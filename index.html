@@ -4,14 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I Scale Companies. Fast. | Depesh Vyas - COO for Hire</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-        
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/css?f[]=satoshi@900,700,500&display=swap" rel="stylesheet">
+
+
+    <!-- Meta Description -->
+    <meta name="description" content="Fractional COO + operations team for founders at $10K–$40K MRR. I build your operations so you can scale to $100K+ MRR without drowning in day-to-day.">
+
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="I Scale Companies. Fast. | Depesh Vyas - COO for Hire">
+    <meta property="og:description" content="Fractional COO + operations team for founders at $10K–$40K MRR. I build your operations so you can scale to $100K+ MRR without drowning in day-to-day.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://the-marauder101.github.io/vbog-website/">
+    <meta property="og:image" content="https://the-marauder101.github.io/vbog-website/og-image.jpg">
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico">
+
+    <style>
         /* ============================================
-           COLOR VARIABLES - CHANGE COLORS HERE ONLY
+           COLOR VARIABLES
            ============================================ */
         :root {
             /* Primary Colors */
@@ -48,7 +67,7 @@
         }
         
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -87,67 +106,18 @@
             background-color: var(--accent-hover);
             transform: translateY(-1px);
         }
-        
-        /* Rotating text animation - FIXED */
-        @keyframes fadeInOut {
-            0% { 
-                opacity: 0; 
-                transform: translateY(10px); 
-            }
-            8% { 
-                opacity: 1; 
-                transform: translateY(0); 
-            }
-            25% { 
-                opacity: 1; 
-                transform: translateY(0); 
-            }
-            33% { 
-                opacity: 0; 
-                transform: translateY(-10px); 
-            }
-            100% { 
-                opacity: 0; 
-                transform: translateY(-10px); 
-            }
-        }
-        
-        .rotating-text {
-            animation: fadeInOut 12s ease-in-out infinite;
-            position: absolute;
-            width: 100%;
-            left: 0;
-            top: 0;
-        }
-        
-        .rotating-text:nth-child(1) { animation-delay: 0s; }
-        .rotating-text:nth-child(2) { animation-delay: 4s; }
-        .rotating-text:nth-child(3) { animation-delay: 8s; }
-        
-        .text-container {
-            position: relative;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        @media (max-width: 768px) {
-            .text-container {
-                height: 100px;
-            }
-        }
-        
+
         /* Logo placeholder box */
         .logo-placeholder {
             background: rgba(255, 255, 255, 0.05);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-height: 90px;
+            min-height: 72px;
             min-width: 180px;
+            padding: 1.5rem 2rem;
+            border-radius: 9999px;
         }
-        
         
         /* Utility classes */
         .section-spacing {
@@ -159,51 +129,82 @@
                 padding: 60px 16px;
             }
         }
-
-
     </style>
 </head>
-    <body class="bg-gray-50">
-    
-    <!-- Hero Section -->
-    <section class="gradient-bg text-white py-20 px-4">
+<body class="bg-gray-50">
+
+       <!-- Hero Section -->
+    <section class="gradient-bg text-white pt-6 pb-20 px-4">
         <div class="max-w-6xl mx-auto">
-            <!-- Logo - TOP LEFT -->
-            <div class="flex justify-start mb-12 -ml-24 -mt-10">
-                <div class="logo-placeholder">
-                    <img src="Logo.svg" alt="Company Logo" class="w-64 md:w-76">
+            <!-- Logo - TOP LEFT, CLEAN LAYOUT -->
+           <div class="flex justify-start mb-8 px-1 md:px-0">
+  <div class="logo-placeholder rounded-full">
+    <h1
+      class="font-black tracking-tight leading-[0.9]
+             text-2xl sm:text-3xl md:text-4xl"
+      style="font-family: 'Satoshi', sans-serif;"
+    >
+      Depesh <br />
+      Vyas.
+    </h1>
+  </div>
+</div>
+
+
                 </div>
-            </div>
+           
             
             <!-- Hero Content -->
-            <div class="text-center">
-                <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
-                    I Scale Companies.<br/>Fast.
+            <div class="text-center max-w-3xl mx-auto">
+                <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 leading-tight">
+                    I Scale Companies.<br class="hidden md:block" />Fast.
                 </h1>
+
+                <!-- Subheadline: who + outcome -->
+                <p class="text-lg md:text-2xl font-semibold opacity-90 mb-6">
+                    Fractional COO + operations team for founders at 
+                    <span class="font-bold">$10K–$40K MRR</span> who are stuck in day-to-day operations.
+                </p>
                 
-                <!-- Rotating Pain Points - FIXED -->
-                <div class="text-container mb-8">
-                    <p class="rotating-text text-2xl md:text-3xl font-semibold opacity-95">
-                        Can you go on vacation without your business dying?
+                <!-- This is for you if -->
+                <p class="text-sm md:text-base uppercase tracking-wide opacity-80 mb-3">
+                    This is for you if:
+                </p>
+                <div class="space-y-2 text-base md:text-lg font-medium opacity-90 mb-8 text-left md:text-center">
+                    <p class="flex md:inline-flex items-start justify-center gap-2">
+                        <span class="mt-[2px] text-green-400">✓</span>
+                        <span>You’re doing <span class="font-semibold">$10K–$40K MRR</span> and want to scale.</span>
                     </p>
-                    <p class="rotating-text text-2xl md:text-3xl font-semibold opacity-95">
-                        Can you focus on improving your service without operations falling apart?
+                    <p class="flex md:inline-flex items-start justify-center gap-2">
+                        <span class="mt-[2px] text-green-400">✓</span>
+                        <span>You’re drowning in ops and don’t have time to drive growth.</span>
                     </p>
-                    <p class="rotating-text text-2xl md:text-3xl font-semibold opacity-95">
-                        Are you trapped in day-to-day firefighting?
+                    <p class="flex md:inline-flex items-start justify-center gap-2">
+                        <span class="mt-[2px] text-green-400">✓</span>
+                        <span>You need a COO but can’t justify a <span class="font-semibold">$200K/year</span> salary.</span>
                     </p>
                 </div>
-                
-                <p class="text-xl md:text-2xl mb-8 font-medium opacity-90">
-                    I'm looking for 3 founders at $10-40K MRR who need a full-time COO<br class="hidden md:block"/> but can't afford $200K/year yet.
-                </p>
-                <a href="#apply" class="cta-button inline-block px-10 py-5 rounded-full text-xl font-bold">
-                    Apply Now - 3 Spots Only
+
+                <!-- Main CTA -->
+                <a href="#apply" class="cta-button inline-block px-10 py-4 md:px-12 md:py-5 rounded-full text-lg md:text-xl font-bold">
+                    Apply Now – 3 Spots Only
                 </a>
-                <p class="mt-4 text-sm opacity-80">⚡ Application closes when I find my 3 companies</p>
+
+                <!-- Risk & Proof -->
+                <p class="mt-3 text-xs md:text-sm opacity-80">
+                    Month 1 is a $2,000 paid trial – we only continue if it’s clearly working.
+                </p>
+                <p class="mt-1 text-xs md:text-sm opacity-70">
+                    Previously: helped a B2B agency grow from <span class="font-semibold">$15K → $120K MRR</span> in 10 months.
+                </p>
+
+                <p class="mt-4 text-xs opacity-70">
+                    Currently taking on <span class="font-semibold">3 companies</span>. Application closes once the spots are filled.
+                </p>
             </div>
         </div>
     </section>
+
 
     <!-- Social Proof - Results -->
     <section class="py-20 px-4 bg-white">
@@ -249,6 +250,66 @@
         </div>
     </section>
 
+    <!-- Who Is Depesh -->
+<section class="py-24 px-6 bg-white border-t border-gray-100">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+        
+        <!-- Left: Text Content -->
+        <div>
+            <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
+                Who Is Depesh Vyas?
+            </h2>
+            
+            <p class="text-lg text-gray-700 mb-6 leading-relaxed">
+                I’m an operator first — not a coach, not a consultant, not a strategist who never touches the real work. 
+                I build the systems, teams, and execution frameworks that take founders from chaos to predictable scale.
+            </p>
+
+            <ul class="space-y-3 text-gray-700 text-base md:text-lg">
+                <li class="flex gap-3">
+                    <span class="text-green-500 text-xl mt-0.5">✓</span>
+                    <span>Scaled multiple B2B agencies & service companies from $10K → $100K+ MRR.</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-green-500 text-xl mt-0.5">✓</span>
+                    <span>Deep expertise in operations design — hiring, workflows, SOPs, accountability, systems.</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-green-500 text-xl mt-0.5">✓</span>
+                    <span>I turn “founder does everything” into a real team with clear ownership & execution.</span>
+                </li>
+            </ul>
+
+            <!-- Social Links -->
+            <div class="flex items-center gap-4 mt-8">
+                <a href="https://www.linkedin.com/" target="_blank" class="text-gray-500 hover:text-blue-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4.98 3.5C4.98 4.88 3.88 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM.22 8.33H4.7V24H.22V8.33zm7.64 0H12v2.13h.06c.53-1 1.84-2.13 3.78-2.13 4.04 0 4.78 2.66 4.78 6.12V24h-4.48v-7.63c0-1.82-.03-4.16-2.54-4.16-2.55 0-2.94 1.99-2.94 4.03V24H7.86V8.33z"/>
+                    </svg>
+                </a>
+
+                <a href="https://twitter.com/" target="_blank" class="text-gray-500 hover:text-black transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+     fill="currentColor" 
+     viewBox="0 0 24 24" 
+     class="w-7 h-7">
+  <path d="M18.244 2H21.5l-7.72 8.803L23 22h-6.654l-5.046-6.331L5.5 22H2.245l8.27-9.441L1 2h6.654l4.62 5.79L18.244 2zm-2.3 17.336h2.05L7.145 4.58H5.016l10.928 14.756z"/>
+</svg></a>
+
+            </div>
+        </div>
+
+        <!-- Right: Photo -->
+        <div class="flex justify-center md:justify-end">
+            <div class="w-64 h-64 md:w-80 md:h-80 rounded-2xl bg-gray-200 shadow-lg overflow-hidden">
+                <!-- Replace with your actual image -->
+                <img src="your-photo.jpg" alt="Depesh Vyas" class="w-full h-full object-cover">
+            </div>
+        </div>
+
+    </div>
+</section>
+
     <!-- Problem/Solution - Who This Is For -->
     <section class="py-20 px-4 bg-gray-50">
         <div class="max-w-4xl mx-auto">
@@ -260,35 +321,35 @@
                 <div class="space-y-4">
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                         </div>
                         <p class="text-lg text-gray-700">Is doing <strong>$10K-$40K MRR</strong> and growing</p>
                     </div>
                     
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                         </div>
                         <p class="text-lg text-gray-700">Is <strong>drowning in day-to-day operations</strong> while trying to scale</p>
                     </div>
                     
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                         </div>
                         <p class="text-lg text-gray-700">Wants to <strong>focus on vision, product, and revenue</strong></p>
                     </div>
                     
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                         </div>
                         <p class="text-lg text-gray-700">Can't afford (or justify) a <strong>$200K/year full-time COO</strong> yet</p>
                     </div>
                     
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                         </div>
                         <p class="text-lg text-gray-700">Is willing to give <strong>equity/profit share</strong> for the right partner</p>
                     </div>
@@ -344,7 +405,7 @@
     </section>
 
     <!-- How We Work Together -->
-    <section class="py-20 px-4 bg-primary-medium text-white" style="background-color: var(--primary-medium);">
+    <section class="py-20 px-4 text-white" style="background-color: var(--primary-medium);">
         <div class="max-w-4xl mx-auto">
             <h2 class="text-4xl md:text-5xl font-bold text-center mb-12">How We Work Together</h2>
             
@@ -404,15 +465,15 @@
                     <p class="text-gray-600 mb-4">12-month minimum commitment</p>
                     <ul class="space-y-3 mb-8">
                         <li class="flex items-start gap-2">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                             <span class="text-gray-700">Full operations team</span>
                         </li>
                         <li class="flex items-start gap-2">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                             <span class="text-gray-700">Strategic oversight from me</span>
                         </li>
                         <li class="flex items-start gap-2">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                             <span class="text-gray-700">Long-term alignment</span>
                         </li>
                     </ul>
@@ -431,15 +492,15 @@
                     <p class="text-gray-600 mb-4">Converts to 5-8% equity at $150K MRR</p>
                     <ul class="space-y-3 mb-8">
                         <li class="flex items-start gap-2">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                             <span class="text-gray-700">Lower upfront cost</span>
                         </li>
                         <li class="flex items-start gap-2">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                             <span class="text-gray-700">Performance-based rewards</span>
                         </li>
                         <li class="flex items-start gap-2">
-                            <span class="check-icon text-xl">✓</span>
+                            <span class="text-xl">✓</span>
                             <span class="text-gray-700">Aligned incentives</span>
                         </li>
                     </ul>
@@ -449,6 +510,14 @@
             <div class="bg-white p-8 rounded-2xl shadow-xl border-2 border-gray-200">
                 <h3 class="text-2xl font-bold mb-4 text-gray-900">Exit Clause:</h3>
                 <p class="text-lg text-gray-700">When you hit $150K MRR or by mutual agreement, we part ways. You keep the systems, I keep the equity.</p>
+            </div>
+
+            <!-- Mid-page CTA (soft) -->
+            <div class="text-center mt-12">
+                <a href="#apply" class="inline-block px-10 py-4 rounded-full text-lg font-bold cta-button">
+                    See If We’re a Fit (3 Spots Only)
+                </a>
+                <p class="mt-3 text-sm text-gray-500">No obligation beyond the 30-day paid trial.</p>
             </div>
         </div>
     </section>
@@ -519,7 +588,7 @@
                     <h2 class="text-3xl font-bold mb-8 text-gray-900">What I Focus On</h2>
                     <div class="space-y-4">
                         <div class="flex items-start gap-3">
-                            <span class="check-icon text-2xl flex-shrink-0">✓</span>
+                            <span class="text-2xl flex-shrink-0">✓</span>
                             <div>
                                 <h3 class="font-bold text-lg text-gray-900">Business Operations</h3>
                                 <p class="text-gray-600">Workflow creation, process optimization, organizational structure</p>
@@ -527,7 +596,7 @@
                         </div>
                         
                         <div class="flex items-start gap-3">
-                            <span class="check-icon text-2xl flex-shrink-0">✓</span>
+                            <span class="text-2xl flex-shrink-0">✓</span>
                             <div>
                                 <h3 class="font-bold text-lg text-gray-900">Hiring & Team Building</h3>
                                 <p class="text-gray-600">From your first hire to building a scalable hiring pipeline</p>
@@ -535,7 +604,7 @@
                         </div>
                         
                         <div class="flex items-start gap-3">
-                            <span class="check-icon text-2xl flex-shrink-0">✓</span>
+                            <span class="text-2xl flex-shrink-0">✓</span>
                             <div>
                                 <h3 class="font-bold text-lg text-gray-900">Systems & Processes</h3>
                                 <p class="text-gray-600">Documentation, SOPs, accountability frameworks</p>
@@ -543,7 +612,7 @@
                         </div>
                         
                         <div class="flex items-start gap-3">
-                            <span class="check-icon text-2xl flex-shrink-0">✓</span>
+                            <span class="text-2xl flex-shrink-0">✓</span>
                             <div>
                                 <h3 class="font-bold text-lg text-gray-900">Strategic Execution</h3>
                                 <p class="text-gray-600">Identifying what moves the needle and making it happen</p>
@@ -557,7 +626,7 @@
                     <h2 class="text-3xl font-bold mb-8 text-gray-900">What I Don't Do</h2>
                     <div class="space-y-4">
                         <div class="flex items-start gap-3">
-                            <span class="x-icon text-2xl flex-shrink-0">✗</span>
+                            <span class="text-2xl flex-shrink-0">✗</span>
                             <div>
                                 <h3 class="font-bold text-lg text-gray-900">Marketing Campaigns</h3>
                                 <p class="text-gray-600">I don't run paid ads or marketing campaigns</p>
@@ -565,7 +634,7 @@
                         </div>
                         
                         <div class="flex items-start gap-3">
-                            <span class="x-icon text-2xl flex-shrink-0">✗</span>
+                            <span class="text-2xl flex-shrink-0">✗</span>
                             <div>
                                 <h3 class="font-bold text-lg text-gray-900">Direct Sales</h3>
                                 <p class="text-gray-600">I don't handle sales calls directly (ops influences sales, but I'm not a sales rep)</p>
@@ -573,7 +642,7 @@
                         </div>
                         
                         <div class="flex items-start gap-3">
-                            <span class="x-icon text-2xl flex-shrink-0">✗</span>
+                            <span class="text-2xl flex-shrink-0">✗</span>
                             <div>
                                 <h3 class="font-bold text-lg text-gray-900">Financial Management</h3>
                                 <p class="text-gray-600">I don't manage your finances/accounting (I can optimize unit economics, but I'm not a CFO)</p>
@@ -635,6 +704,13 @@
                         <p class="text-lg text-gray-700">Comfortable working with a <strong>remote operations team</strong></p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Mid-page CTA (soft) -->
+            <div class="text-center mt-12">
+                <a href="#apply" class="inline-block px-10 py-4 rounded-full text-lg font-bold cta-button">
+                    See If We’re a Fit (3 Spots Only)
+                </a>
             </div>
         </div>
     </section>
@@ -714,8 +790,8 @@
                 <p class="text-lg text-gray-700">If you're serious about scaling and willing to give us the operational control to make it happen, let's talk.</p>
             </div>
             
-            <a href="https://wyo4pu1qb60.typeform.com/to/MgUONO1h" target="_blank" class="cta-button inline-block px-12 py-6 rounded-full text-2xl font-bold mb-4">
-                Apply Now - 3 Spots Only
+            <a href="https://wyo4pu1qb60.typeform.com/to/MgUONO1h" target="_blank" rel="noopener noreferrer" class="cta-button inline-block px-12 py-6 rounded-full text-2xl font-bold mb-4">
+                Apply Now – 3 Spots Only
             </a>
             
             <p class="text-gray-600 text-sm">Application closes when I find my 3 companies.</p>
@@ -726,14 +802,32 @@
     <footer class="py-12 px-4 text-white text-center" style="background-color: var(--primary-dark);">
         <!-- Logo placement in footer -->
         <div class="flex justify-center mb-6">
-            <div class="logo-placeholder">
-                <img src="Logo.svg" alt="Company Logo" class="h-18 md:h-24">
-        
-            </div>
+<div class="logo-placeholder rounded-full">
+    <h1
+      class="font-black tracking-tight leading-[0.9]
+             text-2xl sm:text-3xl md:text-4xl"
+      style="font-family: 'Satoshi', sans-serif;"
+    >
+      Depesh <br />
+      Vyas.
+    </h1>
+  </div>            
         </div>
-        <p class="text-xl font-bold mb-2">Depesh Vyas</p>
-        <p class="text-gray-400">COO for Hire | Building Operations That Scale</p>
+        <p class="text-gray-400"> Building Operations That Scale</p>
     </footer>
+
+    <!-- Sticky Mobile CTA Bar -->
+    <div class="fixed bottom-0 inset-x-0 z-40 bg-white/95 border-t border-gray-200 shadow-md md:hidden">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <div class="text-xs">
+                <span class="font-semibold text-gray-900">Ready to scale?</span><br>
+                <span class="text-gray-600 text-[11px]">3 spots only – see if we’re a fit.</span>
+            </div>
+            <a href="#apply" class="cta-button px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap">
+                See If We’re a Fit
+            </a>
+        </div>
+    </div>
 
 </body>
 </html>
