@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Scale Companies. Fast. | Depesh Vyas - COO for Hire</title>
+    <title>Get 15 Hours Back Per Week | Fractional COO for Service Companies | Depesh Vyas</title>
 
     <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,14 +16,14 @@
 
 
     <!-- Meta Description -->
-    <meta name="description" content="Fractional COO + operations team for founders at $10K–$40K MRR. I build your operations so you can scale to $100K+ MRR without drowning in day-to-day.">
+    <meta name="description" content="Operations Sprint (8-12 weeks) or Full Partnership (12 months) for service businesses at $500K-$2.5M revenue. Get 10-15 hours back per week while growing 2-3x. Case study: $15K→$120K MRR in 10 months.">
 
     <!-- Open Graph Tags -->
-    <meta property="og:title" content="I Scale Companies. Fast. | Depesh Vyas - COO for Hire">
-    <meta property="og:description" content="Fractional COO + operations team for founders at $10K–$40K MRR. I build your operations so you can scale to $100K+ MRR without drowning in day-to-day.">
+    <meta property="og:title" content="Get 15 Hours Back Per Week | Fractional COO for Service Companies | Depesh Vyas">
+    <meta property="og:description" content="Operations Sprint (8-12 weeks) or Full Partnership (12 months) for service businesses at $500K-$2.5M revenue. Get 10-15 hours back per week while growing 2-3x.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://the-marauder101.github.io/vbog-website/">
-    <meta property="og:image" content="https://the-marauder101.github.io/vbog-website/og-image.jpg">
+    <meta property="og:url" content="https://v-bog.com/">
+    <meta property="og:image" content="https://v-bog.com/og-image.jpg">
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -37,12 +37,12 @@
             --primary-dark: #0a0a0a;          /* Main dark background */
             --primary-medium: #1a1a1a;        /* Secondary dark background */
             --primary-light: #2a2a2a;         /* Tertiary dark background */
-            
+
             /* Accent Color */
             --accent-color: #2563eb;          /* Main accent (bright blue) */
             --accent-hover: #1d4ed8;          /* Accent hover state */
             --accent-light: #3b82f6;          /* Lighter accent */
-            
+
             /* Neutral Colors */
             --white: #ffffff;
             --gray-50: #f9fafb;
@@ -51,12 +51,12 @@
             --gray-600: #4b5563;
             --gray-700: #374151;
             --gray-900: #111827;
-            
+
             /* Status Colors */
             --success: #10b981;
             --error: #ef4444;
         }
-        
+
         /* ============================================
            BASE STYLES
            ============================================ */
@@ -65,18 +65,18 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        
+
         /* Hero gradient background */
         .gradient-bg {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 50%, var(--primary-dark) 100%);
         }
-        
+
         /* Accent text gradient */
         .gradient-text {
             background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-light) 100%);
@@ -84,24 +84,24 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         /* Card hover effects */
         .result-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        
+
         .result-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
         }
-        
+
         /* CTA Button styles */
         .cta-button {
             transition: all 0.2s ease;
             background-color: var(--accent-color);
             color: var(--white);
         }
-        
+
         .cta-button:hover {
             background-color: var(--accent-hover);
             transform: translateY(-1px);
@@ -118,16 +118,62 @@
             padding: 1.5rem 2rem;
             border-radius: 9999px;
         }
-        
+
         /* Utility classes */
         .section-spacing {
             padding: 80px 24px;
         }
-        
+
         @media (max-width: 768px) {
             .section-spacing {
                 padding: 60px 16px;
             }
+        }
+
+        /* FAQ Accordion Styles */
+        .faq-item {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .faq-question {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 1000px;
+            padding-bottom: 1.5rem;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+
+        /* Popular badge */
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -152,20 +198,25 @@
 
 
                 </div>
-           
-            
+
+
             <!-- Hero Content -->
             <div class="text-center max-w-3xl mx-auto">
                 <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 leading-tight">
                     I Scale Companies.<br class="hidden md:block" />Fast.
                 </h1>
 
-                <!-- Subheadline: who + outcome -->
-                <p class="text-lg md:text-2xl font-semibold opacity-90 mb-6">
-                    Fractional COO + operations team for founders at 
-                    <span class="font-bold">$10K–$40K MRR</span> who are stuck in day-to-day operations.
+                <!-- New value prop subheadline -->
+                <p class="text-xl md:text-3xl font-bold opacity-95 mb-4">
+                    Get 15+ hours back per week while growing 2-3x.
                 </p>
-                
+
+                <!-- Subheadline: who + outcome -->
+                <p class="text-lg md:text-xl font-medium opacity-90 mb-6">
+                    For service business founders at
+                    <span class="font-bold">$500K–$2.5M annual revenue</span> who are drowning in operations instead of driving growth.
+                </p>
+
                 <!-- This is for you if -->
                 <p class="text-sm md:text-base uppercase tracking-wide opacity-80 mb-3">
                     This is for you if:
@@ -173,15 +224,15 @@
                 <div class="space-y-2 text-base md:text-lg font-medium opacity-90 mb-8 text-left md:text-center">
                     <p class="flex md:inline-flex items-start justify-center gap-2">
                         <span class="mt-[2px] text-green-400">✓</span>
-                        <span>You’re doing <span class="font-semibold">$10K–$40K MRR</span> and want to scale.</span>
+                        <span>You're doing <span class="font-semibold">$500K–$2.5M annual revenue</span> and want to scale.</span>
                     </p>
                     <p class="flex md:inline-flex items-start justify-center gap-2">
                         <span class="mt-[2px] text-green-400">✓</span>
-                        <span>You’re drowning in ops and don’t have time to drive growth.</span>
+                        <span>You're drowning in ops and don't have time to drive growth.</span>
                     </p>
                     <p class="flex md:inline-flex items-start justify-center gap-2">
                         <span class="mt-[2px] text-green-400">✓</span>
-                        <span>You need a COO but can’t justify a <span class="font-semibold">$200K/year</span> salary.</span>
+                        <span>You need a COO but can't justify a <span class="font-semibold">$200K/year</span> salary.</span>
                     </p>
                 </div>
 
@@ -192,14 +243,14 @@
 
                 <!-- Risk & Proof -->
                 <p class="mt-3 text-xs md:text-sm opacity-80">
-                    Month 1 is a $2,000 paid trial – we only continue if it’s clearly working.
+                    Start with a $500 Operations Audit – fee credited if we continue working together.
                 </p>
                 <p class="mt-1 text-xs md:text-sm opacity-70">
                     Previously: helped a B2B agency grow from <span class="font-semibold">$15K → $120K MRR</span> in 10 months.
                 </p>
 
                 <p class="mt-4 text-xs opacity-70">
-                    Currently taking on <span class="font-semibold">3 companies</span>. Application closes once the spots are filled.
+                    Currently taking on <span class="font-semibold">3 Sprint clients</span> and <span class="font-semibold">1-2 Partnership clients</span>. Application closes once spots are filled.
                 </p>
             </div>
         </div>
@@ -211,9 +262,9 @@
         <div class="max-w-6xl mx-auto">
             <h2 class="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-900">What I've Done</h2>
             <p class="text-center text-gray-600 mb-12 text-lg">As COO, I built the operations, systems, and teams that made this growth possible.</p>
-            
+
             <div class="grid md:grid-cols-2 gap-8">
-                <!-- Case Study 1 -->
+                <!-- Case Study 1 - R2G -->
                 <div class="stat-card bg-gradient-to-br from-slate-50 to-gray-50 p-8 rounded-2xl border border-slate-200">
                     <div class="mb-4">
                         <img src="https://www.r2gdigital.com/wp-content/uploads/2025/03/greenlogo2-1-1.svg" alt="R2G Digital" class="h-12">
@@ -229,9 +280,13 @@
                     <div class="mt-4 inline-block bg-slate-800 text-white px-4 py-2 rounded-full text-sm font-bold">
                         8x Growth
                     </div>
+                    <div class="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <p class="text-sm text-gray-700 mb-2"><strong>How:</strong> Started with 8-week Operations Sprint, converted to Full Partnership</p>
+                        <p class="text-sm text-gray-700"><strong>Founder impact:</strong> Went from 60-hour weeks in operations to 20 hours on pure growth</p>
+                    </div>
                 </div>
-                
-                <!-- Case Study 2 -->
+
+                <!-- Case Study 2 - RTW -->
                 <div class="stat-card bg-gradient-to-br from-slate-50 to-gray-50 p-8 rounded-2xl border border-slate-200">
                     <div class="mb-4">
                         <img src="https://framerusercontent.com/images/WLf07jAEjS2wz1kZ4XkUiA4mAc.webp" alt="Ride The Wave" class="h-12">
@@ -247,11 +302,210 @@
                     <div class="mt-4 inline-block bg-slate-800 text-white px-4 py-2 rounded-full text-sm font-bold">
                         36x Growth
                     </div>
+                    <div class="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <p class="text-sm text-gray-700 mb-2"><strong>How:</strong> Started with 10-week Operations Sprint, converted to Full Partnership</p>
+                        <p class="text-sm text-gray-700"><strong>Founder impact:</strong> Went from 70-hour weeks doing everything to 25 hours focused on sales</p>
+                    </div>
                 </div>
             </div>
-            
+
             <div class="text-center mt-12">
-                <p class="text-2xl font-bold text-gray-900">Now I'm taking that same playbook and making it available to 3 companies at a time.</p>
+                <p class="text-2xl font-bold text-gray-900">Now I'm taking that same playbook and making it available to a handful of companies at a time.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEW: How We Work Together - 3-Step Process -->
+    <section class="py-20 px-4 bg-gray-50">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-900">How We Work Together</h2>
+            <p class="text-center text-gray-600 mb-16 text-lg">A clear path from first call to scaled operations</p>
+
+            <!-- Step 1: Discovery Call -->
+            <div class="mb-12">
+                <div class="flex items-start gap-6 mb-8">
+                    <div class="flex-shrink-0 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                        1
+                    </div>
+                    <div class="flex-grow">
+                        <h3 class="text-2xl md:text-3xl font-bold mb-2 text-gray-900">Discovery Call (Free)</h3>
+                        <p class="text-lg text-gray-700 mb-4">We'll discuss your biggest operational bottlenecks and see if we're a fit.</p>
+                        <div class="flex flex-wrap gap-4 text-sm">
+                            <span class="bg-gray-200 px-4 py-2 rounded-full"><strong>Timeline:</strong> 30 minutes</span>
+                            <span class="bg-green-100 text-green-800 px-4 py-2 rounded-full font-semibold">Free</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Operations Audit -->
+            <div class="mb-12">
+                <div class="flex items-start gap-6 mb-8">
+                    <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                        2
+                    </div>
+                    <div class="flex-grow">
+                        <h3 class="text-2xl md:text-3xl font-bold mb-2 text-gray-900">Operations Audit</h3>
+                        <p class="text-lg text-gray-700 mb-4">Deep-dive into your business to identify the 3 critical bottlenecks holding you back.</p>
+                        <div class="flex flex-wrap gap-4 text-sm mb-4">
+                            <span class="bg-gray-200 px-4 py-2 rounded-full"><strong>Timeline:</strong> 7 days</span>
+                            <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-semibold">$500</span>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-gray-200">
+                            <p class="font-semibold text-gray-900 mb-3">Deliverables:</p>
+                            <ul class="space-y-2 text-gray-700">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-green-500 mt-1">✓</span>
+                                    <span>Complete operational assessment</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-green-500 mt-1">✓</span>
+                                    <span>3 biggest bottlenecks identified with solutions</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-green-500 mt-1">✓</span>
+                                    <span>Roadmap to 2-3x revenue</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-green-500 mt-1">✓</span>
+                                    <span>Decision point: Sprint or Full Partnership?</span>
+                                </li>
+                            </ul>
+                            <p class="mt-4 text-sm text-blue-700 font-semibold bg-blue-50 p-3 rounded-lg">
+                                Audit fee is credited toward Sprint or Partnership if we continue.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Choose Your Path -->
+            <div class="mb-8">
+                <div class="flex items-start gap-6 mb-8">
+                    <div class="flex-shrink-0 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                        3
+                    </div>
+                    <div class="flex-grow">
+                        <h3 class="text-2xl md:text-3xl font-bold mb-2 text-gray-900">Choose Your Path</h3>
+                        <p class="text-lg text-gray-700">Based on the audit findings, we'll recommend the right engagement for your situation.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Cards: Sprint vs Partnership -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Operations Sprint Card -->
+                <div class="bg-white p-8 rounded-2xl shadow-xl border-2 border-green-500 relative pt-12">
+                    <div class="popular-badge">Most Popular</div>
+                    <h3 class="text-2xl font-bold mb-2 text-gray-900">Operations Sprint</h3>
+                    <div class="text-3xl font-black gradient-text mb-4">$3,000–$6,000</div>
+                    <p class="text-gray-600 mb-6">8-12 week intensive engagement</p>
+
+                    <p class="font-semibold text-gray-900 mb-3">Perfect for:</p>
+                    <ul class="space-y-2 text-gray-700 mb-6">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Founders who need immediate relief (10-15 hours back/week)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>One critical problem solved (hiring, cash flow, or systems)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Proof of value before full commitment</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Operations is your bottleneck (NOT sales/marketing)</span>
+                        </li>
+                    </ul>
+
+                    <p class="font-semibold text-gray-900 mb-3">What Happens:</p>
+                    <ul class="space-y-2 text-gray-700 mb-6">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>I personally embed 15-20 hours/week with your team</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>We solve 1-3 specific problems identified in audit</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>You keep all systems we build</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>Zero long-term commitment required</span>
+                        </li>
+                    </ul>
+
+                    <div class="bg-gray-50 p-4 rounded-xl mb-6">
+                        <p class="text-sm text-gray-700"><strong>After Sprint:</strong> ~35% of clients convert to Full Partnership. Others part ways with working systems. Zero pressure either way.</p>
+                    </div>
+
+                    <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="cta-button block text-center px-6 py-4 rounded-full font-bold">
+                        Book Discovery Call
+                    </a>
+                </div>
+
+                <!-- Full Partnership Card -->
+                <div class="bg-white p-8 rounded-2xl shadow-xl border-2 border-slate-300 relative">
+                    <h3 class="text-2xl font-bold mb-2 text-gray-900">Full Partnership</h3>
+                    <div class="text-3xl font-black gradient-text mb-1">$2,300/month trial</div>
+                    <p class="text-lg text-gray-600 mb-4">then tiered profit share</p>
+                    <p class="text-gray-600 mb-6">12-month minimum commitment</p>
+
+                    <p class="font-semibold text-gray-900 mb-3">Perfect for:</p>
+                    <ul class="space-y-2 text-gray-700 mb-6">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Founders ready to hand over operations completely</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Scaling from $500K to $1.7M-$2.3M in 12-18 months</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>Building exit-ready systems and professional team</span>
+                        </li>
+                    </ul>
+
+                    <p class="font-semibold text-gray-900 mb-3">What You Get:</p>
+                    <ul class="space-y-2 text-gray-700 mb-6">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>Dedicated Operations Manager (20-30 hours/week)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>Me as Strategic COO (oversight, hiring, systems design)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>Complete operational team built and trained</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>I exit gracefully when you hit $1.7M or by mutual agreement</span>
+                        </li>
+                    </ul>
+
+                    <div class="bg-gray-50 p-4 rounded-xl mb-6">
+                        <p class="text-sm text-gray-700 mb-2"><strong>Structure:</strong></p>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• <strong>Month 1:</strong> $2,300 trial (integration + ops audit)</li>
+                            <li>• <strong>Months 2-12:</strong> Tiered profit share (starts 20-30%, reduces to ~10% by exit)</li>
+                            <li>• <strong>Optional:</strong> 5-10% equity for deeper alignment (discussed after Month 1)</li>
+                        </ul>
+                    </div>
+
+                    <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="inline-block w-full text-center px-6 py-4 rounded-full font-bold border-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+                        Book Discovery Call
+                    </a>
+                </div>
             </div>
         </div>
     </section>
@@ -259,15 +513,15 @@
     <!-- Who Is Depesh -->
 <section class="py-24 px-6 bg-white border-t border-gray-100">
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-        
+
         <!-- Left: Text Content -->
         <div>
             <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
                 Who Is Depesh Vyas?
             </h2>
-            
+
             <p class="text-lg text-gray-700 mb-6 leading-relaxed">
-                I’m an operator first — not a coach, not a consultant, not a strategist who never touches the real work. 
+                I'm an operator first — not a coach, not a consultant, not a strategist who never touches the real work.
                 I build the systems, teams, and execution frameworks that take founders from chaos to predictable scale.
             </p>
 
@@ -282,7 +536,7 @@
                 </li>
                 <li class="flex gap-3">
                     <span class="text-green-500 text-xl mt-0.5">✓</span>
-                    <span>I turn “founder does everything” into a real team with clear ownership & execution.</span>
+                    <span>I turn "founder does everything" into a real team with clear ownership & execution.</span>
                 </li>
             </ul>
 
@@ -295,9 +549,9 @@
                 </a>
 
                 <a href="https://x.com/Depesh_Vyas" target="_blank" class="text-gray-500 hover:text-black transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-     fill="currentColor" 
-     viewBox="0 0 24 24" 
+                    <svg xmlns="http://www.w3.org/2000/svg"
+     fill="currentColor"
+     viewBox="0 0 24 24"
      class="w-7 h-7">
   <path d="M18.244 2H21.5l-7.72 8.803L23 22h-6.654l-5.046-6.331L5.5 22H2.245l8.27-9.441L1 2h6.654l4.62 5.79L18.244 2zm-2.3 17.336h2.05L7.145 4.58H5.016l10.928 14.756z"/>
 </svg></a>
@@ -320,87 +574,96 @@
     <section class="py-20 px-4 bg-gray-50">
         <div class="max-w-4xl mx-auto">
             <h2 class="text-4xl md:text-5xl font-bold text-center mb-12 text-gray-900">Is This You?</h2>
-            
+
             <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl">
                 <p class="text-xl mb-8 text-gray-700 font-semibold">You're a founder who:</p>
-                
+
                 <div class="space-y-4">
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
                             <span class="text-xl">✓</span>
                         </div>
-                        <p class="text-lg text-gray-700">Is doing <strong>$10K-$40K MRR</strong> and growing</p>
+                        <p class="text-lg text-gray-700">Is doing <strong>$500K-$2.5M annual revenue</strong> and growing</p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
                             <span class="text-xl">✓</span>
                         </div>
                         <p class="text-lg text-gray-700">Is <strong>drowning in day-to-day operations</strong> while trying to scale</p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
                             <span class="text-xl">✓</span>
                         </div>
                         <p class="text-lg text-gray-700">Wants to <strong>focus on vision, product, and revenue</strong></p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
                             <span class="text-xl">✓</span>
                         </div>
                         <p class="text-lg text-gray-700">Can't afford (or justify) a <strong>$200K/year full-time COO</strong> yet</p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
                             <span class="text-xl">✓</span>
                         </div>
-                        <p class="text-lg text-gray-700">Is willing to give <strong>equity/profit share</strong> for the right partner</p>
+                        <p class="text-lg text-gray-700">Is willing to invest in the <strong>right operational partner</strong></p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- What You Get -->
+    <!-- What You Get (Full Partnership) -->
     <section class="py-20 px-4 bg-white">
         <div class="max-w-6xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-900">What You Get</h2>
-            <p class="text-center text-xl text-gray-600 mb-12">A dedicated operations team led by me:</p>
-            
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-900">What You Get (Full Partnership)</h2>
+
+            <!-- Callout Box -->
+            <div class="max-w-3xl mx-auto mb-12">
+                <div class="bg-blue-50 border border-blue-200 p-6 rounded-xl text-center">
+                    <p class="text-blue-800 font-medium">
+                        <strong>Note:</strong> Operations Sprint clients work directly with me 15-20 hrs/week.
+                        Full Partnership clients get the complete team structure below.
+                    </p>
+                </div>
+            </div>
+
             <div class="grid md:grid-cols-2 gap-8">
                 <div class="bg-blue-50 p-8 rounded-2xl border border-blue-200">
                     <div class="text-4xl mb-4">👤</div>
                     <h3 class="text-2xl font-bold mb-3 text-gray-900">Dedicated Operations Manager</h3>
                     <p class="text-gray-700 text-lg">20-30 hours/week focused solely on your business</p>
                 </div>
-                
+
                 <div class="bg-slate-50 p-8 rounded-2xl border border-slate-200">
                     <div class="text-4xl mb-4">🎯</div>
                     <h3 class="text-2xl font-bold mb-3 text-gray-900">Strategic Oversight from Me</h3>
                     <p class="text-gray-700 text-lg">I design the systems, make key decisions, interview and ensure execution</p>
                 </div>
-                
+
                 <div class="bg-blue-50 p-8 rounded-2xl border border-blue-200">
                     <div class="text-4xl mb-4">⚙️</div>
                     <h3 class="text-2xl font-bold mb-3 text-gray-900">Handle All Operations</h3>
                     <p class="text-gray-700 text-lg">Hiring, systems, processes, workflows</p>
                 </div>
-                
+
                 <div class="bg-slate-50 p-8 rounded-2xl border border-slate-200">
                     <div class="text-4xl mb-4">🚀</div>
                     <h3 class="text-2xl font-bold mb-3 text-gray-900">Build Infrastructure to Scale</h3>
                     <p class="text-gray-700 text-lg">Systems you need to reach $100K+ MRR</p>
                 </div>
-                
+
                 <div class="bg-blue-50 p-8 rounded-2xl border border-blue-200">
                     <div class="text-4xl mb-4">🎨</div>
                     <h3 class="text-2xl font-bold mb-3 text-gray-900">Free You Up</h3>
                     <p class="text-gray-700 text-lg">Focus on what only you can do</p>
                 </div>
-                
+
                 <div class="bg-slate-50 p-8 rounded-2xl border border-slate-200">
                     <div class="text-4xl mb-4">✅</div>
                     <h3 class="text-2xl font-bold mb-3 text-gray-900">Execute & Implement</h3>
@@ -410,307 +673,332 @@
         </div>
     </section>
 
-    <!-- How We Work Together -->
+    <!-- Sprint vs Partnership: What's Right for You? -->
     <section class="py-20 px-4 text-white" style="background-color: var(--primary-medium);">
         <div class="max-w-4xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold text-center mb-12">How We Work Together</h2>
-            
-            <div class="space-y-6">
-                <div class="bg-white bg-opacity-10 backdrop-blur p-6 rounded-xl">
-                    <h3 class="text-xl font-bold mb-2">Your Operations Manager handles day-to-day execution</h3>
-                    <p class="opacity-90">30 hours/week dedicated to your business</p>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 backdrop-blur p-6 rounded-xl">
-                    <h3 class="text-xl font-bold mb-2">I personally handle all strategic decisions</h3>
-                    <p class="opacity-90">Hiring interviews, system design, and key implementations</p>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 backdrop-blur p-6 rounded-xl">
-                    <h3 class="text-xl font-bold mb-2">Minimum 2 check-ins per week with me</h3>
-                    <p class="opacity-90">Review progress and solve blockers together</p>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 backdrop-blur p-6 rounded-xl">
-                    <h3 class="text-xl font-bold mb-2">You get execution capacity AND strategic expertise</h3>
-                    <p class="opacity-90">The best of both worlds</p>
-                </div>
-            </div>
-            
-            <div class="mt-12 bg-yellow-400 text-gray-900 p-8 rounded-2xl">
-                <h3 class="text-2xl font-bold mb-4">You might be wondering: "Will I actually work with Depesh?"</h3>
-                <p class="text-xl font-semibold mb-4">Yes. I personally:</p>
-                <ul class="space-y-2 text-lg">
-                    <li>✓ Interview and approve every hire for your business</li>
-                    <li>✓ Design all your systems and processes</li>
-                    <li>✓ Join key strategic calls and decisions</li>
-                    <li>✓ Handle all major operational changes</li>
-                </ul>
-                <p class="mt-4 text-lg font-bold">Your Operations Manager executes the playbook. I build the playbook and ensure it's working.</p>
-            </div>
-        </div>
-    </section>
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-12">Sprint vs Partnership: What's Right for You?</h2>
 
-    <!-- Pricing Options -->
-    <section class="py-20 px-4 bg-gray-50">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-900">My Offer</h2>
-            <p class="text-center text-gray-600 mb-12 text-lg">Choose the structure that works for your business</p>
-            
             <div class="grid md:grid-cols-2 gap-8 mb-12">
-                <!-- Option A -->
-                <div class="bg-white p-8 rounded-2xl shadow-xl border-2 border-slate-300 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-slate-600 text-white px-6 py-2 text-sm font-bold">
-                        OPTION A
-                    </div>
-                    <h3 class="text-3xl font-bold mb-6 mt-4 text-gray-900">Cash + Equity</h3>
-                    <div class="mb-6">
-                        <div class="text-5xl font-black gradient-text mb-2">$3,000/mo</div>
-                        <div class="text-2xl font-bold text-gray-700">+ 5-10% equity</div>
-                    </div>
-                    <p class="text-gray-600 mb-4">12-month minimum commitment</p>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start gap-2">
-                            <span class="text-xl">✓</span>
-                            <span class="text-gray-700">Full operations team</span>
+                <!-- Operations Sprint -->
+                <div class="bg-white bg-opacity-10 backdrop-blur p-8 rounded-2xl">
+                    <h3 class="text-2xl font-bold mb-6 text-green-400">Operations Sprint is right if you:</h3>
+                    <ul class="space-y-3 text-lg">
+                        <li class="flex items-start gap-3">
+                            <span class="text-green-400 mt-1">✓</span>
+                            <span>Want to test-drive working with me before full commitment</span>
                         </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-xl">✓</span>
-                            <span class="text-gray-700">Strategic oversight from me</span>
+                        <li class="flex items-start gap-3">
+                            <span class="text-green-400 mt-1">✓</span>
+                            <span>Need 1-3 specific problems solved (not complete ops takeover)</span>
                         </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-xl">✓</span>
-                            <span class="text-gray-700">Long-term alignment</span>
+                        <li class="flex items-start gap-3">
+                            <span class="text-green-400 mt-1">✓</span>
+                            <span>Prefer fixed-fee engagement over profit sharing</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-green-400 mt-1">✓</span>
+                            <span>Want 10-15 hours back immediately</span>
                         </li>
                     </ul>
                 </div>
-                
-                <!-- Option B -->
-                <div class="bg-white p-8 rounded-2xl shadow-xl border-2 border-green-500 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 bg-green-500 text-white px-4 py-2 text-xs font-bold uppercase tracking-wide">
-                        Most Popular
-                    </div>
-                    <div class="absolute top-0 right-0 bg-green-600 text-white px-6 py-2 text-sm font-bold">
-                        OPTION B
-                    </div>
-                    <h3 class="text-3xl font-bold mb-6 mt-4 text-gray-900">Cash + Profit Share</h3>
-                    <div class="mb-6">
-                        <div class="text-5xl font-black gradient-text mb-2">$2,000/mo</div>
-                        <div class="text-2xl font-bold text-gray-700">+ 20-25% profit share</div>
-                    </div>
-                    <p class="text-gray-600 mb-4">Converts to 5-8% equity at $150K MRR</p>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start gap-2">
-                            <span class="text-xl">✓</span>
-                            <span class="text-gray-700">Lower upfront cost</span>
+
+                <!-- Full Partnership -->
+                <div class="bg-white bg-opacity-10 backdrop-blur p-8 rounded-2xl">
+                    <h3 class="text-2xl font-bold mb-6 text-blue-400">Full Partnership is right if you:</h3>
+                    <ul class="space-y-3 text-lg">
+                        <li class="flex items-start gap-3">
+                            <span class="text-blue-400 mt-1">✓</span>
+                            <span>Are ready to completely hand over operations</span>
                         </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-xl">✓</span>
-                            <span class="text-gray-700">Performance-based rewards</span>
+                        <li class="flex items-start gap-3">
+                            <span class="text-blue-400 mt-1">✓</span>
+                            <span>Want to scale 2-3x in next 12-18 months</span>
                         </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-xl">✓</span>
-                            <span class="text-gray-700">Aligned incentives</span>
+                        <li class="flex items-start gap-3">
+                            <span class="text-blue-400 mt-1">✓</span>
+                            <span>Value deep alignment (profit share + optional equity)</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-blue-400 mt-1">✓</span>
+                            <span>Need full team built, not just consulting</span>
                         </li>
                     </ul>
                 </div>
             </div>
-            
-            <div class="bg-white p-8 rounded-2xl shadow-xl border-2 border-gray-200">
-                <h3 class="text-2xl font-bold mb-4 text-gray-900">Exit Clause:</h3>
-                <p class="text-lg text-gray-700">When you hit $150K MRR or by mutual agreement, we part ways. You keep the systems, I keep the equity.</p>
-            </div>
 
-            <!-- Mid-page CTA (soft) -->
-            <div class="text-center mt-12">
-                <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="inline-block px-10 py-4 rounded-full text-lg font-bold cta-button">
-                    Book a Call – 3 Spots Only
-                </a>
-                <p class="mt-3 text-sm text-gray-500">No obligation beyond the 30-day paid trial.</p>
+            <div class="bg-yellow-400 text-gray-900 p-8 rounded-2xl text-center">
+                <p class="text-xl font-bold mb-2">Not sure?</p>
+                <p class="text-lg">Book a discovery call. After the audit, it'll be crystal clear which path makes sense.</p>
             </div>
         </div>
     </section>
 
-    <!-- How This Works (Timeline) -->
-    <section class="py-20 px-4 bg-white">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-900">How This Works</h2>
-            
-            <div class="space-y-12">
-                <!-- Month 1 -->
-                <div class="flex gap-6">
-                    <div class="flex-shrink-0 w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                        1
-                    </div>
-                    <div class="flex-grow">
-                        <h3 class="text-2xl font-bold mb-3 text-gray-900">Month 1: Trial Period</h3>
-                        <ul class="space-y-2 text-gray-700 text-lg">
-                            <li>• You pay $2,000 for 30 days</li>
-                            <li>• We dive deep into your business</li>
-                            <li>• We identify the core operational issues</li>
-                            <li>• You decide if you want to continue with equity/profit share arrangement</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- Months 2-12 -->
-                <div class="flex gap-6">
-                    <div class="flex-shrink-0 w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                        2-12
-                    </div>
-                    <div class="flex-grow">
-                        <h3 class="text-2xl font-bold mb-3 text-gray-900">Months 2-12: Full Engagement</h3>
-                        <ul class="space-y-2 text-gray-700 text-lg">
-                            <li>• We formalize the equity/profit share agreement</li>
-                            <li>• Your dedicated Operations Manager takes over day-to-day operations</li>
-                            <li>• I oversee strategy, systems design, and key decisions</li>
-                            <li>• We build systems that scale</li>
-                            <li>• You focus on growth, we handle execution</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- Month 12+ -->
-                <div class="flex gap-6">
-                    <div class="flex-shrink-0 w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                        12+
-                    </div>
-                    <div class="flex-grow">
-                        <h3 class="text-2xl font-bold mb-3 text-gray-900">Month 12+: Exit or Extend</h3>
-                        <ul class="space-y-2 text-gray-700 text-lg">
-                            <li>• If we hit $150K MRR, we discuss my exit</li>
-                            <li>• If there's more to do, we extend</li>
-                            <li>• Either way, you keep all the systems and processes I built</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- What I Focus On / Don't Do -->
+    <!-- Investment Section (Replaces old Pricing) -->
     <section class="py-20 px-4 bg-gray-50">
         <div class="max-w-6xl mx-auto">
-            <div class="grid md:grid-cols-2 gap-12">
-                <!-- What I Focus On -->
-                <div>
-                    <h2 class="text-3xl font-bold mb-8 text-gray-900">What I Focus On</h2>
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-4 text-gray-900">Investment</h2>
+            <p class="text-center text-gray-600 mb-12 text-lg">Clear pricing, no hidden fees</p>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Discovery Call -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                    <h3 class="text-xl font-bold mb-2 text-gray-900">Discovery Call</h3>
+                    <div class="text-3xl font-black text-green-600 mb-2">Free</div>
+                    <p class="text-gray-600 mb-4">30 minutes</p>
+                    <p class="text-gray-700 text-sm mb-6">See if we're a fit, discuss your bottlenecks</p>
+                    <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="block text-center px-4 py-3 rounded-full font-bold border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition text-sm">
+                        Book Call
+                    </a>
+                </div>
+
+                <!-- Operations Audit -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                    <h3 class="text-xl font-bold mb-2 text-gray-900">Operations Audit</h3>
+                    <div class="text-3xl font-black gradient-text mb-2">$500</div>
+                    <p class="text-gray-600 mb-4">7-day deep dive</p>
+                    <ul class="text-gray-700 text-sm space-y-1 mb-4">
+                        <li>✓ Complete operational assessment</li>
+                        <li>✓ 3 biggest bottlenecks identified</li>
+                        <li>✓ Growth roadmap to 2-3x</li>
+                        <li>✓ Hiring gaps & process breakdown</li>
+                    </ul>
+                    <p class="text-xs text-blue-700 font-semibold mb-4">Fee credited toward Sprint or Partnership</p>
+                    <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="block text-center px-4 py-3 rounded-full font-bold border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition text-sm">
+                        Book Call
+                    </a>
+                </div>
+
+                <!-- Operations Sprint -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-2 border-green-500 relative pt-10">
+                    <div class="popular-badge">Most Popular</div>
+                    <h3 class="text-xl font-bold mb-2 text-gray-900">Operations Sprint</h3>
+                    <div class="text-3xl font-black gradient-text mb-2">$3K-$6K</div>
+                    <p class="text-gray-600 mb-4">8-12 weeks</p>
+                    <ul class="text-gray-700 text-sm space-y-1 mb-4">
+                        <li>✓ 10-15 hours back per week</li>
+                        <li>✓ 1-3 critical systems built</li>
+                        <li>✓ 20-40% revenue growth (avg)</li>
+                        <li>✓ Keep everything we build</li>
+                    </ul>
+                    <p class="text-xs text-gray-600 mb-4">~35% convert to Full Partnership</p>
+                    <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="cta-button block text-center px-4 py-3 rounded-full font-bold text-sm">
+                        Book Call
+                    </a>
+                </div>
+
+                <!-- Full Partnership -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                    <h3 class="text-xl font-bold mb-2 text-gray-900">Full Partnership</h3>
+                    <div class="text-2xl font-black gradient-text mb-1">$2.3K/mo trial</div>
+                    <p class="text-sm text-gray-600 mb-2">+ tiered profit share</p>
+                    <p class="text-gray-600 mb-4">12-month minimum</p>
+                    <ul class="text-gray-700 text-sm space-y-1 mb-4">
+                        <li>✓ Dedicated Ops Manager</li>
+                        <li>✓ Me as Strategic COO</li>
+                        <li>✓ Complete team built</li>
+                        <li>✓ Profit share: 20-30% → ~10%</li>
+                        <li>✓ Equity optional (5-10%)</li>
+                    </ul>
+                    <p class="text-xs text-gray-600 mb-4">Best for $500K-$1.1M ready to scale</p>
+                    <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="block text-center px-4 py-3 rounded-full font-bold border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition text-sm">
+                        Book Call
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What I Solve (And What I Don't) -->
+    <section class="py-20 px-4 bg-white">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-12 text-gray-900">What I Solve (And What I Don't)</h2>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <!-- What I Solve -->
+                <div class="bg-green-50 p-8 rounded-2xl border-2 border-green-200">
+                    <h3 class="text-2xl font-bold mb-6 text-green-800 flex items-center gap-2">
+                        <span class="text-3xl">✅</span> I Solve Operations Problems
+                    </h3>
+                    <p class="text-gray-700 mb-6 font-medium">I'm your person if your bottleneck is:</p>
+
                     <div class="space-y-4">
                         <div class="flex items-start gap-3">
-                            <span class="text-2xl flex-shrink-0">✓</span>
+                            <span class="text-green-600 text-xl mt-0.5">✓</span>
                             <div>
-                                <h3 class="font-bold text-lg text-gray-900">Business Operations</h3>
-                                <p class="text-gray-600">Workflow creation, process optimization, organizational structure</p>
+                                <h4 class="font-bold text-gray-900">Execution Capacity</h4>
+                                <p class="text-gray-600 text-sm">"I'm stuck doing everything - hiring, delivery, team management - and have no time for strategy"</p>
                             </div>
                         </div>
-                        
+
                         <div class="flex items-start gap-3">
-                            <span class="text-2xl flex-shrink-0">✓</span>
+                            <span class="text-green-600 text-xl mt-0.5">✓</span>
                             <div>
-                                <h3 class="font-bold text-lg text-gray-900">Hiring & Team Building</h3>
-                                <p class="text-gray-600">From your first hire to building a scalable hiring pipeline</p>
+                                <h4 class="font-bold text-gray-900">Hiring & Team Building</h4>
+                                <p class="text-gray-600 text-sm">"I need to hire but don't know how, or my team isn't performing and I don't know why"</p>
                             </div>
                         </div>
-                        
+
                         <div class="flex items-start gap-3">
-                            <span class="text-2xl flex-shrink-0">✓</span>
+                            <span class="text-green-600 text-xl mt-0.5">✓</span>
                             <div>
-                                <h3 class="font-bold text-lg text-gray-900">Systems & Processes</h3>
-                                <p class="text-gray-600">Documentation, SOPs, accountability frameworks</p>
+                                <h4 class="font-bold text-gray-900">Systems & Processes</h4>
+                                <p class="text-gray-600 text-sm">"Everything is in my head. Nothing is documented. The business can't run without me"</p>
                             </div>
                         </div>
-                        
+
                         <div class="flex items-start gap-3">
-                            <span class="text-2xl flex-shrink-0">✓</span>
+                            <span class="text-green-600 text-xl mt-0.5">✓</span>
                             <div>
-                                <h3 class="font-bold text-lg text-gray-900">Strategic Execution</h3>
-                                <p class="text-gray-600">Identifying what moves the needle and making it happen</p>
+                                <h4 class="font-bold text-gray-900">Time Management</h4>
+                                <p class="text-gray-600 text-sm">"I'm working 60-70 hour weeks but still feel behind. I need 15+ hours back per week"</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 text-xl mt-0.5">✓</span>
+                            <div>
+                                <h4 class="font-bold text-gray-900">Scaling Infrastructure</h4>
+                                <p class="text-gray-600 text-sm">"We want to grow but our operations can't handle more clients/revenue"</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- What I Don't Do -->
-                <div>
-                    <h2 class="text-3xl font-bold mb-8 text-gray-900">What I Don't Do</h2>
+
+                <!-- What I Don't Solve -->
+                <div class="bg-red-50 p-8 rounded-2xl border-2 border-red-200">
+                    <h3 class="text-2xl font-bold mb-6 text-red-800 flex items-center gap-2">
+                        <span class="text-3xl">❌</span> I Don't Solve Sales/Marketing Problems
+                    </h3>
+                    <p class="text-gray-700 mb-6 font-medium">I'm NOT your person if your bottleneck is:</p>
+
                     <div class="space-y-4">
                         <div class="flex items-start gap-3">
-                            <span class="text-2xl flex-shrink-0">✗</span>
+                            <span class="text-red-600 text-xl mt-0.5">✗</span>
                             <div>
-                                <h3 class="font-bold text-lg text-gray-900">Marketing Campaigns</h3>
-                                <p class="text-gray-600">I don't run paid ads or marketing campaigns</p>
+                                <h4 class="font-bold text-gray-900">Lead Generation</h4>
+                                <p class="text-gray-600 text-sm">"We don't have enough inbound leads or appointments booked"</p>
                             </div>
                         </div>
-                        
+
                         <div class="flex items-start gap-3">
-                            <span class="text-2xl flex-shrink-0">✗</span>
+                            <span class="text-red-600 text-xl mt-0.5">✗</span>
                             <div>
-                                <h3 class="font-bold text-lg text-gray-900">Direct Sales</h3>
-                                <p class="text-gray-600">I don't handle sales calls directly (ops influences sales, but I'm not a sales rep)</p>
+                                <h4 class="font-bold text-gray-900">Sales Conversion</h4>
+                                <p class="text-gray-600 text-sm">"We get leads but can't close them into paying clients"</p>
                             </div>
                         </div>
-                        
+
                         <div class="flex items-start gap-3">
-                            <span class="text-2xl flex-shrink-0">✗</span>
+                            <span class="text-red-600 text-xl mt-0.5">✗</span>
                             <div>
-                                <h3 class="font-bold text-lg text-gray-900">Financial Management</h3>
-                                <p class="text-gray-600">I don't manage your finances/accounting (I can optimize unit economics, but I'm not a CFO)</p>
+                                <h4 class="font-bold text-gray-900">Marketing Campaigns</h4>
+                                <p class="text-gray-600 text-sm">"We need to run ads, build funnels, or create content to generate demand"</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <span class="text-red-600 text-xl mt-0.5">✗</span>
+                            <div>
+                                <h4 class="font-bold text-gray-900">Go-to-Market Strategy</h4>
+                                <p class="text-gray-600 text-sm">"We don't know who to target or how to position our offer"</p>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Diagnostic Section -->
+            <div class="bg-yellow-50 p-8 rounded-2xl border-2 border-yellow-300">
+                <h3 class="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-2">
+                    <span class="text-3xl">🤔</span> Not Sure Which Problem You Have?
+                </h3>
+                <p class="text-gray-700 mb-6 font-medium">Ask yourself this:</p>
+
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white p-6 rounded-xl">
+                        <p class="font-bold text-gray-900 mb-3">"If I had 20 qualified sales calls tomorrow, could my team deliver?"</p>
+                        <ul class="space-y-2 text-gray-700">
+                            <li><strong class="text-red-600">YES</strong> = You have a sales problem (I can't help)</li>
+                            <li><strong class="text-green-600">NO</strong> = You have an operations problem (I can help)</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl">
+                        <p class="font-bold text-gray-900 mb-3">"If I disappeared for 2 weeks, would the business run smoothly?"</p>
+                        <ul class="space-y-2 text-gray-700">
+                            <li><strong class="text-red-600">YES</strong> = You have a growth problem (I can't help)</li>
+                            <li><strong class="text-green-600">NO</strong> = You have an operations problem (I can help)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <p class="text-center text-gray-700">
+                    Still not sure? Book a discovery call and I'll tell you honestly if I can help or not.
+                </p>
+                <div class="text-center mt-4">
+                    <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="cta-button inline-block px-8 py-3 rounded-full font-bold">
+                        Book Discovery Call
+                    </a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Requirements -->
-    <section class="py-20 px-4 bg-white">
+    <section class="py-20 px-4 bg-gray-50">
         <div class="max-w-4xl mx-auto">
             <h2 class="text-4xl md:text-5xl font-bold text-center mb-12 text-gray-900">Requirements</h2>
             <p class="text-center text-xl mb-8 text-gray-700">To work with us, you need:</p>
-            
+
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 md:p-12 rounded-2xl border border-blue-200">
                 <div class="space-y-4">
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                             1
                         </div>
-                        <p class="text-lg text-gray-700"><strong>$10K-$40K MRR</strong> currently</p>
+                        <p class="text-lg text-gray-700"><strong>$500K-$2.5M annual revenue</strong> currently</p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                             2
                         </div>
                         <p class="text-lg text-gray-700"><strong>Post product-market fit</strong> (you have customers and some traction)</p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                             3
                         </div>
                         <p class="text-lg text-gray-700">Growing at least <strong>10% month-over-month</strong> OR clear path to do so</p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                             4
                         </div>
                         <p class="text-lg text-gray-700">Willing to give us <strong>operational control</strong> and trust our decisions</p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                             5
                         </div>
                         <p class="text-lg text-gray-700">Committed to <strong>scaling</strong>, not just running a lifestyle business</p>
                     </div>
-                    
+
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                             6
                         </div>
                         <p class="text-lg text-gray-700">Comfortable working with a <strong>remote operations team</strong></p>
+                    </div>
+
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                            7
+                        </div>
+                        <p class="text-lg text-gray-700">Your bottleneck is <strong>OPERATIONS</strong> (team, delivery, systems) - NOT sales or marketing</p>
                     </div>
                 </div>
             </div>
@@ -718,85 +1006,165 @@
             <!-- Mid-page CTA (soft) -->
             <div class="text-center mt-12">
                 <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="inline-block px-10 py-4 rounded-full text-lg font-bold cta-button">
-                    Book a Call – 3 Spots Only
+                    Book a Call – Limited Spots
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- Why This Pricing Model -->
-    <section class="py-20 px-4 text-white" style="background-color: var(--primary-medium);">
+    <!-- FAQ Section -->
+    <section class="py-20 px-4 bg-white">
         <div class="max-w-4xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold text-center mb-12">Why This Pricing Model?</h2>
-            
-            <div class="grid md:grid-cols-2 gap-8 mb-12">
-                <div>
-                    <h3 class="text-2xl font-bold mb-4">What You Get:</h3>
-                    <ul class="space-y-3 text-lg">
-                        <li>✓ Affordable cash component ($2-3K/month you can manage)</li>
-                        <li>✓ Aligned incentives (I only win if you win)</li>
-                        <li>✓ Full-time commitment from me (not fractional half-attention)</li>
-                    </ul>
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-12 text-gray-900">Frequently Asked Questions</h2>
+
+            <div class="space-y-4" id="faq-container">
+                <!-- FAQ 1 -->
+                <div class="faq-item bg-gray-50 rounded-xl overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 flex justify-between items-center" onclick="toggleFaq(this)">
+                        <span class="font-bold text-lg text-gray-900">Do I work with you personally or your team?</span>
+                        <svg class="faq-icon w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer px-6">
+                        <div class="space-y-4 text-gray-700">
+                            <p><strong>Operations Sprint:</strong> You work directly with me 15-20 hours/week. No ops manager, just me embedded in your business.</p>
+                            <p><strong>Full Partnership:</strong> I personally handle all strategic decisions (hiring, systems design, key implementations). Your dedicated Ops Manager handles day-to-day execution under my oversight. You get minimum 2 check-ins per week with me.</p>
+                        </div>
+                    </div>
                 </div>
-                
-                <div>
-                    <h3 class="text-2xl font-bold mb-4">What I Get:</h3>
-                    <ul class="space-y-3 text-lg">
-                        <li>✓ Base income to cover team costs</li>
-                        <li>✓ Upside if we do our job well</li>
-                        <li>✓ Portfolio of companies we're scaling simultaneously</li>
-                    </ul>
+
+                <!-- FAQ 2 -->
+                <div class="faq-item bg-gray-50 rounded-xl overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 flex justify-between items-center" onclick="toggleFaq(this)">
+                        <span class="font-bold text-lg text-gray-900">What's the difference between Sprint and Partnership?</span>
+                        <svg class="faq-icon w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer px-6">
+                        <div class="space-y-4 text-gray-700">
+                            <p><strong>Sprint</strong> = Solve 1-3 specific problems, 8-12 weeks, fixed fee, you keep control, zero long-term commitment.</p>
+                            <p><strong>Partnership</strong> = I take over all operations, build team, scale to $1.7M-$2.3M, profit-aligned, 12-month minimum.</p>
+                            <p>Think of Sprint as a "test drive" — 35% of Sprint clients convert to Full Partnership.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="bg-white bg-opacity-10 backdrop-blur p-8 rounded-2xl text-center">
-                <p class="text-2xl font-bold">Most founders at your stage can't afford $15-20K/month for a full-time COO.</p>
-                <p class="text-xl mt-4 opacity-90">But you need one. This blended model makes it possible.</p>
+
+                <!-- FAQ 3 -->
+                <div class="faq-item bg-gray-50 rounded-xl overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 flex justify-between items-center" onclick="toggleFaq(this)">
+                        <span class="font-bold text-lg text-gray-900">Why profit share instead of fixed retainer for Partnership?</span>
+                        <svg class="faq-icon w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer px-6">
+                        <div class="space-y-4 text-gray-700">
+                            <p>I only win if you win. My incentives are 100% aligned with your growth. As company scales and team professionalizes, my profit share decreases. Goal is to exit at ~10% share when you hit $1.7M with systems running smoothly.</p>
+                            <p><strong>Sprint uses fixed fee only</strong> — no profit share, no equity.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="faq-item bg-gray-50 rounded-xl overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 flex justify-between items-center" onclick="toggleFaq(this)">
+                        <span class="font-bold text-lg text-gray-900">Do you require equity?</span>
+                        <svg class="faq-icon w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer px-6">
+                        <div class="space-y-4 text-gray-700">
+                            <p><strong>Sprint:</strong> No equity, fixed fee only.</p>
+                            <p><strong>Full Partnership:</strong> Equity is optional (5-10%) for founders who want deeper alignment. We only discuss this after Month 1 trial. Many clients do profit-share only with zero equity.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 5 -->
+                <div class="faq-item bg-gray-50 rounded-xl overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 flex justify-between items-center" onclick="toggleFaq(this)">
+                        <span class="font-bold text-lg text-gray-900">What if the Sprint doesn't work out?</span>
+                        <svg class="faq-icon w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer px-6">
+                        <div class="space-y-4 text-gray-700">
+                            <p>You keep all systems, processes, and documentation we built. Zero hard feelings. That's why it's structured as a Sprint — to de-risk for both of us.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 6 -->
+                <div class="faq-item bg-gray-50 rounded-xl overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 flex justify-between items-center" onclick="toggleFaq(this)">
+                        <span class="font-bold text-lg text-gray-900">How do I know which path is right for me?</span>
+                        <svg class="faq-icon w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer px-6">
+                        <div class="space-y-4 text-gray-700">
+                            <p>Book a discovery call. After discussing your situation, I'll recommend Sprint or Partnership (or neither, if we're not a fit). After the 7-day audit, it'll be crystal clear which makes sense.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 7 -->
+                <div class="faq-item bg-gray-50 rounded-xl overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 flex justify-between items-center" onclick="toggleFaq(this)">
+                        <span class="font-bold text-lg text-gray-900">I have a sales/marketing problem. Can you help?</span>
+                        <svg class="faq-icon w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer px-6">
+                        <div class="space-y-4 text-gray-700">
+                            <p><strong>No. I only solve operations problems.</strong></p>
+                            <p><strong>How to know the difference:</strong></p>
+                            <p>If your problem is "not enough leads" or "can't close deals" → That's sales/marketing. I can't help.</p>
+                            <p>If your problem is "drowning in delivery" or "no time for sales because I'm stuck in ops" → That's operations. I can help.</p>
+                            <p><strong>Here's the test:</strong> If I gave you 15 hours back per week by taking over your operations, would you know exactly what to do with those hours to grow?</p>
+                            <ul class="list-disc list-inside ml-4">
+                                <li>If yes → We're a fit.</li>
+                                <li>If no → You need a sales/marketing person, not an ops person.</li>
+                            </ul>
+                            <p>I'll be honest on the discovery call if I'm not the right fit.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Final CTA -->
-    <section id="apply" class="py-20 px-4 bg-white">
+    <section id="apply" class="py-20 px-4 bg-gray-50">
         <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Next Steps</h2>
-            <p class="text-xl text-gray-700 mb-8">Ready to talk?</p>
-            
-            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 md:p-12 rounded-2xl border border-blue-200 mb-12">
-                <div class="space-y-4 text-left max-w-2xl mx-auto">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                            1
-                        </div>
-                        <p class="text-lg text-gray-700 pt-1">Book a 30-minute call below</p>
-                    </div>
+            <h2 class="text-4xl md:text-5xl font-bold mb-6 text-gray-900">Ready to Get Started?</h2>
 
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                            2
-                        </div>
-                        <p class="text-lg text-gray-700 pt-1">We'll discuss your business and see if there's a fit</p>
+            <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl mb-12">
+                <div class="grid md:grid-cols-2 gap-8 text-left mb-8">
+                    <div class="bg-green-50 p-6 rounded-xl border border-green-200">
+                        <h3 class="text-xl font-bold mb-2 text-gray-900">For Operations Sprint:</h3>
+                        <p class="text-gray-700">I'm taking <strong>3 Sprint clients</strong> in <span id="current-month-sprint"></span>.</p>
                     </div>
-
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                            3
-                        </div>
-                        <p class="text-lg text-gray-700 pt-1">If we both want to move forward, we start the 30-day trial</p>
+                    <div class="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                        <h3 class="text-xl font-bold mb-2 text-gray-900">For Full Partnership:</h3>
+                        <p class="text-gray-700">I'm taking <strong>1-2 Partnership clients</strong> per quarter.</p>
                     </div>
                 </div>
-            </div>
-            
-            <div class="bg-yellow-100 border-4 border-yellow-400 p-8 rounded-2xl mb-8">
-                <p class="text-2xl font-bold text-gray-900 mb-2">⚠️ I'm taking 3 companies maximum right now.</p>
-                <p class="text-lg text-gray-700">If you're serious about scaling and willing to give us the operational control to make it happen, let's talk.</p>
-            </div>
-            
-            <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="cta-button inline-block px-12 py-6 rounded-full text-2xl font-bold mb-4">
-                Book a Call – 3 Spots Only
-            </a>
 
-            <p class="text-gray-600 text-sm">Spots fill up fast – book while available.</p>
+                <p class="text-xl text-gray-700 mb-8">Book a discovery call to see which path is right for you.</p>
+
+                <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="cta-button inline-block px-12 py-6 rounded-full text-2xl font-bold mb-4">
+                    Book a Call – Limited Spots
+                </a>
+
+                <p class="text-gray-600 text-sm">Spots fill up fast – book while available.</p>
+            </div>
         </div>
     </section>
 
@@ -813,7 +1181,7 @@
       Depesh <br />
       Vyas.
     </h1>
-  </div>            
+  </div>
         </div>
         <p class="text-gray-400"> Building Operations That Scale</p>
     </footer>
@@ -823,13 +1191,44 @@
         <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <div class="text-xs">
                 <span class="font-semibold text-gray-900">Ready to scale?</span><br>
-                <span class="text-gray-600 text-[11px]">3 spots only – see if we’re a fit.</span>
+                <span class="text-gray-600 text-[11px]">Limited spots – see if we're a fit.</span>
             </div>
             <a href="https://cal.com/depesh-vyas-vtzovs/30min" target="_blank" rel="noopener noreferrer" class="cta-button px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap">
                 Book a Call
             </a>
         </div>
     </div>
+
+    <!-- JavaScript for FAQ Accordion and Dynamic Month -->
+    <script>
+        // FAQ Accordion functionality
+        function toggleFaq(button) {
+            const faqItem = button.parentElement;
+            const isActive = faqItem.classList.contains('active');
+
+            // Close all other FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Toggle current item
+            if (!isActive) {
+                faqItem.classList.add('active');
+            }
+        }
+
+        // Dynamic month display
+        document.addEventListener('DOMContentLoaded', function() {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            const currentMonth = months[new Date().getMonth()];
+
+            const sprintMonthElement = document.getElementById('current-month-sprint');
+            if (sprintMonthElement) {
+                sprintMonthElement.textContent = currentMonth;
+            }
+        });
+    </script>
 
 </body>
 </html>
