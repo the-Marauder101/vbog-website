@@ -59,6 +59,8 @@
       ]
     }</script>
 
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -79,51 +81,53 @@
 
   <style>
     :root {
-      --bg-primary:   #0a0a0a;
-      --bg-secondary: #1a1a1a;
-      --accent:       #2563eb;
-      --accent-hover: #1d4ed8;
+      --bg-primary:   #f8f5ee;
+      --bg-secondary: #fffdf8;
+      --accent:       #b45309;
+      --accent-hover: #92400e;
     }
-    body { font-family: 'Poppins', sans-serif; background: var(--bg-primary); color: #e5e7eb; }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg-primary); color: #1f2937; }
     .logo-font { font-family: 'Satoshi', sans-serif; }
     .gradient-text {
-      background: linear-gradient(135deg, #2563eb, #60a5fa);
+      background: linear-gradient(135deg, #b45309, #d97706);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     .cta-button {
       background: var(--accent); color: #fff; border-radius: 9999px;
       padding: 0.75rem 2rem; font-weight: 600; display: inline-block;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s; box-shadow:0 10px 24px rgba(180,83,9,0.2);
     }
-    .cta-button:hover { background: var(--accent-hover); }
+    .cta-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
 
     /* Article prose */
-    .prose h1 { font-family:'Satoshi',sans-serif; font-size:2rem; font-weight:800; color:#fff; margin-bottom:1rem; line-height:1.2; }
-    .prose h2 { font-family:'Satoshi',sans-serif; font-size:1.4rem; font-weight:700; color:#fff; margin-top:2rem; margin-bottom:0.75rem; }
-    .prose h3 { font-family:'Satoshi',sans-serif; font-size:1.15rem; font-weight:700; color:#e5e7eb; margin-top:1.5rem; margin-bottom:0.5rem; }
-    .prose p  { margin-bottom:1.1rem; line-height:1.75; color:#d1d5db; }
+    .prose h1 { font-family:'Satoshi',sans-serif; font-size:2rem; font-weight:800; color:#111827; margin-bottom:1rem; line-height:1.2; }
+    .prose h2 { font-family:'Satoshi',sans-serif; font-size:1.4rem; font-weight:700; color:#111827; margin-top:2rem; margin-bottom:0.75rem; }
+    .prose h3 { font-family:'Satoshi',sans-serif; font-size:1.15rem; font-weight:700; color:#334155; margin-top:1.5rem; margin-bottom:0.5rem; }
+    .prose p  { margin-bottom:1.1rem; line-height:1.75; color:#334155; }
     .prose ul,
-    .prose ol { margin-bottom:1.1rem; padding-left:1.5rem; color:#d1d5db; line-height:1.75; }
+    .prose ol { margin-bottom:1.1rem; padding-left:1.5rem; color:#334155; line-height:1.75; }
     .prose ul { list-style-type: disc; }
     .prose ol { list-style-type: decimal; }
     .prose li { margin-bottom:0.4rem; }
-    .prose strong { color:#fff; }
-    .prose em { color:#93c5fd; }
-    .prose a  { color:#60a5fa; text-decoration:underline; }
-    .prose a:hover { color:#93c5fd; }
-    .prose hr { border-color:#374151; margin:2rem 0; }
-    .prose blockquote { border-left:3px solid #2563eb; padding-left:1rem; color:#9ca3af; font-style:italic; margin:1.5rem 0; }
+    .prose strong { color:#111827; }
+    .prose em { color:#a16207; }
+    .prose a  { color:#d97706; text-decoration:underline; }
+    .prose a:hover { color:#a16207; }
+    .prose hr { border-color:#334155; margin:2rem 0; }
+    .prose blockquote { border-left:3px solid #b45309; padding-left:1rem; color:#6b7280; font-style:italic; margin:1.5rem 0; }
   </style>
 </head>
 <body>
 
   <!-- ── Nav ── -->
-  <header style="background:var(--bg-secondary); border-bottom:1px solid #1f2937;">
+  <header style="background:var(--bg-secondary); border-bottom:1px solid #e5e7eb;">
     <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="/" class="logo-font text-xl font-bold text-white">VBOG</a>
+      <a href="/" class="inline-flex items-center rounded-full border border-amber-200 bg-white px-4 py-2 text-slate-900 hover:border-amber-300 transition-colors">
+        <span class="logo-font text-lg font-extrabold leading-none">Depesh<br />Vyas.</span>
+      </a>
       <nav class="flex items-center gap-6 text-sm font-medium">
-        <a href="/blog/" class="text-gray-300 hover:text-white transition-colors">Blog</a>
-        <a href="/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+        <a href="/blog/" class="text-slate-600 hover:text-slate-900 transition-colors">Blogs</a>
+        <a href="/" class="text-slate-600 hover:text-slate-900 transition-colors">Home</a>
         <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener"
            class="cta-button text-sm py-2 px-4">Book a Call</a>
       </nav>
@@ -132,19 +136,19 @@
 
   <!-- ── Breadcrumb ── -->
   <div style="background:var(--bg-secondary); border-bottom:1px solid #111827;">
-    <div class="max-w-2xl mx-auto px-6 py-2 text-xs text-gray-500">
-      <a href="/" class="hover:text-gray-300">Home</a>
+    <div class="max-w-2xl mx-auto px-6 py-2 text-xs text-slate-500">
+      <a href="/" class="hover:text-slate-600">Home</a>
       <span class="mx-2">/</span>
-      <a href="/blog/" class="hover:text-gray-300">Blog</a>
+      <a href="/blog/" class="hover:text-slate-600">Blogs</a>
       <span class="mx-2">/</span>
-      <span class="text-gray-400">What to Outsource vs. Hire In-House at $10K–$40K MRR</span>
+      <span class="text-slate-600">What to Outsource vs. Hire In-House at $10K–$40K MRR</span>
     </div>
   </div>
 
   <!-- ── Article ── -->
   <main>
     <div class="max-w-2xl mx-auto px-6 py-10 prose">
-      <p class="text-xs text-gray-500 mb-6 uppercase tracking-wide">Published 18 Feb 2026 &nbsp;·&nbsp; Depesh Vyas</p>
+      <p class="text-xs text-slate-500 mb-6 uppercase tracking-wide">Published 18 Feb 2026 &nbsp;·&nbsp; Depesh Vyas</p>
       <h1>What to Outsource vs. Hire In-House at $10K–$40K MRR</h1>
 
 <p>One of the most consequential decisions a service business founder makes at the $10K–$40K MRR stage is what to hire for and what to outsource. Get it wrong in either direction — hiring full-time for something that should be outsourced, or trying to outsource something that needs dedicated ownership — and you've wasted significant time and money before realising the mistake.</p>
@@ -191,7 +195,7 @@
 
 <p>The alternative — bringing in someone with actual operational authority, even fractionally — costs more but addresses the actual constraint. The question isn't "what's the cheapest way to get help?" It's "what does the business structurally need in order to grow?"</p>
 
-<p>At this stage, the answer is almost always: someone to own operations. Not to help the founder with operations, but to take operations off the founder's plate entirely. Whether that's a fractional COO, a full-time operations manager, or something in between depends on the specifics of the business — but the category is right even when the specific hire varies.</p>
+<p>At this stage, the answer is almost always: someone to own operations. Not to help the founder with operations, but to take operations off the founder's plate entirely. Whether that's a COO, a full-time operations manager, or something in between depends on the specifics of the business — but the category is right even when the specific hire varies.</p>
 
 <h2>The Hiring Decision Framework (Simplified)</h2>
 
@@ -211,12 +215,12 @@
 
     <!-- ── Author block ── -->
     <div class="max-w-2xl mx-auto px-6 mt-8">
-      <div style="background:var(--bg-secondary); border:1px solid #1f2937; border-radius:1rem;" class="p-6 flex gap-4 items-start">
+      <div style="background:var(--bg-secondary); border:1px solid #e5e7eb; border-radius:1rem;" class="p-6 flex gap-4 items-start">
         <img src="/depesh.jpg" alt="Depesh Vyas" class="w-16 h-16 rounded-full object-cover flex-shrink-0" />
         <div>
-          <p class="font-bold text-white">Depesh Vyas</p>
-          <p class="text-sm text-blue-400 mb-2">Fractional COO &amp; Founder, VBOG</p>
-          <p class="text-sm text-gray-400 leading-relaxed">
+          <p class="font-bold text-slate-900">Depesh Vyas</p>
+          <p class="text-sm text-amber-700 mb-2">COO &amp; Founder, VBOG</p>
+          <p class="text-sm text-slate-600 leading-relaxed">
             Depesh helps service business founders at $10K–$40K MRR escape the founder bottleneck and build
             the operational infrastructure to grow 2–3x without burning out. Previously scaled a B2B agency
             from $5K to $220K MRR in 19 months.
@@ -228,32 +232,32 @@
     <!-- ── Related posts ── -->
     
   <section class="max-w-2xl mx-auto px-6 mt-12 mb-4">
-    <h2 class="text-xl font-bold text-white mb-4">Related Articles</h2>
+    <h2 class="text-xl font-bold text-slate-900 mb-4">Related Articles</h2>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       
         <a href="/blog/why-sops-fail.html"
-           class="block bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-blue-500 transition-colors">
-          <p class="text-sm text-blue-400 mb-1 font-medium">Continue reading</p>
-          <p class="text-white font-semibold leading-snug">Why Most SOPs Fail in Small Service Businesses (And How to Build Ones That Stick) | VBOG</p>
+           class="block bg-white border border-amber-200 rounded-xl p-5 hover:border-amber-500 transition-colors">
+          <p class="text-sm text-amber-700 mb-1 font-medium">Continue reading</p>
+          <p class="text-slate-900 font-semibold leading-snug">Why Most SOPs Fail in Small Service Businesses (And How to Build Ones That Stick) | VBOG</p>
         </a>
         <a href="/blog/agency-0-systems-to-120k-mrr.html"
-           class="block bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-blue-500 transition-colors">
-          <p class="text-sm text-blue-400 mb-1 font-medium">Continue reading</p>
-          <p class="text-white font-semibold leading-snug">From 0 Systems to $120K MRR: How a Marketing Agency Built Operations That Scaled | VBOG</p>
+           class="block bg-white border border-amber-200 rounded-xl p-5 hover:border-amber-500 transition-colors">
+          <p class="text-sm text-amber-700 mb-1 font-medium">Continue reading</p>
+          <p class="text-slate-900 font-semibold leading-snug">From 0 Systems to $120K MRR: How a Marketing Agency Built Operations That Scaled | VBOG</p>
         </a>
         <a href="/blog/founder-bottleneck-cost.html"
-           class="block bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-blue-500 transition-colors">
-          <p class="text-sm text-blue-400 mb-1 font-medium">Continue reading</p>
-          <p class="text-white font-semibold leading-snug">The Founder Bottleneck: What It Costs You to Be Your Own COO | VBOG</p>
+           class="block bg-white border border-amber-200 rounded-xl p-5 hover:border-amber-500 transition-colors">
+          <p class="text-sm text-amber-700 mb-1 font-medium">Continue reading</p>
+          <p class="text-slate-900 font-semibold leading-snug">The Founder Bottleneck: What It Costs You to Be Your Own COO | VBOG</p>
         </a>
     </div>
   </section>
 
     <!-- ── CTA banner ── -->
     <div class="max-w-2xl mx-auto px-6 mt-12 mb-16">
-      <div style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8); border-radius:1rem;" class="p-8 text-center">
-        <h2 class="logo-font text-2xl font-bold text-white mb-2">Ready to fix your operations?</h2>
-        <p class="text-blue-200 mb-6 text-sm">
+      <div style="background:linear-gradient(135deg,#b45309,#92400e); border-radius:1rem;" class="p-8 text-center">
+        <h2 class="logo-font text-2xl font-bold text-slate-900 mb-2">Ready to fix your operations?</h2>
+        <p class="text-amber-900 mb-6 text-sm">
           Start with a $500 Operations Audit — a 7-day deep-dive that shows you exactly where your
           bottlenecks are and what to fix first.
         </p>
@@ -264,13 +268,13 @@
   </main>
 
   <!-- ── Footer ── -->
-  <footer style="background:var(--bg-secondary); border-top:1px solid #1f2937;" class="py-8">
-    <div class="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-      <p class="logo-font font-bold text-white">VBOG</p>
+  <footer style="background:var(--bg-secondary); border-top:1px solid #e5e7eb;" class="py-8">
+    <div class="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+      <a href="/" class="inline-flex items-center rounded-full border border-amber-200 bg-white px-4 py-2 text-slate-900 hover:border-amber-300 transition-colors"><span class="logo-font text-lg font-extrabold leading-none">Depesh<br />Vyas.</span></a>
       <nav class="flex gap-6">
-        <a href="/" class="hover:text-gray-300">Home</a>
-        <a href="/blog/" class="hover:text-gray-300">Blog</a>
-        <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener" class="hover:text-gray-300">Book a Call</a>
+        <a href="/" class="hover:text-slate-600">Home</a>
+        <a href="/blog/" class="hover:text-slate-600">Blogs</a>
+        <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener" class="hover:text-slate-600">Book a Call</a>
       </nav>
       <p>&copy; 2026 VBOG. All rights reserved.</p>
     </div>
