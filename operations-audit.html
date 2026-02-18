@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The $500 Operations Audit | VBOG — Depesh Vyas</title>
+  <meta name="description" content="A 7-day diagnostic that scores your operations across six dimensions and tells you exactly what's blocking your growth — before you commit to anything larger." />
+  <link rel="canonical" href="https://v-bog.com/operations-audit" />
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:title"       content="The $500 Operations Audit | VBOG — Depesh Vyas" />
+  <meta property="og:description" content="A 7-day diagnostic that scores your operations across six dimensions and tells you exactly what's blocking your growth — before you commit to anything larger." />
+  <meta property="og:url"         content="https://v-bog.com/operations-audit" />
+  <meta property="og:image"       content="https://v-bog.com/og-image.jpg" />
+  <meta property="og:site_name"   content="VBOG" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="The $500 Operations Audit | VBOG — Depesh Vyas" />
+  <meta name="twitter:description" content="A 7-day diagnostic that scores your operations across six dimensions and tells you exactly what's blocking your growth — before you commit to anything larger." />
+  <meta name="twitter:image"       content="https://v-bog.com/og-image.jpg" />
+
+  <!-- JSON-LD: WebPage -->
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://v-bog.com/operations-audit#webpage",
+    "url": "https://v-bog.com/operations-audit",
+    "name": "The $500 Operations Audit | VBOG — Depesh Vyas",
+    "description": "A 7-day diagnostic that scores your operations across six dimensions and tells you exactly what's blocking your growth — before you commit to anything larger.",
+    "isPartOf": { "@id": "https://v-bog.com/#website" },
+    "about": { "@id": "https://v-bog.com/#organization" }
+  }</script>
+  <!-- JSON-LD: Service -->
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": "https://v-bog.com/operations-audit#service",
+    "name": "Operations Audit",
+    "description": "A 7-day diagnostic that produces a scored assessment of your business across six operational dimensions — Founder Dependency, Team Scalability, Systems Maturity, Execution Cadence, Revenue Health, and Scale Readiness. Includes a prioritised constraint list, cost-of-inaction analysis, and a clear recommendation for next steps.",
+    "url": "https://v-bog.com/operations-audit",
+    "provider": { "@id": "https://v-bog.com/#person" },
+    "offers": {
+      "@type": "Offer",
+      "price": "500",
+      "priceCurrency": "USD",
+      "name": "$500 Operations Audit",
+      "availability": "https://schema.org/LimitedAvailability"
+    },
+    "areaServed": {
+      "@type": "Country",
+      "name": "United States"
+    }
+  }</script>
+  <!-- JSON-LD: BreadcrumbList -->
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://v-bog.com/"},
+      {"@type": "ListItem", "position": 2, "name": "Operations Audit", "item": "https://v-bog.com/operations-audit"}
+    ]
+  }</script>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "vaqvc4x46y");
+  </script>
+
+  <style>
+    :root {
+      --bg-primary:   #f8f5ee;
+      --bg-secondary: #fffdf8;
+      --accent:       #b45309;
+      --accent-hover: #92400e;
+    }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg-primary); color: #1f2937; }
+    .logo-font { font-family: 'Satoshi', sans-serif; }
+    .gradient-text {
+      background: linear-gradient(135deg, #b45309, #d97706);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .cta-button {
+      background: var(--accent); color: #fff; border-radius: 9999px;
+      padding: 0.75rem 2rem; font-weight: 600; display: inline-block;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 10px 24px rgba(180,83,9,0.2);
+    }
+    .cta-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .dimension-card {
+      background: var(--bg-secondary);
+      border: 1px solid #e5e7eb;
+      border-radius: 1rem;
+      padding: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <header style="background:var(--bg-secondary); border-bottom:1px solid #e5e7eb;">
+    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="inline-flex items-center rounded-full border border-amber-200 bg-white px-4 py-2 text-slate-900 hover:border-amber-300 transition-colors">
+        <span class="logo-font text-lg font-extrabold leading-none">Depesh<br />Vyas.</span>
+      </a>
+      <nav class="flex items-center gap-6 text-sm font-medium">
+        <a href="/blog/" class="text-slate-600 hover:text-slate-900 transition-colors">Blogs</a>
+        <a href="/" class="text-slate-600 hover:text-slate-900 transition-colors">Home</a>
+        <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener"
+           class="cta-button text-sm py-2 px-4">Book a Call</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Breadcrumb -->
+  <div style="background:var(--bg-secondary); border-bottom:1px solid #e5e7eb;">
+    <div class="max-w-4xl mx-auto px-6 py-2 text-xs text-slate-500">
+      <a href="/" class="hover:text-slate-600">Home</a>
+      <span class="mx-2">/</span>
+      <span class="text-slate-600">Operations Audit</span>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center">
+    <p class="text-sm font-semibold text-amber-700 uppercase tracking-widest mb-3">Starting Point</p>
+    <h1 class="logo-font text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight mb-4">
+      The $500 Operations Audit
+    </h1>
+    <p class="text-xl text-slate-600 max-w-2xl mx-auto mb-4 leading-relaxed">
+      A 7-day diagnostic that scores your operations across six dimensions and tells you exactly what's blocking your growth — before you commit to anything larger.
+    </p>
+    <p class="text-sm text-slate-500 mb-8">
+      <strong class="text-slate-700">$500 flat fee.</strong> 3 spots available per month. Fee is credited if we continue into a Sprint or Partnership.
+    </p>
+    <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener"
+       class="cta-button text-lg px-10 py-4">Apply for an Audit</a>
+    <p class="mt-3 text-xs text-slate-500">Book a 30-min discovery call to confirm fit before we start.</p>
+  </section>
+
+  <!-- What it is -->
+  <section class="max-w-4xl mx-auto px-6 pb-16">
+    <div style="background:var(--bg-secondary); border:1px solid #e5e7eb; border-radius:1.25rem;" class="p-8 md:p-10">
+      <h2 class="logo-font text-2xl font-bold text-slate-900 mb-4">What It Is</h2>
+      <p class="text-slate-600 leading-relaxed mb-4">
+        The Operations Audit is a close-look diagnostic — not a generic checklist or a best-practices review. It examines how your business actually runs: how decisions get made, where execution breaks down, where the founder is still the bottleneck, and whether the operation is structurally ready to scale.
+      </p>
+      <p class="text-slate-600 leading-relaxed">
+        It ends with a written report: a scored picture of your operational health, the top constraints ranked by impact, a cost-of-inaction estimate, and a clear recommendation for what to do next.
+      </p>
+    </div>
+  </section>
+
+  <!-- Six Dimensions -->
+  <section class="max-w-4xl mx-auto px-6 pb-16">
+    <h2 class="logo-font text-2xl md:text-3xl font-bold text-slate-900 mb-2">Six Dimensions Assessed</h2>
+    <p class="text-slate-500 mb-8 text-sm">Each dimension is scored 1–10. A total below 30/60 typically means it's not safe to scale yet.</p>
+    <div class="grid md:grid-cols-2 gap-4">
+
+      <div class="dimension-card">
+        <p class="font-bold text-slate-900 mb-1">1. Founder Dependency</p>
+        <p class="text-sm text-slate-600 leading-relaxed">How many decisions, escalations, and execution areas still require the founder? High dependency is the most common growth ceiling at this stage.</p>
+      </div>
+
+      <div class="dimension-card">
+        <p class="font-bold text-slate-900 mb-1">2. Team &amp; Role Scalability</p>
+        <p class="text-sm text-slate-600 leading-relaxed">Do team members own outcomes or just tasks? Is the team structure able to absorb more volume, or does growth amplify variability?</p>
+      </div>
+
+      <div class="dimension-card">
+        <p class="font-bold text-slate-900 mb-1">3. Systems &amp; Data Maturity</p>
+        <p class="text-sm text-slate-600 leading-relaxed">How is operational data captured and used? Fragmented data makes it impossible to diagnose or prevent leakage at scale — this is a visibility problem, not a tech problem.</p>
+      </div>
+
+      <div class="dimension-card">
+        <p class="font-bold text-slate-900 mb-1">4. Execution &amp; Communication Cadence</p>
+        <p class="text-sm text-slate-600 leading-relaxed">Is there a weekly operating rhythm? Numbers reviewed regularly? A meeting structure that keeps the team aligned without the founder as the connective tissue?</p>
+      </div>
+
+      <div class="dimension-card">
+        <p class="font-bold text-slate-900 mb-1">5. Revenue &amp; Margin Health</p>
+        <p class="text-sm text-slate-600 leading-relaxed">Are current unit economics viable? What threatens margins under growth pressure — renewal failure, coordination overhead, delivery quality drops?</p>
+      </div>
+
+      <div class="dimension-card">
+        <p class="font-bold text-slate-900 mb-1">6. Scale Readiness</p>
+        <p class="text-sm text-slate-600 leading-relaxed">Given the above scores, is it actually safe to scale right now? The audit names this plainly — because scaling an unprepared operation produces worse outcomes than fixing foundations first.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- What you get -->
+  <section style="background:var(--bg-secondary); border-top:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb;">
+    <div class="max-w-4xl mx-auto px-6 py-16">
+      <h2 class="logo-font text-2xl md:text-3xl font-bold text-slate-900 mb-8">What the Report Includes</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">1</div>
+          <div>
+            <p class="font-semibold text-slate-900 mb-1">BOSS Scorecard</p>
+            <p class="text-sm text-slate-600 leading-relaxed">Scored assessment across all six dimensions with specific evidence for each score — not general observations, but what was actually observed about how your business runs.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">2</div>
+          <div>
+            <p class="font-semibold text-slate-900 mb-1">Top 5 Constraints</p>
+            <p class="text-sm text-slate-600 leading-relaxed">Ranked by impact, with root cause and risk of each one named clearly. This is the prioritised roadmap for whatever comes next.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">3</div>
+          <div>
+            <p class="font-semibold text-slate-900 mb-1">Cost-of-Inaction Analysis</p>
+            <p class="text-sm text-slate-600 leading-relaxed">A realistic estimate of revenue leakage, founder opportunity cost, and scaling failure risk over the next 6–12 months if the constraints go unaddressed.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">4</div>
+          <div>
+            <p class="font-semibold text-slate-900 mb-1">Clear Recommendation</p>
+            <p class="text-sm text-slate-600 leading-relaxed">Whether the business needs a focused Operations Sprint, a Full Partnership engagement, or something else entirely. No upsell pressure — sometimes the answer is neither.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Process -->
+  <section class="max-w-4xl mx-auto px-6 py-16">
+    <h2 class="logo-font text-2xl md:text-3xl font-bold text-slate-900 mb-8 text-center">How It Works</h2>
+    <div class="grid md:grid-cols-3 gap-6 text-center">
+      <div>
+        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg mx-auto mb-3">1</div>
+        <p class="font-semibold text-slate-900 mb-2">Apply</p>
+        <p class="text-sm text-slate-600 leading-relaxed">Book a 30-min discovery call. If there's a fit, the audit begins. $500 is invoiced upfront and credited toward any subsequent engagement.</p>
+      </div>
+      <div>
+        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg mx-auto mb-3">2</div>
+        <p class="font-semibold text-slate-900 mb-2">7-Day Diagnostic</p>
+        <p class="text-sm text-slate-600 leading-relaxed">Review of your systems, tools, team structure, and delivery workflow. Direct conversation about constraints. Close-look at how decisions actually get made.</p>
+      </div>
+      <div>
+        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg mx-auto mb-3">3</div>
+        <p class="font-semibold text-slate-900 mb-2">Report &amp; Decision</p>
+        <p class="text-sm text-slate-600 leading-relaxed">You receive the written report. We meet to walk through findings. You decide what to do next — with or without VBOG. The roadmap is yours regardless.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who it's for -->
+  <section style="background:var(--bg-secondary); border-top:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb;">
+    <div class="max-w-4xl mx-auto px-6 py-16">
+      <h2 class="logo-font text-2xl md:text-3xl font-bold text-slate-900 mb-6">Who It's For</h2>
+      <p class="text-slate-600 leading-relaxed mb-6">
+        Service business founders at <strong class="text-slate-800">$200K–$1M annual revenue</strong> who are stuck in execution and want a clear, scored picture of what's constraining their growth — before committing to a larger operational engagement.
+      </p>
+      <div class="space-y-3">
+        <div class="flex items-start gap-3">
+          <span class="text-green-600 mt-0.5 flex-shrink-0">✓</span>
+          <p class="text-slate-700 text-sm">You're growing but operations is the ceiling — not sales or marketing.</p>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="text-green-600 mt-0.5 flex-shrink-0">✓</span>
+          <p class="text-slate-700 text-sm">You're planning to scale in the next 6–12 months and want to know if your operation is actually ready.</p>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="text-green-600 mt-0.5 flex-shrink-0">✓</span>
+          <p class="text-slate-700 text-sm">You want an honest diagnostic before committing to a COO engagement — not assumptions, not guesswork.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="max-w-4xl mx-auto px-6 py-16 text-center">
+    <h2 class="logo-font text-3xl font-bold text-slate-900 mb-4">Ready to see what's actually blocking you?</h2>
+    <p class="text-slate-600 mb-8 max-w-xl mx-auto">
+      Book a 30-min discovery call. If we're a fit, the audit starts immediately. 3 spots available per month.
+    </p>
+    <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener"
+       class="cta-button text-lg px-10 py-4">Book a Call — Apply for the Audit</a>
+    <p class="mt-4 text-xs text-slate-500">
+      $500 flat fee · 7-day turnaround · Fee credited if we continue into a Sprint or Partnership
+    </p>
+    <p class="mt-2 text-xs text-slate-400">
+      Prefer to discuss first? <a href="/contact" class="underline text-amber-700 hover:text-amber-900">Reach out directly.</a>
+    </p>
+  </section>
+
+  <!-- Footer -->
+  <footer style="background:var(--bg-secondary); border-top:1px solid #e5e7eb;" class="py-8">
+    <div class="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+      <a href="/" class="inline-flex items-center rounded-full border border-amber-200 bg-white px-4 py-2 text-slate-900 hover:border-amber-300 transition-colors">
+        <span class="logo-font text-lg font-extrabold leading-none">Depesh<br />Vyas.</span>
+      </a>
+      <nav class="flex gap-6">
+        <a href="/" class="hover:text-slate-600">Home</a>
+        <a href="/blog/" class="hover:text-slate-600">Blogs</a>
+        <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener" class="hover:text-slate-600">Book a Call</a>
+      </nav>
+      <p>&copy; 2026 VBOG. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+</html>
