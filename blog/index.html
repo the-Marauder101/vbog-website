@@ -25,15 +25,27 @@
   <script type="application/ld+json">{
     "@context": "https://schema.org",
     "@type": "Blog",
-    "name": "VBOG Operations &amp; Growth Blog",
-    "description": "Practical operations and growth articles for service business founders at $10K–$40K MRR.",
+    "@id": "https://v-bog.com/blog/#blog",
+    "name": "VBOG Operations & Growth Blog",
+    "description": "Practical operations and growth articles for service business founders at $10K–$40K MRR. Written by Depesh Vyas, Fractional COO.",
     "url": "https://v-bog.com/blog/",
+    "author": { "@id": "https://v-bog.com/#person" },
     "publisher": {
       "@type": "Organization",
+      "@id": "https://v-bog.com/#organization",
       "name": "VBOG",
       "url": "https://v-bog.com",
       "logo": { "@type": "ImageObject", "url": "https://v-bog.com/Logo.svg" }
     }
+  }</script>
+  <!-- JSON-LD: BreadcrumbList -->
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://v-bog.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://v-bog.com/blog/" }
+    ]
   }</script>
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

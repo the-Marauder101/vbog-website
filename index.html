@@ -28,6 +28,158 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
+    <!-- Structured Data: Organization -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://v-bog.com/#organization",
+      "name": "VBOG",
+      "url": "https://v-bog.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://v-bog.com/Logo.svg"
+      },
+      "sameAs": [
+        "https://www.linkedin.com/in/depesh-vyas/",
+        "https://x.com/Depesh_Vyas"
+      ]
+    }</script>
+
+    <!-- Structured Data: WebSite -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://v-bog.com/#website",
+      "url": "https://v-bog.com",
+      "name": "VBOG — Depesh Vyas",
+      "publisher": { "@id": "https://v-bog.com/#organization" }
+    }</script>
+
+    <!-- Structured Data: WebPage (Homepage) -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": "https://v-bog.com/#webpage",
+      "url": "https://v-bog.com",
+      "name": "Get 15 Hours Back Per Week | COO for Service Companies | Depesh Vyas",
+      "description": "Operations Sprint (8-12 weeks) or Full Partnership (12 months) for service businesses at $200K-$1M revenue. Get 10-15 hours back per week while growing 2-3x.",
+      "isPartOf": { "@id": "https://v-bog.com/#website" },
+      "about": { "@id": "https://v-bog.com/#organization" }
+    }</script>
+
+    <!-- Structured Data: Person -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "@id": "https://v-bog.com/#person",
+      "name": "Depesh Vyas",
+      "url": "https://v-bog.com",
+      "jobTitle": "Fractional COO",
+      "worksFor": { "@id": "https://v-bog.com/#organization" },
+      "sameAs": [
+        "https://www.linkedin.com/in/depesh-vyas/",
+        "https://x.com/Depesh_Vyas"
+      ]
+    }</script>
+
+    <!-- Structured Data: Services -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "OfferCatalog",
+      "@id": "https://v-bog.com/#services",
+      "name": "COO Services by Depesh Vyas",
+      "provider": { "@id": "https://v-bog.com/#person" },
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "@id": "https://v-bog.com/#operations-sprint",
+          "name": "Operations Sprint",
+          "description": "8-12 week intensive COO engagement. Depesh embeds 15-20 hours/week to solve 1-3 specific operational problems. Fixed fee, no equity, no long-term commitment. You keep all systems built.",
+          "priceRange": "$3,000–$6,000",
+          "areaServed": {
+            "@type": "Country",
+            "name": "United States"
+          }
+        },
+        {
+          "@type": "Offer",
+          "@id": "https://v-bog.com/#full-partnership",
+          "name": "Full COO Partnership",
+          "description": "12-month minimum engagement. Depesh takes over all operations, builds your team, and scales your service business from $200K to $1.7M–$2.3M ARR. Profit-share aligned.",
+          "priceRange": "$2,300/month trial then tiered profit share",
+          "areaServed": {
+            "@type": "Country",
+            "name": "United States"
+          }
+        }
+      ]
+    }</script>
+
+    <!-- Structured Data: FAQPage -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "@id": "https://v-bog.com/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Do I work with you personally or your team?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Operations Sprint: You work directly with Depesh 15-20 hours/week. No ops manager, just him embedded in your business. Full Partnership: Depesh personally handles all strategic decisions (hiring, systems design, key implementations). Your dedicated Ops Manager handles day-to-day execution under his oversight. You get minimum 2 check-ins per week with Depesh."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What's the difference between Sprint and Partnership?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sprint = Solve 1-3 specific problems, 8-12 weeks, fixed fee, you keep control, zero long-term commitment. Partnership = Takes over all operations, builds team, scales to $1.7M-$2.3M, profit-aligned, 12-month minimum. Sprint is a test drive — 35% of Sprint clients convert to Full Partnership."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why profit share instead of fixed retainer for Partnership?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Incentives are 100% aligned with your growth. As the company scales and the team professionalises, the profit share decreases. Goal is to exit at ~10% share when you hit $1.7M with systems running smoothly. Sprint uses fixed fee only — no profit share, no equity."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you require equity?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sprint: No equity, fixed fee only. Full Partnership: Equity is optional (5-10%) for founders who want deeper alignment. Only discussed after Month 1 trial. Many clients do profit-share only with zero equity."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What if the Sprint doesn't work out?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You keep all systems, processes, and documentation built during the engagement. Zero hard feelings. That's why it's structured as a Sprint — to de-risk for both sides."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I know which path is right for me?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Book a discovery call. After discussing your situation, Depesh will recommend Sprint or Partnership (or neither, if it's not a fit). After the 7-day audit, it'll be clear which makes sense."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "I have a sales/marketing problem. Can you help?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Only operations problems. If your problem is 'not enough leads' or 'can't close deals' — that's sales/marketing, not the right fit. If your problem is 'drowning in delivery' or 'no time for sales because stuck in ops' — that's operations. The test: if given 15 hours back per week by taking over operations, would you know exactly what to do with those hours to grow? If yes, it's a fit. If no, you need a sales/marketing person."
+          }
+        }
+      ]
+    }</script>
+
     <style>
         /* ============================================
            COLOR VARIABLES
