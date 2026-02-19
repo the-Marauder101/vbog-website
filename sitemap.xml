@@ -16,6 +16,20 @@
   </url>
 
   <url>
+    <loc>https://v-bog.com/operations-audit/</loc>
+    <lastmod>2026-02-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://v-bog.com/contact/</loc>
+    <lastmod>2026-02-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://v-bog.com/blog/stuck-at-20k-mrr.html</loc>
     <lastmod>2026-02-18</lastmod>
     <changefreq>weekly</changefreq>
