@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Operations &amp; Growth Blog | VBOG — Depesh Vyas</title>
-  <meta name="description" content="Practical operations and growth articles for service business founders at $10K–$40K MRR. Written by Depesh Vyas, fractional COO." />
+  <meta name="description" content="Practical operations and growth articles for service business founders at $10K–$40K MRR. Written by Depesh Vyas, COO." />
   <link rel="canonical" href="https://v-bog.com/blog/" />
 
   <!-- Open Graph -->
@@ -36,6 +36,8 @@
     }
   }</script>
 
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -56,36 +58,38 @@
 
   <style>
     :root {
-      --bg-primary:   #0a0a0a;
-      --bg-secondary: #1a1a1a;
-      --accent:       #2563eb;
-      --accent-hover: #1d4ed8;
+      --bg-primary:   #f8f5ee;
+      --bg-secondary: #fffdf8;
+      --accent:       #b45309;
+      --accent-hover: #92400e;
     }
-    body { font-family: 'Poppins', sans-serif; background: var(--bg-primary); color: #e5e7eb; }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg-primary); color: #1f2937; }
     .logo-font { font-family: 'Satoshi', sans-serif; }
     .gradient-text {
-      background: linear-gradient(135deg, #2563eb, #60a5fa);
+      background: linear-gradient(135deg, #b45309, #d97706);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     .cta-button {
       background: var(--accent); color: #fff; border-radius: 9999px;
       padding: 0.75rem 2rem; font-weight: 600; display: inline-block;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s; box-shadow:0 10px 24px rgba(180,83,9,0.2);
     }
-    .cta-button:hover { background: var(--accent-hover); }
-    .card { background: var(--bg-secondary); border: 1px solid #1f2937; border-radius: 1rem; transition: border-color 0.2s; }
+    .cta-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .card { background: var(--bg-secondary); border: 1px solid #e5e7eb; border-radius: 1rem; transition: border-color 0.2s; }
     .card:hover { border-color: var(--accent); }
   </style>
 </head>
 <body>
 
   <!-- ── Nav ── -->
-  <header style="background:var(--bg-secondary); border-bottom:1px solid #1f2937;">
+  <header style="background:var(--bg-secondary); border-bottom:1px solid #e5e7eb;">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="/" class="logo-font text-xl font-bold text-white">VBOG</a>
+      <a href="/" class="inline-flex items-center rounded-full border border-amber-200 bg-white px-4 py-2 text-slate-900 hover:border-amber-300 transition-colors">
+        <span class="logo-font text-lg font-extrabold leading-none">Depesh<br />Vyas.</span>
+      </a>
       <nav class="flex items-center gap-6 text-sm font-medium">
-        <a href="/blog/" class="text-white font-semibold">Blog</a>
-        <a href="/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+        <a href="/blog/" class="text-slate-900 font-semibold">Blogs</a>
+        <a href="/" class="text-slate-600 hover:text-slate-900 transition-colors">Home</a>
         <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener"
            class="cta-button text-sm py-2 px-4">Book a Call</a>
       </nav>
@@ -93,15 +97,15 @@
   </header>
 
   <!-- ── Hero ── -->
-  <section style="background:linear-gradient(180deg,#0d1117 0%,var(--bg-primary) 100%);"
+  <section style="background:linear-gradient(180deg,#fffdf8 0%,var(--bg-primary) 100%);"
            class="py-16 text-center px-6">
-    <p class="text-blue-400 text-sm font-medium uppercase tracking-widest mb-3">Operations &amp; Growth</p>
-    <h1 class="logo-font text-4xl sm:text-5xl font-bold text-white mb-4">
+    <p class="text-amber-700 text-sm font-medium uppercase tracking-widest mb-3">Operations &amp; Growth</p>
+    <h1 class="logo-font text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
       The <span class="gradient-text">VBOG Blog</span>
     </h1>
-    <p class="text-gray-400 max-w-xl mx-auto text-base leading-relaxed">
+    <p class="text-slate-600 max-w-xl mx-auto text-base leading-relaxed">
       Practical articles on operations, hiring, systems, and growth for service business founders at $10K–$40K MRR.
-      Written by <strong class="text-white">Depesh Vyas</strong>, fractional COO.
+      Written by <strong class="text-slate-900">Depesh Vyas</strong>, COO.
     </p>
   </section>
 
@@ -111,191 +115,191 @@
 
       <!-- 1 -->
       <a href="/blog/stuck-at-20k-mrr.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Operations</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Operations</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           Why Your Service Business Is Stuck at $20K MRR (It&#8217;s Not a Sales Problem)
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           Most service business founders think slow growth is a sales problem. It's not. At $10K–$40K MRR, the bottleneck is almost always operations.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 2 -->
       <a href="/blog/founder-bottleneck-cost.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Founder</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Founder</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           The Founder Bottleneck: What It Costs You to Be Your Own COO
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           When you're the COO of your own service business, you're not just doing extra work — you're actively capping your growth.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 3 -->
       <a href="/blog/fractional-coo-vs-obm-vs-va.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Hiring</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
-          Fractional COO vs OBM vs VA: What Does a $10K–$40K MRR Business Actually Need?
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Hiring</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
+          COO vs OBM vs VA: What Does a $10K–$40K MRR Business Actually Need?
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
-          OBM, VA, or Fractional COO — the wrong hire at this stage costs you months. A clear breakdown of what each role actually does.
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+          OBM, VA, or COO — the wrong hire at this stage costs you months. A clear breakdown of what each role actually does.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 4 -->
       <a href="/blog/signs-operations-cant-scale.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Operations</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Operations</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           Signs Your Operations Can&#8217;t Handle Your Next 10 Clients
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           Most founders don't know their operations are broken until they try to grow. Six concrete warning signs to watch for.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 5 -->
       <a href="/blog/agency-0-systems-to-120k-mrr.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Case Study</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Case Study</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           From 0 Systems to $120K MRR: How a Marketing Agency Built Operations That Scaled
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           A B2B marketing agency at $15K MRR had zero operational systems. Here's exactly what was built, in what order, and what happened to revenue.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 6 -->
       <a href="/blog/what-fractional-coo-does-month-1.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Fractional COO</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
-          What a Fractional COO Actually Does in Month 1 (A Detailed Look)
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">COO</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
+          What a COO Actually Does in Month 1 (A Detailed Look)
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           A concrete breakdown of exactly what happens in the first month of an operational engagement — week by week.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 7 -->
       <a href="/blog/the-500-operations-audit.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Audit</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Audit</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           The $500 Operations Audit: What It Finds and Why It Matters Before You Scale
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           Most founders start scaling before they know what's actually broken. The Audit gives you a scored diagnostic in 7 days.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 8 -->
       <a href="/blog/remove-yourself-from-operations-30-days.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Founder</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Founder</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           How to Remove Yourself From Day-to-Day Operations in 30 Days
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           Most founders think this takes years. It doesn't. The specific framework that gets founders out of execution in 30 days.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 9 -->
       <a href="/blog/why-sops-fail.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Systems</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Systems</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           Why Most SOPs Fail in Small Service Businesses (And How to Build Ones That Stick)
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           Most founders build SOPs nobody uses. The problem isn't the document — it's how they're built and how accountability works.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 10 -->
       <a href="/blog/outsource-vs-hire.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Hiring</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Hiring</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           What to Outsource vs. Hire In-House at $10K–$40K MRR
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           Every hiring decision is high-stakes at this stage. A clear framework for what to outsource, what to hire, and when.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 11 -->
       <a href="/blog/case-study-5k-to-220k-mrr.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Case Study</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Case Study</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           Case Study: From $5K to $220K MRR in 19 Months — The Operations Playbook
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           A B2B marketing services business grew from $5K MRR (6 clients, 4 staff) to $220K MRR (180 clients, 40+ staff) in 19 months.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 12 -->
       <a href="/blog/case-study-cpa-firm.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Case Study</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Case Study</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           Case Study: Saving a 40-Year-Old CPA Firm From Operational Collapse
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           A newly acquired accounting firm had its team leaving, $150K revenue at risk, and tax season starting. How it was stabilised in 10 months.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 13 -->
       <a href="/blog/full-partnership-what-it-looks-like.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Partnership</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
-          What a Full Fractional COO Partnership Looks Like (And What It Costs)
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Partnership</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
+          What a Full COO Partnership Looks Like (And What It Costs)
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           A plain-language breakdown of what a full operational partnership involves, how it's structured, and what the economics look like.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 14 -->
       <a href="/blog/is-fractional-coo-right-for-you.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Self-Assessment</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
-          Is a Fractional COO Right for Your Business? A 10-Question Self-Assessment
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Self-Assessment</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
+          Is a COO Right for Your Business? A 10-Question Self-Assessment
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           Answer these 10 questions honestly. They'll tell you whether your business actually needs one — and whether now is the right time.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
       <!-- 15 -->
       <a href="/blog/the-2300-trial.html" class="card block p-6">
-        <p class="text-xs text-blue-400 uppercase tracking-wide font-medium mb-2">Getting Started</p>
-        <h2 class="logo-font text-lg font-bold text-white mb-3 leading-snug">
+        <p class="text-xs text-amber-700 uppercase tracking-wide font-medium mb-2">Getting Started</p>
+        <h2 class="logo-font text-lg font-bold text-slate-900 mb-3 leading-snug">
           The $2,300 Trial: Why We Start Small and What Happens in 30 Days
         </h2>
-        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">
           Before committing to a 12-month engagement, there's a 30-day trial. Here's why it exists and what gets built in 30 days.
         </p>
-        <span class="text-blue-400 text-sm font-semibold">Read &rarr;</span>
+        <span class="text-amber-700 text-sm font-semibold">Read &rarr;</span>
       </a>
 
     </div><!-- /grid -->
 
     <!-- ── CTA banner ── -->
     <div class="mt-16">
-      <div style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8); border-radius:1rem;" class="p-10 text-center">
-        <h2 class="logo-font text-3xl font-bold text-white mb-3">Ready to fix your operations?</h2>
-        <p class="text-blue-200 mb-6 max-w-lg mx-auto">
+      <div style="background:linear-gradient(135deg,#b45309,#92400e); border-radius:1rem;" class="p-10 text-center">
+        <h2 class="logo-font text-3xl font-bold text-slate-900 mb-3">Ready to fix your operations?</h2>
+        <p class="text-amber-900 mb-6 max-w-lg mx-auto">
           Start with a free 30-minute discovery call. We'll identify your biggest operational bottleneck
           and talk through the right next step for your business.
         </p>
@@ -306,13 +310,13 @@
   </main>
 
   <!-- ── Footer ── -->
-  <footer style="background:var(--bg-secondary); border-top:1px solid #1f2937;" class="py-8">
-    <div class="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-      <p class="logo-font font-bold text-white">VBOG</p>
+  <footer style="background:var(--bg-secondary); border-top:1px solid #e5e7eb;" class="py-8">
+    <div class="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+      <a href="/" class="inline-flex items-center rounded-full border border-amber-200 bg-white px-4 py-2 text-slate-900 hover:border-amber-300 transition-colors"><span class="logo-font text-lg font-extrabold leading-none">Depesh<br />Vyas.</span></a>
       <nav class="flex gap-6">
-        <a href="/" class="hover:text-gray-300">Home</a>
-        <a href="/blog/" class="hover:text-gray-300">Blog</a>
-        <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener" class="hover:text-gray-300">Book a Call</a>
+        <a href="/" class="hover:text-slate-600">Home</a>
+        <a href="/blog/" class="hover:text-slate-600">Blogs</a>
+        <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener" class="hover:text-slate-600">Book a Call</a>
       </nav>
       <p>&copy; 2026 VBOG. All rights reserved.</p>
     </div>
