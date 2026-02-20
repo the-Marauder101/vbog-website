@@ -4,17 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ops Tax Calculator — VBOG</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/css?f[]=satoshi@900,700,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --orange: #E8500A;
-  --orange-light: #FF6B2B;
-  --orange-dim: rgba(232,80,10,0.12);
+  --orange: #ff4d00;
+  --orange-light: #ff7040;
+  --orange-dim: rgba(255,77,0,0.12);
   --black: #0F0F0F;
   --dark: #1A1A1A;
   --mid: #2E2E2E;
@@ -41,8 +43,7 @@ body { font-family: var(--font-body); background: var(--black); color: var(--whi
 
 /* TOP BAR */
 .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; background: rgba(15,15,15,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
-.topbar-logo { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--white); text-decoration: none; letter-spacing: -0.02em; }
-.topbar-logo span { color: var(--orange); }
+.topbar-logo { font-family: 'Satoshi', sans-serif; font-weight: 800; font-size: 16px; color: var(--white); text-decoration: none; letter-spacing: -0.02em; line-height: 0.9; border: 1px solid rgba(248,245,240,0.18); padding: 8px 14px; border-radius: 9999px; }
 .topbar-cta { font-size: 13px; font-weight: 500; color: var(--orange); text-decoration: none; letter-spacing: 0.04em; border: 1px solid var(--orange); padding: 6px 16px; border-radius: var(--radius); transition: background 0.2s, color 0.2s; }
 .topbar-cta:hover { background: var(--orange); color: var(--white); }
 
@@ -285,8 +286,8 @@ select option { background: var(--dark); }
 <body>
 
 <nav class="topbar">
-  <a href="https://v-bog.com" class="topbar-logo">V<span>BOG</span></a>
-  <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" class="topbar-cta">Book a Call</a>
+  <a href="https://v-bog.com" class="topbar-logo">Depesh<br>Vyas.</a>
+  <a href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" class="topbar-cta">Book a Call</a>
 </nav>
 <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
 
@@ -526,6 +527,44 @@ select option { background: var(--dark); }
     </div>
   </section>
 
+  <!-- SECTION LEAD: Capture name/email/LinkedIn before showing results -->
+  <section class="calc-section" id="section-lead">
+    <div class="step-indicator">
+      <div class="step-pip done">✓</div><div class="step-line"></div>
+      <div class="step-pip done">✓</div><div class="step-line"></div>
+      <div class="step-pip done">✓</div><div class="step-line"></div>
+      <div class="step-pip active">→</div>
+    </div>
+    <div class="section-label">Almost there</div>
+    <div class="section-title">Where should we send your report?</div>
+    <div class="section-sub">Your results are ready. Enter your details to see your Ops Tax and get a copy in your inbox.</div>
+
+    <div class="field">
+      <div class="field-label"><span>Your name</span></div>
+      <input type="text" class="text-input" id="lead-name" placeholder="e.g. Sarah Chen" autocomplete="name">
+    </div>
+    <div class="field">
+      <div class="field-label"><span>Email address</span></div>
+      <input type="email" class="text-input" id="lead-email" placeholder="you@company.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <div class="field-label"><span>LinkedIn URL <span class="field-optional">(optional)</span></span></div>
+      <input type="url" class="text-input" id="lead-linkedin" placeholder="linkedin.com/in/yourname">
+    </div>
+
+    <div id="lead-error" style="color:var(--red);font-size:13px;margin-bottom:12px;display:none;"></div>
+    <div id="lead-loading" style="color:var(--muted);font-size:13px;margin-bottom:12px;display:none;">Sending your report…</div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="submitLeadAndShow()">Show My Results <span class="arrow">→</span></button>
+      <button class="btn-secondary" onclick="showSection('c')">← Back</button>
+    </div>
+
+    <p style="font-size:12px;color:var(--muted);margin-top:16px;text-align:center;">
+      No spam. Your data is only used to send you this report and contact you if you'd like to explore working together.
+    </p>
+  </section>
+
   <!-- RESULTS -->
   <section class="calc-section" id="section-results">
     <div class="result-hero">
@@ -595,17 +634,18 @@ select option { background: var(--dark); }
       <div class="cta-headline">Ready to stop paying this tax?</div>
       <div class="cta-sub">Let's talk about getting 15+ hours back per week — and what you'll do with them. Free 30-minute call.</div>
       <div class="cta-actions">
-        <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" class="btn-primary">Book a Free Discovery Call <span class="arrow">→</span></a>
+        <a href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" class="btn-primary">Book a Free Discovery Call <span class="arrow">→</span></a>
         <button class="btn-ghost" onclick="downloadPDF()">↓ Download Results</button>
-      </div>
-      <div class="email-row">
-        <input type="email" id="emailInput" class="text-input" placeholder="Email me my results (optional)">
-        <button class="btn-ghost" onclick="emailResults()">Send</button>
       </div>
     </div>
 
     <div class="share-text" id="shareText">
-      <button class="btn-secondary" onclick="shareResult()">Share my Ops Tax score →</button>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:0.08em;text-transform:uppercase;">Share your score</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn-secondary" onclick="shareLinkedIn()">LinkedIn</button>
+        <button class="btn-secondary" onclick="shareX()">𝕏 (Twitter)</button>
+        <button class="btn-ghost" onclick="shareCopy(this)">⎘ Copy link</button>
+      </div>
     </div>
 
     <div class="btn-row" style="justify-content:center;margin-top:16px;">
@@ -1409,7 +1449,7 @@ function showSection(id) {
     if (el) { el.classList.add('active'); el.style.display = 'block'; }
   }
   currentSection = id;
-  document.getElementById('progressFill').style.width = ({ hero:0, a:20, b:50, c:75, results:100 }[id] || 0) + '%';
+  document.getElementById('progressFill').style.width = ({ hero:0, a:20, b:50, c:75, lead:88, results:100 }[id] || 0) + '%';
   window.scrollTo({ top:0, behavior:'smooth' });
 }
 
@@ -1459,7 +1499,53 @@ function calculateAndShow() {
     if (el) { el.closest('.yn-field').scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline = '1px solid var(--orange)'; setTimeout(() => el.style.outline = '', 2000); }
     return;
   }
-  renderResults(calculate());
+  state.calculatedResults = calculate();
+  showSection('lead');
+}
+
+async function submitLeadAndShow() {
+  const name     = document.getElementById('lead-name').value.trim();
+  const email    = document.getElementById('lead-email').value.trim();
+  const linkedin = document.getElementById('lead-linkedin').value.trim();
+  const errEl    = document.getElementById('lead-error');
+  const loadEl   = document.getElementById('lead-loading');
+
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Please enter your name.'; errEl.style.display = 'block'; return; }
+  if (!email || !email.includes('@')) { errEl.textContent = 'Please enter a valid email.'; errEl.style.display = 'block'; return; }
+
+  loadEl.style.display = 'block';
+
+  const r = state.calculatedResults || calculate();
+  const boss = getBossLabel(r.bossScore);
+
+  const payload = {
+    name,
+    email,
+    linkedin: linkedin || 'Not provided',
+    _subject: `New Ops Tax Result — ${name} (${email})`,
+    _template: 'table',
+    monthly_ops_tax: '$' + Math.round(r.monthlyOpsTax).toLocaleString(),
+    annual_cost:     '$' + Math.round(r.annualCost).toLocaleString(),
+    growth_unlock:   '+$' + Math.round(r.capacityCeiling).toLocaleString() + '/mo',
+    boss_score:      r.bossScore + '/100 — ' + boss.label,
+    mrr:             '$' + Math.round(state.mrr).toLocaleString(),
+    business_type:   state.biztype,
+    team_size:       state.teamSize,
+  };
+
+  try {
+    await fetch('https://formsubmit.co/ajax/depeshvyas17@gmail.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (_) {
+    // Fail silently — always show results regardless of email delivery
+  }
+
+  loadEl.style.display = 'none';
+  renderResults(r);
   showSection('results');
 }
 
@@ -1478,32 +1564,34 @@ function downloadPDF() {
   const date = new Date().toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'});
   const win  = window.open('', '_blank');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/css?f[]=satoshi@900,700,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  body{font-family:'DM Sans',sans-serif;background:#0F0F0F;color:#F8F5F0;margin:0 auto;padding:40px;max-width:680px;}
-  .brand{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:#E8500A;margin-bottom:4px;}
+  body{font-family:'Poppins',sans-serif;background:#0F0F0F;color:#F8F5F0;margin:0 auto;padding:40px;max-width:680px;}
+  .brand{margin-bottom:4px;}
+  .brand img{height:36px;display:block;}
   .date{font-size:12px;color:#6B6B6B;margin-bottom:32px;}
   .tax-lbl{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#6B6B6B;}
-  .tax-amt{font-family:'Syne',sans-serif;font-weight:800;font-size:64px;color:#E8500A;line-height:1;margin:4px 0 24px;}
+  .tax-amt{font-family:'Satoshi',sans-serif;font-weight:800;font-size:64px;color:#ff4d00;line-height:1;margin:4px 0 24px;}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
   .card{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:16px;}
   .card-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6B6B6B;margin-bottom:4px;}
-  .card-val{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;}
+  .card-val{font-family:'Satoshi',sans-serif;font-weight:700;font-size:20px;}
   .boss{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:20px;margin-bottom:24px;}
-  .boss-n{font-family:'Syne',sans-serif;font-weight:800;font-size:48px;color:${boss.textColor};}
+  .boss-n{font-family:'Satoshi',sans-serif;font-weight:800;font-size:48px;color:${boss.textColor};}
   .boss-b{display:inline-block;background:${boss.bg};color:${boss.textColor};font-size:12px;font-weight:600;padding:3px 10px;border-radius:100px;margin:4px 0 8px;}
   .boss-d{font-size:13px;color:#6B6B6B;}
-  .st{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin:24px 0 12px;}
+  .st{font-family:'Satoshi',sans-serif;font-weight:700;font-size:16px;margin:24px 0 12px;}
   .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #2A2A2A;font-size:13px;}
   .row:last-child{border-bottom:none;}
-  .rv{font-family:'Syne',sans-serif;font-weight:700;color:#E8500A;}
-  .narr{border-left:3px solid #E8500A;padding-left:16px;margin:20px 0;font-size:13px;color:#9A9A9A;line-height:1.6;font-style:italic;}
-  .cta{background:rgba(232,80,10,.1);border:1px solid #E8500A;border-radius:4px;padding:20px;text-align:center;margin-top:28px;}
-  .cta-h{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:6px;}
-  .cta-l{color:#E8500A;font-weight:500;font-size:14px;}
+  .rv{font-family:'Satoshi',sans-serif;font-weight:700;color:#ff4d00;}
+  .narr{border-left:3px solid #ff4d00;padding-left:16px;margin:20px 0;font-size:13px;color:#9A9A9A;line-height:1.6;font-style:italic;}
+  .cta{background:rgba(255,77,0,.1);border:1px solid #ff4d00;border-radius:4px;padding:20px;text-align:center;margin-top:28px;}
+  .cta-h{font-family:'Satoshi',sans-serif;font-weight:700;font-size:18px;margin-bottom:6px;}
+  .cta-l{color:#ff4d00;font-weight:500;font-size:14px;}
   .footer{font-size:11px;color:#444;text-align:center;margin-top:32px;border-top:1px solid #2A2A2A;padding-top:16px;}
 </style></head><body>
-<div class="brand">VBOG</div>
+<div class="brand"><img src="https://v-bog.com/Logo.svg" alt="Depesh Vyas · VBOG"></div>
 <div class="date">Ops Tax Report · ${date}</div>
 <div class="tax-lbl">Monthly Ops Tax</div>
 <div class="tax-amt">$${Math.round(r.monthlyOpsTax).toLocaleString()}</div>
@@ -1518,7 +1606,7 @@ function downloadPDF() {
 </div>
 <div class="narr">${generateNarrative(r)}</div>
 <div class="st">Breakdown</div>
-<div class="st" style="color:#E8500A">🔒 Opportunity Cost</div>
+<div class="st" style="color:#ff4d00">🔒 Opportunity Cost</div>
 <div class="row"><span>Excess Ops Time</span><span class="rv">$${Math.round(r.timeCost).toLocaleString()}/mo</span></div>
 <div class="row"><span>Delivery &amp; Delegation Gap</span><span class="rv">$${Math.round(r.deliveryCost).toLocaleString()}/mo</span></div>
 <div class="row"><span>Growth Ceiling</span><span class="rv">$${Math.round(r.capacityCeiling).toLocaleString()}/mo</span></div>
@@ -1528,7 +1616,7 @@ function downloadPDF() {
 ${r.pmTax > 0 ? `<div class="row"><span>PM Overhead Tax</span><span class="rv">$${Math.round(r.pmTax).toLocaleString()}/mo</span></div>` : ''}
 ${r.leakageFactors.length > 0 ? `<div class="st">Top Leakage Factors</div>${r.leakageFactors.slice(0,4).map(f=>`<div class="row"><span>${f.icon} ${f.label}</span><span class="rv" style="color:#E84040">${Math.round(f.pct*100)}% MRR</span></div>`).join('')}` : ''}
 <div class="cta"><div class="cta-h">Stop paying this tax.</div><div class="cta-l">v-bog.com · Book a free discovery call</div></div>
-<div class="footer">Generated by VBOG Ops Tax Calculator · v-bog.com · Confidential</div>
+<div class="footer">Generated by Depesh Vyas · VBOG · v-bog.com · Confidential</div>
 </body></html>`);
   win.document.close();
   setTimeout(() => win.print(), 800);
@@ -1537,20 +1625,36 @@ ${r.leakageFactors.length > 0 ? `<div class="st">Top Leakage Factors</div>${r.le
 /* ═══════════════════════════════════════════════════════
    SHARE & EMAIL
 ═══════════════════════════════════════════════════════ */
-function shareResult() {
-  const r    = calculate();
+function getShareText() {
+  const r    = state.calculatedResults || calculate();
   const boss = getBossLabel(r.bossScore);
-  const text = `I just ran my Ops Tax through the VBOG calculator — I'm leaving $${Math.round(r.monthlyOpsTax).toLocaleString()}/month on the table running my business instead of growing it. BOSS Score: ${r.bossScore}/100 (${boss.label}). Calculate yours → v-bog.com`;
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => alert('Copied! Paste on LinkedIn.'));
-  else prompt('Copy to share:', text);
+  return `I just calculated my Ops Tax — I'm leaving $${Math.round(r.monthlyOpsTax).toLocaleString()}/month on the table running my business instead of growing it.\n\nBOSS Score: ${r.bossScore}/100 (${boss.label}).\n\nCalculate yours (free, 3 min) → v-bog.com`;
 }
 
-function emailResults() {
-  const email = document.getElementById('emailInput').value;
-  if (!email || !email.includes('@')) { alert('Enter a valid email address.'); return; }
-  document.getElementById('emailInput').value = '';
-  document.querySelector('.email-row').innerHTML = '<p style="font-size:13px;color:var(--green);padding:10px 0">✓ Got it — check your inbox shortly.</p>';
+function shareLinkedIn() {
+  const url     = encodeURIComponent('https://v-bog.com');
+  const summary = encodeURIComponent(getShareText());
+  window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${url}&summary=${summary}&source=VBOG`, '_blank');
 }
+
+function shareX() {
+  const text = encodeURIComponent(getShareText().split('\n\n').join(' '));
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+}
+
+function shareCopy(btn) {
+  const text = getShareText();
+  const orig = btn.textContent;
+  const done = () => { btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = orig, 2000); };
+  if (navigator.share) {
+    navigator.share({ title: 'My Ops Tax Score', text, url: 'https://v-bog.com' }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text + '\n\nhttps://v-bog.com').then(done);
+  } else {
+    prompt('Copy to share:', text + '\n\nhttps://v-bog.com');
+  }
+}
+
 
 /* ═══════════════════════════════════════════════════════
    INIT
