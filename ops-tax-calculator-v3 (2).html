@@ -6,9 +6,11 @@
 <title>Ops Tax Calculator — VBOG</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <link href="https://api.fontshare.com/css?f[]=satoshi@900,700,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,19 +22,19 @@
   --black: #0F0F0F;
   --dark: #1A1A1A;
   --mid: #2E2E2E;
-  --muted: #6B6B6B;
+  --muted: #9E9E9E;
   --border: #2A2A2A;
   --border-light: #383838;
   --surface: #161616;
   --surface2: #1E1E1E;
   --white: #F8F5F0;
-  --white-dim: rgba(248,245,240,0.6);
+  --white-dim: rgba(248,245,240,0.82);
   --red: #E84040;
   --yellow: #E8B040;
   --green: #40C880;
   --purple: #8040E8;
   --blue: #4080E8;
-  --font-display: 'Syne', sans-serif;
+  --font-display: 'Poppins', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   --radius: 4px;
   --radius-lg: 8px;
@@ -73,7 +75,7 @@ body { font-family: var(--font-body); background: var(--black); color: var(--whi
 
 .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); margin-bottom: 8px; }
 .section-title { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.02em; color: var(--white); margin-bottom: 6px; }
-.section-sub { font-size: 14px; color: var(--muted); margin-bottom: 36px; line-height: 1.6; }
+.section-sub { font-size: 14px; color: var(--white-dim); margin-bottom: 36px; line-height: 1.6; }
 
 /* STEP INDICATOR */
 .step-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 32px; }
@@ -269,7 +271,7 @@ select option { background: var(--dark); }
 /* CTA */
 .cta-block { background: linear-gradient(135deg, rgba(232,80,10,0.1) 0%, rgba(15,15,15,0) 60%); border: 1px solid var(--orange); border-radius: var(--radius-lg); padding: 36px; margin-bottom: 24px; text-align: center; }
 .cta-headline { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 10px; color: var(--white); }
-.cta-sub { font-size: 15px; color: var(--muted); margin-bottom: 28px; font-weight: 300; }
+.cta-sub { font-size: 15px; color: var(--white-dim); margin-bottom: 28px; font-weight: 300; }
 .cta-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
 .share-text { text-align: center; margin-top: 16px; }
 
@@ -546,8 +548,9 @@ select option { background: var(--dark); }
       <input type="email" class="text-input" id="lead-email" placeholder="you@company.com" autocomplete="email">
     </div>
     <div class="field">
-      <div class="field-label"><span>LinkedIn URL <span class="field-optional">(optional)</span></span></div>
+      <div class="field-label"><span>LinkedIn URL</span></div>
       <input type="url" class="text-input" id="lead-linkedin" placeholder="linkedin.com/in/yourname">
+      <div class="field-note">Helps us learn more about you before the call</div>
     </div>
 
     <div id="lead-error" style="color:var(--red);font-size:13px;margin-bottom:12px;display:none;"></div>
@@ -654,6 +657,24 @@ select option { background: var(--dark); }
 </main>
 
 <script>
+/* ═══════════════════════════════════════════════════════
+   EMAIL CONFIG — fill these in after EmailJS setup
+   1. Sign up free at emailjs.com
+   2. Connect Gmail service using depesh@v-bog.com
+   3. Create two templates (see README comments below)
+   4. Paste your IDs below
+═══════════════════════════════════════════════════════ */
+const EMAILJS_PUBLIC_KEY   = 'YOUR_PUBLIC_KEY';       // from EmailJS account → API Keys
+const EMAILJS_SERVICE_ID   = 'YOUR_SERVICE_ID';       // e.g. 'service_abc123'
+const EMAILJS_USER_TPL     = 'YOUR_USER_TEMPLATE_ID'; // template that sends report TO the user
+const EMAILJS_ADMIN_TPL    = 'YOUR_ADMIN_TEMPLATE_ID';// template that notifies depeshvyas17@gmail.com
+
+(function() {
+  if (EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+})();
+
 /* ═══════════════════════════════════════════════════════
    CONFIG
    All calculation weights live here. Logic is in calculate().
@@ -1509,37 +1530,45 @@ async function submitLeadAndShow() {
   const loadEl   = document.getElementById('lead-loading');
 
   errEl.style.display = 'none';
-  if (!name) { errEl.textContent = 'Please enter your name.'; errEl.style.display = 'block'; return; }
-  if (!email || !email.includes('@')) { errEl.textContent = 'Please enter a valid email.'; errEl.style.display = 'block'; return; }
+  if (!name)  { errEl.textContent = 'Please enter your name.'; errEl.style.display = 'block'; return; }
+  if (!email || !email.includes('@')) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display = 'block'; return; }
 
   loadEl.style.display = 'block';
 
-  const r = state.calculatedResults || calculate();
+  const r    = state.calculatedResults || calculate();
   const boss = getBossLabel(r.bossScore);
 
-  const payload = {
-    name,
-    email,
-    linkedin: linkedin || 'Not provided',
-    _subject: `New Ops Tax Result — ${name} (${email})`,
-    _template: 'table',
+  // Shared template variables
+  const templateVars = {
+    to_name:         name,
+    to_email:        email,
+    linkedin:        linkedin || 'Not provided',
     monthly_ops_tax: '$' + Math.round(r.monthlyOpsTax).toLocaleString(),
     annual_cost:     '$' + Math.round(r.annualCost).toLocaleString(),
     growth_unlock:   '+$' + Math.round(r.capacityCeiling).toLocaleString() + '/mo',
-    boss_score:      r.bossScore + '/100 — ' + boss.label,
+    boss_score:      r.bossScore + '/100',
+    boss_label:      boss.label,
+    boss_desc:       boss.desc,
     mrr:             '$' + Math.round(state.mrr).toLocaleString(),
     business_type:   state.biztype,
-    team_size:       state.teamSize,
+    team_size:       String(state.teamSize),
+    narrative:       generateNarrative(r),
+    hard_cash:       '$' + Math.round(r.hardCashTotal || (r.revenueLeak + r.firefightingPremium + r.pmTax)).toLocaleString() + '/mo',
+    opp_cost:        '$' + Math.round(r.opportunityCostTotal || (r.timeCost + r.deliveryCost + r.capacityCeiling)).toLocaleString() + '/mo',
   };
 
-  try {
-    await fetch('https://formsubmit.co/ajax/depeshvyas17@gmail.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  } catch (_) {
-    // Fail silently — always show results regardless of email delivery
+  if (EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+    try {
+      // Send the Ops Tax report to the user (from depesh@v-bog.com)
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_USER_TPL, templateVars);
+      // Send admin notification to depeshvyas17@gmail.com
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ADMIN_TPL, {
+        ...templateVars,
+        to_email: 'depeshvyas17@gmail.com',
+      });
+    } catch (_) {
+      // Fail silently — results always show
+    }
   }
 
   loadEl.style.display = 'none';
