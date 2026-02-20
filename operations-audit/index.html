@@ -69,16 +69,19 @@
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { brand: { 50:"#fff2ed",100:"#ffddd0",200:"#ffb499",300:"#ff8a66",400:"#ff6633",500:"#ff5511",600:"#ff4d00",700:"#cc3d00",800:"#992e00",900:"#661f00" } } } } }
+  </script>
 
   <style>
     body { font-family: 'Poppins', system-ui, sans-serif; }
     .gradient-bg { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%); }
     .cta-button {
-      background-color: #2563eb;
+      background-color: #ff4d00;
       color: #fff;
       transition: background-color 0.2s, transform 0.2s;
     }
-    .cta-button:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+    .cta-button:hover { background-color: #cc3d00; transform: translateY(-1px); }
     .logo-pill {
       background: rgba(255,255,255,0.05);
       display: inline-flex; align-items: center; justify-content: center;
@@ -97,12 +100,12 @@
         <a href="/" class="logo-pill">
           <span class="font-black tracking-tight leading-none text-xl" style="font-family:'Satoshi',sans-serif;">Depesh<br/>Vyas.</span>
         </a>
-        <a href="/blog/" class="text-sm font-semibold text-gray-300 hover:text-white transition px-4 py-2 rounded-full border border-gray-600 hover:border-gray-400">Blog</a>
+        <a href="/blog/" class="text-sm font-semibold text-gray-300 hover:text-white transition px-4 py-2 rounded-full border border-gray-600 hover:border-gray-400">Blogs</a>
       </div>
 
       <!-- Hero -->
       <div class="max-w-3xl">
-        <p class="text-blue-400 font-semibold text-sm uppercase tracking-widest mb-4">Operations Audit</p>
+        <p class="font-semibold" style="color:#ff6633" text-sm uppercase tracking-widest mb-4">Operations Audit</p>
         <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-6">
           Know Exactly What's Broken Before You Scale.
         </h1>
@@ -110,7 +113,7 @@
           7 days. Six operational dimensions scored. A clear, honest roadmap — and a direct recommendation on whether a Sprint or Full Partnership is the right next step.
         </p>
         <div class="flex flex-col sm:flex-row gap-4">
-          <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener noreferrer"
+          <a href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener noreferrer"
              class="cta-button inline-block px-8 py-4 rounded-full font-bold text-center text-lg">
             Apply for the $500 Audit
           </a>
@@ -131,32 +134,32 @@
 
       <div class="grid md:grid-cols-2 gap-6">
         <div class="bg-white rounded-2xl p-6 border border-gray-200">
-          <div class="text-blue-600 font-bold text-sm uppercase tracking-wider mb-2">Dimension 1</div>
+          <div class="font-bold text-sm uppercase tracking-wider mb-2" style="color:#ff4d00">Dimension 1</div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">Delivery Systems</h3>
           <p class="text-gray-600 text-sm">How client work actually gets done. Bottlenecks, single points of failure, quality consistency.</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-gray-200">
-          <div class="text-blue-600 font-bold text-sm uppercase tracking-wider mb-2">Dimension 2</div>
+          <div class="font-bold text-sm uppercase tracking-wider mb-2" style="color:#ff4d00">Dimension 2</div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">Team Structure</h3>
           <p class="text-gray-600 text-sm">Who owns what. Whether accountability is clear. Where founder dependency lives.</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-gray-200">
-          <div class="text-blue-600 font-bold text-sm uppercase tracking-wider mb-2">Dimension 3</div>
+          <div class="font-bold text-sm uppercase tracking-wider mb-2" style="color:#ff4d00">Dimension 3</div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">Onboarding & Client Experience</h3>
           <p class="text-gray-600 text-sm">The gap between what clients are sold and what they experience. Churn risk indicators.</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-gray-200">
-          <div class="text-blue-600 font-bold text-sm uppercase tracking-wider mb-2">Dimension 4</div>
+          <div class="font-bold text-sm uppercase tracking-wider mb-2" style="color:#ff4d00">Dimension 4</div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">Documentation & SOPs</h3>
           <p class="text-gray-600 text-sm">What exists, what's missing, and whether what exists is actually used.</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-gray-200">
-          <div class="text-blue-600 font-bold text-sm uppercase tracking-wider mb-2">Dimension 5</div>
+          <div class="font-bold text-sm uppercase tracking-wider mb-2" style="color:#ff4d00">Dimension 5</div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">Capacity & Growth Readiness</h3>
           <p class="text-gray-600 text-sm">Whether the business can safely take on more clients or will break if you try to scale.</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-gray-200">
-          <div class="text-blue-600 font-bold text-sm uppercase tracking-wider mb-2">Dimension 6</div>
+          <div class="font-bold text-sm uppercase tracking-wider mb-2" style="color:#ff4d00">Dimension 6</div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">Founder Dependency</h3>
           <p class="text-gray-600 text-sm">How much of the business lives in your head. Where the risk concentrates if you step back.</p>
         </div>
@@ -170,28 +173,28 @@
       <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-12">What You Get at the End of 7 Days</h2>
       <div class="space-y-6">
         <div class="flex gap-4">
-          <span class="text-blue-600 font-bold text-xl mt-0.5">01</span>
+          <span style="color:#ff4d00" class="font-bold text-xl mt-0.5">01</span>
           <div>
             <h3 class="font-bold text-gray-900 text-lg">Scored Diagnostic Report</h3>
             <p class="text-gray-600">Six dimensions scored with context. Not just what's broken — why it's broken and what the downstream effects are.</p>
           </div>
         </div>
         <div class="flex gap-4">
-          <span class="text-blue-600 font-bold text-xl mt-0.5">02</span>
+          <span style="color:#ff4d00" class="font-bold text-xl mt-0.5">02</span>
           <div>
             <h3 class="font-bold text-gray-900 text-lg">Prioritised Constraint List</h3>
             <p class="text-gray-600">The top 3–5 things holding growth back, in order. Not a wishlist — a sequenced plan that accounts for dependencies.</p>
           </div>
         </div>
         <div class="flex gap-4">
-          <span class="text-blue-600 font-bold text-xl mt-0.5">03</span>
+          <span style="color:#ff4d00" class="font-bold text-xl mt-0.5">03</span>
           <div>
             <h3 class="font-bold text-gray-900 text-lg">Cost-of-Inaction Analysis</h3>
             <p class="text-gray-600">The estimated revenue and time cost of staying as you are for the next 6–12 months.</p>
           </div>
         </div>
         <div class="flex gap-4">
-          <span class="text-blue-600 font-bold text-xl mt-0.5">04</span>
+          <span style="color:#ff4d00" class="font-bold text-xl mt-0.5">04</span>
           <div>
             <h3 class="font-bold text-gray-900 text-lg">Clear Next-Step Recommendation</h3>
             <p class="text-gray-600">Operations Sprint, Full Partnership, or neither. If it's not a fit, you'll hear that — not a sales pitch.</p>
@@ -206,7 +209,7 @@
     <div class="max-w-2xl mx-auto">
       <h2 class="text-3xl md:text-4xl font-extrabold mb-4">3 Company Spots Available</h2>
       <p class="text-gray-300 text-lg mb-8">VBOG works with a maximum of 3 companies at a time. The audit is the starting point for every engagement.</p>
-      <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" rel="noopener noreferrer"
+      <a href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener noreferrer"
          class="cta-button inline-block px-10 py-4 rounded-full font-bold text-lg">
         Apply for the $500 Audit →
       </a>
