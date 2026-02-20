@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ops Tax Calculator — VBOG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --orange: #E8500A;
+  --orange-light: #FF6B2B;
+  --orange-dim: rgba(232,80,10,0.12);
+  --black: #0F0F0F;
+  --dark: #1A1A1A;
+  --mid: #2E2E2E;
+  --muted: #6B6B6B;
+  --border: #2A2A2A;
+  --border-light: #383838;
+  --surface: #161616;
+  --surface2: #1E1E1E;
+  --white: #F8F5F0;
+  --white-dim: rgba(248,245,240,0.6);
+  --red: #E84040;
+  --yellow: #E8B040;
+  --green: #40C880;
+  --purple: #8040E8;
+  --blue: #4080E8;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --radius: 4px;
+  --radius-lg: 8px;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); background: var(--black); color: var(--white); min-height: 100vh; font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+/* TOP BAR */
+.topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 56px; background: rgba(15,15,15,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+.topbar-logo { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--white); text-decoration: none; letter-spacing: -0.02em; }
+.topbar-logo span { color: var(--orange); }
+.topbar-cta { font-size: 13px; font-weight: 500; color: var(--orange); text-decoration: none; letter-spacing: 0.04em; border: 1px solid var(--orange); padding: 6px 16px; border-radius: var(--radius); transition: background 0.2s, color 0.2s; }
+.topbar-cta:hover { background: var(--orange); color: var(--white); }
+
+/* PROGRESS */
+.progress-bar-wrap { position: fixed; top: 56px; left: 0; right: 0; z-index: 99; height: 3px; background: var(--border); }
+.progress-bar-fill { height: 100%; background: var(--orange); transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+
+/* LAYOUT */
+.main { max-width: 780px; margin: 0 auto; padding: 104px 24px 80px; }
+
+/* HERO */
+.hero { padding: 60px 0 48px; border-bottom: 1px solid var(--border); margin-bottom: 48px; }
+.hero-eyebrow { font-size: 12px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--orange); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.hero-eyebrow::before { content: ''; display: block; width: 24px; height: 1px; background: var(--orange); }
+.hero h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(36px, 6vw, 60px); line-height: 1.0; letter-spacing: -0.03em; color: var(--white); margin-bottom: 20px; }
+.hero h1 em { font-style: normal; color: var(--orange); text-decoration: underline; text-decoration-color: var(--orange-dim); text-underline-offset: 6px; }
+.hero p { font-size: 17px; color: var(--white-dim); max-width: 520px; font-weight: 300; line-height: 1.65; margin-bottom: 28px; }
+.hero-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+.hero-stat { display: flex; flex-direction: column; gap: 2px; }
+.hero-stat strong { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--orange); }
+.hero-stat span { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+
+/* SECTIONS */
+.calc-section { display: none; animation: fadeUp 0.4s cubic-bezier(0.4,0,0.2,1); }
+.calc-section.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+.section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); margin-bottom: 8px; }
+.section-title { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.02em; color: var(--white); margin-bottom: 6px; }
+.section-sub { font-size: 14px; color: var(--muted); margin-bottom: 36px; line-height: 1.6; }
+
+/* STEP INDICATOR */
+.step-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 32px; }
+.step-pip { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border: 1px solid var(--border-light); background: transparent; color: var(--muted); transition: all 0.3s; }
+.step-pip.done { background: var(--orange); border-color: var(--orange); color: white; }
+.step-pip.active { border-color: var(--orange); color: var(--orange); }
+.step-line { flex: 1; height: 1px; background: var(--border); max-width: 48px; }
+
+/* FIELDS */
+.field { margin-bottom: 28px; }
+.field-label { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.field-label > span:first-child { font-size: 14px; font-weight: 500; color: var(--white); }
+.field-value { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--orange); flex-shrink: 0; margin-left: 12px; }
+.field-optional { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 5px; font-style: italic; }
+.field-note { font-size: 12px; color: var(--muted); margin-top: 6px; font-style: italic; }
+
+.subsection-label { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 32px 0 20px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+.field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+@media (max-width: 520px) { .field-row-2 { grid-template-columns: 1fr; } }
+.field-row-2 .field { margin-bottom: 0; }
+
+/* SLIDERS */
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: var(--border-light); border-radius: 2px; outline: none; cursor: pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--orange); cursor: pointer; box-shadow: 0 0 0 3px rgba(232,80,10,0.2); transition: box-shadow 0.15s; }
+input[type="range"]::-webkit-slider-thumb:hover { box-shadow: 0 0 0 6px rgba(232,80,10,0.2); }
+input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--orange); cursor: pointer; border: none; }
+.slider-hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+/* INPUTS */
+.text-input, .number-input { width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border-light); border-radius: var(--radius); color: var(--white); font-family: var(--font-body); font-size: 15px; outline: none; transition: border-color 0.2s; }
+.text-input:focus, .number-input:focus { border-color: var(--orange); }
+.currency-row { display: flex; align-items: stretch; }
+.currency-prefix { background: var(--border); border: 1px solid var(--border-light); border-right: none; border-radius: var(--radius) 0 0 var(--radius); padding: 10px 12px; color: var(--muted); font-size: 15px; white-space: nowrap; display: flex; align-items: center; }
+.currency-row .number-input { border-radius: 0 var(--radius) var(--radius) 0; }
+.currency-suffix { background: var(--border); border: 1px solid var(--border-light); border-left: none; border-radius: 0 var(--radius) var(--radius) 0; padding: 10px 12px; color: var(--muted); font-size: 15px; display: flex; align-items: center; }
+.currency-row .number-input.has-suffix { border-radius: var(--radius) 0 0 var(--radius); }
+
+select { width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border-light); border-radius: var(--radius); color: var(--white); font-family: var(--font-body); font-size: 15px; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6B6B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; transition: border-color 0.2s; }
+select:focus { border-color: var(--orange); }
+select option { background: var(--dark); }
+
+/* HOURS METER */
+.hours-meter { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 20px; margin: 0 0 20px; display: flex; align-items: center; gap: 14px; }
+.hours-meter-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.hours-meter-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.hours-meter-bar { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; background: var(--orange); }
+.hours-meter-numbers { font-family: var(--font-display); font-size: 14px; font-weight: 700; white-space: nowrap; }
+.hours-meter-numbers .used { color: var(--orange); }
+.hours-meter-numbers .sep { color: var(--muted); margin: 0 3px; }
+.hours-meter-numbers .total { color: var(--white); }
+.hours-warning { background: rgba(232,64,64,0.08); border: 1px solid var(--red); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--red); display: none; }
+.hours-warning.show { display: block; }
+
+/* PIE */
+.time-viz { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin: 0 0 24px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.time-viz-chart { width: 110px; height: 110px; flex-shrink: 0; }
+.time-viz-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 160px; }
+.legend-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-label { color: var(--muted); flex: 1; }
+.legend-val { font-weight: 600; color: var(--white); font-family: var(--font-display); font-size: 14px; }
+
+/* RATE DISPLAY */
+.rate-display { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 24px; }
+.rate-display-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.rate-display-value { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--orange); }
+.rate-display-profit { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--muted); margin-top: 3px; }
+.rate-display-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* YES/NO */
+.yn-field { margin-bottom: 20px; }
+.yn-question { font-size: 14px; color: var(--white); margin-bottom: 10px; line-height: 1.5; }
+.yn-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.yn-btn { padding: 8px 20px; border-radius: var(--radius); border: 1px solid var(--border-light); background: transparent; color: var(--muted); font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.yn-btn:hover { border-color: var(--orange-dim); color: var(--white); }
+.yn-btn.selected { background: var(--orange-dim); border-color: var(--orange); color: var(--orange); font-weight: 600; }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+/* TOOLTIP */
+.tooltip-wrap { position: relative; display: inline-block; }
+.tooltip-icon { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border-light); background: transparent; color: var(--muted); font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; cursor: help; margin-left: 6px; vertical-align: middle; }
+.tooltip-box { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--mid); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 10px 14px; width: 240px; font-size: 12px; color: var(--white-dim); line-height: 1.5; z-index: 200; font-weight: 400; }
+.tooltip-wrap:hover .tooltip-box { display: block; }
+
+/* BUTTONS */
+.btn-primary { display: inline-flex; align-items: center; gap: 10px; background: var(--orange); color: var(--white); font-family: var(--font-display); font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: var(--radius); border: none; cursor: pointer; letter-spacing: -0.01em; transition: background 0.2s, transform 0.15s; text-decoration: none; }
+.btn-primary:hover:not(:disabled) { background: var(--orange-light); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary .arrow { font-size: 20px; transition: transform 0.2s; }
+.btn-primary:hover:not(:disabled) .arrow { transform: translateX(4px); }
+.btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--muted); font-family: var(--font-body); font-size: 14px; padding: 10px 0; border: none; cursor: pointer; transition: color 0.2s; text-decoration: none; }
+.btn-secondary:hover { color: var(--white); }
+.btn-ghost { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--orange); font-family: var(--font-body); font-size: 14px; font-weight: 500; padding: 10px 20px; border: 1px solid var(--orange); border-radius: var(--radius); cursor: pointer; transition: background 0.2s; text-decoration: none; }
+.btn-ghost:hover { background: var(--orange-dim); }
+.btn-row { display: flex; align-items: center; gap: 20px; margin-top: 36px; flex-wrap: wrap; }
+
+/* TWO-PANEL RESULT DISPLAY */
+.result-two-panel {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin: 20px 0 0;
+}
+@media (max-width: 520px) { .result-two-panel { grid-template-columns: 1fr; } }
+.result-panel {
+  border-radius: var(--radius); padding: 18px 20px;
+  border: 1px solid transparent; position: relative;
+}
+.result-panel--cash {
+  background: rgba(232,64,64,0.06);
+  border-color: rgba(232,64,64,0.25);
+}
+.result-panel--opp {
+  background: rgba(232,80,10,0.06);
+  border-color: rgba(232,80,10,0.20);
+}
+.result-panel-icon { font-size: 18px; margin-bottom: 6px; }
+.result-panel-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+.result-panel--cash .result-panel-label { color: #E84040; }
+.result-panel--opp  .result-panel-label { color: var(--orange); }
+.result-panel-amount {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 28px; letter-spacing: -0.02em; line-height: 1;
+  margin-bottom: 8px;
+}
+.result-panel--cash .result-panel-amount { color: #E84040; }
+.result-panel--opp  .result-panel-amount { color: var(--orange); }
+.result-panel-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* RESULTS */
+#section-results { padding-bottom: 40px; }
+.result-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 36px; margin-bottom: 24px; position: relative; overflow: hidden; }
+.result-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--orange); }
+.result-tax-label { font-size: 12px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.result-tax-amount { font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 8vw, 68px); letter-spacing: -0.03em; color: var(--orange); line-height: 1; margin-bottom: 4px; }
+.result-tax-period { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 520px) { .result-grid { grid-template-columns: 1fr; } }
+.result-card { background: var(--dark); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+.result-card-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.result-card-value { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; color: var(--white); }
+.result-card-value.positive { color: var(--green); }
+.result-card-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* BOSS */
+.boss-score-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; margin-bottom: 24px; }
+.boss-score-row { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.boss-score-number { font-family: var(--font-display); font-weight: 800; font-size: 56px; letter-spacing: -0.04em; line-height: 1; }
+.boss-score-info { flex: 1; min-width: 200px; }
+.boss-score-badge { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 12px; border-radius: 100px; margin-bottom: 8px; }
+.boss-score-desc { font-size: 14px; color: var(--muted); line-height: 1.5; }
+.boss-bar-wrap { margin-top: 20px; }
+.boss-bar-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.boss-bar-fill { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(0.4,0,0.2,1) 0.3s; }
+.boss-bar-ticks { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--muted); }
+
+/* BREAKDOWN */
+.breakdown-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; margin-bottom: 24px; }
+.breakdown-title { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin-bottom: 20px; color: var(--white); }
+.breakdown-group-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; margin: 16px 0 4px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.breakdown-group-label:first-child { margin-top: 0; }
+.breakdown-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.breakdown-item:last-child { border-bottom: none; padding-bottom: 0; }
+.breakdown-bar-wrap { flex: 1; }
+.breakdown-name { font-size: 13px; color: var(--white); margin-bottom: 4px; font-weight: 500; }
+.breakdown-sub { font-size: 12px; color: var(--muted); }
+.breakdown-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+.breakdown-bar-inner { height: 100%; border-radius: 2px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1) 0.4s; }
+.breakdown-amount { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--white); white-space: nowrap; flex-shrink: 0; }
+
+/* NARRATIVE */
+.narrative-block { border-left: 3px solid var(--orange); padding-left: 20px; margin-bottom: 28px; }
+.narrative-text { font-size: 15px; color: var(--white-dim); line-height: 1.7; font-weight: 300; font-style: italic; }
+
+/* LEAKAGE */
+.leakage-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; margin-bottom: 24px; }
+.leakage-title { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin-bottom: 16px; color: var(--white); }
+.leakage-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.leakage-item:last-child { border-bottom: none; }
+.leakage-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(232,80,10,0.15); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.leakage-text { flex: 1; }
+.leakage-name { font-size: 13px; color: var(--white); font-weight: 500; }
+.leakage-impact { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.leakage-pct { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--red); flex-shrink: 0; }
+
+/* CTA */
+.cta-block { background: linear-gradient(135deg, rgba(232,80,10,0.1) 0%, rgba(15,15,15,0) 60%); border: 1px solid var(--orange); border-radius: var(--radius-lg); padding: 36px; margin-bottom: 24px; text-align: center; }
+.cta-headline { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 10px; color: var(--white); }
+.cta-sub { font-size: 15px; color: var(--muted); margin-bottom: 28px; font-weight: 300; }
+.cta-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.email-row { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+.email-row .text-input { flex: 1; min-width: 200px; }
+.share-text { text-align: center; margin-top: 16px; }
+
+@media (max-width: 600px) {
+  .topbar { padding: 0 16px; }
+  .main { padding: 96px 16px 60px; }
+  .hero { padding: 40px 0 36px; }
+  .result-hero { padding: 24px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a href="https://v-bog.com" class="topbar-logo">V<span>BOG</span></a>
+  <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" class="topbar-cta">Book a Call</a>
+</nav>
+<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+
+<main class="main">
+
+  <!-- HERO -->
+  <section class="hero" id="heroSection">
+    <div class="hero-eyebrow">VBOG · Ops Tax Calculator</div>
+    <h1>What's your<br><em>Ops Tax?</em></h1>
+    <p>Find out how much it's costing you to run your business instead of growing it. Takes 3 minutes. No fluff, just math.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>15+ hrs</strong><span>Freed per week on avg</span></div>
+      <div class="hero-stat"><strong>2–3×</strong><span>Revenue growth in 12mo</span></div>
+      <div class="hero-stat"><strong>$120K MRR</strong><span>From $15K in 10 months</span></div>
+    </div>
+    <div class="btn-row" style="margin-top:36px;">
+      <button class="btn-primary" onclick="startCalc()">Start the Calculator <span class="arrow">→</span></button>
+    </div>
+  </section>
+
+  <!-- SECTION A: BUSINESS BASICS -->
+  <section class="calc-section" id="section-a">
+    <div class="step-indicator">
+      <div class="step-pip active">1</div><div class="step-line"></div>
+      <div class="step-pip">2</div><div class="step-line"></div>
+      <div class="step-pip">3</div><div class="step-line"></div>
+      <div class="step-pip">✓</div>
+    </div>
+    <div class="section-label">Step 1 of 3</div>
+    <div class="section-title">Your Business Basics</div>
+    <div class="section-sub">The numbers I need to calculate your real cost. Optional fields make it more accurate — leave blank if you're unsure.</div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Monthly Recurring Revenue (MRR) <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-box">Your average monthly revenue. If it varies month to month, use a 3-month average.</span></span></span>
+        <span class="field-value" id="val-mrr">$25,000</span>
+      </div>
+      <input type="range" id="sl-mrr" min="5000" max="200000" step="1000" value="25000" oninput="updateSlider('mrr',this.value)">
+      <div class="slider-hint">$5K — $200K</div>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span>Business Type</span></div>
+      <!-- EDITED: added onchange so state.biztype updates immediately, previously only updated on Next button click -->
+      <select id="sel-biztype" onchange="state.biztype = this.value">
+        <option value="agency">Agency</option>
+        <option value="consulting">Consulting / Advisory</option>
+        <option value="staffaug">Staff Augmentation</option>
+        <option value="managed">Managed Services</option>
+        <option value="coaching">Coaching / Training</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Team Size (excluding you) <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-box">Everyone on your team: employees, contractors, part-time. Include PMs in this number — don't subtract them.</span></span></span>
+        <span class="field-value" id="val-team">4</span>
+      </div>
+      <input type="range" id="sl-team" min="1" max="30" step="1" value="4" oninput="updateSlider('team',this.value)">
+      <div class="slider-hint">1 — 30 people</div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>How many Project Managers are on your team? <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-box">PMs who actively manage projects and team members day-to-day. Benchmark: 1 PM per 8 non-PM staff is the optimal span of control. We'll calculate the gap.</span></span></span>
+      </div>
+      <select id="sel-pms">
+        <option value="0">0 — No dedicated PMs</option>
+        <option value="1">1 PM</option>
+        <option value="2">2 PMs</option>
+        <option value="3">3 PMs</option>
+        <!-- EDITED: label changed from "4+ PMs" to "4 or more PMs" — value 4 is the calculation ceiling -->
+        <option value="4">4 or more PMs</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Avg Monthly Contract Value (per client) <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-box">What a typical client pays per month. Used to calculate the revenue you can't pursue because you're too busy to sell.</span></span></span>
+        <span class="field-value" id="val-acv">$3,000</span>
+      </div>
+      <input type="range" id="sl-acv" min="500" max="30000" step="250" value="3000" oninput="updateSlider('acv',this.value)">
+      <div class="slider-hint">$500 — $30K</div>
+    </div>
+
+    <div class="field">
+      <div class="field-label"><span>Annual Revenue Growth Rate</span></div>
+      <select id="sel-growth">
+        <option value="low">Under 10%</option>
+        <option value="mid" selected>10–20%</option>
+        <option value="high">20–40%</option>
+        <option value="vhigh">Above 40%</option>
+      </select>
+    </div>
+
+    <div class="subsection-label">Optional — Improves Accuracy</div>
+
+    <div class="field-row-2">
+      <div class="field">
+        <div class="field-label"><span>PM Annual Salary <span class="field-optional">(optional)</span></span></div>
+        <div class="currency-row">
+          <div class="currency-prefix">$</div>
+          <input type="number" class="number-input" id="inp-pm-salary" placeholder="95,000" min="0">
+        </div>
+        <div class="field-note">Defaults to $95K if left blank</div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span>Avg Team Member Salary <span class="field-optional">(optional)</span></span></div>
+        <div class="currency-row">
+          <div class="currency-prefix">$</div>
+          <input type="number" class="number-input" id="inp-team-salary" placeholder="55,000" min="0">
+        </div>
+        <div class="field-note">Defaults to $55K if left blank</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Gross Profit Margin <span class="field-optional">(optional)</span> <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-box">Revenue minus direct costs (team salaries, contractors, software). Typically 40–70% for service businesses. Used to show effective profit rate alongside revenue rate. Opportunity cost calculations use revenue rate.</span></span></span>
+      </div>
+      <div class="currency-row">
+        <input type="number" class="number-input has-suffix" id="inp-gross-margin" placeholder="e.g. 55" min="1" max="99">
+        <div class="currency-suffix">%</div>
+      </div>
+      <div class="field-note">Typical range: 40–70% for agencies and consulting firms</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="goSection('b')">Next: My Time <span class="arrow">→</span></button>
+    </div>
+  </section>
+
+  <!-- SECTION B: TIME ALLOCATION -->
+  <section class="calc-section" id="section-b">
+    <div class="step-indicator">
+      <div class="step-pip done">✓</div><div class="step-line"></div>
+      <div class="step-pip active">2</div><div class="step-line"></div>
+      <div class="step-pip">3</div><div class="step-line"></div>
+      <div class="step-pip">✓</div>
+    </div>
+    <div class="section-label">Step 2 of 3</div>
+    <div class="section-title">How Are You Spending Your Time?</div>
+    <div class="section-sub">Move the sliders to match your typical workday. All your allocated hours must add up to your total — the meter below shows you where you are.</div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Total hours you work per day</span>
+        <span class="field-value" id="val-total-hrs">9 hrs</span>
+      </div>
+      <input type="range" id="sl-total-hrs" min="6" max="14" step="0.5" value="9" oninput="updateTimeSlider()">
+      <div class="slider-hint">6 — 14 hrs/day</div>
+    </div>
+
+    <div class="hours-meter">
+      <div class="hours-meter-label">Hours allocated</div>
+      <div class="hours-meter-bar-wrap"><div class="hours-meter-bar" id="hoursMeterBar" style="width:0%"></div></div>
+      <div class="hours-meter-numbers">
+        <span class="used" id="hoursUsed">0</span><span class="sep">/</span><span class="total" id="hoursTotal">9</span>
+        <span style="color:var(--muted);font-size:12px;margin-left:4px">hrs</span>
+      </div>
+    </div>
+    <div class="hours-warning" id="hoursWarning">⚠ Allocated hours exceed your total. Reduce one or more sliders before continuing.</div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Hours on sales & growth per day <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-box">Actual selling, business development, outreach, and strategy. Not delivery meetings or internal calls about client work.</span></span></span>
+        <span class="field-value" id="val-sales-hrs">1.5 hrs</span>
+      </div>
+      <input type="range" id="sl-sales-hrs" min="0" max="8" step="0.5" value="1.5" oninput="updateTimeSlider()">
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Hours doing delivery / fulfillment yourself per day <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-box">Time you personally spend doing client work — writing, building, consulting, producing. Work your team should be owning. If you're doing this alongside your team, it signals a delegation gap, not just a capacity problem.</span></span></span>
+        <span class="field-value" id="val-delivery-hrs">1 hrs</span>
+      </div>
+      <input type="range" id="sl-delivery-hrs" min="0" max="8" step="0.5" value="1" oninput="updateTimeSlider()">
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Hours reviewing / approving team work per day</span>
+        <span class="field-value" id="val-review-hrs">2 hrs</span>
+      </div>
+      <input type="range" id="sl-review-hrs" min="0" max="6" step="0.5" value="2" oninput="updateTimeSlider()">
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Hours in standups & internal meetings per day</span>
+        <span class="field-value" id="val-meeting-hrs">1.5 hrs</span>
+      </div>
+      <input type="range" id="sl-meeting-hrs" min="0" max="5" step="0.5" value="1.5" oninput="updateTimeSlider()">
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Hours firefighting / reacting per day <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-box">Unplanned team questions, ad-hoc client escalations, urgent fixes. Time that wasn't on your calendar this morning.</span></span></span>
+        <span class="field-value" id="val-fire-hrs">2 hrs</span>
+      </div>
+      <input type="range" id="sl-fire-hrs" min="0" max="6" step="0.5" value="2" oninput="updateTimeSlider()">
+    </div>
+
+    <div class="time-viz">
+      <div class="time-viz-chart"><canvas id="pieChart"></canvas></div>
+      <div class="time-viz-legend" id="pieLegend"></div>
+    </div>
+
+    <div class="rate-display">
+      <div class="rate-display-label">Your Founder Revenue Rate</div>
+      <div class="rate-display-value" id="hourlyRateDisplay">—</div>
+      <div class="rate-display-profit" id="hourlyRateProfit" style="display:none"></div>
+      <div class="rate-display-note">MRR × 12 ÷ annual working hours — the ceiling value of your time in revenue terms</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="btnNextToC" onclick="goSectionC()">Next: Health Check <span class="arrow">→</span></button>
+      <button class="btn-secondary" onclick="goSection('a')">← Back</button>
+    </div>
+  </section>
+
+  <!-- SECTION C: HEALTH CHECK -->
+  <section class="calc-section" id="section-c">
+    <div class="step-indicator">
+      <div class="step-pip done">✓</div><div class="step-line"></div>
+      <div class="step-pip done">✓</div><div class="step-line"></div>
+      <div class="step-pip active">3</div><div class="step-line"></div>
+      <div class="step-pip">✓</div>
+    </div>
+    <div class="section-label">Step 3 of 3</div>
+    <div class="section-title">Quick Health Check</div>
+    <div class="section-sub">Nine questions. Answer honestly — the math only works if you do.</div>
+    <div id="healthQuestions"></div>
+    <div class="btn-row" style="margin-top:36px;">
+      <button class="btn-primary" onclick="calculateAndShow()">Calculate My Ops Tax <span class="arrow">→</span></button>
+      <button class="btn-secondary" onclick="goSection('b')">← Back</button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="calc-section" id="section-results">
+    <div class="result-hero">
+      <div class="result-tax-label">Your Monthly Ops Tax</div>
+      <div class="result-tax-amount" id="r-monthly-tax">—</div>
+      <div class="result-tax-period" id="r-tax-period">every month you stay in the weeds</div>
+
+      <!-- Two-panel: hard cash vs opportunity cost -->
+      <div class="result-two-panel">
+        <div class="result-panel result-panel--cash">
+          <div class="result-panel-icon">🩸</div>
+          <div class="result-panel-label">Hard Cash Leaking Now</div>
+          <div class="result-panel-amount" id="r-hard-cash">—</div>
+          <div class="result-panel-note">Real money leaving your business every month — process gaps, PM overhead, reactive chaos.</div>
+        </div>
+        <div class="result-panel result-panel--opp">
+          <div class="result-panel-icon">🔒</div>
+          <div class="result-panel-label">Growth You're Blocking</div>
+          <div class="result-panel-amount" id="r-opp-cost">—</div>
+          <div class="result-panel-note">The company you're not building — founder hours trapped in ops instead of growth.</div>
+        </div>
+      </div>
+
+      <div class="result-grid" style="margin-top:16px;">
+        <div class="result-card">
+          <div class="result-card-label">12-Month Cost of Staying Stuck</div>
+          <div class="result-card-value" id="r-annual-cost">—</div>
+          <div class="result-card-note">if nothing changes this year</div>
+        </div>
+        <div class="result-card">
+          <div class="result-card-label">MRR You Could Be Adding</div>
+          <div class="result-card-value positive" id="r-growth-unlock">—</div>
+          <div class="result-card-note">if you focused on growth instead of ops</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="boss-score-block">
+      <div class="boss-score-row">
+        <div class="boss-score-number" id="r-boss-number">—</div>
+        <div class="boss-score-info">
+          <div class="boss-score-badge" id="r-boss-badge">—</div>
+          <div class="boss-score-desc" id="r-boss-desc">—</div>
+        </div>
+      </div>
+      <div class="boss-bar-wrap">
+        <div class="boss-bar-track"><div class="boss-bar-fill" id="r-boss-bar" style="width:0%"></div></div>
+        <div class="boss-bar-ticks"><span>Critical</span><span>Unstable</span><span>Developing</span><span>Functional</span><span>Scale-Ready</span></div>
+      </div>
+    </div>
+
+    <div class="narrative-block">
+      <p class="narrative-text" id="r-narrative">—</p>
+    </div>
+
+    <div class="breakdown-block">
+      <div class="breakdown-title">What's Making Up Your Ops Tax</div>
+      <div id="r-breakdown"></div>
+    </div>
+
+    <div class="leakage-block" id="r-leakage-block">
+      <div class="leakage-title">Top Revenue Leakage Factors</div>
+      <div id="r-leakage-items"></div>
+    </div>
+
+    <div class="cta-block">
+      <div class="cta-headline">Ready to stop paying this tax?</div>
+      <div class="cta-sub">Let's talk about getting 15+ hours back per week — and what you'll do with them. Free 30-minute call.</div>
+      <div class="cta-actions">
+        <a href="https://calendly.com/depesh-v-bog/30min" target="_blank" class="btn-primary">Book a Free Discovery Call <span class="arrow">→</span></a>
+        <button class="btn-ghost" onclick="downloadPDF()">↓ Download Results</button>
+      </div>
+      <div class="email-row">
+        <input type="email" id="emailInput" class="text-input" placeholder="Email me my results (optional)">
+        <button class="btn-ghost" onclick="emailResults()">Send</button>
+      </div>
+    </div>
+
+    <div class="share-text" id="shareText">
+      <button class="btn-secondary" onclick="shareResult()">Share my Ops Tax score →</button>
+    </div>
+
+    <div class="btn-row" style="justify-content:center;margin-top:16px;">
+      <button class="btn-secondary" onclick="restartCalc()">← Start Over</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONFIG
+   All calculation weights live here. Logic is in calculate().
+═══════════════════════════════════════════════════════ */
+const CONFIG = {
+  workingDaysPerMonth: 22,
+  workingDaysPerYear: 240,            // 48 working weeks × 5 days
+
+  // Time cost factors
+  meetingProductivityFactor: 0.40,    // 40% productive; 60% is waste
+  firefightingOverhead: 1.25,         // 25% context-switching premium on reactive time
+
+  // Capacity ceiling (deals founder can't pursue)
+  freedHoursSalesAllocation: 0.70,    // 70% of freed time realistically goes to sales
+  closeRateAssumption: 0.30,          // 30% close rate on qualified pipeline
+  salesHoursPerDeal: { agency:6, consulting:8, staffaug:5, managed:7, coaching:7 },
+
+  // Delivery / delegation penalty
+  // Growth rate midpoints used as discount rate in PV calculation:
+  // PV = FV / (1 + r) where FV = annual revenue freed delivery hrs could generate
+  deliveryGrowthRates: { low:0.05, mid:0.15, high:0.30, vhigh:0.50 },
+
+  // Overlap discount: delegation penalty and capacity ceiling both assume the founder
+  // converts freed time to sales via the same pipeline math. To avoid conceptual
+  // double-counting of the founder's realistic sales bandwidth, we haircut the
+  // delegation penalty by this factor. See detailed comment in calculate() Component 2.
+  delegationOverlapDiscount: 0.40,
+
+  // PM span of control: 1 PM per 8 non-PM non-founder staff
+  // Source: Quantum Workplace study, 20,000+ managers, engagement-optimised ratio
+  pmOptimalRatio: 8,
+
+  // Default salaries when founder leaves optional fields blank
+  // PM: $95K (conservative of BLS median $100,750, adjusted for smaller service cos)
+  // Team: $55K (US median for service/delivery staff)
+  defaultPmSalaryAnnual:   95000,
+  defaultTeamSalaryAnnual: 55000,
+
+  // Revenue leakage weights (as % of MRR)
+  leakageWeights: {
+    noRenewalProcess:          0.08,
+    founderApprovesPricing:    0.04,
+    noKPIReview:               0.05,
+    noContractSystem:          0.04,
+    oftenOverScope:            0.06,
+    sometimesOverScope:        0.03,
+    teamClarityUnclear:        0.05,
+    teamClaritySomewhat:       0.02,
+    highInterruptions:         0.03,
+    founderHandlesEscalations: 0.03,
+    teamNoDirectDelivery:      0.02,
+  },
+  maxLeakagePct: 0.35,
+
+  // Chaos premium (reactive culture tax on MRR)
+  chaosMultiplier: { 3:0.06, 2:0.04, 1:0.02, 0:0 },
+
+  // 12-month projection multiplier
+  growthMultiplier: { low:1.0, mid:1.15, high:1.3, vhigh:1.5 },
+
+  // Capacity ceiling: max MRR uplift a freed founder can realistically generate.
+  // 50% of current MRR per month is the aggressive best-case ceiling —
+  // sustained above that is not realistic for a service business founder.
+  maxMrrUpliftPct: 0.50,
+
+  // Time cost floor: every founder needs some ops involvement.
+  // The first 2 hrs/day of combined review + meeting waste + firefighting is expected
+  // management activity and attracts zero tax. Only excess above this is taxed.
+  healthyOpsFloorHrs: 2.0,
+
+  scoreColors: {
+    critical:'#E84040', unstable:'#E88040',
+    developing:'#E8C840', functional:'#80C840', scaleReady:'#40C880'
+  }
+};
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let state = {
+  mrr:25000, biztype:'agency', team:4, numPMs:0, acv:3000, growth:'mid',
+  pmSalary:null, teamSalary:null, grossMargin:null,
+  totalHrs:9, salesHrs:1.5, deliveryHrs:1, reviewHrs:2, meetingHrs:1.5, fireHrs:2,
+  health:{}
+};
+
+let pieChart = null;
+
+/* ═══════════════════════════════════════════════════════
+   HEALTH QUESTIONS
+═══════════════════════════════════════════════════════ */
+const QUESTIONS = [
+  { id:'renewalProcess',  q:'Do you have a documented renewal or extension process for contracts?',      options:['Yes','No'] },
+  // EDITED: added 'Sometimes' option — gives realistic middle ground, maps to half penalty in scoring
+  { id:'pricingApproval', q:'Do you personally review and approve pricing for new deals?',               options:['No','Sometimes','Yes'] },
+  { id:'kpiReview',       q:'Does your team have a weekly KPI review with defined owners?',              options:['Yes','No'] },
+  { id:'interruptions',   q:'Does your team message you 10+ times per day with questions?',              options:['Yes','No'] },
+  // EDITED: added 'Sometimes' option — gives realistic middle ground, maps to half penalty in scoring
+  { id:'escalations',     q:'Do you personally handle all client escalations?',                          options:['No','Sometimes','Yes'] },
+  { id:'contractSystem',  q:'Are all client contracts and renewals tracked in a single system?',         options:['Yes','No'] },
+  { id:'directDelivery',  q:'Does your team send completed work directly to clients without your review?', options:['Yes','No'] },
+  { id:'scopeCreep',      q:'How often do projects run over scope or budget?',                           options:['Never','Sometimes','Often'] },
+  { id:'teamClarity',     q:'How clear is your team on what to prioritize without asking you?',          options:['Very Clear','Somewhat Clear','Unclear'] },
+];
+
+function renderHealthQuestions() {
+  const container = document.getElementById('healthQuestions');
+  container.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'yn-field';
+    div.innerHTML = `<div class="yn-question">${q.q}</div>
+      <div class="yn-options" id="opts-${q.id}">
+        ${q.options.map(o => `<button class="yn-btn ${state.health[q.id]===o?'selected':''}" onclick="selectAnswer('${q.id}','${o}',this)">${o}</button>`).join('')}
+      </div>`;
+    container.appendChild(div);
+    if (i < QUESTIONS.length - 1) { const hr = document.createElement('hr'); hr.className = 'divider'; container.appendChild(hr); }
+  });
+}
+
+function selectAnswer(qid, answer, btn) {
+  state.health[qid] = answer;
+  document.getElementById(`opts-${qid}`).querySelectorAll('.yn-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+/* ═══════════════════════════════════════════════════════
+   INPUT UPDATES
+═══════════════════════════════════════════════════════ */
+function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+
+function updateSlider(key, val) {
+  val = parseFloat(val);
+  state[key] = val;
+  if (key === 'mrr')  document.getElementById('val-mrr').textContent  = fmt(val);
+  if (key === 'team') document.getElementById('val-team').textContent = val;
+  if (key === 'acv')  document.getElementById('val-acv').textContent  = fmt(val);
+  updateHourlyRate();
+}
+
+function updateTimeSlider() {
+  state.totalHrs    = parseFloat(document.getElementById('sl-total-hrs').value);
+  state.salesHrs    = parseFloat(document.getElementById('sl-sales-hrs').value);
+  state.deliveryHrs = parseFloat(document.getElementById('sl-delivery-hrs').value);
+  state.reviewHrs   = parseFloat(document.getElementById('sl-review-hrs').value);
+  state.meetingHrs  = parseFloat(document.getElementById('sl-meeting-hrs').value);
+  state.fireHrs     = parseFloat(document.getElementById('sl-fire-hrs').value);
+
+  document.getElementById('val-total-hrs').textContent    = state.totalHrs + ' hrs';
+  document.getElementById('val-sales-hrs').textContent    = state.salesHrs + ' hrs';
+  document.getElementById('val-delivery-hrs').textContent = state.deliveryHrs + ' hrs';
+  document.getElementById('val-review-hrs').textContent   = state.reviewHrs + ' hrs';
+  document.getElementById('val-meeting-hrs').textContent  = state.meetingHrs + ' hrs';
+  document.getElementById('val-fire-hrs').textContent     = state.fireHrs + ' hrs';
+
+  updateHoursMeter();
+  updatePieChart();
+  updateHourlyRate();
+}
+
+function getAllocatedHrs() {
+  return +(state.salesHrs + state.deliveryHrs + state.reviewHrs + state.meetingHrs + state.fireHrs).toFixed(1);
+}
+
+function updateHoursMeter() {
+  const used  = getAllocatedHrs();
+  const total = state.totalHrs;
+  const pct   = Math.min((used / total) * 100, 100);
+  const over  = used > total + 0.01;
+  // EDITED: tightened green threshold from 0.01 to 0.05 tolerance
+  // previously 8.95/9 hrs would show green — now requires within 0.05 of total
+  const full  = !over && Math.abs(used - total) <= 0.05;
+
+  document.getElementById('hoursUsed').textContent  = used.toFixed(1);
+  document.getElementById('hoursTotal').textContent = total.toFixed(1);
+
+  const bar = document.getElementById('hoursMeterBar');
+  bar.style.width      = pct + '%';
+  bar.style.background = over ? 'var(--red)' : full ? 'var(--green)' : 'var(--orange)';
+
+  document.getElementById('hoursWarning').classList.toggle('show', over);
+  document.getElementById('btnNextToC').disabled = over;
+}
+
+function updateHourlyRate() {
+  const annualRev = state.mrr * 12;
+  const annualHrs = state.totalHrs * CONFIG.workingDaysPerYear;
+  const rate = annualRev / annualHrs;
+
+  const el = document.getElementById('hourlyRateDisplay');
+  if (el) el.textContent = fmt(rate) + '/hr (revenue-based)';
+
+  const profitEl = document.getElementById('hourlyRateProfit');
+  if (profitEl && state.grossMargin && state.grossMargin > 0) {
+    profitEl.textContent = fmt(rate * state.grossMargin / 100) + '/hr (at ' + state.grossMargin + '% gross margin)';
+    profitEl.style.display = 'block';
+  } else if (profitEl) {
+    profitEl.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PIE CHART
+═══════════════════════════════════════════════════════ */
+const PIE_LABELS = ['Sales & Growth','Delivery Work','Reviewing','Meetings','Firefighting','Admin / Other'];
+const PIE_COLORS = ['#40C880','#8040E8','#E8500A','#E88040','#E84040','#383838'];
+
+function initPieChart() {
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: PIE_LABELS, datasets: [{ data:[1.5,1,2,1.5,2,1], backgroundColor: PIE_COLORS, borderWidth:0, hoverOffset:4 }] },
+    options: { cutout:'68%', responsive:true, maintainAspectRatio:true, plugins:{ legend:{display:false}, tooltip:{enabled:false} }, animation:{duration:400} }
+  });
+  updatePieChart();
+}
+
+function updatePieChart() {
+  if (!pieChart) return;
+  const s = state;
+  const other = Math.max(0, +(s.totalHrs - s.salesHrs - s.deliveryHrs - s.reviewHrs - s.meetingHrs - s.fireHrs).toFixed(1));
+  const data = [s.salesHrs, s.deliveryHrs, s.reviewHrs, s.meetingHrs, s.fireHrs, other];
+  pieChart.data.datasets[0].data = data;
+  pieChart.update();
+
+  const legend = document.getElementById('pieLegend');
+  if (legend) {
+    legend.innerHTML = PIE_LABELS.map((l,i) => `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${PIE_COLORS[i]}"></div>
+        <div class="legend-label">${l}</div>
+        <div class="legend-val">${data[i].toFixed(1)} hrs</div>
+      </div>`).join('');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CALCULATION ENGINE
+═══════════════════════════════════════════════════════ */
+function calculate() {
+  const S = state;
+  const C = CONFIG;
+
+  // Resolve optional inputs
+  const pmSalaryAnnual    = (S.pmSalary   > 0) ? S.pmSalary   : C.defaultPmSalaryAnnual;
+  const teamSalaryAnnual  = (S.teamSalary > 0) ? S.teamSalary : C.defaultTeamSalaryAnnual;
+  const pmSalaryMonthly   = pmSalaryAnnual / 12;
+  const teamSalaryMonthly = teamSalaryAnnual / 12;
+
+  // ── Founder revenue rate ──────────────────────────────
+  // Revenue-based ceiling: every founder hour displaces this much in revenue potential.
+  // Opportunity cost calculations all use this rate.
+  const annualRevenue = S.mrr * 12;
+  const annualHrs     = S.totalHrs * C.workingDaysPerYear;
+  const hourlyRate    = annualRevenue / annualHrs;
+
+  // Effective profit rate for display only (if margin provided)
+  const effectiveRate = S.grossMargin > 0 ? hourlyRate * (S.grossMargin / 100) : null;
+
+  // ── COMPONENT 1: Time Cost ────────────────────────────
+  // Every founder needs ~2 hrs/day of oversight — approvals, standups, light management.
+  // That's the expected floor and attracts zero tax.
+  // Only hours ABOVE the floor represent genuine ops bottlenecking, and get taxed
+  // at the founder's revenue rate.
+  // "Ops hours per day" = review + meeting waste (60%) + firefighting
+  const rawOpsHrsPerDay  = S.reviewHrs
+                         + S.meetingHrs * (1 - C.meetingProductivityFactor)
+                         + S.fireHrs;
+  const excessOpsHrsPerDay = Math.max(0, rawOpsHrsPerDay - C.healthyOpsFloorHrs);
+  const timeCost           = excessOpsHrsPerDay * C.workingDaysPerMonth * hourlyRate;
+
+  // ── COMPONENT 2: Delivery & Delegation Gap ────────────
+  // Part A — Direct cost: founder doing team-level work at founder-level hourly rate
+  const deliveryDirectCost = S.deliveryHrs * C.workingDaysPerMonth * hourlyRate;
+
+  // Part B — Delegation penalty (forward opportunity cost, simplified PV):
+  // If delivery hours were freed for sales, what annual revenue could they generate?
+  // We discount back to present value using stated growth rate as the discount proxy.
+  // Formula: PV = FV / (1 + r), where r = growth rate midpoint.
+  // This ties the number to the founder's own situation — not an assumption we invent.
+  const r_discount    = C.deliveryGrowthRates[S.growth] || 0.15;
+  const salesHrsDeal  = C.salesHoursPerDeal[S.biztype] || 6;
+  const monthlyDelHrs = S.deliveryHrs * C.workingDaysPerMonth;
+  const dealsFrDel    = (monthlyDelHrs * C.freedHoursSalesAllocation) / salesHrsDeal;
+  const futureRevDel  = dealsFrDel * S.acv * C.closeRateAssumption * 12; // annual FV
+  const delegationPenaltyRaw = (futureRevDel / (1 + r_discount)) / 12;   // monthly PV before overlap adjustment
+
+  // ── OVERLAP ADJUSTMENT (delegation vs capacity ceiling) ──────────────
+  // Both delegationPenalty and capacityCeiling (Component 4) assume the founder
+  // converts freed time into closed deals using the same pipeline math:
+  //   freedHrs × 0.70 sales allocation × (ACV × 0.30 close rate / salesHrsPerDeal)
+  //
+  // The hour pools are DIFFERENT (delivery hrs vs ops hrs), so there's no direct
+  // double-count on the same hours. BUT the combined numbers imply 4–6+ hrs/day
+  // of pure selling and 5–7+ deals closed/month simultaneously — unrealistic for
+  // a service founder who doesn't have that sales infrastructure yet.
+  //
+  // Capacity ceiling already "claims" the founder's realistic sales bandwidth.
+  // Delegation penalty is a valid additional cost (founder doing team-level work
+  // IS wasteful), but the sales-conversion upside portion overlaps conceptually.
+  //
+  // Fix: apply a 40% haircut to the delegation penalty's sales-conversion component.
+  // - deliveryDirectCost (Part A) stays untouched — that's a real cost, no overlap.
+  // - The 40% discount reflects that ~60% of the implied sales upside is already
+  //   captured in the capacity ceiling, while ~40% represents genuinely additional
+  //   value (e.g. the freed delivery time could go to client retention, upsells,
+  //   or strategic work that doesn't compete with capacity ceiling's sales hours).
+  // - Tested across 4 scenarios: reduces combined implied new MRR from 44–64% of
+  //   current MRR down to 35–50%, which is more defensible on a call.
+  const delegationOverlapDiscount = C.delegationOverlapDiscount;  // 0.40 — defined in CONFIG
+  const delegationPenalty = delegationPenaltyRaw * (1 - delegationOverlapDiscount);
+
+  const deliveryCost = deliveryDirectCost + delegationPenalty;
+
+  // ── COMPONENT 3: Revenue Leakage ──────────────────────
+  let leakagePct = 0;
+  const leakageFactors = [];
+  const H = S.health;
+
+  function addLeakage(label, pct, icon) {
+    leakagePct += pct;
+    leakageFactors.push({ label, pct, icon, amount: S.mrr * pct });
+  }
+
+  if (H.renewalProcess === 'No')              addLeakage('No documented renewal process',          C.leakageWeights.noRenewalProcess,          '🔄');
+  // EDITED: added 'Sometimes' branch for pricingApproval — half weight of full 'Yes' penalty
+  if      (H.pricingApproval === 'Yes')       addLeakage('Founder approves all pricing',            C.leakageWeights.founderApprovesPricing,         '💸');
+  else if (H.pricingApproval === 'Sometimes') addLeakage('Founder sometimes approves pricing',      C.leakageWeights.founderApprovesPricing * 0.5,   '💸');
+  if (H.kpiReview === 'No')                   addLeakage('No weekly KPI review',                    C.leakageWeights.noKPIReview,               '📊');
+  if (H.contractSystem === 'No')              addLeakage('No central contract tracking',            C.leakageWeights.noContractSystem,          '📋');
+  if      (H.scopeCreep === 'Often')          addLeakage('Projects often run over scope',           C.leakageWeights.oftenOverScope,            '⚠️');
+  else if (H.scopeCreep === 'Sometimes')      addLeakage('Projects sometimes run over scope',       C.leakageWeights.sometimesOverScope,        '⚠️');
+  if      (H.teamClarity === 'Unclear')       addLeakage('Team unclear on priorities without you',  C.leakageWeights.teamClarityUnclear,        '❓');
+  else if (H.teamClarity === 'Somewhat Clear') addLeakage('Team only somewhat clear on priorities', C.leakageWeights.teamClaritySomewhat,       '❓');
+  if (H.interruptions === 'Yes')              addLeakage('10+ daily interruptions from team',       C.leakageWeights.highInterruptions,         '🔔');
+  // EDITED: added 'Sometimes' branch for escalations — half weight of full 'Yes' penalty
+  if      (H.escalations === 'Yes')           addLeakage('Founder handles all escalations',         C.leakageWeights.founderHandlesEscalations,      '🚒');
+  else if (H.escalations === 'Sometimes')     addLeakage('Founder sometimes handles escalations',   C.leakageWeights.founderHandlesEscalations * 0.5,'🚒');
+  if (H.directDelivery === 'No')              addLeakage('All work requires founder review',        C.leakageWeights.teamNoDirectDelivery,      '👀');
+
+  // EDITED: previously the cap was applied to leakagePct but individual factor amounts
+  // were calculated pre-cap, causing displayed items to sum higher than the actual revenueLeak.
+  // Fix: calculate rawLeakagePct before cap, then pro-rate each factor's amount proportionally
+  // so displayed breakdown always sums exactly to the revenueLeak figure used in the total.
+  const rawLeakagePct = leakagePct;
+  leakagePct = Math.min(leakagePct, C.maxLeakagePct);
+  const capRatio = rawLeakagePct > 0 ? leakagePct / rawLeakagePct : 1;
+  leakageFactors.forEach(f => {
+    f.pct    = f.pct    * capRatio;  // pro-rated percentage
+    f.amount = f.amount * capRatio;  // pro-rated dollar amount
+  });
+  const revenueLeak = S.mrr * leakagePct;
+  leakageFactors.sort((a,b) => b.pct - a.pct);
+
+  // ── COMPONENT 4: Capacity Ceiling (MRR Uplift Potential) ────────────
+  // All ops hours (not just excess) represent hours the founder could redirect to sales.
+  // MRR per sales hour = (ACV × closeRate) / salesHrsPerDeal
+  // Freed hours/month × 70% to sales × MRR per sales hour = raw MRR uplift potential.
+  // Capped at 50% of MRR — aggressive best-case ceiling for a service founder.
+  const freedHrsMonth     = rawOpsHrsPerDay * C.workingDaysPerMonth;
+  const salesFreedHrs     = freedHrsMonth * C.freedHoursSalesAllocation;
+  const mrrPerSalesHour   = (S.acv * C.closeRateAssumption) / salesHrsDeal;
+  const mrrUpliftRaw      = salesFreedHrs * mrrPerSalesHour;
+  const capacityCeiling   = Math.min(mrrUpliftRaw, S.mrr * C.maxMrrUpliftPct);
+  const freedHrsWeek      = rawOpsHrsPerDay * 5; // kept for narrative display
+
+  // ── COMPONENT 5: Firefighting Premium ────────────────
+  let chaosCount = 0;
+  if (H.kpiReview === 'No') chaosCount++;
+  if (H.teamClarity === 'Unclear' || H.teamClarity === 'Somewhat Clear') chaosCount++;
+  if (H.interruptions === 'Yes') chaosCount++;
+  const firefightingPremium = S.mrr * C.chaosMultiplier[Math.min(chaosCount, 3)];
+
+  // ── COMPONENT 6: PM Tax ───────────────────────────────
+  // Non-PM staff = total team - number of PMs
+  const nonPmStaff = Math.max(0, S.team - S.numPMs);
+
+  // Underutilization tax:
+  // Utilization rate = nonPmStaff / (numPMs × 8), capped at 1.0
+  // Underutilization % = 1 - utilization
+  // Tax = underutilization % × pm monthly salary × numPMs
+  // Example: 7 staff, 1 PM → 7/8 = 87.5% utilized → 12.5% of PM salary = tax
+  // Example: 4 staff, 1 PM → 4/8 = 50% utilized → 50% of PM salary = tax
+  let pmUnderutilizationTax = 0;
+  if (S.numPMs > 0) {
+    const idealCapacity  = S.numPMs * C.pmOptimalRatio;
+    const utilization    = Math.min(1, nonPmStaff / idealCapacity);
+    const underutilized  = 1 - utilization;
+    pmUnderutilizationTax = underutilized * pmSalaryMonthly * S.numPMs;
+  }
+
+  // PM incompetence tax:
+  // If PMs exist but founder is still doing 6+ hrs/day of ops,
+  // the PM is not doing their job → 80% of PM salary is tax
+  // Founder "ops hours" = everything except sales and delivery
+  const founderOpsHrs = S.totalHrs - S.salesHrs - S.deliveryHrs;
+  let pmIncompetenceTax = 0;
+  if (S.numPMs > 0 && founderOpsHrs > 6) {
+    pmIncompetenceTax = S.numPMs * pmSalaryMonthly * 0.80;
+  }
+
+  const pmTax = pmUnderutilizationTax + pmIncompetenceTax;
+
+  // ── SEGMENTATION: Hard Cash vs Opportunity Cost ─────
+  // Hard Cash = real money leaving today: process gaps, PM overhead, reactive culture
+  const hardCashLoss    = revenueLeak + pmTax + firefightingPremium;
+  // Opportunity Cost = value not being created: misallocated founder time + growth ceiling
+  const opportunityCost = timeCost + deliveryCost + capacityCeiling;
+
+  // ── TOTALS ──────────────────────────────────────────
+  const monthlyOpsTax = hardCashLoss + opportunityCost;
+  // INTENT: annualCost is NOT a simple ×12. The growth multiplier reflects that
+  // a growing business compounds the cost of inaction — staying stuck costs more
+  // each month as MRR rises. The multiplier is the founder's own stated growth rate,
+  // so the number is tied to their reality, not an assumption we invent.
+  // e.g. at 20% growth (mid): ×1.15 — cost of delay grows with the business.
+  const growthMult    = CONFIG.growthMultiplier[S.growth] || 1.15;
+  const annualCost    = monthlyOpsTax * 12 * growthMult;
+
+  // dealsPerMonth: display-only approximation for narrative
+  const dealsPerMonth = salesFreedHrs / salesHrsDeal;
+
+  // ── NARRATIVE MODE SIGNALS ─────────────────────────────
+  // Used by generateNarrative() to select the right psychological framing.
+  // nonGrowthPct: % of founder's day NOT spent on sales/growth
+  // cashPctOfTotal: hard cash loss as % of total ops tax (0–1)
+  // These determine whether the problem is time-trapped, systems-broken, or both.
+  const nonGrowthHrs = S.totalHrs - S.salesHrs;
+  const nonGrowthPct = nonGrowthHrs / S.totalHrs;            // 0–1
+  const cashPctOfTotal = monthlyOpsTax > 0 ? hardCashLoss / monthlyOpsTax : 0;  // 0–1
+
+  return {
+    hourlyRate, effectiveRate,
+    timeCost, deliveryCost, deliveryDirectCost, delegationPenalty,
+    revenueLeak, capacityCeiling, firefightingPremium,
+    pmTax, pmUnderutilizationTax, pmIncompetenceTax,
+    hardCashLoss, opportunityCost,
+    monthlyOpsTax, annualCost,
+    leakageFactors, dealsPerMonth, freedHrsWeek,
+    rawOpsHrsPerDay, excessOpsHrsPerDay,
+    founderOpsHrs, nonPmStaff,
+    pmSalaryMonthly, teamSalaryMonthly,
+    nonGrowthPct, cashPctOfTotal, nonGrowthHrs,
+    bossScore: computeBossScore(H, S, founderOpsHrs)
+  };
+}
+
+/* ═══════════════════════════════════════════════════════
+   BOSS SCORE
+═══════════════════════════════════════════════════════ */
+function computeBossScore(H, S, founderOpsHrs) {
+  let score = 100;
+
+  // ── FOUNDER DEPENDENCY ───────────────────────────────
+  // Rated IMPORTANT by Depesh: full penalty −5, partial (Sometimes) −2
+  // EDITED: was −8 flat Yes/No. Now has 3-way answer: No=0, Sometimes=−2, Yes=−5
+  if      (H.pricingApproval === 'Yes')       score -= 5;
+  else if (H.pricingApproval === 'Sometimes') score -= 2;
+
+  // Rated IMPORTANT: same 3-way scale as pricing
+  // EDITED: was −8 flat. Now No=0, Sometimes=−2, Yes=−5
+  if      (H.escalations === 'Yes')           score -= 5;
+  else if (H.escalations === 'Sometimes')     score -= 2;
+
+  // Rated VERY IMPORTANT: team not sending work directly = −9
+  // EDITED: was −9, weight confirmed correct under new system
+  if (H.directDelivery === 'No')              score -= 9;
+
+  // ── DELEGATION & TEAM CLARITY ────────────────────────
+  // Rated CRITICAL: Unclear = −13, Somewhat Clear = −6 (half penalty)
+  // EDITED: was −12 / −6. Unclear bumped to −13 to match Critical rating
+  if      (H.teamClarity === 'Unclear')       score -= 13;
+  else if (H.teamClarity === 'Somewhat Clear') score -= 6;
+
+  // Rated CRITICAL: −13
+  // EDITED: was −5. Bumped significantly to match Critical rating
+  if (H.interruptions === 'Yes')              score -= 13;
+
+  // Delivery hours penalty — proportionate, no penalty at or below 1.5 hrs/day
+  // EDITED: was two fixed tiers (−4 at 1.5hrs, −8 at 3hrs).
+  // Now: 0 at ≤1.5hrs, gentle ramp 1.5→4hrs (0 to −4), aggressive ramp 4→6hrs (−4 to −10), ceiling −10 at 6+hrs
+  const dHrs = S.deliveryHrs;
+  let deliveryPenalty = 0;
+  if (dHrs > 6) {
+    deliveryPenalty = 10;                                          // ceiling
+  } else if (dHrs > 4) {
+    deliveryPenalty = 4 + ((dHrs - 4) / 2) * 6;                  // 4→6hrs: ramps −4 to −10
+  } else if (dHrs > 1.5) {
+    deliveryPenalty = ((dHrs - 1.5) / 2.5) * 4;                  // 1.5→4hrs: ramps 0 to −4
+  }
+  score -= deliveryPenalty;
+
+  // ── OPERATING CADENCE ────────────────────────────────
+  // KPI review rated CRITICAL: −13
+  // EDITED: was −14, adjusted to −13 to align with Critical tier
+  if (H.kpiReview === 'No') score -= 13;
+
+  // Meeting hours penalty — unchanged, LLM-generated but calibration confirmed acceptable
+  if (S.meetingHrs > 2.5)   score -= 6;
+
+  // ── REVENUE PREDICTABILITY ───────────────────────────
+  // Renewal process rated VERY IMPORTANT: −9
+  // EDITED: was −10, adjusted to −9 to align with Very Important tier
+  if (H.renewalProcess === 'No')         score -= 9;
+
+  // Contract system rated VERY IMPORTANT: −9
+  // EDITED: was −6, bumped to −9 to align with Very Important tier
+  if (H.contractSystem === 'No')         score -= 9;
+
+  // Scope creep rated IMPORTANT: Often = −5, Sometimes = −2
+  // EDITED: was −4 / −2. Often bumped to −5 to align with Important tier
+  if      (H.scopeCreep === 'Often')     score -= 5;
+  else if (H.scopeCreep === 'Sometimes') score -= 2;
+
+  // ── SYSTEMS & DATA MATURITY (REMOVED) ────────────────
+  // EDITED: entire block removed. contractSystem, kpiReview, renewalProcess
+  // were double-counted here on top of their primary category weights above.
+  // This was an artefact from code generation, not in the original PRD spec.
+
+  // ── PM STRUCTURAL PENALTY ────────────────────────────
+  // Unchanged — PM exists but founder still doing 6+ hrs ops = −5
+  if (S.numPMs > 0 && founderOpsHrs > 6) score -= 5;
+
+  return Math.max(0, Math.min(100, score));
+}
+
+function getBossLabel(score) {
+  if (score <= 30) return { label:'Critical',    textColor:'#E84040', bg:'rgba(232,64,64,0.15)',   color:'#E84040', desc:'The business cannot safely scale. Founder burnout risk within 6 months. This is Phase I territory — team structure, communication systems, and data normalisation have to come before anything else.' };
+  if (score <= 50) return { label:'Unstable',    textColor:'#E88040', bg:'rgba(232,128,64,0.15)',  color:'#E88040', desc:'Operating in firefighting mode. Profitability is fragile. Every growth attempt increases disorder. Phase I foundations — KPIs, CRM, communication cadence — are needed now.' };
+  if (score <= 70) return { label:'Developing',  textColor:'#E8C840', bg:'rgba(232,200,64,0.15)',  color:'#E8C840', desc:'Systems exist but depend too heavily on the founder. Phase I is partially in place. Phase II deep work — USP isolation, competitive positioning, scaling pipeline — can begin in parallel.' };
+  if (score <= 85) return { label:'Functional',  textColor:'#80C840', bg:'rgba(128,200,64,0.15)',  color:'#80C840', desc:'Delegation is working but the capacity ceiling is near. Ready for Phase II deep work — offer development, scaling pipeline design, and Phase III sales funnel architecture.' };
+  return               { label:'Scale-Ready', textColor:'#40C880', bg:'rgba(64,200,128,0.15)',  color:'#40C880', desc:'Operations can support 2–3× growth. The right next moves are Phase III funnel optimisation and Phase IV growth infrastructure — dashboards, financing, central reporting.' };
+}
+
+/* ═══════════════════════════════════════════════════════
+   NARRATIVE
+   Three modes based on WHERE the ops tax is coming from:
+   - TIME-TRAPPED:    hard cash < 20% of total AND non-growth > 75% of day
+                      → Systems are okay, the founder IS the bottleneck.
+                      Psychology: identity threat, compounding daily cost,
+                      contrast with what peers do with freed time.
+   - SYSTEMS-BROKEN:  hard cash > 40% of total
+                      → Real money bleeding out through process gaps.
+                      Psychology: specificity of loss, annual anchor,
+                      status quo bias reversal ("doing nothing costs $X").
+   - BOTH (default):  everything else
+                      → Cash bleeding AND time trapped.
+                      Psychology: cascade framing, worst-of-both urgency.
+
+   Additional overlay: delivery hours > 3 → identity threat line
+   ("you're the most expensive person on your team doing the cheapest work")
+═══════════════════════════════════════════════════════ */
+function getNarrativeMode(r) {
+  // Thresholds for mode selection — defined here for easy tuning
+  const TIME_TRAPPED_CASH_CEILING  = 0.20;  // hard cash must be < 20% of total
+  const TIME_TRAPPED_NONGROWTH_FLOOR = 0.75; // non-growth must be > 75% of day
+  const SYSTEMS_BROKEN_CASH_FLOOR  = 0.40;  // hard cash must be > 40% of total
+
+  if (r.cashPctOfTotal < TIME_TRAPPED_CASH_CEILING && r.nonGrowthPct > TIME_TRAPPED_NONGROWTH_FLOOR) {
+    return 'time-trapped';
+  }
+  if (r.cashPctOfTotal > SYSTEMS_BROKEN_CASH_FLOOR) {
+    return 'systems-broken';
+  }
+  return 'both';
+}
+
+function generateNarrative(r) {
+  const S    = state;
+  const mode = getNarrativeMode(r);
+  const rate = Math.round(r.hourlyRate);
+  const ngPct = Math.round(r.nonGrowthPct * 100);
+  const ngHrs = r.nonGrowthHrs.toFixed(1);
+  const excessHrs = r.excessOpsHrsPerDay.toFixed(1);
+  const weeklyWaste = Math.round(r.excessOpsHrsPerDay * 5);
+  const monthlyTax  = Math.round(r.monthlyOpsTax).toLocaleString();
+  const annualTax   = Math.round(r.annualCost).toLocaleString();
+  const hardCash    = Math.round(r.hardCashLoss).toLocaleString();
+  const oppCost     = Math.round(r.opportunityCost).toLocaleString();
+  const dailyCost   = Math.round(r.monthlyOpsTax / CONFIG.workingDaysPerMonth).toLocaleString();
+
+  // ── Delivery identity threat — triggers at 3+ hrs/day regardless of mode ──
+  // Psychology: reframing. Founder thinks "I'm helping." Reality: "You're the most
+  // expensive person doing the cheapest work." Forces a status re-evaluation.
+  let deliveryLine = '';
+  if (S.deliveryHrs >= 3) {
+    deliveryLine = ` You're spending ${S.deliveryHrs} hours a day doing delivery work — that makes you the most expensive employee on your team doing work your team should own. Every hour you spend in delivery is an hour a $${rate}/hr founder is doing a $${Math.round((S.teamSalary || CONFIG.defaultTeamSalaryAnnual) / CONFIG.workingDaysPerYear / (S.totalHrs || 9))}/hr job.`;
+  } else if (S.deliveryHrs > 0) {
+    deliveryLine = ` You're still doing ${S.deliveryHrs} hrs/day of delivery yourself — work your team should own.`;
+  }
+
+  // ── PM line — unchanged, factual ──
+  const pmLine = r.pmTax > 0
+    ? ` Your PM setup is costing you $${Math.round(r.pmTax).toLocaleString()}/mo without keeping you out of the weeds.`
+    : '';
+
+  // ── MODE: TIME-TRAPPED ──────────────────────────────────
+  // Founder's systems are decent. The problem is THEM. They won't see "systems" issues
+  // in their health check, so the narrative must make them feel the weight of their
+  // own time allocation. Key levers:
+  // 1. Identity threat: "you're not running a company, you're running yourself"
+  // 2. Daily loss anchoring: smaller number feels more visceral than monthly
+  // 3. Temporal compounding: "every week" creates rolling urgency
+  // 4. Permission to feel the problem: validate that this isn't laziness, it's structural
+  if (mode === 'time-trapped') {
+    return `Here's the uncomfortable part: your systems aren't the problem. You are. ${ngPct}% of your day — ${ngHrs} out of ${S.totalHrs} hours — is spent on work that doesn't grow the business. At $${rate}/hr, that's $${dailyCost} in lost growth capacity every working day. Not someday. Today. And it was yesterday too.${deliveryLine}${pmLine} Every week you stay in this pattern, $${Math.round(r.monthlyOpsTax / 4.3).toLocaleString()} in potential value never gets created. That's not a systems fix — it's a decision only you can make about what your time is actually for. Total monthly ops tax: $${monthlyTax}. Almost all of it — $${oppCost} — is opportunity cost. The company you're not building while you're busy running the one you have.`;
+  }
+
+  // ── MODE: SYSTEMS-BROKEN ────────────────────────────────
+  // Real cash is bleeding. This founder can feel the pain already — they just haven't
+  // quantified it. Key levers:
+  // 1. Specificity: exact dollar amounts make it undeniable
+  // 2. Status quo reframe: "doing nothing" isn't free, it has a price tag
+  // 3. Annual anchor: multiply the pain, make it feel cumulative
+  // 4. Agency: "this is fixable" — but only if you act
+  if (mode === 'systems-broken') {
+    return `Your business is bleeding $${hardCash} every month in hard cash — not theoretical, not opportunity cost, real money leaving through process gaps, overhead, and reactive chaos. That's $${Math.round(r.hardCashLoss * 12).toLocaleString()} over the next year if nothing changes. And nothing changes by itself.${deliveryLine}${pmLine} On top of the cash loss, you're also leaving $${oppCost}/mo in growth on the table because ${excessHrs} hrs/day of your time is trapped in ops instead of revenue. Total monthly ops tax: $${monthlyTax}. The math here isn't complicated — every month you delay fixing this, you're choosing to pay it again.`;
+  }
+
+  // ── MODE: BOTH (default) ────────────────────────────────
+  // Worst case: cash is bleeding AND founder time is trapped. Hit them with the
+  // cascade — it's not one problem, it's two compounding problems.
+  // Key levers:
+  // 1. Cascade framing: "not only... but also..." makes it feel overwhelming (intentionally)
+  // 2. Compounding language: problems feeding each other
+  // 3. Annual shock number: biggest anchor in the report
+  // 4. False stability warning: "it feels manageable because you're used to it"
+  return `At $${S.mrr.toLocaleString()} MRR, your time is worth $${rate}/hr — but ${ngPct}% of your day is spent on work that doesn't grow the business. That's not just an inconvenience. It's $${monthlyTax}/mo in total ops tax, and it's hitting you from both sides.${deliveryLine}${pmLine} $${hardCash}/mo is hard cash leaving your business right now — process gaps, reactive chaos, and overhead you can measure on a P&L. The other $${oppCost}/mo is the growth you're blocking yourself from. Deals you can't pursue. Clients you can't onboard. Revenue that never materialises because you're too buried to go get it. Over 12 months, that's $${annualTax}. The danger is that this feels manageable because you're used to it. It's not. It's compounding — every month the business grows, the tax grows with it.`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER RESULTS
+═══════════════════════════════════════════════════════ */
+function renderResults(r) {
+  const get = id => document.getElementById(id);
+
+  get('r-monthly-tax').textContent   = '$' + Math.round(r.monthlyOpsTax).toLocaleString();
+  get('r-hard-cash').textContent     = '$' + Math.round(r.hardCashLoss).toLocaleString() + '/mo';
+  get('r-opp-cost').textContent      = '$' + Math.round(r.opportunityCost).toLocaleString() + '/mo';
+  get('r-annual-cost').textContent   = '$' + Math.round(r.annualCost).toLocaleString();
+  get('r-growth-unlock').textContent = '+$' + Math.round(r.capacityCeiling).toLocaleString() + '/mo';
+
+  // ── MODE-SPECIFIC COPY ──────────────────────────────────
+  // Subtitle, panel notes, and CTA adapt to where the pain is coming from.
+  // This prevents the "this is BS" reaction from founders whose systems are fine
+  // but whose time allocation is the real problem (and vice versa).
+  const mode = getNarrativeMode(r);
+  const ngPct = Math.round(r.nonGrowthPct * 100);
+
+  // Subtitle under the big number — first thing they read after the shock
+  const subtitles = {
+    'time-trapped':    `${ngPct}% of your day is in ops — your time is the tax`,
+    'systems-broken':  `real cash leaving your business every month`,
+    'both':            `every month you stay in the weeds — and it's compounding`
+  };
+  get('r-tax-period').textContent = subtitles[mode];
+
+  // Panel notes — the small text under Hard Cash and Opportunity Cost panels
+  // These explain WHY each number matters in a way that matches the mode
+  const cashPanelNote = get('r-hard-cash').closest('.result-panel').querySelector('.result-panel-note');
+  const oppPanelNote  = get('r-opp-cost').closest('.result-panel').querySelector('.result-panel-note');
+  if (cashPanelNote && oppPanelNote) {
+    const panelCopy = {
+      'time-trapped': {
+        cash: r.hardCashLoss > 0
+          ? 'Some process gaps exist, but this isn\'t your main problem.'
+          : 'Your systems are holding. The tax is almost entirely in how you spend your time.',
+        opp:  'This is where it hurts. Every dollar here is growth you\'re personally blocking by staying in the weeds.'
+      },
+      'systems-broken': {
+        cash: 'This is real money — not theoretical. It\'s leaving through gaps you can see on a P&L if you look.',
+        opp:  'On top of the cash loss, this is what you\'re leaving on the table by not having time to grow.'
+      },
+      'both': {
+        cash: 'Real money leaving your business every month — process gaps, PM overhead, reactive chaos.',
+        opp:  'The company you\'re not building — founder hours trapped in ops instead of growth.'
+      }
+    };
+    cashPanelNote.textContent = panelCopy[mode].cash;
+    oppPanelNote.textContent  = panelCopy[mode].opp;
+  }
+
+  // CTA block — headline and sub adapt to mode
+  const ctaCopy = {
+    'time-trapped': {
+      headline: 'Your systems aren\'t the problem. Your calendar is.',
+      sub:      'A 30-minute call to figure out what you should stop doing — and who should be doing it instead.'
+    },
+    'systems-broken': {
+      headline: 'Every month you wait, you pay this again.',
+      sub:      'Let\'s find the 2–3 process fixes that stop the bleeding. Free 30-minute call.'
+    },
+    'both': {
+      headline: 'This doesn\'t fix itself.',
+      sub:      'Cash is leaving and growth is stalled. Let\'s talk about what to fix first. Free 30-minute call.'
+    }
+  };
+  const ctaHeadline = document.querySelector('.cta-headline');
+  const ctaSub      = document.querySelector('.cta-sub');
+  if (ctaHeadline) ctaHeadline.textContent = ctaCopy[mode].headline;
+  if (ctaSub)      ctaSub.textContent      = ctaCopy[mode].sub;
+
+  const boss = getBossLabel(r.bossScore);
+  get('r-boss-number').textContent = r.bossScore;
+  get('r-boss-number').style.color = boss.textColor;
+  get('r-boss-badge').textContent  = boss.label + ' — ' + r.bossScore + '/100';
+  get('r-boss-badge').style.background = boss.bg;
+  get('r-boss-badge').style.color  = boss.textColor;
+  get('r-boss-desc').textContent   = boss.desc;
+  setTimeout(() => { get('r-boss-bar').style.width = r.bossScore + '%'; get('r-boss-bar').style.background = boss.color; }, 100);
+
+  get('r-narrative').textContent = generateNarrative(r);
+
+  // Breakdown
+  const total = r.monthlyOpsTax || 1;
+
+  // Opportunity cost components (what you're not building)
+  const ocComponents = [
+    { name:'Excess Ops Time',            sub:`${r.excessOpsHrsPerDay.toFixed(1)} hrs/day above healthy floor × $${Math.round(r.hourlyRate)}/hr`, amount:r.timeCost,        color:'#E8500A' },
+    { name:'Delivery & Delegation Gap',  sub:`$${Math.round(r.deliveryDirectCost).toLocaleString()} direct + $${Math.round(r.delegationPenalty).toLocaleString()} forward value (PV)`, amount:r.deliveryCost, color:'#8040E8' },
+    { name:'Growth Ceiling',             sub:'MRR you could be adding if time was freed',                                                          amount:r.capacityCeiling, color:'#E88040' },
+  ].filter(c => c.amount > 0);
+
+  // Hard cash components (real money leaving today)
+  const cashComponents = [
+    { name:'Revenue Leakage',        sub:'Process gaps, missed renewals, scope drift',  amount:r.revenueLeak,         color:'#E84040' },
+    { name:'Firefighting Premium',   sub:'Reactive culture tax on MRR',                 amount:r.firefightingPremium, color:'#E84060' },
+  ].filter(c => c.amount > 0);
+
+  if (r.pmTax > 0) {
+    const parts = [];
+    if (r.pmUnderutilizationTax > 0) parts.push(`$${Math.round(r.pmUnderutilizationTax).toLocaleString()} underutilization`);
+    if (r.pmIncompetenceTax > 0)     parts.push(`$${Math.round(r.pmIncompetenceTax).toLocaleString()} founder still in ops`);
+    cashComponents.push({ name:'PM Overhead Tax', sub: parts.join(' · '), amount: r.pmTax, color:'#4080E8' });
+  }
+
+  function renderBreakdownGroup(label, components, labelColor) {
+    if (components.length === 0) return '';
+    return `
+      <div class="breakdown-group-label" style="color:${labelColor}">${label}</div>
+      ${components.map(c => `
+        <div class="breakdown-item">
+          <div class="breakdown-bar-wrap">
+            <div class="breakdown-name">${c.name}</div>
+            <div class="breakdown-sub">${c.sub}</div>
+            <div class="breakdown-bar"><div class="breakdown-bar-inner" style="width:0%;background:${c.color}" data-target="${Math.min(100,Math.round((c.amount/total)*100))}"></div></div>
+          </div>
+          <div class="breakdown-amount">$${Math.round(c.amount).toLocaleString()}</div>
+        </div>`).join('')}`;
+  }
+
+  get('r-breakdown').innerHTML =
+    renderBreakdownGroup(`🔒 Opportunity Cost — Growth You're Blocking`, ocComponents, 'var(--orange)') +
+    renderBreakdownGroup('🩸 Hard Cash — Leaking Out Today', cashComponents, '#E84040');
+
+  setTimeout(() => { document.querySelectorAll('.breakdown-bar-inner').forEach(el => { el.style.width = el.dataset.target + '%'; }); }, 200);
+
+  const top = r.leakageFactors.slice(0, 5);
+  if (top.length === 0) {
+    get('r-leakage-block').style.display = 'none';
+  } else {
+    get('r-leakage-items').innerHTML = top.map(f => `
+      <div class="leakage-item">
+        <div class="leakage-icon">${f.icon}</div>
+        <div class="leakage-text">
+          <div class="leakage-name">${f.label}</div>
+          <div class="leakage-impact">~$${Math.round(f.amount).toLocaleString()}/month</div>
+        </div>
+        <div class="leakage-pct">${Math.round(f.pct*100)}% MRR</div>
+      </div>`).join('');
+  }
+
+  if (new URLSearchParams(window.location.search).get('mode') === 'sales') {
+    get('shareText').style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+let currentSection = 'hero';
+
+function showSection(id) {
+  document.querySelectorAll('.calc-section').forEach(el => { el.classList.remove('active'); el.style.display = ''; });
+  const hero = document.getElementById('heroSection');
+  if (id === 'hero') {
+    hero.style.display = '';
+  } else {
+    hero.style.display = 'none';
+    const el = document.getElementById('section-' + id);
+    if (el) { el.classList.add('active'); el.style.display = 'block'; }
+  }
+  currentSection = id;
+  document.getElementById('progressFill').style.width = ({ hero:0, a:20, b:50, c:75, results:100 }[id] || 0) + '%';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function startCalc() {
+  renderHealthQuestions();
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('mrr'))  { state.mrr = parseInt(p.get('mrr')); document.getElementById('sl-mrr').value = state.mrr; updateSlider('mrr', state.mrr); }
+  if (p.get('type')) { state.biztype = p.get('type'); document.getElementById('sel-biztype').value = state.biztype; }
+  showSection('a');
+}
+
+function readSectionA() {
+  state.growth     = document.getElementById('sel-growth').value;
+  state.numPMs     = parseInt(document.getElementById('sel-pms').value) || 0;
+  const pmS  = document.getElementById('inp-pm-salary').value;
+  const tmS  = document.getElementById('inp-team-salary').value;
+  const gmS  = document.getElementById('inp-gross-margin').value;
+  state.pmSalary    = pmS  ? parseFloat(pmS)  : null;
+  state.teamSalary  = tmS  ? parseFloat(tmS)  : null;
+  state.grossMargin = gmS  ? parseFloat(gmS)  : null;
+}
+
+function goSection(id) {
+  if (currentSection === 'a') readSectionA();
+  if (id === 'b') {
+    setTimeout(() => {
+      if (!pieChart) initPieChart(); else updatePieChart();
+      updateHourlyRate();
+      updateHoursMeter();
+    }, 100);
+  }
+  showSection(id);
+}
+
+function goSectionC() {
+  if (getAllocatedHrs() > state.totalHrs + 0.01) {
+    document.getElementById('hoursWarning').classList.add('show');
+    return;
+  }
+  showSection('c');
+}
+
+function calculateAndShow() {
+  const unanswered = QUESTIONS.filter(q => !state.health[q.id]);
+  if (unanswered.length > 0) {
+    const el = document.getElementById('opts-' + unanswered[0].id);
+    if (el) { el.closest('.yn-field').scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline = '1px solid var(--orange)'; setTimeout(() => el.style.outline = '', 2000); }
+    return;
+  }
+  renderResults(calculate());
+  showSection('results');
+}
+
+function restartCalc() {
+  state.health = {};
+  showSection('hero');
+  document.getElementById('heroSection').style.display = '';
+}
+
+/* ═══════════════════════════════════════════════════════
+   PDF EXPORT
+═══════════════════════════════════════════════════════ */
+function downloadPDF() {
+  const r    = calculate();
+  const boss = getBossLabel(r.bossScore);
+  const date = new Date().toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'});
+  const win  = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'DM Sans',sans-serif;background:#0F0F0F;color:#F8F5F0;margin:0 auto;padding:40px;max-width:680px;}
+  .brand{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:#E8500A;margin-bottom:4px;}
+  .date{font-size:12px;color:#6B6B6B;margin-bottom:32px;}
+  .tax-lbl{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#6B6B6B;}
+  .tax-amt{font-family:'Syne',sans-serif;font-weight:800;font-size:64px;color:#E8500A;line-height:1;margin:4px 0 24px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+  .card{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:16px;}
+  .card-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6B6B6B;margin-bottom:4px;}
+  .card-val{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;}
+  .boss{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:20px;margin-bottom:24px;}
+  .boss-n{font-family:'Syne',sans-serif;font-weight:800;font-size:48px;color:${boss.textColor};}
+  .boss-b{display:inline-block;background:${boss.bg};color:${boss.textColor};font-size:12px;font-weight:600;padding:3px 10px;border-radius:100px;margin:4px 0 8px;}
+  .boss-d{font-size:13px;color:#6B6B6B;}
+  .st{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin:24px 0 12px;}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #2A2A2A;font-size:13px;}
+  .row:last-child{border-bottom:none;}
+  .rv{font-family:'Syne',sans-serif;font-weight:700;color:#E8500A;}
+  .narr{border-left:3px solid #E8500A;padding-left:16px;margin:20px 0;font-size:13px;color:#9A9A9A;line-height:1.6;font-style:italic;}
+  .cta{background:rgba(232,80,10,.1);border:1px solid #E8500A;border-radius:4px;padding:20px;text-align:center;margin-top:28px;}
+  .cta-h{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:6px;}
+  .cta-l{color:#E8500A;font-weight:500;font-size:14px;}
+  .footer{font-size:11px;color:#444;text-align:center;margin-top:32px;border-top:1px solid #2A2A2A;padding-top:16px;}
+</style></head><body>
+<div class="brand">VBOG</div>
+<div class="date">Ops Tax Report · ${date}</div>
+<div class="tax-lbl">Monthly Ops Tax</div>
+<div class="tax-amt">$${Math.round(r.monthlyOpsTax).toLocaleString()}</div>
+<div class="grid">
+  <div class="card"><div class="card-lbl">12-Month Cost</div><div class="card-val">$${Math.round(r.annualCost).toLocaleString()}</div></div>
+  <div class="card"><div class="card-lbl">Growth Unlock</div><div class="card-val" style="color:#40C880">+$${Math.round(r.capacityCeiling).toLocaleString()}/mo</div></div>
+</div>
+<div class="boss">
+  <div class="boss-n">${r.bossScore}<span style="font-size:20px;color:#6B6B6B">/100</span></div>
+  <div class="boss-b">${boss.label}</div>
+  <div class="boss-d">${boss.desc}</div>
+</div>
+<div class="narr">${generateNarrative(r)}</div>
+<div class="st">Breakdown</div>
+<div class="st" style="color:#E8500A">🔒 Opportunity Cost</div>
+<div class="row"><span>Excess Ops Time</span><span class="rv">$${Math.round(r.timeCost).toLocaleString()}/mo</span></div>
+<div class="row"><span>Delivery &amp; Delegation Gap</span><span class="rv">$${Math.round(r.deliveryCost).toLocaleString()}/mo</span></div>
+<div class="row"><span>Growth Ceiling</span><span class="rv">$${Math.round(r.capacityCeiling).toLocaleString()}/mo</span></div>
+<div class="st" style="color:#E84040;margin-top:12px">🩸 Hard Cash Loss</div>
+<div class="row"><span>Revenue Leakage</span><span class="rv">$${Math.round(r.revenueLeak).toLocaleString()}/mo</span></div>
+<div class="row"><span>Firefighting Premium</span><span class="rv">$${Math.round(r.firefightingPremium).toLocaleString()}/mo</span></div>
+${r.pmTax > 0 ? `<div class="row"><span>PM Overhead Tax</span><span class="rv">$${Math.round(r.pmTax).toLocaleString()}/mo</span></div>` : ''}
+${r.leakageFactors.length > 0 ? `<div class="st">Top Leakage Factors</div>${r.leakageFactors.slice(0,4).map(f=>`<div class="row"><span>${f.icon} ${f.label}</span><span class="rv" style="color:#E84040">${Math.round(f.pct*100)}% MRR</span></div>`).join('')}` : ''}
+<div class="cta"><div class="cta-h">Stop paying this tax.</div><div class="cta-l">v-bog.com · Book a free discovery call</div></div>
+<div class="footer">Generated by VBOG Ops Tax Calculator · v-bog.com · Confidential</div>
+</body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 800);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SHARE & EMAIL
+═══════════════════════════════════════════════════════ */
+function shareResult() {
+  const r    = calculate();
+  const boss = getBossLabel(r.bossScore);
+  const text = `I just ran my Ops Tax through the VBOG calculator — I'm leaving $${Math.round(r.monthlyOpsTax).toLocaleString()}/month on the table running my business instead of growing it. BOSS Score: ${r.bossScore}/100 (${boss.label}). Calculate yours → v-bog.com`;
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => alert('Copied! Paste on LinkedIn.'));
+  else prompt('Copy to share:', text);
+}
+
+function emailResults() {
+  const email = document.getElementById('emailInput').value;
+  if (!email || !email.includes('@')) { alert('Enter a valid email address.'); return; }
+  document.getElementById('emailInput').value = '';
+  document.querySelector('.email-row').innerHTML = '<p style="font-size:13px;color:var(--green);padding:10px 0">✓ Got it — check your inbox shortly.</p>';
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  updateHoursMeter();
+  if (new URLSearchParams(window.location.search).get('mode') === 'sales') {
+    const el = document.getElementById('shareText');
+    if (el) el.style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
