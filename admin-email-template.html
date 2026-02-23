@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>New Ops Tax Lead</title>
+</head>
+<body style="margin:0;padding:0;background:#0F0F0F;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0F0F0F;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+
+      <table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#161616;border:1px solid #2A2A2A;border-radius:8px;overflow:hidden;">
+
+        <!-- Red top accent — signals urgency/action -->
+        <tr>
+          <td style="height:4px;background:#ff4d00;font-size:0;line-height:0;">&nbsp;</td>
+        </tr>
+
+        <!-- Header -->
+        <tr>
+          <td style="padding:24px 32px 20px;border-bottom:1px solid #2A2A2A;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td>
+                  <p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#ff4d00;">VBOG · New Calculator Lead</p>
+                  <p style="margin:4px 0 0;font-size:20px;font-weight:700;color:#F8F5F0;letter-spacing:-0.02em;">{{to_name}} just ran the Ops Tax Calculator</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Lead details -->
+        <tr>
+          <td style="padding:24px 32px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;">
+              <tr><td style="padding:16px 20px;border-bottom:1px solid #2A2A2A;">
+                <p style="margin:0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#6B6B6B;">Name</p>
+                <p style="margin:4px 0 0;font-size:15px;color:#F8F5F0;font-weight:500;">{{to_name}}</p>
+              </td></tr>
+              <tr><td style="padding:16px 20px;border-bottom:1px solid #2A2A2A;">
+                <p style="margin:0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#6B6B6B;">Email</p>
+                <p style="margin:4px 0 0;font-size:15px;color:#ff4d00;font-weight:500;">
+                  <a href="mailto:{{to_email}}" style="color:#ff4d00;text-decoration:none;">{{to_email}}</a>
+                </p>
+              </td></tr>
+              <tr><td style="padding:16px 20px;">
+                <p style="margin:0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#6B6B6B;">LinkedIn</p>
+                <p style="margin:4px 0 0;font-size:15px;color:#F8F5F0;font-weight:500;">
+                  <a href="https://{{linkedin}}" style="color:#ff4d00;text-decoration:none;">{{linkedin}}</a>
+                </p>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Their numbers -->
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <p style="margin:0 0 12px;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9E9E9E;">Their Results</p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <!-- Monthly Tax -->
+                <td width="32%" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;padding:14px 16px;">
+                  <p style="margin:0 0 2px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#6B6B6B;">Monthly Tax</p>
+                  <p style="margin:0;font-size:22px;font-weight:700;color:#ff4d00;letter-spacing:-0.02em;">{{monthly_ops_tax}}</p>
+                </td>
+                <td width="2%">&nbsp;</td>
+                <!-- Annual Cost -->
+                <td width="32%" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;padding:14px 16px;">
+                  <p style="margin:0 0 2px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#6B6B6B;">Annual Cost</p>
+                  <p style="margin:0;font-size:22px;font-weight:700;color:#F8F5F0;letter-spacing:-0.02em;">{{annual_cost}}</p>
+                </td>
+                <td width="2%">&nbsp;</td>
+                <!-- Boss Score -->
+                <td width="32%" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;padding:14px 16px;">
+                  <p style="margin:0 0 2px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#6B6B6B;">BOSS Score</p>
+                  <p style="margin:0;font-size:22px;font-weight:700;color:#F8F5F0;letter-spacing:-0.02em;">{{boss_score}}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Business context row -->
+        <tr>
+          <td style="padding:12px 32px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="49%" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;padding:14px 16px;">
+                  <p style="margin:0 0 2px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#6B6B6B;">MRR</p>
+                  <p style="margin:0;font-size:18px;font-weight:600;color:#F8F5F0;">{{mrr}}</p>
+                </td>
+                <td width="2%">&nbsp;</td>
+                <td width="49%" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;padding:14px 16px;">
+                  <p style="margin:0 0 2px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#6B6B6B;">Business Type</p>
+                  <p style="margin:0;font-size:18px;font-weight:600;color:#F8F5F0;text-transform:capitalize;">{{business_type}}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- BOSS Label -->
+        <tr>
+          <td style="padding:12px 32px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;">
+              <tr>
+                <td style="padding:14px 16px;">
+                  <p style="margin:0 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#6B6B6B;">BOSS Level</p>
+                  <p style="margin:0 0 6px;font-size:14px;font-weight:600;color:#ff4d00;">{{boss_label}}</p>
+                  <p style="margin:0;font-size:12px;color:#9E9E9E;line-height:1.5;">{{boss_desc}}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Growth unlock -->
+        <tr>
+          <td style="padding:12px 32px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(64,200,128,0.07);border:1px solid rgba(64,200,128,0.25);border-radius:6px;">
+              <tr>
+                <td style="padding:14px 16px;">
+                  <p style="margin:0 0 2px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#40C880;">Growth Unlock Potential</p>
+                  <p style="margin:0;font-size:20px;font-weight:700;color:#40C880;letter-spacing:-0.02em;">{{growth_unlock}}</p>
+                  <p style="margin:4px 0 0;font-size:11px;color:#6B6B6B;">additional MRR possible if ops are freed</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Narrative -->
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-left:3px solid #ff4d00;">
+              <tr>
+                <td style="padding-left:16px;">
+                  <p style="margin:0 0 6px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#6B6B6B;">Generated Narrative</p>
+                  <p style="margin:0;font-size:13px;color:#9E9E9E;line-height:1.6;font-style:italic;">{{narrative}}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ═══════════════════════════════════════
+             QUESTION INPUTS SECTION (new)
+        ═══════════════════════════════════════ -->
+
+        <!-- Section A: Business Basics -->
+        <tr>
+          <td style="padding:24px 32px 0;">
+            <p style="margin:0 0 12px;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9E9E9E;">Section A — Business Inputs</p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;">
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">Monthly Recurring Revenue (MRR)</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{mrr}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">Business Type</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;text-transform:capitalize;">{{business_type}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">Team Size (excl. founder)</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{team_size}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">Project Managers on Team</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{num_pms}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">Avg Monthly Contract Value (ACV)</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{acv}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">Annual Revenue Growth Rate</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{growth_rate}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">PM Annual Salary</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{pm_salary}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">Avg Team Member Salary</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{team_salary}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="55%" style="font-size:12px;color:#6B6B6B;">Gross Profit Margin</td>
+                  <td width="45%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{gross_margin}}</td>
+                </tr></table>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Section B: Time Allocation -->
+        <tr>
+          <td style="padding:16px 32px 0;">
+            <p style="margin:0 0 12px;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9E9E9E;">Section B — Founder Time Allocation</p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;">
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="65%" style="font-size:12px;color:#6B6B6B;">Total hours worked per day</td>
+                  <td width="35%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{total_hrs}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="65%" style="font-size:12px;color:#6B6B6B;">Hours on sales &amp; growth</td>
+                  <td width="35%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{sales_hrs}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="65%" style="font-size:12px;color:#6B6B6B;">Hours doing delivery / fulfillment</td>
+                  <td width="35%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{delivery_hrs}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="65%" style="font-size:12px;color:#6B6B6B;">Hours on client review</td>
+                  <td width="35%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{review_hrs}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="65%" style="font-size:12px;color:#6B6B6B;">Hours in meetings</td>
+                  <td width="35%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{meeting_hrs}}</td>
+                </tr></table>
+              </td></tr>
+              <tr><td style="padding:12px 20px;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td width="65%" style="font-size:12px;color:#6B6B6B;">Hours firefighting / reacting</td>
+                  <td width="35%" style="font-size:13px;color:#F8F5F0;font-weight:600;text-align:right;">{{fire_hrs}}</td>
+                </tr></table>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Section C: Health Check -->
+        <tr>
+          <td style="padding:16px 32px 0;">
+            <p style="margin:0 0 12px;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9E9E9E;">Section C — Health Check Answers</p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;">
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">Documented renewal / extension process?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_renewal}}</p>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">Personally review &amp; approve pricing for new deals?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_pricing}}</p>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">Weekly KPI review with defined owners?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_kpi}}</p>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">Team messages you 10+ times per day with questions?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_interrupts}}</p>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">Personally handle all client escalations?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_escalations}}</p>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">All contracts &amp; renewals tracked in a single system?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_contracts}}</p>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">Team sends work directly to clients without your review?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_delivery}}</p>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-bottom:1px solid #222;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">How often do projects run over scope or budget?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_scope}}</p>
+              </td></tr>
+              <tr><td style="padding:12px 20px;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6B6B6B;">How clear is your team on what to prioritize without asking you?</p>
+                <p style="margin:0;font-size:13px;color:#F8F5F0;font-weight:600;">{{q_clarity}}</p>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Action footer -->
+        <tr>
+          <td style="padding:28px 32px 32px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #2A2A2A;">
+              <tr>
+                <td style="padding-top:24px;text-align:center;">
+                  <p style="margin:0 0 16px;font-size:13px;color:#9E9E9E;">Follow up while it's warm →</p>
+                  <a href="mailto:{{to_email}}?subject=Your Ops Tax Report — Let's Talk&body=Hey {{to_name}},%0A%0AI noticed you ran the Ops Tax Calculator..."
+                     style="display:inline-block;background:#ff4d00;color:#FFFFFF;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:4px;letter-spacing:-0.01em;">
+                    Reply to {{to_name}} →
+                  </a>
+                  <p style="margin:16px 0 0;font-size:11px;color:#444;">VBOG · Ops Tax Calculator · v-bog.com</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
