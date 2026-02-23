@@ -1562,9 +1562,34 @@ async function submitLeadAndShow() {
       // Send the Ops Tax report to the user (from depesh@v-bog.com)
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_USER_TPL, templateVars);
       // Send admin notification to depeshvyas17@gmail.com
+      const growthLabels = { low: 'Under 10%', mid: '10–20%', high: '20–40%', very_high: 'Above 40%' };
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ADMIN_TPL, {
         ...templateVars,
         to_email: 'depeshvyas17@gmail.com',
+        // Section A — business basics
+        num_pms:       String(state.numPMs),
+        acv:           '$' + Math.round(state.acv).toLocaleString(),
+        growth_rate:   growthLabels[state.growth] || state.growth,
+        pm_salary:     state.pmSalary   ? '$' + Math.round(state.pmSalary).toLocaleString()   : 'Default ($95K)',
+        team_salary:   state.teamSalary ? '$' + Math.round(state.teamSalary).toLocaleString() : 'Default ($55K)',
+        gross_margin:  state.grossMargin ? state.grossMargin + '%' : 'Not provided',
+        // Section B — time allocation
+        total_hrs:     state.totalHrs    + ' hrs/day',
+        sales_hrs:     state.salesHrs    + ' hrs/day',
+        delivery_hrs:  state.deliveryHrs + ' hrs/day',
+        review_hrs:    state.reviewHrs   + ' hrs/day',
+        meeting_hrs:   state.meetingHrs  + ' hrs/day',
+        fire_hrs:      state.fireHrs     + ' hrs/day',
+        // Section C — health check answers
+        q_renewal:     state.health.renewalProcess  || 'Not answered',
+        q_pricing:     state.health.pricingApproval || 'Not answered',
+        q_kpi:         state.health.kpiReview       || 'Not answered',
+        q_interrupts:  state.health.interruptions   || 'Not answered',
+        q_escalations: state.health.escalations     || 'Not answered',
+        q_contracts:   state.health.contractSystem  || 'Not answered',
+        q_delivery:    state.health.directDelivery  || 'Not answered',
+        q_scope:       state.health.scopeCreep      || 'Not answered',
+        q_clarity:     state.health.teamClarity     || 'Not answered',
       });
     } catch (_) {
       // Fail silently — results always show
