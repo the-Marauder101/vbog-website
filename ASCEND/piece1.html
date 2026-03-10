@@ -594,6 +594,32 @@
       .cta-section { padding: 32px 20px; }
       .report-header-top { flex-direction: column; }
     }
+    /* Export section — appears at bottom of report, below CTA.
+       Client downloads JSON file to send to Naipaul for Piece 2 import. */
+    .export-section {
+      display: flex; align-items: center; gap: 18px;
+      background: var(--off-white); border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px 28px;
+      margin-top: 24px; flex-wrap: wrap;
+    }
+    .export-icon { flex-shrink: 0; }
+    .export-text { flex: 1; min-width: 200px; }
+    .export-title {
+      font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 4px;
+    }
+    .export-desc {
+      font-size: 13px; color: var(--text-mid); line-height: 1.55;
+    }
+    .export-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--navy); color: var(--gold);
+      font-size: 13px; font-weight: 700; letter-spacing: 0.4px;
+      border: none; border-radius: var(--radius); padding: 12px 20px;
+      cursor: pointer; white-space: nowrap; transition: opacity 0.18s;
+      flex-shrink: 0;
+    }
+    .export-btn:hover { opacity: 0.88; }
+
   </style>
 </head>
 <body>
@@ -1083,6 +1109,26 @@
         <span class="cta-sub">No commitment. No pitch. Just clarity on where your business stands financially.</span>
       </div>
 
+      <!-- SECTION 7: EXPORT FOR NAIPAUL
+           Client downloads a JSON file of their scores + stage.
+           They send it to Naipaul before the discovery call.
+           Naipaul imports it into Piece 2 (Deep Diagnostic tool)
+           which pre-loads the client self-scores — no manual re-entry.
+      -->
+      <div class="export-section">
+        <div class="export-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+        </div>
+        <div class="export-text">
+          <div class="export-title">Share Your Results With Your Advisor</div>
+          <div class="export-desc">Download your assessment file and send it to Naipaul before your call. This allows him to review your self-assessment in advance and come prepared with the right questions for your specific situation.</div>
+        </div>
+        <button class="export-btn" onclick="exportResultsJSON()">
+          Download Assessment File
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+      </div>
+
     </div><!-- end report-screen -->
 
   </div><!-- end page -->
@@ -1562,6 +1608,84 @@
         startScoring();
       }
     });
+
+    // ================================================================
+    // PIECE 1 → PIECE 2 EXPORT
+    // Generates a JSON file containing:
+    //   - client name + email
+    //   - all 12 domain scores (self-assessed)
+    //   - total score + stage number + tier name
+    //   - timestamp of completion
+    // Client downloads this file and emails it to Naipaul.
+    // Naipaul imports it into Piece 2 (Deep Diagnostic) which
+    // pre-loads all self-scores so he can enter his expert scores
+    // alongside the client's self-assessment during the 90-min call.
+    //
+    // FORMAT NOTE: The JSON schema here is the import contract for Piece 2.
+    // Any changes to field names here must be reflected in Piece 2's importer.
+    // Schema version: "ascend-p1-v1"
+    // ================================================================
+    function exportResultsJSON() {
+      // Gather all 12 domain scores from radio inputs
+      const domainScores = [];
+      for (let d = 1; d <= 12; d++) {
+        const checked = document.querySelector(`input[name="d${d}"]:checked`);
+        domainScores.push(checked ? parseInt(checked.value) : null);
+      }
+
+      // Gather domain names for readability in the exported file
+      const domainNames = [
+        'Liquidity & Cash Management',
+        'Capital Structure & Debt',
+        'Internal Controls',
+        'Accounting & Reporting',
+        'Profitability Analysis',
+        'Forecasting & Planning',
+        'External Relationships',
+        'Systems & Technology',
+        'Leadership & Governance',
+        'Team & Talent',
+        'Quality of Earnings',
+        'Exit / Value Readiness'
+      ];
+
+      // Get stage + tier from report (already calculated)
+      const stageNum = document.getElementById('report-stage-num').textContent;
+      const tierName = document.getElementById('report-tier-name').textContent;
+      const totalScore = domainScores.reduce((a, b) => a + (b || 0), 0);
+
+      // Build export payload
+      const exportData = {
+        schema: 'ascend-p1-v1',       // Import contract version for Piece 2
+        exportedAt: new Date().toISOString(),
+        client: {
+          name: userName,
+          email: userEmail
+        },
+        assessment: {
+          totalScore: totalScore,
+          stageNumber: parseInt(stageNum),
+          tierName: tierName.replace(' Tier', ''),
+          domains: domainNames.map((name, i) => ({
+            index: i + 1,
+            name: name,
+            selfScore: domainScores[i]
+          }))
+        }
+      };
+
+      // Trigger download
+      const filename = `ascend-assessment-${userName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.json`;
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   </script>
 
 </body>
