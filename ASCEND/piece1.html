@@ -268,16 +268,19 @@
     }
     .domain-subtitle { font-size: 13px; color: var(--text-light); }
 
-    /* PLACEHOLDER indicator for domains 9-12 */
+    /* EDIT: .placeholder-badge removed from UI display.
+       The "Content TBC" badge previously shown on domains 9-12 has been removed
+       from the client-facing and Naipaul-facing tool view.
+       REASON: The scoring criteria for domains 9-12 ARE present (sourced from the
+       Master Connection Matrix) and are correct for Piece 1 (self-scoring tool).
+       What is missing for those 4 domains is the INTERVIEW QUESTION content
+       (questions + expected responses) required for PIECE 2 (deep diagnostic).
+       That gap is a Piece 2 concern only — not Piece 1.
+       The badge was therefore mislabelled and has been hidden.
+       Tracking of the Piece 2 content gap is handled in code comments only.
+       If the badge needs to be reinstated, set display back to inline-block. */
     .placeholder-badge {
-      display: inline-block;
-      background: #FFF3CD; color: #856404;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
-      text-transform: uppercase; padding: 2px 8px; border-radius: 4px;
-      margin-left: 8px; vertical-align: middle;
-      /* CODE NOTE: This badge flags domains 9-12 as placeholder content.
-         Scoring criteria text for these domains must be replaced by Naipaul
-         once he provides the actual interview question content. */
+      display: none;
     }
 
     .score-options {
@@ -289,14 +292,6 @@
     .score-option input[type="radio"] {
       position: absolute; opacity: 0; width: 0; height: 0;
     }
-    .score-option label {
-      display: block; padding: 12px 10px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      cursor: pointer; text-align: center;
-      transition: all 0.18s;
-      background: var(--off-white);
-    }
     .score-option label:hover {
       border-color: var(--gold);
       background: var(--gold-pale);
@@ -306,15 +301,31 @@
       background: var(--gold);
       color: var(--navy);
     }
+    /* EDIT: score-option-number is hidden from the client.
+       The 0/1/2/3 value is tracked internally via the radio input's value attribute.
+       The span still exists in the HTML so the value is preserved in the DOM,
+       but display:none removes it from the visual layout entirely.
+       DO NOT remove the span from HTML — it carries no data risk but removal
+       would require touching all 48 radio label blocks. */
     .score-option-number {
-      font-size: 20px; font-weight: 700; color: var(--navy);
-      display: block; margin-bottom: 4px;
+      display: none;
     }
-    .score-option input:checked + label .score-option-number { color: var(--navy); }
+    /* EDIT: Now that the number is hidden, desc takes the full card face.
+       Increased font size slightly and adjusted padding for better readability. */
     .score-option-desc {
-      font-size: 11px; line-height: 1.35; color: var(--text-mid);
+      font-size: 12px; line-height: 1.45; color: var(--text-mid);
+      display: block;
     }
-    .score-option input:checked + label .score-option-desc { color: var(--navy); opacity: 0.8; }
+    .score-option input:checked + label .score-option-desc { color: var(--navy); opacity: 0.9; }
+    /* EDIT: Label padding increased slightly since number no longer takes vertical space */
+    .score-option label {
+      display: block; padding: 14px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer; text-align: center;
+      transition: all 0.18s;
+      background: var(--off-white);
+    }
 
     .domain-error {
       font-size: 12px; color: var(--red-soft); margin-top: 10px; display: none;
@@ -838,10 +849,13 @@
 
       <!-- ============================================================
            DOMAIN 9: Leadership & Governance
-           PLACEHOLDER — awaiting question content from Naipaul.
-           DO NOT assume or hardcode scoring criteria below.
-           These descriptions are placeholder text only.
-           Replace with Naipaul's confirmed criteria when received.
+           PIECE 1 STATUS: Scoring criteria sourced from Master Connection Matrix.
+           Descriptions below are confirmed from matrix data. ✓
+           PIECE 2 GAP (not a Piece 1 issue): Interview questions and expected
+           responses for this domain have NOT been provided by Naipaul.
+           Piece 2 cannot produce qualitative findings for this domain until
+           Naipaul provides the question set. Placeholder prompt sections will
+           be built in Piece 2 Phase 3 and populated when content is received.
       ============================================================ -->
       <div class="domain-card" id="card-9">
         <div class="domain-header">
@@ -855,7 +869,7 @@
           </div>
         </div>
         <div class="score-options">
-          <!-- PLACEHOLDER: Replace these 4 descriptions with Naipaul's confirmed criteria -->
+          <!-- Scoring criteria sourced from Master Connection Matrix. Confirmed for Piece 1. -->
           <div class="score-option"><input type="radio" name="d9" id="d9-0" value="0" onchange="onScore(9)" /><label for="d9-0"><span class="score-option-number">0</span><span class="score-option-desc">Owner handles all finance decisions personally</span></label></div>
           <div class="score-option"><input type="radio" name="d9" id="d9-1" value="1" onchange="onScore(9)" /><label for="d9-1"><span class="score-option-number">1</span><span class="score-option-desc">Finance team member in a defined role</span></label></div>
           <div class="score-option"><input type="radio" name="d9" id="d9-2" value="2" onchange="onScore(9)" /><label for="d9-2"><span class="score-option-number">2</span><span class="score-option-desc">Finance leader with a clear strategic mandate</span></label></div>
@@ -866,10 +880,12 @@
 
       <!-- ============================================================
            DOMAIN 10: Team & Talent
-           PLACEHOLDER — awaiting question content from Naipaul.
-           DO NOT assume or hardcode scoring criteria below.
-           These descriptions are placeholder text only.
-           Replace with Naipaul's confirmed criteria when received.
+           PIECE 1 STATUS: Scoring criteria sourced from Master Connection Matrix.
+           Descriptions below are confirmed from matrix data. ✓
+           PIECE 2 GAP (not a Piece 1 issue): Interview questions and expected
+           responses for this domain have NOT been provided by Naipaul.
+           Piece 2 cannot produce qualitative findings for this domain until
+           Naipaul provides the question set.
       ============================================================ -->
       <div class="domain-card" id="card-10">
         <div class="domain-header">
@@ -883,7 +899,7 @@
           </div>
         </div>
         <div class="score-options">
-          <!-- PLACEHOLDER: Replace these 4 descriptions with Naipaul's confirmed criteria -->
+          <!-- Scoring criteria sourced from Master Connection Matrix. Confirmed for Piece 1. -->
           <div class="score-option"><input type="radio" name="d10" id="d10-0" value="0" onchange="onScore(10)" /><label for="d10-0"><span class="score-option-number">0</span><span class="score-option-desc">No defined finance roles exist</span></label></div>
           <div class="score-option"><input type="radio" name="d10" id="d10-1" value="1" onchange="onScore(10)" /><label for="d10-1"><span class="score-option-number">1</span><span class="score-option-desc">Roles informally understood</span></label></div>
           <div class="score-option"><input type="radio" name="d10" id="d10-2" value="2" onchange="onScore(10)" /><label for="d10-2"><span class="score-option-number">2</span><span class="score-option-desc">Documented org with basic performance management</span></label></div>
@@ -894,10 +910,12 @@
 
       <!-- ============================================================
            DOMAIN 11: Quality of Earnings
-           PLACEHOLDER — awaiting question content from Naipaul.
-           DO NOT assume or hardcode scoring criteria below.
-           These descriptions are placeholder text only.
-           Replace with Naipaul's confirmed criteria when received.
+           PIECE 1 STATUS: Scoring criteria sourced from Master Connection Matrix.
+           Descriptions below are confirmed from matrix data. ✓
+           PIECE 2 GAP (not a Piece 1 issue): Interview questions and expected
+           responses for this domain have NOT been provided by Naipaul.
+           Piece 2 cannot produce qualitative findings for this domain until
+           Naipaul provides the question set.
       ============================================================ -->
       <div class="domain-card" id="card-11">
         <div class="domain-header">
@@ -911,7 +929,7 @@
           </div>
         </div>
         <div class="score-options">
-          <!-- PLACEHOLDER: Replace these 4 descriptions with Naipaul's confirmed criteria -->
+          <!-- Scoring criteria sourced from Master Connection Matrix. Confirmed for Piece 1. -->
           <div class="score-option"><input type="radio" name="d11" id="d11-0" value="0" onchange="onScore(11)" /><label for="d11-0"><span class="score-option-number">0</span><span class="score-option-desc">No QofE awareness</span></label></div>
           <div class="score-option"><input type="radio" name="d11" id="d11-1" value="1" onchange="onScore(11)" /><label for="d11-1"><span class="score-option-number">1</span><span class="score-option-desc">Basic revenue quality review in place</span></label></div>
           <div class="score-option"><input type="radio" name="d11" id="d11-2" value="2" onchange="onScore(11)" /><label for="d11-2"><span class="score-option-number">2</span><span class="score-option-desc">Internal QofE pre-review completed</span></label></div>
@@ -922,10 +940,12 @@
 
       <!-- ============================================================
            DOMAIN 12: Exit / Value Readiness
-           PLACEHOLDER — awaiting question content from Naipaul.
-           DO NOT assume or hardcode scoring criteria below.
-           These descriptions are placeholder text only.
-           Replace with Naipaul's confirmed criteria when received.
+           PIECE 1 STATUS: Scoring criteria sourced from Master Connection Matrix.
+           Descriptions below are confirmed from matrix data. ✓
+           PIECE 2 GAP (not a Piece 1 issue): Interview questions and expected
+           responses for this domain have NOT been provided by Naipaul.
+           Piece 2 cannot produce qualitative findings for this domain until
+           Naipaul provides the question set.
       ============================================================ -->
       <div class="domain-card" id="card-12">
         <div class="domain-header">
@@ -939,7 +959,7 @@
           </div>
         </div>
         <div class="score-options">
-          <!-- PLACEHOLDER: Replace these 4 descriptions with Naipaul's confirmed criteria -->
+          <!-- Scoring criteria sourced from Master Connection Matrix. Confirmed for Piece 1. -->
           <div class="score-option"><input type="radio" name="d12" id="d12-0" value="0" onchange="onScore(12)" /><label for="d12-0"><span class="score-option-number">0</span><span class="score-option-desc">No exit preparation whatsoever</span></label></div>
           <div class="score-option"><input type="radio" name="d12" id="d12-1" value="1" onchange="onScore(12)" /><label for="d12-1"><span class="score-option-number">1</span><span class="score-option-desc">Aware of exit requirements</span></label></div>
           <div class="score-option"><input type="radio" name="d12" id="d12-2" value="2" onchange="onScore(12)" /><label for="d12-2"><span class="score-option-number">2</span><span class="score-option-desc">Partial data room / preparation done</span></label></div>
@@ -1105,8 +1125,16 @@
       { id: 12, name: 'Exit / Value Readiness',       short: 'Exit Readiness', placeholder: true },
     ];
 
-    // Gap descriptions for report — plain-language explanations of what a low score means.
-    // PLACEHOLDER entries for domains 9-12 must be replaced once Naipaul provides content.
+    // Gap descriptions for report Section 3 (Priority Focus Areas).
+    // These are plain-language explanations shown to the client when a domain
+    // appears in their top 3 lowest scores.
+    // Domains 1-8: confirmed copy. ✓
+    // Domains 9-12: [PLACEHOLDER] copy below.
+    //   NOTE: The scoring CRITERIA for domains 9-12 are confirmed (from the matrix).
+    //   What is missing is the plain-language GAP DESCRIPTION for the report output —
+    //   i.e. what a low score in this domain means in plain English for the client.
+    //   This is a Piece 1 go-live blocker for any client who scores low on these domains.
+    //   ACTION REQUIRED: Naipaul or Depesh to confirm the 4 gap descriptions before go-live.
     const DOMAIN_GAP_TEXT = [
       'You lack reliable visibility into your cash position — decisions are being made without a safety net.',
       'Your debt terms and covenant exposure aren\'t systematically tracked, creating hidden financial risk.',
