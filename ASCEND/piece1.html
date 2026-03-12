@@ -619,6 +619,10 @@
       flex-shrink: 0;
     }
     .export-btn:hover { opacity: 0.88; }
+    /* PDF button variant — gold background, navy text (primary action) */
+    .export-btn-pdf {
+      background: var(--gold); color: var(--navy);
+    }
 
   </style>
 </head>
@@ -1120,12 +1124,19 @@
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
         </div>
         <div class="export-text">
-          <div class="export-title">Share Your Results With Your Advisor</div>
-          <div class="export-desc">Download your assessment file and send it to Naipaul before your call. This allows him to review your self-assessment in advance and come prepared with the right questions for your specific situation.</div>
+          <div class="export-title">Download Your Report</div>
+          <div class="export-desc">Save your diagnostic report as a PDF, or download your assessment file to share with Naipaul before your discovery call.</div>
         </div>
+        <!-- PDF download: opens a print-optimised page in a new tab.
+             Client uses browser print → Save as PDF.
+             No library needed — works on all devices. -->
+        <button class="export-btn export-btn-pdf" onclick="openPrintReport()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Download PDF Report
+        </button>
         <button class="export-btn" onclick="exportResultsJSON()">
-          Download Assessment File
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Share With Advisor
         </button>
       </div>
 
@@ -1608,6 +1619,793 @@
         startScoring();
       }
     });
+
+    // ================================================================
+    // PDF REPORT GENERATOR
+    // Opens a print-optimised 6-page HTML document in a new tab.
+    // Client uses browser Print → Save as PDF.
+    // Matches Naipaul's reference PDF layout exactly:
+    //   Page 1 — Cover
+    //   Page 2 — Executive Summary (score gauge + key metrics)
+    //   Page 3 — Domain Score Breakdown table (all 12)
+    //   Page 4 — ASCEND Roadmap (stage strip + 6 tier cards)
+    //   Page 5 — Priority Focus Areas + primary domains + mini grid
+    //   Page 6 — Recommended Next Steps (CTA)
+    //
+    // All data pulled from live state: userName, userEmail, scores[],
+    // DOMAINS[], STAGE_TIERS[], DOMAIN_GAP_TEXT[], DOMAIN_PRIORITY_MATRIX
+    // No external dependencies — works offline after fonts load.
+    // ================================================================
+    function openPrintReport() {
+      // --- Gather all data needed for the report ---
+      const totalScore = scores.reduce((a, b) => a + (b || 0), 0);
+      const stage      = STAGE_LOOKUP[totalScore];
+      const tier       = STAGE_TIERS.find(t => t.stages.includes(stage));
+      const today      = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+      // Domain tier zone labels (Entry / Sprint / Retainer) shown in domain table
+      // Source: PRD Section 4.3 service zone boundaries
+      // Entry = stages 0-6, Sprint = stages 7-11, Retainer = stages 12-18
+      const DOMAIN_ZONE = ['Entry','Entry','Entry','Entry','Sprint','Sprint','Sprint','Sprint','Retainer','Retainer','Retainer','Retainer'];
+
+      // Score status labels — mirrors the PDF exactly
+      function scoreStatus(s) {
+        if (s === 0) return { label: 'CRITICAL',    cls: 'critical' };
+        if (s === 1) return { label: 'DEVELOPING',  cls: 'developing' };
+        if (s === 2) return { label: 'FUNCTIONAL',  cls: 'functional' };
+        return              { label: 'OPTIMISED',   cls: 'optimised' };
+      }
+
+      // Count critical domains (score 0)
+      const criticalCount = scores.filter(s => s === 0).length;
+
+      // Top 3 priority domains (lowest scores first, then by primary at stage)
+      const priorityMatrix = DOMAIN_PRIORITY_MATRIX[tier.name] || new Array(12).fill(0);
+      const ranked = scores
+        .map((s, i) => ({ i, s, isPrimary: priorityMatrix[i] === 1 }))
+        .sort((a, b) => a.s - b.s || (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
+        .slice(0, 3);
+
+      // Primary domains at this stage
+      const primaryDomains = DOMAINS.filter((_, i) => priorityMatrix[i] === 1);
+
+      // Gauge bar: score position as percentage of 36
+      const gaugePct = Math.round((totalScore / 36) * 100);
+
+      // ASCEND phase letter (first character of ascendPhase e.g. "A" from "A — ASSESS")
+      const phaseLetter = tier.ascendPhase.charAt(0);
+
+      // Risk bullet points per domain (from PDF — 3 bullets shown for top priority gaps)
+      // These are derived from DOMAIN_GAP_TEXT but split into 3 sub-bullets
+      const RISK_BULLETS = [
+        ['No 13-week cash forecast', 'Unknown DSO/DPO position', 'Reactive cash management'],
+        ['No covenant dashboard', 'Debt maturity not mapped', 'Refinancing risk unquantified'],
+        ['No controls documentation', 'Segregation of duties absent', 'Audit readiness at risk'],
+        ['Close process too slow', 'Reporting package incomplete', 'Management decisions delayed'],
+        ['No gross margin by product', 'Customer profitability unknown', 'Channel contribution unmapped'],
+        ['No rolling forecast in place', 'Cash needs not anticipated', 'Budget not updated in-year'],
+        ['Reactive lender relations', 'Tax planning reactive only', 'Advisor relationships untapped'],
+        ['Critical processes on spreadsheets', 'No ERP or system integration', 'Manual errors unchecked'],
+        ['No dedicated finance leadership', 'Founder dependency in decisions', 'Strategic mandate undefined'],
+        ['Finance roles undefined', 'No performance management', 'Talent pipeline non-existent'],
+        ['No QofE assessment done', 'Earnings quality untested', 'Exit/fundraise readiness at risk'],
+        ['No exit preparation begun', 'Data room does not exist', 'Valuation readiness unknown'],
+      ];
+
+      // Risk titles for top 3 cards (matches PDF card heading format)
+      const RISK_TITLES = [
+        'Risk: No cash visibility',
+        'Risk: Untracked covenant risk',
+        'Risk: No controls framework',
+        'Risk: Delayed financial close',
+        'Risk: Flying blind on margin',
+        'Risk: No forward visibility',
+        'Risk: Reactive advisor relations',
+        'Risk: Process fragility',
+        'Risk: Leadership gap',
+        'Risk: Team structure absent',
+        'Risk: Earnings quality unknown',
+        'Risk: Exit unprepared',
+      ];
+
+      // ----------------------------------------------------------------
+      // BUILD PRINT HTML — full 6-page document
+      // ----------------------------------------------------------------
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>ASCEND™ CFO Finance Diagnostic — ${userName}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* ============================================================
+       PRINT REPORT STYLESHEET
+       Designed for A4 / Letter print → PDF.
+       @page rules enforce margins. page-break-before/after
+       ensure each section lands on its own page.
+    ============================================================ */
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: white;
+      color: #0D1B2A;
+      font-size: 10pt;
+      line-height: 1.5;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Colours — match ACT Ascend brand */
+    :root {
+      --navy:  #0D1B2A;
+      --gold:  #C9A84C;
+      --gold2: #E8C878;
+      --pale:  #F5EDD6;
+      --off:   #F8F6F1;
+      --border:#E2D9C5;
+      --mid:   #4A5568;
+      --light: #718096;
+      --red:   #C0392B;
+      --amber: #E67E22;
+      --green: #27AE60;
+    }
+
+    /* Page wrapper — each .page is one printed page */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 14mm 16mm 12mm;
+      page-break-after: always;
+      position: relative;
+      background: white;
+      overflow: hidden;
+    }
+    .page:last-child { page-break-after: avoid; }
+
+    /* ── HEADER BAR — appears on pages 2-6 ── */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid var(--gold); padding-bottom: 8px; margin-bottom: 16px;
+    }
+    .page-header-logo { font-size: 9pt; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--navy); }
+    .page-header-logo span { color: var(--gold); }
+    .page-header-right { font-size: 8pt; color: var(--light); }
+
+    /* ── PAGE 1: COVER ── */
+    .cover-page {
+      background: var(--navy);
+      display: flex; flex-direction: column;
+      justify-content: space-between;
+      color: white; padding: 18mm 16mm 14mm;
+    }
+    .cover-top { }
+    .cover-brand { font-size: 10pt; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 48px; }
+    .cover-brand span { color: rgba(255,255,255,0.5); }
+    .cover-title { font-size: 26pt; font-weight: 800; line-height: 1.15; margin-bottom: 10px; }
+    .cover-title span { color: var(--gold); display: block; }
+    .cover-subtitle { font-size: 12pt; color: rgba(255,255,255,0.55); margin-bottom: 48px; }
+    .cover-for-label { font-size: 9pt; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .cover-client-name { font-size: 22pt; font-weight: 700; margin-bottom: 4px; }
+    .cover-score-row { display: flex; align-items: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+    .cover-score-chip {
+      background: rgba(201,168,76,0.15); border: 1.5px solid var(--gold);
+      border-radius: 6px; padding: 10px 16px;
+    }
+    .cover-score-chip .chip-val { font-size: 18pt; font-weight: 800; color: var(--gold); line-height: 1; }
+    .cover-score-chip .chip-label { font-size: 8pt; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .cover-bottom { }
+    .cover-date { font-size: 10pt; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+    .cover-confidential { font-size: 8pt; color: rgba(255,255,255,0.3); margin-bottom: 12px; }
+    .cover-prepared { font-size: 9pt; color: rgba(255,255,255,0.55); }
+
+    /* ── PAGE 2: EXECUTIVE SUMMARY ── */
+    .exec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .exec-metric {
+      background: var(--off); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .exec-metric-key { font-size: 8pt; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--light); margin-bottom: 4px; }
+    .exec-metric-val { font-size: 16pt; font-weight: 800; color: var(--navy); line-height: 1.1; }
+    .exec-metric-sub { font-size: 8pt; color: var(--mid); margin-top: 2px; }
+    .exec-metric.highlight { background: var(--navy); border-color: var(--navy); }
+    .exec-metric.highlight .exec-metric-key { color: rgba(255,255,255,0.5); }
+    .exec-metric.highlight .exec-metric-val { color: var(--gold); }
+    .exec-metric.highlight .exec-metric-sub { color: rgba(255,255,255,0.4); }
+    .exec-metric.critical-metric { border-color: var(--red); }
+    .exec-metric.critical-metric .exec-metric-val { color: var(--red); }
+
+    /* Gauge bar — horizontal 0→36 bar with score marker */
+    .gauge-wrap { margin: 16px 0; }
+    .gauge-label-row { display: flex; justify-content: space-between; font-size: 8pt; color: var(--light); margin-bottom: 6px; }
+    .gauge-track {
+      height: 14px; background: #E8E4DC; border-radius: 7px; position: relative; overflow: visible;
+    }
+    .gauge-fill {
+      height: 100%; border-radius: 7px;
+      background: linear-gradient(90deg, #1E8449 0%, #E67E22 50%, #C0392B 85%);
+      position: absolute; left: 0; top: 0;
+    }
+    .gauge-marker {
+      position: absolute; top: -4px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--navy); border: 3px solid var(--gold);
+      transform: translateX(-50%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gauge-score-label {
+      position: absolute; top: -22px;
+      font-size: 8pt; font-weight: 700; color: var(--navy);
+      transform: translateX(-50%); white-space: nowrap;
+    }
+    .gauge-ticks { display: flex; justify-content: space-between; margin-top: 4px; font-size: 7pt; color: var(--light); }
+
+    .stage-position-block {
+      background: var(--navy); border-radius: 10px; padding: 16px 20px;
+      color: white; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .stage-pos-letter {
+      width: 52px; height: 52px; flex-shrink: 0;
+      background: var(--gold); color: var(--navy);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; font-size: 24pt; font-weight: 800;
+    }
+    .stage-pos-name { font-size: 15pt; font-weight: 800; }
+    .stage-pos-phase { font-size: 9pt; color: rgba(255,255,255,0.55); margin-top: 2px; }
+    .stage-pos-desc { font-size: 9pt; color: rgba(255,255,255,0.7); margin-top: 6px; line-height: 1.5; }
+
+    .exec-summary-text {
+      font-size: 9.5pt; color: var(--mid); line-height: 1.7;
+      border-left: 3px solid var(--gold); padding-left: 12px;
+    }
+
+    /* ── PAGE 3: DOMAIN SCORE BREAKDOWN ── */
+    .section-title { font-size: 13pt; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+    .section-sub { font-size: 9pt; color: var(--mid); margin-bottom: 14px; }
+
+    .domain-table { width: 100%; border-collapse: collapse; }
+    .domain-table th {
+      background: var(--navy); color: white;
+      font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 8px 10px; text-align: left;
+    }
+    .domain-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); font-size: 9pt; }
+    .domain-table tr:nth-child(even) td { background: var(--off); }
+    .domain-table tr:hover td { background: var(--pale); }
+
+    .zone-pill {
+      font-size: 7.5pt; font-weight: 700; letter-spacing: 0.5px;
+      padding: 2px 7px; border-radius: 10px; white-space: nowrap;
+    }
+    .zone-entry   { background: #E8F5E9; color: #1B5E20; }
+    .zone-sprint  { background: #FFF8E1; color: #F57F17; }
+    .zone-retainer{ background: #E3F2FD; color: #0D47A1; }
+
+    .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .score-bar-track { flex: 1; height: 6px; background: #E8E4DC; border-radius: 3px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 3px; }
+    .score-num { font-size: 9pt; font-weight: 700; width: 24px; text-align: right; flex-shrink: 0; }
+
+    .status-badge {
+      font-size: 7.5pt; font-weight: 700; letter-spacing: 0.5px;
+      padding: 2px 7px; border-radius: 10px; white-space: nowrap;
+    }
+    .critical   { background: #FDECEA; color: var(--red); }
+    .developing { background: #FFF8E1; color: #7A5C00; }
+    .functional { background: #E8F5E9; color: #1B5E20; }
+    .optimised  { background: #E3F2FD; color: #0D47A1; }
+
+    .score-guide { margin-top: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .score-guide-item { display: flex; align-items: center; gap: 6px; font-size: 8pt; color: var(--mid); }
+
+    /* ── PAGE 4: ROADMAP ── */
+    .roadmap-stage-strip {
+      display: flex; gap: 4px; margin-bottom: 16px; align-items: flex-end; flex-wrap: wrap;
+    }
+    .roadmap-strip-tier { text-align: center; }
+    .roadmap-strip-label { font-size: 7pt; font-weight: 700; color: var(--mid); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .roadmap-strip-dots { display: flex; gap: 3px; }
+    .roadmap-dot {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8pt; font-weight: 700; border: 2px solid var(--border);
+      color: var(--light); background: white;
+    }
+    .roadmap-dot.active { background: var(--gold); border-color: var(--gold); color: var(--navy); font-weight: 800; }
+    .roadmap-dot.passed { background: var(--off); color: #BBBBBB; border-color: #DDDDDD; }
+
+    .roadmap-cards { display: flex; flex-direction: column; gap: 8px; }
+    .roadmap-card {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+      background: white;
+    }
+    .roadmap-card.current { border-color: var(--gold); background: var(--pale); }
+    .roadmap-card-letter {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border-radius: 8px; background: var(--off); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14pt; font-weight: 800; color: var(--light);
+    }
+    .roadmap-card.current .roadmap-card-letter { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+    .roadmap-card-tier { font-size: 10pt; font-weight: 800; color: var(--navy); }
+    .roadmap-card-phase { font-size: 8pt; color: var(--mid); margin-top: 1px; }
+    .roadmap-card-desc { font-size: 8.5pt; color: var(--mid); margin-top: 5px; line-height: 1.5; }
+    .you-are-here {
+      font-size: 7.5pt; font-weight: 700; background: var(--navy); color: var(--gold);
+      padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 4px;
+    }
+
+    /* ── PAGE 5: PRIORITY FOCUS AREAS ── */
+    .priority-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .priority-card {
+      border: 1.5px solid var(--border); border-radius: 8px; padding: 12px;
+      background: var(--off);
+    }
+    .priority-card-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--navy); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10pt; font-weight: 800; margin-bottom: 8px;
+    }
+    .priority-card-name { font-size: 9.5pt; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    .priority-card-risk { font-size: 8pt; font-weight: 600; color: var(--red); margin-bottom: 8px; }
+    .priority-card-desc { font-size: 8pt; color: var(--mid); line-height: 1.5; margin-bottom: 8px; }
+    .priority-bullet { font-size: 7.5pt; color: var(--mid); padding: 2px 0; padding-left: 10px; position: relative; }
+    .priority-bullet::before { content: "·"; position: absolute; left: 2px; color: var(--gold); font-weight: 700; }
+
+    .primary-domains-block {
+      background: var(--navy); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; color: white;
+    }
+    .primary-domains-title { font-size: 9pt; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .primary-domain-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .primary-domain-row:last-child { margin-bottom: 0; }
+    .primary-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 5px; }
+    .primary-domain-name { font-size: 9pt; font-weight: 700; }
+    .primary-domain-why { font-size: 8pt; color: rgba(255,255,255,0.6); }
+
+    /* Mini scorecard grid — all 12 domains as chips */
+    .mini-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .mini-chip {
+      padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border);
+      font-size: 7.5pt; background: var(--off); display: flex; align-items: center; gap: 5px;
+    }
+    .mini-chip-score { font-weight: 800; }
+    .mini-chip-name { color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+    .mini-chip.c0 { border-color: #FDECEA; background: #FDECEA; }
+    .mini-chip.c0 .mini-chip-score { color: var(--red); }
+    .mini-chip.c1 { border-color: #FFF8E1; background: #FFF8E1; }
+    .mini-chip.c1 .mini-chip-score { color: #7A5C00; }
+    .mini-chip.c2 { border-color: #E8F5E9; background: #E8F5E9; }
+    .mini-chip.c2 .mini-chip-score { color: #1B5E20; }
+    .mini-chip.c3 { border-color: #E3F2FD; background: #E3F2FD; }
+    .mini-chip.c3 .mini-chip-score { color: #0D47A1; }
+
+    /* ── PAGE 6: NEXT STEPS ── */
+    .engagement-card {
+      background: var(--navy); border-radius: 10px; padding: 20px 24px; color: white; margin-bottom: 20px;
+    }
+    .engagement-zone { font-size: 8pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .engagement-name { font-size: 14pt; font-weight: 800; margin-bottom: 6px; }
+    .engagement-meta { font-size: 9pt; color: rgba(255,255,255,0.55); margin-bottom: 12px; }
+    .engagement-desc { font-size: 9.5pt; color: rgba(255,255,255,0.8); line-height: 1.65; }
+
+    .steps-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .step-item { display: flex; gap: 14px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 8px; }
+    .step-num {
+      width: 32px; height: 32px; flex-shrink: 0;
+      background: var(--gold); color: var(--navy);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 11pt; font-weight: 800;
+    }
+    .step-title { font-size: 10pt; font-weight: 700; margin-bottom: 3px; }
+    .step-desc { font-size: 8.5pt; color: var(--mid); line-height: 1.5; }
+
+    .cta-final {
+      background: var(--gold); border-radius: 8px; padding: 16px 20px;
+      text-align: center; margin-bottom: 20px;
+    }
+    .cta-final-main { font-size: 11pt; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+    .cta-final-sub { font-size: 8.5pt; color: rgba(13,27,42,0.65); margin-bottom: 8px; }
+    .cta-final-url { font-size: 10pt; font-weight: 700; color: var(--navy); text-decoration: none; }
+
+    .page-footer {
+      position: absolute; bottom: 10mm; left: 16mm; right: 16mm;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid var(--border); padding-top: 6px;
+      font-size: 7.5pt; color: var(--light);
+    }
+
+    /* Print-specific overrides */
+    @media print {
+      body { background: white; }
+      .page { box-shadow: none; }
+    }
+
+    /* Screen preview styles — slight shadow so pages look distinct */
+    @media screen {
+      body { background: #E8E4DC; }
+      .page { margin: 20px auto; box-shadow: 0 4px 24px rgba(0,0,0,0.18); max-width: 210mm; }
+      .print-btn {
+        position: fixed; top: 16px; right: 16px; z-index: 999;
+        background: #0D1B2A; color: #C9A84C;
+        font-size: 13px; font-weight: 700;
+        border: none; border-radius: 8px; padding: 12px 22px;
+        cursor: pointer; display: flex; align-items: center; gap: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      }
+      .print-btn:hover { opacity: 0.9; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Print / Save as PDF button (screen only) -->
+<button class="print-btn" onclick="window.print()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+  Save as PDF
+</button>
+
+<!-- =====================================================
+     PAGE 1: COVER
+===================================================== -->
+<div class="page cover-page">
+  <div class="cover-top">
+    <div class="cover-brand">ACT <span>ASCEND</span> PARTNERS™</div>
+    <div class="cover-title">
+      ASCEND™ CFO Finance Diagnostic
+      <span>Client Assessment Report</span>
+    </div>
+    <div class="cover-subtitle">Prepared for</div>
+    <div class="cover-client-name">${userName}</div>
+    <div class="cover-score-row">
+      <div class="cover-score-chip">
+        <div class="chip-val">${totalScore} / 36</div>
+        <div class="chip-label">Overall Score</div>
+      </div>
+      <div class="cover-score-chip">
+        <div class="chip-val">Stage ${stage} of 18</div>
+        <div class="chip-label">${tier.name} Tier · ASCEND Phase: ${tier.ascendPhase}</div>
+      </div>
+    </div>
+  </div>
+  <div class="cover-bottom">
+    <div class="cover-date">${today}</div>
+    <div class="cover-confidential">CONFIDENTIAL — For Recipient Use Only</div>
+    <div class="cover-prepared">Prepared by Naipaul Sheosankar | ACT Ascend Partners™ | ACTascendpartners.com</div>
+  </div>
+</div>
+
+<!-- =====================================================
+     PAGE 2: EXECUTIVE SUMMARY
+===================================================== -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-logo">ACT <span>ASCEND</span> PARTNERS™ · ASCEND™ CFO Finance Diagnostic</div>
+    <div class="page-header-right">Executive Summary · Prepared for ${userName}</div>
+  </div>
+
+  <!-- Score gauge -->
+  <div class="gauge-wrap">
+    <div class="gauge-label-row">
+      <span style="font-size:9pt;font-weight:700;color:#0D1B2A;">Overall Score</span>
+      <span>${totalScore} / 36</span>
+    </div>
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:${gaugePct}%"></div>
+      <div class="gauge-marker" style="left:${gaugePct}%">
+        <div class="gauge-score-label">${totalScore}</div>
+      </div>
+    </div>
+    <div class="gauge-ticks">
+      <span>0</span><span>6</span><span>12</span><span>18</span><span>24</span><span>30</span><span>36</span>
+    </div>
+  </div>
+
+  <!-- Key metrics grid -->
+  <div class="exec-grid">
+    <div class="exec-metric highlight">
+      <div class="exec-metric-key">Current Stage</div>
+      <div class="exec-metric-val">Stage ${stage}</div>
+      <div class="exec-metric-sub">of 18 stages</div>
+    </div>
+    <div class="exec-metric">
+      <div class="exec-metric-key">Tier</div>
+      <div class="exec-metric-val">${tier.name}</div>
+      <div class="exec-metric-sub">ASCEND Phase: ${tier.ascendPhase}</div>
+    </div>
+    <div class="exec-metric">
+      <div class="exec-metric-key">Total Score</div>
+      <div class="exec-metric-val">${totalScore} / 36</div>
+      <div class="exec-metric-sub">Sum of 12 domain scores</div>
+    </div>
+    <div class="exec-metric critical-metric">
+      <div class="exec-metric-key">Critical Risk Domains</div>
+      <div class="exec-metric-val">${criticalCount}</div>
+      <div class="exec-metric-sub">Domains scoring 0 / 3</div>
+    </div>
+  </div>
+
+  <!-- Stage position block -->
+  <div class="stage-position-block">
+    <div class="stage-pos-letter">${phaseLetter}</div>
+    <div>
+      <div class="stage-pos-name">${tier.name} Tier · ${tier.ascendPhase}</div>
+      <div class="stage-pos-phase">Stage ${stage} of 18 · Score ${totalScore} / 36</div>
+      <div class="stage-pos-desc">${tier.description}</div>
+    </div>
+  </div>
+
+  <!-- Strategic position narrative -->
+  <div class="exec-summary-text">
+    A score of ${totalScore}/36 places you at Stage ${stage} — ${tier.name} Tier. The ASCEND™ framework identifies this as the ${tier.ascendPhase} phase.
+    At this stage, ${tier.description.toLowerCase()}
+    ${criticalCount > 0 ? `You have ${criticalCount} domain${criticalCount > 1 ? 's' : ''} scoring zero — these represent structural vulnerabilities requiring immediate attention.` : 'Your financial infrastructure shows developing capability across all 12 domains.'}
+    The recommended engagement is <strong>${tier.recommendedService}</strong> (${tier.price}).
+  </div>
+
+  <div class="page-footer">
+    <span>ACT Ascend Partners™ | ASCEND™ CFO Finance Diagnostic | Confidential</span>
+    <span>Page 2</span>
+  </div>
+</div>
+
+<!-- =====================================================
+     PAGE 3: DOMAIN SCORE BREAKDOWN
+===================================================== -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-logo">ACT <span>ASCEND</span> PARTNERS™ · ASCEND™ CFO Finance Diagnostic</div>
+    <div class="page-header-right">Score: ${totalScore} / 36 · ${userName}</div>
+  </div>
+
+  <div class="section-title">Domain Score Breakdown</div>
+  <div class="section-sub">Score: ${totalScore} / 36 · 12 Domains Assessed · Each domain scored 0–3. Scores of 0–1 indicate critical gaps requiring immediate attention.</div>
+
+  <table class="domain-table">
+    <thead>
+      <tr>
+        <th style="width:70px">Zone</th>
+        <th>Domain</th>
+        <th style="width:130px">Score</th>
+        <th style="width:90px">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${DOMAINS.map((d, i) => {
+        const s = scores[i];
+        const st = scoreStatus(s);
+        const zone = DOMAIN_ZONE[i];
+        const zoneClass = zone === 'Entry' ? 'zone-entry' : zone === 'Sprint' ? 'zone-sprint' : 'zone-retainer';
+        const barColor = s === 0 ? '#C0392B' : s === 1 ? '#E67E22' : s === 2 ? '#27AE60' : '#1A5276';
+        const barPct = Math.round((s / 3) * 100);
+        return `
+        <tr>
+          <td><span class="zone-pill ${zoneClass}">${zone}</span></td>
+          <td style="font-weight:600">${d.name}</td>
+          <td>
+            <div class="score-bar-wrap">
+              <div class="score-bar-track">
+                <div class="score-bar-fill" style="width:${barPct}%;background:${barColor}"></div>
+              </div>
+              <div class="score-num">${s} / 3</div>
+            </div>
+          </td>
+          <td><span class="status-badge ${st.cls}">${st.label}</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+
+  <div class="score-guide">
+    <div class="score-guide-item"><span class="status-badge critical">0 — CRITICAL</span> Immediate action required</div>
+    <div class="score-guide-item"><span class="status-badge developing">1 — DEVELOPING</span> Foundations being established</div>
+    <div class="score-guide-item"><span class="status-badge functional">2 — FUNCTIONAL</span> Operating but room to improve</div>
+    <div class="score-guide-item"><span class="status-badge optimised">3 — OPTIMISED</span> Best-practice level achieved</div>
+  </div>
+
+  <div class="page-footer">
+    <span>ACT Ascend Partners™ | ASCEND™ CFO Finance Diagnostic | Confidential</span>
+    <span>Page 3</span>
+  </div>
+</div>
+
+<!-- =====================================================
+     PAGE 4: ASCEND ROADMAP
+===================================================== -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-logo">ACT <span>ASCEND</span> PARTNERS™ · ASCEND™ CFO Finance Diagnostic</div>
+    <div class="page-header-right">Stage ${stage} of 18 · ${tier.name} Tier · ${userName}</div>
+  </div>
+
+  <div class="section-title">Your Position on the ASCEND™ Roadmap</div>
+  <div class="section-sub">Stage ${stage} of 18 · ${tier.name} Tier</div>
+
+  <!-- Stage strip -->
+  <div class="roadmap-stage-strip">
+    ${STAGE_TIERS.map(t => `
+      <div class="roadmap-strip-tier">
+        <div class="roadmap-strip-label">${t.name}</div>
+        <div class="roadmap-strip-dots">
+          ${t.stages.map(s => `
+            <div class="roadmap-dot ${s === stage ? 'active' : s < stage ? 'passed' : ''}">${s}</div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('')}
+  </div>
+
+  <!-- Tier cards -->
+  <div class="roadmap-cards">
+    ${STAGE_TIERS.map((t, ti) => {
+      const isCurrent = t.name === tier.name;
+      const letter = t.ascendPhase.charAt(0);
+      return `
+      <div class="roadmap-card ${isCurrent ? 'current' : ''}">
+        <div class="roadmap-card-letter">${letter}</div>
+        <div style="flex:1">
+          <div class="roadmap-card-tier">${t.name}
+            <span style="font-size:8pt;font-weight:400;color:#718096;margin-left:6px">${t.ascendPhase} · Stages ${t.stages[0]}–${t.stages[t.stages.length-1]}</span>
+          </div>
+          <div class="roadmap-card-desc">${t.sneakPeek}</div>
+          ${isCurrent ? '<div class="you-are-here">YOU ARE HERE</div>' : ''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="page-footer">
+    <span>ACT Ascend Partners™ | ASCEND™ CFO Finance Diagnostic | Confidential</span>
+    <span>Page 4</span>
+  </div>
+</div>
+
+<!-- =====================================================
+     PAGE 5: PRIORITY FOCUS AREAS
+===================================================== -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-logo">ACT <span>ASCEND</span> PARTNERS™ · ASCEND™ CFO Finance Diagnostic</div>
+    <div class="page-header-right">Priority Focus Areas · ${userName}</div>
+  </div>
+
+  <div class="section-title">Priority Focus Areas &amp; Risk Analysis</div>
+  <div class="section-sub">Domains requiring immediate attention</div>
+
+  <!-- Top 3 priority domain cards -->
+  <div class="priority-cards">
+    ${ranked.map((item, rank) => {
+      const d = DOMAINS[item.i];
+      const bullets = RISK_BULLETS[item.i] || ['Gap identified', 'Action required', 'Review needed'];
+      const riskTitle = RISK_TITLES[item.i] || 'Risk: Gap identified';
+      return `
+      <div class="priority-card">
+        <div class="priority-card-num">${String(rank+1).padStart(2,'0')}</div>
+        <div class="priority-card-name">${d.name}</div>
+        <div class="priority-card-risk">${riskTitle}</div>
+        <div class="priority-card-desc">${DOMAIN_GAP_TEXT[item.i].replace('[PLACEHOLDER] ','')}</div>
+        ${bullets.map(b => `<div class="priority-bullet">${b}</div>`).join('')}
+      </div>`;
+    }).join('')}
+  </div>
+
+  <!-- Primary focus domains at this stage -->
+  <div class="primary-domains-block">
+    <div class="primary-domains-title">Primary Focus Domains at ${tier.name} Stage</div>
+    <div style="font-size:8.5pt;color:rgba(255,255,255,0.6);margin-bottom:10px">At ${tier.name} stage, the ASCEND framework identifies these as the core areas where focused attention creates the highest leverage:</div>
+    ${primaryDomains.length > 0 ? primaryDomains.map(d => `
+      <div class="primary-domain-row">
+        <div class="primary-dot"></div>
+        <div>
+          <div class="primary-domain-name">${d.name}</div>
+          <div class="primary-domain-why">${DOMAIN_GAP_TEXT[DOMAINS.indexOf(d)].replace('[PLACEHOLDER] ','')}</div>
+        </div>
+      </div>`).join('') : '<div style="font-size:9pt;color:rgba(255,255,255,0.5)">No primary domains defined for this stage.</div>'}
+  </div>
+
+  <!-- Mini scorecard grid — all 12 -->
+  <div style="font-size:8pt;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#718096;margin-bottom:8px">All 12 Domain Status at a Glance</div>
+  <div class="mini-grid">
+    ${DOMAINS.map((d, i) => {
+      const s = scores[i];
+      return `<div class="mini-chip c${s}">
+        <span class="mini-chip-score">${s}</span>
+        <span class="mini-chip-name">${d.short}</span>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="page-footer">
+    <span>ACT Ascend Partners™ | ASCEND™ CFO Finance Diagnostic | Confidential</span>
+    <span>Page 5</span>
+  </div>
+</div>
+
+<!-- =====================================================
+     PAGE 6: RECOMMENDED NEXT STEPS
+===================================================== -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-logo">ACT <span>ASCEND</span> PARTNERS™ · ASCEND™ CFO Finance Diagnostic</div>
+    <div class="page-header-right">Recommended Next Steps · ${userName}</div>
+  </div>
+
+  <div class="section-title">Your Recommended Next Steps</div>
+  <div class="section-sub">Based on your ASCEND™ Diagnostic results</div>
+
+  <!-- Engagement recommendation card -->
+  <div class="engagement-card">
+    <div class="engagement-zone">Recommended Engagement: ${tier.offerZone}</div>
+    <div class="engagement-name">${tier.recommendedService}</div>
+    <div class="engagement-meta">${tier.price} · Based on Stage ${stage} placement</div>
+    <div class="engagement-desc">
+      Based on your score of ${totalScore}/36 and Stage ${stage} placement, ${tier.description.toLowerCase()}
+      This engagement maps all 12 domains in depth, validates your self-assessment scores with a senior advisor review, and produces a prioritised action plan specific to your business.
+    </div>
+  </div>
+
+  <!-- 3-step path forward -->
+  <div style="font-size:10pt;font-weight:700;margin-bottom:10px">Your 3-Step Path Forward</div>
+  <div class="steps-grid">
+    <div class="step-item">
+      <div class="step-num">01</div>
+      <div>
+        <div class="step-title">Book a Discovery Call</div>
+        <div class="step-desc">Schedule a 30-minute call with Naipaul Sheosankar at ACT Ascend Partners. No commitment, no pitch — just clarity on where your business stands and what the most critical blind spots are.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">02</div>
+      <div>
+        <div class="step-title">Receive Your Validated Diagnostic</div>
+        <div class="step-desc">Naipaul reviews your self-assessment scores, conducts a senior advisor walkthrough of all 12 domains, and identifies gaps your team may have missed. Delivered as a written report within 5 business days.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">03</div>
+      <div>
+        <div class="step-title">90-Day Action Plan</div>
+        <div class="step-desc">Receive a prioritised action plan tied directly to your stage and highest-risk domains. Each item is sequenced, assigned a responsible owner, and linked to a measurable outcome.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-final">
+    <div class="cta-final-main">Book Your Discovery Call</div>
+    <div class="cta-final-sub">No commitment. No pitch. Just clarity on where your business stands financially.</div>
+    <!-- PLACEHOLDER: Replace with Naipaul's actual booking URL when provided -->
+    <a class="cta-final-url" href="https://actascendpartners.com/book">ACTascendpartners.com</a>
+    <span style="margin:0 10px;color:rgba(13,27,42,0.3)">|</span>
+    <!-- PLACEHOLDER: Replace with Naipaul's actual LinkedIn URL when provided -->
+    <a class="cta-final-url" href="https://linkedin.com/in/naipaulsheosankar">Connect with Naipaul Sheosankar on LinkedIn</a>
+  </div>
+
+  <!-- Prepared by -->
+  <div style="text-align:center;font-size:8pt;color:#718096;margin-top:8px">
+    Prepared by: <strong>Naipaul Sheosankar, MBA, CPA</strong><br/>
+    Managing Partner — ACT Ascend Partners™ · ${today}
+  </div>
+
+  <div class="page-footer">
+    <span>ACT Ascend Partners™ | ASCEND™ CFO Finance Diagnostic | Confidential</span>
+    <span>Page 6</span>
+  </div>
+</div>
+
+</body>
+</html>`;
+
+      // Open print view in new tab
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+    }
 
     // ================================================================
     // PIECE 1 → PIECE 2 EXPORT
