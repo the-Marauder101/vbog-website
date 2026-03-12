@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASCEND™ Deep Diagnostic — ACT Ascend Partners</title>
+  <!-- JSZip: used to build .docx (OOXML ZIP archive) in-browser, no server needed -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    /* ================================================================
+       DESIGN SYSTEM — mirrors Piece 1 visual language exactly.
+       Both tools are part of the same product family.
+    ================================================================ */
+    :root {
+      --navy:       #0D1B2A;
+      --navy-mid:   #1A2E42;
+      --gold:       #C9A84C;
+      --gold-pale:  #FDF6E3;
+      --off-white:  #F8F7F4;
+      --border:     #E2DDD5;
+      --text-mid:   #5A5A5A;
+      --text-light: #9A9A9A;
+      --red-soft:   #C0392B;
+      --amber:      #D68910;
+      --green-soft: #1E8449;
+      --radius:     8px;
+      --radius-lg:  14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--off-white); color: var(--navy); min-height: 100vh; }
+    .page { max-width: 820px; margin: 0 auto; padding: 32px 20px 80px; }
+
+    /* Top bar */
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .topbar-logo { font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--navy); }
+    .topbar-logo span { color: var(--gold); }
+    .topbar-badge { background: var(--navy); color: var(--gold); font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+
+    /* Buttons */
+    .btn-primary { background: var(--gold); color: var(--navy); font-size: 15px; font-weight: 700; border: none; border-radius: var(--radius); padding: 14px 28px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.18s; justify-content: center; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-secondary { background: transparent; color: var(--navy); font-size: 14px; font-weight: 600; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 12px 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.18s; }
+    .btn-secondary:hover { border-color: var(--gold); }
+
+    /* Screen visibility */
+    #screen-import   { display: block; }
+    #screen-assess   { display: none; }
+    #screen-findings { display: none; }
+
+    /* ================================================================
+       SCREEN 1: IMPORT
+    ================================================================ */
+    .import-hero { background: var(--navy); border-radius: var(--radius-lg); padding: 40px; margin-bottom: 28px; color: white; position: relative; overflow: hidden; }
+    .import-hero::before { content: ''; position: absolute; top: -80px; right: -80px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%); }
+    .import-hero-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+    .import-hero-title { font-size: 26px; font-weight: 800; line-height: 1.25; margin-bottom: 10px; }
+    .import-hero-sub { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 520px; }
+
+    .import-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 20px; }
+    .import-card-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .import-card-sub { font-size: 13px; color: var(--text-mid); margin-bottom: 22px; line-height: 1.55; }
+
+    .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 36px 24px; text-align: center; cursor: pointer; transition: border-color 0.18s, background 0.18s; position: relative; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--gold); background: var(--gold-pale); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-label { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .upload-hint { font-size: 12px; color: var(--text-light); }
+
+    /* Client preview — shown after valid JSON loaded */
+    .client-preview { display: none; background: var(--gold-pale); border: 1.5px solid var(--gold); border-radius: var(--radius); padding: 20px 24px; margin-top: 18px; }
+    .client-preview.visible { display: block; }
+    .preview-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .preview-name { font-size: 18px; font-weight: 800; }
+    .preview-email { font-size: 13px; color: var(--text-mid); margin-top: 2px; }
+    .preview-badge { background: var(--navy); color: var(--gold); font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; }
+    .preview-scores { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .preview-chip { font-size: 11px; background: white; border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--navy); }
+    .preview-chip span { font-weight: 700; }
+
+    .import-error { display: none; background: #FDECEA; border: 1px solid #C0392B; border-radius: var(--radius); padding: 12px 16px; font-size: 13px; color: var(--red-soft); margin-top: 12px; }
+    .import-error.visible { display: block; }
+
+    .manual-link-row { text-align: center; margin-top: 14px; font-size: 13px; color: var(--text-mid); }
+    .manual-link { color: var(--navy); font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+    .start-row { margin-top: 22px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .start-row .btn-primary { flex: 1; min-width: 200px; }
+
+    /* ================================================================
+       SCREEN 2: ASSESSMENT
+       One domain shown at a time. Sequential flow.
+    ================================================================ */
+    .assess-header { background: var(--navy); border-radius: var(--radius-lg); padding: 24px 32px; margin-bottom: 24px; color: white; }
+    .assess-header-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .assess-title { font-size: 17px; font-weight: 800; }
+    .assess-client-name { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+    .progress-wrap { min-width: 160px; }
+    .progress-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 6px; text-align: right; }
+    .progress-bar-track { height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+    .progress-count { font-size: 11px; color: rgba(255,255,255,0.35); text-align: right; margin-top: 4px; }
+
+    /* Domain assessment card */
+    .assess-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px; }
+    .assess-card-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 22px; }
+    .assess-domain-num { width: 42px; height: 42px; flex-shrink: 0; background: var(--navy); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; }
+    .assess-domain-name { font-size: 19px; font-weight: 800; }
+    .assess-domain-desc { font-size: 13px; color: var(--text-mid); margin-top: 3px; }
+
+    /* Client self-score reference — read-only, shown from imported Piece 1 data */
+    .self-score-ref { background: var(--gold-pale); border: 1px solid rgba(201,168,76,0.4); border-radius: var(--radius); padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .self-score-ref.no-data { background: var(--off-white); border-color: var(--border); }
+    .self-score-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--amber); flex-shrink: 0; }
+    .self-score-ref.no-data .self-score-tag { color: var(--text-light); }
+    .self-score-val { font-size: 15px; font-weight: 800; }
+    .self-score-criteria { font-size: 12px; color: var(--text-mid); flex: 1; }
+
+    /* Naipaul score input */
+    .score-section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--navy); margin-bottom: 10px; }
+    .score-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+    @media (max-width: 600px) { .score-options { grid-template-columns: repeat(2, 1fr); } }
+    .score-option { position: relative; }
+    .score-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .score-option label { display: block; padding: 14px 10px; border: 1.5px solid var(--border); border-radius: var(--radius); cursor: pointer; text-align: center; transition: all 0.18s; background: var(--off-white); font-size: 12px; line-height: 1.45; color: var(--text-mid); }
+    .score-option label:hover { border-color: var(--gold); background: var(--gold-pale); }
+    .score-option input:checked + label { border-color: var(--gold); background: var(--gold); color: var(--navy); font-weight: 600; }
+    /* Score number hidden visually — value tracked via radio input value attribute */
+    .score-option-number { display: none; }
+
+    /* Interview questions accordion — collapsed by default, all content shown when expanded */
+    .accordion { margin-bottom: 20px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .accordion-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--off-white); cursor: pointer; font-size: 11px; font-weight: 700; color: var(--navy); letter-spacing: 1px; text-transform: uppercase; user-select: none; transition: background 0.15s; gap: 10px; }
+    .accordion-toggle:hover { background: var(--gold-pale); }
+    .accordion-chevron { transition: transform 0.25s; flex-shrink: 0; }
+    .accordion-toggle.open .accordion-chevron { transform: rotate(180deg); }
+    .accordion-body { display: none; padding: 20px 18px; background: white; border-top: 1px solid var(--border); }
+    .accordion-body.open { display: block; }
+
+    /* Question sub-sections inside accordion */
+    .q-section { margin-bottom: 22px; padding-bottom: 22px; border-bottom: 1px solid var(--border); }
+    .q-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .q-section-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .q-strategic { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 8px; line-height: 1.5; }
+    .q-tactical-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; margin-top: 10px; }
+    .q-tactical-list { padding-left: 0; }
+    .q-tactical-item { font-size: 12px; color: var(--text-mid); line-height: 1.6; padding: 2px 0 2px 16px; position: relative; }
+    .q-tactical-item::before { content: "→"; position: absolute; left: 0; color: var(--gold); font-weight: 700; font-size: 11px; }
+    .q-expected { background: #F0F7F0; border-radius: 6px; padding: 10px 12px; margin-top: 10px; }
+    .q-expected-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--green-soft); margin-bottom: 4px; }
+    .q-expected-text { font-size: 12px; color: #1A4A1A; line-height: 1.6; }
+
+    /* No-questions notice for domains 9-12 */
+    .no-questions-notice { padding: 14px 16px; background: #FFF8E1; border: 1px solid #FFD54F; border-radius: var(--radius); font-size: 13px; color: #7A5C00; line-height: 1.6; margin-bottom: 20px; }
+
+    /* Notes textarea */
+    .notes-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--navy); margin-bottom: 8px; }
+    .notes-field { width: 100%; min-height: 110px; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: inherit; font-size: 13px; color: var(--navy); background: var(--off-white); resize: vertical; transition: border-color 0.18s; line-height: 1.55; }
+    .notes-field:focus { outline: none; border-color: var(--gold); background: white; }
+    .notes-field::placeholder { color: var(--text-light); font-style: italic; }
+
+    .domain-err { font-size: 12px; color: var(--red-soft); margin-top: 8px; display: none; }
+    .domain-err.visible { display: block; }
+
+    .assess-nav { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+    .assess-nav .btn-primary { flex: 1; min-width: 180px; }
+
+    /* ================================================================
+       SCREEN 3: FINDINGS BRIEF
+    ================================================================ */
+    .findings-header { background: var(--navy); border-radius: var(--radius-lg); padding: 40px; margin-bottom: 28px; color: white; position: relative; overflow: hidden; }
+    .findings-header::before { content: ''; position: absolute; top: -80px; right: -80px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%); }
+    .findings-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+    .findings-title { font-size: 24px; font-weight: 800; margin-bottom: 5px; }
+    .findings-client { font-size: 14px; color: rgba(255,255,255,0.55); }
+    .findings-meta { display: flex; gap: 14px; margin-top: 20px; flex-wrap: wrap; }
+    .findings-meta-item { background: rgba(255,255,255,0.08); border-radius: var(--radius); padding: 10px 16px; }
+    .findings-meta-key { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 3px; }
+    .findings-meta-val { font-size: 15px; font-weight: 800; color: var(--gold); }
+
+    .findings-part { background: white; border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px; }
+    .findings-part-title { font-size: 12px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--navy); padding-bottom: 12px; margin-bottom: 20px; border-bottom: 2px solid var(--gold); display: flex; align-items: center; gap: 10px; }
+
+    /* Domain finding row — Part 1 */
+    .df-row { padding: 18px 0; border-bottom: 1px solid var(--border); }
+    .df-row:last-child { border-bottom: none; }
+    .df-row-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .df-name { font-size: 15px; font-weight: 700; flex: 1; }
+    .score-pair { display: flex; align-items: center; gap: 6px; }
+    .sc { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+    .sc-client { background: var(--off-white); border: 1.5px solid var(--border); color: var(--text-mid); }
+    .sc-naipaul { background: var(--navy); color: var(--gold); }
+    .sc-nodata { background: var(--off-white); border: 1.5px dashed var(--border); color: var(--text-light); font-style: italic; }
+    .diff-flag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+    .diff-over  { background: #FDECEA; color: var(--red-soft); }   /* client overestimates */
+    .diff-under { background: #EBF5EA; color: var(--green-soft); } /* client undersells */
+    .diff-match { background: #E8F4FD; color: #1A5276; }           /* scores match */
+    .df-notes-block { background: var(--off-white); border-radius: var(--radius); padding: 10px 14px; margin-top: 6px; }
+    .df-notes-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .df-notes-text { font-size: 13px; color: var(--text-mid); line-height: 1.6; white-space: pre-wrap; }
+    .df-no-notes { font-size: 12px; color: var(--text-light); font-style: italic; }
+
+    /* Blind spots — Part 3 */
+    .blind-spot { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border: 1.5px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; background: var(--off-white); }
+    .blind-spot:last-child { margin-bottom: 0; }
+    .bs-num { width: 36px; height: 36px; flex-shrink: 0; background: var(--navy); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; }
+    .bs-name { font-size: 14px; font-weight: 700; }
+    .bs-why { font-size: 13px; color: var(--text-mid); margin-top: 3px; line-height: 1.5; }
+
+    /* Partnership model — Part 4 */
+    .partnership-card { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%); border-radius: var(--radius); padding: 24px; color: white; }
+    .partnership-zone { font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .partnership-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+    .partnership-body { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.65; }
+    .partnership-price { margin-top: 14px; font-size: 13px; font-weight: 700; color: var(--gold); }
+
+    /* Timeline — Part 5 */
+    .timeline-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .timeline-item:last-child { border-bottom: none; }
+    .tl-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); margin-top: 6px; flex-shrink: 0; }
+    .tl-dot.current { width: 14px; height: 14px; margin-top: 4px; box-shadow: 0 0 0 3px rgba(201,168,76,0.3); }
+    .tl-label { font-size: 14px; font-weight: 700; }
+    .tl-desc { font-size: 13px; color: var(--text-mid); margin-top: 2px; line-height: 1.5; }
+
+    /* Download section */
+    .download-section { background: var(--gold-pale); border: 1.5px solid var(--gold); border-radius: var(--radius-lg); padding: 28px 32px; margin-top: 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .download-text { flex: 1; min-width: 200px; }
+    .download-title { font-size: 16px; font-weight: 800; margin-bottom: 5px; }
+    .download-desc { font-size: 13px; color: var(--text-mid); line-height: 1.55; }
+    .download-btn { background: var(--navy); color: var(--gold); font-size: 14px; font-weight: 700; border: none; border-radius: var(--radius); padding: 14px 24px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; transition: opacity 0.18s; flex-shrink: 0; }
+    .download-btn:hover { opacity: 0.88; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-logo">ACT <span>Ascend</span> Partners</div>
+    <div class="topbar-badge">Deep Diagnostic — Internal Tool</div>
+  </div>
+
+  <!-- ============================================================
+       SCREEN 1: IMPORT CLIENT FILE
+       Naipaul uploads the JSON exported from the client's Piece 1
+       session. The tool validates and pre-loads all 12 self-scores.
+       Manual entry (no file) is also supported — all scores start blank.
+  ============================================================ -->
+  <div id="screen-import">
+
+    <div class="import-hero">
+      <div class="import-hero-label">ASCEND™ Deep Diagnostic</div>
+      <div class="import-hero-title">Discovery Interview<br>Assessment Tool</div>
+      <div class="import-hero-sub">Upload the client's self-assessment file from Piece 1, then work through each domain during your 90-minute discovery call. The tool combines both assessments and produces your findings brief.</div>
+    </div>
+
+    <div class="import-card">
+      <div class="import-card-title">Upload Client Assessment File</div>
+      <div class="import-card-sub">The client should have sent you a <code>.json</code> file downloaded from their self-scoring report. Upload it here to pre-load their scores. If you don't have the file, you can continue without it — all self-score fields will show as blank.</div>
+
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".json" onchange="handleFileUpload(this)" />
+        <div class="upload-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+        </div>
+        <div class="upload-label">Drop .json file here or click to browse</div>
+        <div class="upload-hint">ascend-assessment-[client-name]-[date].json</div>
+      </div>
+
+      <div class="import-error" id="import-error"></div>
+
+      <!-- Client preview — shown after successful file load -->
+      <div class="client-preview" id="client-preview">
+        <div class="preview-row">
+          <div>
+            <div class="preview-name" id="preview-name">—</div>
+            <div class="preview-email" id="preview-email">—</div>
+          </div>
+          <div class="preview-badge" id="preview-stage">—</div>
+        </div>
+        <div class="preview-scores" id="preview-scores"></div>
+      </div>
+
+      <div class="manual-link-row">
+        No file? <span class="manual-link" onclick="startWithoutFile()">Continue without client file →</span>
+      </div>
+    </div>
+
+    <div class="start-row">
+      <button class="btn-primary" id="start-btn" disabled onclick="startAssessment()" style="opacity:0.4;cursor:not-allowed;">
+        Start Assessment
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+  </div><!-- end screen-import -->
+
+  <!-- ============================================================
+       SCREEN 2: DOMAIN ASSESSMENT
+       One domain shown at a time. Each domain has:
+       - Client self-score reference (from Piece 1 import, read-only)
+       - Naipaul's expert score input (0-3)
+       - Interview questions accordion (collapsed by default, full content when open)
+       - Free-text notes field
+  ============================================================ -->
+  <div id="screen-assess">
+
+    <div class="assess-header">
+      <div class="assess-header-top">
+        <div>
+          <div class="assess-title">Domain Assessment</div>
+          <div class="assess-client-name" id="assess-client-label">—</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label">Progress</div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+          <div class="progress-count" id="progress-count">Domain 1 of 12</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Domain card is rendered dynamically by renderDomain(index) -->
+    <div id="domain-container"></div>
+
+    <div class="assess-nav" id="assess-nav"></div>
+
+  </div><!-- end screen-assess -->
+
+  <!-- ============================================================
+       SCREEN 3: FINDINGS BRIEF
+       Five parts per PRD spec. Followed by .docx download button.
+  ============================================================ -->
+  <div id="screen-findings">
+
+    <div class="findings-header">
+      <div class="findings-eyebrow">ASCEND™ Findings Brief</div>
+      <div class="findings-title" id="findings-client-name">—</div>
+      <div class="findings-client" id="findings-client-email">—</div>
+      <div class="findings-meta" id="findings-meta"></div>
+    </div>
+
+    <!-- Part 1: Per-domain findings -->
+    <div class="findings-part">
+      <div class="findings-part-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Part 1 — Per-Domain Assessment (12 Domains)
+      </div>
+      <div id="part1-container"></div>
+    </div>
+
+    <!-- Part 2: Overall stage confirmation -->
+    <div class="findings-part">
+      <div class="findings-part-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Part 2 — Overall Stage Confirmation
+      </div>
+      <div id="part2-container"></div>
+    </div>
+
+    <!-- Part 3: Top 3 blind spots -->
+    <div class="findings-part">
+      <div class="findings-part-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Part 3 — Top 3 Blind Spots
+      </div>
+      <div id="part3-container"></div>
+    </div>
+
+    <!-- Part 4: Recommended partnership model -->
+    <div class="findings-part">
+      <div class="findings-part-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Part 4 — Recommended Partnership Model
+      </div>
+      <div id="part4-container"></div>
+    </div>
+
+    <!-- Part 5: Suggested timeline -->
+    <div class="findings-part">
+      <div class="findings-part-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Part 5 — Suggested Timeline
+      </div>
+      <div id="part5-container"></div>
+    </div>
+
+    <!-- Download .docx -->
+    <div class="download-section">
+      <div class="download-text">
+        <div class="download-title">Download Findings Brief</div>
+        <div class="download-desc">Generates a structured Word document (.docx) with all five parts plus blank sections for your Executive Summary, Presentation Notes, and Action Items. Edit it offline before your presentation call.</div>
+      </div>
+      <button class="download-btn" onclick="downloadDocx()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download .docx
+      </button>
+    </div>
+
+  </div><!-- end screen-findings -->
+
+</div><!-- end page -->
+<script>
+// ================================================================
+// DATA: ASCEND FRAMEWORK
+// All framework data sourced from:
+//   - Master Connection Matrix (ACT_Ascend_Framework_matrix__2_.docx)
+//   - ASCEND PRD v1.0
+//   - CFO Diagnostic Interview Guide
+// ================================================================
+
+// 12 diagnostic domains — names, descriptions, scoring criteria
+// Domains 1-8: scoring criteria confirmed from Master Connection Matrix ✓
+// Domains 9-12: scoring criteria confirmed from Master Connection Matrix ✓
+//   NOTE: Interview questions for domains 9-12 NOT PROVIDED by Naipaul.
+//         Placeholder notice shown in the accordion. Content gap = Piece 2 blocker
+//         for qualitative findings on these 4 domains. Naipaul to provide.
+const DOMAINS = [
+  {
+    index: 1,
+    name: 'Liquidity & Cash Management',
+    desc: 'Cash position, forecasting, AR/AP management',
+    criteria: [
+      'No tracking or forecast in place',
+      'Basic AR/AP tracking exists',
+      '13-week forecast in place',
+      'Cash optimisation active'
+    ]
+  },
+  {
+    index: 2,
+    name: 'Capital Structure & Debt',
+    desc: 'Credit terms, covenant compliance, treasury management',
+    criteria: [
+      'No credit term awareness',
+      'Terms known, minimal tracking',
+      'Covenant compliance monitored',
+      'Strategic treasury active'
+    ]
+  },
+  {
+    index: 3,
+    name: 'Internal Controls',
+    desc: 'Controls environment, audit readiness, delegation of authority',
+    criteria: [
+      'No controls or policies',
+      'Informal, undocumented',
+      'Documented DOA & key controls',
+      'Controls tested, audit-ready'
+    ]
+  },
+  {
+    index: 4,
+    name: 'Accounting & Reporting',
+    desc: 'Close process, management reporting, EBITDA reconciliation',
+    criteria: [
+      'Inconsistent books, no close',
+      'Close by day 15+',
+      'Close by day 10, basic package',
+      'Close by day 7, narrative pack'
+    ]
+  },
+  {
+    index: 5,
+    name: 'Profitability Analysis',
+    desc: 'Product/customer/channel P&L, VPM analysis',
+    criteria: [
+      'Total company P&L only',
+      'Basic product/customer split',
+      'Full multi-dimensional P&L',
+      'VPM analysis & pricing strategy'
+    ]
+  },
+  {
+    index: 6,
+    name: 'Forecasting & Planning',
+    desc: 'Rolling forecasts, strategic planning, balance sheet forecasting',
+    criteria: [
+      'No forecast beyond current month',
+      'Annual budget, no updates',
+      'Rolling quarterly forecast',
+      'Integrated 3-statement model'
+    ]
+  },
+  {
+    index: 7,
+    name: 'External Relationships',
+    desc: 'Audit, tax, insurance, lender relationships',
+    criteria: [
+      'Reactive compliance only',
+      'Organised audit/tax relations',
+      'Proactive audit/tax planning',
+      'Strategic advisor engagement'
+    ]
+  },
+  {
+    index: 8,
+    name: 'Systems & Technology',
+    desc: 'ERP, cloud systems, IT controls, automation',
+    criteria: [
+      'Critical processes on spreadsheets',
+      'ERP in place, min integration',
+      'Cloud-based, integrated systems',
+      'AI/automation deployed'
+    ]
+  },
+  {
+    index: 9,
+    name: 'Leadership & Governance',
+    desc: 'Finance leadership structure, strategic mandate, governance',
+    criteria: [
+      'Owner does everything',
+      'Finance team member in role',
+      'Finance leader with mandate',
+      'CFO-level strategic leadership'
+    ]
+  },
+  {
+    index: 10,
+    name: 'Team & Talent',
+    desc: 'Finance team structure, talent management, performance',
+    criteria: [
+      'No defined finance roles',
+      'Roles informally understood',
+      'Documented org, basic perf mgmt',
+      'Benchmarked comp, talent pipeline'
+    ]
+  },
+  {
+    index: 11,
+    name: 'Quality of Earnings',
+    desc: 'Revenue quality, earnings sustainability, QofE readiness',
+    criteria: [
+      'No QofE awareness',
+      'Basic revenue quality review',
+      'Internal QofE pre-review done',
+      'QofE-ready for external review'
+    ]
+  },
+  {
+    index: 12,
+    name: 'Exit / Value Readiness',
+    desc: 'Exit preparation, data room, valuation readiness',
+    criteria: [
+      'No exit preparation',
+      'Aware of exit requirements',
+      'Partial data room/preparation',
+      'Full exit-ready package complete'
+    ]
+  }
+];
+
+// Stage lookup table: total score (0-36) → stage (0-18)
+// Source: Master Connection Matrix v2, confirmed in PRD Section 4.2
+// Index = total score, value = stage number
+const STAGE_LOOKUP = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,17,18];
+
+// Stage tiers: each tier maps stages to ASCEND phase, offer, and service
+// Source: Master Connection Matrix + PRD Section 4.1
+const STAGE_TIERS = [
+  { name: 'Foundation',    stages: [0,1,2,3],     scores: '0–7',   ascendPhase: 'A — ASSESS',      offer: 'Entry Offer',    service: 'Ascend Finance Diagnostic Assessment', price: '$2,500–$5,000',     description: 'Foundational financial infrastructure is missing or informal. Priority is establishing basic visibility and controls.' },
+  { name: 'Structure',     stages: [4,5,6],        scores: '8–13',  ascendPhase: 'S — STANDARDIZE', offer: 'Entry → Sprint', service: 'Diagnostic Assessment / Sprint Bridge',  price: '$2,500–$25,000',    description: 'Basic structures exist but lack consistency. Priority is standardising accounting, reporting, and governance.' },
+  { name: 'Intelligence',  stages: [7,8,9],        scores: '14–19', ascendPhase: 'C — CONTROL',     offer: '90-Day Sprint',  service: '90-Day Financial Control Sprint',        price: '$10,000–$25,000',   description: 'Reporting exists but lacks depth. Priority is gaining real financial intelligence to drive decisions.' },
+  { name: 'Optimization',  stages: [10,11,12],     scores: '20–25', ascendPhase: 'E — EXECUTE',     offer: 'Sprint → Retainer', service: '90-Day Sprint / Retainer Transition',  price: '$10,000–$15,000/mo', description: 'Strong foundation in place. Priority is optimising systems, team, and processes for efficiency and scale.' },
+  { name: 'Mastery',       stages: [13,14,15],     scores: '26–31', ascendPhase: 'N — NAVIGATE',    offer: 'CFO Retainer',   service: 'Fractional CFO Advisory Retainer',       price: '$5,000–$15,000/mo', description: 'Finance function is mature. Priority is navigating growth decisions, risk, and capital allocation.' },
+  { name: 'Exit & Scale',  stages: [16,17,18],     scores: '32–36', ascendPhase: 'D — DRIVE',       offer: 'Premium Retainer', service: 'Fractional CFO Advisory — Exit & Scale', price: '$5,000–$15,000/mo', description: 'Business is positioned for exit or significant scale. Priority is maximising enterprise value and exit readiness.' }
+];
+
+// Domain priority matrix: which domains are PRIMARY at each tier
+// Source: Master Connection Matrix — confirmed in PRD Section 5
+// P = PRIMARY (core diagnostic focus), S = SUPPORT, U = SETUP, blank = not in scope
+const DOMAIN_PRIORITY = {
+  'Foundation':   { primary: ['Liquidity & Cash Management', 'Accounting & Reporting'] },
+  'Structure':    { primary: ['Capital Structure & Debt', 'Internal Controls'] },
+  'Intelligence': { primary: ['Accounting & Reporting', 'Profitability Analysis', 'Forecasting & Planning'] },
+  'Optimization': { primary: ['Systems & Technology', 'Leadership & Governance', 'Team & Talent'] },
+  'Mastery':      { primary: ['Profitability Analysis', 'Quality of Earnings'] },
+  'Exit & Scale': { primary: ['Systems & Technology', 'Quality of Earnings', 'Exit / Value Readiness'] }
+};
+
+// Gap descriptions: plain-language explanation of what a low score means for each domain
+// Used in Part 1 of the findings brief for context
+// Domains 9-12: provisional copy — Naipaul to confirm before go-live (same gap as Piece 1)
+const DOMAIN_GAP_TEXT = [
+  'Cash visibility is limited, creating operational risk. The business cannot reliably predict its cash position, leaving it exposed to liquidity shortfalls.',
+  'The capital structure is not actively managed. Covenant obligations may be unclear, and the business may not be optimising its debt or treasury position.',
+  'Internal controls are informal or absent. This creates financial reporting risk and makes the business difficult to audit or scale safely.',
+  'Financial reporting is inconsistent or delayed. Management cannot make informed decisions without timely, accurate financial information.',
+  'Profitability analysis is shallow. The business does not know which products, customers, or channels are driving or destroying value.',
+  'Financial planning is reactive. Without rolling forecasts, the business cannot anticipate cash needs, covenants, or strategic inflection points.',
+  'External advisor relationships are reactive. The business is missing opportunities to leverage audit, tax, and lender relationships strategically.',
+  'Finance processes rely heavily on spreadsheets or disconnected systems. This limits accuracy, scalability, and the ability to leverage automation.',
+  // Domains 9-12: provisional — Naipaul to confirm gap descriptions
+  'Leadership and finance governance structure needs to be formalised. Founder dependency in finance decisions creates a strategic bottleneck.',
+  'Finance team structure and talent management is informal or undefined. The business lacks the human infrastructure to scale its finance function.',
+  'Earnings quality has not been assessed. This may affect fundraising, acquisition readiness, or the credibility of reported financials.',
+  'The business is not positioned for a successful exit or external valuation process. Key data room and value-readiness work has not begun.'
+];
+
+// ================================================================
+// INTERVIEW QUESTIONS DATA
+// Source: CFO Financial Diagnostic Check List Interview Guide v1
+// Domains 1-8: Full strategic + tactical questions + expected responses ✓
+// Domains 9-12: NO interview questions provided by Naipaul — TBC (Piece 2 blocker)
+//
+// Structure per domain:
+//   sections: [ { title, strategic, tactical: [], expectedResponse } ]
+// ================================================================
+const INTERVIEW_QUESTIONS = {
+  1: { // Liquidity & Cash Management
+    sections: [
+      {
+        title: '1.1 Current Liquidity Position',
+        strategic: 'How does your current liquidity position support the company\'s strategic objectives and what is your philosophy on optimal cash levels?',
+        tactical: ['What is your current cash balance and how many days of operating expenses does this represent?'],
+        expectedResponse: 'A strong CFO should articulate current cash position relative to operating needs and debt covenants, target minimum cash levels with clear rationale (e.g. 30–60 days of operating expenses), how liquidity strategy balances safety with efficient capital deployment, and planned uses of excess cash. Red flag: no clear cash floor or philosophy.'
+      },
+      {
+        title: '1.2 Cash Forecasting',
+        strategic: 'How has your cash forecasting process evolved over time, and how do you ensure it provides actionable early-warning signals for potential liquidity issues?',
+        tactical: [
+          'Do you maintain a 13-week rolling cash forecast? How frequently is it updated?',
+          'What has been your forecast accuracy over the past 6–12 months (actual variance to forecast)?',
+          'Who is responsible for the forecast and what inputs do they receive from operations?'
+        ],
+        expectedResponse: 'Should confirm 13-week forecast updated weekly (minimum). Should provide specific accuracy metrics (e.g. ±5% on weeks 1–4, ±10% on weeks 5–13). Red flags: no rolling forecast, monthly updates only, inability to cite accuracy metrics.'
+      },
+      {
+        title: '1.3 Accounts Receivable Management',
+        strategic: 'How do you balance credit terms as a competitive tool versus the working capital and credit risk implications?',
+        tactical: [
+          'What is your current DSO (Days Sales Outstanding) and how does it trend?',
+          'What percentage of receivables are >90 days past due?',
+          'Do you offer early payment discounts? What is the uptake rate and effective cost?',
+          'Walk me through your A/R aging and collections process.'
+        ],
+        expectedResponse: 'Should provide specific DSO metric with trend and comparison to industry benchmarks. Should know percentage >90 days and have action plan for aged receivables. Strong CFOs will have KPIs on collection effectiveness. Red flag: no DSO tracking or aged receivables without action plan.'
+      },
+      {
+        title: '1.4 Accounts Payable Management',
+        strategic: 'How do you optimize payment timing to maximize working capital while maintaining strong vendor relationships and reputation?',
+        tactical: [
+          'What is your current DPO (Days Payable Outstanding)?',
+          'Do vendors offer early payment discounts? Do you take them? What\'s your evaluation process?',
+          'How do you monitor vendor payment performance and prevent relationship damage?'
+        ],
+        expectedResponse: 'Should provide specific DPO with context (industry norms, contract terms). Should describe systematic evaluation of early pay discounts comparing annualised discount rate to cost of capital. Red flag: extending payables excessively without considering vendor relations.'
+      }
+    ]
+  },
+  2: { // Capital Structure & Debt
+    sections: [
+      {
+        title: '2.1 Legal Entity Structure and Ownership',
+        strategic: 'How does your legal entity structure support your business strategy, and what key considerations drive your entity structuring decisions?',
+        tactical: [
+          'Can you provide an org chart of your legal entity structure?',
+          'What are the ownership percentages across your cap table?',
+          'Are there any complex structures (preferred stock, warrants, earnouts) we should understand?'
+        ],
+        expectedResponse: 'Should have current org chart readily available. Should know ownership structure precisely, including any minority interests, preferred shares, option pools, or other claims. Red flag: cannot produce current structure or uncertain about ownership details.'
+      },
+      {
+        title: '2.2 Credit Facilities and Debt',
+        strategic: 'What is your capital structure philosophy and how do your current credit facilities position you for your strategic plan over the next 2–3 years?',
+        tactical: [
+          'Please summarise your credit agreements: type (revolver, term loan), size, current utilisation, maturity, pricing.',
+          'What are your financial covenants and how much headroom do you currently have?',
+          'What restrictions or material covenants should we be aware of (M&A limitations, dividend restrictions)?',
+          'When is your next refinancing event and what is the plan?'
+        ],
+        expectedResponse: 'Should provide precise details on all facilities: committed/uncommitted amounts, drawn amounts, interest rate structure, maturity dates. Should know covenant levels exactly and current compliance with specific headroom percentages. Red flag: vague on covenant details or lack of proactive refinancing plan.'
+      },
+      {
+        title: '2.3 Covenant Compliance and Lender Relations',
+        strategic: 'How do you manage lender relationships and what is your approach to covenant monitoring and financial institution communications?',
+        tactical: [
+          'Walk me through your covenant compliance reporting process and timing.',
+          'Have you ever been out of compliance or requested a waiver/amendment? What happened?',
+          'Who are your key lender contacts and how often do you communicate?',
+          'Show me your most recent compliance certificate.'
+        ],
+        expectedResponse: 'Should describe systematic process: monthly or quarterly calculation, review/approval process, submission timing. Should be forthcoming about any historical compliance issues — what caused them, how resolved, lessons learned. Red flag: reactive lender management or delayed covenant reporting.'
+      },
+      {
+        title: '2.4 Treasury Management and Banking',
+        strategic: 'How has your banking structure and treasury operations evolved to support the scale and complexity of the business?',
+        tactical: [
+          'Describe your operating bank account structure (number of accounts, concentration accounts, subsidiaries).',
+          'What treasury management tools do you use? (ACH, wire, controlled disbursement, positive pay, sweep accounts, lockbox)',
+          'How do you manage fraud prevention and payment controls?',
+          'What banking fees do you pay annually? Last fee review?'
+        ],
+        expectedResponse: 'Should describe account architecture clearly. Should use appropriate treasury tools for company size: positive pay, ACH filters, dual authorization for wires. Should have systematic approach to fraud prevention with layered controls. Red flag: overly complex account structure, lack of basic fraud controls.'
+      },
+      {
+        title: '2.5 FX and Interest Rate Risk Management',
+        strategic: 'What is your philosophy on hedging FX and interest rate risk, and how do you balance risk mitigation with cost and complexity?',
+        tactical: [
+          'What is your FX exposure by currency? Revenue, expenses, balance sheet items?',
+          'Do you hedge FX? What percentage and what instruments?',
+          'What is your interest rate exposure (fixed vs. floating debt)? Do you hedge it?',
+          'Walk me through your hedging policy and approval process.'
+        ],
+        expectedResponse: 'Should articulate materiality threshold for hedging, hedging philosophy, hedge instruments, hedge accounting treatment, governance and approval process. For immaterial exposures, "we don\'t hedge because exposure is <5% of EBITDA" is reasonable. Red flag: material unhedged exposure without clear risk tolerance.'
+      }
+    ]
+  },
+  3: { // Internal Controls
+    sections: [
+      {
+        title: '3.1 Control Environment and Recent Assessments',
+        strategic: 'How do you think about the maturity of your control environment relative to your company\'s stage, and what is your roadmap for control enhancement as you grow?',
+        tactical: [
+          'Have you had any recent control assessments? By whom (internal, external auditors, consultants)?',
+          'What were the key findings and what actions have been taken?',
+          'Are there any material weaknesses or significant deficiencies currently outstanding?',
+          'Do you have documented processes and control documentation (process narratives, flowcharts, control matrices)?'
+        ],
+        expectedResponse: 'Should cite recent assessments and summarise findings transparently with remediation — completed and planned. Material weaknesses are serious — should explain root cause and comprehensive remediation plan. Red flag: no assessment in >2 years, unaddressed material weaknesses, or defensive posture about control gaps.'
+      },
+      {
+        title: '3.2 External Auditor Relationship',
+        strategic: 'How do you view the relationship with your external auditors — what value do they provide beyond the audit opinion?',
+        tactical: [
+          'Walk me through your auditor\'s communications with management and the board (management letters, audit committee reports).',
+          'What were the key themes in the most recent management letter?',
+          'Have there been any significant accounting disagreements or "close calls" with the auditors?',
+          'Show me the last three years of audit reports and management representation letters.'
+        ],
+        expectedResponse: 'Should describe regular communication pattern: planning meeting, interim fieldwork, final audit, audit committee sessions. Management letter should contain constructive observations. Red flag: contentious auditor relationship, pattern of questioned judgments, or inability to produce audit communications.'
+      },
+      {
+        title: '3.3 Board and Audit Committee Oversight',
+        strategic: 'How does the board/audit committee exercise oversight of financial reporting and controls, and how has that oversight evolved?',
+        tactical: [
+          'What concerns, if any, has the board/audit committee raised about financial controls or reporting?',
+          'How often does the audit committee meet? What are typical agenda items?',
+          'What major accounting policies or judgments has the audit committee reviewed and approved in the last year?'
+        ],
+        expectedResponse: 'Should cite any board concerns transparently with resolution path. Quarterly audit committee meetings are standard. Should cite examples of significant judgments reviewed (e.g. goodwill impairment, revenue recognition policy changes). Red flag: board concerns with unclear resolution or perfunctory audit committee engagement.'
+      },
+      {
+        title: '3.4 Internal Audit Function',
+        strategic: 'What role does internal audit play in your overall governance and risk management framework?',
+        tactical: [
+          'Do you have an internal audit function? If so, what is the structure (in-house, outsourced, co-source)?',
+          'What is the internal audit plan for this year? What areas are being reviewed?',
+          'What were the most significant internal audit findings in the last 12 months and management\'s response?',
+          'If no internal audit, what alternative assurance mechanisms are in place?'
+        ],
+        expectedResponse: 'Should describe internal audit structure and resources. Annual audit plan should be risk-based covering key processes on 1–3 year rotation. For companies without internal audit, should explain compensating controls. Red flag: internal audit reports ignored or consistently challenged.'
+      },
+      {
+        title: '3.5 Delegation of Authority',
+        strategic: 'How do you balance empowering the organisation with appropriate decision-making authority versus maintaining necessary controls and oversight?',
+        tactical: [
+          'Do you have a formal delegation of authority policy? Show it to me.',
+          'What are the approval thresholds for key transactions (capex, operating expenses, contracts, hiring)?',
+          'What systems/tools enforce these authorities?',
+          'How do you monitor compliance with authority limits?'
+        ],
+        expectedResponse: 'Should produce written policy documenting approval authorities by role/level. Should cite specific thresholds (e.g. VPs can approve <$50K capex). Should describe system enforcements: purchase order systems with workflow, signing authorities on bank accounts. Red flag: no formal policy, overly centralised approvals slowing business.'
+      },
+      {
+        title: '3.6 Inventory Accuracy and Controls',
+        strategic: 'How do you ensure inventory accuracy supports both operational efficiency and financial reporting integrity?',
+        tactical: [
+          'What is your inventory record accuracy rate?',
+          'Describe your cycle counting program (frequency, coverage, who performs, tolerance thresholds).',
+          'When was your last physical inventory? What were the results (dollar/percentage variance)?',
+          'Walk me through your obsolescence review process and current reserve level.'
+        ],
+        expectedResponse: 'Should cite accuracy metric (target typically 95–98% of items within tolerance). Cycle counting should cover ABC items appropriately (A items monthly, B quarterly, C annually). Should describe physical inventory results including material adjustments and root causes. Red flag: low accuracy, no cycle counting, large unexplained variances.'
+      }
+    ]
+  },
+  4: { // Accounting & Reporting
+    sections: [
+      {
+        title: '4.1 Consolidation and Chart of Accounts',
+        strategic: 'How does your accounting structure and chart of accounts design support both financial reporting needs and operational decision-making?',
+        tactical: [
+          'Describe your consolidation structure (legal entities, reporting segments, elimination entries).',
+          'Walk me through your chart of accounts structure (natural accounts, departments, cost centres, products).',
+          'How many active GL accounts? When was last COA cleanup?',
+          'Show me a sample GL account structure and typical journal entry.'
+        ],
+        expectedResponse: 'Should map consolidation clearly: subsidiaries, segments, inter-company eliminations. Should describe COA segmentation (e.g. natural accounts + department + location + product line). Should know number of active accounts and have discipline around account creation/retirement. Red flag: overly complex or poorly maintained COA, significant number of "miscellaneous" accounts.'
+      },
+      {
+        title: '4.2 Key Accounting Policies',
+        strategic: 'What are your most significant accounting policies and areas of judgment, and how do you ensure consistency and appropriateness as the business evolves?',
+        tactical: [
+          'What is your revenue recognition policy? Has it changed recently?',
+          'Describe your capitalisation policy (thresholds, useful lives).',
+          'What inventory valuation method do you use and why?',
+          'How do you account for leases post-ASC 842?',
+          'Show me your accounting policies manual.'
+        ],
+        expectedResponse: 'Should explain revenue recognition thoroughly (point-in-time vs. over-time, performance obligations). Should cite cap policy with specific thresholds. Should explain inventory method (FIFO, weighted average) with rationale. Should demonstrate understanding of lease accounting. Red flag: vague policy explanations, inconsistent application, or lack of documentation.'
+      },
+      {
+        title: '4.3 Reserves and Accrual Methods',
+        strategic: 'How do you approach reserves and estimates — what framework ensures they are reasonable, supportable, and consistently applied?',
+        tactical: [
+          'Walk me through your major reserves and accruals. What are the current balances?',
+          'How do you calculate allowance for doubtful accounts? Show me the aging analysis and reserve roll-forward.',
+          'Describe your inventory obsolescence reserve methodology and current coverage.',
+          'How have reserves trended over time? Any significant releases or additions?'
+        ],
+        expectedResponse: 'Should list major reserves with current balances. Bad debt: should use historical loss rates, aging analysis, specific identification of problem accounts. Should show reserve roll-forwards with additions, usage, releases. Red flag: reserves that don\'t move consistently with business drivers, significant unexplained changes.'
+      },
+      {
+        title: '4.4 Financial Statement Analysis',
+        strategic: 'Looking at your recent financial statements, what story do they tell about your business performance and financial health?',
+        tactical: [
+          'Let\'s do a line-by-line review of your most recent income statement. Explain significant variances vs. prior period and budget.',
+          'Walk me through your balance sheet — any unusual items, reclassifications, or concerning trends?',
+          'Explain your cash flow statement — sources and uses of cash, free cash flow generation.',
+          'What do you consider the most important financial metrics for this business?'
+        ],
+        expectedResponse: 'Should walk through P&L fluently explaining drivers of each major line. Should highlight balance sheet changes with context. Should explain cash flow clearly. Should cite key metrics relevant to business (unit economics, CAC, LTV, ROIC). Red flag: inability to explain variances, lack of business context, or focus only on compliance.'
+      },
+      {
+        title: '4.5 File Organisation and Documentation',
+        strategic: 'How do you think about financial close documentation and file organisation as both risk management and efficiency enabler?',
+        tactical: [
+          'Where and how do you store financial records and supporting documentation?',
+          'Show me your month-end close file structure for a recent period.',
+          'What is your document retention policy?',
+          'How would you retrieve support for a transaction from 2 years ago?'
+        ],
+        expectedResponse: 'Should describe organised system: monthly close folders with standard structure, accessible storage. Should produce example close file demonstrating organisation. Should cite retention policy (typically 7 years for tax). Red flag: disorganised files, reliance on individuals\' personal files, inability to retrieve historical documentation.'
+      },
+      {
+        title: '4.6 Management Reporting',
+        strategic: 'How has your management reporting evolved to provide the right information to drive business decisions?',
+        tactical: [
+          'Show me your standard monthly reporting package to management/board.',
+          'What reports do you produce intra-month and for whom?',
+          'How do you communicate variance explanations and business insights?',
+          'What dashboards or self-service tools do business leaders have access to?'
+        ],
+        expectedResponse: 'Should produce actual monthly package: executive summary, P&L with variance commentary, balance sheet, cash flow, KPIs. Package should tell story, not just present numbers. Should describe narrative approach. Red flag: reporting focused on numbers without context, late or inconsistent delivery, lack of actionable insights.'
+      },
+      {
+        title: '4.7 EBITDA Reconciliations',
+        strategic: 'How do you think about the different measures of profitability (GAAP, Adjusted, Covenant EBITDA) and ensure they are understood and reconciled?',
+        tactical: [
+          'Show me your GAAP to Management to Bank EBITDA reconciliation.',
+          'Walk me through each adjustment — what and why?',
+          'How do adjustments trend over time? Are certain items recurring despite being "non-recurring"?',
+          'How have auditors and lenders responded to your adjusted EBITDA calculations?'
+        ],
+        expectedResponse: 'Should produce clear reconciliation with each adjustment explained. Adjustments should be defensible and ideally non-recurring. Should watch for "recurring non-recurring" items. Should confirm auditors have reviewed adjusted metrics. Red flag: aggressive or growing adjustments, inability to defend rationale.'
+      }
+    ]
+  },
+  5: { // Profitability Analysis
+    sections: [
+      {
+        title: '5.1 Current Profitability Views',
+        strategic: 'How do you analyse profitability to inform strategic decisions about where to compete and how to allocate resources?',
+        tactical: [
+          'Show me your product line P&L. What are your most and least profitable products?',
+          'How do you analyse customer profitability? Show me an example.',
+          'What is your channel/distribution profitability (direct, wholesale, online)?',
+          'Do you have geographic profitability analysis?'
+        ],
+        expectedResponse: 'Should produce actual profitability reports showing revenue, direct costs, contribution margin, allocated costs, and operating margin by dimension. Should discuss findings — where business makes/loses money and why. Should cite examples of actions taken based on analysis. Red flag: no profitability analysis below total company level, or analysis never acted upon.'
+      },
+      {
+        title: '5.2 Analytical Depth and Methodology',
+        strategic: 'How do you balance analytical sophistication with simplicity and speed in profitability analysis?',
+        tactical: [
+          'How do you allocate costs in profitability analysis? What remains unallocated?',
+          'Do you analyse incremental profitability for specific decisions vs. fully-loaded?',
+          'How far down the P&L do you analyse profitability (gross margin, contribution margin, EBIT, ROIC)?',
+          'How do you balance actual costs vs. standard costs in your analysis?'
+        ],
+        expectedResponse: 'Should explain allocation methodology clearly. Should distinguish incremental analysis for pricing/volume decisions from fully-loaded for strategic decisions. Should describe typical depth. Red flag: overly complex allocations creating precision illusion, or simplistic allocations hiding reality.'
+      },
+      {
+        title: '5.3 Reports and Tools',
+        strategic: 'How do you enable self-service profitability analysis across the organisation while maintaining data integrity?',
+        tactical: [
+          'What reports and tools do you provide for profitability analysis?',
+          'When are profitability reports produced (monthly, quarterly, real-time)?',
+          'Who uses these reports and how (decision-making, monitoring, planning)?',
+          'What systems and tools support your profitability analysis (ERP, BI tools, Excel)?'
+        ],
+        expectedResponse: 'Should describe standard reports suite: product profitability, customer profitability, channel analysis, with distribution lists and usage. Should explain tech stack: ERP for data foundation, BI tools (Tableau, Power BI) for visualisation, Excel for ad-hoc. Red flag: all analysis in spreadsheets, inconsistent report timing, or reports not actually used for decisions.'
+      },
+      {
+        title: '5.4 Volume-Price-Mix Analysis',
+        strategic: 'How do you use volume-price-mix analysis to understand revenue drivers and inform commercial strategy?',
+        tactical: [
+          'Do you perform regular volume-price-mix analysis? Show me a recent example.',
+          'Break down your most recent revenue growth into volume, price, and mix components.',
+          'What does mix analysis tell you about your business (customer, product, geography)?',
+          'How has this analysis influenced your pricing or commercial strategy?'
+        ],
+        expectedResponse: 'Should produce VPM analysis: "Q4 revenue up 12%: +8% volume, +3% price, +1% mix." Should explain mix drivers and connect to strategy. Red flag: no VPM analysis, or analysis done but not connected to business actions.'
+      }
+    ]
+  },
+  6: { // Forecasting & Planning
+    sections: [
+      {
+        title: '6.1 Monthly Close Process',
+        strategic: 'How has your close process evolved to balance speed, accuracy, and insight generation as the company has grown?',
+        tactical: [
+          'What is your close timeline? When do you close books and issue financials?',
+          'Walk me through your close calendar/checklist for the most recent month.',
+          'What are your biggest bottlenecks in the close process?',
+          'How many post-close adjustments do you typically make?',
+          'What systems/automation do you use for the close?'
+        ],
+        expectedResponse: 'Should cite specific timeline (e.g. "close by day 5, financials by day 7, reporting by day 10"). Should produce close checklist with responsibilities and deadlines. Post-close adjustments should be minimal and decreasing. Red flag: >10 day close, many post-close adjustments, or heavy manual processes.'
+      },
+      {
+        title: '6.2 Account Reconciliations and Reviews',
+        strategic: 'How do you ensure balance sheet integrity through reconciliations while maintaining efficiency?',
+        tactical: [
+          'What is your account reconciliation policy (all accounts, risk-based, frequency)?',
+          'Show me recent examples of key reconciliations (cash, AR, inventory, debt).',
+          'What is your review and approval process?',
+          'Do you have outstanding or aged reconciling items? What is being done?'
+        ],
+        expectedResponse: 'Should describe policy: all balance sheet accounts reconciled monthly, with risk-based depth. Should produce examples showing clear reconciliation format, supporting documentation, preparer/reviewer signatures, dates. Review should be independent (preparer ≠ reviewer). Red flag: incomplete reconciliations, lack of reviews, or many aged items.'
+      },
+      {
+        title: '6.3 Forecasting Process',
+        strategic: 'How does your forecasting process enable proactive decision-making and how do you balance rigour with agility?',
+        tactical: [
+          'Describe your forecast cycle (timing, frequency, horizon).',
+          'What is your forecast accuracy (revenue, EBITDA) over the last year?',
+          'How granular is your forecast (P&L detail, departments, products)?',
+          'Do you forecast balance sheet and cash flow, or just P&L?',
+          'What tools/systems do you use for forecasting?'
+        ],
+        expectedResponse: 'Should describe cadence (e.g. "quarterly rolling 4-quarter forecast, updated monthly"). Should cite accuracy metrics. Forecast detail should balance usefulness with effort. Should forecast full financial statements including balance sheet and cash flow, not just P&L. Red flag: annual budget only, poor accuracy without learning, or P&L-only forecasts.'
+      },
+      {
+        title: '6.4 Balance Sheet, Cash Flow, and Covenant Forecasting',
+        strategic: 'How do you ensure comprehensive financial forecasting that connects P&L, balance sheet, cash flow, and covenant compliance?',
+        tactical: [
+          'Show me your balance sheet forecast. How do you project working capital?',
+          'Walk me through your cash flow forecast methodology and key assumptions.',
+          'How do you forecast covenant compliance? Show me forward-looking covenant projections.',
+          'What downside scenarios do you model and what would trigger covenant issues?'
+        ],
+        expectedResponse: 'Should produce balance sheet forecast showing working capital build/release based on sales growth and efficiency assumptions. Cash flow forecast should reconcile to P&L. Covenant forecast should project 12+ months forward with sensitivity analysis. Red flag: no balance sheet/cash flow forecast, or covenant forecasting only after problems emerge.'
+      },
+      {
+        title: '6.5 Annual Planning and Strategic Planning',
+        strategic: 'How do you connect long-term strategic planning with annual budgeting and resource allocation?',
+        tactical: [
+          'Describe your annual planning process (timing, participants, approval).',
+          'Do you have a strategic plan beyond the annual budget? What\'s the time horizon?',
+          'How do strategic initiatives get funded in the annual plan?',
+          'Show me your most recent board-approved annual plan and strategic plan.'
+        ],
+        expectedResponse: 'Should describe annual planning timeline (typically Q3/Q4 for following year), with bottoms-up inputs, executive review, board approval. Strategic plan should exist (3–5 years), with annual refresh and explicit connection to annual budget. Red flag: budgeting disconnected from strategy, lack of multi-year plan, or "hockey stick" strategic plans without credible path.'
+      },
+      {
+        title: '6.6 Sales, Inventory, and Operations Planning (SIOP)',
+        strategic: 'How does SIOP integrate financial planning with operational execution and how does Finance participate?',
+        tactical: [
+          'Do you have a formal SIOP process? Describe the monthly cycle.',
+          'How does Finance participate in SIOP?',
+          'How does SIOP output feed into your financial forecast?',
+          'Give an example of a significant decision made through SIOP.'
+        ],
+        expectedResponse: 'Should describe monthly SIOP cycle: demand review, supply review, reconciliation, executive SIOP meeting. Finance should participate actively — translating volume/mix plans to revenue, margin, working capital, cash flow. Should cite example of SIOP driving a decision. Red flag: SIOP exists but Finance not integrated, or SIOP plan disconnected from financial forecast.'
+      }
+    ]
+  },
+  7: { // External Relationships
+    sections: [
+      {
+        title: '7.1 External Auditors — Engagement and Performance',
+        strategic: 'How do you evaluate auditor performance and ensure you\'re getting appropriate value from the relationship?',
+        tactical: [
+          'Who is your current external auditor and how long have they been auditor?',
+          'Show me the current engagement letter and fee structure.',
+          'When was your last RFP for audit services? What were the results?',
+          'How do you evaluate audit quality and auditor performance?'
+        ],
+        expectedResponse: 'Should name auditor and tenure. Should produce engagement letter showing scope, fees, timing. Should discuss recent RFP (every 5–7 years is reasonable). Should describe performance assessment: timeliness, communication quality, technical competency, value-added observations. Red flag: auditor unchanged for 15+ years without RFP, inability to assess quality beyond "they give us clean opinion."'
+      },
+      {
+        title: '7.2 Audit Opinions and Reports',
+        strategic: '',
+        tactical: [
+          'Show me audit opinions for the last 3 years.',
+          'Have you ever received a modified opinion (qualified, adverse, disclaimer)? If so, why?',
+          'Show me management representation letters for the last 3 years.',
+          'What are typical audit timelines (fieldwork start, completion, opinion date)?'
+        ],
+        expectedResponse: 'Should produce clean unmodified opinions for recent years. Any modified opinions require full explanation of circumstances and resolution. Management rep letters should be standard without unusual representations. Should describe timeline (e.g. "fieldwork starts mid-January, completed early February, opinion by late February"). Red flag: modified opinions without clear resolution or significantly delayed audit completion.'
+      },
+      {
+        title: '7.3 Audit Planning and Execution',
+        strategic: '',
+        tactical: [
+          'Walk me through the typical audit timeline and phases (planning, interim, final).',
+          'Show me the current year audit plan — what are the focus areas?',
+          'What is the current status of fieldwork?',
+          'When will I get to meet the audit partner and manager?'
+        ],
+        expectedResponse: 'Should describe standard audit cycle: planning meeting (Q3/Q4), interim fieldwork (Q4), year-end fieldwork (Q1), opinion issuance. Should share audit plan showing risk assessment and focus areas. Should provide fieldwork status update. Red flag: lack of structured audit plan, poor coordination on timing, or limited partner involvement.'
+      }
+    ]
+  },
+  8: { // Systems & Technology
+    sections: [
+      {
+        title: '10.1 Systems Architecture and Strategy',
+        strategic: 'How does your systems architecture support current operations and how are you planning for future scalability?',
+        tactical: [
+          'What systems do you use for each function? (GL, AP, AR, inventory, payroll, consolidation, reporting, budgeting)',
+          'Which systems are cloud-based vs. on-premises?',
+          'Create a systems map showing how data flows between systems.',
+          'How much do you rely on Excel for critical processes?'
+        ],
+        expectedResponse: 'Should inventory all finance systems: ERP (NetSuite, SAP, Dynamics), AP automation (Bill.com, Coupa), consolidation (OneStream, Workiva), FP&A (Adaptive, Anaplan), BI (Tableau, Power BI). Should specify cloud vs. on-prem. Should map data flows and integrations. Red flag: entirely on-premises in 2026, critical processes in spreadsheets, or lack of integration requiring manual data transfers.'
+      },
+      {
+        title: '10.2 IT Controls and Security',
+        strategic: 'How do you ensure financial systems security and controls in an increasingly complex threat environment?',
+        tactical: [
+          'How do you control access to financial systems (user provisioning, de-provisioning, reviews)?',
+          'What is your backup and disaster recovery process?',
+          'How do you manage system changes (change management, testing, approvals)?',
+          'What security measures are in place (MFA, encryption, monitoring)?',
+          'Have you had any security incidents or breaches?'
+        ],
+        expectedResponse: 'Should describe access controls: formal provisioning process, quarterly access reviews, immediate de-provisioning on termination. Backups should be daily with offsite storage, tested recovery. Security basics: MFA for all systems, data encryption in transit and at rest, activity monitoring. Red flag: poor access controls, no backup testing, weak passwords allowed, or undisclosed incidents.'
+      },
+      {
+        title: '10.3 IT Training and Support',
+        strategic: '',
+        tactical: [
+          'How do you train users on systems?',
+          'What is your IT support model (internal help desk, outsourced, vendor support)?',
+          'How do you provide cybersecurity awareness training?',
+          'Do you have system documentation and user guides?'
+        ],
+        expectedResponse: 'Should describe training: initial onboarding, periodic refreshers, super-users supporting teams. Support model should provide timely help. Security training should be mandatory annually. Should have system documentation — not just vendor manuals, but company-specific procedures. Red flag: no formal training, slow support response, or no security awareness program.'
+      }
+    ]
+  },
+  // Domains 9-12: NO interview questions provided by Naipaul — TBC before Piece 2 go-live
+  // A placeholder notice is shown in the accordion for these domains.
+  9:  { sections: [] },
+  10: { sections: [] },
+  11: { sections: [] },
+  12: { sections: [] }
+};
+
+// ================================================================
+// APPLICATION STATE
+// ================================================================
+let clientData     = null;  // Imported Piece 1 JSON — null if no file uploaded
+let currentDomain  = 0;     // 0-indexed domain currently shown in Screen 2
+let naipaulScores  = new Array(12).fill(null);  // Naipaul's expert scores [0-3 or null]
+let naipaulNotes   = new Array(12).fill('');    // Naipaul's interview notes per domain
+
+// ================================================================
+// SCREEN 1: IMPORT HANDLERS
+// ================================================================
+
+// Drag-and-drop visual feedback
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+
+function handleFileUpload(input) {
+  if (input.files[0]) processFile(input.files[0]);
+}
+
+function processFile(file) {
+  const errEl  = document.getElementById('import-error');
+  const prevEl = document.getElementById('client-preview');
+  errEl.classList.remove('visible');
+  prevEl.classList.remove('visible');
+
+  if (!file.name.endsWith('.json')) {
+    errEl.textContent = 'File must be a .json file. Please upload the assessment file downloaded from the client\'s Piece 1 report.';
+    errEl.classList.add('visible');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Validate schema: must be ascend-p1-v1 with expected fields
+      if (data.schema !== 'ascend-p1-v1' || !data.client || !data.assessment || !Array.isArray(data.assessment.domains)) {
+        throw new Error('Invalid file format. This does not appear to be an ASCEND Piece 1 assessment file.');
+      }
+      if (data.assessment.domains.length !== 12) {
+        throw new Error('Assessment file is incomplete — expected 12 domains.');
+      }
+      clientData = data;
+      renderClientPreview(data);
+      enableStart();
+    } catch (err) {
+      errEl.textContent = err.message || 'Could not read this file. Please check the file and try again.';
+      errEl.classList.add('visible');
+      clientData = null;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function renderClientPreview(data) {
+  document.getElementById('preview-name').textContent = data.client.name || '—';
+  document.getElementById('preview-email').textContent = data.client.email || '—';
+  document.getElementById('preview-stage').textContent =
+    `Stage ${data.assessment.stageNumber} — ${data.assessment.tierName}`;
+
+  const scoresEl = document.getElementById('preview-scores');
+  scoresEl.innerHTML = data.assessment.domains.map(d =>
+    `<div class="preview-chip">D${d.index}: <span>${d.selfScore !== null ? d.selfScore : '—'}</span></div>`
+  ).join('');
+
+  document.getElementById('client-preview').classList.add('visible');
+}
+
+function enableStart() {
+  const btn = document.getElementById('start-btn');
+  btn.disabled = false;
+  btn.style.opacity = '';
+  btn.style.cursor = '';
+}
+
+function startWithoutFile() {
+  // Allow Naipaul to proceed without a client file — self-scores show as "Not provided"
+  clientData = null;
+  enableStart();
+  // Visual feedback
+  const card = document.querySelector('.import-card');
+  const notice = document.createElement('div');
+  notice.style.cssText = 'padding:12px 16px;background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;font-size:13px;color:#7A5C00;margin-top:12px;';
+  notice.textContent = 'Continuing without client file. Client self-scores will not be shown. Naipaul\'s expert scores only.';
+  card.appendChild(notice);
+}
+
+function startAssessment() {
+  document.getElementById('screen-import').style.display = 'none';
+  document.getElementById('screen-assess').style.display = 'block';
+  document.getElementById('assess-client-label').textContent =
+    clientData ? `Client: ${clientData.client.name}` : 'No client file — expert scores only';
+  currentDomain = 0;
+  renderDomain(0);
+}
+
+// ================================================================
+// SCREEN 2: DOMAIN ASSESSMENT RENDERER
+// ================================================================
+function renderDomain(idx) {
+  const domain   = DOMAINS[idx];
+  const questions = INTERVIEW_QUESTIONS[domain.index];
+  const selfScore = clientData ? clientData.assessment.domains[idx].selfScore : null;
+  const selfLabel = selfScore !== null ? `${selfScore}/3 — ${domain.criteria[selfScore]}` : null;
+
+  // Update progress
+  const pct = Math.round((idx / 12) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-count').textContent = `Domain ${idx + 1} of 12`;
+
+  // Build domain card HTML
+  const container = document.getElementById('domain-container');
+  container.innerHTML = `
+    <div class="assess-card">
+      <div class="assess-card-header">
+        <div class="assess-domain-num">${domain.index}</div>
+        <div>
+          <div class="assess-domain-name">${domain.name}</div>
+          <div class="assess-domain-desc">${domain.desc}</div>
+        </div>
+      </div>
+
+      <!-- Client self-score reference (read-only) -->
+      <div class="self-score-ref ${selfScore === null ? 'no-data' : ''}">
+        <div class="self-score-tag">Client Self-Score</div>
+        <div class="self-score-val">${selfScore !== null ? selfScore + '/3' : 'Not provided'}</div>
+        ${selfScore !== null ? `<div class="self-score-criteria">${domain.criteria[selfScore]}</div>` : ''}
+      </div>
+
+      <!-- Naipaul's expert score input -->
+      <div class="score-section-label">Your Expert Assessment</div>
+      <div class="score-options">
+        ${domain.criteria.map((c, i) => `
+          <div class="score-option">
+            <input type="radio" name="ns${idx}" id="ns${idx}-${i}" value="${i}"
+              onchange="naipaulScores[${idx}]=${i}"
+              ${naipaulScores[idx] === i ? 'checked' : ''} />
+            <label for="ns${idx}-${i}">
+              <span class="score-option-number">${i}</span>
+              ${c}
+            </label>
+          </div>`).join('')}
+      </div>
+
+      <!-- Interview questions accordion — collapsed by default, full content when open -->
+      ${buildQuestionsAccordion(domain.index, questions)}
+
+      <!-- Notes field -->
+      <div class="notes-label">Interview Notes</div>
+      <textarea class="notes-field" id="notes-${idx}"
+        placeholder="What did the client say? What stood out? Any specific examples, numbers, or red flags mentioned..."
+        oninput="naipaulNotes[${idx}]=this.value">${naipaulNotes[idx]}</textarea>
+
+      <div class="domain-err" id="derr-${idx}">Please select your expert score before proceeding.</div>
+    </div>`;
+
+  // Build navigation buttons
+  const navEl = document.getElementById('assess-nav');
+  const isLast = idx === 11;
+  navEl.innerHTML = `
+    ${idx > 0 ? `<button class="btn-secondary" onclick="navDomain(${idx - 1})">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>` : ''}
+    <button class="btn-primary" onclick="${isLast ? 'generateFindings()' : `navDomain(${idx + 1})`}">
+      ${isLast ? 'Generate Findings Brief' : 'Next Domain'}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        ${isLast ? '<polyline points="20 6 9 17 4 12"/>' : '<polyline points="9 18 15 12 9 6"/>'}
+      </svg>
+    </button>`;
+}
+
+function buildQuestionsAccordion(domainIndex, questions) {
+  const hasQuestions = questions.sections && questions.sections.length > 0;
+
+  if (!hasQuestions) {
+    // Domains 9-12: no interview questions provided yet
+    return `
+      <div style="margin-bottom:20px;">
+        <div class="no-questions-notice">
+          <strong>Interview questions not yet provided for this domain.</strong><br>
+          Leadership & Governance, Team & Talent, Quality of Earnings, and Exit/Value Readiness are pending question set content from Naipaul. Use the notes field below to capture your observations during the call.
+        </div>
+      </div>`;
+  }
+
+  // Build accordion with all sub-sections. Collapsed by default.
+  const sectionsHTML = questions.sections.map((sec, si) => `
+    <div class="q-section">
+      <div class="q-section-title">${sec.title}</div>
+      ${sec.strategic ? `<div class="q-strategic">${sec.strategic}</div>` : ''}
+      ${sec.tactical && sec.tactical.length > 0 ? `
+        <div class="q-tactical-label">Tactical Questions</div>
+        <div class="q-tactical-list">
+          ${sec.tactical.map(q => `<div class="q-tactical-item">${q}</div>`).join('')}
+        </div>` : ''}
+      ${sec.expectedResponse ? `
+        <div class="q-expected">
+          <div class="q-expected-label">Expected Response / Red Flags</div>
+          <div class="q-expected-text">${sec.expectedResponse}</div>
+        </div>` : ''}
+    </div>`).join('');
+
+  return `
+    <div class="accordion" style="margin-bottom:20px;">
+      <div class="accordion-toggle" onclick="toggleAccordion(this)" id="acc-${domainIndex}">
+        Interview Questions & Expected Responses (${questions.sections.length} sections)
+        <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accordion-body" id="acc-body-${domainIndex}">
+        ${sectionsHTML}
+      </div>
+    </div>`;
+}
+
+function toggleAccordion(toggleEl) {
+  toggleEl.classList.toggle('open');
+  const bodyId = toggleEl.id.replace('acc-', 'acc-body-');
+  const body = document.getElementById(bodyId);
+  if (body) body.classList.toggle('open');
+}
+
+function navDomain(idx) {
+  // Save current notes
+  const notesEl = document.getElementById(`notes-${currentDomain}`);
+  if (notesEl) naipaulNotes[currentDomain] = notesEl.value;
+
+  // Validate: score required before moving forward
+  if (idx > currentDomain && naipaulScores[currentDomain] === null) {
+    const errEl = document.getElementById(`derr-${currentDomain}`);
+    if (errEl) errEl.classList.add('visible');
+    return;
+  }
+
+  currentDomain = idx;
+  renderDomain(idx);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ================================================================
+// SCORING HELPERS — shared with report generation
+// ================================================================
+function getStage(totalScore) {
+  return STAGE_LOOKUP[Math.min(totalScore, 36)];
+}
+
+function getTier(stage) {
+  return STAGE_TIERS.find(t => t.stages.includes(stage)) || STAGE_TIERS[0];
+}
+
+function getClientStage() {
+  if (!clientData) return null;
+  return clientData.assessment.stageNumber;
+}
+
+function getClientTier() {
+  const s = getClientStage();
+  return s !== null ? getTier(s) : null;
+}
+
+// ================================================================
+// SCREEN 3: FINDINGS BRIEF GENERATOR
+// ================================================================
+function generateFindings() {
+  // Save final domain notes
+  const notesEl = document.getElementById(`notes-${currentDomain}`);
+  if (notesEl) naipaulNotes[currentDomain] = notesEl.value;
+
+  // Validate all 12 domains scored
+  const unscored = naipaulScores.map((s, i) => s === null ? i + 1 : null).filter(Boolean);
+  if (unscored.length > 0) {
+    alert(`Please score all domains before generating findings. Missing: Domain${unscored.length > 1 ? 's' : ''} ${unscored.join(', ')}.`);
+    navDomain(unscored[0] - 1);
+    return;
+  }
+
+  // Calculate Naipaul's total + stage
+  const naipaulTotal = naipaulScores.reduce((a, b) => a + b, 0);
+  const naipaulStage = getStage(naipaulTotal);
+  const naipaulTier  = getTier(naipaulStage);
+
+  // Switch screens
+  document.getElementById('screen-assess').style.display = 'none';
+  document.getElementById('screen-findings').style.display = 'block';
+
+  // Header
+  const cName = clientData ? clientData.client.name : 'Client (No File)';
+  const cEmail = clientData ? clientData.client.email : '—';
+  document.getElementById('findings-client-name').textContent = cName;
+  document.getElementById('findings-client-email').textContent = cEmail;
+
+  const metaEl = document.getElementById('findings-meta');
+  metaEl.innerHTML = `
+    <div class="findings-meta-item">
+      <div class="findings-meta-key">Naipaul's Stage</div>
+      <div class="findings-meta-val">Stage ${naipaulStage} — ${naipaulTier.name}</div>
+    </div>
+    <div class="findings-meta-item">
+      <div class="findings-meta-key">Total Score</div>
+      <div class="findings-meta-val">${naipaulTotal} / 36</div>
+    </div>
+    ${clientData ? `
+    <div class="findings-meta-item">
+      <div class="findings-meta-key">Client Self-Score</div>
+      <div class="findings-meta-val">Stage ${clientData.assessment.stageNumber} — ${clientData.assessment.tierName}</div>
+    </div>` : ''}
+    <div class="findings-meta-item">
+      <div class="findings-meta-key">ASCEND Phase</div>
+      <div class="findings-meta-val">${naipaulTier.ascendPhase}</div>
+    </div>`;
+
+  buildPart1(naipaulTier);
+  buildPart2(naipaulStage, naipaulTier, naipaulTotal);
+  buildPart3(naipaulTier);
+  buildPart4(naipaulTier);
+  buildPart5(naipaulStage, naipaulTier);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Part 1: Per-domain findings — 12 rows
+function buildPart1(naipaulTier) {
+  const container = document.getElementById('part1-container');
+  container.innerHTML = DOMAINS.map((d, i) => {
+    const nScore  = naipaulScores[i];
+    const cScore  = clientData ? clientData.assessment.domains[i].selfScore : null;
+    const notes   = naipaulNotes[i].trim();
+
+    // Diff flag logic:
+    //   client scored higher than Naipaul → overestimating (flag red)
+    //   client scored lower than Naipaul  → underselling (flag green)
+    //   same score → match (flag blue)
+    //   no client data → no flag
+    let diffHTML = '';
+    if (cScore !== null) {
+      if (cScore > nScore)       diffHTML = `<span class="diff-flag diff-over">Client may be overestimating</span>`;
+      else if (cScore < nScore)  diffHTML = `<span class="diff-flag diff-under">Client may be underselling</span>`;
+      else                       diffHTML = `<span class="diff-flag diff-match">Scores align</span>`;
+    }
+
+    return `
+      <div class="df-row">
+        <div class="df-row-top">
+          <div class="df-name">${d.index}. ${d.name}</div>
+          <div class="score-pair">
+            ${cScore !== null
+              ? `<span class="sc sc-client" title="Client self-score">Client: ${cScore}/3</span>`
+              : `<span class="sc sc-nodata" title="No client file">Client: —</span>`}
+            <span class="sc sc-naipaul" title="Naipaul's expert score">Naipaul: ${nScore}/3</span>
+          </div>
+          ${diffHTML}
+        </div>
+        <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;">
+          <em>${d.criteria[nScore]}</em>
+          ${nScore <= 1 ? ` — <span style="color:var(--text-mid);">${DOMAIN_GAP_TEXT[i]}</span>` : ''}
+        </div>
+        ${notes
+          ? `<div class="df-notes-block">
+               <div class="df-notes-tag">Interview Notes</div>
+               <div class="df-notes-text">${notes}</div>
+             </div>`
+          : `<div class="df-no-notes">No notes recorded for this domain.</div>`}
+      </div>`;
+  }).join('');
+}
+
+// Part 2: Overall stage confirmation
+function buildPart2(naipaulStage, naipaulTier, naipaulTotal) {
+  const container = document.getElementById('part2-container');
+  const clientStage = getClientStage();
+  const clientTier  = getClientTier();
+
+  let diffNote = '';
+  if (clientStage !== null && clientStage !== naipaulStage) {
+    const dir = naipaulStage < clientStage ? 'lower' : 'higher';
+    diffNote = `<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:12px 16px;margin-top:14px;font-size:13px;color:#7A5C00;">
+      <strong>Stage difference noted:</strong> Client self-assessed at Stage ${clientStage} (${clientTier.name}). 
+      Your expert assessment places them at Stage ${naipaulStage} (${naipaulTier.name}) — ${dir}. 
+      This difference should be addressed directly on the presentation call.
+    </div>`;
+  }
+
+  container.innerHTML = `
+    <div style="background:var(--gold-pale);border:1.5px solid var(--gold);border-radius:var(--radius);padding:20px 24px;">
+      <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Stage ${naipaulStage} — ${naipaulTier.name} Tier</div>
+      <div style="font-size:14px;color:var(--text-mid);margin-bottom:10px;">ASCEND Phase: ${naipaulTier.ascendPhase} · Total Score: ${naipaulTotal}/36</div>
+      <div style="font-size:14px;line-height:1.65;">${naipaulTier.description}</div>
+    </div>
+    ${diffNote}`;
+}
+
+// Part 3: Top 3 blind spots — lowest-scoring domains weighted by stage priority
+function buildPart3(naipaulTier) {
+  const container = document.getElementById('part3-container');
+  const primaryDomains = DOMAIN_PRIORITY[naipaulTier.name]?.primary || [];
+
+  // Score each domain: lower Naipaul score = higher risk.
+  // Primary domains at this stage get higher weight in ranking.
+  const ranked = DOMAINS.map((d, i) => ({
+    domain: d,
+    idx: i,
+    score: naipaulScores[i],
+    isPrimary: primaryDomains.includes(d.name),
+    sortKey: naipaulScores[i] - (primaryDomains.includes(d.name) ? 0.5 : 0) // lower = worse, primary = worse
+  })).sort((a, b) => a.sortKey - b.sortKey).slice(0, 3);
+
+  container.innerHTML = ranked.map((item, rank) => `
+    <div class="blind-spot">
+      <div class="bs-num">${rank + 1}</div>
+      <div>
+        <div class="bs-name">${item.domain.name}
+          ${item.isPrimary ? `<span style="font-size:10px;background:var(--navy);color:var(--gold);padding:2px 7px;border-radius:10px;margin-left:6px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Primary at this stage</span>` : ''}
+        </div>
+        <div class="bs-why">Score: ${item.score}/3 — ${item.domain.criteria[item.score]}. ${DOMAIN_GAP_TEXT[item.idx]}</div>
+      </div>
+    </div>`).join('');
+}
+
+// Part 4: Recommended partnership model
+function buildPart4(naipaulTier) {
+  const container = document.getElementById('part4-container');
+  container.innerHTML = `
+    <div class="partnership-card">
+      <div class="partnership-zone">${naipaulTier.ascendPhase}</div>
+      <div class="partnership-title">${naipaulTier.service}</div>
+      <div class="partnership-body">Based on the assessment, ${naipaulTier.description.toLowerCase()} The recommended engagement model is the <strong>${naipaulTier.offer}</strong> — structured to address the priority gaps identified and create a clear path to the next stage.</div>
+      <div class="partnership-price">Investment range: ${naipaulTier.price}</div>
+    </div>`;
+}
+
+// Part 5: Suggested timeline — current stage to next tier
+function buildPart5(naipaulStage, naipaulTier) {
+  const container = document.getElementById('part5-container');
+  const currentTierIdx = STAGE_TIERS.indexOf(naipaulTier);
+  const nextTier = STAGE_TIERS[currentTierIdx + 1] || null;
+
+  const timelineItems = STAGE_TIERS.map((tier, i) => {
+    const isCurrent = tier.name === naipaulTier.name;
+    const isNext    = nextTier && tier.name === nextTier.name;
+    const isPast    = i < currentTierIdx;
+    const opacity   = isPast ? '0.4' : '1';
+
+    return `
+      <div class="timeline-item" style="opacity:${opacity}">
+        <div class="tl-dot ${isCurrent ? 'current' : ''}"></div>
+        <div>
+          <div class="tl-label">
+            ${tier.name} (Stages ${tier.stages[0]}–${tier.stages[tier.stages.length-1]})
+            ${isCurrent ? '<span style="font-size:11px;background:var(--gold);color:var(--navy);padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:700;">Current</span>' : ''}
+            ${isNext ? '<span style="font-size:11px;background:var(--navy);color:var(--gold);padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:700;">Next Target</span>' : ''}
+          </div>
+          <div class="tl-desc">${tier.ascendPhase} — ${tier.service} (${tier.price})</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const progressNote = nextTier
+    ? `<div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-top:16px;font-size:13px;color:var(--text-mid);line-height:1.6;">
+        <strong>Suggested path:</strong> The ${naipaulTier.offer} is designed to move the client from ${naipaulTier.name} (Stage ${naipaulStage}) toward ${nextTier.name} (Stage ${nextTier.stages[0]}+) within the engagement period. 
+        Actual timeline depends on starting baseline, client engagement, and resource availability. This is Naipaul's professional judgment, not a guarantee.
+       </div>`
+    : `<div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-top:16px;font-size:13px;color:var(--text-mid);">Client is at the highest tier. Focus is on sustaining and maximising enterprise value for exit.</div>`;
+
+  container.innerHTML = timelineItems + progressNote;
+}
+
+// ================================================================
+// .DOCX GENERATOR
+// Generates a structured Word document in-browser using JSZip + OOXML.
+// Structure:
+//   [BLANK] Executive Summary  ← Naipaul fills this in after the call
+//   Part 1 — Per-Domain Assessment (x12)
+//   Part 2 — Overall Stage Confirmation
+//   Part 3 — Top 3 Blind Spots
+//   Part 4 — Recommended Partnership Model
+//   Part 5 — Suggested Timeline
+//   [BLANK] Presentation Notes ← Naipaul fills in for delivery call
+//   [BLANK] Action Items       ← Naipaul fills in for client
+// ================================================================
+function downloadDocx() {
+  const cName = clientData ? clientData.client.name : 'Client';
+  const cEmail = clientData ? clientData.client.email : '';
+  const naipaulTotal = naipaulScores.reduce((a, b) => a + b, 0);
+  const naipaulStage = getStage(naipaulTotal);
+  const naipaulTier  = getTier(naipaulStage);
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Build OOXML document.xml content
+  // Using a helper to escape XML special characters
+  const x = s => String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  // Helper: paragraph builder
+  const para = (text, style, opts = {}) => {
+    const bold  = opts.bold  ? '<w:b/>' : '';
+    const size  = opts.size  ? `<w:sz w:val="${opts.size}"/><w:szCs w:val="${opts.size}"/>` : '';
+    const color = opts.color ? `<w:color w:val="${opts.color}"/>` : '';
+    const spacing = opts.spacing ? `<w:spacing w:before="${opts.spacing}" w:after="${opts.spacing}"/>` : '';
+    const shade = opts.shade ? `<w:shd w:val="clear" w:color="auto" w:fill="${opts.shade}"/>` : '';
+    const pStyle = style ? `<w:pStyle w:val="${style}"/>` : '';
+    return `<w:p>
+      <w:pPr>${pStyle}${spacing}${shade ? `<w:rPr>${shade}</w:rPr>` : ''}</w:pPr>
+      <w:r><w:rPr>${bold}${size}${color}</w:rPr><w:t xml:space="preserve">${x(text)}</w:t></w:r>
+    </w:p>`;
+  };
+
+  const h1 = (t)  => para(t, 'Heading1');
+  const h2 = (t)  => para(t, 'Heading2');
+  const h3 = (t)  => para(t, 'Heading3');
+  const p  = (t, opts = {}) => para(t, '', opts);
+  const br = ()   => `<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:p>`;
+
+  // Blank fill-in section box
+  const blankSection = (label, lines = 8) => {
+    const rows = Array.from({length: lines}, () =>
+      `<w:tr><w:tc><w:tcPr>
+        <w:tcBorders><w:top w:val="none"/><w:left w:val="none"/><w:bottom w:val="none"/><w:right w:val="none"/></w:tcBorders>
+        <w:shd w:val="clear" w:color="auto" w:fill="F8F7F4"/>
+      </w:tcPr>
+      <w:p><w:pPr><w:spacing w:before="200" w:after="200"/></w:pPr>
+        <w:r><w:rPr><w:color w:val="CCCCCC"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r>
+      </w:p></w:tc></w:tr>`
+    ).join('');
+    return `
+      ${h3(label)}
+      ${p('[ Naipaul to complete before presentation call ]', { color: 'AAAAAA', size: 20 })}
+      <w:tbl>
+        <w:tblPr>
+          <w:tblW w:w="9360" w:type="dxa"/>
+          <w:tblBorders>
+            <w:top w:val="single" w:sz="4" w:color="C9A84C"/>
+            <w:left w:val="single" w:sz="4" w:color="C9A84C"/>
+            <w:bottom w:val="single" w:sz="4" w:color="C9A84C"/>
+            <w:right w:val="single" w:sz="4" w:color="C9A84C"/>
+          </w:tblBorders>
+          <w:tblCellMar><w:top w:w="160"/><w:left w:w="160"/><w:bottom w:w="160"/><w:right w:w="160"/></w:tblCellMar>
+        </w:tblPr>
+        <w:tblGrid><w:gridCol w:w="9360"/></w:tblGrid>
+        ${rows}
+      </w:tbl>
+      ${br()}`;
+  };
+
+  // Domain findings rows
+  const domainRows = DOMAINS.map((d, i) => {
+    const nScore = naipaulScores[i];
+    const cScore = clientData ? clientData.assessment.domains[i].selfScore : null;
+    const notes  = naipaulNotes[i].trim();
+    let diffText = '';
+    if (cScore !== null) {
+      if (cScore > nScore)      diffText = ' [Client may be overestimating]';
+      else if (cScore < nScore) diffText = ' [Client may be underselling]';
+      else                      diffText = ' [Scores align]';
+    }
+    return `
+      ${h3(`Domain ${d.index}: ${d.name}`)}
+      ${p(`Naipaul Score: ${nScore}/3 — ${d.criteria[nScore]}${cScore !== null ? `   |   Client Self-Score: ${cScore}/3${diffText}` : ''}`, { bold: true })}
+      ${nScore <= 1 ? p(DOMAIN_GAP_TEXT[i], { color: '555555' }) : ''}
+      ${notes ? p(`Interview Notes: ${notes}`) : p('Interview Notes: [None recorded]', { color: 'AAAAAA' })}
+      ${br()}`;
+  }).join('');
+
+  // Blind spots
+  const primaryDomains = DOMAIN_PRIORITY[naipaulTier.name]?.primary || [];
+  const ranked = DOMAINS.map((d, i) => ({
+    d, i, score: naipaulScores[i],
+    isPrimary: primaryDomains.includes(d.name),
+    sortKey: naipaulScores[i] - (primaryDomains.includes(d.name) ? 0.5 : 0)
+  })).sort((a, b) => a.sortKey - b.sortKey).slice(0, 3);
+
+  const blindSpotRows = ranked.map((item, rank) =>
+    `${p(`${rank + 1}. ${item.d.name} (Score: ${item.score}/3)${item.isPrimary ? ' — PRIMARY domain at this stage' : ''}`, { bold: true })}
+     ${p(DOMAIN_GAP_TEXT[item.i])}
+     ${br()}`
+  ).join('');
+
+  // Timeline rows
+  const currentTierIdx = STAGE_TIERS.indexOf(naipaulTier);
+  const timelineRows = STAGE_TIERS.map((tier, i) => {
+    const tag = i === currentTierIdx ? ' ← CURRENT STAGE' : (i === currentTierIdx + 1 ? ' ← NEXT TARGET' : '');
+    return p(`${tier.name} (Stages ${tier.stages[0]}–${tier.stages[tier.stages.length-1]}) — ${tier.service} (${tier.price})${tag}`,
+      i < currentTierIdx ? { color: 'BBBBBB' } : i === currentTierIdx ? { bold: true } : {});
+  }).join('');
+
+  // Assemble full document body XML
+  const bodyXML = `
+    ${h1('ASCEND™ Diagnostic Findings Brief')}
+    ${p(`Client: ${cName}  |  ${cEmail}  |  Assessment Date: ${today}`)}
+    ${p(`Naipaul's Assessment: Stage ${naipaulStage} — ${naipaulTier.name} Tier  |  Total Score: ${naipaulTotal}/36`)}
+    ${clientData ? p(`Client Self-Score: Stage ${clientData.assessment.stageNumber} — ${clientData.assessment.tierName}`) : ''}
+    ${p(`ASCEND Phase: ${naipaulTier.ascendPhase}  |  Recommended Service: ${naipaulTier.service}`)}
+    ${br()}
+
+    ${h1('[ SECTION A ] Executive Summary')}
+    ${p('Complete this section after reviewing the findings brief and before the presentation call.', { color: '555555' })}
+    ${blankSection('A1. Overview — What did you find?', 6)}
+    ${blankSection('A2. The 3 most critical issues for this business', 6)}
+    ${blankSection('A3. Your recommended immediate next step for this client', 4)}
+    ${br()}
+
+    ${h1('Part 1 — Per-Domain Assessment')}
+    ${domainRows}
+
+    ${h1('Part 2 — Overall Stage Confirmation')}
+    ${h2(`Stage ${naipaulStage} — ${naipaulTier.name} Tier`)}
+    ${p(`ASCEND Phase: ${naipaulTier.ascendPhase}  |  Total Score: ${naipaulTotal}/36`)}
+    ${p(naipaulTier.description)}
+    ${clientData && clientData.assessment.stageNumber !== naipaulStage
+      ? p(`Stage difference: Client self-assessed at Stage ${clientData.assessment.stageNumber} (${clientData.assessment.tierName}). Expert assessment places them at Stage ${naipaulStage} (${naipaulTier.name}). Address this directly on the presentation call.`, { color: '7A5C00' })
+      : ''}
+    ${br()}
+
+    ${h1('Part 3 — Top 3 Blind Spots')}
+    ${blindSpotRows}
+
+    ${h1('Part 4 — Recommended Partnership Model')}
+    ${h2(naipaulTier.service)}
+    ${p(`ASCEND Phase: ${naipaulTier.ascendPhase}`)}
+    ${p(`Based on the assessment, ${naipaulTier.description.toLowerCase()} The recommended engagement model is the ${naipaulTier.offer} — structured to address the priority gaps identified and create a clear path to the next stage.`)}
+    ${p(`Investment range: ${naipaulTier.price}`, { bold: true })}
+    ${br()}
+
+    ${h1('Part 5 — Suggested Timeline')}
+    ${timelineRows}
+    ${br()}
+    ${p(`Note: The ${naipaulTier.offer} is designed to move the client from ${naipaulTier.name} (Stage ${naipaulStage}) toward the next tier. Actual timeline depends on starting baseline, client engagement, and resource availability. This is Naipaul's professional judgment, not a guarantee.`, { color: '555555' })}
+    ${br()}
+
+    ${h1('[ SECTION B ] Presentation Notes')}
+    ${p('Use this section to prepare for the presentation call. What narrative will you lead with? What will you hold back?', { color: '555555' })}
+    ${blankSection('B1. Opening narrative — how will you frame the findings?', 6)}
+    ${blankSection('B2. The "moment of truth" — what\'s the key insight you\'ll deliver?', 4)}
+    ${blankSection('B3. Anticipated client objections and your responses', 6)}
+    ${blankSection('B4. The close — how will you pitch the engagement?', 4)}
+    ${br()}
+
+    ${h1('[ SECTION C ] Action Items')}
+    ${p('Specific actions to include in the engagement scope or immediate next steps.', { color: '555555' })}
+    ${blankSection('C1. Immediate actions (first 30 days)', 6)}
+    ${blankSection('C2. 90-day sprint goals / retainer scope', 6)}
+    ${blankSection('C3. Success metrics — how will you and the client measure progress?', 4)}`;
+
+  // Build minimal OOXML Word document XML
+  const documentXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+  xmlns:mo="http://schemas.microsoft.com/office/mac/office/2008/main"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:mv="urn:schemas-microsoft-com:mac:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+  xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+  xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+  xmlns:w10="urn:schemas-microsoft-com:office:word"
+  xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+  xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+  xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+  xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+  xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+  xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+  mc:Ignorable="w14 wp14">
+  <w:body>
+    ${bodyXML}
+    <w:sectPr>
+      <w:pgSz w:w="12240" w:h="15840"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+  // Word styles — heading styles + body font
+  const stylesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+          xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <w:docDefaults>
+    <w:rPrDefault><w:rPr>
+      <w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>
+      <w:sz w:val="24"/><w:szCs w:val="24"/>
+      <w:color w:val="0D1B2A"/>
+    </w:rPr></w:rPrDefault>
+  </w:docDefaults>
+  <w:style w:type="paragraph" w:styleId="Heading1">
+    <w:name w:val="heading 1"/>
+    <w:pPr><w:spacing w:before="400" w:after="160"/>
+      <w:rPr><w:b/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="0D1B2A"/></w:rPr>
+    </w:pPr>
+    <w:rPr><w:b/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="0D1B2A"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading2">
+    <w:name w:val="heading 2"/>
+    <w:pPr><w:spacing w:before="280" w:after="120"/>
+      <w:rPr><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="C9A84C"/></w:rPr>
+    </w:pPr>
+    <w:rPr><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="C9A84C"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading3">
+    <w:name w:val="heading 3"/>
+    <w:pPr><w:spacing w:before="200" w:after="80"/>
+      <w:rPr><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/><w:color w:val="1A2E42"/></w:rPr>
+    </w:pPr>
+    <w:rPr><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/><w:color w:val="1A2E42"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Normal">
+    <w:name w:val="Normal"/>
+    <w:pPr><w:spacing w:before="80" w:after="80"/></w:pPr>
+  </w:style>
+</w:styles>`;
+
+  // Relationships
+  const relsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const appRelsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+  const contentTypesXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`;
+
+  // Build ZIP and trigger download
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', contentTypesXML);
+  zip.file('_rels/.rels', appRelsXML);
+  zip.file('word/document.xml', documentXML);
+  zip.file('word/styles.xml', stylesXML);
+  zip.file('word/_rels/document.xml.rels', relsXML);
+
+  const filename = `ascend-findings-${cName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.docx`;
+
+  zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+}
+</script>
+</body>
+</html>
