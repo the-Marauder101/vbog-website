@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Your Founder Bottleneck Audit | V-BOG</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/css?f[]=satoshi@900,700,500&display=swap" rel="stylesheet">
+
+<!-- SEO -->
+<meta name="description" content="Book a Founder Bottleneck Audit — a 60-minute operational diagnostic for B2B service founders doing $10K+ MRR. Identify what's keeping you stuck and get a 90-day roadmap.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://v-bog.com/lp1/">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Book Your Founder Bottleneck Audit | V-BOG">
+<meta property="og:description" content="Remove yourself as the bottleneck. Book a 60-min operational diagnostic for B2B service founders doing $10K+ MRR.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://v-bog.com/lp1/">
+<meta property="og:image" content="https://v-bog.com/og-image.jpg">
+<meta property="og:site_name" content="VBOG">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Book Your Founder Bottleneck Audit | V-BOG">
+<meta name="twitter:description" content="Remove yourself as the bottleneck. 60-min operational diagnostic for B2B founders.">
+<meta name="twitter:image" content="https://v-bog.com/og-image.jpg">
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Poppins', 'sans-serif'],
+          display: ['Satoshi', 'sans-serif'],
+        },
+        colors: {
+          accent: {
+            DEFAULT: '#FF4D00',
+            hover: '#CC3D00',
+            light: '#FFF2ED',
+          },
+          ink: '#0D0D0D',
+          cream: '#FAFAF7',
+          card: '#FFFFFF',
+          mid: '#6B6B6B',
+          line: '#E5E2DC',
+          dark: '#141414',
+        }
+      }
+    }
+  }
+</script>
+
+<!-- Analytics: Microsoft Clarity -->
+<script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "vaqvc4x46y");
+</script>
+
+<style>
+  :root {
+    --accent: #FF4D00;
+    --accent-hover: #CC3D00;
+    --ink: #0D0D0D;
+    --cream: #FAFAF7;
+    --mid: #6B6B6B;
+    --line: #E5E2DC;
+    --dark: #141414;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Satoshi', 'Poppins', sans-serif;
+    font-weight: 700;
+  }
+
+  /* NAV */
+  .nav-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(250,250,247,0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    transition: box-shadow 0.2s;
+  }
+  .nav-wrap.scrolled {
+    box-shadow: 0 2px 16px rgba(13,13,13,0.08);
+  }
+
+  /* BUTTONS */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.875rem 2rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 8px 24px rgba(255,77,0,0.22);
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 32px rgba(255,77,0,0.28);
+  }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.625rem 1.5rem;
+    border-radius: 9999px;
+    border: 1.5px solid var(--accent);
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+  }
+  .btn-ghost:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* PLACEHOLDER */
+  .placeholder-block {
+    background: #E8E5E0;
+    border: 2px dashed #C8C3BB;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9E9A95;
+    font-size: 0.8rem;
+    font-weight: 500;
+    gap: 8px;
+  }
+  .placeholder-block svg { opacity: 0.5; }
+
+  /* STEP CONNECTOR */
+  .step-line {
+    flex: 1;
+    height: 2px;
+    background: var(--line);
+    margin: 0 12px;
+    margin-top: -28px;
+  }
+
+  /* FORM */
+  .form-field {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9375rem;
+    background: #fff;
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .form-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255,77,0,0.1);
+  }
+  .form-field::placeholder { color: #B0ABA5; }
+
+  label.field-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  /* REALITY CALLOUT */
+  .reality-box {
+    background: var(--ink);
+    color: #fff;
+    border-radius: 14px;
+    padding: 2rem 2.5rem;
+    border-left: 4px solid var(--accent);
+  }
+
+  /* MOBILE STICKY CTA */
+  #sticky-cta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: #fff;
+    border-top: 1px solid var(--line);
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    display: none;
+  }
+  #sticky-cta.visible { transform: translateY(0); }
+
+  @media (max-width: 767px) {
+    #sticky-cta { display: block; }
+    body { padding-bottom: 80px; }
+  }
+
+  /* TRUST BAR ITEMS */
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: var(--mid);
+    font-weight: 500;
+  }
+  .trust-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* SECTION EYEBROW */
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  /* CHECK / CROSS ITEMS */
+  .check-item, .cross-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    padding: 8px 0;
+  }
+  .check-icon { color: #1A6B3C; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .cross-icon { color: #C0392B; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* METRIC PILL */
+  .metric-pill {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,77,0,0.08);
+    color: var(--accent);
+    border: 1px solid rgba(255,77,0,0.2);
+    border-radius: 9999px;
+    padding: 6px 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ===================== NAV ===================== -->
+<header class="nav-wrap" id="nav">
+  <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="https://v-bog.com" class="flex-shrink-0">
+      <img src="../Logo.svg" alt="V-BOG" class="h-8 w-auto">
+    </a>
+    <a href="#apply" class="btn-ghost hidden sm:inline-flex">Book Your Audit</a>
+  </div>
+</header>
+
+
+<!-- ===================== HERO ===================== -->
+<section id="hero" class="py-16 md:py-24 bg-cream">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="flex flex-col md:flex-row md:items-center gap-12 md:gap-16">
+
+      <!-- Left: Copy -->
+      <div class="flex-1 max-w-xl">
+        <span class="eyebrow">Founder Bottleneck Audit — 60 Minutes</span>
+        <h1 class="text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.1] font-display font-black text-ink mb-5">
+          Remove Yourself as the Bottleneck in Your Business
+        </h1>
+        <p class="text-lg text-mid leading-relaxed mb-3">
+          Book a Founder Bottleneck Audit to identify the operational systems missing from your B2B service business so you can scale without being involved in every decision.
+        </p>
+        <p class="text-sm font-semibold text-ink mb-8 px-3 py-2 bg-accent/5 border border-accent/15 rounded-lg inline-block">
+          Designed for B2B service founders doing $10K+ MRR
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+          <a href="#apply" class="btn-primary text-center">
+            Book Your Founder Bottleneck Audit
+          </a>
+        </div>
+
+        <!-- Trust bar -->
+        <div class="flex flex-wrap gap-x-6 gap-y-2 mt-2">
+          <span class="trust-item"><span class="trust-dot"></span>60-min session</span>
+          <span class="trust-item"><span class="trust-dot"></span>No obligation</span>
+          <span class="trust-item"><span class="trust-dot"></span>Limited spots</span>
+        </div>
+      </div>
+
+      <!-- Right: Placeholder image -->
+      <div class="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-end">
+        <div class="placeholder-block w-full max-w-[360px] aspect-[3/4]">
+          <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>360 × 480px</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== PAIN SECTION ===================== -->
+<section class="py-16 bg-white border-t border-line">
+  <div class="max-w-3xl mx-auto px-6">
+    <span class="eyebrow">Does This Sound Familiar?</span>
+    <h2 class="text-3xl md:text-4xl font-display font-black text-ink mb-4">
+      If Your Business Looks Like This…
+    </h2>
+    <p class="text-lg text-mid mb-10">You might be experiencing the founder bottleneck stage.</p>
+
+    <ul class="space-y-4 mb-12">
+      <li class="flex items-start gap-4 p-4 rounded-xl bg-cream border border-line">
+        <span class="text-accent text-lg mt-0.5">→</span>
+        <span class="font-medium text-ink">Every major client decision still goes through you</span>
+      </li>
+      <li class="flex items-start gap-4 p-4 rounded-xl bg-cream border border-line">
+        <span class="text-accent text-lg mt-0.5">→</span>
+        <span class="font-medium text-ink">Your team waits for instructions before moving forward</span>
+      </li>
+      <li class="flex items-start gap-4 p-4 rounded-xl bg-cream border border-line">
+        <span class="text-accent text-lg mt-0.5">→</span>
+        <span class="font-medium text-ink">Growth increases chaos instead of freedom</span>
+      </li>
+      <li class="flex items-start gap-4 p-4 rounded-xl bg-cream border border-line">
+        <span class="text-accent text-lg mt-0.5">→</span>
+        <span class="font-medium text-ink">Hiring hasn't solved the operational problems</span>
+      </li>
+      <li class="flex items-start gap-4 p-4 rounded-xl bg-cream border border-line">
+        <span class="text-accent text-lg mt-0.5">→</span>
+        <span class="font-medium text-ink">Revenue is growing, but your time isn't</span>
+      </li>
+    </ul>
+
+    <!-- Reality callout -->
+    <div class="reality-box">
+      <p class="text-sm font-semibold uppercase tracking-widest text-accent mb-2">The Reality</p>
+      <p class="text-xl md:text-2xl font-display font-bold leading-snug">
+        Most founders think they have a <span class="line-through opacity-50">sales problem</span>.<br>
+        In reality, they have a <span class="text-accent">systems problem</span>.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== THE DIAGNOSIS ===================== -->
+<section class="py-16 md:py-20 bg-cream border-t border-line">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <span class="eyebrow">The Solution</span>
+      <h2 class="text-3xl md:text-4xl font-display font-black text-ink mb-4">
+        The Founder Bottleneck Audit
+      </h2>
+      <p class="text-lg text-mid max-w-2xl mx-auto">
+        This is a 60-minute operational diagnostic session where we analyse your business structure and identify the key constraints preventing scale.
+      </p>
+    </div>
+
+    <p class="text-center font-semibold text-ink mb-8">During this session we will:</p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+
+      <!-- Card 1 -->
+      <div class="bg-white rounded-2xl p-6 border border-line shadow-sm">
+        <div class="placeholder-block w-12 h-12 rounded-xl mb-4 text-xs">48×48</div>
+        <div class="text-xs font-bold text-accent uppercase tracking-wider mb-2">Step 01</div>
+        <h3 class="font-display font-bold text-ink text-lg mb-2">Identify Your Founder Dependency Points</h3>
+        <p class="text-sm text-mid">Where the business currently depends on you.</p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-white rounded-2xl p-6 border border-line shadow-sm">
+        <div class="placeholder-block w-12 h-12 rounded-xl mb-4 text-xs">48×48</div>
+        <div class="text-xs font-bold text-accent uppercase tracking-wider mb-2">Step 02</div>
+        <h3 class="font-display font-bold text-ink text-lg mb-2">Map the Operational Bottlenecks</h3>
+        <p class="text-sm text-mid">Which systems are missing or broken.</p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-white rounded-2xl p-6 border border-line shadow-sm">
+        <div class="placeholder-block w-12 h-12 rounded-xl mb-4 text-xs">48×48</div>
+        <div class="text-xs font-bold text-accent uppercase tracking-wider mb-2">Step 03</div>
+        <h3 class="font-display font-bold text-ink text-lg mb-2">Diagnose Your Growth Ceiling</h3>
+        <p class="text-sm text-mid">How far your current structure can realistically scale.</p>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="bg-white rounded-2xl p-6 border border-line shadow-sm">
+        <div class="placeholder-block w-12 h-12 rounded-xl mb-4 text-xs">48×48</div>
+        <div class="text-xs font-bold text-accent uppercase tracking-wider mb-2">Step 04</div>
+        <h3 class="font-display font-bold text-ink text-lg mb-2">Create a 90-Day Operational Roadmap</h3>
+        <p class="text-sm text-mid">The systems required to remove the founder bottleneck.</p>
+      </div>
+
+    </div>
+
+    <div class="text-center">
+      <a href="#apply" class="btn-primary">Apply for the Founder Bottleneck Audit</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== PROCESS STEPS ===================== -->
+<section class="py-16 bg-white border-t border-line">
+  <div class="max-w-4xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <span class="eyebrow">The Process</span>
+      <h2 class="text-3xl md:text-4xl font-display font-black text-ink">
+        What Happens After You Book
+      </h2>
+    </div>
+
+    <!-- Desktop: horizontal -->
+    <div class="hidden md:flex items-start gap-0">
+
+      <div class="flex-1 text-center">
+        <div class="w-14 h-14 rounded-full bg-accent text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">1</div>
+        <h3 class="font-display font-bold text-ink mb-2">Application Review</h3>
+        <p class="text-sm text-mid">We review your responses to ensure the audit is relevant.</p>
+      </div>
+
+      <div class="step-line self-start" style="margin-top:26px;"></div>
+
+      <div class="flex-1 text-center">
+        <div class="w-14 h-14 rounded-full bg-accent text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">2</div>
+        <h3 class="font-display font-bold text-ink mb-2">Founder Bottleneck Audit</h3>
+        <p class="text-sm text-mid">We diagnose operational constraints and growth ceilings.</p>
+      </div>
+
+      <div class="step-line self-start" style="margin-top:26px;"></div>
+
+      <div class="flex-1 text-center">
+        <div class="w-14 h-14 rounded-full bg-accent text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">3</div>
+        <h3 class="font-display font-bold text-ink mb-2">Actionable Roadmap</h3>
+        <p class="text-sm text-mid">You receive a clear system roadmap for the next 90 days.</p>
+      </div>
+
+    </div>
+
+    <!-- Mobile: vertical -->
+    <div class="flex md:hidden flex-col gap-6">
+      <div class="flex items-start gap-5">
+        <div class="w-12 h-12 rounded-full bg-accent text-white font-bold text-lg flex items-center justify-center flex-shrink-0">1</div>
+        <div>
+          <h3 class="font-display font-bold text-ink mb-1">Application Review</h3>
+          <p class="text-sm text-mid">We review your responses to ensure the audit is relevant.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-5">
+        <div class="w-12 h-12 rounded-full bg-accent text-white font-bold text-lg flex items-center justify-center flex-shrink-0">2</div>
+        <div>
+          <h3 class="font-display font-bold text-ink mb-1">Founder Bottleneck Audit</h3>
+          <p class="text-sm text-mid">We diagnose operational constraints and growth ceilings.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-5">
+        <div class="w-12 h-12 rounded-full bg-accent text-white font-bold text-lg flex items-center justify-center flex-shrink-0">3</div>
+        <div>
+          <h3 class="font-display font-bold text-ink mb-1">Actionable Roadmap</h3>
+          <p class="text-sm text-mid">You receive a clear system roadmap for the next 90 days.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ===================== SOCIAL PROOF ===================== -->
+<section class="py-16 md:py-20 bg-dark border-t border-white/10">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <span class="eyebrow" style="color:#FF6633;">Real Results</span>
+      <h2 class="text-3xl md:text-4xl font-display font-black text-white">
+        Real Founder Outcomes
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+
+      <!-- Case Study 1 -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="placeholder-block w-14 h-14 rounded-full flex-shrink-0 text-xs" style="background:#2A2A2A;border-color:#3A3A3A;color:#666;">80×80</div>
+          <div>
+            <div class="text-2xl font-display font-black text-accent">$15K → $120K</div>
+            <div class="text-xs text-white/50 font-medium">MRR Growth</div>
+          </div>
+        </div>
+        <p class="text-white/70 text-sm leading-relaxed">Agency founder grew from $15K → $120K MRR after installing operational systems.</p>
+      </div>
+
+      <!-- Case Study 2 -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="placeholder-block w-14 h-14 rounded-full flex-shrink-0 text-xs" style="background:#2A2A2A;border-color:#3A3A3A;color:#666;">80×80</div>
+          <div>
+            <div class="text-2xl font-display font-black text-accent">$220K MRR</div>
+            <div class="text-xs text-white/50 font-medium">Revenue Scale</div>
+          </div>
+        </div>
+        <p class="text-white/70 text-sm leading-relaxed">Service business scaled to $220K MRR after removing founder dependency.</p>
+      </div>
+
+      <!-- Case Study 3 -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="placeholder-block w-14 h-14 rounded-full flex-shrink-0 text-xs" style="background:#2A2A2A;border-color:#3A3A3A;color:#666;">80×80</div>
+          <div>
+            <div class="text-2xl font-display font-black text-accent">40% Less</div>
+            <div class="text-xs text-white/50 font-medium">Working Hours</div>
+          </div>
+        </div>
+        <p class="text-white/70 text-sm leading-relaxed">Founder reduced working hours by 40% while growing revenue.</p>
+      </div>
+
+    </div>
+
+    <div class="text-center">
+      <a href="#apply" class="btn-primary">Apply for the Founder Bottleneck Audit</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== WHO IT'S FOR ===================== -->
+<section class="py-16 md:py-20 bg-cream border-t border-line">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <span class="eyebrow">Qualification</span>
+      <h2 class="text-3xl md:text-4xl font-display font-black text-ink">
+        Is This Call Right For You?
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <!-- For -->
+      <div class="bg-white rounded-2xl p-8 border border-line shadow-sm">
+        <h3 class="font-display font-bold text-ink text-xl mb-6 flex items-center gap-2">
+          <span class="text-green-600">✓</span> This Call Is Designed For:
+        </h3>
+        <div class="check-item"><span class="check-icon">✓</span><span>B2B agency or service founders</span></div>
+        <div class="check-item"><span class="check-icon">✓</span><span>Businesses generating $10K+ MRR</span></div>
+        <div class="check-item"><span class="check-icon">✓</span><span>Founders actively trying to scale</span></div>
+      </div>
+
+      <!-- Not for -->
+      <div class="bg-white rounded-2xl p-8 border border-line shadow-sm">
+        <h3 class="font-display font-bold text-ink text-xl mb-6 flex items-center gap-2">
+          <span class="text-red-600">✗</span> This Audit Is Not Suitable For:
+        </h3>
+        <div class="cross-item"><span class="cross-icon">✗</span><span>Solo freelancers without a team</span></div>
+        <div class="cross-item"><span class="cross-icon">✗</span><span>Early-stage founders under $4K MRR</span></div>
+        <div class="cross-item"><span class="cross-icon">✗</span><span>Large enterprises with complex org structures</span></div>
+        <div class="cross-item"><span class="cross-icon">✗</span><span>Founders looking for quick hacks instead of systems</span></div>
+      </div>
+
+    </div>
+
+    <p class="text-center text-mid mt-6 font-medium">This keeps the conversation high quality.</p>
+  </div>
+</section>
+
+
+<!-- ===================== AUTHORITY ===================== -->
+<section class="py-16 md:py-20 bg-white border-t border-line">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-10">
+      <span class="eyebrow">About V-BOG</span>
+      <h2 class="text-3xl md:text-4xl font-display font-black text-ink mb-4">
+        Why Founders Work With V-BOG
+      </h2>
+      <p class="text-lg text-mid max-w-2xl mx-auto">
+        V-BOG specialises in removing founder dependency in B2B service businesses.
+      </p>
+    </div>
+
+    <!-- Metric pills -->
+    <div class="flex flex-wrap justify-center gap-3 mb-12">
+      <span class="metric-pill">$15K → $120K MRR</span>
+      <span class="metric-pill">Scaled to $220K MRR</span>
+      <span class="metric-pill">40% time reclaimed</span>
+    </div>
+
+    <!-- Founder story placeholder -->
+    <div class="placeholder-block w-full aspect-video max-w-3xl mx-auto mb-10 rounded-2xl" style="min-height:280px;">
+      <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M4 8h8a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4a2 2 0 012-2z" />
+      </svg>
+      <span>Founder Story — 16:9 image or video (e.g. 960 × 540px)</span>
+    </div>
+
+    <div class="bg-accent/5 border border-accent/15 rounded-2xl p-6 max-w-2xl mx-auto text-center">
+      <p class="text-sm font-semibold text-mid mb-1 uppercase tracking-wider">Our Framework</p>
+      <p class="text-xl font-display font-bold text-ink">Instead of relying on guesswork, we apply the <span class="text-accent">BOSS Framework™</span> to install scalable operational systems.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== EXPECTATION SETTING ===================== -->
+<section class="py-16 bg-cream border-t border-line">
+  <div class="max-w-4xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <span class="eyebrow">Transparency</span>
+      <h2 class="text-3xl md:text-4xl font-display font-black text-ink">
+        What This Call Is (And Isn't)
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <!-- Is -->
+      <div class="bg-white rounded-2xl p-8 border border-line shadow-sm">
+        <h3 class="font-display font-bold text-ink text-lg mb-5">This session is:</h3>
+        <div class="check-item"><span class="check-icon">✔</span><span>A strategic diagnostic</span></div>
+        <div class="check-item"><span class="check-icon">✔</span><span>A structured conversation about your business systems</span></div>
+        <div class="check-item"><span class="check-icon">✔</span><span>An opportunity to identify scaling constraints and how we can work together if you are the right company</span></div>
+      </div>
+
+      <!-- Is not -->
+      <div class="bg-white rounded-2xl p-8 border border-line shadow-sm">
+        <h3 class="font-display font-bold text-ink text-lg mb-5">This session is not:</h3>
+        <div class="cross-item"><span class="cross-icon">✘</span><span>A free consulting session</span></div>
+        <div class="cross-item"><span class="cross-icon">✘</span><span>A generic sales call</span></div>
+        <div class="cross-item"><span class="cross-icon">✘</span><span>A marketing pitch</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== URGENCY / LIMITED CAPACITY ===================== -->
+<section class="py-10 bg-accent border-t border-accent/20">
+  <div class="max-w-3xl mx-auto px-6 text-center">
+    <p class="text-white font-display font-bold text-xl md:text-2xl mb-2">
+      We work with a maximum of 3 companies at a time.
+    </p>
+    <p class="text-white/80 text-base">
+      Because of this, not every application is accepted.
+    </p>
+  </div>
+</section>
+
+
+<!-- ===================== APPLICATION FORM ===================== -->
+<section id="apply" class="py-16 md:py-24 bg-white border-t border-line">
+  <div class="max-w-2xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <span class="eyebrow">Apply Now</span>
+      <h2 class="text-3xl md:text-4xl font-display font-black text-ink mb-4">
+        Apply for the Founder Bottleneck Audit
+      </h2>
+      <p class="text-mid text-base">
+        Complete the short application below before booking your session.
+      </p>
+    </div>
+
+    <form id="apply-form" novalidate class="space-y-6">
+
+      <!-- Personal Info -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="field-label" for="full-name">Full Name <span class="text-accent">*</span></label>
+          <input id="full-name" name="full_name" type="text" class="form-field" placeholder="Your full name" required>
+        </div>
+        <div>
+          <label class="field-label" for="email">Email Address <span class="text-accent">*</span></label>
+          <input id="email" name="email" type="email" class="form-field" placeholder="you@company.com" required>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="field-label" for="linkedin">LinkedIn Profile <span class="text-accent">*</span></label>
+          <input id="linkedin" name="linkedin" type="url" class="form-field" placeholder="linkedin.com/in/yourname" required>
+        </div>
+        <div>
+          <label class="field-label" for="website">Company Website <span class="text-accent">*</span></label>
+          <input id="website" name="website" type="url" class="form-field" placeholder="yourcompany.com" required>
+        </div>
+      </div>
+
+      <!-- Business Info -->
+      <div>
+        <label class="field-label" for="revenue">What is your current monthly revenue? <span class="text-accent">*</span></label>
+        <select id="revenue" name="revenue" class="form-field" required>
+          <option value="" disabled selected>Select your MRR range</option>
+          <option value="under-5k">Under $5K</option>
+          <option value="5k-10k">$5K – $10K</option>
+          <option value="10k-20k">$10K – $20K</option>
+          <option value="20k-40k">$20K – $40K</option>
+          <option value="40k-plus">$40K+</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="field-label" for="team-size">How many team members do you currently have? <span class="text-accent">*</span></label>
+        <select id="team-size" name="team_size" class="form-field" required>
+          <option value="" disabled selected>Select team size</option>
+          <option value="just-me">Just me</option>
+          <option value="2-5">2 – 5</option>
+          <option value="6-10">6 – 10</option>
+          <option value="10-plus">10+</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="field-label" for="challenge">What is your biggest operational challenge right now? <span class="text-accent">*</span></label>
+        <textarea id="challenge" name="challenge" class="form-field" rows="4"
+          placeholder="Describe the main bottleneck or challenge you're facing..." required></textarea>
+      </div>
+
+      <!-- Error message -->
+      <div id="form-error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">
+        Please fill in all required fields before continuing.
+      </div>
+
+      <button type="submit" class="btn-primary w-full text-center text-lg py-4">
+        Apply &amp; Book Your Founder Bottleneck Audit →
+      </button>
+
+      <p class="text-center text-xs text-mid">
+        After submitting, you'll be taken to our calendar to select your preferred time.
+      </p>
+
+    </form>
+  </div>
+</section>
+
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="bg-dark border-t border-white/10 py-10">
+  <div class="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <a href="https://v-bog.com">
+      <img src="../Logo.svg" alt="V-BOG" class="h-7 w-auto" style="filter: brightness(0) invert(1);">
+    </a>
+    <p class="text-white/40 text-sm text-center sm:text-right">
+      © 2025 V-BOG. All rights reserved.
+    </p>
+  </div>
+</footer>
+
+
+<!-- ===================== MOBILE STICKY CTA ===================== -->
+<div id="sticky-cta" role="complementary" aria-label="Sticky booking CTA">
+  <a href="#apply" class="btn-primary w-full text-center block" style="border-radius:12px;">
+    Book Your Founder Bottleneck Audit →
+  </a>
+</div>
+
+
+<!-- ===================== JS ===================== -->
+<script>
+  // Nav scroll shadow
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 10);
+  }, { passive: true });
+
+  // Mobile sticky CTA — show after hero scrolls out of view
+  const hero = document.getElementById('hero');
+  const stickyCta = document.getElementById('sticky-cta');
+  const applySection = document.getElementById('apply');
+
+  function updateStickyCta() {
+    const heroBottom = hero.getBoundingClientRect().bottom;
+    const applyTop = applySection.getBoundingClientRect().top;
+    const showCta = heroBottom < 0 && applyTop > window.innerHeight;
+    stickyCta.classList.toggle('visible', showCta);
+  }
+
+  window.addEventListener('scroll', updateStickyCta, { passive: true });
+
+  // Form submit → validate → open Calendly
+  document.getElementById('apply-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const fields = this.querySelectorAll('[required]');
+    let valid = true;
+    fields.forEach(f => {
+      if (!f.value.trim()) valid = false;
+    });
+    const errorEl = document.getElementById('form-error');
+    if (!valid) {
+      errorEl.classList.remove('hidden');
+      errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    errorEl.classList.add('hidden');
+    window.open('https://calendly.com/depesh-v-bog/vbog-discovery-call-r', '_blank', 'noopener,noreferrer');
+  });
+</script>
+
+</body>
+</html>
