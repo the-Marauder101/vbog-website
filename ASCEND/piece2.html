@@ -1902,6 +1902,17 @@ function enterEditMode(idx) {
 // Saves the current domain's score and notes, resets isEditMode,
 // re-renders the review table with updated data, and shows the panel.
 function backToReview() {
+  // Explicitly save the currently-checked radio score for this domain.
+  // We cannot rely solely on the onchange inline handler because onchange
+  // only fires when the selection changes — if the user clicked the same
+  // option that was already selected, onchange never fires. Reading the
+  // checked radio directly here guarantees the latest value is captured
+  // regardless of whether onchange fired.
+  const checkedRadio = document.querySelector(`input[name="ns${currentDomain}"]:checked`);
+  if (checkedRadio !== null) {
+    naipaulScores[currentDomain] = parseInt(checkedRadio.value, 10);
+  }
+
   // Save any notes edited during this domain visit
   const notesEl = document.getElementById(`notes-${currentDomain}`);
   if (notesEl) naipaulNotes[currentDomain] = notesEl.value;
