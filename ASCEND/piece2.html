@@ -165,6 +165,37 @@
     .assess-nav .btn-primary { flex: 1; min-width: 180px; }
 
     /* ================================================================
+       REVIEW PANEL — shown between Domain 12 and findings generation.
+       Also shown when returning from an edit-mode domain visit.
+       Hidden by default; toggled via showReviewPanel() / hideReviewPanel().
+    ================================================================ */
+    #review-panel { display: none; margin-top: 0; }
+    .review-panel-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px; }
+    .review-panel-title { font-size: 18px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+    .review-panel-subtitle { font-size: 13px; color: var(--text-mid); margin-bottom: 24px; }
+    .review-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .review-table th { background: var(--navy); color: white; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+    .review-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .review-table tr:last-child td { border-bottom: none; }
+    .review-table tr:nth-child(even) td { background: var(--off-white); }
+    .review-score-chip { display: inline-block; width: 28px; height: 28px; border-radius: 50%; font-size: 13px; font-weight: 700; text-align: center; line-height: 28px; }
+    .review-score-0 { background: #FDECEA; color: var(--red-soft); }
+    .review-score-1 { background: #FFF3CD; color: var(--amber); }
+    .review-score-2 { background: #E8F4FD; color: #1A6FA8; }
+    .review-score-3 { background: #E8F8F0; color: var(--green-soft); }
+    .review-notes-preview { font-size: 12px; color: var(--text-mid); font-style: italic; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .review-notes-none { font-size: 12px; color: var(--text-light); }
+    .review-edit-btn { font-size: 12px; font-weight: 600; color: var(--navy); background: var(--off-white); border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 12px; cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s; }
+    .review-edit-btn:hover { border-color: var(--gold); background: var(--gold-pale); }
+    .review-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .review-actions .btn-primary { flex: 1; min-width: 200px; }
+
+    /* "Back to Review" button — only rendered when isEditMode=true (see renderDomain nav logic).
+       Navy background distinguishes it clearly from the gold primary action button. */
+    .btn-back-to-review { background: var(--navy); color: white; font-size: 15px; font-weight: 700; border: none; border-radius: var(--radius); padding: 14px 28px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.18s; justify-content: center; flex: 1; min-width: 180px; }
+    .btn-back-to-review:hover { opacity: 0.88; }
+
+    /* ================================================================
        SCREEN 3: FINDINGS BRIEF
     ================================================================ */
     .findings-header { background: var(--navy); border-radius: var(--radius-lg); padding: 40px; margin-bottom: 28px; color: white; position: relative; overflow: hidden; }
@@ -323,6 +354,51 @@
 
     <div class="assess-nav" id="assess-nav"></div>
 
+    <!-- ============================================================
+         REVIEW PANEL
+         Shown after Domain 12 in normal flow (replaces domain-container
+         and assess-nav). Also shown after returning from an edit visit.
+
+         Logic:
+           showReviewPanel() — hides domain-container + assess-nav,
+                               renders this panel, scrolls to top.
+           hideReviewPanel() — hides this panel, shows domain-container
+                               + assess-nav for the selected domain.
+           enterEditMode(idx) — called by each row's "Edit" button.
+                                Sets isEditMode=true, hides panel,
+                                navigates to that domain.
+           backToReview()     — called by "Back to Review" nav button.
+                                Saves current scores/notes, sets
+                                isEditMode=false, shows panel again.
+    ============================================================ -->
+    <div id="review-panel">
+      <div class="review-panel-card">
+        <div class="review-panel-title">Review Your Inputs</div>
+        <div class="review-panel-subtitle">Check all 12 domain scores and notes before locking the findings brief. Click Edit on any row to go back and make changes.</div>
+        <table class="review-table" id="review-table">
+          <thead>
+            <tr>
+              <th style="width:32px;">#</th>
+              <th>Domain</th>
+              <th style="width:80px; text-align:center;">Client</th>
+              <th style="width:80px; text-align:center;">Your Score</th>
+              <th>Your Notes</th>
+              <th style="width:80px;"></th>
+            </tr>
+          </thead>
+          <tbody id="review-table-body">
+            <!-- Populated dynamically by renderReviewTable() -->
+          </tbody>
+        </table>
+      </div>
+      <div class="review-actions">
+        <button class="btn-primary" onclick="generateFindings()">
+          Confirm &amp; Generate Findings Brief
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      </div>
+    </div>
+
   </div><!-- end screen-assess -->
 
   <!-- ============================================================
@@ -410,140 +486,146 @@
 // 12 diagnostic domains — names, descriptions, scoring criteria
 // Domains 1-8: scoring criteria confirmed from Master Connection Matrix ✓
 // Domains 9-12: scoring criteria confirmed from Master Connection Matrix ✓
-//   NOTE: Interview questions for domains 9-12 NOT PROVIDED by Naipaul.
-//         Placeholder notice shown in the accordion. Content gap = Piece 2 blocker
-//         for qualitative findings on these 4 domains. Naipaul to provide.
+//   NOTE 2026-03-14: Full interview question sets added for D9-D12 per
+//         CFO_financew_Diagonistic_Interview_Guide_5_NEW_SECTIONS_concise.docx
+//         D9=5 sections, D10=5 sections, D11=5 sections, D12=7 sections — all coded.
+//         D9 content fit for ICP is an open question logged in ASCEND_Open_Questions_Naipaul.docx
+// UPDATED 2026-03-14: All domain names, descriptions and criteria confirmed per
+// ACT_Ascend_Domain_Mapping_old_vs_new_domain_rename_03_14_2026.docx
+// D7: MERGED (old D7 Exit & M&A Readiness + old D12 Exit/Value Readiness)
+// D8: SPLIT — ERP portion only (AI portion becomes D12)
+// D12: NEW domain — AI & Digital Transformation (split from old D8 Systems & Technology)
 const DOMAINS = [
   {
     index: 1,
-    name: 'Liquidity & Cash Management',
-    desc: 'Cash position, forecasting, AR/AP management',
+    name: 'Cash Flow & Liquidity',
+    desc: 'Cash position, 13-week forecasting, AR/AP management, cash optimization',
     criteria: [
       'No tracking or forecast in place',
       'Basic AR/AP tracking exists',
       '13-week forecast in place',
-      'Cash optimisation active'
+      'Cash optimisation actively managed'
     ]
   },
   {
     index: 2,
-    name: 'Capital Structure & Debt',
-    desc: 'Credit terms, covenant compliance, treasury management',
+    name: 'Working Capital Optimization',
+    desc: 'AR, AP and inventory cycle management, cash conversion cycle, working capital efficiency',
     criteria: [
-      'No credit term awareness',
-      'Terms known, minimal tracking',
-      'Covenant compliance monitored',
-      'Strategic treasury active'
+      'No working capital management',
+      'Basic AR/AP tracking, no optimisation',
+      'DSO/DPO/DIO monitored and managed',
+      'Active WC optimisation, benchmarked CCC'
     ]
   },
   {
     index: 3,
-    name: 'Internal Controls',
-    desc: 'Controls environment, audit readiness, delegation of authority',
+    name: 'Internal Controls & Governance',
+    desc: 'Controls environment, audit readiness, delegation of authority, board governance, PE compliance',
     criteria: [
-      'No controls or policies',
-      'Informal, undocumented',
-      'Documented DOA & key controls',
-      'Controls tested, audit-ready'
+      'No controls or governance policies',
+      'Informal, undocumented controls',
+      'Documented DOA, key controls & governance framework',
+      'Controls tested, audit-ready, board governance active'
     ]
   },
   {
     index: 4,
-    name: 'Accounting & Reporting',
-    desc: 'Close process, management reporting, EBITDA reconciliation',
+    name: 'Financial Reporting & KPIs',
+    desc: 'Close process, board-ready management reporting, KPI dashboards, forward-looking intelligence',
     criteria: [
-      'Inconsistent books, no close',
-      'Close by day 15+',
-      'Close by day 10, basic package',
-      'Close by day 7, narrative pack'
+      'Inconsistent books, no close process',
+      'Close by day 15+, compliance-only reporting',
+      'Close by day 10, KPI dashboard in place',
+      'Close by day 7, board-ready narrative pack'
     ]
   },
   {
     index: 5,
-    name: 'Profitability Analysis',
-    desc: 'Product/customer/channel P&L, VPM analysis',
+    name: 'Revenue & Margin Analysis',
+    desc: 'Revenue drivers, contribution margin by product/customer/channel, pricing strategy, VPM analysis',
     criteria: [
       'Total company P&L only',
-      'Basic product/customer split',
-      'Full multi-dimensional P&L',
-      'VPM analysis & pricing strategy'
+      'Basic product/customer revenue split',
+      'Full multi-dimensional P&L with contribution margin',
+      'VPM analysis & data-driven pricing strategy'
     ]
   },
   {
     index: 6,
-    name: 'Forecasting & Planning',
-    desc: 'Rolling forecasts, strategic planning, balance sheet forecasting',
+    name: 'Value Creation Roadmap',
+    desc: '12-24 month value-building roadmap, exit-prep planning, integrated 3-statement model, scenario analysis',
     criteria: [
       'No forecast beyond current month',
-      'Annual budget, no updates',
-      'Rolling quarterly forecast',
-      'Integrated 3-statement model'
+      'Annual budget, no updates or scenario planning',
+      'Rolling quarterly forecast with value creation focus',
+      'Integrated 3-statement model with 12-24 month value roadmap'
     ]
   },
   {
     index: 7,
-    name: 'External Relationships',
-    desc: 'Audit, tax, insurance, lender relationships',
+    name: 'Exit & M&A Readiness',
+    desc: 'Buyer readiness, PE/banker relationships, CIM readiness, deal process prep, data room, transaction readiness',
     criteria: [
-      'Reactive compliance only',
-      'Organised audit/tax relations',
-      'Proactive audit/tax planning',
-      'Strategic advisor engagement'
+      'No exit awareness or preparation',
+      'Aware of exit requirements, no active prep',
+      'Data room started, banker/PE relationships developing',
+      'Fully exit-ready: data room complete, CIM ready, deal process prepared'
     ]
   },
   {
     index: 8,
-    name: 'Systems & Technology',
-    desc: 'ERP, cloud systems, IT controls, automation',
+    name: 'ERP & Systems Readiness',
+    desc: 'Core ERP infrastructure (e.g. NetSuite), data integrity, systems scalability, IT controls',
     criteria: [
-      'Critical processes on spreadsheets',
-      'ERP in place, min integration',
-      'Cloud-based, integrated systems',
-      'AI/automation deployed'
+      'Critical processes on spreadsheets, no ERP',
+      'ERP in place, minimal integration',
+      'Cloud-based ERP, integrated systems, data integrity controls',
+      'Scalable ERP ecosystem, automated integrations, audit-ready'
     ]
   },
   {
     index: 9,
-    name: 'Leadership & Governance',
-    desc: 'Finance leadership structure, strategic mandate, governance',
+    name: 'Owner Dependence Score',
+    desc: 'Owner dependency in finance decisions, delegation, succession, strategic vs. operational balance',
     criteria: [
-      'Owner does everything',
-      'Finance team member in role',
-      'Finance leader with mandate',
-      'CFO-level strategic leadership'
+      'Owner handles all finance decisions personally',
+      'Finance team member in a defined role',
+      'Finance leader with a clear strategic mandate',
+      'CFO-level strategic leadership in place, owner fully delegated'
     ]
   },
   {
     index: 10,
-    name: 'Team & Talent',
-    desc: 'Finance team structure, talent management, performance',
+    name: 'Finance Team Structure',
+    desc: 'Finance org design, talent management, succession planning, scalability of the finance function',
     criteria: [
       'No defined finance roles',
       'Roles informally understood',
-      'Documented org, basic perf mgmt',
-      'Benchmarked comp, talent pipeline'
+      'Documented org structure with basic performance management',
+      'Benchmarked comp, active talent pipeline, succession documented'
     ]
   },
   {
     index: 11,
-    name: 'Quality of Earnings',
-    desc: 'Revenue quality, earnings sustainability, QofE readiness',
+    name: 'EBITDA Quality & Normalization',
+    desc: 'Revenue quality, EBITDA normalization, ITAD-specific add-backs, QofE readiness for exit/fundraise',
     criteria: [
-      'No QofE awareness',
-      'Basic revenue quality review',
-      'Internal QofE pre-review done',
-      'QofE-ready for external review'
+      'No QofE awareness, EBITDA not normalized',
+      'Basic revenue quality review, some adjustments identified',
+      'Internal QofE pre-review completed, add-backs quantified',
+      'QofE-ready for external buyer review with full EBITDA bridge'
     ]
   },
   {
     index: 12,
-    name: 'Exit / Value Readiness',
-    desc: 'Exit preparation, data room, valuation readiness',
+    name: 'AI & Digital Transformation',
+    desc: 'AI-driven automation (e.g. High Radius), finance digital transformation, data strategy, cloud modernisation',
     criteria: [
-      'No exit preparation',
-      'Aware of exit requirements',
-      'Partial data room/preparation',
-      'Full exit-ready package complete'
+      'No AI or automation in finance, Excel-dependent',
+      'Basic automation tools in place (e.g. AP, reconciliations)',
+      'AI/automation roadmap active, measurable ROI achieved',
+      'AI-driven finance function: forecasting, anomaly detection, digital strategy embedded'
     ]
   }
 ];
@@ -568,17 +650,17 @@ const STAGE_TIERS = [
 // Source: Master Connection Matrix — confirmed in PRD Section 5
 // P = PRIMARY (core diagnostic focus), S = SUPPORT, U = SETUP, blank = not in scope
 const DOMAIN_PRIORITY = {
-  'Foundation':   { primary: ['Liquidity & Cash Management', 'Accounting & Reporting'] },
-  'Structure':    { primary: ['Capital Structure & Debt', 'Internal Controls'] },
-  'Intelligence': { primary: ['Accounting & Reporting', 'Profitability Analysis', 'Forecasting & Planning'] },
-  'Optimization': { primary: ['Systems & Technology', 'Leadership & Governance', 'Team & Talent'] },
-  'Mastery':      { primary: ['Profitability Analysis', 'Quality of Earnings'] },
-  'Exit & Scale': { primary: ['Systems & Technology', 'Quality of Earnings', 'Exit / Value Readiness'] }
+  'Foundation':   { primary: ['Cash Flow & Liquidity', 'Financial Reporting & KPIs'] },
+  'Structure':    { primary: ['Working Capital Optimization', 'Internal Controls & Governance'] },
+  'Intelligence': { primary: ['Financial Reporting & KPIs', 'Revenue & Margin Analysis', 'Value Creation Roadmap'] },
+  'Optimization': { primary: ['ERP & Systems Readiness', 'Owner Dependence Score', 'Finance Team Structure'] },
+  'Mastery':      { primary: ['Revenue & Margin Analysis', 'EBITDA Quality & Normalization'] },
+  'Exit & Scale': { primary: ['ERP & Systems Readiness', 'EBITDA Quality & Normalization', 'AI & Digital Transformation'] }
 };
 
 // Gap descriptions: plain-language explanation of what a low score means for each domain
 // Used in Part 1 of the findings brief for context
-// Domains 9-12: provisional copy — Naipaul to confirm before go-live (same gap as Piece 1)
+// Domains 9-12: provisional copy — coded by tool builder. Naipaul confirmation pending (see ASCEND_Open_Questions_Naipaul.docx Q3)
 const DOMAIN_GAP_TEXT = [
   'Cash visibility is limited, creating operational risk. The business cannot reliably predict its cash position, leaving it exposed to liquidity shortfalls.',
   'The capital structure is not actively managed. Covenant obligations may be unclear, and the business may not be optimising its debt or treasury position.',
@@ -588,7 +670,7 @@ const DOMAIN_GAP_TEXT = [
   'Financial planning is reactive. Without rolling forecasts, the business cannot anticipate cash needs, covenants, or strategic inflection points.',
   'External advisor relationships are reactive. The business is missing opportunities to leverage audit, tax, and lender relationships strategically.',
   'Finance processes rely heavily on spreadsheets or disconnected systems. This limits accuracy, scalability, and the ability to leverage automation.',
-  // Domains 9-12: provisional — Naipaul to confirm gap descriptions
+  // Domains 9-12: provisional gap descriptions — Naipaul confirmation pending (ASCEND_Open_Questions_Naipaul.docx Q3)
   'Leadership and finance governance structure needs to be formalised. Founder dependency in finance decisions creates a strategic bottleneck.',
   'Finance team structure and talent management is informal or undefined. The business lacks the human infrastructure to scale its finance function.',
   'Earnings quality has not been assessed. This may affect fundraising, acquisition readiness, or the credibility of reported financials.',
@@ -599,13 +681,17 @@ const DOMAIN_GAP_TEXT = [
 // INTERVIEW QUESTIONS DATA
 // Source: CFO Financial Diagnostic Check List Interview Guide v1
 // Domains 1-8: Full strategic + tactical questions + expected responses ✓
-// Domains 9-12: NO interview questions provided by Naipaul — TBC (Piece 2 blocker)
+// Domains 9-12: RESOLVED 2026-03-14 — full question sets now coded.
+//   D9 sourced from CFO Guide Section 1 (Leadership & Governance) — content fit for ICP is open (see Questions doc)
+//   D10 sourced from CFO Guide Section 2 (Team & Talent)
+//   D11 sourced from CFO Guide Section 3 (Quality of Earnings)
+//   D12 sourced from CFO Guide Section 12 (AI & Data & Digital Transformation — 7 sub-sections)
 //
 // Structure per domain:
 //   sections: [ { title, strategic, tactical: [], expectedResponse } ]
 // ================================================================
 const INTERVIEW_QUESTIONS = {
-  1: { // Liquidity & Cash Management
+  1: { // Cash Flow & Liquidity — UPDATED name 2026-03-14
     sections: [
       {
         title: '1.1 Current Liquidity Position',
@@ -646,7 +732,7 @@ const INTERVIEW_QUESTIONS = {
       }
     ]
   },
-  2: { // Capital Structure & Debt
+  2: { // Working Capital Optimization — UPDATED name 2026-03-14
     sections: [
       {
         title: '2.1 Legal Entity Structure and Ownership',
@@ -704,7 +790,7 @@ const INTERVIEW_QUESTIONS = {
       }
     ]
   },
-  3: { // Internal Controls
+  3: { // Internal Controls & Governance — UPDATED name 2026-03-14
     sections: [
       {
         title: '3.1 Control Environment and Recent Assessments',
@@ -751,7 +837,7 @@ const INTERVIEW_QUESTIONS = {
       },
       {
         title: '3.5 Delegation of Authority',
-        strategic: 'How do you balance empowering the organisation with appropriate decision-making authority versus maintaining necessary controls and oversight?',
+        strategic: 'How do you balance empowering the organization with appropriate decision-making authority versus maintaining necessary controls and oversight?',
         tactical: [
           'Do you have a formal delegation of authority policy? Show it to me.',
           'What are the approval thresholds for key transactions (capex, operating expenses, contracts, hiring)?',
@@ -773,14 +859,14 @@ const INTERVIEW_QUESTIONS = {
       }
     ]
   },
-  4: { // Accounting & Reporting
+  4: { // Financial Reporting & KPIs — UPDATED name 2026-03-14
     sections: [
       {
         title: '4.1 Consolidation and Chart of Accounts',
         strategic: 'How does your accounting structure and chart of accounts design support both financial reporting needs and operational decision-making?',
         tactical: [
           'Describe your consolidation structure (legal entities, reporting segments, elimination entries).',
-          'Walk me through your chart of accounts structure (natural accounts, departments, cost centres, products).',
+          'Walk me through your chart of accounts structure (natural accounts, departments, cost centers, products).',
           'How many active GL accounts? When was last COA cleanup?',
           'Show me a sample GL account structure and typical journal entry.'
         ],
@@ -821,15 +907,15 @@ const INTERVIEW_QUESTIONS = {
         expectedResponse: 'Should walk through P&L fluently explaining drivers of each major line. Should highlight balance sheet changes with context. Should explain cash flow clearly. Should cite key metrics relevant to business (unit economics, CAC, LTV, ROIC). Red flag: inability to explain variances, lack of business context, or focus only on compliance.'
       },
       {
-        title: '4.5 File Organisation and Documentation',
-        strategic: 'How do you think about financial close documentation and file organisation as both risk management and efficiency enabler?',
+        title: '4.5 File Organization and Documentation',
+        strategic: 'How do you think about financial close documentation and file organization as both risk management and efficiency enabler?',
         tactical: [
           'Where and how do you store financial records and supporting documentation?',
           'Show me your month-end close file structure for a recent period.',
           'What is your document retention policy?',
           'How would you retrieve support for a transaction from 2 years ago?'
         ],
-        expectedResponse: 'Should describe organised system: monthly close folders with standard structure, accessible storage. Should produce example close file demonstrating organisation. Should cite retention policy (typically 7 years for tax). Red flag: disorganised files, reliance on individuals\' personal files, inability to retrieve historical documentation.'
+        expectedResponse: 'Should describe organized system: monthly close folders with standard structure, accessible storage. Should produce example close file demonstrating organization. Should cite retention policy (typically 7 years for tax). Red flag: disorganized files, reliance on individuals\' personal files, inability to retrieve historical documentation.'
       },
       {
         title: '4.6 Management Reporting',
@@ -855,14 +941,14 @@ const INTERVIEW_QUESTIONS = {
       }
     ]
   },
-  5: { // Profitability Analysis
+  5: { // Revenue & Margin Analysis — UPDATED name 2026-03-14
     sections: [
       {
         title: '5.1 Current Profitability Views',
-        strategic: 'How do you analyse profitability to inform strategic decisions about where to compete and how to allocate resources?',
+        strategic: 'How do you analyze profitability to inform strategic decisions about where to compete and how to allocate resources?',
         tactical: [
           'Show me your product line P&L. What are your most and least profitable products?',
-          'How do you analyse customer profitability? Show me an example.',
+          'How do you analyze customer profitability? Show me an example.',
           'What is your channel/distribution profitability (direct, wholesale, online)?',
           'Do you have geographic profitability analysis?'
         ],
@@ -873,15 +959,15 @@ const INTERVIEW_QUESTIONS = {
         strategic: 'How do you balance analytical sophistication with simplicity and speed in profitability analysis?',
         tactical: [
           'How do you allocate costs in profitability analysis? What remains unallocated?',
-          'Do you analyse incremental profitability for specific decisions vs. fully-loaded?',
-          'How far down the P&L do you analyse profitability (gross margin, contribution margin, EBIT, ROIC)?',
+          'Do you analyze incremental profitability for specific decisions vs. fully-loaded?',
+          'How far down the P&L do you analyze profitability (gross margin, contribution margin, EBIT, ROIC)?',
           'How do you balance actual costs vs. standard costs in your analysis?'
         ],
         expectedResponse: 'Should explain allocation methodology clearly. Should distinguish incremental analysis for pricing/volume decisions from fully-loaded for strategic decisions. Should describe typical depth. Red flag: overly complex allocations creating precision illusion, or simplistic allocations hiding reality.'
       },
       {
         title: '5.3 Reports and Tools',
-        strategic: 'How do you enable self-service profitability analysis across the organisation while maintaining data integrity?',
+        strategic: 'How do you enable self-service profitability analysis across the organization while maintaining data integrity?',
         tactical: [
           'What reports and tools do you provide for profitability analysis?',
           'When are profitability reports produced (monthly, quarterly, real-time)?',
@@ -903,7 +989,7 @@ const INTERVIEW_QUESTIONS = {
       }
     ]
   },
-  6: { // Forecasting & Planning
+  6: { // Value Creation Roadmap — UPDATED name 2026-03-14
     sections: [
       {
         title: '6.1 Monthly Close Process',
@@ -975,44 +1061,88 @@ const INTERVIEW_QUESTIONS = {
       }
     ]
   },
-  7: { // External Relationships
+  7: { // Exit & M&A Readiness — UPDATED 2026-03-14 (MERGED: old D7 Exit & M&A Readiness + old D12 Exit/Value Readiness)
     sections: [
       {
-        title: '7.1 External Auditors — Engagement and Performance',
-        strategic: 'How do you evaluate auditor performance and ensure you\'re getting appropriate value from the relationship?',
+        title: '7.1 Transaction Readiness and Data Room',
+        strategic: 'How would you assess the company\'s readiness for a potential transaction (sale, IPO, significant capital raise) if the board decided to pursue one in the next 6-12 months?',
         tactical: [
-          'Who is your current external auditor and how long have they been auditor?',
-          'Show me the current engagement letter and fee structure.',
-          'When was your last RFP for audit services? What were the results?',
-          'How do you evaluate audit quality and auditor performance?'
+          'If a buyer showed up tomorrow, how ready is your data room? What exists and what needs creation?',
+          'Walk through your historical financials — years of audited statements, any restatements or qualifications?',
+          'Do you have clean financials or are there unusual items, discontinued ops, or carve-out complexity?',
+          'Show your current business plan and projections — how much detail and how credible are the assumptions?',
+          'What is your projection methodology and key assumptions?',
+          'Have you commissioned any quality of earnings studies? When and what were the findings?',
+          'What are known deal-breaker issues or major disclosure items?',
+          'Any skeletons — litigation, regulatory issues, concentration risks, related party transactions?',
+          'How much work would be required to prepare a CIM?',
+          'Is your cap table clean or complex?'
         ],
-        expectedResponse: 'Should name auditor and tenure. Should produce engagement letter showing scope, fees, timing. Should discuss recent RFP (every 5–7 years is reasonable). Should describe performance assessment: timeliness, communication quality, technical competency, value-added observations. Red flag: auditor unchanged for 15+ years without RFP, inability to assess quality beyond "they give us clean opinion."'
+        expectedResponse: 'Ideal: organized electronic data room maintained continuously. Reality: 4-8 weeks to compile. Historical: minimum 3 years audited, ideally 5, with clean unqualified opinions. Business plan: current 3-5 year plan with detailed assumptions, bottoms-up methodology, not just a hockey stick. QofE: if none done, buyer will conduct one — proactive study helps. Deal-breakers: major litigation, customer concentration >40% single customer without contract, regulatory violations, related-party conflicts. Red flags: no data room, inability to produce clean financials, unrealistic projections, undisclosed material issues, or "6 months to get ready."'
       },
       {
-        title: '7.2 Audit Opinions and Reports',
-        strategic: '',
+        title: '7.2 EBITDA Quality & Normalization and EBITDA Adjustments for a Buyer',
+        strategic: 'If a buyer conducted a quality of earnings study today, what would they find, and how would you defend the sustainability and normalisation of EBITDA?',
         tactical: [
-          'Show me audit opinions for the last 3 years.',
-          'Have you ever received a modified opinion (qualified, adverse, disclaimer)? If so, why?',
-          'Show me management representation letters for the last 3 years.',
-          'What are typical audit timelines (fieldwork start, completion, opinion date)?'
+          'If you were the buyer, what would you normalize in EBITDA? Walk through the bridge.',
+          'What revenue might a buyer question — one-time items, related party transactions, pull-forwards?',
+          'What costs would you add back — owner compensation, non-recurring fees, deferred expenses?',
+          'Are there any aggressive accounting positions a buyer might challenge?',
+          'How much EBITDA is management adjustments vs. GAAP reported?',
+          'Walk through your capex — what is maintenance vs. growth? How would a buyer view it?',
+          'Is working capital at normalized levels or temporarily favorable/unfavorable?',
+          'Any deferred capex, maintenance, or investments a buyer would need to fund post-close?',
+          'Have you modelled the seller vs. buyer EBITDA gap?'
         ],
-        expectedResponse: 'Should produce clean unmodified opinions for recent years. Any modified opinions require full explanation of circumstances and resolution. Management rep letters should be standard without unusual representations. Should describe timeline (e.g. "fieldwork starts mid-January, completed early February, opinion by late February"). Red flag: modified opinions without clear resolution or significantly delayed audit completion.'
+        expectedResponse: 'Should produce a detailed QofE bridge: Reported EBITDA → adjustments → Adj Seller EBITDA → likely buyer adjustments → Buyer EBITDA. Revenue quality should be quantified: % recurring, % arms-length, any pull-forwards flagged. Common normalisation: owner/excess comp, related party leases, deferred maintenance, one-time fees. Management adjustments: >15-20% of EBITDA raises scepticism — all should be documented and comparable. Seller-buyer gap of 10-15% is typical and negotiable; >20% suggests aggressiveness. Red flags: large unexplained gap, inability to support adjustments, revenue recognition questions, deferred maintenance, or working capital unsustainably low.'
       },
       {
-        title: '7.3 Audit Planning and Execution',
-        strategic: '',
+        title: '7.3 Legal and Regulatory Compliance',
+        strategic: 'How confident are you that the business is in full compliance with all legal and regulatory requirements, and what process ensures nothing is hidden that could surface during diligence?',
         tactical: [
-          'Walk me through the typical audit timeline and phases (planning, interim, final).',
-          'Show me the current year audit plan — what are the focus areas?',
-          'What is the current status of fieldwork?',
-          'When will I get to meet the audit partner and manager?'
+          'Walk through your compliance framework — areas covered, monitoring, and ownership',
+          'Do you have open litigation? Describe all material matters with exposure and current status.',
+          'Any regulatory investigations, audits, or inquiries in the current or last 3 years?',
+          'Any warning letters, violation notices, or consent orders?',
+          'Data privacy compliance — GDPR, CCPA, HIPAA if applicable?',
+          'Any IP disputes — patent, trademark, copyright claims?',
+          'Employment law — wage and hour issues, discrimination claims, OSHA citations?',
+          'Tax — open audits, disputes, or uncertain positions?',
+          'What is your legal matter reporting and disclosure process?'
         ],
-        expectedResponse: 'Should describe standard audit cycle: planning meeting (Q3/Q4), interim fieldwork (Q4), year-end fieldwork (Q1), opinion issuance. Should share audit plan showing risk assessment and focus areas. Should provide fieldwork status update. Red flag: lack of structured audit plan, poor coordination on timing, or limited partner involvement.'
+        expectedResponse: 'Systematic compliance framework with assigned ownership, annual calendar, training, and board reporting. Litigation should be comprehensive — all matters >$100K listed with exposure, probability, reserve, and status. Regulatory issues should be fully disclosed with remediation documented. Data privacy: GDPR/CCPA compliance should be confirmed with a DPO or equivalent in place. Tax: all open audits and uncertain positions >$100K should be known and reserved. Disclosure discipline: affirmative obligation to disclose vs. hoping issues are not discovered. Red flags: undisclosed litigation, violations without remediation, evasiveness, inadequate reserves, or a "hope they don\'t find it" mentality.'
+      },
+      {
+        title: '7.4 Customer and Vendor Contract Quality',
+        strategic: 'How confident are you that major customer and vendor contracts would survive a change of control, and what commercial terms might create issues in a transaction?',
+        tactical: [
+          'What percentage of revenue is under written contract vs. PO or handshake agreement?',
+          'Walk through your top 10 customer contracts — terms, duration, remaining life, and change of control provisions.',
+          'Which contracts require consent for a change of control? What is your plan to obtain consent?',
+          'Are there any unfavorable terms — auto-renewal without price increases, MFN pricing, volume commitments?',
+          'What is your customer contract renewal pipeline for the next 12 months?',
+          'On the vendor side — any single-source suppliers, long-term take-or-pay commitments, or change of control provisions?',
+          'Any critical IP licenses with change of control restrictions?'
+        ],
+        expectedResponse: 'Should quantify contract coverage: ideally >80% of revenue under written contracts. For top contracts (>5% revenue each) should know: term, remaining duration, pricing mechanism, volume commitments, change of control provisions. Change of control analysis: ideally top 5 customers (>60% revenue) have no provisions or standard consent-not-unreasonably-withheld clauses. High risk: major customer can terminate on change of control — requires pre-negotiation. Renewal pipeline: should know % of revenue renewing in next 12 months and expected renewal rate. Red flags: low contract coverage (<60%), major change of control termination rights, unfavorable commercial terms, upcoming renewal concentration (>30% expiring), or single-source vendor dependencies.'
+      },
+      {
+        title: '7.5 Management Team Continuity and Retention',
+        strategic: 'How would you assess the risk of management team disruption through a transaction, and what retention mechanisms are in place or would need to be created?',
+        tactical: [
+          'Who are the critical employees — beyond the executive team — whose departure would materially harm the business?',
+          'What is current turnover and are there flight risk indicators among key people?',
+          'Do key employees have employment agreements with severance and change of control provisions?',
+          'What equity do key employees hold and what happens to it in a change of control?',
+          'If you were designing a retention program today, who would be included and what would it cost?',
+          'Have there been key departures during previous transactions or periods of uncertainty?',
+          'What is the succession depth for critical roles?'
+        ],
+        expectedResponse: 'Should identify critical employees beyond C-suite: key salespeople, operational leaders, technical specialists — anyone whose departure would materially impact revenue or operations. Current retention mechanisms: employment agreements with severance and change of control, equity vesting, non-competes. Transaction-specific: stay bonuses (50-100% base at close), post-close retention bonuses (50% base at 12 months), revised employment agreements. Succession depth: strong for finance/accounting, weak for sales or operations single-points-of-failure is a red flag. Communication strategy for employees during a deal. Red flags: high pre-transaction turnover (>20%), key employees without agreements or retention, poor succession depth, prior attrition without lessons learned.'
       }
     ]
   },
-  8: { // Systems & Technology
+  8: { // ERP & Systems Readiness — UPDATED name 2026-03-14
     sections: [
       {
         title: '10.1 Systems Architecture and Strategy',
@@ -1050,12 +1180,330 @@ const INTERVIEW_QUESTIONS = {
       }
     ]
   },
-  // Domains 9-12: NO interview questions provided by Naipaul — TBC before Piece 2 go-live
-  // A placeholder notice is shown in the accordion for these domains.
-  9:  { sections: [] },
-  10: { sections: [] },
-  11: { sections: [] },
-  12: { sections: [] }
+  // UPDATED 2026-03-14: D9-D12 — full question sets added per CFO_financew_Diagonistic_Interview_Guide_5_NEW_SECTIONS_concise.docx
+  9: { // Owner Dependence Score — UPDATED 2026-03-14 (previously 'Owner Dependence Score', now confirmed with full question set)
+    sections: [
+      {
+        title: '9.1 Executive Leadership and Organizational Influence',
+        strategic: 'How do you define the modern CFO role beyond traditional financial stewardship, and how have you positioned yourself as a strategic partner to the CEO and business leaders?',
+        tactical: [
+          'Who do you report to and what is the nature and frequency of that relationship?',
+          'What functions beyond traditional finance report to you? (IT, Legal, HR, Procurement, Strategy, Risk)',
+          'Describe your participation in executive team, board, and board committee meetings.',
+          'What percentage of your time is spent on strategic vs. operational activities?',
+          'Give examples of major business decisions where you played a key influencing role in the last 12 months.',
+          'How would the CEO describe your partnership? How would other C-suite peers describe it?'
+        ],
+        expectedResponse: 'Should articulate CFO as co-architect of strategy, not just gatekeeper. Influence across capital allocation, M&A, risk management, transformation. Report to CEO (meet weekly minimum). Active in executive team (weekly), board (quarterly), audit committee (quarterly). Time allocation: 40-50% strategic vs. 50-60% operational. Should cite examples: market entry analysis, system transformation, debt restructuring, M&A evaluation. Red flags: reports to COO, minimal CEO interaction, >80% operational time, no strategic contributions cited.'
+      },
+      {
+        title: '9.2 Board Governance and Investor Relations',
+        strategic: 'How do you navigate the dual responsibility of supporting management while maintaining the independence and fiduciary duty required by the board and shareholders?',
+        tactical: [
+          'How often do you interact with board members outside formal meetings?',
+          'Walk me through your typical board presentation structure.',
+          'Describe your last audit committee meeting — agenda, discussion topics, outcomes.',
+          'Have you ever had to deliver bad news to the board? How did you handle it?',
+          'What is your process for preparing board materials?',
+          'Have you ever disagreed with management on a board recommendation?'
+        ],
+        expectedResponse: 'Regular touchpoints with board chair (monthly) and audit committee chair between meetings. Board presentations: 10-15 slides covering performance, drivers, outlook, strategic initiatives, risks. Audit committee: 2-3 hours on financials, audit status, controls, accounting policies, reserves, risks. Bad news examples: earnings miss, control deficiency, covenant breach — early warning, clear explanation, action plan. Red flags: minimal board interaction, surprised board, inability to describe difficult conversations.'
+      },
+      {
+        title: '9.3 Strategic Planning and Capital Allocation',
+        strategic: 'How does Finance actively shape strategy rather than just analyze and validate it, and what is your framework for disciplined capital allocation?',
+        tactical: [
+          'Describe Finance\'s role in your most recent strategic planning cycle.',
+          'Give a specific example where financial analysis changed strategic direction.',
+          'What is your capital allocation framework and decision criteria?',
+          'Walk me through a recent capital allocation decision.',
+          'How do you balance financial discipline with supporting bold strategic moves?',
+          'What financial metrics drive your strategic planning?'
+        ],
+        expectedResponse: 'Finance involved from inception — framing questions, analysis, scenario modeling. Capital allocation framework with specific hurdle rates (e.g. "organic 20% IRR, M&A 15%, maintain 2.5x leverage ceiling"). Should cite example where financial analysis fundamentally shaped strategic direction. Metrics: ROIC, IRR/NPV, payback. Red flags: reactive involvement, no framework, no influence examples, or rigid rules preventing innovation.'
+      },
+      {
+        title: '9.4 Risk Management and Compliance Oversight',
+        strategic: 'How have you built an enterprise risk management framework that balances appropriate risk-taking for value creation with protection of the business and stakeholders?',
+        tactical: [
+          'What is your enterprise risk management framework?',
+          'Walk me through your risk register — top 5-10 risks and how they are prioritized.',
+          'How often do you review risks with the executive team and with the board?',
+          'Give an example of a risk that materialised — how did you respond?',
+          'What is your risk appetite statement?',
+          'Describe your compliance program.',
+          'What insurance coverage do you maintain and how was it determined?'
+        ],
+        expectedResponse: 'Formal ERM: systematic identification, likelihood/impact scoring, mitigation planning, KRI monitoring. Risk register: 10-20 risks across strategic, operational, financial, compliance categories. Review quarterly with executives, semi-annually with board. Risk appetite statement should be explicit. Compliance program should cover financial reporting, tax, employment, commercial, industry-specific, and data privacy. Red flags: no formal ERM, reactive management, no risk response examples.'
+      },
+      {
+        title: '9.5 Succession Planning and Leadership Development',
+        strategic: 'How do you think about building finance leadership bench strength and ensuring continuity for critical finance roles, including your own succession?',
+        tactical: [
+          'Who is your identified CFO successor? What is the readiness timeline?',
+          'Walk me through your development plan for potential successors.',
+          'What exposure have you given high-potential leaders?',
+          'Do you have documented succession plans?',
+          'Does the board know your succession candidates?',
+          'What would happen if you were unexpectedly unavailable?',
+          'How do you balance internal development vs. external talent acquisition?'
+        ],
+        expectedResponse: 'Should identify 1-2 candidates with honest readiness assessment: "Controller ready in 12-18 months after board exposure and IR experience" or "no internal candidate ready within 2 years, need external search." Development: board presentations, M&A leadership, investor participation, special projects. Emergency plan: typically Controller/CAO as interim with documented authority. Annual talent review with 9-box and succession dashboard. Red flags: no succession thinking, unrealistic assessments, CFO viewing it as threatening, lack of board transparency, or no emergency plan.'
+      }
+    ]
+  },
+  10: { // Finance Team Structure — UPDATED 2026-03-14 (previously 'Finance Team Structure', full question set added)
+    sections: [
+      {
+        title: '10.1 Organization Design and Structure',
+        strategic: 'How have you designed the finance organization to evolve from transactional processor to strategic business partner, and how does the structure enable both operational excellence and value creation?',
+        tactical: [
+          'Show me your finance org chart with names, titles, reporting lines, and headcount.',
+          'What is total finance headcount? How does it benchmark to revenue or transaction volume?',
+          'Describe your organization design philosophy — centralized vs. decentralized, shared services, centers of excellence.',
+          'Break down headcount by function (Accounting, FP&A, Treasury, Tax).',
+          'How is finance distributed — corporate vs. business units?',
+          'What organizational changes have you made in the last 2-3 years? What drove them and what were the results?'
+        ],
+        expectedResponse: 'Benchmark: 0.5-1.5 finance FTEs per $100M revenue. Breakdown: Accounting 40-50%, FP&A 20-30%, Treasury 5-10%, Tax 5-10%. Design philosophy explained: "centralised accounting for efficiency, distributed FP&A for partnership." Spans: CFO 5-8 directs. Recent changes with rationale and impact. Red flags: bloated vs. benchmarks, too many layers, frequent reorgs (>1 per 18 months), or no design rationale.'
+      },
+      {
+        title: '10.2 Talent Assessment and Capability Gaps',
+        strategic: 'How do you systematically assess finance team capabilities against current needs and future business requirements, and what is your strategy for closing critical gaps?',
+        tactical: [
+          'Walk me through your talent assessment process and tools.',
+          'What critical skills gaps exist today?',
+          'Which roles are hardest to recruit?',
+          'Who are your highest performers and what is your retention plan for them?',
+          'Who are your development challenges and what is the plan?',
+          'What new capabilities will you need in 2-3 years?',
+          'How do you benchmark your team externally?'
+        ],
+        expectedResponse: 'Annual assessment using 9-box grids, competency models, calibration sessions. Capability requirements clearly defined: technical, business acumen, leadership. Candid gap identification: analytics, technical accounting, M&A, treasury, digital fluency. Build vs. buy framework. Should have detailed knowledge of team strengths and development needs. Red flags: generic discussion, defensive about gaps, underperformance tolerance, or no structured assessment.'
+      },
+      {
+        title: '10.3 Talent Development and Retention',
+        strategic: 'How have you created a finance organization culture where high-performers want to build their careers, and what is your approach to developing capabilities vs. hiring them?',
+        tactical: [
+          'What is voluntary turnover in finance over the last 2 years? What are the trends and benchmarks?',
+          'Who is currently a flight risk and what are you doing about it?',
+          'Describe your development programs and investment levels.',
+          'What percentage of leadership roles are filled internally?',
+          'How many promotions in the last 12 months?',
+          'What do exit interviews tell you? What are the recurring themes?',
+          'How do you measure engagement and what are the current results?'
+        ],
+        expectedResponse: 'Turnover: 8-15% is healthy (below 8% = low-performers staying, above 15% = retention issues). Development investment: $1,500-3,000 per employee annually. Mix: technical 40-50%, leadership 30-40%, business 20-30%. Internal promotion 60-70%+ for senior roles. Exit themes should drive action: comp → benchmarking, development → enhanced paths, culture → leadership changes. Red flags: high turnover (>20%), inability to retain high-performers, low internal promotion (<50%), themes ignored, no engagement measurement.'
+      },
+      {
+        title: '10.4 Compensation Philosophy and Competitiveness',
+        strategic: 'How do you ensure finance compensation is competitive enough to attract and retain talent while being fiscally responsible and aligned with business performance?',
+        tactical: [
+          'How do you benchmark compensation? What sources and peer groups?',
+          'What percentile do you target for base, total cash, and total compensation?',
+          'Walk me through your annual bonus plan — metrics, weights, and payout scale.',
+          'How much differentiation is there in bonuses between top and average performers?',
+          'Do you use equity? For which roles and at what levels?',
+          'When was your last comprehensive benchmarking exercise and what actions did you take?'
+        ],
+        expectedResponse: 'Benchmarking using multiple sources (Big 4 surveys, Robert Half, Radford, Mercer). Target: 50th percentile for ICs/managers, 60th-75th for directors and scarce capabilities. Bonus differentiation: top performers 120-150%, solid 90-110%, developing 50-80%, poor 0%. Equity for VPs+: 4-year vest. Last review within 12 months with documented actions. Red flags: no benchmarking, team >10% below market, no differentiation, or data >18 months old.'
+      },
+      {
+        title: '10.5 Performance Management and Accountability',
+        strategic: 'How does your performance management system drive both individual excellence and team collaboration while enabling honest conversations about performance?',
+        tactical: [
+          'Describe your performance management system and calendar.',
+          'How do you set goals? Provide examples.',
+          'How often do you provide feedback?',
+          'Do you use forced rankings or distributions?',
+          'How is performance linked to compensation?',
+          'How do you handle underperformance? Give a specific example.',
+          'How many people have exited for performance in the last 24 months?'
+        ],
+        expectedResponse: 'System: annual goals (January), quarterly check-ins, mid-year review, year-end review. Goals should be SMART. Feedback: minimum monthly 1:1s, real-time within 24-48 hours for significant issues. Ratings with distribution: 15-20% top, 60-70% solid, 10-15% developing, 5% underperforming. Performance-to-pay linkage: top performers get 150%+ bonus and 5-8% merit, poor performers get 0% and are managed out. Performance exits: 3-5% annually is healthy. Red flags: once-a-year feedback, vague goals, no differentiation, no comp linkage, underperformance tolerance >12 months.'
+      }
+    ]
+  },
+  11: { // EBITDA Quality & Normalization — UPDATED 2026-03-14 (previously 'EBITDA Quality & Normalization', full question set added)
+    sections: [
+      {
+        title: '11.1 Revenue Quality and Sustainability',
+        strategic: 'How do you assess and communicate the quality, sustainability, and risks embedded in the company\'s revenue stream to ensure stakeholders understand the true earnings power of the business?',
+        tactical: [
+          'What percentage of revenue is recurring vs. transactional? What is the trend?',
+          'Break down organic vs. acquisition growth over the last 3 years.',
+          'What is your customer concentration? Revenue from top 1, 5, and 10 customers?',
+          'Which customers represent >10% of revenue? Any >20%?',
+          'What would be the impact if you lost your largest customer? Your second largest?',
+          'Describe revenue stickiness — renewal rates, retention, and churn metrics.',
+          'What is your revenue backlog or deferred revenue? How many months of forward visibility?',
+          'Any material contracts up for renewal in the next 12 months? What is their status?'
+        ],
+        expectedResponse: 'Should quantify precisely: recurring % by model (SaaS 80-95%, B2B services 60-80%, transactional lower). Organic vs. inorganic for 3 years. Concentration: >10% notable, >20% significant risk, >30% dangerous. Stickiness by model: SaaS — NRR >100% excellent, 90-100% solid, <90% issues. B2B — renewal >85% strong. Red flags: declining recurring %, high concentration (>30% top 5), deteriorating retention, shrinking backlog, lost customers without replacement.'
+      },
+      {
+        title: '11.2 Margin Quality and Sustainability',
+        strategic: 'How do you evaluate whether current margins are sustainable and representative of true operational performance, or inflated by one-time benefits and accounting treatments?',
+        tactical: [
+          'Walk me through margin trends over the last 3 years — gross, operating, and EBITDA.',
+          'Create a margin bridge from prior year — what drove the change?',
+          'What portion of current margin improvement is sustainable vs. one-time or temporary?',
+          'Any unusual items in the last 12 months? Commodity deflation, underinvestment, deferred maintenance?',
+          'How do margins compare to your historical range and to competitors?',
+          'What is your contribution margin by product or customer segment?',
+          'What are the biggest margin risks over the next 12-24 months?'
+        ],
+        expectedResponse: 'Specific trajectory: e.g. "gross margin 42% to 47%, EBITDA 18% to 22% over 3 years." Bridge critical: break out price, mix, productivity, input costs. Separate sustainable from temporary. Flag unusual items: commodity benefits, COVID expense reductions, deferred maintenance. Historical context: current vs. 10-year average. Competitive benchmarking. Red flags: vague "operational excellence," margin above historical without acknowledgment, temporary factors treated as permanent.'
+      },
+      {
+        title: '11.3 EBITDA Adjustments and Non-GAAP Metrics',
+        strategic: 'How do you ensure that adjusted EBITDA and other non-GAAP metrics enhance understanding of core operational performance rather than obscure weakness or create misleading impressions?',
+        tactical: [
+          'Walk through your EBITDA reconciliation — GAAP Net Income to EBITDA to Adjusted EBITDA.',
+          'What adjustments do you make and what is the total in $ and as a % of EBITDA?',
+          'How have total adjustments trended over the last 3 years?',
+          'Are any "non-recurring" items appearing in multiple periods? Which ones and why?',
+          'Show your Adjusted EBITDA vs. Covenant EBITDA — what is the difference and why?',
+          'What is your policy on qualifying items for adjustment? Who approves new categories?',
+          'Have auditors or lenders ever questioned your adjustments?'
+        ],
+        expectedResponse: 'Clear reconciliation with all items named and quantified. Total adjustments typically <15-20% of EBITDA for credibility; 20-30% acceptable for true transformation. Policy should be formal: CFO proposes, Controller validates, Audit Committee approves annually. Covenant vs. adjusted EBITDA gap should be explained. Cash flow conversion reconciliation: EBITDA to FCF should be shown. Red flags: >25% adjustments, growing adjustments, "recurring non-recurring" items, creative new categories, inability to explain, or poor cash conversion.'
+      },
+      {
+        title: '11.4 Working Capital Quality and Cash Conversion',
+        strategic: 'How do you assess whether working capital and cash flow performance reflects genuine operational efficiency or is being managed to inflate short-term metrics at the expense of business health?',
+        tactical: [
+          'Calculate your key working capital metrics: DSO, DIO, DPO, Cash Conversion Cycle.',
+          'How have these trended over the last 2-3 years?',
+          'What is your cash conversion rate as a % of EBITDA?',
+          'Calculate Free Cash Flow — how does it compare to EBITDA and Net Income?',
+          'Explain any periods where cash significantly diverged from earnings.',
+          'Are current working capital levels sustainable or are they stretched?',
+          'How do your metrics compare to industry benchmarks?'
+        ],
+        expectedResponse: 'Should calculate precisely: "DSO 45, DIO 60, DPO 40 = CCC 65 days." Trends should show genuine improvement vs. unsustainable actions (aggressive collections damaging relationships, inventory depletion risking stock-outs). Cash conversion: strong 70-100%+ of EBITDA. FCF solid at 40-60%+ of EBITDA. Red flags: deteriorating metrics, poor conversion (<60% persistently), unexplained divergence, one-quarter spikes, metrics far better than industry suggesting a squeeze.'
+      },
+      {
+        title: '11.5 Accounting Quality and Restatements',
+        strategic: 'How do you ensure the highest quality financial reporting that balances technical compliance with transparent economic substance, and how do you respond when errors occur?',
+        tactical: [
+          'Have there been any restatements in the last 5 years? Walk me through what happened.',
+          'Any significant out-of-period corrections?',
+          'What was the root cause and what was the remediation?',
+          'Give examples of accounting policy choices where you had discretion — what did you choose and why?',
+          'Have you ever been pressured to achieve earnings targets through accounting? How did you handle it?',
+          'Describe any significant disagreements with auditors.',
+          'What is your audit adjustment threshold — how many post-close adjustments are typically proposed?'
+        ],
+        expectedResponse: 'Restatements require full explanation: cause, scale, remediation, and lesson learned. Policy examples should show conservative choices: full retrospective adoption, early write-offs over capitalisation. Earnings pressure: should have a clear example of holding the line. Auditor disagreements: occasional judgment differences expected; frequent fundamental disagreements suggest issues. Red flags: multiple restatements, pattern of errors, inadequate remediation, aggressive choices consistently, or revenue ahead of economic substance.'
+      }
+    ]
+  },
+  12: { // AI & Digital Transformation — NEW DOMAIN 2026-03-14 (split from old D8 Systems & Technology; AI/digital portion)
+    sections: [
+      {
+        title: '12.1 AI/Automation Strategy and Roadmap',
+        strategic: 'How are you leveraging AI and automation to transform finance from a cost center focused on transaction processing to a strategic value driver, and what is your roadmap for implementation?',
+        tactical: [
+          'What AI/ML or automation tools are you currently using in finance?',
+          'Give specific examples of processes you have automated in the last 2 years — what was the impact?',
+          'What is your AI/automation roadmap for the next 12-24 months?',
+          'How do you prioritize automation opportunities? Show me your pipeline.',
+          'What ROI have you achieved from automation investments?',
+          'What percentage of finance processes are fully automated vs. manual or Excel-dependent?',
+          'What AI use cases are you piloting or evaluating? (Forecasting, anomaly detection, collections, invoice processing, reconciliations)',
+          'How are you addressing change management and skill development for AI/automation?'
+        ],
+        expectedResponse: 'Current tools: invoice processing automation (Bill.com, Coupa, AvidXchange), reconciliation automation (BlackLine, Trintech), RPA (UiPath, Automation Anywhere), BI/analytics (Tableau, Power BI), potentially ML for forecasting or anomaly detection. Examples with quantified impact — e.g. "AP automation reduced processing time 70%, redeployed 2.5 FTEs, improved early payment discount capture from 40% to 75%." Roadmap specific with near-term wins and longer-term transformation. ROI quantified. Automation %: 60% fully automated is a strong benchmark. Red flags: no automation in place, no roadmap, unable to quantify ROI, >50% of processes Excel-dependent, no dedicated resources.'
+      },
+      {
+        title: '12.2 Data Strategy and Governance',
+        strategic: 'How have you built a data foundation that enables both operational efficiency and strategic insights, and what governance ensures data is trusted as a strategic asset?',
+        tactical: [
+          'Describe your data architecture — operational databases, warehouse/lake, integration approach.',
+          'Do you have a single source of truth for key data domains? (Customers, products, suppliers, GL)',
+          'What is your data governance framework? Who owns data quality?',
+          'How do you measure and monitor data quality? What are your current metrics?',
+          'Describe your ETL/data integration — real-time vs. batch, manual vs. automated.',
+          'What BI/analytics tools do you provide? Who has access?',
+          'What is your data security and privacy compliance approach? (GDPR, CCPA, SOC 2)',
+          'Do you have documented data dictionary, lineage, and retention policies?'
+        ],
+        expectedResponse: 'Architecture: operational systems (ERP, CRM, HRIS) feed to cloud data warehouse (Snowflake/Redshift/BigQuery), integrated via ETL tools, consumption layer with BI tools and self-service analytics. Single source of truth: customer master in CRM, product master in ERP, GL chart centrally managed — all with documented ownership. Governance: data governance council, stewards assigned by domain, quality scorecards. Quality metrics: completeness, accuracy, and timeliness with targets and actual performance tracked monthly. Red flags: no data warehouse (relying on operational databases), multiple conflicting "sources of truth," no governance, poor quality metrics, or inadequate security.'
+      },
+      {
+        title: '12.3 Digital Finance Capabilities and Literacy',
+        strategic: 'How are you building digital fluency across the finance organization to ensure the team can leverage technology effectively and partner with the business on digital transformation?',
+        tactical: [
+          'How would you assess your finance team\'s current digital literacy and capabilities?',
+          'What digital skills gaps exist — data analytics, Python/SQL, automation tools, cloud platforms?',
+          'What training programs have you implemented and what is the investment per employee?',
+          'Have you hired specialised digital roles into finance? (Data analysts, automation specialists)',
+          'What percentage of finance team is proficient in: advanced Excel, SQL, Python/R, BI tools, automation platforms?',
+          'How do you partner with IT and data science teams?'
+        ],
+        expectedResponse: 'Skills assessment: conducted formally with results. Gaps identified specifically. Training investment: $1,500-3,000 per employee annually as a benchmark. Specialist hiring: 10% of finance team in digital-specialist roles is a strong indicator. Proficiency targets: Excel advanced 40%, SQL 30%, BI tools 60%. IT/data science partnership: embedded analysts, joint steering committees, shared Slack channels. Red flags: no skills assessment, minimal training (<$1K per FTE), no specialist hires, low proficiency across team, or "old school" finance mindset resistant to change.'
+      },
+      {
+        title: '12.4 Process Digitization and Continuous Improvement',
+        strategic: 'How do you systematically identify, prioritize, and digitize manual finance processes to drive efficiency and redeploy talent to higher-value activities?',
+        tactical: [
+          'Do you have documented process maps for core finance processes? Show examples.',
+          'What continuous improvement methodology do you use? (Lean, Six Sigma, other)',
+          'Walk me through your process improvement pipeline — what is prioritized and why?',
+          'What process performance metrics do you track? (Cycle time, error rates, cost per transaction)',
+          'Give examples of processes you have digitized or improved in the last year — before and after metrics.',
+          'What percentage of finance processes are documented, standardized, and measured?',
+          'Who owns process improvement — is it a dedicated role or everyone\'s responsibility?'
+        ],
+        expectedResponse: 'Process documentation: 80% of core processes mapped is a strong benchmark. Methodology: Lean principles with quarterly Kaizen events is a good example. Pipeline: maintained improvement backlog, scored on impact vs. effort, top 10 in active execution. Metrics tracked: close cycle time, forecast accuracy, AP processing cost, DSO, employee satisfaction with finance support — all with targets and red/yellow/green dashboard. Examples with specific before/after metrics. Red flags: no process documentation (<50%), no improvement methodology, no pipeline, no metrics tracked, or inability to cite examples with quantified results.'
+      },
+      {
+        title: '12.5 Cloud and System Modernisation',
+        strategic: 'How are you modernising the finance technology stack to move from legacy on-premises systems to cloud-based platforms that enable scalability, integration, and innovation?',
+        tactical: [
+          'What percentage of finance systems are cloud vs. on-premises today?',
+          'What is your cloud migration roadmap over the next 2-3 years?',
+          'Which systems are you planning to replace or modernize? Why those systems?',
+          'How do you evaluate cloud platforms? What are your key criteria?',
+          'What cloud migrations have you completed and what were the lessons learned?',
+          'What is your integration strategy for cloud applications?',
+          'What has been your experience with total cost of ownership — cloud vs. on-premises?',
+          'Do you have a cloud-first policy for new systems?'
+        ],
+        expectedResponse: 'Current state: should know % cloud vs. on-prem by system. Roadmap: Year 1-3 plan with specific systems and rationale. Evaluation criteria scored and documented. Completed migrations with honest lessons learned: data cleanup effort underestimated, parallel running period, user training critical, change management required. Security/compliance: require SOC 2 Type II minimum, GDPR compliance, data residency clauses. Cloud-first policy: recommended as default for all new systems. TCO experience: cloud typically higher Year 1, breaks even Year 2-3, then 20-30% lower ongoing. Red flags: no migration plan, resistance to cloud, entirely on-premises in 2026, failed migrations without lessons, or no integration strategy.'
+      },
+      {
+        title: '12.6 Finance Analytics and Business Intelligence',
+        strategic: 'How have you evolved finance from backward-looking reporting to forward-looking analytics and insights that drive business decisions?',
+        tactical: [
+          'How would you characterize your finance analytics maturity? (Descriptive, diagnostic, predictive, prescriptive)',
+          'What BI/analytics tools do you use and who has access?',
+          'What percentage of reports are: standard/recurring, ad-hoc requests, self-service by business users?',
+          'Give examples of analytics that have directly driven business decisions or actions.',
+          'Do you use predictive analytics or ML? For what use cases?',
+          'How long does it take to fulfill ad-hoc analysis requests? What is the current backlog?',
+          'How do you balance self-service access with data governance and quality?'
+        ],
+        expectedResponse: 'Maturity: currently 60% descriptive, 30% diagnostic, 10% predictive is a typical baseline. Goal should be to shift toward more predictive and prescriptive. Decision-driving examples required: pricing analytics, customer profitability, churn prediction with quantified business impact. Predictive analytics: ML for revenue forecasting improving accuracy from ±8% to ±4% is a strong example. Request fulfillment: 5-day average is acceptable; 0 backlog is the target. Self-service: curated data marts with governed definitions and user training. Red flags: stuck in descriptive reporting only, all requests through finance (no self-service), long turnaround times, no advanced analytics capability, inability to cite decision-driving examples.'
+      },
+      {
+        title: '12.7 Cyber Security and Risk Management for Digital Finance',
+        strategic: 'As finance becomes increasingly digital and cloud-based, how do you ensure security and manage the growing cyber risk to financial systems and data?',
+        tactical: [
+          'What is your approach to financial systems and data security?',
+          'How do you manage access to financial systems? (Provisioning, reviews, de-provisioning)',
+          'What security measures are in place? (MFA, encryption, monitoring, penetration testing)',
+          'How do you assess and monitor third-party vendor cyber security?',
+          'Do you have incident response and business continuity plans? When were they last tested?',
+          'What cyber security training do you provide to the finance team?',
+          'Have you had any security incidents or breaches? What happened?',
+          'What cyber insurance coverage do you maintain?'
+        ],
+        expectedResponse: 'Shared responsibility model: IT/CISO provides infrastructure security, Finance owns access governance and data classification. Access management: formal provisioning with manager approval, role-based access (segregation of duties), quarterly access reviews, immediate de-provisioning on termination. Security measures: MFA required for all financial systems (100% compliance), encryption at rest and in transit, activity monitoring with anomaly alerts, annual penetration testing. Vendor security: require SOC 2 Type II minimum, annual risk assessments for critical vendors. Incident response: documented plan tested annually via tabletop exercise. Training: mandatory annual cyber awareness, monthly simulated phishing tests. Cyber insurance: $5M+ liability policy covering business interruption, data breach, regulatory fines. Red flags: viewing security as "IT\'s problem," weak access controls, no MFA, incident response plan not tested, no employee training, or CFO disengaged from cyber risk.'
+      }
+    ]
+  }
 };
 
 // ================================================================
@@ -1065,6 +1513,20 @@ let clientData     = null;  // Imported Piece 1 JSON — null if no file uploade
 let currentDomain  = 0;     // 0-indexed domain currently shown in Screen 2
 let naipaulScores  = new Array(12).fill(null);  // Naipaul's expert scores [0-3 or null]
 let naipaulNotes   = new Array(12).fill('');    // Naipaul's interview notes per domain
+
+// ----------------------------------------------------------------
+// REVIEW PANEL STATE
+// isEditMode: true when Naipaul entered a domain FROM the review
+// panel (via "Edit" button), not from normal sequential flow.
+//
+// When true:
+//   - The nav button shows "Back to Review" instead of "Next Domain"
+//   - Clicking it saves the score/notes and returns to the review
+//     panel WITHOUT cycling through remaining domains.
+// When false (normal flow):
+//   - Nav buttons behave exactly as before — Back / Next / Generate.
+// ----------------------------------------------------------------
+let isEditMode = false;
 
 // ================================================================
 // SCREEN 1: IMPORT HANDLERS
@@ -1222,32 +1684,56 @@ function renderDomain(idx) {
       <div class="domain-err" id="derr-${idx}">Please select your expert score before proceeding.</div>
     </div>`;
 
-  // Build navigation buttons
+  // ----------------------------------------------------------------
+  // Build navigation buttons.
+  //
+  // EDIT MODE (isEditMode=true):
+  //   Naipaul arrived here from the review panel via an "Edit" button.
+  //   Show only "Back to Review" — saves his score/notes and returns
+  //   to the panel without cycling through remaining domains.
+  //
+  // NORMAL MODE (isEditMode=false):
+  //   Standard sequential flow. Back (if not domain 0) + Next.
+  //   On the last domain (idx=11), the primary button calls
+  //   showReviewPanel() instead of generateFindings() directly —
+  //   the review panel is the confirmation gate before locking.
+  // ----------------------------------------------------------------
   const navEl = document.getElementById('assess-nav');
   const isLast = idx === 11;
-  navEl.innerHTML = `
-    ${idx > 0 ? `<button class="btn-secondary" onclick="navDomain(${idx - 1})">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      Back
-    </button>` : ''}
-    <button class="btn-primary" onclick="${isLast ? 'generateFindings()' : `navDomain(${idx + 1})`}">
-      ${isLast ? 'Generate Findings Brief' : 'Next Domain'}
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        ${isLast ? '<polyline points="20 6 9 17 4 12"/>' : '<polyline points="9 18 15 12 9 6"/>'}
-      </svg>
-    </button>`;
+
+  if (isEditMode) {
+    // Edit mode: single navy "Back to Review" button — no ambiguity
+    navEl.innerHTML = `
+      <button class="btn-back-to-review" onclick="backToReview()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Review
+      </button>`;
+  } else {
+    // Normal flow: Back (if not first domain) + Next or Review & Confirm
+    navEl.innerHTML = `
+      ${idx > 0 ? `<button class="btn-secondary" onclick="navDomain(${idx - 1})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>` : ''}
+      <button class="btn-primary" onclick="${isLast ? 'showReviewPanel()' : `navDomain(${idx + 1})`}">
+        ${isLast ? 'Review &amp; Confirm' : 'Next Domain'}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          ${isLast ? '<polyline points="20 6 9 17 4 12"/>' : '<polyline points="9 18 15 12 9 6"/>'}
+        </svg>
+      </button>`;
+  }
 }
 
 function buildQuestionsAccordion(domainIndex, questions) {
   const hasQuestions = questions.sections && questions.sections.length > 0;
 
   if (!hasQuestions) {
-    // Domains 9-12: no interview questions provided yet
+    // Fallback notice for any domain with no question sections — D9-D12 now all have sections, this will not fire for them
     return `
       <div style="margin-bottom:20px;">
         <div class="no-questions-notice">
-          <strong>Interview questions not yet provided for this domain.</strong><br>
-          Leadership & Governance, Team & Talent, Quality of Earnings, and Exit/Value Readiness are pending question set content from Naipaul. Use the notes field below to capture your observations during the call.
+          <strong>No interview questions available for this domain.</strong><br>
+          This domain does not yet have a question set configured. Use the notes field below to capture your observations during the call.
         </div>
       </div>`;
   }
@@ -1324,6 +1810,113 @@ function getClientStage() {
 function getClientTier() {
   const s = getClientStage();
   return s !== null ? getTier(s) : null;
+}
+
+// ================================================================
+// REVIEW PANEL — functions
+// ================================================================
+
+// showReviewPanel()
+// -----------------
+// Called when Naipaul clicks "Review & Confirm" on Domain 12 (normal
+// flow). Saves the current domain's notes, validates all 12 domains
+// are scored, builds the review table, then shows the review panel
+// while hiding the domain card and nav buttons.
+function showReviewPanel() {
+  // Save notes for the last domain before switching view
+  const notesEl = document.getElementById(`notes-${currentDomain}`);
+  if (notesEl) naipaulNotes[currentDomain] = notesEl.value;
+
+  // Validate all 12 domains are scored before showing review
+  const unscored = naipaulScores.map((s, i) => s === null ? i + 1 : null).filter(Boolean);
+  if (unscored.length > 0) {
+    alert(`Please score all domains before reviewing. Missing: Domain${unscored.length > 1 ? 's' : ''} ${unscored.join(', ')}.`);
+    navDomain(unscored[0] - 1);
+    return;
+  }
+
+  // Render the review table with latest scores and notes
+  renderReviewTable();
+
+  // Hide domain card and nav, show review panel
+  document.getElementById('domain-container').style.display = 'none';
+  document.getElementById('assess-nav').style.display = 'none';
+  document.getElementById('review-panel').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// renderReviewTable()
+// -------------------
+// Builds the 12-row summary table inside the review panel.
+// Each row shows: domain number, domain name, client self-score
+// (if available), Naipaul's score (color-coded chip), a truncated
+// notes preview, and an "Edit" button that calls enterEditMode().
+// Called by showReviewPanel() and backToReview().
+function renderReviewTable() {
+  const tbody = document.getElementById('review-table-body');
+  tbody.innerHTML = DOMAINS.map((domain, i) => {
+    const nScore    = naipaulScores[i];
+    const cScore    = clientData ? clientData.assessment.domains[i].selfScore : null;
+    const notes     = naipaulNotes[i].trim();
+    const notesTxt  = notes
+      ? `<span class="review-notes-preview">${notes.replace(/</g,'&lt;')}</span>`
+      : `<span class="review-notes-none">No notes</span>`;
+    const cScoreTxt = cScore !== null ? cScore : '—';
+    // Color-coded chip based on Naipaul's score (0=red,1=amber,2=blue,3=green)
+    const chip = `<span class="review-score-chip review-score-${nScore}">${nScore}</span>`;
+    return `
+      <tr>
+        <td style="font-weight:700; color:var(--text-mid);">${domain.index}</td>
+        <td style="font-weight:600;">${domain.name}</td>
+        <td style="text-align:center; color:var(--text-mid);">${cScoreTxt}</td>
+        <td style="text-align:center;">${chip}</td>
+        <td>${notesTxt}</td>
+        <td><button class="review-edit-btn" onclick="enterEditMode(${i})">Edit</button></td>
+      </tr>`;
+  }).join('');
+}
+
+// enterEditMode(idx)
+// ------------------
+// Called when Naipaul clicks "Edit" on a review table row.
+// Sets isEditMode=true so renderDomain() knows to show "Back to Review"
+// instead of the normal next/back buttons.
+// Hides the review panel and renders the selected domain.
+function enterEditMode(idx) {
+  isEditMode = true;  // Flag: tells renderDomain to show "Back to Review"
+
+  // Hide review panel, restore domain card and nav visibility
+  document.getElementById('review-panel').style.display = 'none';
+  document.getElementById('domain-container').style.display = 'block';
+  document.getElementById('assess-nav').style.display = 'flex';
+
+  // Navigate to the selected domain
+  currentDomain = idx;
+  renderDomain(idx);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// backToReview()
+// --------------
+// Called when Naipaul clicks "Back to Review" in edit mode.
+// Saves the current domain's score and notes, resets isEditMode,
+// re-renders the review table with updated data, and shows the panel.
+function backToReview() {
+  // Save any notes edited during this domain visit
+  const notesEl = document.getElementById(`notes-${currentDomain}`);
+  if (notesEl) naipaulNotes[currentDomain] = notesEl.value;
+
+  // Reset edit mode flag before hiding domain view
+  isEditMode = false;
+
+  // Re-render the table so the updated score/notes are visible
+  renderReviewTable();
+
+  // Hide domain card and nav, show review panel
+  document.getElementById('domain-container').style.display = 'none';
+  document.getElementById('assess-nav').style.display = 'none';
+  document.getElementById('review-panel').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ================================================================
