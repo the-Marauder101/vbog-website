@@ -95,6 +95,30 @@
     font-weight: 700;
   }
 
+  /* LOGO BOX — matches index.html exactly */
+  .logo-box {
+    background: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+  }
+  .logo-box:hover { opacity: 0.88; }
+  .logo-box span {
+    font-family: 'Satoshi', sans-serif;
+    font-weight: 900;
+    font-size: 15px;
+    color: #0a0a0a;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+  .logo-box-lg { padding: 14px 28px; }
+  .logo-box-lg span { font-size: 22px; }
+
   /* NAV */
   .nav-wrap {
     position: sticky;
@@ -297,8 +321,8 @@
 <!-- ===================== NAV ===================== -->
 <header class="nav-wrap" id="nav">
   <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-    <a href="https://v-bog.com" class="flex-shrink-0">
-      <img src="../Logo.svg" alt="V-BOG" class="h-8 w-auto">
+    <a href="https://v-bog.com" class="logo-box">
+      <span>Depesh<br>Vyas.</span>
     </a>
     <a href="#apply" class="btn-ghost hidden sm:inline-flex">Book Your Audit</a>
   </div>
@@ -533,27 +557,23 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
 
-      <!-- Case Study 1 -->
+      <!-- Case Study 1: R2G -->
       <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
-        <div class="flex items-center gap-4 mb-4">
-          <div class="placeholder-block w-14 h-14 rounded-full flex-shrink-0 text-xs" style="background:#2A2A2A;border-color:#3A3A3A;color:#666;">80×80</div>
-          <div>
-            <div class="text-2xl font-display font-black text-accent">$15K → $120K</div>
-            <div class="text-xs text-white/50 font-medium">MRR Growth</div>
-          </div>
+        <div class="mb-4">
+          <img src="https://www.r2gdigital.com/wp-content/uploads/2025/03/greenlogo2-1-1.svg" alt="R2G Digital" style="height:32px;max-width:140px;object-fit:contain;filter:brightness(0) invert(1);opacity:0.9;">
         </div>
+        <div class="text-2xl font-display font-black text-accent mb-1">$15K → $120K</div>
+        <div class="text-xs text-white/50 font-medium mb-3">MRR Growth</div>
         <p class="text-white/70 text-sm leading-relaxed">Agency founder grew from $15K → $120K MRR after installing operational systems.</p>
       </div>
 
-      <!-- Case Study 2 -->
+      <!-- Case Study 2: Ride the Wave -->
       <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
-        <div class="flex items-center gap-4 mb-4">
-          <div class="placeholder-block w-14 h-14 rounded-full flex-shrink-0 text-xs" style="background:#2A2A2A;border-color:#3A3A3A;color:#666;">80×80</div>
-          <div>
-            <div class="text-2xl font-display font-black text-accent">$220K MRR</div>
-            <div class="text-xs text-white/50 font-medium">Revenue Scale</div>
-          </div>
+        <div class="mb-4">
+          <img src="https://framerusercontent.com/images/WLf07jAEjS2wz1kZ4XkUiA4mAc.webp" alt="Ride The Wave" style="height:32px;max-width:140px;object-fit:contain;filter:brightness(0) invert(1);opacity:0.9;">
         </div>
+        <div class="text-2xl font-display font-black text-accent mb-1">$220K MRR</div>
+        <div class="text-xs text-white/50 font-medium mb-3">Revenue Scale</div>
         <p class="text-white/70 text-sm leading-relaxed">Service business scaled to $220K MRR after removing founder dependency.</p>
       </div>
 
@@ -790,8 +810,8 @@
 <!-- ===================== FOOTER ===================== -->
 <footer class="bg-dark border-t border-white/10 py-10">
   <div class="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-    <a href="https://v-bog.com">
-      <img src="../Logo.svg" alt="V-BOG" class="h-7 w-auto" style="filter: brightness(0) invert(1);">
+    <a href="https://v-bog.com" class="logo-box logo-box-lg" style="background:transparent;">
+      <span style="color:#fff;">Depesh<br>Vyas.</span>
     </a>
     <p class="text-white/40 text-sm text-center sm:text-right">
       © 2025 V-BOG. All rights reserved.
