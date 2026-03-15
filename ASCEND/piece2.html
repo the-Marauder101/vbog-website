@@ -173,9 +173,9 @@
     .review-panel-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px; }
     .review-panel-title { font-size: 18px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
     .review-panel-subtitle { font-size: 13px; color: var(--text-mid); margin-bottom: 24px; }
-    .review-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .review-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
     .review-table th { background: var(--navy); color: white; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
-    .review-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .review-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; overflow: hidden; }
     .review-table tr:last-child td { border-bottom: none; }
     .review-table tr:nth-child(even) td { background: var(--off-white); }
     .review-score-chip { display: inline-block; width: 28px; height: 28px; border-radius: 50%; font-size: 13px; font-weight: 700; text-align: center; line-height: 28px; }
@@ -183,7 +183,12 @@
     .review-score-1 { background: #FFF3CD; color: var(--amber); }
     .review-score-2 { background: #E8F4FD; color: #1A6FA8; }
     .review-score-3 { background: #E8F8F0; color: var(--green-soft); }
-    .review-notes-preview { font-size: 12px; color: var(--text-mid); font-style: italic; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Notes cell: constrained width, text truncated with ellipsis on one line.
+       display:block on the span is required — inline elements ignore max-width
+       relative to parent table cells when table-layout is not fixed.
+       word-break prevents long unbroken strings (URLs etc.) from escaping. */
+    .review-notes-preview { display: block; font-size: 12px; color: var(--text-mid); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: break-all; }
     .review-notes-none { font-size: 12px; color: var(--text-light); }
     .review-edit-btn { font-size: 12px; font-weight: 600; color: var(--navy); background: var(--off-white); border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 12px; cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s; }
     .review-edit-btn:hover { border-color: var(--gold); background: var(--gold-pale); }
@@ -379,11 +384,11 @@
           <thead>
             <tr>
               <th style="width:32px;">#</th>
-              <th>Domain</th>
-              <th style="width:80px; text-align:center;">Client</th>
-              <th style="width:80px; text-align:center;">Your Score</th>
+              <th style="width:160px;">Domain</th>
+              <th style="width:72px; text-align:center;">Client</th>
+              <th style="width:72px; text-align:center;">Your Score</th>
               <th>Your Notes</th>
-              <th style="width:80px;"></th>
+              <th style="width:72px;"></th>
             </tr>
           </thead>
           <tbody id="review-table-body">
