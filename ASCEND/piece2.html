@@ -165,6 +165,42 @@
     .assess-nav .btn-primary { flex: 1; min-width: 180px; }
 
     /* ================================================================
+       REVIEW PANEL — shown between Domain 12 and findings generation.
+       Also shown when returning from an edit-mode domain visit.
+       Hidden by default; toggled via showReviewPanel() / hideReviewPanel().
+    ================================================================ */
+    #review-panel { display: none; margin-top: 0; }
+    .review-panel-card { background: white; border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px; }
+    .review-panel-title { font-size: 18px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+    .review-panel-subtitle { font-size: 13px; color: var(--text-mid); margin-bottom: 24px; }
+    .review-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+    .review-table th { background: var(--navy); color: white; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+    .review-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; overflow: hidden; }
+    .review-table tr:last-child td { border-bottom: none; }
+    .review-table tr:nth-child(even) td { background: var(--off-white); }
+    .review-score-chip { display: inline-block; width: 28px; height: 28px; border-radius: 50%; font-size: 13px; font-weight: 700; text-align: center; line-height: 28px; }
+    .review-score-0 { background: #FDECEA; color: var(--red-soft); }
+    .review-score-1 { background: #FFF3CD; color: var(--amber); }
+    .review-score-2 { background: #E8F4FD; color: #1A6FA8; }
+    .review-score-3 { background: #E8F8F0; color: var(--green-soft); }
+
+    /* Notes cell: constrained width, text truncated with ellipsis on one line.
+       display:block on the span is required — inline elements ignore max-width
+       relative to parent table cells when table-layout is not fixed.
+       word-break prevents long unbroken strings (URLs etc.) from escaping. */
+    .review-notes-preview { display: block; font-size: 12px; color: var(--text-mid); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: break-all; }
+    .review-notes-none { font-size: 12px; color: var(--text-light); }
+    .review-edit-btn { font-size: 12px; font-weight: 600; color: var(--navy); background: var(--off-white); border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 12px; cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s; }
+    .review-edit-btn:hover { border-color: var(--gold); background: var(--gold-pale); }
+    .review-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .review-actions .btn-primary { flex: 1; min-width: 200px; }
+
+    /* "Back to Review" button — only rendered when isEditMode=true (see renderDomain nav logic).
+       Navy background distinguishes it clearly from the gold primary action button. */
+    .btn-back-to-review { background: var(--navy); color: white; font-size: 15px; font-weight: 700; border: none; border-radius: var(--radius); padding: 14px 28px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.18s; justify-content: center; flex: 1; min-width: 180px; }
+    .btn-back-to-review:hover { opacity: 0.88; }
+
+    /* ================================================================
        SCREEN 3: FINDINGS BRIEF
     ================================================================ */
     .findings-header { background: var(--navy); border-radius: var(--radius-lg); padding: 40px; margin-bottom: 28px; color: white; position: relative; overflow: hidden; }
@@ -228,17 +264,22 @@
     .download-desc { font-size: 13px; color: var(--text-mid); line-height: 1.55; }
     .download-btn { background: var(--navy); color: var(--gold); font-size: 14px; font-weight: 700; border: none; border-radius: var(--radius); padding: 14px 24px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; transition: opacity 0.18s; flex-shrink: 0; }
     .download-btn:hover { opacity: 0.88; }
-    /* ADDED: Save Session button — ghost style alongside download-btn */
+
+    /* ── SESSION FEATURES ─────────────────────────────────────────────────────
+       Styles for the save/resume session workflow.
+       save-session-btn: ghost style alongside download-btn on Screen 3.
+       edit-domains-btn: small ghost button in the findings-header on Screen 3.
+       resume-session-btn: primary gold button on Screen 1 when P2 session loaded.
+       session-badge: green indicator in the client preview confirming session loaded.
+       download-row: flex wrapper for download-btn + save-session-btn side by side.
+    ────────────────────────────────────────────────────────────────────────── */
     .save-session-btn { background: transparent; color: var(--navy); font-size: 14px; font-weight: 700; border: 1.5px solid var(--navy); border-radius: var(--radius); padding: 13px 22px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; transition: all 0.18s; flex-shrink: 0; }
     .save-session-btn:hover { background: var(--navy); color: var(--gold); }
-    /* ADDED: Edit Domains button on Screen 3 — lets Naipaul go back to domain scoring */
-    .edit-domains-btn { background: transparent; color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 600; border: 1.5px solid rgba(255,255,255,0.25); border-radius: var(--radius); padding: 9px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.18s; }
+    .edit-domains-btn { background: transparent; color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 600; border: 1.5px solid rgba(255,255,255,0.25); border-radius: var(--radius); padding: 9px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.18s; margin-bottom: 16px; }
     .edit-domains-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); color: white; }
-    /* ADDED: Resume Session button on Screen 1 — shown when a P2 session file is uploaded */
-    .resume-session-btn { background: var(--gold); color: var(--navy); font-size: 15px; font-weight: 700; border: none; border-radius: var(--radius); padding: 16px 32px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.18s; }
+    .resume-session-btn { background: var(--gold); color: var(--navy); font-size: 15px; font-weight: 700; border: none; border-radius: var(--radius); padding: 14px 28px; cursor: pointer; display: none; align-items: center; gap: 8px; transition: opacity 0.18s; flex: 1; min-width: 200px; justify-content: center; }
     .resume-session-btn:hover { opacity: 0.88; }
-    /* ADDED: Session badge shown in client preview when a P2 file is loaded */
-    .session-badge { display: inline-flex; align-items: center; gap: 6px; background: #E8F5E9; border: 1px solid #81C784; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; color: #1B5E20; margin-top: 8px; }
+    .session-badge { display: inline-flex; align-items: center; gap: 6px; background: #E8F5E9; border: 1px solid #81C784; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; color: #1B5E20; margin-top: 10px; }
     .download-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   </style>
 </head>
@@ -297,11 +338,15 @@
       </div>
     </div>
 
-    <div class="start-row" id="start-row" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-      <!-- ADDED: Resume Session button — only visible when a P2 session file is detected -->
-      <button id="resume-btn" class="resume-session-btn" style="display:none;" onclick="resumeSession()">
+    <!-- start-row: buttons shown after a file is uploaded.
+         - No file loaded: only "Start New Interview" (disabled until file or manual-entry chosen).
+         - P1 file loaded: "Start New Interview" enabled.
+         - P2 session file loaded: "Resume & Review" (gold, primary) + "Start New Interview"
+           (secondary ghost) — starting new wipes session state, resuming loads review panel. -->
+    <div class="start-row" id="start-row">
+      <button class="resume-session-btn" id="resume-btn" onclick="resumeSession()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
-        Resume Session
+        Resume &amp; Review
       </button>
       <button class="btn-primary" id="start-btn" disabled onclick="startAssessment()" style="opacity:0.4;cursor:not-allowed;">
         Start New Interview
@@ -340,6 +385,51 @@
 
     <div class="assess-nav" id="assess-nav"></div>
 
+    <!-- ============================================================
+         REVIEW PANEL
+         Shown after Domain 12 in normal flow (replaces domain-container
+         and assess-nav). Also shown after returning from an edit visit.
+
+         Logic:
+           showReviewPanel() — hides domain-container + assess-nav,
+                               renders this panel, scrolls to top.
+           hideReviewPanel() — hides this panel, shows domain-container
+                               + assess-nav for the selected domain.
+           enterEditMode(idx) — called by each row's "Edit" button.
+                                Sets isEditMode=true, hides panel,
+                                navigates to that domain.
+           backToReview()     — called by "Back to Review" nav button.
+                                Saves current scores/notes, sets
+                                isEditMode=false, shows panel again.
+    ============================================================ -->
+    <div id="review-panel">
+      <div class="review-panel-card">
+        <div class="review-panel-title">Review Your Inputs</div>
+        <div class="review-panel-subtitle">Check all 12 domain scores and notes before locking the findings brief. Click Edit on any row to go back and make changes.</div>
+        <table class="review-table" id="review-table">
+          <thead>
+            <tr>
+              <th style="width:32px;">#</th>
+              <th style="width:160px;">Domain</th>
+              <th style="width:72px; text-align:center;">Client</th>
+              <th style="width:72px; text-align:center;">Your Score</th>
+              <th>Your Notes</th>
+              <th style="width:72px;"></th>
+            </tr>
+          </thead>
+          <tbody id="review-table-body">
+            <!-- Populated dynamically by renderReviewTable() -->
+          </tbody>
+        </table>
+      </div>
+      <div class="review-actions">
+        <button class="btn-primary" onclick="generateFindings()">
+          Confirm &amp; Generate Findings Brief
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      </div>
+    </div>
+
   </div><!-- end screen-assess -->
 
   <!-- ============================================================
@@ -349,13 +439,13 @@
   <div id="screen-findings">
 
     <div class="findings-header">
-      <!-- ADDED: Edit Domains button — returns to Screen 2 with all scores pre-loaded -->
-      <div style="margin-bottom:16px;">
-        <button class="edit-domains-btn" onclick="goBackToAssess()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-          Edit Domain Scores
-        </button>
-      </div>
+      <!-- "Edit Domain Scores" — takes Naipaul back to Screen 2 domain 1 with all scores intact.
+           Useful if he wants to walk through all domains again. For targeted edits, the
+           review panel's Edit buttons are faster (already available above the findings). -->
+      <button class="edit-domains-btn" onclick="goBackToAssess()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Edit Domain Scores
+      </button>
       <div class="findings-eyebrow">ASCEND™ Findings Brief</div>
       <div class="findings-title" id="findings-client-name">—</div>
       <div class="findings-client" id="findings-client-email">—</div>
@@ -408,18 +498,21 @@
     </div>
 
     <!-- Download .docx -->
+    <!-- Download section: two actions side by side.
+         Download .docx — generates the Word findings brief.
+         Save Session — exports a ascend-p2-v1 JSON with all scores, notes, and client data.
+         Uploading that JSON back to Screen 1 restores everything and drops Naipaul into
+         the review panel to make targeted edits before re-downloading the .docx. -->
     <div class="download-section">
       <div class="download-text">
-        <div class="download-title">Download & Save</div>
-        <div class="download-desc">Download the findings brief as a Word document (.docx) to edit offline before your presentation call. Save the session as a JSON file to reload and edit scores later.</div>
+        <div class="download-title">Download &amp; Save</div>
+        <div class="download-desc">Download the findings brief as a Word document to edit offline. Save the session as a JSON file — re-upload it here later to make edits and re-download.</div>
       </div>
-      <!-- ADDED: download-row wraps both buttons side by side -->
       <div class="download-row">
         <button class="download-btn" onclick="downloadDocx()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download .docx
         </button>
-        <!-- ADDED: Save Session JSON — exports all scores, notes and client data for re-editing -->
         <button class="save-session-btn" onclick="saveSession()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           Save Session
@@ -442,9 +535,10 @@
 // 12 diagnostic domains — names, descriptions, scoring criteria
 // Domains 1-8: scoring criteria confirmed from Master Connection Matrix ✓
 // Domains 9-12: scoring criteria confirmed from Master Connection Matrix ✓
-//   NOTE: Interview questions for domains 9-12 NOT PROVIDED by Naipaul.
-//         Placeholder notice shown in the accordion. Content gap = Piece 2 blocker
-//         for qualitative findings on these 4 domains. Naipaul to provide.
+//   NOTE 2026-03-14: Full interview question sets added for D9-D12 per
+//         CFO_financew_Diagonistic_Interview_Guide_5_NEW_SECTIONS_concise.docx
+//         D9=5 sections, D10=5 sections, D11=5 sections, D12=7 sections — all coded.
+//         D9 content fit for ICP is an open question logged in ASCEND_Open_Questions_Naipaul.docx
 // UPDATED 2026-03-14: All domain names, descriptions and criteria confirmed per
 // ACT_Ascend_Domain_Mapping_old_vs_new_domain_rename_03_14_2026.docx
 // D7: MERGED (old D7 Exit & M&A Readiness + old D12 Exit/Value Readiness)
@@ -454,7 +548,7 @@ const DOMAINS = [
   {
     index: 1,
     name: 'Cash Flow & Liquidity',
-    desc: 'Cash position, 13-week forecasting, AR/AP management, cash optimisation',
+    desc: 'Cash position, 13-week forecasting, AR/AP management, cash optimization',
     criteria: [
       'No tracking or forecast in place',
       'Basic AR/AP tracking exists',
@@ -566,7 +660,7 @@ const DOMAINS = [
     name: 'EBITDA Quality & Normalization',
     desc: 'Revenue quality, EBITDA normalization, ITAD-specific add-backs, QofE readiness for exit/fundraise',
     criteria: [
-      'No QofE awareness, EBITDA not normalised',
+      'No QofE awareness, EBITDA not normalized',
       'Basic revenue quality review, some adjustments identified',
       'Internal QofE pre-review completed, add-backs quantified',
       'QofE-ready for external buyer review with full EBITDA bridge'
@@ -615,7 +709,7 @@ const DOMAIN_PRIORITY = {
 
 // Gap descriptions: plain-language explanation of what a low score means for each domain
 // Used in Part 1 of the findings brief for context
-// Domains 9-12: provisional copy — Naipaul to confirm before go-live (same gap as Piece 1)
+// Domains 9-12: provisional copy — coded by tool builder. Naipaul confirmation pending (see ASCEND_Open_Questions_Naipaul.docx Q3)
 const DOMAIN_GAP_TEXT = [
   'Cash visibility is limited, creating operational risk. The business cannot reliably predict its cash position, leaving it exposed to liquidity shortfalls.',
   'The capital structure is not actively managed. Covenant obligations may be unclear, and the business may not be optimising its debt or treasury position.',
@@ -625,7 +719,7 @@ const DOMAIN_GAP_TEXT = [
   'Financial planning is reactive. Without rolling forecasts, the business cannot anticipate cash needs, covenants, or strategic inflection points.',
   'External advisor relationships are reactive. The business is missing opportunities to leverage audit, tax, and lender relationships strategically.',
   'Finance processes rely heavily on spreadsheets or disconnected systems. This limits accuracy, scalability, and the ability to leverage automation.',
-  // Domains 9-12: provisional — Naipaul to confirm gap descriptions
+  // Domains 9-12: provisional gap descriptions — Naipaul confirmation pending (ASCEND_Open_Questions_Naipaul.docx Q3)
   'Leadership and finance governance structure needs to be formalised. Founder dependency in finance decisions creates a strategic bottleneck.',
   'Finance team structure and talent management is informal or undefined. The business lacks the human infrastructure to scale its finance function.',
   'Earnings quality has not been assessed. This may affect fundraising, acquisition readiness, or the credibility of reported financials.',
@@ -636,7 +730,11 @@ const DOMAIN_GAP_TEXT = [
 // INTERVIEW QUESTIONS DATA
 // Source: CFO Financial Diagnostic Check List Interview Guide v1
 // Domains 1-8: Full strategic + tactical questions + expected responses ✓
-// Domains 9-12: NO interview questions provided by Naipaul — TBC (Piece 2 blocker)
+// Domains 9-12: RESOLVED 2026-03-14 — full question sets now coded.
+//   D9 sourced from CFO Guide Section 1 (Leadership & Governance) — content fit for ICP is open (see Questions doc)
+//   D10 sourced from CFO Guide Section 2 (Team & Talent)
+//   D11 sourced from CFO Guide Section 3 (Quality of Earnings)
+//   D12 sourced from CFO Guide Section 12 (AI & Data & Digital Transformation — 7 sub-sections)
 //
 // Structure per domain:
 //   sections: [ { title, strategic, tactical: [], expectedResponse } ]
@@ -788,7 +886,7 @@ const INTERVIEW_QUESTIONS = {
       },
       {
         title: '3.5 Delegation of Authority',
-        strategic: 'How do you balance empowering the organisation with appropriate decision-making authority versus maintaining necessary controls and oversight?',
+        strategic: 'How do you balance empowering the organization with appropriate decision-making authority versus maintaining necessary controls and oversight?',
         tactical: [
           'Do you have a formal delegation of authority policy? Show it to me.',
           'What are the approval thresholds for key transactions (capex, operating expenses, contracts, hiring)?',
@@ -817,7 +915,7 @@ const INTERVIEW_QUESTIONS = {
         strategic: 'How does your accounting structure and chart of accounts design support both financial reporting needs and operational decision-making?',
         tactical: [
           'Describe your consolidation structure (legal entities, reporting segments, elimination entries).',
-          'Walk me through your chart of accounts structure (natural accounts, departments, cost centres, products).',
+          'Walk me through your chart of accounts structure (natural accounts, departments, cost centers, products).',
           'How many active GL accounts? When was last COA cleanup?',
           'Show me a sample GL account structure and typical journal entry.'
         ],
@@ -858,15 +956,15 @@ const INTERVIEW_QUESTIONS = {
         expectedResponse: 'Should walk through P&L fluently explaining drivers of each major line. Should highlight balance sheet changes with context. Should explain cash flow clearly. Should cite key metrics relevant to business (unit economics, CAC, LTV, ROIC). Red flag: inability to explain variances, lack of business context, or focus only on compliance.'
       },
       {
-        title: '4.5 File Organisation and Documentation',
-        strategic: 'How do you think about financial close documentation and file organisation as both risk management and efficiency enabler?',
+        title: '4.5 File Organization and Documentation',
+        strategic: 'How do you think about financial close documentation and file organization as both risk management and efficiency enabler?',
         tactical: [
           'Where and how do you store financial records and supporting documentation?',
           'Show me your month-end close file structure for a recent period.',
           'What is your document retention policy?',
           'How would you retrieve support for a transaction from 2 years ago?'
         ],
-        expectedResponse: 'Should describe organised system: monthly close folders with standard structure, accessible storage. Should produce example close file demonstrating organisation. Should cite retention policy (typically 7 years for tax). Red flag: disorganised files, reliance on individuals\' personal files, inability to retrieve historical documentation.'
+        expectedResponse: 'Should describe organized system: monthly close folders with standard structure, accessible storage. Should produce example close file demonstrating organization. Should cite retention policy (typically 7 years for tax). Red flag: disorganized files, reliance on individuals\' personal files, inability to retrieve historical documentation.'
       },
       {
         title: '4.6 Management Reporting',
@@ -896,10 +994,10 @@ const INTERVIEW_QUESTIONS = {
     sections: [
       {
         title: '5.1 Current Profitability Views',
-        strategic: 'How do you analyse profitability to inform strategic decisions about where to compete and how to allocate resources?',
+        strategic: 'How do you analyze profitability to inform strategic decisions about where to compete and how to allocate resources?',
         tactical: [
           'Show me your product line P&L. What are your most and least profitable products?',
-          'How do you analyse customer profitability? Show me an example.',
+          'How do you analyze customer profitability? Show me an example.',
           'What is your channel/distribution profitability (direct, wholesale, online)?',
           'Do you have geographic profitability analysis?'
         ],
@@ -910,15 +1008,15 @@ const INTERVIEW_QUESTIONS = {
         strategic: 'How do you balance analytical sophistication with simplicity and speed in profitability analysis?',
         tactical: [
           'How do you allocate costs in profitability analysis? What remains unallocated?',
-          'Do you analyse incremental profitability for specific decisions vs. fully-loaded?',
-          'How far down the P&L do you analyse profitability (gross margin, contribution margin, EBIT, ROIC)?',
+          'Do you analyze incremental profitability for specific decisions vs. fully-loaded?',
+          'How far down the P&L do you analyze profitability (gross margin, contribution margin, EBIT, ROIC)?',
           'How do you balance actual costs vs. standard costs in your analysis?'
         ],
         expectedResponse: 'Should explain allocation methodology clearly. Should distinguish incremental analysis for pricing/volume decisions from fully-loaded for strategic decisions. Should describe typical depth. Red flag: overly complex allocations creating precision illusion, or simplistic allocations hiding reality.'
       },
       {
         title: '5.3 Reports and Tools',
-        strategic: 'How do you enable self-service profitability analysis across the organisation while maintaining data integrity?',
+        strategic: 'How do you enable self-service profitability analysis across the organization while maintaining data integrity?',
         tactical: [
           'What reports and tools do you provide for profitability analysis?',
           'When are profitability reports produced (monthly, quarterly, real-time)?',
@@ -1029,19 +1127,19 @@ const INTERVIEW_QUESTIONS = {
           'How much work would be required to prepare a CIM?',
           'Is your cap table clean or complex?'
         ],
-        expectedResponse: 'Ideal: organised electronic data room maintained continuously. Reality: 4-8 weeks to compile. Historical: minimum 3 years audited, ideally 5, with clean unqualified opinions. Business plan: current 3-5 year plan with detailed assumptions, bottoms-up methodology, not just a hockey stick. QofE: if none done, buyer will conduct one — proactive study helps. Deal-breakers: major litigation, customer concentration >40% single customer without contract, regulatory violations, related-party conflicts. Red flags: no data room, inability to produce clean financials, unrealistic projections, undisclosed material issues, or "6 months to get ready."'
+        expectedResponse: 'Ideal: organized electronic data room maintained continuously. Reality: 4-8 weeks to compile. Historical: minimum 3 years audited, ideally 5, with clean unqualified opinions. Business plan: current 3-5 year plan with detailed assumptions, bottoms-up methodology, not just a hockey stick. QofE: if none done, buyer will conduct one — proactive study helps. Deal-breakers: major litigation, customer concentration >40% single customer without contract, regulatory violations, related-party conflicts. Red flags: no data room, inability to produce clean financials, unrealistic projections, undisclosed material issues, or "6 months to get ready."'
       },
       {
         title: '7.2 EBITDA Quality & Normalization and EBITDA Adjustments for a Buyer',
         strategic: 'If a buyer conducted a quality of earnings study today, what would they find, and how would you defend the sustainability and normalisation of EBITDA?',
         tactical: [
-          'If you were the buyer, what would you normalise in EBITDA? Walk through the bridge.',
+          'If you were the buyer, what would you normalize in EBITDA? Walk through the bridge.',
           'What revenue might a buyer question — one-time items, related party transactions, pull-forwards?',
           'What costs would you add back — owner compensation, non-recurring fees, deferred expenses?',
           'Are there any aggressive accounting positions a buyer might challenge?',
           'How much EBITDA is management adjustments vs. GAAP reported?',
           'Walk through your capex — what is maintenance vs. growth? How would a buyer view it?',
-          'Is working capital at normalised levels or temporarily favourable/unfavourable?',
+          'Is working capital at normalized levels or temporarily favorable/unfavorable?',
           'Any deferred capex, maintenance, or investments a buyer would need to fund post-close?',
           'Have you modelled the seller vs. buyer EBITDA gap?'
         ],
@@ -1070,12 +1168,12 @@ const INTERVIEW_QUESTIONS = {
           'What percentage of revenue is under written contract vs. PO or handshake agreement?',
           'Walk through your top 10 customer contracts — terms, duration, remaining life, and change of control provisions.',
           'Which contracts require consent for a change of control? What is your plan to obtain consent?',
-          'Are there any unfavourable terms — auto-renewal without price increases, MFN pricing, volume commitments?',
+          'Are there any unfavorable terms — auto-renewal without price increases, MFN pricing, volume commitments?',
           'What is your customer contract renewal pipeline for the next 12 months?',
           'On the vendor side — any single-source suppliers, long-term take-or-pay commitments, or change of control provisions?',
-          'Any critical IP licences with change of control restrictions?'
+          'Any critical IP licenses with change of control restrictions?'
         ],
-        expectedResponse: 'Should quantify contract coverage: ideally >80% of revenue under written contracts. For top contracts (>5% revenue each) should know: term, remaining duration, pricing mechanism, volume commitments, change of control provisions. Change of control analysis: ideally top 5 customers (>60% revenue) have no provisions or standard consent-not-unreasonably-withheld clauses. High risk: major customer can terminate on change of control — requires pre-negotiation. Renewal pipeline: should know % of revenue renewing in next 12 months and expected renewal rate. Red flags: low contract coverage (<60%), major change of control termination rights, unfavourable commercial terms, upcoming renewal concentration (>30% expiring), or single-source vendor dependencies.'
+        expectedResponse: 'Should quantify contract coverage: ideally >80% of revenue under written contracts. For top contracts (>5% revenue each) should know: term, remaining duration, pricing mechanism, volume commitments, change of control provisions. Change of control analysis: ideally top 5 customers (>60% revenue) have no provisions or standard consent-not-unreasonably-withheld clauses. High risk: major customer can terminate on change of control — requires pre-negotiation. Renewal pipeline: should know % of revenue renewing in next 12 months and expected renewal rate. Red flags: low contract coverage (<60%), major change of control termination rights, unfavorable commercial terms, upcoming renewal concentration (>30% expiring), or single-source vendor dependencies.'
       },
       {
         title: '7.5 Management Team Continuity and Retention',
@@ -1085,7 +1183,7 @@ const INTERVIEW_QUESTIONS = {
           'What is current turnover and are there flight risk indicators among key people?',
           'Do key employees have employment agreements with severance and change of control provisions?',
           'What equity do key employees hold and what happens to it in a change of control?',
-          'If you were designing a retention programme today, who would be included and what would it cost?',
+          'If you were designing a retention program today, who would be included and what would it cost?',
           'Have there been key departures during previous transactions or periods of uncertainty?',
           'What is the succession depth for critical roles?'
         ],
@@ -1135,7 +1233,7 @@ const INTERVIEW_QUESTIONS = {
   9: { // Owner Dependence Score — UPDATED 2026-03-14 (previously 'Owner Dependence Score', now confirmed with full question set)
     sections: [
       {
-        title: '9.1 Executive Leadership and Organisational Influence',
+        title: '9.1 Executive Leadership and Organizational Influence',
         strategic: 'How do you define the modern CFO role beyond traditional financial stewardship, and how have you positioned yourself as a strategic partner to the CEO and business leaders?',
         tactical: [
           'Who do you report to and what is the nature and frequency of that relationship?',
@@ -1162,7 +1260,7 @@ const INTERVIEW_QUESTIONS = {
       },
       {
         title: '9.3 Strategic Planning and Capital Allocation',
-        strategic: 'How does Finance actively shape strategy rather than just analyse and validate it, and what is your framework for disciplined capital allocation?',
+        strategic: 'How does Finance actively shape strategy rather than just analyze and validate it, and what is your framework for disciplined capital allocation?',
         tactical: [
           'Describe Finance\'s role in your most recent strategic planning cycle.',
           'Give a specific example where financial analysis changed strategic direction.',
@@ -1171,21 +1269,21 @@ const INTERVIEW_QUESTIONS = {
           'How do you balance financial discipline with supporting bold strategic moves?',
           'What financial metrics drive your strategic planning?'
         ],
-        expectedResponse: 'Finance involved from inception — framing questions, analysis, scenario modelling. Capital allocation framework with specific hurdle rates (e.g. "organic 20% IRR, M&A 15%, maintain 2.5x leverage ceiling"). Should cite example where financial analysis fundamentally shaped strategic direction. Metrics: ROIC, IRR/NPV, payback. Red flags: reactive involvement, no framework, no influence examples, or rigid rules preventing innovation.'
+        expectedResponse: 'Finance involved from inception — framing questions, analysis, scenario modeling. Capital allocation framework with specific hurdle rates (e.g. "organic 20% IRR, M&A 15%, maintain 2.5x leverage ceiling"). Should cite example where financial analysis fundamentally shaped strategic direction. Metrics: ROIC, IRR/NPV, payback. Red flags: reactive involvement, no framework, no influence examples, or rigid rules preventing innovation.'
       },
       {
         title: '9.4 Risk Management and Compliance Oversight',
         strategic: 'How have you built an enterprise risk management framework that balances appropriate risk-taking for value creation with protection of the business and stakeholders?',
         tactical: [
           'What is your enterprise risk management framework?',
-          'Walk me through your risk register — top 5-10 risks and how they are prioritised.',
+          'Walk me through your risk register — top 5-10 risks and how they are prioritized.',
           'How often do you review risks with the executive team and with the board?',
           'Give an example of a risk that materialised — how did you respond?',
           'What is your risk appetite statement?',
-          'Describe your compliance programme.',
+          'Describe your compliance program.',
           'What insurance coverage do you maintain and how was it determined?'
         ],
-        expectedResponse: 'Formal ERM: systematic identification, likelihood/impact scoring, mitigation planning, KRI monitoring. Risk register: 10-20 risks across strategic, operational, financial, compliance categories. Review quarterly with executives, semi-annually with board. Risk appetite statement should be explicit. Compliance programme should cover financial reporting, tax, employment, commercial, industry-specific, and data privacy. Red flags: no formal ERM, reactive management, no risk response examples.'
+        expectedResponse: 'Formal ERM: systematic identification, likelihood/impact scoring, mitigation planning, KRI monitoring. Risk register: 10-20 risks across strategic, operational, financial, compliance categories. Review quarterly with executives, semi-annually with board. Risk appetite statement should be explicit. Compliance program should cover financial reporting, tax, employment, commercial, industry-specific, and data privacy. Red flags: no formal ERM, reactive management, no risk response examples.'
       },
       {
         title: '9.5 Succession Planning and Leadership Development',
@@ -1206,15 +1304,15 @@ const INTERVIEW_QUESTIONS = {
   10: { // Finance Team Structure — UPDATED 2026-03-14 (previously 'Finance Team Structure', full question set added)
     sections: [
       {
-        title: '10.1 Organisation Design and Structure',
-        strategic: 'How have you designed the finance organisation to evolve from transactional processor to strategic business partner, and how does the structure enable both operational excellence and value creation?',
+        title: '10.1 Organization Design and Structure',
+        strategic: 'How have you designed the finance organization to evolve from transactional processor to strategic business partner, and how does the structure enable both operational excellence and value creation?',
         tactical: [
           'Show me your finance org chart with names, titles, reporting lines, and headcount.',
           'What is total finance headcount? How does it benchmark to revenue or transaction volume?',
-          'Describe your organisation design philosophy — centralised vs. decentralised, shared services, centres of excellence.',
+          'Describe your organization design philosophy — centralized vs. decentralized, shared services, centers of excellence.',
           'Break down headcount by function (Accounting, FP&A, Treasury, Tax).',
           'How is finance distributed — corporate vs. business units?',
-          'What organisational changes have you made in the last 2-3 years? What drove them and what were the results?'
+          'What organizational changes have you made in the last 2-3 years? What drove them and what were the results?'
         ],
         expectedResponse: 'Benchmark: 0.5-1.5 finance FTEs per $100M revenue. Breakdown: Accounting 40-50%, FP&A 20-30%, Treasury 5-10%, Tax 5-10%. Design philosophy explained: "centralised accounting for efficiency, distributed FP&A for partnership." Spans: CFO 5-8 directs. Recent changes with rationale and impact. Red flags: bloated vs. benchmarks, too many layers, frequent reorgs (>1 per 18 months), or no design rationale.'
       },
@@ -1234,11 +1332,11 @@ const INTERVIEW_QUESTIONS = {
       },
       {
         title: '10.3 Talent Development and Retention',
-        strategic: 'How have you created a finance organisation culture where high-performers want to build their careers, and what is your approach to developing capabilities vs. hiring them?',
+        strategic: 'How have you created a finance organization culture where high-performers want to build their careers, and what is your approach to developing capabilities vs. hiring them?',
         tactical: [
           'What is voluntary turnover in finance over the last 2 years? What are the trends and benchmarks?',
           'Who is currently a flight risk and what are you doing about it?',
-          'Describe your development programmes and investment levels.',
+          'Describe your development programs and investment levels.',
           'What percentage of leadership roles are filled internally?',
           'How many promotions in the last 12 months?',
           'What do exit interviews tell you? What are the recurring themes?',
@@ -1354,12 +1452,12 @@ const INTERVIEW_QUESTIONS = {
     sections: [
       {
         title: '12.1 AI/Automation Strategy and Roadmap',
-        strategic: 'How are you leveraging AI and automation to transform finance from a cost centre focused on transaction processing to a strategic value driver, and what is your roadmap for implementation?',
+        strategic: 'How are you leveraging AI and automation to transform finance from a cost center focused on transaction processing to a strategic value driver, and what is your roadmap for implementation?',
         tactical: [
           'What AI/ML or automation tools are you currently using in finance?',
           'Give specific examples of processes you have automated in the last 2 years — what was the impact?',
           'What is your AI/automation roadmap for the next 12-24 months?',
-          'How do you prioritise automation opportunities? Show me your pipeline.',
+          'How do you prioritize automation opportunities? Show me your pipeline.',
           'What ROI have you achieved from automation investments?',
           'What percentage of finance processes are fully automated vs. manual or Excel-dependent?',
           'What AI use cases are you piloting or evaluating? (Forecasting, anomaly detection, collections, invoice processing, reconciliations)',
@@ -1384,11 +1482,11 @@ const INTERVIEW_QUESTIONS = {
       },
       {
         title: '12.3 Digital Finance Capabilities and Literacy',
-        strategic: 'How are you building digital fluency across the finance organisation to ensure the team can leverage technology effectively and partner with the business on digital transformation?',
+        strategic: 'How are you building digital fluency across the finance organization to ensure the team can leverage technology effectively and partner with the business on digital transformation?',
         tactical: [
           'How would you assess your finance team\'s current digital literacy and capabilities?',
           'What digital skills gaps exist — data analytics, Python/SQL, automation tools, cloud platforms?',
-          'What training programmes have you implemented and what is the investment per employee?',
+          'What training programs have you implemented and what is the investment per employee?',
           'Have you hired specialised digital roles into finance? (Data analysts, automation specialists)',
           'What percentage of finance team is proficient in: advanced Excel, SQL, Python/R, BI tools, automation platforms?',
           'How do you partner with IT and data science teams?'
@@ -1396,15 +1494,15 @@ const INTERVIEW_QUESTIONS = {
         expectedResponse: 'Skills assessment: conducted formally with results. Gaps identified specifically. Training investment: $1,500-3,000 per employee annually as a benchmark. Specialist hiring: 10% of finance team in digital-specialist roles is a strong indicator. Proficiency targets: Excel advanced 40%, SQL 30%, BI tools 60%. IT/data science partnership: embedded analysts, joint steering committees, shared Slack channels. Red flags: no skills assessment, minimal training (<$1K per FTE), no specialist hires, low proficiency across team, or "old school" finance mindset resistant to change.'
       },
       {
-        title: '12.4 Process Digitisation and Continuous Improvement',
-        strategic: 'How do you systematically identify, prioritise, and digitise manual finance processes to drive efficiency and redeploy talent to higher-value activities?',
+        title: '12.4 Process Digitization and Continuous Improvement',
+        strategic: 'How do you systematically identify, prioritize, and digitize manual finance processes to drive efficiency and redeploy talent to higher-value activities?',
         tactical: [
           'Do you have documented process maps for core finance processes? Show examples.',
           'What continuous improvement methodology do you use? (Lean, Six Sigma, other)',
-          'Walk me through your process improvement pipeline — what is prioritised and why?',
+          'Walk me through your process improvement pipeline — what is prioritized and why?',
           'What process performance metrics do you track? (Cycle time, error rates, cost per transaction)',
-          'Give examples of processes you have digitised or improved in the last year — before and after metrics.',
-          'What percentage of finance processes are documented, standardised, and measured?',
+          'Give examples of processes you have digitized or improved in the last year — before and after metrics.',
+          'What percentage of finance processes are documented, standardized, and measured?',
           'Who owns process improvement — is it a dedicated role or everyone\'s responsibility?'
         ],
         expectedResponse: 'Process documentation: 80% of core processes mapped is a strong benchmark. Methodology: Lean principles with quarterly Kaizen events is a good example. Pipeline: maintained improvement backlog, scored on impact vs. effort, top 10 in active execution. Metrics tracked: close cycle time, forecast accuracy, AP processing cost, DSO, employee satisfaction with finance support — all with targets and red/yellow/green dashboard. Examples with specific before/after metrics. Red flags: no process documentation (<50%), no improvement methodology, no pipeline, no metrics tracked, or inability to cite examples with quantified results.'
@@ -1415,7 +1513,7 @@ const INTERVIEW_QUESTIONS = {
         tactical: [
           'What percentage of finance systems are cloud vs. on-premises today?',
           'What is your cloud migration roadmap over the next 2-3 years?',
-          'Which systems are you planning to replace or modernise? Why those systems?',
+          'Which systems are you planning to replace or modernize? Why those systems?',
           'How do you evaluate cloud platforms? What are your key criteria?',
           'What cloud migrations have you completed and what were the lessons learned?',
           'What is your integration strategy for cloud applications?',
@@ -1428,12 +1526,12 @@ const INTERVIEW_QUESTIONS = {
         title: '12.6 Finance Analytics and Business Intelligence',
         strategic: 'How have you evolved finance from backward-looking reporting to forward-looking analytics and insights that drive business decisions?',
         tactical: [
-          'How would you characterise your finance analytics maturity? (Descriptive, diagnostic, predictive, prescriptive)',
+          'How would you characterize your finance analytics maturity? (Descriptive, diagnostic, predictive, prescriptive)',
           'What BI/analytics tools do you use and who has access?',
           'What percentage of reports are: standard/recurring, ad-hoc requests, self-service by business users?',
           'Give examples of analytics that have directly driven business decisions or actions.',
           'Do you use predictive analytics or ML? For what use cases?',
-          'How long does it take to fulfil ad-hoc analysis requests? What is the current backlog?',
+          'How long does it take to fulfill ad-hoc analysis requests? What is the current backlog?',
           'How do you balance self-service access with data governance and quality?'
         ],
         expectedResponse: 'Maturity: currently 60% descriptive, 30% diagnostic, 10% predictive is a typical baseline. Goal should be to shift toward more predictive and prescriptive. Decision-driving examples required: pricing analytics, customer profitability, churn prediction with quantified business impact. Predictive analytics: ML for revenue forecasting improving accuracy from ±8% to ±4% is a strong example. Request fulfillment: 5-day average is acceptable; 0 backlog is the target. Self-service: curated data marts with governed definitions and user training. Red flags: stuck in descriptive reporting only, all requests through finance (no self-service), long turnaround times, no advanced analytics capability, inability to cite decision-driving examples.'
@@ -1465,6 +1563,20 @@ let currentDomain  = 0;     // 0-indexed domain currently shown in Screen 2
 let naipaulScores  = new Array(12).fill(null);  // Naipaul's expert scores [0-3 or null]
 let naipaulNotes   = new Array(12).fill('');    // Naipaul's interview notes per domain
 
+// ----------------------------------------------------------------
+// REVIEW PANEL STATE
+// isEditMode: true when Naipaul entered a domain FROM the review
+// panel (via "Edit" button), not from normal sequential flow.
+//
+// When true:
+//   - The nav button shows "Back to Review" instead of "Next Domain"
+//   - Clicking it saves the score/notes and returns to the review
+//     panel WITHOUT cycling through remaining domains.
+// When false (normal flow):
+//   - Nav buttons behave exactly as before — Back / Next / Generate.
+// ----------------------------------------------------------------
+let isEditMode = false;
+
 // ================================================================
 // SCREEN 1: IMPORT HANDLERS
 // ================================================================
@@ -1485,7 +1597,11 @@ function handleFileUpload(input) {
 }
 
 function processFile(file) {
-  // UPDATED: detects both ascend-p1-v1 (new interview) and ascend-p2-v1 (session resume)
+  // Handles two file types in the same upload zone:
+  //   ascend-p1-v1 — Piece 1 client self-assessment export → new interview
+  //   ascend-p2-v1 — Piece 2 session save → resume & edit existing scores
+  // The UI responds differently for each: P1 shows "Start New Interview",
+  // P2 shows "Resume & Review" as the primary action.
   const errEl  = document.getElementById('import-error');
   const prevEl = document.getElementById('client-preview');
   errEl.classList.remove('visible');
@@ -1503,7 +1619,8 @@ function processFile(file) {
       const data = JSON.parse(e.target.result);
 
       if (data.schema === 'ascend-p2-v1') {
-        // ── SESSION FILE (Piece 2 save) ──────────────────────────────────
+        // ── SESSION RESUME (Piece 2 save) ──────────────────────────────
+        // Restore all state from the saved session file.
         if (!Array.isArray(data.naipaulScores) || data.naipaulScores.length !== 12) {
           throw new Error('Session file is missing or has incomplete score data.');
         }
@@ -1514,11 +1631,11 @@ function processFile(file) {
         naipaulNotes  = data.naipaulNotes;
         clientData    = data.clientData || null;
         renderSessionPreview(data);
-        enableStart();
-        showResumeButton(true);
+        enableStart(true);  // true = session mode, show Resume button as primary
 
       } else if (data.schema === 'ascend-p1-v1') {
-        // ── NEW INTERVIEW FILE (Piece 1 export) ─────────────────────────
+        // ── NEW INTERVIEW (Piece 1 client export) ──────────────────────
+        // Validate and load client self-scores. Reset any prior session state.
         if (!data.client || !data.assessment || !Array.isArray(data.assessment.domains)) {
           throw new Error('Invalid file format. This does not appear to be an ASCEND Piece 1 assessment file.');
         }
@@ -1529,11 +1646,10 @@ function processFile(file) {
         naipaulScores = new Array(12).fill(null);
         naipaulNotes  = new Array(12).fill('');
         renderClientPreview(data);
-        enableStart();
-        showResumeButton(false);
+        enableStart(false);  // false = new interview, show Start button
 
       } else {
-        throw new Error('Unrecognised file format. Upload the client self-assessment file (Piece 1) or a saved session file (Piece 2).');
+        throw new Error('Unrecognized file format. Upload the client self-assessment (Piece 1 .json) or a saved session (Piece 2 .json).');
       }
 
     } catch (err) {
@@ -1542,7 +1658,7 @@ function processFile(file) {
       clientData    = null;
       naipaulScores = new Array(12).fill(null);
       naipaulNotes  = new Array(12).fill('');
-      showResumeButton(false);
+      enableStart(false);
     }
   };
   reader.readAsText(file);
@@ -1562,129 +1678,171 @@ function renderClientPreview(data) {
   document.getElementById('client-preview').classList.add('visible');
 }
 
+function enableStart(isSessionMode) {
+  // isSessionMode=true  → P2 session loaded: show Resume button (gold/primary),
+  //                        show Start New as secondary ghost, keep it enabled.
+  // isSessionMode=false → P1 or no file: show only Start New button.
+  const startBtn  = document.getElementById('start-btn');
+  const resumeBtn = document.getElementById('resume-btn');
+
+  // Always enable the start button once any valid file is loaded
+  startBtn.disabled = false;
+  startBtn.style.opacity = '';
+  startBtn.style.cursor = '';
+
+  if (isSessionMode) {
+    // Session mode: Resume is the obvious primary action.
+    // Start New is still available but presented as secondary (ghost via btn-secondary class).
+    resumeBtn.style.display = 'inline-flex';
+    startBtn.className = 'btn-secondary';  // downgrade to ghost so Resume stands out
+    startBtn.style.flex = '0 0 auto';
+    startBtn.style.minWidth = '';
+  } else {
+    // New interview mode: hide Resume, Start New stays as primary gold button.
+    resumeBtn.style.display = 'none';
+    startBtn.className = 'btn-primary';
+    startBtn.style.flex = '1';
+    startBtn.style.minWidth = '200px';
+  }
+}
+
+function startWithoutFile() {
+  // Naipaul chooses to proceed without any file.
+  // Reset all session state so a previously uploaded P2 session doesn't bleed through.
+  clientData    = null;
+  naipaulScores = new Array(12).fill(null);
+  naipaulNotes  = new Array(12).fill('');
+  enableStart(false);  // new interview mode — no resume button
+  // Visual feedback notice
+  const card = document.querySelector('.import-card');
+  // Remove any existing notice before adding a new one
+  const existing = card.querySelector('.no-file-notice');
+  if (existing) existing.remove();
+  const notice = document.createElement('div');
+  notice.className = 'no-file-notice';
+  notice.style.cssText = 'padding:12px 16px;background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;font-size:13px;color:#7A5C00;margin-top:12px;';
+  notice.textContent = 'Continuing without client file. Client self-scores will not be shown. Naipaul\'s expert scores only.';
+  card.appendChild(notice);
+}
+
 // ================================================================
-// ADDED: Session resume functions
+// SESSION FEATURES — save, resume, and re-edit workflow
 // ================================================================
 
-// renderSessionPreview: shows a preview card when a P2 session file is loaded
+// renderSessionPreview()
+// ──────────────────────
+// Called when a P2 session file is uploaded to Screen 1.
+// Shows a preview card with client name, session date, scored domains,
+// and a green session badge confirming the session was loaded.
 function renderSessionPreview(data) {
-  const savedAt = data.meta && data.meta.savedAt
-    ? new Date(data.meta.savedAt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' })
-    : 'Unknown date';
+  const savedAt    = data.meta && data.meta.savedAt
+    ? new Date(data.meta.savedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    : 'unknown date';
   const clientName  = data.clientData ? data.clientData.client.name  : 'No client file in session';
   const clientEmail = data.clientData ? data.clientData.client.email : '';
-  const totalScore  = data.naipaulScores.filter(s => s !== null).reduce((a, b) => a + b, 0);
   const scored      = data.naipaulScores.filter(s => s !== null).length;
+  const total       = data.naipaulScores.filter(s => s !== null).reduce((a, b) => a + b, 0);
 
   document.getElementById('preview-name').textContent  = clientName;
   document.getElementById('preview-email').textContent = clientEmail || ('Session saved ' + savedAt);
 
-  // Stage badge from saved scores (only if all 12 scored)
+  // Stage badge: show computed stage if fully scored, otherwise show progress
   const stageBadge = document.getElementById('preview-stage');
   if (scored === 12) {
-    const stage = getStage(totalScore);
+    const stage = getStage(total);
     const tier  = getTier(stage);
     stageBadge.textContent = `Stage ${stage} — ${tier.name}`;
   } else {
     stageBadge.textContent = `${scored}/12 domains scored`;
   }
 
-  // Score chips from saved Naipaul scores
-  document.getElementById('preview-scores').innerHTML =
-    data.naipaulScores.map((score, i) =>
-      `<span class="preview-chip" title="${DOMAINS[i].name}">${DOMAINS[i].name.split(' ')[0]}: ${score !== null ? score : '—'}</span>`
-    ).join('');
+  // Score chips for each domain using Naipaul's saved scores
+  document.getElementById('preview-scores').innerHTML = data.naipaulScores.map((score, i) =>
+    `<span class="preview-chip" title="${DOMAINS[i].name}">${DOMAINS[i].name.split(' ')[0]}: ${score !== null ? score : '—'}</span>`
+  ).join('');
 
-  // Session badge indicator
+  // Green session badge — confirms this is a session file, not a fresh client file
   const prevEl = document.getElementById('client-preview');
-  // Add session badge if not already present
-  if (!prevEl.querySelector('.session-badge')) {
-    const badge = document.createElement('div');
-    badge.className = 'session-badge';
-    badge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg> Session file loaded — Resume to continue editing';
-    prevEl.appendChild(badge);
-  }
-
+  const existingBadge = prevEl.querySelector('.session-badge');
+  if (existingBadge) existingBadge.remove();
+  const badge = document.createElement('div');
+  badge.className = 'session-badge';
+  badge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg> Session loaded — click Resume & Review to continue editing';
+  prevEl.appendChild(badge);
   prevEl.classList.add('visible');
 }
 
-// resumeSession: loads saved state then jumps straight to Screen 3 (Findings)
+// resumeSession()
+// ───────────────
+// Called when Naipaul clicks "Resume & Review" on Screen 1 after uploading a P2 session.
+// All state (naipaulScores, naipaulNotes, clientData) is already restored by processFile().
+// Flow:
+//   - If all 12 domains are scored → go straight to the review panel (same surface
+//     Naipaul uses for targeted edits before generating findings). Same edit flow,
+//     no new mental model.
+//   - If partially scored → go to Screen 2 at the first unscored domain so Naipaul
+//     can finish scoring before reviewing.
 function resumeSession() {
-  // All state (naipaulScores, naipaulNotes, clientData) already restored in processFile
-  // Just validate all 12 were scored in the session
   const unscored = naipaulScores.map((s, i) => s === null ? i + 1 : null).filter(Boolean);
-  if (unscored.length > 0) {
-    // Partially scored session — go to Screen 2 at first unscored domain so Naipaul can finish
-    document.getElementById('screen-import').style.display  = 'none';
-    document.getElementById('screen-assess').style.display  = 'block';
-    document.getElementById('assess-client-label').textContent =
-      clientData ? `Client: ${clientData.client.name}` : 'Session loaded — expert scores only';
-    currentDomain = unscored[0] - 1;
-    renderDomain(currentDomain);
-    return;
-  }
-  // All 12 scored — go straight to Screen 3
-  document.getElementById('screen-import').style.display   = 'none';
-  document.getElementById('screen-assess').style.display   = 'none';
-  document.getElementById('screen-findings').style.display = 'block';
-  // Set the assess header label in case Naipaul uses Edit Domain Scores later
+
+  // Set the client label for Screen 2 in case Naipaul navigates there from the review panel
   document.getElementById('assess-client-label').textContent =
     clientData ? `Client: ${clientData.client.name}` : 'Session loaded — expert scores only';
-  // Regenerate findings from restored state
-  const naipaulTotal = naipaulScores.reduce((a, b) => a + b, 0);
-  const naipaulStage = getStage(naipaulTotal);
-  const naipaulTier  = getTier(naipaulStage);
-  const cName  = clientData ? clientData.client.name  : 'Client (No File)';
-  const cEmail = clientData ? clientData.client.email : '—';
-  document.getElementById('findings-client-name').textContent  = cName;
-  document.getElementById('findings-client-email').textContent = cEmail;
-  const metaEl = document.getElementById('findings-meta');
-  metaEl.innerHTML = `
-    <div class="findings-meta-item">
-      <div class="findings-meta-key">Naipaul's Stage</div>
-      <div class="findings-meta-val">Stage ${naipaulStage} — ${naipaulTier.name}</div>
-    </div>
-    <div class="findings-meta-item">
-      <div class="findings-meta-key">Total Score</div>
-      <div class="findings-meta-val">${naipaulTotal} / 36</div>
-    </div>
-    ${clientData ? `
-    <div class="findings-meta-item">
-      <div class="findings-meta-key">Client Self-Score</div>
-      <div class="findings-meta-val">Stage ${clientData.assessment.stageNumber} — ${clientData.assessment.tierName}</div>
-    </div>` : ''}
-    <div class="findings-meta-item">
-      <div class="findings-meta-key">ASCEND Phase</div>
-      <div class="findings-meta-val">${naipaulTier.ascendPhase}</div>
-    </div>`;
-  buildPart1(naipaulTier);
-  buildPart2(naipaulStage, naipaulTier, naipaulTotal);
-  buildPart3(naipaulTier);
-  buildPart4(naipaulTier);
-  buildPart5(naipaulStage, naipaulTier);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (unscored.length > 0) {
+    // Partially scored session: go to Screen 2 at the first unscored domain
+    document.getElementById('screen-import').style.display = 'none';
+    document.getElementById('screen-assess').style.display = 'block';
+    isEditMode  = false;
+    currentDomain = unscored[0] - 1;
+    renderDomain(currentDomain);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  // All 12 scored: go to Screen 2 (hidden) and immediately show the review panel.
+  // The review panel is the re-edit surface — Naipaul edits individual domains from there,
+  // then hits "Confirm & Generate" to produce the findings brief.
+  document.getElementById('screen-import').style.display = 'none';
+  document.getElementById('screen-assess').style.display = 'block';
+  isEditMode = false;
+  currentDomain = 11;  // set to last domain so backToReview() saves the right domain
+  showReviewPanel();
 }
 
-// goBackToAssess: from Screen 3, return to Screen 2 at domain 0
-// Scores and notes remain intact — Naipaul edits what he wants, then hits Generate Findings Brief again
+// goBackToAssess()
+// ────────────────
+// Called from the "Edit Domain Scores" button in the Screen 3 findings header.
+// Takes Naipaul back to Screen 2 at domain 1 with all scores and notes intact.
+// Useful when he wants to walk through all domains sequentially rather than
+// targeting specific ones via the review panel.
 function goBackToAssess() {
   document.getElementById('screen-findings').style.display = 'none';
   document.getElementById('screen-assess').style.display   = 'block';
-  // Always go to domain 1 so he has full control — all pre-filled
+  // Hide review panel in case it was visible, show domain card and nav
+  document.getElementById('review-panel').style.display       = 'none';
+  document.getElementById('domain-container').style.display   = 'block';
+  document.getElementById('assess-nav').style.display         = 'flex';
+  isEditMode    = false;
   currentDomain = 0;
   renderDomain(0);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// saveSession: exports naipaulScores, naipaulNotes, and clientData as ascend-p2-v1 JSON
+// saveSession()
+// ─────────────
+// Exports all current state as an ascend-p2-v1 JSON file.
+// The exported file can be re-uploaded to Screen 1 — the tool detects the schema,
+// restores all scores and notes, and drops Naipaul into the review panel to make
+// targeted edits before re-downloading the .docx.
 function saveSession() {
-  // Capture any unsaved notes from the currently active domain textarea
+  // Capture any unsaved notes from the current domain textarea before exporting
   const notesEl = document.getElementById(`notes-${currentDomain}`);
   if (notesEl) naipaulNotes[currentDomain] = notesEl.value;
 
   const session = {
-    schema:       'ascend-p2-v1',
-    clientData:   clientData,  // entire P1 JSON embedded (null if no file was uploaded)
+    schema:        'ascend-p2-v1',
+    clientData:    clientData,      // full P1 JSON embedded (null if no file was uploaded)
     naipaulScores: naipaulScores,
     naipaulNotes:  naipaulNotes,
     meta: {
@@ -1708,45 +1866,19 @@ function saveSession() {
   URL.revokeObjectURL(url);
 }
 
-
-function enableStart() {
-  // UPDATED: enables Start button; Resume button visibility handled by showResumeButton()
-  const btn = document.getElementById('start-btn');
-  btn.disabled = false;
-  btn.style.opacity = '';
-  btn.style.cursor = '';
-}
-
-// ADDED: show/hide the Resume Session button based on uploaded file type
-function showResumeButton(show) {
-  const resumeBtn = document.getElementById('resume-btn');
-  if (show) {
-    resumeBtn.style.display = 'inline-flex';
-  } else {
-    resumeBtn.style.display = 'none';
-  }
-}
-
-function startWithoutFile() {
-  // UPDATED: reset session state so a previous upload doesn't bleed through
-  clientData    = null;
-  naipaulScores = new Array(12).fill(null);
-  naipaulNotes  = new Array(12).fill('');
-  showResumeButton(false);
-  enableStart();
-  // Visual feedback
-  const card = document.querySelector('.import-card');
-  const notice = document.createElement('div');
-  notice.style.cssText = 'padding:12px 16px;background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;font-size:13px;color:#7A5C00;margin-top:12px;';
-  notice.textContent = 'Continuing without client file. Client self-scores will not be shown. Naipaul\'s expert scores only.';
-  card.appendChild(notice);
-}
-
+// ================================================================
+// SCREEN 1: START ASSESSMENT
+// ================================================================
 function startAssessment() {
+  // "Start New Interview" — always resets any session state and begins fresh.
+  // If a P2 session was loaded and Naipaul clicks this instead of Resume,
+  // he intentionally wants a clean slate. Session state was already cleared
+  // by processFile() or startWithoutFile() where appropriate.
   document.getElementById('screen-import').style.display = 'none';
   document.getElementById('screen-assess').style.display = 'block';
   document.getElementById('assess-client-label').textContent =
     clientData ? `Client: ${clientData.client.name}` : 'No client file — expert scores only';
+  isEditMode    = false;
   currentDomain = 0;
   renderDomain(0);
 }
@@ -1811,32 +1943,56 @@ function renderDomain(idx) {
       <div class="domain-err" id="derr-${idx}">Please select your expert score before proceeding.</div>
     </div>`;
 
-  // Build navigation buttons
+  // ----------------------------------------------------------------
+  // Build navigation buttons.
+  //
+  // EDIT MODE (isEditMode=true):
+  //   Naipaul arrived here from the review panel via an "Edit" button.
+  //   Show only "Back to Review" — saves his score/notes and returns
+  //   to the panel without cycling through remaining domains.
+  //
+  // NORMAL MODE (isEditMode=false):
+  //   Standard sequential flow. Back (if not domain 0) + Next.
+  //   On the last domain (idx=11), the primary button calls
+  //   showReviewPanel() instead of generateFindings() directly —
+  //   the review panel is the confirmation gate before locking.
+  // ----------------------------------------------------------------
   const navEl = document.getElementById('assess-nav');
   const isLast = idx === 11;
-  navEl.innerHTML = `
-    ${idx > 0 ? `<button class="btn-secondary" onclick="navDomain(${idx - 1})">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      Back
-    </button>` : ''}
-    <button class="btn-primary" onclick="${isLast ? 'generateFindings()' : `navDomain(${idx + 1})`}">
-      ${isLast ? 'Generate Findings Brief' : 'Next Domain'}
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        ${isLast ? '<polyline points="20 6 9 17 4 12"/>' : '<polyline points="9 18 15 12 9 6"/>'}
-      </svg>
-    </button>`;
+
+  if (isEditMode) {
+    // Edit mode: single navy "Back to Review" button — no ambiguity
+    navEl.innerHTML = `
+      <button class="btn-back-to-review" onclick="backToReview()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Review
+      </button>`;
+  } else {
+    // Normal flow: Back (if not first domain) + Next or Review & Confirm
+    navEl.innerHTML = `
+      ${idx > 0 ? `<button class="btn-secondary" onclick="navDomain(${idx - 1})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>` : ''}
+      <button class="btn-primary" onclick="${isLast ? 'showReviewPanel()' : `navDomain(${idx + 1})`}">
+        ${isLast ? 'Review &amp; Confirm' : 'Next Domain'}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          ${isLast ? '<polyline points="20 6 9 17 4 12"/>' : '<polyline points="9 18 15 12 9 6"/>'}
+        </svg>
+      </button>`;
+  }
 }
 
 function buildQuestionsAccordion(domainIndex, questions) {
   const hasQuestions = questions.sections && questions.sections.length > 0;
 
   if (!hasQuestions) {
-    // Domains 9-12: no interview questions provided yet
+    // Fallback notice for any domain with no question sections — D9-D12 now all have sections, this will not fire for them
     return `
       <div style="margin-bottom:20px;">
         <div class="no-questions-notice">
-          <strong>Interview questions not yet provided for this domain.</strong><br>
-          Owner Dependence Score, Finance Team Structure, EBITDA Quality & Normalization, and Exit/Value Readiness are pending question set content from Naipaul. Use the notes field below to capture your observations during the call.
+          <strong>No interview questions available for this domain.</strong><br>
+          This domain does not yet have a question set configured. Use the notes field below to capture your observations during the call.
         </div>
       </div>`;
   }
@@ -1913,6 +2069,124 @@ function getClientStage() {
 function getClientTier() {
   const s = getClientStage();
   return s !== null ? getTier(s) : null;
+}
+
+// ================================================================
+// REVIEW PANEL — functions
+// ================================================================
+
+// showReviewPanel()
+// -----------------
+// Called when Naipaul clicks "Review & Confirm" on Domain 12 (normal
+// flow). Saves the current domain's notes, validates all 12 domains
+// are scored, builds the review table, then shows the review panel
+// while hiding the domain card and nav buttons.
+function showReviewPanel() {
+  // Save notes for the last domain before switching view
+  const notesEl = document.getElementById(`notes-${currentDomain}`);
+  if (notesEl) naipaulNotes[currentDomain] = notesEl.value;
+
+  // Validate all 12 domains are scored before showing review
+  const unscored = naipaulScores.map((s, i) => s === null ? i + 1 : null).filter(Boolean);
+  if (unscored.length > 0) {
+    alert(`Please score all domains before reviewing. Missing: Domain${unscored.length > 1 ? 's' : ''} ${unscored.join(', ')}.`);
+    navDomain(unscored[0] - 1);
+    return;
+  }
+
+  // Render the review table with latest scores and notes
+  renderReviewTable();
+
+  // Hide domain card and nav, show review panel
+  document.getElementById('domain-container').style.display = 'none';
+  document.getElementById('assess-nav').style.display = 'none';
+  document.getElementById('review-panel').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// renderReviewTable()
+// -------------------
+// Builds the 12-row summary table inside the review panel.
+// Each row shows: domain number, domain name, client self-score
+// (if available), Naipaul's score (color-coded chip), a truncated
+// notes preview, and an "Edit" button that calls enterEditMode().
+// Called by showReviewPanel() and backToReview().
+function renderReviewTable() {
+  const tbody = document.getElementById('review-table-body');
+  tbody.innerHTML = DOMAINS.map((domain, i) => {
+    const nScore    = naipaulScores[i];
+    const cScore    = clientData ? clientData.assessment.domains[i].selfScore : null;
+    const notes     = naipaulNotes[i].trim();
+    const notesTxt  = notes
+      ? `<span class="review-notes-preview">${notes.replace(/</g,'&lt;')}</span>`
+      : `<span class="review-notes-none">No notes</span>`;
+    const cScoreTxt = cScore !== null ? cScore : '—';
+    // Color-coded chip based on Naipaul's score (0=red,1=amber,2=blue,3=green)
+    const chip = `<span class="review-score-chip review-score-${nScore}">${nScore}</span>`;
+    return `
+      <tr>
+        <td style="font-weight:700; color:var(--text-mid);">${domain.index}</td>
+        <td style="font-weight:600;">${domain.name}</td>
+        <td style="text-align:center; color:var(--text-mid);">${cScoreTxt}</td>
+        <td style="text-align:center;">${chip}</td>
+        <td>${notesTxt}</td>
+        <td><button class="review-edit-btn" onclick="enterEditMode(${i})">Edit</button></td>
+      </tr>`;
+  }).join('');
+}
+
+// enterEditMode(idx)
+// ------------------
+// Called when Naipaul clicks "Edit" on a review table row.
+// Sets isEditMode=true so renderDomain() knows to show "Back to Review"
+// instead of the normal next/back buttons.
+// Hides the review panel and renders the selected domain.
+function enterEditMode(idx) {
+  isEditMode = true;  // Flag: tells renderDomain to show "Back to Review"
+
+  // Hide review panel, restore domain card and nav visibility
+  document.getElementById('review-panel').style.display = 'none';
+  document.getElementById('domain-container').style.display = 'block';
+  document.getElementById('assess-nav').style.display = 'flex';
+
+  // Navigate to the selected domain
+  currentDomain = idx;
+  renderDomain(idx);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// backToReview()
+// --------------
+// Called when Naipaul clicks "Back to Review" in edit mode.
+// Saves the current domain's score and notes, resets isEditMode,
+// re-renders the review table with updated data, and shows the panel.
+function backToReview() {
+  // Explicitly save the currently-checked radio score for this domain.
+  // We cannot rely solely on the onchange inline handler because onchange
+  // only fires when the selection changes — if the user clicked the same
+  // option that was already selected, onchange never fires. Reading the
+  // checked radio directly here guarantees the latest value is captured
+  // regardless of whether onchange fired.
+  const checkedRadio = document.querySelector(`input[name="ns${currentDomain}"]:checked`);
+  if (checkedRadio !== null) {
+    naipaulScores[currentDomain] = parseInt(checkedRadio.value, 10);
+  }
+
+  // Save any notes edited during this domain visit
+  const notesEl = document.getElementById(`notes-${currentDomain}`);
+  if (notesEl) naipaulNotes[currentDomain] = notesEl.value;
+
+  // Reset edit mode flag before hiding domain view
+  isEditMode = false;
+
+  // Re-render the table so the updated score/notes are visible
+  renderReviewTable();
+
+  // Hide domain card and nav, show review panel
+  document.getElementById('domain-container').style.display = 'none';
+  document.getElementById('assess-nav').style.display = 'none';
+  document.getElementById('review-panel').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ================================================================
