@@ -723,14 +723,14 @@
             <input type="radio" name="d1" id="d1-0" value="0" onchange="onScore(1)" />
             <label for="d1-0">
               <span class="score-option-number">0</span>
-              <span class="score-option-desc">No cash tracking or forecasting in place</span>
+              <span class="score-option-desc">No cash balance tracked day-to-day</span>
             </label>
           </div>
           <div class="score-option">
             <input type="radio" name="d1" id="d1-1" value="1" onchange="onScore(1)" />
             <label for="d1-1">
               <span class="score-option-number">1</span>
-              <span class="score-option-desc">Basic AR/AP tracking only</span>
+              <span class="score-option-desc">Cash position known, not forecasted</span>
             </label>
           </div>
           <div class="score-option">
@@ -744,7 +744,7 @@
             <input type="radio" name="d1" id="d1-3" value="3" onchange="onScore(1)" />
             <label for="d1-3">
               <span class="score-option-number">3</span>
-              <span class="score-option-desc">Cash optimisation actively managed</span>
+              <span class="score-option-desc">Cash conversion cycle (CCC) actively optimized</span>
             </label>
           </div>
         </div>
@@ -761,10 +761,10 @@
           </div>
         </div>
         <div class="score-options">
-          <div class="score-option"><input type="radio" name="d2" id="d2-0" value="0" onchange="onScore(2)" /><label for="d2-0"><span class="score-option-number">0</span><span class="score-option-desc">No credit term awareness</span></label></div>
-          <div class="score-option"><input type="radio" name="d2" id="d2-1" value="1" onchange="onScore(2)" /><label for="d2-1"><span class="score-option-number">1</span><span class="score-option-desc">Terms known, minimal tracking</span></label></div>
-          <div class="score-option"><input type="radio" name="d2" id="d2-2" value="2" onchange="onScore(2)" /><label for="d2-2"><span class="score-option-number">2</span><span class="score-option-desc">Covenant compliance monitored</span></label></div>
-          <div class="score-option"><input type="radio" name="d2" id="d2-3" value="3" onchange="onScore(2)" /><label for="d2-3"><span class="score-option-number">3</span><span class="score-option-desc">Strategic treasury actively managed</span></label></div>
+          <div class="score-option"><input type="radio" name="d2" id="d2-0" value="0" onchange="onScore(2)" /><label for="d2-0"><span class="score-option-number">0</span><span class="score-option-desc">Working capital is not measured or managed</span></label></div>
+          <div class="score-option"><input type="radio" name="d2" id="d2-1" value="1" onchange="onScore(2)" /><label for="d2-1"><span class="score-option-number">1</span><span class="score-option-desc">Not optimizing Credit terms</span></label></div>
+          <div class="score-option"><input type="radio" name="d2" id="d2-2" value="2" onchange="onScore(2)" /><label for="d2-2"><span class="score-option-number">2</span><span class="score-option-desc">Working capital line managed within defined utilization bands</span></label></div>
+          <div class="score-option"><input type="radio" name="d2" id="d2-3" value="3" onchange="onScore(2)" /><label for="d2-3"><span class="score-option-number">3</span><span class="score-option-desc">Strategic treasury management active</span></label></div>
         </div>
         <div class="domain-error" id="err-2">Please select a score for this domain.</div>
       </div>
@@ -779,10 +779,10 @@
           </div>
         </div>
         <div class="score-options">
-          <div class="score-option"><input type="radio" name="d3" id="d3-0" value="0" onchange="onScore(3)" /><label for="d3-0"><span class="score-option-number">0</span><span class="score-option-desc">No controls or policies in place</span></label></div>
-          <div class="score-option"><input type="radio" name="d3" id="d3-1" value="1" onchange="onScore(3)" /><label for="d3-1"><span class="score-option-number">1</span><span class="score-option-desc">Informal and undocumented controls</span></label></div>
-          <div class="score-option"><input type="radio" name="d3" id="d3-2" value="2" onchange="onScore(3)" /><label for="d3-2"><span class="score-option-number">2</span><span class="score-option-desc">Documented DOA &amp; key controls exist</span></label></div>
-          <div class="score-option"><input type="radio" name="d3" id="d3-3" value="3" onchange="onScore(3)" /><label for="d3-3"><span class="score-option-number">3</span><span class="score-option-desc">Controls tested and audit-ready</span></label></div>
+          <div class="score-option"><input type="radio" name="d3" id="d3-0" value="0" onchange="onScore(3)" /><label for="d3-0"><span class="score-option-number">0</span><span class="score-option-desc">No financial controls or policies in place</span></label></div>
+          <div class="score-option"><input type="radio" name="d3" id="d3-1" value="1" onchange="onScore(3)" /><label for="d3-1"><span class="score-option-number">1</span><span class="score-option-desc">Informal controls, nothing documented</span></label></div>
+          <div class="score-option"><input type="radio" name="d3" id="d3-2" value="2" onchange="onScore(3)" /><label for="d3-2"><span class="score-option-number">2</span><span class="score-option-desc">Segregation of duties enforced on high-risk processes</span></label></div>
+          <div class="score-option"><input type="radio" name="d3" id="d3-3" value="3" onchange="onScore(3)" /><label for="d3-3"><span class="score-option-number">3</span><span class="score-option-desc">All controls documented, tested, and operating effectively</span></label></div>
         </div>
         <div class="domain-error" id="err-3">Please select a score for this domain.</div>
       </div>
@@ -797,10 +797,10 @@
           </div>
         </div>
         <div class="score-options">
-          <div class="score-option"><input type="radio" name="d4" id="d4-0" value="0" onchange="onScore(4)" /><label for="d4-0"><span class="score-option-number">0</span><span class="score-option-desc">Inconsistent books, no close process</span></label></div>
-          <div class="score-option"><input type="radio" name="d4" id="d4-1" value="1" onchange="onScore(4)" /><label for="d4-1"><span class="score-option-number">1</span><span class="score-option-desc">Close by day 15 or later</span></label></div>
-          <div class="score-option"><input type="radio" name="d4" id="d4-2" value="2" onchange="onScore(4)" /><label for="d4-2"><span class="score-option-number">2</span><span class="score-option-desc">Close by day 10, basic reporting package</span></label></div>
-          <div class="score-option"><input type="radio" name="d4" id="d4-3" value="3" onchange="onScore(4)" /><label for="d4-3"><span class="score-option-number">3</span><span class="score-option-desc">Close by day 7 with narrative pack</span></label></div>
+          <div class="score-option"><input type="radio" name="d4" id="d4-0" value="0" onchange="onScore(4)" /><label for="d4-0"><span class="score-option-number">0</span><span class="score-option-desc">Books are inconsistent or maintained in arrears</span></label></div>
+          <div class="score-option"><input type="radio" name="d4" id="d4-1" value="1" onchange="onScore(4)" /><label for="d4-1"><span class="score-option-number">1</span><span class="score-option-desc">Monthly close by day 15+</span></label></div>
+          <div class="score-option"><input type="radio" name="d4" id="d4-2" value="2" onchange="onScore(4)" /><label for="d4-2"><span class="score-option-number">2</span><span class="score-option-desc">Close by day 10, basic package</span></label></div>
+          <div class="score-option"><input type="radio" name="d4" id="d4-3" value="3" onchange="onScore(4)" /><label for="d4-3"><span class="score-option-number">3</span><span class="score-option-desc">Close by day 7, narrative package &amp; KPI</span></label></div>
         </div>
         <div class="domain-error" id="err-4">Please select a score for this domain.</div>
       </div>
@@ -816,9 +816,9 @@
         </div>
         <div class="score-options">
           <div class="score-option"><input type="radio" name="d5" id="d5-0" value="0" onchange="onScore(5)" /><label for="d5-0"><span class="score-option-number">0</span><span class="score-option-desc">Total company P&amp;L only</span></label></div>
-          <div class="score-option"><input type="radio" name="d5" id="d5-1" value="1" onchange="onScore(5)" /><label for="d5-1"><span class="score-option-number">1</span><span class="score-option-desc">Basic product/customer split</span></label></div>
-          <div class="score-option"><input type="radio" name="d5" id="d5-2" value="2" onchange="onScore(5)" /><label for="d5-2"><span class="score-option-number">2</span><span class="score-option-desc">Full multi-dimensional P&amp;L</span></label></div>
-          <div class="score-option"><input type="radio" name="d5" id="d5-3" value="3" onchange="onScore(5)" /><label for="d5-3"><span class="score-option-number">3</span><span class="score-option-desc">VPM analysis &amp; active pricing strategy</span></label></div>
+          <div class="score-option"><input type="radio" name="d5" id="d5-1" value="1" onchange="onScore(5)" /><label for="d5-1"><span class="score-option-number">1</span><span class="score-option-desc">Basic product/customer segmentation</span></label></div>
+          <div class="score-option"><input type="radio" name="d5" id="d5-2" value="2" onchange="onScore(5)" /><label for="d5-2"><span class="score-option-number">2</span><span class="score-option-desc">Full multi-dimensional P&amp;L: margin by product, customer, and channel</span></label></div>
+          <div class="score-option"><input type="radio" name="d5" id="d5-3" value="3" onchange="onScore(5)" /><label for="d5-3"><span class="score-option-number">3</span><span class="score-option-desc">VPM analysis and pricing strategy, Unprofitable customers or products exited based on analysis</span></label></div>
         </div>
         <div class="domain-error" id="err-5">Please select a score for this domain.</div>
       </div>
@@ -829,14 +829,14 @@
           <div class="domain-number">6</div>
           <div class="domain-title-wrap">
             <div class="domain-title">Value Creation Roadmap</div>
-            <div class="domain-subtitle">Forecast horizon, budget discipline, 3-statement modeling</div>
+            <div class="domain-subtitle">Forecast horizon, budget discipline, 3-statement modelling</div>
           </div>
         </div>
         <div class="score-options">
-          <div class="score-option"><input type="radio" name="d6" id="d6-0" value="0" onchange="onScore(6)" /><label for="d6-0"><span class="score-option-number">0</span><span class="score-option-desc">No forecast beyond current month</span></label></div>
-          <div class="score-option"><input type="radio" name="d6" id="d6-1" value="1" onchange="onScore(6)" /><label for="d6-1"><span class="score-option-number">1</span><span class="score-option-desc">Annual budget, no updates</span></label></div>
-          <div class="score-option"><input type="radio" name="d6" id="d6-2" value="2" onchange="onScore(6)" /><label for="d6-2"><span class="score-option-number">2</span><span class="score-option-desc">Rolling quarterly forecast in place</span></label></div>
-          <div class="score-option"><input type="radio" name="d6" id="d6-3" value="3" onchange="onScore(6)" /><label for="d6-3"><span class="score-option-number">3</span><span class="score-option-desc">Integrated 3-statement model</span></label></div>
+          <div class="score-option"><input type="radio" name="d6" id="d6-0" value="0" onchange="onScore(6)" /><label for="d6-0"><span class="score-option-number">0</span><span class="score-option-desc">No value creation initiatives identified or tracked</span></label></div>
+          <div class="score-option"><input type="radio" name="d6" id="d6-1" value="1" onchange="onScore(6)" /><label for="d6-1"><span class="score-option-number">1</span><span class="score-option-desc">Value creation is aspirational not quantified or assigned</span></label></div>
+          <div class="score-option"><input type="radio" name="d6" id="d6-2" value="2" onchange="onScore(6)" /><label for="d6-2"><span class="score-option-number">2</span><span class="score-option-desc">Key value creation initiatives identified with financial targets</span></label></div>
+          <div class="score-option"><input type="radio" name="d6" id="d6-3" value="3" onchange="onScore(6)" /><label for="d6-3"><span class="score-option-number">3</span><span class="score-option-desc">Value creation roadmap tracked monthly &mdash; owners, milestones, EBITDA impact</span></label></div>
         </div>
         <div class="domain-error" id="err-6">Please select a score for this domain.</div>
       </div>
@@ -851,10 +851,10 @@
           </div>
         </div>
         <div class="score-options">
-          <div class="score-option"><input type="radio" name="d7" id="d7-0" value="0" onchange="onScore(7)" /><label for="d7-0"><span class="score-option-number">0</span><span class="score-option-desc">Reactive compliance only</span></label></div>
-          <div class="score-option"><input type="radio" name="d7" id="d7-1" value="1" onchange="onScore(7)" /><label for="d7-1"><span class="score-option-number">1</span><span class="score-option-desc">Organized audit/tax relations</span></label></div>
-          <div class="score-option"><input type="radio" name="d7" id="d7-2" value="2" onchange="onScore(7)" /><label for="d7-2"><span class="score-option-number">2</span><span class="score-option-desc">Proactive audit/tax planning</span></label></div>
-          <div class="score-option"><input type="radio" name="d7" id="d7-3" value="3" onchange="onScore(7)" /><label for="d7-3"><span class="score-option-number">3</span><span class="score-option-desc">Strategic advisor engagement active</span></label></div>
+          <div class="score-option"><input type="radio" name="d7" id="d7-0" value="0" onchange="onScore(7)" /><label for="d7-0"><span class="score-option-number">0</span><span class="score-option-desc">Owner has no view on business valuation or exit timeline</span></label></div>
+          <div class="score-option"><input type="radio" name="d7" id="d7-1" value="1" onchange="onScore(7)" /><label for="d7-1"><span class="score-option-number">1</span><span class="score-option-desc">No formal exit planning or advisor engagement yet</span></label></div>
+          <div class="score-option"><input type="radio" name="d7" id="d7-2" value="2" onchange="onScore(7)" /><label for="d7-2"><span class="score-option-number">2</span><span class="score-option-desc">Preliminary data room or documentation inventory started</span></label></div>
+          <div class="score-option"><input type="radio" name="d7" id="d7-3" value="3" onchange="onScore(7)" /><label for="d7-3"><span class="score-option-number">3</span><span class="score-option-desc">Owner can articulate valuation, exit timeline, and process steps with confidence</span></label></div>
         </div>
         <div class="domain-error" id="err-7">Please select a score for this domain.</div>
       </div>
@@ -869,10 +869,10 @@
           </div>
         </div>
         <div class="score-options">
-          <div class="score-option"><input type="radio" name="d8" id="d8-0" value="0" onchange="onScore(8)" /><label for="d8-0"><span class="score-option-number">0</span><span class="score-option-desc">Critical processes on spreadsheets</span></label></div>
-          <div class="score-option"><input type="radio" name="d8" id="d8-1" value="1" onchange="onScore(8)" /><label for="d8-1"><span class="score-option-number">1</span><span class="score-option-desc">ERP in place, minimal integration</span></label></div>
-          <div class="score-option"><input type="radio" name="d8" id="d8-2" value="2" onchange="onScore(8)" /><label for="d8-2"><span class="score-option-number">2</span><span class="score-option-desc">Cloud-based, integrated systems</span></label></div>
-          <div class="score-option"><input type="radio" name="d8" id="d8-3" value="3" onchange="onScore(8)" /><label for="d8-3"><span class="score-option-number">3</span><span class="score-option-desc">AI/automation actively deployed</span></label></div>
+          <div class="score-option"><input type="radio" name="d8" id="d8-0" value="0" onchange="onScore(8)" /><label for="d8-0"><span class="score-option-number">0</span><span class="score-option-desc">Finance data exists in multiple inconsistent versions</span></label></div>
+          <div class="score-option"><input type="radio" name="d8" id="d8-1" value="1" onchange="onScore(8)" /><label for="d8-1"><span class="score-option-number">1</span><span class="score-option-desc">Minimal integration between systems &mdash; data moved manually</span></label></div>
+          <div class="score-option"><input type="radio" name="d8" id="d8-2" value="2" onchange="onScore(8)" /><label for="d8-2"><span class="score-option-number">2</span><span class="score-option-desc">Key systems are integrated &mdash; data flows without manual intervention</span></label></div>
+          <div class="score-option"><input type="radio" name="d8" id="d8-3" value="3" onchange="onScore(8)" /><label for="d8-3"><span class="score-option-number">3</span><span class="score-option-desc">AI and automation tools actively deployed in the finance function</span></label></div>
         </div>
         <div class="domain-error" id="err-8">Please select a score for this domain.</div>
       </div>
@@ -900,9 +900,9 @@
         </div>
         <div class="score-options">
           <!-- Scoring criteria sourced from Master Connection Matrix. Confirmed for Piece 1. -->
-          <div class="score-option"><input type="radio" name="d9" id="d9-0" value="0" onchange="onScore(9)" /><label for="d9-0"><span class="score-option-number">0</span><span class="score-option-desc">Owner handles all finance decisions personally</span></label></div>
-          <div class="score-option"><input type="radio" name="d9" id="d9-1" value="1" onchange="onScore(9)" /><label for="d9-1"><span class="score-option-number">1</span><span class="score-option-desc">Finance team member in a defined role</span></label></div>
-          <div class="score-option"><input type="radio" name="d9" id="d9-2" value="2" onchange="onScore(9)" /><label for="d9-2"><span class="score-option-number">2</span><span class="score-option-desc">Finance leader with a clear strategic mandate</span></label></div>
+          <div class="score-option"><input type="radio" name="d9" id="d9-0" value="0" onchange="onScore(9)" /><label for="d9-0"><span class="score-option-number">0</span><span class="score-option-desc">Owner is the finance function &mdash; handles AR, AP, approvals, and reporting personally</span></label></div>
+          <div class="score-option"><input type="radio" name="d9" id="d9-1" value="1" onchange="onScore(9)" /><label for="d9-1"><span class="score-option-number">1</span><span class="score-option-desc">Finance employee handles transactional work but owner makes all decisions</span></label></div>
+          <div class="score-option"><input type="radio" name="d9" id="d9-2" value="2" onchange="onScore(9)" /><label for="d9-2"><span class="score-option-number">2</span><span class="score-option-desc">Owner involved in strategic finance decisions only</span></label></div>
           <div class="score-option"><input type="radio" name="d9" id="d9-3" value="3" onchange="onScore(9)" /><label for="d9-3"><span class="score-option-number">3</span><span class="score-option-desc">CFO-level strategic leadership in place</span></label></div>
         </div>
         <div class="domain-error" id="err-9">Please select a score for this domain.</div>
@@ -930,10 +930,10 @@
         </div>
         <div class="score-options">
           <!-- Scoring criteria sourced from Master Connection Matrix. Confirmed for Piece 1. -->
-          <div class="score-option"><input type="radio" name="d10" id="d10-0" value="0" onchange="onScore(10)" /><label for="d10-0"><span class="score-option-number">0</span><span class="score-option-desc">No defined finance roles exist</span></label></div>
-          <div class="score-option"><input type="radio" name="d10" id="d10-1" value="1" onchange="onScore(10)" /><label for="d10-1"><span class="score-option-number">1</span><span class="score-option-desc">Roles informally understood</span></label></div>
-          <div class="score-option"><input type="radio" name="d10" id="d10-2" value="2" onchange="onScore(10)" /><label for="d10-2"><span class="score-option-number">2</span><span class="score-option-desc">Documented org with basic performance management</span></label></div>
-          <div class="score-option"><input type="radio" name="d10" id="d10-3" value="3" onchange="onScore(10)" /><label for="d10-3"><span class="score-option-number">3</span><span class="score-option-desc">Benchmarked comp, active talent pipeline</span></label></div>
+          <div class="score-option"><input type="radio" name="d10" id="d10-0" value="0" onchange="onScore(10)" /><label for="d10-0"><span class="score-option-number">0</span><span class="score-option-desc">No defined finance roles</span></label></div>
+          <div class="score-option"><input type="radio" name="d10" id="d10-1" value="1" onchange="onScore(10)" /><label for="d10-1"><span class="score-option-number">1</span><span class="score-option-desc">Finance roles informally understood but not documented</span></label></div>
+          <div class="score-option"><input type="radio" name="d10" id="d10-2" value="2" onchange="onScore(10)" /><label for="d10-2"><span class="score-option-number">2</span><span class="score-option-desc">Documented org chart with clear roles, reporting lines, and responsibilities</span></label></div>
+          <div class="score-option"><input type="radio" name="d10" id="d10-3" value="3" onchange="onScore(10)" /><label for="d10-3"><span class="score-option-number">3</span><span class="score-option-desc">Finance team capability grows with the business training budget allocated and used</span></label></div>
         </div>
         <div class="domain-error" id="err-10">Please select a score for this domain.</div>
       </div>
@@ -960,10 +960,10 @@
         </div>
         <div class="score-options">
           <!-- Scoring criteria sourced from Master Connection Matrix. Confirmed for Piece 1. -->
-          <div class="score-option"><input type="radio" name="d11" id="d11-0" value="0" onchange="onScore(11)" /><label for="d11-0"><span class="score-option-number">0</span><span class="score-option-desc">No QofE awareness</span></label></div>
-          <div class="score-option"><input type="radio" name="d11" id="d11-1" value="1" onchange="onScore(11)" /><label for="d11-1"><span class="score-option-number">1</span><span class="score-option-desc">Basic revenue quality review in place</span></label></div>
-          <div class="score-option"><input type="radio" name="d11" id="d11-2" value="2" onchange="onScore(11)" /><label for="d11-2"><span class="score-option-number">2</span><span class="score-option-desc">Internal QofE pre-review completed</span></label></div>
-          <div class="score-option"><input type="radio" name="d11" id="d11-3" value="3" onchange="onScore(11)" /><label for="d11-3"><span class="score-option-number">3</span><span class="score-option-desc">QofE-ready for external review</span></label></div>
+          <div class="score-option"><input type="radio" name="d11" id="d11-0" value="0" onchange="onScore(11)" /><label for="d11-0"><span class="score-option-number">0</span><span class="score-option-desc">No awareness of QofE concepts or EBITDA normalization</span></label></div>
+          <div class="score-option"><input type="radio" name="d11" id="d11-1" value="1" onchange="onScore(11)" /><label for="d11-1"><span class="score-option-number">1</span><span class="score-option-desc">No formal EBITDA bridge or normalization schedule</span></label></div>
+          <div class="score-option"><input type="radio" name="d11" id="d11-2" value="2" onchange="onScore(11)" /><label for="d11-2"><span class="score-option-number">2</span><span class="score-option-desc">Normalized EBITDA schedule maintained with documented, defensible adjustments</span></label></div>
+          <div class="score-option"><input type="radio" name="d11" id="d11-3" value="3" onchange="onScore(11)" /><label for="d11-3"><span class="score-option-number">3</span><span class="score-option-desc">Business is QofE-ready for external review by a buyer or lender</span></label></div>
         </div>
         <div class="domain-error" id="err-11">Please select a score for this domain.</div>
       </div>
@@ -990,10 +990,10 @@
         </div>
         <div class="score-options">
           <!-- Scoring criteria sourced from Master Connection Matrix. Confirmed for Piece 1. -->
-          <div class="score-option"><input type="radio" name="d12" id="d12-0" value="0" onchange="onScore(12)" /><label for="d12-0"><span class="score-option-number">0</span><span class="score-option-desc">No exit preparation whatsoever</span></label></div>
-          <div class="score-option"><input type="radio" name="d12" id="d12-1" value="1" onchange="onScore(12)" /><label for="d12-1"><span class="score-option-number">1</span><span class="score-option-desc">Aware of exit requirements</span></label></div>
-          <div class="score-option"><input type="radio" name="d12" id="d12-2" value="2" onchange="onScore(12)" /><label for="d12-2"><span class="score-option-number">2</span><span class="score-option-desc">Partial data room / preparation done</span></label></div>
-          <div class="score-option"><input type="radio" name="d12" id="d12-3" value="3" onchange="onScore(12)" /><label for="d12-3"><span class="score-option-number">3</span><span class="score-option-desc">Full exit-ready package complete</span></label></div>
+          <div class="score-option"><input type="radio" name="d12" id="d12-0" value="0" onchange="onScore(12)" /><label for="d12-0"><span class="score-option-number">0</span><span class="score-option-desc">No automation in the finance function &mdash; all processes are manual</span></label></div>
+          <div class="score-option"><input type="radio" name="d12" id="d12-1" value="1" onchange="onScore(12)" /><label for="d12-1"><span class="score-option-number">1</span><span class="score-option-desc">Aware of AI and automation opportunities but nothing deployed</span></label></div>
+          <div class="score-option"><input type="radio" name="d12" id="d12-2" value="2" onchange="onScore(12)" /><label for="d12-2"><span class="score-option-number">2</span><span class="score-option-desc">At least one finance process automated with measurable impact</span></label></div>
+          <div class="score-option"><input type="radio" name="d12" id="d12-3" value="3" onchange="onScore(12)" /><label for="d12-3"><span class="score-option-number">3</span><span class="score-option-desc">AI-powered tools deployed in finance: cash application, forecasting, or anomaly detection</span></label></div>
         </div>
         <div class="domain-error" id="err-12">Please select a score for this domain.</div>
       </div>
@@ -1127,7 +1127,7 @@
           <div class="export-title">Download Your Report</div>
           <div class="export-desc">Save your diagnostic report as a PDF, or download your assessment file to share with Naipaul before your discovery call.</div>
         </div>
-        <!-- PDF download: opens a print-optimized page in a new tab.
+        <!-- PDF download: opens a print-optimised page in a new tab.
              Client uses browser print → Save as PDF.
              No library needed — works on all devices. -->
         <button class="export-btn export-btn-pdf" onclick="openPrintReport()">
@@ -1220,7 +1220,7 @@
       // D10: Finance Team Structure (evolved from Team & Talent — broadened to include succession/scalability)
       'The finance function lacks a documented structure, defined roles and a talent pipeline — the team cannot scale or survive key-person departure.',
       // D11: EBITDA Quality & Normalization (sharpened with ITAD-specific add-back language)
-      'Reported EBITDA has not been normalized or tested against a buyer standard — earnings quality, sustainability and ITAD-specific add-backs are unquantified.',
+      'Reported EBITDA has not been normalised or tested against a buyer standard — earnings quality, sustainability and ITAD-specific add-backs are unquantified.',
       // D12: AI & Digital Transformation (NEW — split from old Systems & Technology)
       'The finance function has no AI or automation strategy — manual processes dominate, and the business is falling behind on digital transformation and data-driven decision-making.',
     ];
@@ -1257,7 +1257,7 @@
         recommendedService: 'Ascend Finance Diagnostic Assessment / Sprint Bridge',
         price: '$2,500–$25,000',
         description: 'You have basic operations in place, but standardisation is needed. Capital structure, internal controls, and consistent reporting are the focus at this stage.',
-        sneakPeek: 'Standardize your controls, capital structure, and reporting into repeatable, documented systems.',
+        sneakPeek: 'Standardise your controls, capital structure, and reporting into repeatable, documented systems.',
       },
       {
         name: 'Intelligence',
@@ -1279,7 +1279,7 @@
         recommendedService: '90-Day Sprint / Retainer Transition',
         price: '$10,000–$15,000/mo',
         description: 'Your finance fundamentals are solid. The focus shifts to systems, leadership structure, and talent — optimising for scale and consistency.',
-        sneakPeek: 'Optimize for scale: strengthen systems, finance leadership, and team structure.',
+        sneakPeek: 'Optimise for scale: strengthen systems, finance leadership, and team structure.',
       },
       {
         name: 'Mastery',
@@ -1641,7 +1641,7 @@
 
     // ================================================================
     // PDF REPORT GENERATOR
-    // Opens a print-optimized 6-page HTML document in a new tab.
+    // Opens a print-optimised 6-page HTML document in a new tab.
     // Client uses browser Print → Save as PDF.
     // Matches Naipaul's reference PDF layout exactly:
     //   Page 1 — Cover
@@ -1687,7 +1687,7 @@
         if (s === 0) return { label: 'CRITICAL',   cls: 'st-critical' };
         if (s === 1) return { label: 'DEVELOPING', cls: 'st-developing' };
         if (s === 2) return { label: 'FUNCTIONAL', cls: 'st-functional' };
-        return              { label: 'OPTIMIZED',  cls: 'st-optimized' };
+        return              { label: 'OPTIMISED',  cls: 'st-optimised' };
       }
 
       const criticalCount  = scores.filter(s => s === 0).length;
@@ -1741,7 +1741,7 @@
         // D10 Finance Team Structure
         ['Finance roles undefined','No succession depth in finance','Talent pipeline non-existent'],
         // D11 EBITDA Quality & Normalization
-        ['No normalized EBITDA prepared','ITAD add-backs not quantified','Earnings quality not buyer-tested'],
+        ['No normalised EBITDA prepared','ITAD add-backs not quantified','Earnings quality not buyer-tested'],
         // D12 AI & Digital Transformation
         ['No AI or automation in finance','Manual processes dominate','No digital transformation roadmap'],
       ];
@@ -1756,9 +1756,9 @@
     /* ============================================================
        PRINT REPORT STYLESHEET
        Exact theme match to reference PDF (Naipaul Sheosankar / ACT Ascend Partners).
-       Colors extracted via pdfplumber from the reference file.
+       Colours extracted via pdfplumber from the reference file.
 
-       Color palette:
+       Colour palette:
          #0A1F38  Navy (cover bg, header bars, dark blocks)
          #1B3A5C  Navy-2 (secondary cover band)
          #C8963E  Gold (rules, accents, badges, CTA)
@@ -1867,7 +1867,7 @@
     .cover-rule-thin {
       height: 2px; background: #C8963E; opacity: 0.55;
     }
-    /* Centered thin rule below score chips */
+    /* Centred thin rule below score chips */
     .cover-rule-centre {
       width: 216pt; height: 2px; background: #C8963E;
       margin: 14px auto 0; opacity: 0.55;
@@ -1978,7 +1978,7 @@
     .st-critical   { background: #FDECEA; color: #C0392B; font-size: 7pt; font-weight: bold; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
     .st-developing { background: #FFF8E1; color: #7A5C00; font-size: 7pt; font-weight: bold; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
     .st-functional { background: #E8F5E9; color: #1B5E20; font-size: 7pt; font-weight: bold; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
-    .st-optimized  { background: #E3F2FD; color: #0D47A1; font-size: 7pt; font-weight: bold; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+    .st-optimised  { background: #E3F2FD; color: #0D47A1; font-size: 7pt; font-weight: bold; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
 
     .score-guide { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
     .sg-item { display: flex; align-items: center; gap: 5px; font-size: 7.5pt; color: #4A5568; }
@@ -2161,7 +2161,7 @@
       </div>
     </div>
 
-    <!-- Centered rule below chips -->
+    <!-- Centred rule below chips -->
     <div class="cover-rule-centre"></div>
   </div>
 
@@ -2302,7 +2302,7 @@
       <div class="sg-item"><span class="st-critical">0 \u2014 CRITICAL</span> Immediate action required</div>
       <div class="sg-item"><span class="st-developing">1 \u2014 DEVELOPING</span> Foundations being established</div>
       <div class="sg-item"><span class="st-functional">2 \u2014 FUNCTIONAL</span> Operating but room to improve</div>
-      <div class="sg-item"><span class="st-optimized">3 \u2014 OPTIMIZED</span> Best-practice level achieved</div>
+      <div class="sg-item"><span class="st-optimised">3 \u2014 OPTIMISED</span> Best-practice level achieved</div>
     </div>
   </div>
   <div class="page-footer">
@@ -2439,7 +2439,7 @@
       <div class="eng-meta">${tier.price} &nbsp;&middot;&nbsp; Based on Stage ${stage} placement</div>
       <div class="eng-desc">
         Based on your score of ${totalScore}/36 and Stage ${stage} placement, ${tier.description.charAt(0).toLowerCase() + tier.description.slice(1)}
-        This engagement maps all 12 domains in depth, validates your self-assessment scores with a senior advisor review, and produces a prioritized action plan specific to your business.
+        This engagement maps all 12 domains in depth, validates your self-assessment scores with a senior advisor review, and produces a prioritised action plan specific to your business.
       </div>
     </div>
 
@@ -2463,7 +2463,7 @@
         <div class="step-num">03</div>
         <div>
           <div class="step-title">90-Day Action Plan</div>
-          <div class="step-desc">Receive a prioritized action plan tied directly to your stage and highest-risk domains. Each item is sequenced, assigned a responsible owner, and linked to a measurable outcome.</div>
+          <div class="step-desc">Receive a prioritised action plan tied directly to your stage and highest-risk domains. Each item is sequenced, assigned a responsible owner, and linked to a measurable outcome.</div>
         </div>
       </div>
     </div>
