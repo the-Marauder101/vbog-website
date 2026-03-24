@@ -8,6 +8,10 @@
   <!-- Google Fonts: Playfair Display (display) + DM Sans (body) -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
+  <!-- EmailJS: sends submission report to naipauls@actaiascend.com -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>emailjs.init("REPLACE_WITH_YOUR_PUBLIC_KEY");</script>
+
   <style>
     /* =============================================
        CSS VARIABLES & RESET
@@ -633,7 +637,7 @@
     <div class="hero-inner">
       <div class="hero-badge">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        ACT Ascend Partners™
+        ACT Ascend™ Partners
       </div>
       <h1>ASCEND™ CFO<br><span>Finance Diagnostic</span></h1>
       <p>Score your financial operations across 12 domains. Understand exactly where you stand — and what to focus on next.</p>
@@ -1616,17 +1620,55 @@
     // Replace this function with a real fetch() call to that endpoint.
     // ================================================================
     function simulateEmailSend() {
-      // TODO: Replace this entire function with a real API call.
-      // Example:
-      // fetch('/api/send-report', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ name: userName, email: userEmail, scores, ... })
-      // });
+      const domainNames = [
+        'Cash Flow & Liquidity', 'Internal Controls & Governance',
+        'Financial Reporting & KPIs', 'Working Capital Optimization',
+        'ERP & Systems Readiness', 'Owner Dependence Score',
+        'Finance Team Structure', 'Revenue & Margin Analysis',
+        'Value Creation Roadmap', 'EBITDA Quality & Normalization',
+        'Exit & M&A Readiness', 'AI & Digital Transformation'
+      ];
+      const stageNum      = document.getElementById('report-stage-num').textContent;
+      const tierName      = document.getElementById('report-tier-name').textContent;
+      const totalScoreVal = scores.reduce((a, b) => a + (b || 0), 0);
 
-      // UI-only feedback for now:
-      setTimeout(() => {
-        const banner = document.getElementById('email-banner');
+      // Build JSON payload — identical structure to the downloadable file
+      const exportData = {
+        schema: 'ascend-p1-v1',
+        exportedAt: new Date().toISOString(),
+        client: { name: userName, email: userEmail },
+        assessment: {
+          totalScore: totalScoreVal,
+          stageNumber: parseInt(stageNum),
+          tierName: tierName.replace(' Tier', ''),
+          domains: domainNames.map((name, i) => ({
+            index: i + 1, name: name, selfScore: scores[i]
+          }))
+        }
+      };
+      const jsonStr = JSON.stringify(exportData, null, 2);
+
+      const domainTable = domainNames.map((n, i) =>
+        (i + 1) + '. ' + n + ': ' + scores[i] + '/3'
+      ).join('\n');
+
+      // Send via EmailJS to naipauls@actaiascend.com
+      emailjs.send('REPLACE_WITH_SERVICE_ID', 'REPLACE_WITH_TEMPLATE_ID', {
+        client_name:   userName,
+        client_email:  userEmail,
+        total_score:   totalScoreVal + ' / 36',
+        stage_number:  stageNum + ' of 18',
+        tier_name:     tierName,
+        domain_scores: domainTable,
+        json_data:     jsonStr,
+        submitted_at:  new Date().toLocaleString()
+      }).catch(function(err) {
+        console.error('EmailJS send failed:', err);
+      });
+
+      // UI feedback (shown immediately — not blocked by email result)
+      setTimeout(function() {
+        var banner = document.getElementById('email-banner');
         document.getElementById('banner-email').textContent = userEmail;
         banner.style.display = 'flex';
       }, 1200);
@@ -2137,7 +2179,7 @@
 ═══════════════════════════════════════════ -->
 <div class="cover-page">
   <div>
-    <div class="cover-brand-line">ACT <span>ASCEND</span> PARTNERS\u2122</div>
+    <div class="cover-brand-line">ACT <span>ASCEND\u2122</span> PARTNERS</div>
     <div class="cover-h1">
       ASCEND\u2122 CFO Finance Diagnostic
       <span class="cover-h1-sub">Client Assessment Report</span>
@@ -2171,7 +2213,7 @@
   <div class="cover-bottom-band">
     <div class="cover-date">${today}</div>
     <div class="cover-conf">CONFIDENTIAL \u2014 For Recipient Use Only</div>
-    <div class="cover-prepared">Prepared by Naipaul Sheosankar &nbsp;|&nbsp; ACT Ascend Partners\u2122 &nbsp;|&nbsp; ACTascendpartners.com</div>
+    <div class="cover-prepared">Prepared by Naipaul Sheosankar &nbsp;|&nbsp; ACT Ascend\u2122 Partners &nbsp;|&nbsp; ACTascendpartners.com</div>
   </div>
 </div>
 
@@ -2181,7 +2223,7 @@
 <div class="page">
   <!-- Full-width navy header bar — exact reference -->
   <div class="page-header">
-    <span class="hdr-brand">ACT <em>ASCEND</em> PARTNERS\u2122 &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
+    <span class="hdr-brand">ACT <em>ASCEND\u2122</em> PARTNERS &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
     <span class="hdr-right">Executive Summary &nbsp;&middot;&nbsp; ${userName}</span>
   </div>
   <div class="page-body">
@@ -2250,7 +2292,7 @@
     </div>
   </div>
   <div class="page-footer">
-    <span>ACT Ascend Partners\u2122 &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
+    <span>ACT Ascend\u2122 Partners &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
     <span>Page 2</span>
   </div>
 </div>
@@ -2260,7 +2302,7 @@
 ═══════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
-    <span class="hdr-brand">ACT <em>ASCEND</em> PARTNERS\u2122 &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
+    <span class="hdr-brand">ACT <em>ASCEND\u2122</em> PARTNERS &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
     <span class="hdr-right">Score: ${totalScore} / 36 &nbsp;&middot;&nbsp; ${userName}</span>
   </div>
   <div class="page-body">
@@ -2308,7 +2350,7 @@
     </div>
   </div>
   <div class="page-footer">
-    <span>ACT Ascend Partners\u2122 &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
+    <span>ACT Ascend\u2122 Partners &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
     <span>Page 3</span>
   </div>
 </div>
@@ -2318,7 +2360,7 @@
 ═══════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
-    <span class="hdr-brand">ACT <em>ASCEND</em> PARTNERS\u2122 &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
+    <span class="hdr-brand">ACT <em>ASCEND\u2122</em> PARTNERS &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
     <span class="hdr-right">Stage ${stage} of 18 &nbsp;&middot;&nbsp; ${tier.name} Tier &nbsp;&middot;&nbsp; ${userName}</span>
   </div>
   <div class="page-body">
@@ -2356,7 +2398,7 @@
     </div>
   </div>
   <div class="page-footer">
-    <span>ACT Ascend Partners\u2122 &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
+    <span>ACT Ascend\u2122 Partners &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
     <span>Page 4</span>
   </div>
 </div>
@@ -2366,7 +2408,7 @@
 ═══════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
-    <span class="hdr-brand">ACT <em>ASCEND</em> PARTNERS\u2122 &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
+    <span class="hdr-brand">ACT <em>ASCEND\u2122</em> PARTNERS &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
     <span class="hdr-right">Priority Focus Areas &nbsp;&middot;&nbsp; ${userName}</span>
   </div>
   <div class="page-body">
@@ -2418,7 +2460,7 @@
     </div>
   </div>
   <div class="page-footer">
-    <span>ACT Ascend Partners\u2122 &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
+    <span>ACT Ascend\u2122 Partners &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
     <span>Page 5</span>
   </div>
 </div>
@@ -2428,7 +2470,7 @@
 ═══════════════════════════════════════════ -->
 <div class="page">
   <div class="page-header">
-    <span class="hdr-brand">ACT <em>ASCEND</em> PARTNERS\u2122 &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
+    <span class="hdr-brand">ACT <em>ASCEND\u2122</em> PARTNERS &nbsp;&middot;&nbsp; ASCEND\u2122 CFO Finance Diagnostic</span>
     <span class="hdr-right">Recommended Next Steps &nbsp;&middot;&nbsp; ${userName}</span>
   </div>
   <div class="page-body">
@@ -2482,11 +2524,11 @@
 
     <div class="prepared-by">
       Prepared by: <strong>Naipaul Sheosankar, MBA, CPA</strong><br/>
-      Managing Partner \u2014 ACT Ascend Partners\u2122 &nbsp;&middot;&nbsp; ${today}
+      Managing Partner \u2014 ACT Ascend\u2122 Partners &nbsp;&middot;&nbsp; ${today}
     </div>
   </div>
   <div class="page-footer">
-    <span>ACT Ascend Partners\u2122 &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
+    <span>ACT Ascend\u2122 Partners &nbsp;|&nbsp; ASCEND\u2122 CFO Finance Diagnostic &nbsp;|&nbsp; Confidential</span>
     <span>Page 6</span>
   </div>
 </div>
