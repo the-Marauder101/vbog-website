@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTT Reseller Pricing Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg:          #0e0f11;
+  --bg2:         #16181c;
+  --bg3:         #1e2126;
+  --border:      #2a2d35;
+  --border2:     #383c47;
+  --text:        #e8eaf0;
+  --text2:       #8b909e;
+  --text3:       #565b6a;
+  --accent:      #c8f56a;
+  --accent2:     #8fba3e;
+  --accent-dim:  rgba(200,245,106,0.08);
+  --accent-dim2: rgba(200,245,106,0.15);
+  --blue:        #4d9fff;
+  --blue-dim:    rgba(77,159,255,0.1);
+  --amber:       #f5a623;
+  --amber-dim:   rgba(245,166,35,0.1);
+  --red:         #ff5f5f;
+  --red-dim:     rgba(255,95,95,0.1);
+  --green:       #5dd88a;
+  --green-dim:   rgba(93,216,138,0.1);
+  --radius:      6px;
+  --radius-lg:   10px;
+  --mono:        'DM Mono', monospace;
+  --sans:        'DM Sans', sans-serif;
+  --transition:  0.15s ease;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+}
+
+.logo {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-title {
+  font-size: 13px;
+  color: var(--text2);
+  font-family: var(--mono);
+}
+
+.header-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  min-height: calc(100vh - 61px);
+}
+
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 24px;
+  overflow-y: auto;
+  position: sticky;
+  top: 61px;
+  height: calc(100vh - 61px);
+}
+
+.content {
+  padding: 24px 32px;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   SECTION HEADERS
+   ============================================================ */
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.section-gap { margin-bottom: 28px; }
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+.ctrl-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ctrl-row label {
+  font-size: 12px;
+  color: var(--text2);
+  width: 150px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+.ctrl-row input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  background: var(--border2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.ctrl-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  transition: transform var(--transition);
+}
+
+.ctrl-row input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.ctrl-val {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 72px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   MIX SLIDERS
+   ============================================================ */
+.mix-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mix-label {
+  font-size: 11px;
+  color: var(--text2);
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.mix-row input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  background: var(--border2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.mix-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--blue);
+  cursor: pointer;
+}
+
+.mix-pct {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--blue);
+  width: 36px;
+  text-align: right;
+}
+
+.mix-total-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* ============================================================
+   METRIC CARDS
+   ============================================================ */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  transition: border-color var(--transition);
+}
+
+.metric-card:hover { border-color: var(--border2); }
+
+.metric-label {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.metric-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metric-value.accent { color: var(--accent); }
+.metric-value.blue   { color: var(--blue); }
+.metric-value.amber  { color: var(--amber); }
+.metric-value.green  { color: var(--green); }
+.metric-value.red    { color: var(--red); }
+
+.metric-sub {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 3px;
+  font-family: var(--mono);
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.table-wrap {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.table-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+
+th.r { text-align: right; }
+
+td {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+}
+
+td.r { text-align: right; }
+td.bold { color: var(--text); font-weight: 500; }
+td.accent { color: var(--accent); }
+td.blue { color: var(--blue); }
+td.amber { color: var(--amber); }
+td.green { color: var(--green); }
+td.red { color: var(--red); }
+
+tr:last-child td { border-bottom: none; }
+
+tr.highlight td {
+  background: var(--accent-dim);
+  color: var(--text);
+}
+
+tr.highlight td.accent { color: var(--accent); }
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+.status-bar {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+  border: 1px solid transparent;
+}
+
+.status-bar.ok    { background: var(--green-dim);  border-color: rgba(93,216,138,0.25);  color: var(--green); }
+.status-bar.warn  { background: var(--amber-dim);  border-color: rgba(245,166,35,0.25);  color: var(--amber); }
+.status-bar.info  { background: var(--blue-dim);   border-color: rgba(77,159,255,0.25);  color: var(--blue); }
+.status-bar.bad   { background: var(--red-dim);    border-color: rgba(255,95,95,0.25);   color: var(--red); }
+
+/* ============================================================
+   VOLUME TIERS
+   ============================================================ */
+.vol-row {
+  display: grid;
+  grid-template-columns: 110px 110px 70px 1fr 1fr 70px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+
+.vol-row:hover { background: var(--bg3); }
+.vol-row:last-child { border-bottom: none; }
+
+.vol-row.head {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border2);
+}
+
+.vol-row.head span {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.vol-row span {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.vol-row span.highlight { color: var(--accent); font-weight: 500; }
+.vol-row span.bold      { color: var(--text);   font-weight: 500; }
+.vol-row span.right     { text-align: right; }
+.vol-row span.green     { color: var(--green); }
+.vol-row span.amber     { color: var(--amber); }
+.vol-row span.red       { color: var(--red); }
+.vol-row span.disc      { color: var(--accent); }
+
+/* ============================================================
+   MISC
+   ============================================================ */
+.divider-line {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+}
+
+.tag.accent { border-color: rgba(200,245,106,0.3); color: var(--accent); }
+.tag.blue   { border-color: rgba(77,159,255,0.3);  color: var(--blue); }
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  .metrics-grid { grid-template-columns: repeat(2,1fr); }
+  .vol-row { grid-template-columns: 90px 90px 55px 1fr 1fr 55px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">CTT // Pricing Engine</div>
+  <div class="header-title">Reseller Installation Rate Calculator</div>
+  <div class="header-badge">v1.0 — VBOG</div>
+</header>
+
+<div class="main">
+
+  <!-- ========== SIDEBAR — ALL CONTROLS ========== -->
+  <aside class="sidebar">
+
+    <div class="section-gap">
+      <div class="section-label">Base rates</div>
+
+      <div class="ctrl-row">
+        <label>Base labour — 50L anchor</label>
+        <input type="range" id="BASE_LABOUR_50L" min="200" max="1500" step="50" value="600">
+        <span class="ctrl-val" id="v_BASE_LABOUR_50L">AED 600</span>
+      </div>
+
+      <div class="ctrl-row">
+        <label>Labour multiplier</label>
+        <input type="range" id="LABOUR_MULTIPLIER" min="0.5" max="3" step="0.1" value="1.0">
+        <span class="ctrl-val" id="v_LABOUR_MULTIPLIER">1.0×</span>
+      </div>
+
+      <div class="ctrl-row">
+        <label>Despatch multiplier</label>
+        <input type="range" id="DESPATCH_MULTIPLIER" min="0.5" max="3" step="0.1" value="1.0">
+        <span class="ctrl-val" id="v_DESPATCH_MULTIPLIER">1.0×</span>
+      </div>
+
+      <div class="ctrl-row">
+        <label>Parts margin / job</label>
+        <input type="range" id="PARTS_MARGIN_PER_JOB" min="0" max="1500" step="50" value="250">
+        <span class="ctrl-val" id="v_PARTS_MARGIN_PER_JOB">AED 250</span>
+      </div>
+    </div>
+
+    <div class="section-gap">
+      <div class="section-label">Capacity</div>
+
+      <div class="ctrl-row">
+        <label>Jobs per day</label>
+        <input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4">
+        <span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span>
+      </div>
+
+      <div class="ctrl-row">
+        <label>Working days / year</label>
+        <input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250">
+        <span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span>
+      </div>
+
+      <div class="ctrl-row">
+        <label>Target margin %</label>
+        <input type="range" id="TARGET_MARGIN_PCT" min="5" max="60" step="5" value="30">
+        <span class="ctrl-val" id="v_TARGET_MARGIN_PCT">30%</span>
+      </div>
+    </div>
+
+    <div class="section-gap">
+      <div class="section-label">Job mix <span id="mix-total-badge" class="tag accent">100%</span></div>
+
+      <div class="mix-row">
+        <span class="mix-label">Up to 50L</span>
+        <input type="range" class="mix-slider" id="MIX_50L"   min="0" max="100" step="5" value="20">
+        <span class="mix-pct" id="v_MIX_50L">20%</span>
+      </div>
+      <div class="mix-row">
+        <span class="mix-label">80L</span>
+        <input type="range" class="mix-slider" id="MIX_80L"   min="0" max="100" step="5" value="30">
+        <span class="mix-pct" id="v_MIX_80L">30%</span>
+      </div>
+      <div class="mix-row">
+        <span class="mix-label">100L / 150L</span>
+        <input type="range" class="mix-slider" id="MIX_150L"  min="0" max="100" step="5" value="25">
+        <span class="mix-pct" id="v_MIX_150L">25%</span>
+      </div>
+      <div class="mix-row">
+        <span class="mix-label">200L</span>
+        <input type="range" class="mix-slider" id="MIX_200L"  min="0" max="100" step="5" value="15">
+        <span class="mix-pct" id="v_MIX_200L">15%</span>
+      </div>
+      <div class="mix-row">
+        <span class="mix-label">300L+ <span class="tag blue">auto</span></span>
+        <input type="range" disabled style="flex:1;opacity:0.3" value="10">
+        <span class="mix-pct" id="v_MIX_300L" style="color:var(--text3)">10%</span>
+      </div>
+    </div>
+
+    <div class="section-gap">
+      <div class="section-label">Volume discounts</div>
+
+      <div class="ctrl-row">
+        <label>Max discount at peak vol</label>
+        <input type="range" id="VOLUME_DISCOUNT_MAX_PCT" min="0" max="35" step="1" value="15">
+        <span class="ctrl-val" id="v_VOLUME_DISCOUNT_MAX_PCT">15%</span>
+      </div>
+
+      <div class="ctrl-row">
+        <label>Discount curve shape</label>
+        <input type="range" id="VOLUME_DISCOUNT_CURVE" min="0.3" max="2" step="0.1" value="0.7">
+        <span class="ctrl-val" id="v_VOLUME_DISCOUNT_CURVE">0.7 (convex)</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="content">
+
+    <!-- KPI ROW -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Annual capacity</div>
+        <div class="metric-value accent" id="kpi-capacity">—</div>
+        <div class="metric-sub" id="kpi-capacity-sub">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Revenue (at capacity)</div>
+        <div class="metric-value blue" id="kpi-revenue">—</div>
+        <div class="metric-sub" id="kpi-revenue-sub">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Cost envelope</div>
+        <div class="metric-value green" id="kpi-cost">—</div>
+        <div class="metric-sub">at target margin</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Blended rate / job</div>
+        <div class="metric-value" id="kpi-blended">—</div>
+        <div class="metric-sub">despatch + labour + parts</div>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div class="status-bar info" id="status-bar">Adjust the controls to see your pricing model.</div>
+
+    <!-- RATE CARD TABLE -->
+    <div class="table-wrap">
+      <div class="table-head">
+        <span class="table-title">Rate card — despatch + labour by unit size</span>
+        <span class="tag accent" id="rc-multiplier-badge">1.0× / 1.0×</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Unit size</th>
+            <th class="r">Base despatch</th>
+            <th class="r">Despatch (adj)</th>
+            <th class="r">Base labour</th>
+            <th class="r">Labour (adj)</th>
+            <th class="r">Total ex-VAT</th>
+            <th class="r">Total inc-VAT</th>
+          </tr>
+        </thead>
+        <tbody id="rate-card-body"></tbody>
+      </table>
+    </div>
+
+    <!-- REVENUE MIX TABLE -->
+    <div class="table-wrap">
+      <div class="table-head">
+        <span class="table-title">Revenue build — by job type</span>
+        <span class="tag blue" id="jobs-yr-badge">— jobs/yr</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Unit type</th>
+            <th class="r">All-in / job</th>
+            <th class="r">Mix %</th>
+            <th class="r">Jobs / yr</th>
+            <th class="r">Revenue contrib</th>
+            <th class="r">% of total</th>
+          </tr>
+        </thead>
+        <tbody id="mix-body"></tbody>
+      </table>
+    </div>
+
+    <!-- VOLUME QUOTES -->
+    <div class="table-wrap">
+      <div class="table-head">
+        <span class="table-title">Wholesaler volume quotes</span>
+        <span class="tag" id="disc-badge">max —% discount</span>
+      </div>
+      <div class="vol-row head">
+        <span>Volume</span>
+        <span>Price / unit</span>
+        <span>Discount</span>
+        <span>Total ex-VAT</span>
+        <span>Total inc-VAT</span>
+        <span>Margin</span>
+      </div>
+      <div id="vol-tiers-body"></div>
+    </div>
+
+    <!-- P&L SUMMARY -->
+    <div class="table-wrap">
+      <div class="table-head">
+        <span class="table-title">P&amp;L summary — at full capacity</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Line</th>
+            <th class="r">Annual (AED)</th>
+            <th class="r">Per job (AED)</th>
+            <th class="r">% of revenue</th>
+          </tr>
+        </thead>
+        <tbody id="pnl-body"></tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<footer class="footer">
+  CTT Reseller Pricing Engine &nbsp;|&nbsp; v-bog.com &nbsp;|&nbsp; Confidential — internal use only
+</footer>
+
+<script>
+/* ============================================================
+   ALL CONFIGURABLE VARIABLES — EDIT HERE ONLY
+   ============================================================ */
+
+// Base labour rates — anchored to 50L, rest are ratios of the anchor
+const LABOUR_SCALE_RATIOS = {
+  "Up to 50L": 1.000,   // anchor — set by slider
+  "80L":       1.167,   // 700/600
+  "100/150L":  1.417,   // 850/600
+  "200L":      1.667,   // 1000/600
+  "300L+":     2.167,   // 1300/600
+};
+
+// Base despatch fees by zone (AED) — scaled by DESPATCH_MULTIPLIER slider
+const BASE_DESPATCH_BY_ZONE = {
+  "Sharjah/Ajman":  650,
+  "Dubai":          700,
+  "UAQ":            850,
+  "RAK":           1000,
+  "Fujairah":      1250,
+  "Al Ain":        1400,
+  "Abu Dhabi":     1550,
+  "Liwa/Ruwais":   3500,
+};
+
+// Blended despatch assumption (weighted avg of zone mix — used for revenue model)
+const BLENDED_DESPATCH_BASE = 880;
+
+// Add-on rates (AED) — informational, not in volume calculator
+const ADDON_RATES = {
+  "False ceiling access":    350,
+  "Roof access premium":     300,
+  "Old heater removal":      200,
+  "Waiting (per hr, after 30 min free)": 200,
+};
+
+// Volume tiers for wholesaler quotes
+const VOLUME_TIERS = [100, 250, 500, 1000, 2000, 5000];
+
+// VAT rate
+const VAT_RATE = 0.05;
+
+// Margin colour thresholds
+const MARGIN_GREEN_THRESHOLD  = 0.25;   // >= 25% = green
+const MARGIN_AMBER_THRESHOLD  = 0.10;   // >= 10% = amber, else red
+
+/* ============================================================
+   DOM HELPERS
+   ============================================================ */
+const $  = id => document.getElementById(id);
+const fmtAED  = n => 'AED ' + Math.round(n).toLocaleString();
+const fmtNum  = n => Math.round(n).toLocaleString();
+const fmtPct  = n => n.toFixed(1) + '%';
+const fmtMul  = n => n.toFixed(1) + '×';
+
+function colorForMargin(m) {
+  if (m >= MARGIN_GREEN_THRESHOLD)  return 'green';
+  if (m >= MARGIN_AMBER_THRESHOLD)  return 'amber';
+  return 'red';
+}
+
+/* ============================================================
+   READ ALL SLIDER VALUES
+   ============================================================ */
+function readInputs() {
+  return {
+    BASE_LABOUR_50L:           parseFloat($('BASE_LABOUR_50L').value),
+    LABOUR_MULTIPLIER:         parseFloat($('LABOUR_MULTIPLIER').value),
+    DESPATCH_MULTIPLIER:       parseFloat($('DESPATCH_MULTIPLIER').value),
+    PARTS_MARGIN_PER_JOB:      parseFloat($('PARTS_MARGIN_PER_JOB').value),
+    JOBS_PER_DAY:              parseFloat($('JOBS_PER_DAY').value),
+    WORKING_DAYS_PER_YEAR:     parseInt($('WORKING_DAYS_PER_YEAR').value),
+    TARGET_MARGIN_PCT:         parseFloat($('TARGET_MARGIN_PCT').value) / 100,
+    MIX_50L:                   parseInt($('MIX_50L').value),
+    MIX_80L:                   parseInt($('MIX_80L').value),
+    MIX_150L:                  parseInt($('MIX_150L').value),
+    MIX_200L:                  parseInt($('MIX_200L').value),
+    VOLUME_DISCOUNT_MAX_PCT:   parseFloat($('VOLUME_DISCOUNT_MAX_PCT').value) / 100,
+    VOLUME_DISCOUNT_CURVE:     parseFloat($('VOLUME_DISCOUNT_CURVE').value),
+  };
+}
+
+/* ============================================================
+   DERIVED CALCULATIONS
+   ============================================================ */
+function derive(v) {
+  // Mix (auto-balance 300L+)
+  const mixRaw = {
+    "Up to 50L": v.MIX_50L,
+    "80L":       v.MIX_80L,
+    "100/150L":  v.MIX_150L,
+    "200L":      v.MIX_200L,
+  };
+  const sumRaw = Object.values(mixRaw).reduce((a,b) => a+b, 0);
+  const mix300 = Math.max(0, 100 - sumRaw);
+  const mix = { ...mixRaw, "300L+": mix300 };
+  const mixTotal = sumRaw + mix300;
+
+  // Labour rates per unit type (anchor × scale ratio × multiplier)
+  const labourRates = {};
+  for (const [unit, ratio] of Object.entries(LABOUR_SCALE_RATIOS)) {
+    labourRates[unit] = v.BASE_LABOUR_50L * ratio * v.LABOUR_MULTIPLIER;
+  }
+
+  // Blended despatch (adjusted)
+  const blendedDespatch = BLENDED_DESPATCH_BASE * v.DESPATCH_MULTIPLIER;
+
+  // All-in rate per unit type (blended despatch + labour + parts)
+  const unitRates = {};
+  for (const unit of Object.keys(LABOUR_SCALE_RATIOS)) {
+    unitRates[unit] = blendedDespatch + labourRates[unit] + v.PARTS_MARGIN_PER_JOB;
+  }
+
+  // Weighted blended all-in rate
+  let blendedAllIn = 0;
+  for (const [unit, share] of Object.entries(mix)) {
+    blendedAllIn += (share / 100) * unitRates[unit];
+  }
+
+  // Capacity
+  const jobsPerYear  = v.JOBS_PER_DAY * v.WORKING_DAYS_PER_YEAR;
+  const revenue      = blendedAllIn * jobsPerYear;
+  const costEnvelope = revenue * (1 - v.TARGET_MARGIN_PCT);
+  const profit       = revenue - costEnvelope;
+  const dailyRevenue = revenue / v.WORKING_DAYS_PER_YEAR;
+
+  return {
+    mix, mixTotal, labourRates, blendedDespatch,
+    unitRates, blendedAllIn,
+    jobsPerYear, revenue, costEnvelope, profit, dailyRevenue,
+  };
+}
+
+/* ============================================================
+   RENDER FUNCTIONS
+   ============================================================ */
+function updateSidebarLabels(v) {
+  $('v_BASE_LABOUR_50L').textContent      = fmtAED(v.BASE_LABOUR_50L);
+  $('v_LABOUR_MULTIPLIER').textContent    = fmtMul(v.LABOUR_MULTIPLIER) + (v.LABOUR_MULTIPLIER === 1 ? ' (base)' : v.LABOUR_MULTIPLIER < 1 ? ' (disc)' : ' (prem)');
+  $('v_DESPATCH_MULTIPLIER').textContent  = fmtMul(v.DESPATCH_MULTIPLIER) + (v.DESPATCH_MULTIPLIER === 1 ? ' (base)' : '');
+  $('v_PARTS_MARGIN_PER_JOB').textContent = fmtAED(v.PARTS_MARGIN_PER_JOB);
+  $('v_JOBS_PER_DAY').textContent         = v.JOBS_PER_DAY + ' / day';
+  $('v_WORKING_DAYS_PER_YEAR').textContent= v.WORKING_DAYS_PER_YEAR + ' days';
+  $('v_TARGET_MARGIN_PCT').textContent    = Math.round(v.TARGET_MARGIN_PCT * 100) + '%';
+  $('v_VOLUME_DISCOUNT_MAX_PCT').textContent = Math.round(v.VOLUME_DISCOUNT_MAX_PCT * 100) + '%';
+  $('v_VOLUME_DISCOUNT_CURVE').textContent   = parseFloat($('VOLUME_DISCOUNT_CURVE').value).toFixed(1) + (parseFloat($('VOLUME_DISCOUNT_CURVE').value) < 1 ? ' (convex)' : parseFloat($('VOLUME_DISCOUNT_CURVE').value) > 1 ? ' (concave)' : ' (linear)');
+}
+
+function updateMixLabels(d) {
+  const keys = Object.keys(d.mix);
+  const ids  = ['MIX_50L','MIX_80L','MIX_150L','MIX_200L','MIX_300L'];
+  keys.forEach((k, i) => {
+    const el = $('v_' + ids[i]);
+    if (el) el.textContent = d.mix[k] + '%';
+  });
+  const badge = $('mix-total-badge');
+  badge.textContent = d.mixTotal + '%';
+  badge.className = 'tag ' + (d.mixTotal === 100 ? 'accent' : '');
+  badge.style.color = d.mixTotal === 100 ? '' : 'var(--red)';
+  badge.style.borderColor = d.mixTotal === 100 ? '' : 'rgba(255,95,95,0.4)';
+}
+
+function updateKPIs(v, d) {
+  $('kpi-capacity').textContent     = fmtNum(d.jobsPerYear) + ' jobs';
+  $('kpi-capacity-sub').textContent = v.JOBS_PER_DAY + '/day × ' + v.WORKING_DAYS_PER_YEAR + ' days';
+  $('kpi-revenue').textContent      = fmtAED(d.revenue);
+  $('kpi-revenue-sub').textContent  = fmtAED(d.dailyRevenue) + '/day';
+  $('kpi-cost').textContent         = fmtAED(d.costEnvelope);
+  $('kpi-blended').textContent      = fmtAED(d.blendedAllIn);
+}
+
+function updateStatus(v, d) {
+  const bar = $('status-bar');
+  const margin = v.TARGET_MARGIN_PCT;
+  const profitAED = d.profit;
+  const msg = `${v.JOBS_PER_DAY} jobs/day × ${v.WORKING_DAYS_PER_YEAR} days = ${fmtNum(d.jobsPerYear)} jobs/yr. Blended: ${fmtAED(d.blendedAllIn)}/job. Revenue: ${fmtAED(d.revenue)}. Cost envelope at ${Math.round(margin*100)}% margin: ${fmtAED(d.costEnvelope)}. Implied profit: ${fmtAED(profitAED)}.`;
+  bar.textContent = msg;
+  bar.className = 'status-bar ' + (margin >= 0.25 ? 'ok' : margin >= 0.10 ? 'warn' : 'bad');
+}
+
+function updateRateCard(v, d) {
+  $('rc-multiplier-badge').textContent = 'L ' + fmtMul(v.LABOUR_MULTIPLIER) + ' / D ' + fmtMul(v.DESPATCH_MULTIPLIER);
+  const tbody = $('rate-card-body');
+  tbody.innerHTML = '';
+  const units = Object.keys(LABOUR_SCALE_RATIOS);
+  units.forEach(unit => {
+    const baseD  = BLENDED_DESPATCH_BASE;
+    const adjD   = Math.round(d.blendedDespatch);
+    const baseL  = Math.round(v.BASE_LABOUR_50L * LABOUR_SCALE_RATIOS[unit]);
+    const adjL   = Math.round(d.labourRates[unit]);
+    const total  = adjD + adjL;
+    const totalV = Math.round(total * (1 + VAT_RATE));
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="bold">${unit}</td>
+      <td class="r">${fmtNum(baseD)}</td>
+      <td class="r ${adjD !== baseD ? 'accent' : ''}">${fmtNum(adjD)}</td>
+      <td class="r">${fmtNum(baseL)}</td>
+      <td class="r ${adjL !== baseL ? 'accent' : ''}">${fmtNum(adjL)}</td>
+      <td class="r bold">${fmtNum(total)}</td>
+      <td class="r blue">${fmtNum(totalV)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateMixTable(v, d) {
+  $('jobs-yr-badge').textContent = fmtNum(d.jobsPerYear) + ' jobs/yr';
+  const tbody = $('mix-body');
+  tbody.innerHTML = '';
+  let totalRev = 0;
+  const rows = [];
+  for (const [unit, share] of Object.entries(d.mix)) {
+    const rate     = d.unitRates[unit];
+    const jobsUnit = (share / 100) * d.jobsPerYear;
+    const rev      = rate * jobsUnit;
+    totalRev      += rev;
+    rows.push({ unit, rate, share, jobsUnit, rev });
+  }
+  rows.forEach(r => {
+    const pctOfTotal = totalRev > 0 ? r.rev / totalRev * 100 : 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="bold">${r.unit}</td>
+      <td class="r accent">${fmtNum(r.rate)}</td>
+      <td class="r">${r.share}%</td>
+      <td class="r">${fmtNum(r.jobsUnit)}</td>
+      <td class="r">${fmtAED(r.rev)}</td>
+      <td class="r">${fmtPct(pctOfTotal)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  const totRow = document.createElement('tr');
+  totRow.className = 'highlight';
+  totRow.innerHTML = `
+    <td class="bold">Total</td>
+    <td class="r accent">${fmtAED(d.blendedAllIn)}</td>
+    <td class="r">100%</td>
+    <td class="r bold">${fmtNum(d.jobsPerYear)}</td>
+    <td class="r bold accent">${fmtAED(totalRev)}</td>
+    <td class="r">100%</td>
+  `;
+  tbody.appendChild(totRow);
+}
+
+function updateVolumeTiers(v, d) {
+  $('disc-badge').textContent = 'max ' + Math.round(v.VOLUME_DISCOUNT_MAX_PCT * 100) + '% discount';
+  const container = $('vol-tiers-body');
+  container.innerHTML = '';
+  const curve    = parseFloat($('VOLUME_DISCOUNT_CURVE').value);
+  const maxVol   = Math.max(...VOLUME_TIERS);
+  const baseRate = d.blendedAllIn;
+
+  VOLUME_TIERS.forEach(vol => {
+    const t          = Math.pow(vol / maxVol, curve);
+    const discFrac   = v.VOLUME_DISCOUNT_MAX_PCT * t;
+    const discPct    = Math.round(discFrac * 100);
+    const adjRate    = baseRate * (1 - discFrac);
+    const totalExVAT = adjRate * vol;
+    const totalIncVAT= totalExVAT * (1 + VAT_RATE);
+    const impliedMargin = v.TARGET_MARGIN_PCT * (1 - discFrac);
+    const mCol       = colorForMargin(impliedMargin);
+
+    const row = document.createElement('div');
+    row.className = 'vol-row';
+    row.innerHTML = `
+      <span class="bold">${fmtNum(vol)} units</span>
+      <span class="highlight">${fmtAED(adjRate)}</span>
+      <span class="${discPct > 0 ? 'disc' : ''}">${discPct > 0 ? '-' + discPct + '%' : '—'}</span>
+      <span class="right bold">${fmtAED(totalExVAT)}</span>
+      <span class="right">${fmtAED(totalIncVAT)}</span>
+      <span class="${mCol} right">${fmtPct(impliedMargin * 100)}</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function updatePnL(v, d) {
+  const tbody = $('pnl-body');
+  tbody.innerHTML = '';
+  const rows = [
+    { label: 'Labour + despatch revenue',    val: d.revenue - v.PARTS_MARGIN_PER_JOB * d.jobsPerYear, isRev: true },
+    { label: 'Parts margin revenue',          val: v.PARTS_MARGIN_PER_JOB * d.jobsPerYear, isRev: true },
+    { label: 'Total revenue',                 val: d.revenue, bold: true, color: 'blue' },
+    { label: 'Max cost envelope',             val: -d.costEnvelope, bold: false, color: 'amber' },
+    { label: 'Implied profit',                val: d.profit, bold: true, color: d.profit >= 0 ? 'green' : 'red' },
+  ];
+  rows.forEach(r => {
+    const perJob   = r.val / d.jobsPerYear;
+    const pctRev   = d.revenue > 0 ? Math.abs(r.val) / d.revenue * 100 : 0;
+    const tr       = document.createElement('tr');
+    const cls      = r.bold ? 'bold ' + (r.color || '') : (r.color || '');
+    const valStr   = (r.val < 0 ? '(' : '') + fmtAED(Math.abs(r.val)) + (r.val < 0 ? ')' : '');
+    const perStr   = (perJob < 0 ? '(' : '') + fmtAED(Math.abs(perJob)) + (perJob < 0 ? ')' : '');
+    tr.innerHTML   = `<td class="${cls}">${r.label}</td><td class="r ${cls}">${valStr}</td><td class="r">${perStr}</td><td class="r">${fmtPct(pctRev)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ============================================================
+   MAIN RECALCULATE
+   ============================================================ */
+function recalc() {
+  const v = readInputs();
+  const d = derive(v);
+  updateSidebarLabels(v);
+  updateMixLabels(d);
+  updateKPIs(v, d);
+  updateStatus(v, d);
+  updateRateCard(v, d);
+  updateMixTable(v, d);
+  updateVolumeTiers(v, d);
+  updatePnL(v, d);
+}
+
+/* ============================================================
+   EVENT LISTENERS
+   ============================================================ */
+const ALL_INPUTS = [
+  'BASE_LABOUR_50L','LABOUR_MULTIPLIER','DESPATCH_MULTIPLIER','PARTS_MARGIN_PER_JOB',
+  'JOBS_PER_DAY','WORKING_DAYS_PER_YEAR','TARGET_MARGIN_PCT',
+  'MIX_50L','MIX_80L','MIX_150L','MIX_200L',
+  'VOLUME_DISCOUNT_MAX_PCT','VOLUME_DISCOUNT_CURVE',
+];
+
+ALL_INPUTS.forEach(id => $(id).addEventListener('input', recalc));
+
+// Initial render
+recalc();
+</script>
+</body>
+</html>
