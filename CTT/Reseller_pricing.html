@@ -6,36 +6,36 @@
 <title>CTT Reseller Pricing Engine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    DESIGN TOKENS
    ============================================================ */
 :root {
-  --bg:          #0e0f11;
-  --bg2:         #16181c;
-  --bg3:         #1e2126;
-  --border:      #2a2d35;
-  --border2:     #383c47;
-  --text:        #e8eaf0;
-  --text2:       #8b909e;
-  --text3:       #565b6a;
-  --accent:      #c8f56a;
-  --accent2:     #8fba3e;
-  --accent-dim:  rgba(200,245,106,0.08);
-  --accent-dim2: rgba(200,245,106,0.15);
-  --blue:        #4d9fff;
-  --blue-dim:    rgba(77,159,255,0.1);
-  --amber:       #f5a623;
-  --amber-dim:   rgba(245,166,35,0.1);
-  --red:         #ff5f5f;
-  --red-dim:     rgba(255,95,95,0.1);
-  --green:       #5dd88a;
-  --green-dim:   rgba(93,216,138,0.1);
-  --radius:      6px;
-  --radius-lg:   10px;
-  --mono:        'DM Mono', monospace;
-  --sans:        'DM Sans', sans-serif;
+  --bg:          #0d1117;
+  --bg2:         #161b27;
+  --bg3:         #1c2333;
+  --border:      #21262e;
+  --border2:     #30363d;
+  --text:        #e6edf3;
+  --text2:       #8b949e;
+  --text3:       #484f58;
+  --accent:      #58a6ff;
+  --accent2:     #388bfd;
+  --accent-dim:  rgba(88,166,255,0.08);
+  --accent-dim2: rgba(88,166,255,0.15);
+  --blue:        #79c0ff;
+  --blue-dim:    rgba(121,192,255,0.10);
+  --amber:       #e3b341;
+  --amber-dim:   rgba(227,179,65,0.10);
+  --red:         #ff7b72;
+  --red-dim:     rgba(255,123,114,0.10);
+  --green:       #56d364;
+  --green-dim:   rgba(86,211,100,0.10);
+  --radius:      8px;
+  --radius-lg:   12px;
+  --mono:        'JetBrains Mono', monospace;
+  --sans:        'Inter', sans-serif;
   --transition:  0.15s ease;
 }
 
@@ -61,7 +61,9 @@ body {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  background: var(--bg);
+  background: rgba(13,17,23,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 100;
 }
 
@@ -116,7 +118,7 @@ body {
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text3);
+  color: var(--text2);
   margin-bottom: 14px;
   display: flex;
   align-items: center;
@@ -154,7 +156,7 @@ body {
   flex: 1;
   -webkit-appearance: none;
   appearance: none;
-  height: 3px;
+  height: 4px;
   background: var(--border2);
   border-radius: 2px;
   outline: none;
@@ -168,11 +170,12 @@ body {
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
-  transition: transform var(--transition);
+  transition: transform var(--transition), box-shadow var(--transition);
 }
 
 .ctrl-row input[type=range]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+  transform: scale(1.15);
+  box-shadow: 0 0 0 4px rgba(88,166,255,0.25);
 }
 
 .ctrl-val {
@@ -205,7 +208,7 @@ body {
   flex: 1;
   -webkit-appearance: none;
   appearance: none;
-  height: 3px;
+  height: 4px;
   background: var(--border2);
   border-radius: 2px;
   outline: none;
@@ -217,8 +220,13 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--blue);
+  background: var(--accent);
   cursor: pointer;
+  transition: box-shadow var(--transition);
+}
+
+.mix-row input[type=range]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 3px rgba(88,166,255,0.20);
 }
 
 .mix-pct {
@@ -252,10 +260,11 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
-  transition: border-color var(--transition);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.metric-card:hover { border-color: var(--border2); }
+.metric-card:hover { border-color: var(--border2); box-shadow: 0 2px 8px rgba(0,0,0,0.45); }
 
 .metric-label {
   font-size: 10px;
@@ -298,6 +307,7 @@ body {
   border-radius: var(--radius-lg);
   overflow: hidden;
   margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
 }
 
 .table-head {
@@ -373,10 +383,10 @@ tr.highlight td.accent { color: var(--accent); }
   border: 1px solid transparent;
 }
 
-.status-bar.ok    { background: var(--green-dim);  border-color: rgba(93,216,138,0.25);  color: var(--green); }
-.status-bar.warn  { background: var(--amber-dim);  border-color: rgba(245,166,35,0.25);  color: var(--amber); }
-.status-bar.info  { background: var(--blue-dim);   border-color: rgba(77,159,255,0.25);  color: var(--blue); }
-.status-bar.bad   { background: var(--red-dim);    border-color: rgba(255,95,95,0.25);   color: var(--red); }
+.status-bar.ok    { background: var(--green-dim);  border-color: rgba(86,211,100,0.25);   color: var(--green); }
+.status-bar.warn  { background: var(--amber-dim);  border-color: rgba(227,179,65,0.25);   color: var(--amber); }
+.status-bar.info  { background: var(--blue-dim);   border-color: rgba(121,192,255,0.25);  color: var(--blue); }
+.status-bar.bad   { background: var(--red-dim);    border-color: rgba(255,123,114,0.25);  color: var(--red); }
 
 /* ============================================================
    VOLUME TIERS
