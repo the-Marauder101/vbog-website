@@ -231,6 +231,12 @@ tr.cost-total td.purple { color: var(--purple); }
     </div>
 
     <div class="section-gap">
+      <div class="section-label">Labour premiums</div>
+      <div class="ctrl-row"><label>Handling premium — heaters &gt; 150L</label><input type="range" id="HANDLING_PREMIUM" min="0" max="1000" step="25" value="200"><span class="ctrl-val" id="v_HANDLING_PREMIUM">AED 200</span></div>
+      <div class="info-note">Extra labour cost per job for 200L and 300L+ heaters (heavier, two-person handling). Adds to the cost base only for the share of jobs that are large heaters, then flows through the cost-up rate to the 200L and 300L+ lines on the rate card.</div>
+    </div>
+
+    <div class="section-gap">
       <div class="section-label">Capacity &amp; margin</div>
       <div class="ctrl-row"><label>Jobs per day (total)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span><span class="ctrl-sub" id="v_JOBS_PER_DAY_CAP" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:6px"></span></div>
       <div class="ctrl-row"><label>Working days / year</label><input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250"><span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span></div>
@@ -747,6 +753,7 @@ function readInputs() {
     WORKING_DAYS_PER_YEAR:   parseInt($('WORKING_DAYS_PER_YEAR').value),
     TARGET_MARGIN_PCT:       parseFloat($('TARGET_MARGIN_PCT').value) / 100,
     OPERATIONAL_EFFICIENCY_DISCOUNT: parseFloat($('OPERATIONAL_EFFICIENCY_DISCOUNT').value) / 100,
+    HANDLING_PREMIUM:        parseFloat($('HANDLING_PREMIUM').value),
     MIX_50L:                 mix50,
     MIX_80L:                 mix80,
     MIX_150L:                mix150,
@@ -803,11 +810,16 @@ function derive(v) {
     blendedDespatch += (share / 100) * zoneFees[zone];
   }
 
-  // ---- Cost-up rate
+  // ---- Cost-up rate (handling premium adds per-large-job labour cost)
   const staffCost    = calcStaffCost();
   const overheadCost = calcOverheadCost();
-  const totalCost    = staffCost + overheadCost;
   const jobsPerYear  = v.JOBS_PER_DAY * v.WORKING_DAYS_PER_YEAR;
+
+  // Large heaters = 200L and 300L+. Handling premium hits only this share.
+  const largeShare    = ((mix["200L"] || 0) + (mix["300L+"] || 0)) / 100;
+  const handlingCost  = v.HANDLING_PREMIUM * jobsPerYear * largeShare;
+  const totalCost     = staffCost + overheadCost + handlingCost;
+
   const costPerJob   = jobsPerYear > 0 ? totalCost / jobsPerYear : 0;
   const marginDivisor = Math.max(0.01, 1 - v.TARGET_MARGIN_PCT);
   const targetRate    = costPerJob / marginDivisor;
@@ -820,13 +832,23 @@ function derive(v) {
   const labourClipped = blendedDespatch > idealBlended;
   const blendedAllIn  = labourClipped ? blendedDespatch : idealBlended;
   const blendedLabour = blendedAllIn - blendedDespatch;
+
+  // Per-unit labour distribution: large units carry the handling premium on
+  // top of the scale-ratio split. Solve for baseLabour50L so the weighted
+  // sum still equals blendedLabour exactly (rate card stays coherent with
+  // revenue).
+  const isLarge = u => (u === "200L" || u === "300L+");
   const labourMixWeight = Object.entries(mix).reduce(
     (sum, [u, share]) => sum + (share / 100) * LABOUR_SCALE_RATIOS[u], 0);
-  const baseLabour50L = labourMixWeight > 0 ? blendedLabour / labourMixWeight : 0;
+  const premiumWeighted = v.HANDLING_PREMIUM * largeShare;
+  const baseLabour50L = labourMixWeight > 0
+    ? Math.max(0, (blendedLabour - premiumWeighted) / labourMixWeight)
+    : 0;
   const labourRates = {};
   const unitFullRates = {};
   for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-    labourRates[u]   = baseLabour50L * LABOUR_SCALE_RATIOS[u];
+    const premium = isLarge(u) ? v.HANDLING_PREMIUM : 0;
+    labourRates[u]   = baseLabour50L * LABOUR_SCALE_RATIOS[u] + premium;
     unitFullRates[u] = blendedDespatch + labourRates[u];
   }
 
@@ -842,7 +864,7 @@ function derive(v) {
     unitFullRates,
     blendedAllIn, costPerJob, targetRate, labourClipped,
     jobsPerYear, revenue, totalCost, profit, actualMargin, dailyRevenue,
-    staffCost, overheadCost,
+    staffCost, overheadCost, handlingCost, largeShare,
   };
 }
 
@@ -857,6 +879,7 @@ function updateSidebarLabels(v, d) {
   $('v_WORKING_DAYS_PER_YEAR').textContent = v.WORKING_DAYS_PER_YEAR + ' days';
   $('v_TARGET_MARGIN_PCT').textContent = Math.round(v.TARGET_MARGIN_PCT*100) + '%';
   $('v_OPERATIONAL_EFFICIENCY_DISCOUNT').textContent = Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)+'%';
+  $('v_HANDLING_PREMIUM').textContent  = fmtAED(v.HANDLING_PREMIUM);
   $('v_VOLUME_DISCOUNT_MAX_PCT').textContent = Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)+'%';
   const c = v.VOLUME_DISCOUNT_CURVE;
   $('v_VOLUME_DISCOUNT_CURVE').textContent = c.toFixed(1)+(c<1?' (convex)':c>1?' (concave)':' (linear)');
@@ -951,6 +974,7 @@ function updateOverview(v, d) {
     { label:'Staff — field techs',    val: STAFF_ROSTER.filter(s=>s.on&&FIELD_TECH_IDS.includes(s.id)).reduce((sum,s)=>sum+s.allIn*s.util/100,0), cls:'' },
     { label:'Staff — management/support', val: STAFF_ROSTER.filter(s=>s.on&&!FIELD_TECH_IDS.includes(s.id)).reduce((sum,s)=>sum+s.allIn*s.util/100,0), cls:'' },
     { label:'Total staff cost',       val: d.staffCost,    cls:'purple bold', isSub:false },
+    { label:`Handling premium (large heaters, ${Math.round(d.largeShare*100)}% of jobs)`, val: d.handlingCost, cls:'' },
     { label:'Vehicles & fuel',        val: OVERHEAD_ITEMS.filter(o=>['oh_veh','oh_vehrep'].includes(o.id)).reduce((sum,o)=>sum+o.tb*o.pct/100,0), cls:'' },
     { label:'Accommodation & visa',   val: OVERHEAD_ITEMS.filter(o=>['oh_accom','oh_visa'].includes(o.id)).reduce((sum,o)=>sum+o.tb*o.pct/100,0), cls:'' },
     { label:'Other overheads',        val: OVERHEAD_ITEMS.filter(o=>!['oh_veh','oh_vehrep','oh_accom','oh_visa'].includes(o.id)).reduce((sum,o)=>sum+o.tb*o.pct/100,0), cls:'' },
@@ -1135,6 +1159,7 @@ function updatePnL(v, d) {
   const rows = [
     { label:'Service revenue',           val: d.revenue,    color:'blue',   bold:true },
     { label:'Staff cost',                val: -d.staffCost, color:'purple', bold:false },
+    { label:'Handling premium (labour)', val: -d.handlingCost, color:'purple', bold:false },
     { label:'Overhead cost',             val: -d.overheadCost, color:'amber', bold:false },
     { label:'Total cost base',           val: -d.totalCost, color:'',       bold:true },
     { label:'Net profit',                val: d.profit,     color: d.profit>=0?'green':'red', bold:true },
@@ -1252,7 +1277,7 @@ function recalc() {
 const ALL_SLIDER_IDS = [
   'BASE_DESPATCH','DESPATCH_MULTIPLIER',
   'JOBS_PER_DAY','WORKING_DAYS_PER_YEAR','TARGET_MARGIN_PCT',
-  'OPERATIONAL_EFFICIENCY_DISCOUNT',
+  'OPERATIONAL_EFFICIENCY_DISCOUNT','HANDLING_PREMIUM',
   'MIX_50L','MIX_80L','MIX_150L','MIX_200L',
   'VOLUME_DISCOUNT_MAX_PCT','VOLUME_DISCOUNT_CURVE',
   'ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi',
