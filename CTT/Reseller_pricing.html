@@ -90,6 +90,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .mix-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--blue); cursor: pointer; }
 .mix-pct { font-family: var(--mono); font-size: 11px; color: var(--blue); width: 40px; text-align: right; }
 
+/* Zone mix rows — 4 columns: label | slider | pct | fee */
+.zone-row { display: grid; grid-template-columns: 95px 1fr 36px 58px; align-items: center; gap: 6px; margin-bottom: 10px; }
+.zone-row input[type=range] { -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; width: 100%; }
+.zone-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--blue); cursor: pointer; }
+.zone-pct  { font-family: var(--mono); font-size: 11px; color: var(--blue); text-align: right; white-space: nowrap; }
+.zone-fee  { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: right; white-space: nowrap; }
+
 /* STAFF ROWS */
 .staff-row { display: grid; grid-template-columns: 1fr 90px 80px 90px; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; background: var(--bg2); transition: border-color var(--transition); }
 .staff-row:hover { border-color: var(--border2); }
@@ -271,14 +278,14 @@ tr.cost-total td.purple { color: var(--purple); }
       <div class="section-label">Zone mix <span id="zone-total-badge" class="tag accent">100%</span></div>
       <div class="info-note">Set what % of your jobs come from each zone. This computes the blended despatch automatically — no more hardcoded 880.</div>
 
-      <div class="mix-row"><span class="mix-label">Dubai</span><input type="range" class="zone-slider" id="ZONE_Dubai" min="0" max="100" step="1" value="45"><span class="mix-pct" id="vz_Dubai">45%</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:52px;text-align:right" id="zfee_Dubai">AED 700</span></div>
-      <div class="mix-row"><span class="mix-label">Sharjah/Ajman</span><input type="range" class="zone-slider" id="ZONE_Sharjah" min="0" max="100" step="1" value="20"><span class="mix-pct" id="vz_Sharjah">20%</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:52px;text-align:right" id="zfee_Sharjah">AED 650</span></div>
-      <div class="mix-row"><span class="mix-label">UAQ</span><input type="range" class="zone-slider" id="ZONE_UAQ" min="0" max="100" step="1" value="10"><span class="mix-pct" id="vz_UAQ">10%</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:52px;text-align:right" id="zfee_UAQ">AED 850</span></div>
-      <div class="mix-row"><span class="mix-label">RAK</span><input type="range" class="zone-slider" id="ZONE_RAK" min="0" max="100" step="1" value="10"><span class="mix-pct" id="vz_RAK">10%</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:52px;text-align:right" id="zfee_RAK">AED 1,000</span></div>
-      <div class="mix-row"><span class="mix-label">Fujairah</span><input type="range" class="zone-slider" id="ZONE_Fujairah" min="0" max="100" step="1" value="5"><span class="mix-pct" id="vz_Fujairah">5%</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:52px;text-align:right" id="zfee_Fujairah">AED 1,250</span></div>
-      <div class="mix-row"><span class="mix-label">Al Ain</span><input type="range" class="zone-slider" id="ZONE_AlAin" min="0" max="100" step="1" value="5"><span class="mix-pct" id="vz_AlAin">5%</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:52px;text-align:right" id="zfee_AlAin">AED 1,400</span></div>
-      <div class="mix-row"><span class="mix-label">Abu Dhabi</span><input type="range" class="zone-slider" id="ZONE_AbuDhabi" min="0" max="100" step="1" value="4"><span class="mix-pct" id="vz_AbuDhabi">4%</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:52px;text-align:right" id="zfee_AbuDhabi">AED 1,550</span></div>
-      <div class="mix-row"><span class="mix-label">Liwa/Ruwais <span class="tag blue">auto</span></span><input type="range" disabled style="flex:1;opacity:0.3" value="1"><span class="mix-pct" id="vz_Liwa" style="color:var(--text3)">1%</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:52px;text-align:right" id="zfee_Liwa">AED 3,500</span></div>
+      <div class="zone-row"><span class="mix-label">Dubai</span><input type="range" class="zone-slider" id="ZONE_Dubai" min="0" max="100" step="1" value="45"><span class="zone-pct" id="vz_Dubai">45%</span><span class="zone-fee" id="zfee_Dubai">AED 700</span></div>
+      <div class="zone-row"><span class="mix-label">Sharjah/Ajman</span><input type="range" class="zone-slider" id="ZONE_Sharjah" min="0" max="100" step="1" value="20"><span class="zone-pct" id="vz_Sharjah">20%</span><span class="zone-fee" id="zfee_Sharjah">AED 650</span></div>
+      <div class="zone-row"><span class="mix-label">UAQ</span><input type="range" class="zone-slider" id="ZONE_UAQ" min="0" max="100" step="1" value="10"><span class="zone-pct" id="vz_UAQ">10%</span><span class="zone-fee" id="zfee_UAQ">AED 850</span></div>
+      <div class="zone-row"><span class="mix-label">RAK</span><input type="range" class="zone-slider" id="ZONE_RAK" min="0" max="100" step="1" value="10"><span class="zone-pct" id="vz_RAK">10%</span><span class="zone-fee" id="zfee_RAK">AED 1,000</span></div>
+      <div class="zone-row"><span class="mix-label">Fujairah</span><input type="range" class="zone-slider" id="ZONE_Fujairah" min="0" max="100" step="1" value="5"><span class="zone-pct" id="vz_Fujairah">5%</span><span class="zone-fee" id="zfee_Fujairah">AED 1,250</span></div>
+      <div class="zone-row"><span class="mix-label">Al Ain</span><input type="range" class="zone-slider" id="ZONE_AlAin" min="0" max="100" step="1" value="5"><span class="zone-pct" id="vz_AlAin">5%</span><span class="zone-fee" id="zfee_AlAin">AED 1,400</span></div>
+      <div class="zone-row"><span class="mix-label">Abu Dhabi</span><input type="range" class="zone-slider" id="ZONE_AbuDhabi" min="0" max="100" step="1" value="4"><span class="zone-pct" id="vz_AbuDhabi">4%</span><span class="zone-fee" id="zfee_AbuDhabi">AED 1,550</span></div>
+      <div class="zone-row"><span class="mix-label">Liwa/Ruwais <span class="tag blue">auto</span></span><input type="range" disabled style="opacity:0.3" value="1"><span class="zone-pct" id="vz_Liwa" style="color:var(--text3)">1%</span><span class="zone-fee" id="zfee_Liwa">AED 3,500</span></div>
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:8px 10px;background:var(--accent-dim);border-radius:var(--radius);border:1px solid rgba(37,99,235,0.2)">
         <span style="font-family:var(--mono);font-size:11px;color:var(--accent)">Blended despatch (computed)</span>
