@@ -98,7 +98,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .zone-fee  { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: right; white-space: nowrap; }
 
 /* STAFF ROWS */
-.staff-row { display: grid; grid-template-columns: 1fr 90px 80px 90px; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; background: var(--bg2); transition: border-color var(--transition); }
+.staff-row { display: grid; grid-template-columns: 1fr 82px 105px 84px; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; background: var(--bg2); transition: border-color var(--transition); }
 .staff-row:hover { border-color: var(--border2); }
 .staff-row.inactive { opacity: 0.45; }
 .staff-name { font-size: 12px; font-weight: 500; color: var(--text); }
@@ -107,19 +107,19 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .staff-util-wrap { display: flex; align-items: center; gap: 4px; }
 .staff-util-wrap input[type=range] { flex: 1; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
 .staff-util-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--purple); cursor: pointer; }
-.staff-util-pct { font-family: var(--mono); font-size: 10px; color: var(--purple); width: 32px; text-align: right; flex-shrink: 0; }
+.staff-util-pct { font-family: var(--mono); font-size: 10px; color: var(--purple); width: 38px; text-align: right; flex-shrink: 0; }
 .staff-toggle { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
 .staff-alloc { font-family: var(--mono); font-size: 11px; color: var(--green); text-align: right; }
 
 /* OVERHEAD ROWS */
-.oh-row { display: grid; grid-template-columns: 1fr 80px 80px 80px; gap: 6px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.oh-row { display: grid; grid-template-columns: 1fr 74px 100px 82px; gap: 6px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .oh-row:last-child { border-bottom: none; }
 .oh-name { font-size: 11px; color: var(--text2); }
 .oh-amount { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: right; }
 .oh-alloc-wrap { display: flex; align-items: center; gap: 3px; }
 .oh-alloc-wrap input[type=range] { flex: 1; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
 .oh-alloc-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--amber); cursor: pointer; }
-.oh-pct { font-family: var(--mono); font-size: 10px; color: var(--amber); width: 28px; text-align: right; flex-shrink: 0; }
+.oh-pct { font-family: var(--mono); font-size: 10px; color: var(--amber); width: 34px; text-align: right; flex-shrink: 0; }
 .oh-cost { font-family: var(--mono); font-size: 11px; color: var(--green); text-align: right; }
 
 /* STACK VIZ */
@@ -298,7 +298,7 @@ tr.cost-total td.purple { color: var(--purple); }
   <div id="stab-staff" class="tab-panel">
     <div class="info-note" style="margin-bottom:16px">All-in annual cost per person from the cost model (salary + housing + visa + gratuity + leave). Adjust utilisation % to set how much of each person's time is allocated to the reseller unit. Toggle off to exclude.</div>
 
-    <div style="display:grid;grid-template-columns:1fr 90px 80px 90px;gap:8px;padding:4px 10px;margin-bottom:6px">
+    <div style="display:grid;grid-template-columns:1fr 82px 105px 84px;gap:8px;padding:4px 10px;margin-bottom:6px">
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">Person / Role</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">All-in / yr</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:center">Util %</span>
@@ -316,7 +316,7 @@ tr.cost-total td.purple { color: var(--purple); }
   <div id="stab-overheads" class="tab-panel">
     <div class="info-note" style="margin-bottom:16px">TB 2025 actuals. Adjust allocation % to assign each overhead to the reseller unit. Based on the same methodology as the Atlantic calculator.</div>
 
-    <div style="display:grid;grid-template-columns:1fr 80px 80px 80px;gap:6px;padding:4px 10px;margin-bottom:4px">
+    <div style="display:grid;grid-template-columns:1fr 74px 100px 82px;gap:6px;padding:4px 10px;margin-bottom:4px">
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">Overhead item</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:right">TB (AED)</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:center">Alloc %</span>
