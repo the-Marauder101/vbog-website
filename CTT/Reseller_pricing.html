@@ -122,13 +122,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .oh-pct { font-family: var(--mono); font-size: 10px; color: var(--amber); width: 34px; text-align: right; flex-shrink: 0; }
 .oh-cost { font-family: var(--mono); font-size: 11px; color: var(--green); text-align: right; }
 
-/* STACK VIZ */
-.stack-viz { display: flex; gap: 6px; margin: 10px 0 14px; flex-wrap: wrap; }
-.stack-stop { flex: 1; min-width: 60px; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; text-align: center; background: var(--bg2); }
-.stack-stop.active { border-color: var(--accent); background: var(--accent-dim); }
-.stack-stop .stop-num { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 2px; }
-.stack-stop .stop-pct { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--accent); }
-.stack-stop .stop-label { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
 /* METRIC CARDS */
 .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
@@ -164,9 +157,6 @@ td.green { color: var(--green); } td.red { color: var(--red); } td.muted { color
 tr:last-child td { border-bottom: none; }
 tr.highlight td { background: var(--accent-dim); color: var(--text); }
 tr.highlight td.accent { color: var(--accent); }
-tr.stack-row-1 td { background: rgba(37,99,235,0.03); }
-tr.stack-row-2 td { background: rgba(37,99,235,0.06); }
-tr.stack-row-3 td { background: rgba(37,99,235,0.10); }
 tr.cost-total td { background: var(--purple-dim); font-weight: 500; }
 tr.cost-total td.purple { color: var(--purple); }
 
@@ -221,22 +211,19 @@ tr.cost-total td.purple { color: var(--purple); }
 
   <!-- TAB NAV IN SIDEBAR -->
   <div class="tab-nav" style="margin-bottom:20px">
-    <button class="tab-btn active" onclick="switchSidebarTab('pricing')">Pricing</button>
-    <button class="tab-btn" onclick="switchSidebarTab('staff')">Staff</button>
-    <button class="tab-btn" onclick="switchSidebarTab('overheads')">Overheads</button>
+    <button class="tab-btn active" data-tab="pricing" onclick="switchSidebarTab('pricing')">Pricing</button>
+    <button class="tab-btn" data-tab="staff" onclick="switchSidebarTab('staff')">Staff</button>
+    <button class="tab-btn" data-tab="overheads" onclick="switchSidebarTab('overheads')">Overheads</button>
   </div>
 
   <!-- ===== PRICING TAB ===== -->
   <div id="stab-pricing" class="tab-panel active">
 
     <div class="section-gap">
-      <div class="section-label">Base rates</div>
-      <div class="ctrl-row"><label>Base labour — 50L anchor</label><input type="range" id="BASE_LABOUR_50L" min="200" max="1500" step="50" value="600"><span class="ctrl-val" id="v_BASE_LABOUR_50L">AED 600</span></div>
-      <div class="ctrl-row"><label>Base despatch — anchor</label><input type="range" id="BASE_DESPATCH" min="100" max="4000" step="50" value="700"><span class="ctrl-val" id="v_BASE_DESPATCH">AED 700</span></div>
-      <div class="ctrl-row"><label>Labour multiplier</label><input type="range" id="LABOUR_MULTIPLIER" min="0.5" max="3" step="0.1" value="1.0"><span class="ctrl-val" id="v_LABOUR_MULTIPLIER">1.0×</span></div>
+      <div class="section-label">Despatch anchor</div>
+      <div class="info-note">Customer-facing labour rates are derived from cost + target margin. Despatch is set here (Dubai anchor) and scales to other zones by their ratios; the labour component is whatever is needed to hit your target margin.</div>
+      <div class="ctrl-row"><label>Base despatch — Dubai anchor</label><input type="range" id="BASE_DESPATCH" min="100" max="4000" step="50" value="700"><span class="ctrl-val" id="v_BASE_DESPATCH">AED 700</span></div>
       <div class="ctrl-row"><label>Despatch multiplier</label><input type="range" id="DESPATCH_MULTIPLIER" min="0.5" max="3" step="0.1" value="1.0"><span class="ctrl-val" id="v_DESPATCH_MULTIPLIER">1.0×</span></div>
-      <div class="ctrl-row"><label>Parts margin / job</label><input type="range" id="PARTS_MARGIN_PER_JOB" min="0" max="1500" step="50" value="250"><span class="ctrl-val" id="v_PARTS_MARGIN_PER_JOB">AED 250</span></div>
-      <div class="info-note">Parts margin = profit on spare parts per job (e.g. buy AED 150, charge AED 400 → AED 250 margin). Adds to revenue only.</div>
       <div class="toggle-row">
         <label for="COMBINED_PRICING_TOGGLE">Pricing display mode<br><span class="toggle-label-val" id="v_COMBINED_MODE">Separate (despatch + labour)</span></label>
         <label class="toggle-switch"><input type="checkbox" id="COMBINED_PRICING_TOGGLE"><span class="toggle-track"></span></label>
@@ -244,19 +231,12 @@ tr.cost-total td.purple { color: var(--purple); }
     </div>
 
     <div class="section-gap">
-      <div class="section-label">Capacity</div>
-      <div class="ctrl-row"><label>Jobs per day (total)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span></div>
+      <div class="section-label">Capacity &amp; margin</div>
+      <div class="ctrl-row"><label>Jobs per day (total)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span><span class="ctrl-sub" id="v_JOBS_PER_DAY_CAP" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:6px"></span></div>
       <div class="ctrl-row"><label>Working days / year</label><input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250"><span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span></div>
       <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="5" max="60" step="5" value="30"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">30%</span></div>
-    </div>
-
-    <div class="section-gap">
-      <div class="section-label">Job stacking</div>
-      <div class="info-note">2nd and 3rd+ jobs at the same stop get a reduced rate — shared travel overhead.</div>
-      <div class="ctrl-row"><label>Jobs stacked per stop</label><input type="range" id="STACK_SIZE" min="1" max="5" step="1" value="1"><span class="ctrl-val" id="v_STACK_SIZE">1 (no stack)</span></div>
-      <div class="ctrl-row"><label>2nd job rate</label><input type="range" id="STACK_RATE_2ND" min="50" max="100" step="5" value="85"><span class="ctrl-val" id="v_STACK_RATE_2ND">85%</span></div>
-      <div class="ctrl-row"><label>3rd+ job rate</label><input type="range" id="STACK_RATE_3RD" min="40" max="100" step="5" value="75"><span class="ctrl-val" id="v_STACK_RATE_3RD">75%</span></div>
-      <div class="stack-viz" id="stack-viz"></div>
+      <div class="ctrl-row"><label>Operational efficiency discount</label><input type="range" id="OPERATIONAL_EFFICIENCY_DISCOUNT" min="0" max="25" step="1" value="13"><span class="ctrl-val" id="v_OPERATIONAL_EFFICIENCY_DISCOUNT">13%</span></div>
+      <div class="info-note">Efficiency discount shaves the customer-facing rate below cost+margin (the savings the business absorbs from route stacking, repeat-customer overhead, etc). At 0% the customer pays the full cost-up rate.</div>
     </div>
 
     <div class="section-gap">
@@ -338,11 +318,11 @@ tr.cost-total td.purple { color: var(--purple); }
 
   <!-- CONTENT TAB NAV -->
   <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchContentTab('overview')">Overview</button>
-    <button class="tab-btn" onclick="switchContentTab('utilisation')">Utilisation</button>
-    <button class="tab-btn" onclick="switchContentTab('ratecards')">Rate Cards</button>
-    <button class="tab-btn" onclick="switchContentTab('volume')">Volume Quotes</button>
-    <button class="tab-btn" onclick="switchContentTab('pnl')">P&amp;L</button>
+    <button class="tab-btn active" data-tab="overview" onclick="switchContentTab('overview')">Overview</button>
+    <button class="tab-btn" data-tab="utilisation" onclick="switchContentTab('utilisation')">Utilisation</button>
+    <button class="tab-btn" data-tab="ratecards" onclick="switchContentTab('ratecards')">Rate Cards</button>
+    <button class="tab-btn" data-tab="volume" onclick="switchContentTab('volume')">Volume Quotes</button>
+    <button class="tab-btn" data-tab="pnl" onclick="switchContentTab('pnl')">P&amp;L</button>
   </div>
 
   <!-- ===== OVERVIEW TAB ===== -->
@@ -357,7 +337,7 @@ tr.cost-total td.purple { color: var(--purple); }
     <div class="metrics-grid-3">
       <div class="metric-card"><div class="metric-label">Staff cost (reseller)</div><div class="metric-value purple" id="ov-staff-cost">—</div><div class="metric-sub" id="ov-staff-sub">—</div></div>
       <div class="metric-card"><div class="metric-label">Overhead cost (reseller)</div><div class="metric-value amber" id="ov-oh-cost">—</div><div class="metric-sub" id="ov-oh-sub">—</div></div>
-      <div class="metric-card"><div class="metric-label">Blended rate / job</div><div class="metric-value" id="ov-blended">—</div><div class="metric-sub" id="ov-blended-sub">despatch + labour + parts</div></div>
+      <div class="metric-card"><div class="metric-label">Blended rate / job</div><div class="metric-value" id="ov-blended">—</div><div class="metric-sub" id="ov-blended-sub">cost-up + margin − efficiency discount</div></div>
     </div>
     <div class="table-wrap">
       <div class="table-head"><span class="table-title">Cost base breakdown</span><span class="tag purple" id="ov-total-cost-badge">—</span></div>
@@ -400,22 +380,15 @@ tr.cost-total td.purple { color: var(--purple); }
         <span class="table-title">Rate card — by unit size</span>
         <div style="display:flex;gap:6px;align-items:center">
           <span class="tag accent" id="rc-mode-badge">Separate mode</span>
-          <span class="tag" id="rc-multiplier-badge">L 1.0× / D 1.0×</span>
+          <span class="tag" id="rc-derived-badge">derived from cost</span>
         </div>
       </div>
       <table><thead id="rate-card-head"></thead><tbody id="rate-card-body"></tbody></table>
     </div>
-    <div class="table-wrap" id="stack-table-wrap">
-      <div class="table-head"><span class="table-title">Stacked job pricing — per stop</span><span class="tag green" id="stack-badge">1 job/stop</span></div>
-      <table>
-        <thead><tr><th>Job position in stack</th><th class="r">Rate applied</th><th class="r">50L example</th><th class="r">80L example</th><th class="r">200L example</th><th class="r">Revenue impact</th></tr></thead>
-        <tbody id="stack-body"></tbody>
-      </table>
-    </div>
     <div class="table-wrap">
       <div class="table-head"><span class="table-title">Revenue build — by job type</span><span class="tag blue" id="jobs-yr-badge">— jobs/yr</span></div>
       <table>
-        <thead><tr><th>Unit type</th><th class="r">Full rate / job</th><th class="r">Stacked avg</th><th class="r">Mix %</th><th class="r">Jobs / yr</th><th class="r">Revenue contrib</th></tr></thead>
+        <thead><tr><th>Unit type</th><th class="r">Rate / job</th><th class="r">Mix %</th><th class="r">Jobs / yr</th><th class="r">Revenue contrib</th></tr></thead>
         <tbody id="mix-body"></tbody>
       </table>
     </div>
@@ -526,12 +499,6 @@ const ZONE_MIX_DEFAULT = {
   "Liwa/Ruwais":     1,
 };
 
-// Derived: BLENDED_DESPATCH_BASE = weighted average of zone fees at default mix
-// At BASE_DESPATCH=700 and default mix above:
-// (700×0.45) + (650×0.20) + (850×0.10) + (1000×0.10) + (1250×0.05) + (1400×0.05) + (1550×0.04) + (3500×0.01)
-// = 315 + 130 + 85 + 100 + 62.5 + 70 + 62 + 35 = 859.5 ≈ 880 (original hardcoded value — now computed live)
-const BLENDED_DESPATCH_BASE = 880;   // reference only — actual value computed from zone sliders
-
 // Volume tiers for wholesaler quotes
 const VOLUME_TIERS = [100, 250, 500, 1000, 2000, 5000];
 
@@ -585,11 +552,17 @@ const OVERHEAD_ITEMS = [
   { id:'oh_misc',   name:'Misc (utilities, bank etc)', tb: 30000,  pct: 50 },
 ];
 
-// Jobs per person per day capacity (field techs only)
-const JOBS_PER_FIELD_TECH_PER_DAY = 1;
+// Jobs per field tech per day at 100% utilisation
+const JOBS_PER_FIELD_TECH_PER_DAY = 2;
 
 // Field tech role identifiers (used for team/capacity calc)
 const FIELD_TECH_IDS = ['s_ashique','s_imtiaz','s_chiranjibi','s_daljit'];
+
+// Cost-up split: overheads are fixed; staff cost scales with volume (variable)
+// Used for the wholesaler volume-quote margin column so small tiers don't get
+// attributed the full fixed cost base.
+const STAFF_COST_VARIABILITY = 1.0;     // 1.0 = fully variable per job
+const OVERHEAD_COST_VARIABILITY = 0.0;  // 0.0 = fully fixed
 
 /* ============================================================
    DOM HELPERS
@@ -613,8 +586,8 @@ function switchSidebarTab(name) {
   ['pricing','staff','overheads'].forEach(t => {
     $('stab-'+t).classList.toggle('active', t===name);
   });
-  document.querySelectorAll('.sidebar .tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['pricing','staff','overheads'][i]===name);
+  document.querySelectorAll('.sidebar .tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab===name);
   });
 }
 
@@ -622,8 +595,8 @@ function switchContentTab(name) {
   ['overview','utilisation','ratecards','volume','pnl'].forEach(t => {
     $('ctab-'+t).classList.toggle('active', t===name);
   });
-  document.querySelectorAll('.content .tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['overview','utilisation','ratecards','volume','pnl'][i]===name);
+  document.querySelectorAll('.content .tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab===name);
   });
 }
 
@@ -719,129 +692,157 @@ function calcTotalCost() {
 }
 
 /* ============================================================
+   TEAM CAPACITY (field-tech derived)
+   ============================================================ */
+function teamCapacity() {
+  const fieldTechs = STAFF_ROSTER.filter(s => s.on && FIELD_TECH_IDS.includes(s.id));
+  // Util-weighted: each tech contributes (util/100 × jobs-per-tech-per-day)
+  const cap = fieldTechs.reduce((sum, s) => sum + (s.util / 100) * JOBS_PER_FIELD_TECH_PER_DAY, 0);
+  return { fieldTechCount: fieldTechs.length, teamsCount: Math.floor(fieldTechs.length / 2), maxJobsDay: cap };
+}
+
+/* ============================================================
+   CLAMP HELPERS
+   ============================================================ */
+// Proportionally scale `values` so they sum to `capSum` if they currently exceed
+// it. If the sum is below, leave them untouched. Mutates the input slider DOM
+// values to match the clamped values so the UI reflects what's actually used.
+function clampToSum(ids, capSum) {
+  const raw = ids.map(id => parseFloat($(id).value) || 0);
+  const sum = raw.reduce((a, b) => a + b, 0);
+  if (sum <= capSum || sum === 0) return raw;
+  const scaled = raw.map(x => Math.round(x * capSum / sum));
+  // Fix rounding drift on last entry
+  const drift = capSum - scaled.reduce((a, b) => a + b, 0);
+  scaled[scaled.length - 1] += drift;
+  ids.forEach((id, i) => { $(id).value = scaled[i]; });
+  return scaled;
+}
+
+/* ============================================================
    READ PRICING INPUTS
    ============================================================ */
 function readInputs() {
-  return {
-    BASE_LABOUR_50L:         parseFloat($('BASE_LABOUR_50L').value),
-    BASE_DESPATCH:           parseFloat($('BASE_DESPATCH').value),
-    LABOUR_MULTIPLIER:       parseFloat($('LABOUR_MULTIPLIER').value),
-    DESPATCH_MULTIPLIER:     parseFloat($('DESPATCH_MULTIPLIER').value),
-    PARTS_MARGIN_PER_JOB:   parseFloat($('PARTS_MARGIN_PER_JOB').value),
-    COMBINED_PRICING:        $('COMBINED_PRICING_TOGGLE').checked,
-    JOBS_PER_DAY:            parseFloat($('JOBS_PER_DAY').value),
-    WORKING_DAYS_PER_YEAR:   parseInt($('WORKING_DAYS_PER_YEAR').value),
-    TARGET_MARGIN_PCT:       parseFloat($('TARGET_MARGIN_PCT').value) / 100,
-    STACK_SIZE:              parseInt($('STACK_SIZE').value),
-    STACK_RATE_2ND:          parseFloat($('STACK_RATE_2ND').value) / 100,
-    STACK_RATE_3RD:          parseFloat($('STACK_RATE_3RD').value) / 100,
-    MIX_50L:                 parseInt($('MIX_50L').value),
-    MIX_80L:                 parseInt($('MIX_80L').value),
-    MIX_150L:                parseInt($('MIX_150L').value),
-    MIX_200L:                parseInt($('MIX_200L').value),
-    VOLUME_DISCOUNT_MAX_PCT: parseFloat($('VOLUME_DISCOUNT_MAX_PCT').value) / 100,
-    VOLUME_DISCOUNT_CURVE:   parseFloat($('VOLUME_DISCOUNT_CURVE').value),
-    // Zone mix — read each slider, auto-balance Liwa/Ruwais
-    ZONE_Dubai:    parseInt($('ZONE_Dubai').value),
-    ZONE_Sharjah:  parseInt($('ZONE_Sharjah').value),
-    ZONE_UAQ:      parseInt($('ZONE_UAQ').value),
-    ZONE_RAK:      parseInt($('ZONE_RAK').value),
-    ZONE_Fujairah: parseInt($('ZONE_Fujairah').value),
-    ZONE_AlAin:    parseInt($('ZONE_AlAin').value),
-    ZONE_AbuDhabi: parseInt($('ZONE_AbuDhabi').value),
-  };
-}
+  // Hard-clamp job-mix sliders to ≤100% sum (300L+ auto-fills the remainder)
+  const mixIds = ['MIX_50L','MIX_80L','MIX_150L','MIX_200L'];
+  const [mix50, mix80, mix150, mix200] = clampToSum(mixIds, 100);
 
-/* ============================================================
-   STACKING MULTIPLIER
-   ============================================================ */
-function stackedAvgMultiplier(size, r2, r3) {
-  if (size <= 1) return 1.0;
-  let total = 1.0;
-  if (size >= 2) total += r2;
-  for (let i = 3; i <= size; i++) total += r3;
-  return total / size;
-}
+  // Hard-clamp zone sliders to ≤100% sum (Liwa/Ruwais auto-fills the remainder)
+  const zoneIds = ['ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi'];
+  const [zDub, zShj, zUaq, zRak, zFuj, zAla, zAbd] = clampToSum(zoneIds, 100);
 
-/* ============================================================
-   DERIVE PRICING MODEL
-   ============================================================ */
-function derive(v) {
-  const mixRaw = { "Up to 50L": v.MIX_50L, "80L": v.MIX_80L, "100/150L": v.MIX_150L, "200L": v.MIX_200L };
-  const sumRaw = Object.values(mixRaw).reduce((a,b) => a+b, 0);
-  const mix300 = Math.max(0, 100 - sumRaw);
-  const mix = { ...mixRaw, "300L+": mix300 };
-  const mixTotal = sumRaw + mix300;
-
-  const labourRates = {};
-  for (const [u, r] of Object.entries(LABOUR_SCALE_RATIOS)) {
-    labourRates[u] = v.BASE_LABOUR_50L * r * v.LABOUR_MULTIPLIER;
+  // Hard-clamp JOBS_PER_DAY to team capacity
+  const cap = teamCapacity();
+  let jobsPerDay = parseFloat($('JOBS_PER_DAY').value);
+  if (cap.maxJobsDay > 0 && jobsPerDay > cap.maxJobsDay) {
+    jobsPerDay = Math.floor(cap.maxJobsDay * 2) / 2;  // snap down to 0.5 step
+    $('JOBS_PER_DAY').value = jobsPerDay;
   }
 
-  // Zone mix — compute blended despatch from zone shares
-  // Liwa/Ruwais auto-balances to make zone shares sum to 100%
+  return {
+    BASE_DESPATCH:           parseFloat($('BASE_DESPATCH').value),
+    DESPATCH_MULTIPLIER:     parseFloat($('DESPATCH_MULTIPLIER').value),
+    COMBINED_PRICING:        $('COMBINED_PRICING_TOGGLE').checked,
+    JOBS_PER_DAY:            jobsPerDay,
+    WORKING_DAYS_PER_YEAR:   parseInt($('WORKING_DAYS_PER_YEAR').value),
+    TARGET_MARGIN_PCT:       parseFloat($('TARGET_MARGIN_PCT').value) / 100,
+    OPERATIONAL_EFFICIENCY_DISCOUNT: parseFloat($('OPERATIONAL_EFFICIENCY_DISCOUNT').value) / 100,
+    MIX_50L:                 mix50,
+    MIX_80L:                 mix80,
+    MIX_150L:                mix150,
+    MIX_200L:                mix200,
+    VOLUME_DISCOUNT_MAX_PCT: parseFloat($('VOLUME_DISCOUNT_MAX_PCT').value) / 100,
+    VOLUME_DISCOUNT_CURVE:   parseFloat($('VOLUME_DISCOUNT_CURVE').value),
+    ZONE_Dubai:    zDub,
+    ZONE_Sharjah:  zShj,
+    ZONE_UAQ:      zUaq,
+    ZONE_RAK:      zRak,
+    ZONE_Fujairah: zFuj,
+    ZONE_AlAin:    zAla,
+    ZONE_AbuDhabi: zAbd,
+    _cap: cap,
+  };
+}
+
+/* ============================================================
+   DERIVE PRICING MODEL — cost-up pricing
+   ============================================================
+   1. Total cost (staff util × all-in + OH × alloc) is the truth.
+   2. Cost per job = cost / (jobs/day × days/year).
+   3. Target rate = cost-per-job ÷ (1 − target margin).
+   4. Customer rate = target rate × (1 − operational efficiency discount).
+   5. Despatch is anchored by BASE_DESPATCH × zone ratios × zone mix.
+   6. Labour is the residual: customer rate − blended despatch,
+      then split across unit sizes by LABOUR_SCALE_RATIOS and mix.
+*/
+function derive(v) {
+  // ---- Unit-size mix (300L+ auto-fills remainder; inputs are clamped to ≤100)
+  const mixRaw  = { "Up to 50L": v.MIX_50L, "80L": v.MIX_80L, "100/150L": v.MIX_150L, "200L": v.MIX_200L };
+  const sumRaw  = Object.values(mixRaw).reduce((a,b) => a+b, 0);
+  const mix300  = Math.max(0, 100 - sumRaw);
+  const mix     = { ...mixRaw, "300L+": mix300 };
+  const mixTotal = sumRaw + mix300;
+
+  // ---- Zone mix (Liwa/Ruwais auto-fills remainder; inputs are clamped to ≤100)
   const zoneSumWithoutLiwa = v.ZONE_Dubai + v.ZONE_Sharjah + v.ZONE_UAQ + v.ZONE_RAK +
                               v.ZONE_Fujairah + v.ZONE_AlAin + v.ZONE_AbuDhabi;
-  const zoneLiwa = Math.max(0, 100 - zoneSumWithoutLiwa);
-  const zoneTotal = zoneSumWithoutLiwa + zoneLiwa;   // may be < 100 if sliders over-sum
+  const zoneLiwa  = Math.max(0, 100 - zoneSumWithoutLiwa);
+  const zoneTotal = zoneSumWithoutLiwa + zoneLiwa;  // now always 100 thanks to clamp
 
-  // Each zone's actual despatch fee = BASE_DESPATCH × zone ratio × DESPATCH_MULTIPLIER
-  const zoneFees = {
-    "Dubai":         v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS["Dubai"]         * v.DESPATCH_MULTIPLIER,
-    "Sharjah/Ajman": v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS["Sharjah/Ajman"] * v.DESPATCH_MULTIPLIER,
-    "UAQ":           v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS["UAQ"]           * v.DESPATCH_MULTIPLIER,
-    "RAK":           v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS["RAK"]           * v.DESPATCH_MULTIPLIER,
-    "Fujairah":      v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS["Fujairah"]      * v.DESPATCH_MULTIPLIER,
-    "Al Ain":        v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS["Al Ain"]        * v.DESPATCH_MULTIPLIER,
-    "Abu Dhabi":     v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS["Abu Dhabi"]     * v.DESPATCH_MULTIPLIER,
-    "Liwa/Ruwais":   v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS["Liwa/Ruwais"]   * v.DESPATCH_MULTIPLIER,
-  };
+  const zoneFees = {};
+  for (const [zone, ratio] of Object.entries(ZONE_DESPATCH_RATIOS)) {
+    zoneFees[zone] = v.BASE_DESPATCH * ratio * v.DESPATCH_MULTIPLIER;
+  }
   const zoneShares = {
     "Dubai": v.ZONE_Dubai, "Sharjah/Ajman": v.ZONE_Sharjah, "UAQ": v.ZONE_UAQ,
     "RAK": v.ZONE_RAK, "Fujairah": v.ZONE_Fujairah, "Al Ain": v.ZONE_AlAin,
     "Abu Dhabi": v.ZONE_AbuDhabi, "Liwa/Ruwais": zoneLiwa,
   };
-
-  // Blended despatch = weighted average across all zones by share
   let blendedDespatch = 0;
-  const denom = zoneTotal > 0 ? zoneTotal : 100;
   for (const [zone, share] of Object.entries(zoneShares)) {
-    blendedDespatch += (share / denom) * zoneFees[zone];
+    blendedDespatch += (share / 100) * zoneFees[zone];
   }
-  // blendedDespatch now feeds into unitFullRates below — this is the correct
-  // zone-weighted average that replaced the hardcoded BLENDED_DESPATCH_BASE=880
 
+  // ---- Cost-up rate
+  const staffCost    = calcStaffCost();
+  const overheadCost = calcOverheadCost();
+  const totalCost    = staffCost + overheadCost;
+  const jobsPerYear  = v.JOBS_PER_DAY * v.WORKING_DAYS_PER_YEAR;
+  const costPerJob   = jobsPerYear > 0 ? totalCost / jobsPerYear : 0;
+  const marginDivisor = Math.max(0.01, 1 - v.TARGET_MARGIN_PCT);
+  const targetRate    = costPerJob / marginDivisor;
+  const idealBlended  = targetRate * (1 - v.OPERATIONAL_EFFICIENCY_DISCOUNT);
+
+  // ---- Split blendedAllIn between despatch (anchored) and labour (residual).
+  // If anchored despatch alone exceeds the cost-up target, the customer rate
+  // floor becomes despatch itself (labour = 0) and blendedAllIn rises to match
+  // so rate card and revenue stay coherent.
+  const labourClipped = blendedDespatch > idealBlended;
+  const blendedAllIn  = labourClipped ? blendedDespatch : idealBlended;
+  const blendedLabour = blendedAllIn - blendedDespatch;
+  const labourMixWeight = Object.entries(mix).reduce(
+    (sum, [u, share]) => sum + (share / 100) * LABOUR_SCALE_RATIOS[u], 0);
+  const baseLabour50L = labourMixWeight > 0 ? blendedLabour / labourMixWeight : 0;
+  const labourRates = {};
   const unitFullRates = {};
   for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-    unitFullRates[u] = blendedDespatch + labourRates[u] + v.PARTS_MARGIN_PER_JOB;
+    labourRates[u]   = baseLabour50L * LABOUR_SCALE_RATIOS[u];
+    unitFullRates[u] = blendedDespatch + labourRates[u];
   }
 
-  const stackMultiplier = stackedAvgMultiplier(v.STACK_SIZE, v.STACK_RATE_2ND, v.STACK_RATE_3RD);
-
-  const unitEffectiveRates = {};
-  for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-    unitEffectiveRates[u] = unitFullRates[u] * stackMultiplier;
-  }
-
-  let blendedAllIn = 0;
-  for (const [u, share] of Object.entries(mix)) {
-    blendedAllIn += (share / 100) * unitEffectiveRates[u];
-  }
-
-  const jobsPerYear  = v.JOBS_PER_DAY * v.WORKING_DAYS_PER_YEAR;
+  // ---- P&L
   const revenue      = blendedAllIn * jobsPerYear;
-  const totalCost    = calcTotalCost();
   const profit       = revenue - totalCost;
   const actualMargin = revenue > 0 ? profit / revenue : 0;
-  const dailyRevenue = revenue / v.WORKING_DAYS_PER_YEAR;
+  const dailyRevenue = v.WORKING_DAYS_PER_YEAR > 0 ? revenue / v.WORKING_DAYS_PER_YEAR : 0;
 
   return {
-    mix, mixTotal, labourRates, blendedDespatch, zoneFees, zoneShares, zoneLiwa, zoneTotal,
-    unitFullRates, unitEffectiveRates, stackMultiplier,
-    blendedAllIn, jobsPerYear, revenue, totalCost, profit,
-    actualMargin, dailyRevenue,
-    staffCost: calcStaffCost(),
-    overheadCost: calcOverheadCost(),
+    mix, mixTotal, labourRates, baseLabour50L, blendedDespatch,
+    zoneFees, zoneShares, zoneLiwa, zoneTotal,
+    unitFullRates,
+    blendedAllIn, costPerJob, targetRate, labourClipped,
+    jobsPerYear, revenue, totalCost, profit, actualMargin, dailyRevenue,
+    staffCost, overheadCost,
   };
 }
 
@@ -849,25 +850,36 @@ function derive(v) {
    RENDER: SIDEBAR LABELS
    ============================================================ */
 function updateSidebarLabels(v, d) {
-  $('v_BASE_LABOUR_50L').textContent   = fmtAED(v.BASE_LABOUR_50L);
   $('v_BASE_DESPATCH').textContent     = fmtAED(v.BASE_DESPATCH);
-  $('v_LABOUR_MULTIPLIER').textContent = fmtMul(v.LABOUR_MULTIPLIER) + (v.LABOUR_MULTIPLIER===1?' (base)':v.LABOUR_MULTIPLIER<1?' (disc)':' (prem)');
   $('v_DESPATCH_MULTIPLIER').textContent = fmtMul(v.DESPATCH_MULTIPLIER) + (v.DESPATCH_MULTIPLIER===1?' (base)':'');
-  $('v_PARTS_MARGIN_PER_JOB').textContent = fmtAED(v.PARTS_MARGIN_PER_JOB);
   $('v_COMBINED_MODE').textContent     = v.COMBINED_PRICING ? 'Combined (one price)' : 'Separate (despatch + labour)';
   $('v_JOBS_PER_DAY').textContent      = v.JOBS_PER_DAY + ' / day';
   $('v_WORKING_DAYS_PER_YEAR').textContent = v.WORKING_DAYS_PER_YEAR + ' days';
   $('v_TARGET_MARGIN_PCT').textContent = Math.round(v.TARGET_MARGIN_PCT*100) + '%';
-  $('v_STACK_SIZE').textContent        = v.STACK_SIZE<=1 ? '1 (no stack)' : v.STACK_SIZE+' jobs/stop';
-  $('v_STACK_RATE_2ND').textContent    = Math.round(v.STACK_RATE_2ND*100)+'%';
-  $('v_STACK_RATE_3RD').textContent    = Math.round(v.STACK_RATE_3RD*100)+'%';
+  $('v_OPERATIONAL_EFFICIENCY_DISCOUNT').textContent = Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)+'%';
   $('v_VOLUME_DISCOUNT_MAX_PCT').textContent = Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)+'%';
   const c = v.VOLUME_DISCOUNT_CURVE;
   $('v_VOLUME_DISCOUNT_CURVE').textContent = c.toFixed(1)+(c<1?' (convex)':c>1?' (concave)':' (linear)');
+
+  // Jobs/day cap hint
+  const capEl = $('v_JOBS_PER_DAY_CAP');
+  if (capEl) {
+    const max = v._cap.maxJobsDay;
+    capEl.textContent = max > 0 ? 'cap ' + max.toFixed(1) : 'no field techs';
+  }
+  // Dynamically tighten the slider max so the user can't drag past capacity.
+  // Floor at 1 so the slider stays operable even with zero field techs (the
+  // capacity warning surfaces on the Utilisation tab instead).
+  const jpdEl = $('JOBS_PER_DAY');
+  if (jpdEl) {
+    const snappedCap = Math.floor(v._cap.maxJobsDay * 2) / 2;
+    jpdEl.max = Math.max(1, snappedCap);
+  }
+
   ['MIX_50L','MIX_80L','MIX_150L','MIX_200L'].forEach(k => { $('v_'+k).textContent = v[k]+'%'; });
   $('v_MIX_300L').textContent = d.mix["300L+"]+'%';
 
-  // Zone mix labels + live zone fees (update as BASE_DESPATCH or multiplier changes)
+  // Zone mix labels + live zone fees
   const zoneLabelMap = {
     Dubai:'Dubai', Sharjah:'Sharjah/Ajman', UAQ:'UAQ', RAK:'RAK',
     Fujairah:'Fujairah', AlAin:'Al Ain', AbuDhabi:'Abu Dhabi',
@@ -878,47 +890,29 @@ function updateSidebarLabels(v, d) {
     const feeEl = $('zfee_'+key);
     if (feeEl) feeEl.textContent = 'AED '+Math.round(d.zoneFees[zoneName]||0).toLocaleString();
   }
-  // Liwa auto-balance
   const liwaShareEl = $('vz_Liwa');
   if (liwaShareEl) liwaShareEl.textContent = d.zoneLiwa+'%';
   const liwaFeeEl = $('zfee_Liwa');
   if (liwaFeeEl) liwaFeeEl.textContent = 'AED '+Math.round(d.zoneFees['Liwa/Ruwais']||0).toLocaleString();
 
-  // Zone total badge
+  // Zone total badge — clamped, so always 100 except when all zones are 0
   const zBadge = $('zone-total-badge');
   if (zBadge) {
     zBadge.textContent = d.zoneTotal+'%';
-    zBadge.className = 'tag '+(d.zoneTotal===100?'accent':'');
-    zBadge.style.color = d.zoneTotal===100?'':'var(--red)';
+    zBadge.className = 'tag accent';
   }
-
   // Blended despatch display
   const bdEl = $('blended-despatch-display');
   if (bdEl) bdEl.textContent = 'AED '+Math.round(d.blendedDespatch).toLocaleString();
+
+  // Mix total badge — clamped, so always 100
   const badge = $('mix-total-badge');
   badge.textContent = d.mixTotal+'%';
-  badge.className = 'tag '+(d.mixTotal===100?'accent':'');
-  badge.style.color = d.mixTotal===100?'':'var(--red)';
+  badge.className = 'tag accent';
 
   // Staff + overhead totals in sidebar
   $('staff-total-display').textContent = fmtAED(d.staffCost);
   $('oh-total-display').textContent    = fmtAED(d.overheadCost);
-}
-
-/* ============================================================
-   RENDER: STACK VIZ
-   ============================================================ */
-function updateStackViz(v) {
-  const viz = $('stack-viz'); viz.innerHTML = '';
-  if (v.STACK_SIZE <= 1) { viz.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:4px 0">No stacking — each job at full rate.</div>'; return; }
-  for (let i = 1; i <= v.STACK_SIZE; i++) {
-    let pct = i===1 ? '100%' : i===2 ? Math.round(v.STACK_RATE_2ND*100)+'%' : Math.round(v.STACK_RATE_3RD*100)+'%';
-    let lbl = i===1 ? '1st job' : i===2 ? '2nd job' : i+'rd+';
-    const div = document.createElement('div');
-    div.className = 'stack-stop active';
-    div.innerHTML = `<div class="stop-num">Stop ${i}</div><div class="stop-pct">${pct}</div><div class="stop-label">${lbl}</div>`;
-    viz.appendChild(div);
-  }
 }
 
 /* ============================================================
@@ -933,7 +927,7 @@ function updateOverview(v, d) {
 
   const profitEl = $('kpi-profit');
   profitEl.textContent = fmtAED(d.profit);
-  profitEl.className   = 'metric-value '+(d.profit>0?'green':d.profit>-50000?'amber':'red');
+  profitEl.className   = 'metric-value '+colorForMargin(d.actualMargin);
   $('kpi-margin-pct').textContent = fmtPct(d.actualMargin*100)+' actual margin';
 
   $('ov-staff-cost').textContent = fmtAED(d.staffCost);
@@ -941,13 +935,15 @@ function updateOverview(v, d) {
   $('ov-oh-cost').textContent    = fmtAED(d.overheadCost);
   $('ov-oh-sub').textContent     = fmtPct(d.totalCost>0?d.overheadCost/d.totalCost*100:0)+' of cost base';
   $('ov-blended').textContent    = fmtAED(d.blendedAllIn);
-  $('ov-blended-sub').textContent = v.STACK_SIZE>1 ? 'stack ×'+d.stackMultiplier.toFixed(2)+' applied' : 'no stacking';
+  $('ov-blended-sub').textContent = v.OPERATIONAL_EFFICIENCY_DISCOUNT > 0
+    ? `cost+margin → −${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% efficiency discount`
+    : 'cost+margin (no efficiency discount)';
   $('ov-total-cost-badge').textContent = 'Total cost: '+fmtAED(d.totalCost);
 
   const bar = $('status-bar');
   const m = d.actualMargin;
   bar.textContent = `${v.JOBS_PER_DAY} jobs/day × ${v.WORKING_DAYS_PER_YEAR} days = ${fmtNum(d.jobsPerYear)} jobs/yr. Revenue: ${fmtAED(d.revenue)}. Cost base: ${fmtAED(d.totalCost)} (staff: ${fmtAED(d.staffCost)} + OH: ${fmtAED(d.overheadCost)}). Profit: ${fmtAED(d.profit)} (${fmtPct(m*100)} margin).`;
-  bar.className = 'status-bar '+(m>=0.25?'ok':m>=0.05?'warn':'bad');
+  bar.className = 'status-bar '+(m>=MARGIN_GREEN_THRESHOLD?'ok':m>=MARGIN_AMBER_THRESHOLD?'warn':'bad');
 
   const tbody = $('ov-cost-breakdown');
   tbody.innerHTML = '';
@@ -975,12 +971,13 @@ function updateOverview(v, d) {
    RENDER: UTILISATION TAB
    ============================================================ */
 function updateUtilisation(v, d) {
-  const activeStaff   = STAFF_ROSTER.filter(s => s.on);
-  const fieldTechs    = activeStaff.filter(s => FIELD_TECH_IDS.includes(s.id));
-  const teamsCount    = Math.floor(fieldTechs.length / 2);
-  const maxJobsDay    = teamsCount * JOBS_PER_FIELD_TECH_PER_DAY * 2;
-  const utilMatch     = v.JOBS_PER_DAY <= maxJobsDay;
-  const avgUtil       = activeStaff.length > 0 ? activeStaff.reduce((sum,s) => sum + s.util, 0) / activeStaff.length : 0;
+  const activeStaff = STAFF_ROSTER.filter(s => s.on);
+  const fieldTechs  = activeStaff.filter(s => FIELD_TECH_IDS.includes(s.id));
+  const teamsCount  = v._cap.teamsCount;
+  const maxJobsDay  = v._cap.maxJobsDay;
+  const utilMatch   = v.JOBS_PER_DAY <= maxJobsDay + 1e-6;
+  const avgUtil     = activeStaff.length > 0 ? activeStaff.reduce((sum,s) => sum + s.util, 0) / activeStaff.length : 0;
+  const fmtCap      = n => (Math.round(n*10)/10).toLocaleString();
 
   $('util-headcount').textContent = activeStaff.length;
   $('util-teams').textContent     = teamsCount + ' team' + (teamsCount!==1?'s':'');
@@ -990,13 +987,13 @@ function updateUtilisation(v, d) {
   const matchEl = $('util-capacity-match');
   matchEl.textContent = utilMatch ? '✓ Covered' : '⚠ Over capacity';
   matchEl.className   = 'metric-value '+(utilMatch?'green':'red');
-  $('util-capacity-sub').textContent = `${teamsCount} team${teamsCount!==1?'s':''} = max ${maxJobsDay} jobs/day`;
+  $('util-capacity-sub').textContent = `${fieldTechs.length} field tech${fieldTechs.length!==1?'s':''} × ${JOBS_PER_FIELD_TECH_PER_DAY} jobs/day = max ${fmtCap(maxJobsDay)} jobs/day`;
   $('util-badge').textContent        = activeStaff.length+' active';
 
   const uBar = $('util-status');
   uBar.textContent  = utilMatch
-    ? `${teamsCount} team${teamsCount!==1?'s':''} (${fieldTechs.length} field techs) support ${maxJobsDay} jobs/day — your setting of ${v.JOBS_PER_DAY} jobs/day is within capacity.`
-    : `⚠ ${v.JOBS_PER_DAY} jobs/day exceeds team capacity of ${maxJobsDay} jobs/day (${teamsCount} teams of 2). Add field staff or reduce jobs/day.`;
+    ? `${fieldTechs.length} field tech${fieldTechs.length!==1?'s':''} at current util support ${fmtCap(maxJobsDay)} jobs/day — your setting of ${v.JOBS_PER_DAY} jobs/day is within capacity.`
+    : `⚠ ${v.JOBS_PER_DAY} jobs/day exceeds team capacity of ${fmtCap(maxJobsDay)} jobs/day. Raise field-tech utilisation, add staff, or reduce jobs/day.`;
   uBar.className    = 'status-bar '+(utilMatch?'ok':'bad');
 
   const tbody = $('util-table-body');
@@ -1021,17 +1018,19 @@ function updateUtilisation(v, d) {
 
   const d2body = $('util-demand-body');
   d2body.innerHTML = '';
+  // Required field techs at 100% util to support current jobs/day
+  const requiredTechs = Math.ceil(v.JOBS_PER_DAY / JOBS_PER_FIELD_TECH_PER_DAY);
   const demandRows = [
     { label:'Jobs per day', current: v.JOBS_PER_DAY, max: maxJobsDay },
     { label:'Jobs per year', current: d.jobsPerYear, max: maxJobsDay * v.WORKING_DAYS_PER_YEAR },
     { label:'Revenue', current: d.revenue, max: d.blendedAllIn * maxJobsDay * v.WORKING_DAYS_PER_YEAR, isMoney: true },
-    { label:'Field techs', current: fieldTechs.length, max: Math.max(fieldTechs.length, Math.ceil(v.JOBS_PER_DAY*2)) },
+    { label:'Field techs at 100% util', current: fieldTechs.length, max: requiredTechs },
   ];
   demandRows.forEach(r => {
     const gap = r.current - r.max;
     const tr  = document.createElement('tr');
     const fmt = r.isMoney ? fmtAED : fmtNum;
-    const gapCls = gap > 0 ? 'red' : 'green';
+    const gapCls = gap < 0 ? 'red' : 'green';
     tr.innerHTML = `<td class="bold">${r.label}</td><td class="r accent">${fmt(r.current)}</td><td class="r">${fmt(r.max)}</td><td class="r ${gapCls}">${gap===0?'—':(gap>0?'+':'')+fmt(gap)}</td>`;
     d2body.appendChild(tr);
   });
@@ -1041,51 +1040,38 @@ function updateUtilisation(v, d) {
    RENDER: RATE CARD TAB
    ============================================================ */
 function updateRateCard(v, d) {
-  $('rc-mode-badge').textContent       = v.COMBINED_PRICING ? 'Combined mode' : 'Separate mode';
-  $('rc-multiplier-badge').textContent = 'L '+fmtMul(v.LABOUR_MULTIPLIER)+' / D '+fmtMul(v.DESPATCH_MULTIPLIER);
+  $('rc-mode-badge').textContent = v.COMBINED_PRICING ? 'Combined mode' : 'Separate mode';
+  const derivedBadge = $('rc-derived-badge');
+  if (derivedBadge) {
+    derivedBadge.textContent = d.labourClipped
+      ? '⚠ despatch > cost-up rate'
+      : `cost+${Math.round(v.TARGET_MARGIN_PCT*100)}% margin − ${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% eff`;
+  }
   const thead = $('rate-card-head'), tbody = $('rate-card-body');
 
   if (v.COMBINED_PRICING) {
-    thead.innerHTML = `<tr><th>Unit size</th><th class="r">Combined price</th><th class="r">inc-VAT</th><th class="r">2nd job (${Math.round(v.STACK_RATE_2ND*100)}%)</th><th class="r">3rd+ job (${Math.round(v.STACK_RATE_3RD*100)}%)</th></tr>`;
+    thead.innerHTML = `<tr><th>Unit size</th><th class="r">Combined rate</th><th class="r">inc-VAT</th><th class="r">Mix %</th></tr>`;
     tbody.innerHTML = '';
     for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
       const full = d.unitFullRates[u];
+      const share = d.mix[u] || 0;
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="bold">${u}</td><td class="r bold accent">${fmtNum(full)}</td><td class="r blue">${fmtNum(Math.round(full*(1+VAT_RATE)))}</td><td class="r muted">${fmtNum(Math.round(full*v.STACK_RATE_2ND))}</td><td class="r muted">${fmtNum(Math.round(full*v.STACK_RATE_3RD))}</td>`;
+      tr.innerHTML = `<td class="bold">${u}</td><td class="r bold accent">${fmtNum(full)}</td><td class="r blue">${fmtNum(Math.round(full*(1+VAT_RATE)))}</td><td class="r">${share}%</td>`;
       tbody.appendChild(tr);
     }
   } else {
-    thead.innerHTML = `<tr><th>Unit size</th><th class="r">Despatch (base)</th><th class="r">Despatch (×${fmtMul(v.DESPATCH_MULTIPLIER)})</th><th class="r">Labour (base)</th><th class="r">Labour (×${fmtMul(v.LABOUR_MULTIPLIER)})</th><th class="r">Total ex-VAT</th><th class="r">Total inc-VAT</th></tr>`;
+    thead.innerHTML = `<tr><th>Unit size</th><th class="r">Despatch (blended)</th><th class="r">Labour (derived)</th><th class="r">Total ex-VAT</th><th class="r">Total inc-VAT</th><th class="r">Mix %</th></tr>`;
     tbody.innerHTML = '';
     for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-      const baseD = v.BASE_DESPATCH, adjD = Math.round(d.blendedDespatch);
-      const baseL = Math.round(v.BASE_LABOUR_50L * LABOUR_SCALE_RATIOS[u]);
+      const adjD  = Math.round(d.blendedDespatch);
       const adjL  = Math.round(d.labourRates[u]);
       const total = adjD + adjL;
+      const share = d.mix[u] || 0;
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="bold">${u}</td><td class="r muted">${fmtNum(baseD)}</td><td class="r ${adjD!==baseD?'accent':''}">${fmtNum(adjD)}</td><td class="r muted">${fmtNum(baseL)}</td><td class="r ${adjL!==baseL?'accent':''}">${fmtNum(adjL)}</td><td class="r bold">${fmtNum(total)}</td><td class="r blue">${fmtNum(Math.round(total*(1+VAT_RATE)))}</td>`;
+      tr.innerHTML = `<td class="bold">${u}</td><td class="r accent">${fmtNum(adjD)}</td><td class="r accent">${fmtNum(adjL)}</td><td class="r bold">${fmtNum(total)}</td><td class="r blue">${fmtNum(Math.round(total*(1+VAT_RATE)))}</td><td class="r">${share}%</td>`;
       tbody.appendChild(tr);
     }
   }
-
-  // Stack table
-  $('stack-badge').textContent = v.STACK_SIZE+' job'+(v.STACK_SIZE>1?'s':'')+'/stop';
-  const stbody = $('stack-body'); stbody.innerHTML = '';
-  const u50 = d.unitFullRates["Up to 50L"], u80 = d.unitFullRates["80L"], u200 = d.unitFullRates["200L"];
-  for (let i = 1; i <= Math.max(v.STACK_SIZE, 3); i++) {
-    const rate = i===1 ? 1.0 : i===2 ? v.STACK_RATE_2ND : v.STACK_RATE_3RD;
-    const lbl  = i===1 ? '1st job — full rate' : i===2 ? '2nd job' : '3rd+ job';
-    const cls  = i===1 ? 'stack-row-1' : i===2 ? 'stack-row-2' : 'stack-row-3';
-    const isActive = i <= v.STACK_SIZE;
-    const tr = document.createElement('tr');
-    tr.className = isActive ? cls : '';
-    const note = isActive ? '' : ' <span style="color:var(--text3);font-size:10px">(not in stack)</span>';
-    tr.innerHTML = `<td class="${isActive?'bold':'muted'}">${lbl}${note}</td><td class="r ${isActive?'accent':'muted'}">${Math.round(rate*100)}%</td><td class="r">${isActive?fmtNum(u50*rate):'—'}</td><td class="r">${isActive?fmtNum(u80*rate):'—'}</td><td class="r">${isActive?fmtNum(u200*rate):'—'}</td><td class="r ${isActive?'green':'muted'}">${isActive?(rate<1?'-'+Math.round((1-rate)*100)+'% vs full':'full rate'):'—'}</td>`;
-    stbody.appendChild(tr);
-  }
-  const avgRow = document.createElement('tr'); avgRow.className = 'highlight';
-  avgRow.innerHTML = `<td class="bold">Effective average (stack of ${v.STACK_SIZE})</td><td class="r accent">${Math.round(d.stackMultiplier*100)}%</td><td class="r accent">${fmtNum(u50*d.stackMultiplier)}</td><td class="r accent">${fmtNum(u80*d.stackMultiplier)}</td><td class="r accent">${fmtNum(u200*d.stackMultiplier)}</td><td class="r green">${v.STACK_SIZE>1?'-'+Math.round((1-d.stackMultiplier)*100)+'% vs full':'no discount'}</td>`;
-  stbody.appendChild(avgRow);
 
   // Mix table
   $('jobs-yr-badge').textContent = fmtNum(d.jobsPerYear)+' jobs/yr';
@@ -1093,19 +1079,19 @@ function updateRateCard(v, d) {
   let totalRev = 0;
   const rows = [];
   for (const [u, share] of Object.entries(d.mix)) {
-    const effRate  = d.unitEffectiveRates[u];
+    const rate     = d.unitFullRates[u];
     const jobsUnit = (share/100) * d.jobsPerYear;
-    const rev      = effRate * jobsUnit;
+    const rev      = rate * jobsUnit;
     totalRev += rev;
-    rows.push({ u, full: d.unitFullRates[u], eff: effRate, share, jobsUnit, rev });
+    rows.push({ u, rate, share, jobsUnit, rev });
   }
   rows.forEach(r => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="bold">${r.u}</td><td class="r muted">${fmtNum(r.full)}</td><td class="r accent">${fmtNum(r.eff)}</td><td class="r">${r.share}%</td><td class="r">${fmtNum(r.jobsUnit)}</td><td class="r">${fmtAED(r.rev)}</td>`;
+    tr.innerHTML = `<td class="bold">${r.u}</td><td class="r accent">${fmtNum(r.rate)}</td><td class="r">${r.share}%</td><td class="r">${fmtNum(r.jobsUnit)}</td><td class="r">${fmtAED(r.rev)}</td>`;
     mtbody.appendChild(tr);
   });
   const totRow = document.createElement('tr'); totRow.className = 'highlight';
-  totRow.innerHTML = `<td class="bold">Total / blended</td><td class="r muted">—</td><td class="r accent">${fmtAED(d.blendedAllIn)}</td><td class="r">100%</td><td class="r bold">${fmtNum(d.jobsPerYear)}</td><td class="r bold accent">${fmtAED(totalRev)}</td>`;
+  totRow.innerHTML = `<td class="bold">Total / blended</td><td class="r accent">${fmtAED(d.blendedAllIn)}</td><td class="r">100%</td><td class="r bold">${fmtNum(d.jobsPerYear)}</td><td class="r bold accent">${fmtAED(totalRev)}</td>`;
   mtbody.appendChild(totRow);
 }
 
@@ -1115,7 +1101,7 @@ function updateRateCard(v, d) {
 function updateVolumeQuotes(v, d) {
   $('disc-badge').textContent = 'max '+Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)+'% discount';
   const vs = $('vol-status');
-  vs.textContent = `Base rate for volume quotes: ${fmtAED(d.blendedAllIn)}/unit (stacking + mix adjusted). Discounts applied on a ${v.VOLUME_DISCOUNT_CURVE<1?'convex (slow start, steep end)':v.VOLUME_DISCOUNT_CURVE>1?'concave (fast start, flattens)':'linear'} curve up to ${Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)}% at ${fmtNum(Math.max(...VOLUME_TIERS))} units.`;
+  vs.textContent = `Base rate for volume quotes: ${fmtAED(d.blendedAllIn)}/unit (cost-up + mix). Discounts applied on a ${v.VOLUME_DISCOUNT_CURVE<1?'convex (slow start, steep end)':v.VOLUME_DISCOUNT_CURVE>1?'concave (fast start, flattens)':'linear'} curve up to ${Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)}% at ${fmtNum(Math.max(...VOLUME_TIERS))} units. Margin column treats staff as variable and overheads as fixed.`;
   vs.className = 'status-bar info';
   const container = $('vol-tiers-body'); container.innerHTML = '';
   const maxVol = Math.max(...VOLUME_TIERS);
@@ -1126,8 +1112,14 @@ function updateVolumeQuotes(v, d) {
     const adjRate     = d.blendedAllIn * (1-discFrac);
     const totalEx     = adjRate * vol;
     const totalInc    = totalEx * (1+VAT_RATE);
-    const adjMargin   = d.totalCost>0 ? (totalEx - d.totalCost*(vol/d.jobsPerYear)) / totalEx : 0;
-    const mCol        = colorForMargin(adjMargin);
+    // Variable cost only (staff scales with volume; overheads are fixed and
+    // already absorbed by the rest of the year). Avoids attributing the full
+    // fixed cost base to a one-shot wholesale batch.
+    const volFrac      = d.jobsPerYear > 0 ? vol / d.jobsPerYear : 0;
+    const variableCost = d.staffCost * STAFF_COST_VARIABILITY +
+                          d.overheadCost * OVERHEAD_COST_VARIABILITY;
+    const adjMargin    = totalEx > 0 ? (totalEx - variableCost * volFrac) / totalEx : 0;
+    const mCol         = colorForMargin(adjMargin);
     const row = document.createElement('div'); row.className = 'vol-row';
     row.innerHTML = `<span class="bold">${fmtNum(vol)} units</span><span class="highlight">${fmtAED(adjRate)}</span><span class="${discPct>0?'disc':''}">${discPct>0?'-'+discPct+'%':'—'}</span><span class="right bold">${fmtAED(totalEx)}</span><span class="right">${fmtAED(totalInc)}</span><span class="${mCol} right">${fmtPct(adjMargin*100)}</span>`;
     container.appendChild(row);
@@ -1140,12 +1132,8 @@ function updateVolumeQuotes(v, d) {
 function updatePnL(v, d) {
   $('pnl-cost-badge').textContent = 'Cost base: '+fmtAED(d.totalCost);
   const tbody = $('pnl-body'); tbody.innerHTML = '';
-  const labourDesRev = (d.blendedAllIn - v.PARTS_MARGIN_PER_JOB) * d.jobsPerYear;
-  const partsRev     = v.PARTS_MARGIN_PER_JOB * d.jobsPerYear;
   const rows = [
-    { label:'Labour + despatch revenue', val: labourDesRev, color:'' },
-    { label:'Parts margin revenue',      val: partsRev,     color:'' },
-    { label:'Total revenue',             val: d.revenue,    color:'blue',   bold:true },
+    { label:'Service revenue',           val: d.revenue,    color:'blue',   bold:true },
     { label:'Staff cost',                val: -d.staffCost, color:'purple', bold:false },
     { label:'Overhead cost',             val: -d.overheadCost, color:'amber', bold:false },
     { label:'Total cost base',           val: -d.totalCost, color:'',       bold:true },
@@ -1171,12 +1159,13 @@ function updatePnL(v, d) {
     { label:'30% margin',                  rev: d.totalCost/(1-0.30) },
     { label:'Target: '+Math.round(v.TARGET_MARGIN_PCT*100)+'% margin', rev: d.totalCost/(1-v.TARGET_MARGIN_PCT) },
   ];
+  const capJobsPerDay = v._cap.maxJobsDay;
   beScenarios.forEach(sc => {
-    const jobsNeeded  = d.blendedAllIn>0 ? sc.rev/d.blendedAllIn : 0;
-    const daysNeeded  = jobsNeeded / v.WORKING_DAYS_PER_YEAR;
-    const feasible    = daysNeeded <= 8;
+    const jobsNeeded       = d.blendedAllIn>0 ? sc.rev/d.blendedAllIn : 0;
+    const jobsPerDayNeeded = v.WORKING_DAYS_PER_YEAR>0 ? jobsNeeded / v.WORKING_DAYS_PER_YEAR : 0;
+    const withinCap        = jobsPerDayNeeded <= capJobsPerDay + 1e-6;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="bold">${sc.label}</td><td class="r accent">${fmtAED(sc.rev)}</td><td class="r">${fmtNum(jobsNeeded)}</td><td class="r ${daysNeeded<=v.JOBS_PER_DAY?'green':daysNeeded<=6?'amber':'red'}">${daysNeeded.toFixed(1)}/day</td><td class="r ${feasible?daysNeeded<=v.JOBS_PER_DAY?'green':'amber':'red'}">${daysNeeded<=v.JOBS_PER_DAY?'✓ Within capacity':'⚠ Needs more volume'}</td>`;
+    tr.innerHTML = `<td class="bold">${sc.label}</td><td class="r accent">${fmtAED(sc.rev)}</td><td class="r">${fmtNum(jobsNeeded)}</td><td class="r ${withinCap?'green':'red'}">${jobsPerDayNeeded.toFixed(1)}/day</td><td class="r ${withinCap?'green':'red'}">${withinCap?'✓ Within capacity':'⚠ Exceeds capacity'}</td>`;
     b2body.appendChild(tr);
   });
 }
@@ -1196,7 +1185,7 @@ function updateZoneTable(v, d) {
     const baseFee  = Math.round(v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS[zone]);
     const adjFee   = Math.round(d.zoneFees[zone]);
     const share    = d.zoneShares[zone] || 0;
-    const weighted = (share / (d.zoneTotal||100)) * adjFee;
+    const weighted = (share / 100) * adjFee;
     const isAnchor = zone === 'Dubai';
     const tr = document.createElement('tr');
     if (isAnchor) tr.className = 'highlight';
@@ -1248,7 +1237,6 @@ function recalc() {
   const v = readInputs();
   const d = derive(v);
   updateSidebarLabels(v, d);
-  updateStackViz(v);
   updateOverview(v, d);
   updateUtilisation(v, d);
   updateRateCard(v, d);
@@ -1262,9 +1250,9 @@ function recalc() {
    EVENT LISTENERS
    ============================================================ */
 const ALL_SLIDER_IDS = [
-  'BASE_LABOUR_50L','BASE_DESPATCH','LABOUR_MULTIPLIER','DESPATCH_MULTIPLIER',
-  'PARTS_MARGIN_PER_JOB','JOBS_PER_DAY','WORKING_DAYS_PER_YEAR','TARGET_MARGIN_PCT',
-  'STACK_SIZE','STACK_RATE_2ND','STACK_RATE_3RD',
+  'BASE_DESPATCH','DESPATCH_MULTIPLIER',
+  'JOBS_PER_DAY','WORKING_DAYS_PER_YEAR','TARGET_MARGIN_PCT',
+  'OPERATIONAL_EFFICIENCY_DISCOUNT',
   'MIX_50L','MIX_80L','MIX_150L','MIX_200L',
   'VOLUME_DISCOUNT_MAX_PCT','VOLUME_DISCOUNT_CURVE',
   'ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi',
