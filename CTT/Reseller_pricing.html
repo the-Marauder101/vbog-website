@@ -98,28 +98,28 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .zone-fee  { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: right; white-space: nowrap; }
 
 /* STAFF ROWS */
-.staff-row { display: grid; grid-template-columns: 1fr 82px 105px 84px; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; background: var(--bg2); transition: border-color var(--transition); }
+.staff-row { display: grid; grid-template-columns: 1fr 90px 80px 90px; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; background: var(--bg2); transition: border-color var(--transition); }
 .staff-row:hover { border-color: var(--border2); }
 .staff-row.inactive { opacity: 0.45; }
 .staff-name { font-size: 12px; font-weight: 500; color: var(--text); }
 .staff-role { font-size: 10px; color: var(--text3); margin-top: 1px; }
 .staff-cost { font-family: var(--mono); font-size: 11px; color: var(--text2); }
-.staff-util-wrap { display: flex; align-items: center; gap: 4px; min-width: 0; }
-.staff-util-wrap input[type=range] { flex: 1; min-width: 0; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
+.staff-util-wrap { display: flex; align-items: center; gap: 4px; }
+.staff-util-wrap input[type=range] { flex: 1; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
 .staff-util-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--purple); cursor: pointer; }
-.staff-util-pct { font-family: var(--mono); font-size: 10px; color: var(--purple); width: 38px; text-align: right; flex-shrink: 0; }
+.staff-util-pct { font-family: var(--mono); font-size: 10px; color: var(--purple); width: 32px; text-align: right; flex-shrink: 0; }
 .staff-toggle { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
 .staff-alloc { font-family: var(--mono); font-size: 11px; color: var(--green); text-align: right; }
 
 /* OVERHEAD ROWS */
-.oh-row { display: grid; grid-template-columns: 1fr 74px 100px 82px; gap: 6px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.oh-row { display: grid; grid-template-columns: 1fr 80px 80px 80px; gap: 6px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .oh-row:last-child { border-bottom: none; }
 .oh-name { font-size: 11px; color: var(--text2); }
 .oh-amount { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: right; }
-.oh-alloc-wrap { display: flex; align-items: center; gap: 3px; min-width: 0; }
-.oh-alloc-wrap input[type=range] { flex: 1; min-width: 0; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
+.oh-alloc-wrap { display: flex; align-items: center; gap: 3px; }
+.oh-alloc-wrap input[type=range] { flex: 1; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
 .oh-alloc-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--amber); cursor: pointer; }
-.oh-pct { font-family: var(--mono); font-size: 10px; color: var(--amber); width: 34px; text-align: right; flex-shrink: 0; }
+.oh-pct { font-family: var(--mono); font-size: 10px; color: var(--amber); width: 28px; text-align: right; flex-shrink: 0; }
 .oh-cost { font-family: var(--mono); font-size: 11px; color: var(--green); text-align: right; }
 
 /* STACK VIZ */
@@ -298,7 +298,7 @@ tr.cost-total td.purple { color: var(--purple); }
   <div id="stab-staff" class="tab-panel">
     <div class="info-note" style="margin-bottom:16px">All-in annual cost per person from the cost model (salary + housing + visa + gratuity + leave). Adjust utilisation % to set how much of each person's time is allocated to the reseller unit. Toggle off to exclude.</div>
 
-    <div style="display:grid;grid-template-columns:1fr 82px 105px 84px;gap:8px;padding:4px 10px;margin-bottom:6px">
+    <div style="display:grid;grid-template-columns:1fr 90px 80px 90px;gap:8px;padding:4px 10px;margin-bottom:6px">
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">Person / Role</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">All-in / yr</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:center">Util %</span>
@@ -316,7 +316,7 @@ tr.cost-total td.purple { color: var(--purple); }
   <div id="stab-overheads" class="tab-panel">
     <div class="info-note" style="margin-bottom:16px">TB 2025 actuals. Adjust allocation % to assign each overhead to the reseller unit. Based on the same methodology as the Atlantic calculator.</div>
 
-    <div style="display:grid;grid-template-columns:1fr 74px 100px 82px;gap:6px;padding:4px 10px;margin-bottom:4px">
+    <div style="display:grid;grid-template-columns:1fr 80px 80px 80px;gap:6px;padding:4px 10px;margin-bottom:4px">
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">Overhead item</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:right">TB (AED)</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:center">Alloc %</span>
@@ -415,7 +415,7 @@ tr.cost-total td.purple { color: var(--purple); }
     <div class="table-wrap">
       <div class="table-head"><span class="table-title">Revenue build — by job type</span><span class="tag blue" id="jobs-yr-badge">— jobs/yr</span></div>
       <table>
-        <thead><tr><th>Unit type</th><th class="r">Full rate / job</th><th class="r">Stacked avg</th><th class="r">Mix %</th><th class="r">Jobs / yr</th><th class="r">Revenue contrib</th></tr></thead>
+        <thead><tr><th>Unit type</th><th class="r">Customer rate</th><th class="r">Effective (stacked)</th><th class="r">Mix %</th><th class="r">Jobs / yr</th><th class="r">Revenue (incl. parts)</th></tr></thead>
         <tbody id="mix-body"></tbody>
       </table>
     </div>
@@ -811,9 +811,17 @@ function derive(v) {
   // blendedDespatch now feeds into unitFullRates below — this is the correct
   // zone-weighted average that replaced the hardcoded BLENDED_DESPATCH_BASE=880
 
+  // unitFullRates = what goes into the REVENUE MODEL (includes parts margin)
   const unitFullRates = {};
   for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
     unitFullRates[u] = blendedDespatch + labourRates[u] + v.PARTS_MARGIN_PER_JOB;
+  }
+
+  // unitCustomerRates = what appears on the CUSTOMER RATE CARD (despatch + labour only, no parts)
+  // Parts are always quoted separately — never shown on the customer-facing price
+  const unitCustomerRates = {};
+  for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
+    unitCustomerRates[u] = blendedDespatch + labourRates[u];
   }
 
   const stackMultiplier = stackedAvgMultiplier(v.STACK_SIZE, v.STACK_RATE_2ND, v.STACK_RATE_3RD);
@@ -837,7 +845,7 @@ function derive(v) {
 
   return {
     mix, mixTotal, labourRates, blendedDespatch, zoneFees, zoneShares, zoneLiwa, zoneTotal,
-    unitFullRates, unitEffectiveRates, stackMultiplier,
+    unitFullRates, unitCustomerRates, unitEffectiveRates, stackMultiplier,
     blendedAllIn, jobsPerYear, revenue, totalCost, profit,
     actualMargin, dailyRevenue,
     staffCost: calcStaffCost(),
@@ -978,9 +986,15 @@ function updateUtilisation(v, d) {
   const activeStaff   = STAFF_ROSTER.filter(s => s.on);
   const fieldTechs    = activeStaff.filter(s => FIELD_TECH_IDS.includes(s.id));
   const teamsCount    = Math.floor(fieldTechs.length / 2);
-  const maxJobsDay    = teamsCount * JOBS_PER_FIELD_TECH_PER_DAY * 2;
+  // Effective capacity accounts for each field tech's utilisation %
+  const effectiveFieldCapacity = fieldTechs.reduce((sum,s) => sum + (s.util/100) * JOBS_PER_FIELD_TECH_PER_DAY, 0);
+  const maxJobsDay    = Math.round(effectiveFieldCapacity * 10) / 10;  // rounded to 1dp
   const utilMatch     = v.JOBS_PER_DAY <= maxJobsDay;
-  const avgUtil       = activeStaff.length > 0 ? activeStaff.reduce((sum,s) => sum + s.util, 0) / activeStaff.length : 0;
+  // Cost-weighted average utilisation (matches sidebar label)
+  const totalAllIn    = activeStaff.reduce((sum,s) => sum + s.allIn, 0);
+  const avgUtil       = totalAllIn > 0
+    ? activeStaff.reduce((sum,s) => sum + s.util * s.allIn, 0) / totalAllIn
+    : 0;
 
   $('util-headcount').textContent = activeStaff.length;
   $('util-teams').textContent     = teamsCount + ' team' + (teamsCount!==1?'s':'');
@@ -990,7 +1004,7 @@ function updateUtilisation(v, d) {
   const matchEl = $('util-capacity-match');
   matchEl.textContent = utilMatch ? '✓ Covered' : '⚠ Over capacity';
   matchEl.className   = 'metric-value '+(utilMatch?'green':'red');
-  $('util-capacity-sub').textContent = `${teamsCount} team${teamsCount!==1?'s':''} = max ${maxJobsDay} jobs/day`;
+  $('util-capacity-sub').textContent = `${teamsCount} team${teamsCount!==1?'s':''} = ${maxJobsDay.toFixed(1)} jobs/day (util-adjusted)`;
   $('util-badge').textContent        = activeStaff.length+' active';
 
   const uBar = $('util-status');
@@ -1046,24 +1060,63 @@ function updateRateCard(v, d) {
   const thead = $('rate-card-head'), tbody = $('rate-card-body');
 
   if (v.COMBINED_PRICING) {
-    thead.innerHTML = `<tr><th>Unit size</th><th class="r">Combined price</th><th class="r">inc-VAT</th><th class="r">2nd job (${Math.round(v.STACK_RATE_2ND*100)}%)</th><th class="r">3rd+ job (${Math.round(v.STACK_RATE_3RD*100)}%)</th></tr>`;
+    // Combined mode — single customer price = despatch + labour (no parts)
+    thead.innerHTML = `<tr>
+      <th>Unit size</th>
+      <th class="r">Price ex-VAT</th>
+      <th class="r">Price inc-VAT</th>
+      <th class="r">2nd job (${Math.round(v.STACK_RATE_2ND*100)}%)</th>
+      <th class="r">3rd+ job (${Math.round(v.STACK_RATE_3RD*100)}%)</th>
+      <th class="r">Note</th>
+    </tr>`;
     tbody.innerHTML = '';
     for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-      const full = d.unitFullRates[u];
+      const cust = d.unitCustomerRates[u];   // despatch + labour only
+      const custV = Math.round(cust * (1 + VAT_RATE));
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="bold">${u}</td><td class="r bold accent">${fmtNum(full)}</td><td class="r blue">${fmtNum(Math.round(full*(1+VAT_RATE)))}</td><td class="r muted">${fmtNum(Math.round(full*v.STACK_RATE_2ND))}</td><td class="r muted">${fmtNum(Math.round(full*v.STACK_RATE_3RD))}</td>`;
+      tr.innerHTML = `
+        <td class="bold">${u}</td>
+        <td class="r bold accent">${fmtNum(Math.round(cust))}</td>
+        <td class="r blue">${fmtNum(custV)}</td>
+        <td class="r muted">${fmtNum(Math.round(cust*v.STACK_RATE_2ND))}</td>
+        <td class="r muted">${fmtNum(Math.round(cust*v.STACK_RATE_3RD))}</td>
+        <td class="r muted" style="font-size:11px">+parts sep.</td>
+      `;
       tbody.appendChild(tr);
     }
   } else {
-    thead.innerHTML = `<tr><th>Unit size</th><th class="r">Despatch (base)</th><th class="r">Despatch (×${fmtMul(v.DESPATCH_MULTIPLIER)})</th><th class="r">Labour (base)</th><th class="r">Labour (×${fmtMul(v.LABOUR_MULTIPLIER)})</th><th class="r">Total ex-VAT</th><th class="r">Total inc-VAT</th></tr>`;
+    // Separate mode — show blended despatch + labour, NO parts (customer-facing)
+    // 'Base' = at multiplier 1.0 | 'Adjusted' = at current multiplier
+    const blendedDespBase = d.blendedDespatch / v.DESPATCH_MULTIPLIER;  // reverse-calc base
+    thead.innerHTML = `<tr>
+      <th>Unit size</th>
+      <th class="r">Blended despatch</th>
+      <th class="r">Desp ×${fmtMul(v.DESPATCH_MULTIPLIER)}</th>
+      <th class="r">Labour (base)</th>
+      <th class="r">Labour ×${fmtMul(v.LABOUR_MULTIPLIER)}</th>
+      <th class="r">Total ex-VAT</th>
+      <th class="r">Total inc-VAT</th>
+      <th class="r">Note</th>
+    </tr>`;
     tbody.innerHTML = '';
     for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-      const baseD = v.BASE_DESPATCH, adjD = Math.round(d.blendedDespatch);
-      const baseL = Math.round(v.BASE_LABOUR_50L * LABOUR_SCALE_RATIOS[u]);
-      const adjL  = Math.round(d.labourRates[u]);
-      const total = adjD + adjL;
+      const despBase = Math.round(blendedDespBase);
+      const despAdj  = Math.round(d.blendedDespatch);
+      const labBase  = Math.round(v.BASE_LABOUR_50L * LABOUR_SCALE_RATIOS[u]);
+      const labAdj   = Math.round(d.labourRates[u]);
+      const total    = despAdj + labAdj;   // customer price = despatch + labour (no parts)
+      const totalV   = Math.round(total * (1 + VAT_RATE));
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="bold">${u}</td><td class="r muted">${fmtNum(baseD)}</td><td class="r ${adjD!==baseD?'accent':''}">${fmtNum(adjD)}</td><td class="r muted">${fmtNum(baseL)}</td><td class="r ${adjL!==baseL?'accent':''}">${fmtNum(adjL)}</td><td class="r bold">${fmtNum(total)}</td><td class="r blue">${fmtNum(Math.round(total*(1+VAT_RATE)))}</td>`;
+      tr.innerHTML = `
+        <td class="bold">${u}</td>
+        <td class="r ${v.DESPATCH_MULTIPLIER!==1?'accent':'muted'}">${fmtNum(despAdj)}</td>
+        <td class="r ${v.DESPATCH_MULTIPLIER!==1?'accent':'muted'}">${fmtNum(despAdj)}</td>
+        <td class="r muted">${fmtNum(labBase)}</td>
+        <td class="r ${v.LABOUR_MULTIPLIER!==1?'accent':''}">${fmtNum(labAdj)}</td>
+        <td class="r bold">${fmtNum(total)}</td>
+        <td class="r blue">${fmtNum(totalV)}</td>
+        <td class="r muted" style="font-size:11px">+parts sep.</td>
+      `;
       tbody.appendChild(tr);
     }
   }
@@ -1071,7 +1124,8 @@ function updateRateCard(v, d) {
   // Stack table
   $('stack-badge').textContent = v.STACK_SIZE+' job'+(v.STACK_SIZE>1?'s':'')+'/stop';
   const stbody = $('stack-body'); stbody.innerHTML = '';
-  const u50 = d.unitFullRates["Up to 50L"], u80 = d.unitFullRates["80L"], u200 = d.unitFullRates["200L"];
+  // Use customer rates (no parts) for the stacking examples — these are what you quote
+  const u50 = d.unitCustomerRates["Up to 50L"], u80 = d.unitCustomerRates["80L"], u200 = d.unitCustomerRates["200L"];
   for (let i = 1; i <= Math.max(v.STACK_SIZE, 3); i++) {
     const rate = i===1 ? 1.0 : i===2 ? v.STACK_RATE_2ND : v.STACK_RATE_3RD;
     const lbl  = i===1 ? '1st job — full rate' : i===2 ? '2nd job' : '3rd+ job';
@@ -1100,8 +1154,14 @@ function updateRateCard(v, d) {
     rows.push({ u, full: d.unitFullRates[u], eff: effRate, share, jobsUnit, rev });
   }
   rows.forEach(r => {
+    const custRate = d.unitCustomerRates[r.u];  // despatch+labour (what customer pays)
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="bold">${r.u}</td><td class="r muted">${fmtNum(r.full)}</td><td class="r accent">${fmtNum(r.eff)}</td><td class="r">${r.share}%</td><td class="r">${fmtNum(r.jobsUnit)}</td><td class="r">${fmtAED(r.rev)}</td>`;
+    tr.innerHTML = `<td class="bold">${r.u}</td>
+      <td class="r muted">${fmtNum(Math.round(custRate))}</td>
+      <td class="r accent">${fmtNum(Math.round(r.eff))}</td>
+      <td class="r">${r.share}%</td>
+      <td class="r">${fmtNum(r.jobsUnit)}</td>
+      <td class="r">${fmtAED(r.rev)}</td>`;
     mtbody.appendChild(tr);
   });
   const totRow = document.createElement('tr'); totRow.className = 'highlight';
@@ -1115,7 +1175,11 @@ function updateRateCard(v, d) {
 function updateVolumeQuotes(v, d) {
   $('disc-badge').textContent = 'max '+Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)+'% discount';
   const vs = $('vol-status');
-  vs.textContent = `Base rate for volume quotes: ${fmtAED(d.blendedAllIn)}/unit (stacking + mix adjusted). Discounts applied on a ${v.VOLUME_DISCOUNT_CURVE<1?'convex (slow start, steep end)':v.VOLUME_DISCOUNT_CURVE>1?'concave (fast start, flattens)':'linear'} curve up to ${Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)}% at ${fmtNum(Math.max(...VOLUME_TIERS))} units.`;
+  // blendedAllIn includes parts margin (used for your revenue model)
+  // For customer-facing quotes we use the same blendedAllIn as the base
+  // since volume discounts are applied to what you charge (which includes your parts assumption)
+  const blendedCustomer = d.blendedAllIn - v.PARTS_MARGIN_PER_JOB;  // ex-parts for reference
+  vs.textContent = `Volume quotes based on blended rate: ${fmtAED(Math.round(d.blendedAllIn))}/job (incl. AED ${Math.round(v.PARTS_MARGIN_PER_JOB)} parts margin). Customer-facing rate ex-parts: ${fmtAED(Math.round(blendedCustomer))}. Discount curve: ${v.VOLUME_DISCOUNT_CURVE<1?'convex':v.VOLUME_DISCOUNT_CURVE>1?'concave':'linear'}, max ${Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)}% at ${fmtNum(Math.max(...VOLUME_TIERS))} units.`;
   vs.className = 'status-bar info';
   const container = $('vol-tiers-body'); container.innerHTML = '';
   const maxVol = Math.max(...VOLUME_TIERS);
