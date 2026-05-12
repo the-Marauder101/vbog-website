@@ -242,7 +242,7 @@ tr.cost-total td.purple { color: var(--purple); }
       <div class="ctrl-row"><label>Working days / year</label><input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250"><span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span></div>
       <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="5" max="60" step="5" value="30"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">30%</span></div>
       <div class="ctrl-row"><label>Operational efficiency discount</label><input type="range" id="OPERATIONAL_EFFICIENCY_DISCOUNT" min="0" max="25" step="1" value="13"><span class="ctrl-val" id="v_OPERATIONAL_EFFICIENCY_DISCOUNT">13%</span></div>
-      <div class="info-note">Efficiency discount shaves the customer-facing rate below cost+margin (the savings the business absorbs from route stacking, repeat-customer overhead, etc). At 0% the customer pays the full cost-up rate.</div>
+      <div class="info-note">Efficiency savings from job stacking on the same day — shared fuel, travel time and on-site overhead across multiple jobs at one stop or area. Reduces the cost base used to price each job, which lowers customer rates while keeping the implied margin equal to your target margin.</div>
     </div>
 
     <div class="section-gap">
@@ -810,7 +810,11 @@ function derive(v) {
     blendedDespatch += (share / 100) * zoneFees[zone];
   }
 
-  // ---- Cost-up rate (handling premium adds per-large-job labour cost)
+  // ---- Cost-up rate. Efficiency from job stacking is modelled as a real
+  // cost saving (shared fuel / travel time / on-site overhead across stops),
+  // so it reduces the cost base used in the cost-up formula. The customer
+  // rate therefore drops with efficiency while implied margin still equals
+  // target margin exactly.
   const staffCost    = calcStaffCost();
   const overheadCost = calcOverheadCost();
   const jobsPerYear  = v.JOBS_PER_DAY * v.WORKING_DAYS_PER_YEAR;
@@ -818,12 +822,18 @@ function derive(v) {
   // Large heaters = 200L and 300L+. Handling premium hits only this share.
   const largeShare    = ((mix["200L"] || 0) + (mix["300L+"] || 0)) / 100;
   const handlingCost  = v.HANDLING_PREMIUM * jobsPerYear * largeShare;
-  const totalCost     = staffCost + overheadCost + handlingCost;
+  const grossCost     = staffCost + overheadCost + handlingCost;
+  const efficiencySavings = grossCost * v.OPERATIONAL_EFFICIENCY_DISCOUNT;
+  const netCost       = grossCost - efficiencySavings;
+  // totalCost alias = netCost so existing renderers (Overview tile, badges,
+  // jobs-per-year column ratios) reflect the cost base actually used by the
+  // pricing formula. Gross / savings are separate fields for the breakdown.
+  const totalCost     = netCost;
 
-  const costPerJob   = jobsPerYear > 0 ? totalCost / jobsPerYear : 0;
+  const costPerJob   = jobsPerYear > 0 ? netCost / jobsPerYear : 0;
   const marginDivisor = Math.max(0.01, 1 - v.TARGET_MARGIN_PCT);
-  const targetRate    = costPerJob / marginDivisor;
-  const idealBlended  = targetRate * (1 - v.OPERATIONAL_EFFICIENCY_DISCOUNT);
+  const idealBlended  = costPerJob / marginDivisor;
+  const targetRate    = idealBlended;
 
   // ---- Split blendedAllIn between despatch (anchored) and labour (residual).
   // If anchored despatch alone exceeds the cost-up target, the customer rate
@@ -852,9 +862,11 @@ function derive(v) {
     unitFullRates[u] = blendedDespatch + labourRates[u];
   }
 
-  // ---- P&L
+  // ---- P&L. Profit measured against the net cost actually incurred after
+  // operational savings, so actualMargin equals targetMargin (except in the
+  // labour-clipped edge case where despatch alone exceeds the cost-up rate).
   const revenue      = blendedAllIn * jobsPerYear;
-  const profit       = revenue - totalCost;
+  const profit       = revenue - netCost;
   const actualMargin = revenue > 0 ? profit / revenue : 0;
   const dailyRevenue = v.WORKING_DAYS_PER_YEAR > 0 ? revenue / v.WORKING_DAYS_PER_YEAR : 0;
 
@@ -865,6 +877,7 @@ function derive(v) {
     blendedAllIn, costPerJob, targetRate, labourClipped,
     jobsPerYear, revenue, totalCost, profit, actualMargin, dailyRevenue,
     staffCost, overheadCost, handlingCost, largeShare,
+    grossCost, efficiencySavings, netCost,
   };
 }
 
@@ -959,9 +972,9 @@ function updateOverview(v, d) {
   $('ov-oh-sub').textContent     = fmtPct(d.totalCost>0?d.overheadCost/d.totalCost*100:0)+' of cost base';
   $('ov-blended').textContent    = fmtAED(d.blendedAllIn);
   $('ov-blended-sub').textContent = v.OPERATIONAL_EFFICIENCY_DISCOUNT > 0
-    ? `cost+margin → −${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% efficiency discount`
-    : 'cost+margin (no efficiency discount)';
-  $('ov-total-cost-badge').textContent = 'Total cost: '+fmtAED(d.totalCost);
+    ? `net cost + ${Math.round(v.TARGET_MARGIN_PCT*100)}% margin (after ${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% efficiency savings)`
+    : `cost + ${Math.round(v.TARGET_MARGIN_PCT*100)}% margin`;
+  $('ov-total-cost-badge').textContent = 'Net cost: '+fmtAED(d.netCost);
 
   const bar = $('status-bar');
   const m = d.actualMargin;
@@ -979,14 +992,20 @@ function updateOverview(v, d) {
     { label:'Accommodation & visa',   val: OVERHEAD_ITEMS.filter(o=>['oh_accom','oh_visa'].includes(o.id)).reduce((sum,o)=>sum+o.tb*o.pct/100,0), cls:'' },
     { label:'Other overheads',        val: OVERHEAD_ITEMS.filter(o=>!['oh_veh','oh_vehrep','oh_accom','oh_visa'].includes(o.id)).reduce((sum,o)=>sum+o.tb*o.pct/100,0), cls:'' },
     { label:'Total overhead cost',    val: d.overheadCost, cls:'amber bold' },
-    { label:'TOTAL COST BASE',        val: d.totalCost,    cls:'bold', total:true },
+    { label:'Gross cost base',        val: d.grossCost,    cls:'bold' },
+    { label:`Operational efficiency savings (${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% of gross)`, val: -d.efficiencySavings, cls:'green', isCredit:true },
+    { label:'NET COST BASE',          val: d.netCost,      cls:'bold', total:true },
   ];
   rows.forEach(r => {
     const tr = document.createElement('tr');
     if (r.total) tr.className = 'cost-total';
     const perJob = d.jobsPerYear>0 ? r.val/d.jobsPerYear : 0;
-    const pct    = d.totalCost>0   ? r.val/d.totalCost*100 : 0;
-    tr.innerHTML = `<td class="${r.cls||''}">${r.label}</td><td class="r ${r.cls||''}">${fmtAED(r.val)}</td><td class="r">${fmtAED(perJob)}</td><td class="r">${r.total?'100%':fmtPct(pct)}</td>`;
+    const denom  = d.grossCost > 0 ? d.grossCost : 1;
+    const pct    = r.val/denom*100;
+    const valStr = r.isCredit ? '('+fmtAED(Math.abs(r.val))+')' : fmtAED(r.val);
+    const perStr = r.isCredit ? '('+fmtAED(Math.abs(perJob))+')' : fmtAED(perJob);
+    const pctStr = r.total ? Math.round(d.netCost/d.grossCost*100)+'% of gross' : fmtPct(pct);
+    tr.innerHTML = `<td class="${r.cls||''}">${r.label}</td><td class="r ${r.cls||''}">${valStr}</td><td class="r">${perStr}</td><td class="r">${pctStr}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -1154,15 +1173,17 @@ function updateVolumeQuotes(v, d) {
    RENDER: P&L TAB
    ============================================================ */
 function updatePnL(v, d) {
-  $('pnl-cost-badge').textContent = 'Cost base: '+fmtAED(d.totalCost);
+  $('pnl-cost-badge').textContent = 'Net cost: '+fmtAED(d.netCost);
   const tbody = $('pnl-body'); tbody.innerHTML = '';
   const rows = [
-    { label:'Service revenue',           val: d.revenue,    color:'blue',   bold:true },
-    { label:'Staff cost',                val: -d.staffCost, color:'purple', bold:false },
-    { label:'Handling premium (labour)', val: -d.handlingCost, color:'purple', bold:false },
-    { label:'Overhead cost',             val: -d.overheadCost, color:'amber', bold:false },
-    { label:'Total cost base',           val: -d.totalCost, color:'',       bold:true },
-    { label:'Net profit',                val: d.profit,     color: d.profit>=0?'green':'red', bold:true },
+    { label:'Service revenue',           val: d.revenue,           color:'blue',   bold:true },
+    { label:'Staff cost',                val: -d.staffCost,        color:'purple', bold:false },
+    { label:'Handling premium (labour)', val: -d.handlingCost,     color:'purple', bold:false },
+    { label:'Overhead cost',             val: -d.overheadCost,     color:'amber',  bold:false },
+    { label:'Gross cost base',           val: -d.grossCost,        color:'',       bold:true },
+    { label:`Operational efficiency savings (${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}%)`, val: d.efficiencySavings, color:'green', bold:false },
+    { label:'Net cost base',             val: -d.netCost,          color:'',       bold:true },
+    { label:'Net profit',                val: d.profit,            color: d.profit>=0?'green':'red', bold:true },
   ];
   rows.forEach(r => {
     const perJob = d.jobsPerYear>0 ? r.val/d.jobsPerYear : 0;
