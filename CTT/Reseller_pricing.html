@@ -312,7 +312,7 @@ tr.profit-row td.green{color:var(--green);}
       <div class="info-note">Enter a single number to override ALL computed costs (staff + overheads). When set, this becomes your cost base — ignoring all sliders above. Leave blank or 0 to use the live calculated costs. Use this to pressure-test scenarios.</div>
       <div class="num-input-row" style="margin-top:10px;margin-bottom:8px">
         <label>Override cost base</label>
-        <input type="number" class="num-input" id="COST_BASE_OVERRIDE" min="0" step="1000" value="0"
+        <input type="number" class="num-input" id="COST_BASE_OVERRIDE" min="0" step="1000" value="686000"
           placeholder="0 = use live costs"
           oninput="recalc()">
         <span class="num-unit">AED / yr</span>
@@ -1048,60 +1048,71 @@ function updateAddons(){
    RENDER: VOLUME QUOTES
    ============================================================ */
 function updateVolumeQuotes(v,d){
-  const isDiscMode = $('VOL_MODE_TOGGLE') && $('VOL_MODE_TOGGLE').checked;
-  const markupMax  = (parseFloat($('VOL_MARKUP_MAX_PCT').value)||30) / 100;
-  const markupMin  = (parseFloat($('VOL_MARKUP_MIN_PCT').value)||10)  / 100;
-  const costDiscMax= (parseFloat($('VOL_COST_DISCOUNT_MAX_PCT').value)||0) / 100;
-  const curve      = parseFloat($('VOL_DISCOUNT_CURVE').value)||0.7;
-  const maxVol     = Math.max(...VOLUME_TIERS);
+  const isDiscMode  = $('VOL_MODE_TOGGLE') && $('VOL_MODE_TOGGLE').checked;
+  // Small orders = highest markup (VOL_MARKUP_MAX_PCT), large orders = lowest markup (VOL_MARKUP_MIN_PCT)
+  // Guard: ensure min never exceeds max
+  let markupMax  = (parseFloat($('VOL_MARKUP_MAX_PCT').value)||30) / 100;
+  let markupMin  = (parseFloat($('VOL_MARKUP_MIN_PCT').value)||10)  / 100;
+  if(markupMin > markupMax) markupMin = markupMax;  // clamp — can't give larger orders a worse deal
+  const costDiscMax = (parseFloat($('VOL_COST_DISCOUNT_MAX_PCT').value)||0) / 100;
+  const curve       = parseFloat($('VOL_DISCOUNT_CURVE').value)||0.7;
+  const maxVol      = Math.max(...VOLUME_TIERS);
 
-  // Update sidebar value labels
-  if($('v_VOL_MARKUP_MAX_PCT'))  $('v_VOL_MARKUP_MAX_PCT').textContent  = Math.round(markupMax*100)+'%';
-  if($('v_VOL_MARKUP_MIN_PCT'))  $('v_VOL_MARKUP_MIN_PCT').textContent  = Math.round(markupMin*100)+'%';
-  if($('v_VOL_COST_DISCOUNT_MAX_PCT')) $('v_VOL_COST_DISCOUNT_MAX_PCT').textContent = Math.round(costDiscMax*100)+'%';
-  if($('v_VOL_MODE'))            $('v_VOL_MODE').textContent = isDiscMode ? 'Show as discount from rate' : 'Show as markup on cost';
-  if($('v_VOL_DISCOUNT_CURVE'))  { const c=curve; $('v_VOL_DISCOUNT_CURVE').textContent=c.toFixed(1)+(c<1?' (convex)':c>1?' (concave)':' (linear)'); }
+  // Update sidebar labels
+  if($('v_VOL_MARKUP_MAX_PCT'))       $('v_VOL_MARKUP_MAX_PCT').textContent       = Math.round(markupMax*100)+'%';
+  if($('v_VOL_MARKUP_MIN_PCT'))       $('v_VOL_MARKUP_MIN_PCT').textContent       = Math.round(markupMin*100)+'%';
+  if($('v_VOL_COST_DISCOUNT_MAX_PCT'))$('v_VOL_COST_DISCOUNT_MAX_PCT').textContent= Math.round(costDiscMax*100)+'%';
+  if($('v_VOL_MODE'))   $('v_VOL_MODE').textContent = isDiscMode ? 'Show as % discount off rate' : 'Show as % markup on cost';
+  if($('v_VOL_DISCOUNT_CURVE')){ const c=curve; $('v_VOL_DISCOUNT_CURVE').textContent=c.toFixed(1)+(c<1?' (convex)':c>1?' (concave)':' (linear)'); }
 
   const col3Head=$('vol-col-3-head');
-  if(col3Head) col3Head.textContent = isDiscMode ? 'Discount' : 'Markup';
+  if(col3Head) col3Head.textContent = isDiscMode ? 'Discount off rate' : 'Markup on cost';
 
   const badge=$('disc-badge');
   if(badge) badge.textContent = isDiscMode
-    ? 'discount mode — cost disc. up to '+Math.round(costDiscMax*100)+'%'
-    : 'markup '+Math.round(markupMin*100)+'%–'+Math.round(markupMax*100)+'% on cost';
+    ? 'discount: 0% → '+Math.round((1-markupMin/markupMax)*100)+'% at peak vol'
+    : 'markup: '+Math.round(markupMin*100)+'%–'+Math.round(markupMax*100)+'% on cost';
 
   const vs=$('vol-status');
   vs.textContent = isDiscMode
-    ? `Discount mode: price = rate card × (1 − discount%). Cost discount up to ${Math.round(costDiscMax*100)}% on large orders reduces your effective cost, widening margin.`
-    : `Markup mode: price = cost/job × (1 + markup%). Markup slides from ${Math.round(markupMax*100)}% at ${fmtNum(VOLUME_TIERS[0])} units down to ${Math.round(markupMin*100)}% at ${fmtNum(maxVol)} units. Cost discount up to ${Math.round(costDiscMax*100)}% applied to large orders.`;
+    ? `Discount mode: price = your standard rate × (1 − discount%). Small orders: no discount (or minimal). Large orders: up to ${Math.round((1-(markupMin/(markupMax||0.001)))*100)}% off. Cost discount up to ${Math.round(costDiscMax*100)}% separately reduces your effective cost for large batches.`
+    : `Markup mode: price = effective cost/job × (1 + markup%). Small orders: ${Math.round(markupMax*100)}% markup. Large orders: ${Math.round(markupMin*100)}% markup. Cost discount up to ${Math.round(costDiscMax*100)}% reduces your cost base at high volume.`;
   vs.className='status-bar info';
 
   const con=$('vol-tiers-body'); con.innerHTML='';
+
   // Cost per job — use baseline if set, else actual
   const costPerJob = d.baselineJobs>0 ? d.netCost/d.baselineJobs : (d.jobsPerYear>0 ? d.netCost/d.jobsPerYear : 0);
+  // Standard rate card price (at full target margin)
+  const stdRate = d.blendedAllIn || (costPerJob/(1-(v.TARGET_MARGIN_PCT||0.30)));
 
   VOLUME_TIERS.forEach(vol=>{
-    // t = 0 at smallest tier → 1 at largest
+    // t = 0 at smallest tier, 1 at largest
     const t = Math.pow(vol/maxVol, curve);
-    // Markup at this volume: slides from markupMax (small) to markupMin (large)
+
+    // Markup at this volume: MAX for small orders → MIN for large orders
     const markupAtVol = markupMax - (markupMax - markupMin) * t;
-    // Cost discount at this volume: 0 → costDiscMax
+
+    // Cost discount at this volume: 0 at small → costDiscMax at large
     const costDiscAtVol = costDiscMax * t;
-    // Effective cost/job after discount
     const effCost = costPerJob * (1 - costDiscAtVol);
 
-    let price, col3Val, col3Cls;
+    // Price = effCost × (1 + markupAtVol)
+    // Small orders: effCost × (1+markupMax) → highest price
+    // Large orders: effCost × (1+markupMin) → lowest price
+    const price = effCost * (1 + markupAtVol);
+
+    // Discount vs standard rate (for discount display mode)
+    const discFrac = stdRate > 0 ? Math.max(0, 1 - price/stdRate) : 0;
+
+    let col3Val, col3Cls;
     if(isDiscMode){
-      // Express as discount from blendedAllIn
-      const rateBase = d.blendedAllIn || 1;
-      const priceMarkup = effCost * (1 + markupAtVol);
-      const discFrac = Math.max(0, 1 - priceMarkup/rateBase);
-      price = rateBase * (1 - discFrac);
       const dp = Math.round(discFrac*100);
-      col3Val = dp>0 ? '-'+dp+'%' : '—'; col3Cls = dp>0?'disc':'';
+      col3Val = dp>0 ? '-'+dp+'%' : '—';
+      col3Cls = dp>0 ? 'disc' : '';
     } else {
-      price = effCost * (1 + markupAtVol);
-      col3Val = '+'+Math.round(markupAtVol*100)+'%'; col3Cls='green';
+      col3Val = '+'+Math.round(markupAtVol*100)+'%';
+      col3Cls = 'green';
     }
 
     const totalEx  = price * vol;
@@ -1193,7 +1204,10 @@ const NON_MIX_IDS=[
 ];
 NON_MIX_IDS.forEach(id=>{if($(id))$(id).addEventListener('input',recalc);});
 $('COMBINED_PRICING_TOGGLE').addEventListener('change',recalc);
-if($('VOL_MODE_TOGGLE')) $('VOL_MODE_TOGGLE').addEventListener('change',recalc);
+if($('VOL_MODE_TOGGLE')) $('VOL_MODE_TOGGLE').addEventListener('change', function(){
+  recalc();
+  switchContentTab('volume');  // jump to Volume Quotes tab so user sees the toggle effect immediately
+});
 
 const MIX_IDS  =['MIX_50L','MIX_80L','MIX_150L','MIX_200L'];
 const ZONE_IDS =['ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi'];
