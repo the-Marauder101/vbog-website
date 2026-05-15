@@ -210,8 +210,8 @@ tr.profit-row td.green{color:var(--green);}
       <div class="section-label">Capacity &amp; margin</div>
       <div class="ctrl-row"><label>Jobs per day (actual)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px" id="v_JOBS_CAP_HINT"></span></div>
       <div class="ctrl-row"><label>Working days / year</label><input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250"><span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span></div>
-      <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="0" max="60" step="5" value="30"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">30%</span></div>
-      <div class="ctrl-row"><label>Operational efficiency discount</label><input type="range" id="OPERATIONAL_EFFICIENCY_DISCOUNT" min="0" max="25" step="1" value="13"><span class="ctrl-val" id="v_OPERATIONAL_EFFICIENCY_DISCOUNT">13%</span></div>
+      <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="0" max="60" step="5" value="0"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">0%</span></div>
+      <div class="ctrl-row"><label>Operational efficiency discount</label><input type="range" id="OPERATIONAL_EFFICIENCY_DISCOUNT" min="0" max="25" step="1" value="0"><span class="ctrl-val" id="v_OPERATIONAL_EFFICIENCY_DISCOUNT">0%</span></div>
       <div class="info-note">Efficiency savings from job stacking — shared fuel and travel time. Reduces the cost base used to price each job while keeping the implied margin equal to your target.</div>
 
       <!-- FIX 3: Cost recovery baseline — lock pricing to N jobs -->
@@ -251,9 +251,9 @@ tr.profit-row td.green{color:var(--green);}
         </label>
       </div>
 
-      <div class="ctrl-row"><label>Markup % — small orders</label><input type="range" id="VOL_MARKUP_MAX_PCT" min="0" max="60" step="1" value="30"><span class="ctrl-val" id="v_VOL_MARKUP_MAX_PCT">30%</span></div>
-      <div class="ctrl-row"><label>Markup % — large orders</label><input type="range" id="VOL_MARKUP_MIN_PCT" min="0" max="60" step="1" value="10"><span class="ctrl-val" id="v_VOL_MARKUP_MIN_PCT">10%</span></div>
-      <div class="ctrl-row"><label>Cost discount at peak vol</label><input type="range" id="VOL_COST_DISCOUNT_MAX_PCT" min="0" max="30" step="1" value="0"><span class="ctrl-val" id="v_VOL_COST_DISCOUNT_MAX_PCT">0%</span></div>
+      <div class="ctrl-row"><label>Markup % — small orders</label><input type="range" id="VOL_MARKUP_MAX_PCT" min="0" max="100" step="1" value="0"><span class="ctrl-val" id="v_VOL_MARKUP_MAX_PCT">0%</span></div>
+      <div class="ctrl-row"><label>Markup % — large orders</label><input type="range" id="VOL_MARKUP_MIN_PCT" min="0" max="100" step="1" value="0"><span class="ctrl-val" id="v_VOL_MARKUP_MIN_PCT">0%</span></div>
+      <div class="ctrl-row"><label>Cost discount at peak vol</label><input type="range" id="VOL_COST_DISCOUNT_MAX_PCT" min="0" max="100" step="1" value="0"><span class="ctrl-val" id="v_VOL_COST_DISCOUNT_MAX_PCT">0%</span></div>
       <div class="ctrl-row"><label>Curve shape</label><input type="range" id="VOL_DISCOUNT_CURVE" min="0.3" max="2" step="0.1" value="0.7"><span class="ctrl-val" id="v_VOL_DISCOUNT_CURVE">0.7 (convex)</span></div>
     </div>
 
@@ -1049,11 +1049,10 @@ function updateAddons(){
    ============================================================ */
 function updateVolumeQuotes(v,d){
   const isDiscMode  = $('VOL_MODE_TOGGLE') && $('VOL_MODE_TOGGLE').checked;
-  // Small orders = highest markup (VOL_MARKUP_MAX_PCT), large orders = lowest markup (VOL_MARKUP_MIN_PCT)
-  // Guard: ensure min never exceeds max
-  let markupMax  = (parseFloat($('VOL_MARKUP_MAX_PCT').value)||30) / 100;
-  let markupMin  = (parseFloat($('VOL_MARKUP_MIN_PCT').value)||10)  / 100;
-  if(markupMin > markupMax) markupMin = markupMax;  // clamp — can't give larger orders a worse deal
+  // VOL_MARKUP_MAX_PCT = markup at smallest tier; VOL_MARKUP_MIN_PCT = markup at largest tier.
+  // Names are historical — the two sliders are now independent (large can be higher OR lower than small).
+  let markupMax  = (parseFloat($('VOL_MARKUP_MAX_PCT').value)||0) / 100;
+  let markupMin  = (parseFloat($('VOL_MARKUP_MIN_PCT').value)||0) / 100;
   const costDiscMax = (parseFloat($('VOL_COST_DISCOUNT_MAX_PCT').value)||0) / 100;
   const curve       = parseFloat($('VOL_DISCOUNT_CURVE').value)||0.7;
   const maxVol      = Math.max(...VOLUME_TIERS);
@@ -1070,7 +1069,7 @@ function updateVolumeQuotes(v,d){
 
   const badge=$('disc-badge');
   if(badge) badge.textContent = isDiscMode
-    ? 'discount: 0% → '+Math.round((1-markupMin/markupMax)*100)+'% at peak vol'
+    ? 'discount: 0% → '+Math.round((1-markupMin/(markupMax||0.001))*100)+'% at peak vol'
     : 'markup: '+Math.round(markupMin*100)+'%–'+Math.round(markupMax*100)+'% on cost';
 
   const vs=$('vol-status');
