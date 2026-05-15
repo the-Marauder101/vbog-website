@@ -210,7 +210,7 @@ tr.profit-row td.green{color:var(--green);}
       <div class="section-label">Capacity &amp; margin</div>
       <div class="ctrl-row"><label>Jobs per day (actual)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px" id="v_JOBS_CAP_HINT"></span></div>
       <div class="ctrl-row"><label>Working days / year</label><input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250"><span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span></div>
-      <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="5" max="60" step="5" value="30"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">30%</span></div>
+      <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="0" max="60" step="5" value="30"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">30%</span></div>
       <div class="ctrl-row"><label>Operational efficiency discount</label><input type="range" id="OPERATIONAL_EFFICIENCY_DISCOUNT" min="0" max="25" step="1" value="13"><span class="ctrl-val" id="v_OPERATIONAL_EFFICIENCY_DISCOUNT">13%</span></div>
       <div class="info-note">Efficiency savings from job stacking — shared fuel and travel time. Reduces the cost base used to price each job while keeping the implied margin equal to your target.</div>
 
@@ -237,9 +237,24 @@ tr.profit-row td.green{color:var(--green);}
     </div>
 
     <div class="section-gap">
-      <div class="section-label">Volume discounts</div>
-      <div class="ctrl-row"><label>Max discount at peak vol</label><input type="range" id="VOLUME_DISCOUNT_MAX_PCT" min="0" max="35" step="1" value="15"><span class="ctrl-val" id="v_VOLUME_DISCOUNT_MAX_PCT">15%</span></div>
-      <div class="ctrl-row"><label>Discount curve shape</label><input type="range" id="VOLUME_DISCOUNT_CURVE" min="0.3" max="2" step="0.1" value="0.7"><span class="ctrl-val" id="v_VOLUME_DISCOUNT_CURVE">0.7 (convex)</span></div>
+      <div class="section-label">Volume quote pricing</div>
+      <div class="info-note">Set a markup % range. Smaller orders get the higher markup; larger orders get the lower markup (better deal). Optionally apply a cost discount on top — reducing your effective cost base for large orders, giving you room to offer lower prices while keeping margins healthy.</div>
+
+      <div class="toggle-row" style="margin-bottom:12px">
+        <label for="VOL_MODE_TOGGLE">
+          Quote display mode<br>
+          <span class="toggle-label-val" id="v_VOL_MODE">Show as markup on cost</span>
+        </label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="VOL_MODE_TOGGLE">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="ctrl-row"><label>Markup % — small orders</label><input type="range" id="VOL_MARKUP_MAX_PCT" min="0" max="60" step="1" value="30"><span class="ctrl-val" id="v_VOL_MARKUP_MAX_PCT">30%</span></div>
+      <div class="ctrl-row"><label>Markup % — large orders</label><input type="range" id="VOL_MARKUP_MIN_PCT" min="0" max="60" step="1" value="10"><span class="ctrl-val" id="v_VOL_MARKUP_MIN_PCT">10%</span></div>
+      <div class="ctrl-row"><label>Cost discount at peak vol</label><input type="range" id="VOL_COST_DISCOUNT_MAX_PCT" min="0" max="30" step="1" value="0"><span class="ctrl-val" id="v_VOL_COST_DISCOUNT_MAX_PCT">0%</span></div>
+      <div class="ctrl-row"><label>Curve shape</label><input type="range" id="VOL_DISCOUNT_CURVE" min="0.3" max="2" step="0.1" value="0.7"><span class="ctrl-val" id="v_VOL_DISCOUNT_CURVE">0.7 (convex)</span></div>
     </div>
 
     <div class="section-gap">
@@ -420,8 +435,8 @@ tr.profit-row td.green{color:var(--green);}
   <div id="ctab-volume" class="tab-panel">
     <div class="status-bar info" id="vol-status">—</div>
     <div class="table-wrap">
-      <div class="table-head"><span class="table-title">Wholesaler volume quotes</span><span class="tag" id="disc-badge">—</span></div>
-      <div class="vol-row head"><span>Volume</span><span>Price / unit</span><span>Discount</span><span>Total ex-VAT</span><span>Total inc-VAT</span><span>Margin</span></div>
+      <div class="table-head"><span class="table-title">Wholesaler volume quotes</span><span class="tag accent" id="disc-badge">—</span></div>
+      <div class="vol-row head"><span>Volume</span><span>Price / unit</span><span id="vol-col-3-head">Markup</span><span>Total ex-VAT</span><span>Total inc-VAT</span><span>Your margin</span></div>
       <div id="vol-tiers-body"></div>
     </div>
   </div>
@@ -1035,26 +1050,69 @@ function updateAddons(){
    RENDER: VOLUME QUOTES
    ============================================================ */
 function updateVolumeQuotes(v,d){
-  $('disc-badge').textContent='max '+Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)+'% discount';
+  const isDiscMode = $('VOL_MODE_TOGGLE') && $('VOL_MODE_TOGGLE').checked;
+  const markupMax  = (parseFloat($('VOL_MARKUP_MAX_PCT').value)||30) / 100;
+  const markupMin  = (parseFloat($('VOL_MARKUP_MIN_PCT').value)||10)  / 100;
+  const costDiscMax= (parseFloat($('VOL_COST_DISCOUNT_MAX_PCT').value)||0) / 100;
+  const curve      = parseFloat($('VOL_DISCOUNT_CURVE').value)||0.7;
+  const maxVol     = Math.max(...VOLUME_TIERS);
+
+  // Update sidebar value labels
+  if($('v_VOL_MARKUP_MAX_PCT'))  $('v_VOL_MARKUP_MAX_PCT').textContent  = Math.round(markupMax*100)+'%';
+  if($('v_VOL_MARKUP_MIN_PCT'))  $('v_VOL_MARKUP_MIN_PCT').textContent  = Math.round(markupMin*100)+'%';
+  if($('v_VOL_COST_DISCOUNT_MAX_PCT')) $('v_VOL_COST_DISCOUNT_MAX_PCT').textContent = Math.round(costDiscMax*100)+'%';
+  if($('v_VOL_MODE'))            $('v_VOL_MODE').textContent = isDiscMode ? 'Show as discount from rate' : 'Show as markup on cost';
+  if($('v_VOL_DISCOUNT_CURVE'))  { const c=curve; $('v_VOL_DISCOUNT_CURVE').textContent=c.toFixed(1)+(c<1?' (convex)':c>1?' (concave)':' (linear)'); }
+
+  const col3Head=$('vol-col-3-head');
+  if(col3Head) col3Head.textContent = isDiscMode ? 'Discount' : 'Markup';
+
+  const badge=$('disc-badge');
+  if(badge) badge.textContent = isDiscMode
+    ? 'discount mode — cost disc. up to '+Math.round(costDiscMax*100)+'%'
+    : 'markup '+Math.round(markupMin*100)+'%–'+Math.round(markupMax*100)+'% on cost';
+
   const vs=$('vol-status');
-  vs.textContent=`Base rate: ${fmtAED(d.blendedAllIn)}/unit. Rate fixed to baseline of ${fmtNum(d.baselineJobs)} jobs. Discount curve: ${v.VOLUME_DISCOUNT_CURVE<1?'convex':v.VOLUME_DISCOUNT_CURVE>1?'concave':'linear'}, max ${Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)}% at ${fmtNum(Math.max(...VOLUME_TIERS))} units.`;
+  vs.textContent = isDiscMode
+    ? `Discount mode: price = rate card × (1 − discount%). Cost discount up to ${Math.round(costDiscMax*100)}% on large orders reduces your effective cost, widening margin.`
+    : `Markup mode: price = cost/job × (1 + markup%). Markup slides from ${Math.round(markupMax*100)}% at ${fmtNum(VOLUME_TIERS[0])} units down to ${Math.round(markupMin*100)}% at ${fmtNum(maxVol)} units. Cost discount up to ${Math.round(costDiscMax*100)}% applied to large orders.`;
   vs.className='status-bar info';
+
   const con=$('vol-tiers-body'); con.innerHTML='';
-  const maxVol=Math.max(...VOLUME_TIERS);
+  // Cost per job — use baseline if set, else actual
+  const costPerJob = d.baselineJobs>0 ? d.netCost/d.baselineJobs : (d.jobsPerYear>0 ? d.netCost/d.jobsPerYear : 0);
+
   VOLUME_TIERS.forEach(vol=>{
-    const t=Math.pow(vol/maxVol,v.VOLUME_DISCOUNT_CURVE);
-    const discFrac=v.VOLUME_DISCOUNT_MAX_PCT*t;
-    const discPct=Math.round(discFrac*100);
-    const adjRate=d.blendedAllIn*(1-discFrac);
-    const totalEx=adjRate*vol;
-    const totalInc=totalEx*(1+VAT_RATE);
-    // Margin: revenue vs cost attributed to this batch (pro-rata of annual cost)
-    const volFrac=d.baselineJobs>0?vol/d.baselineJobs:0;
-    const batchCost=d.netCost*Math.min(volFrac,1);  // cap at 100% of annual cost
-    const adjMargin=totalEx>0?(totalEx-batchCost)/totalEx:0;
-    const mCol=colorForMargin(adjMargin);
+    // t = 0 at smallest tier → 1 at largest
+    const t = Math.pow(vol/maxVol, curve);
+    // Markup at this volume: slides from markupMax (small) to markupMin (large)
+    const markupAtVol = markupMax - (markupMax - markupMin) * t;
+    // Cost discount at this volume: 0 → costDiscMax
+    const costDiscAtVol = costDiscMax * t;
+    // Effective cost/job after discount
+    const effCost = costPerJob * (1 - costDiscAtVol);
+
+    let price, col3Val, col3Cls;
+    if(isDiscMode){
+      // Express as discount from blendedAllIn
+      const rateBase = d.blendedAllIn || 1;
+      const priceMarkup = effCost * (1 + markupAtVol);
+      const discFrac = Math.max(0, 1 - priceMarkup/rateBase);
+      price = rateBase * (1 - discFrac);
+      const dp = Math.round(discFrac*100);
+      col3Val = dp>0 ? '-'+dp+'%' : '—'; col3Cls = dp>0?'disc':'';
+    } else {
+      price = effCost * (1 + markupAtVol);
+      col3Val = '+'+Math.round(markupAtVol*100)+'%'; col3Cls='green';
+    }
+
+    const totalEx  = price * vol;
+    const totalInc = totalEx * (1+VAT_RATE);
+    const margin   = price>0 ? (price-effCost)/price : 0;
+    const mCol     = colorForMargin(margin);
+
     const row=document.createElement('div'); row.className='vol-row';
-    row.innerHTML=`<span class="bold">${fmtNum(vol)} units</span><span class="highlight">${fmtAED(adjRate)}</span><span class="${discPct>0?'disc':''}">${discPct>0?'-'+discPct+'%':'—'}</span><span class="right bold">${fmtAED(totalEx)}</span><span class="right">${fmtAED(totalInc)}</span><span class="${mCol} right">${fmtPct(adjMargin*100)}</span>`;
+    row.innerHTML=`<span class="bold">${fmtNum(vol)} units</span><span class="highlight">${fmtAED(Math.round(price))}</span><span class="${col3Cls}">${col3Val}</span><span class="right bold">${fmtAED(Math.round(totalEx))}</span><span class="right">${fmtAED(Math.round(totalInc))}</span><span class="${mCol} right">${fmtPct(margin*100)}</span>`;
     con.appendChild(row);
   });
 }
@@ -1116,17 +1174,33 @@ function recalc(){
 /* ============================================================
    EVENT LISTENERS
    ============================================================ */
-const ALL_SLIDER_IDS=[
-  'BASE_DESPATCH','DESPATCH_MULTIPLIER',
-  'HANDLING_PREMIUM',
+/* ---- Mix snap: when one slider moves, scale others so total = 100 ---- */
+function snapMixTo100(changedId, allIds) {
+  const val = parseFloat($(changedId).value)||0;
+  const others = allIds.filter(id=>id!==changedId);
+  const otherVals = others.map(id=>parseFloat($(id).value)||0);
+  const otherSum  = otherVals.reduce((a,b)=>a+b,0);
+  const remaining = Math.max(0, 100-val);
+  let newVals;
+  if(otherSum===0){ const each=Math.floor(remaining/others.length); newVals=otherVals.map((_,i)=>i<others.length-1?each:remaining-each*(others.length-1)); }
+  else { newVals=otherVals.map(v=>Math.round(v/otherSum*remaining)); const drift=remaining-newVals.reduce((a,b)=>a+b,0); newVals[newVals.length-1]+=drift; }
+  others.forEach((id,i)=>{ $(id).value=Math.max(0,newVals[i]); });
+}
+
+const NON_MIX_IDS=[
+  'BASE_DESPATCH','DESPATCH_MULTIPLIER','HANDLING_PREMIUM',
   'JOBS_PER_DAY','WORKING_DAYS_PER_YEAR','TARGET_MARGIN_PCT',
   'OPERATIONAL_EFFICIENCY_DISCOUNT',
-  'MIX_50L','MIX_80L','MIX_150L','MIX_200L',
-  'VOLUME_DISCOUNT_MAX_PCT','VOLUME_DISCOUNT_CURVE',
-  'ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi',
+  'VOL_MARKUP_MIN_PCT','VOL_MARKUP_MAX_PCT','VOL_COST_DISCOUNT_MAX_PCT','VOL_DISCOUNT_CURVE',
 ];
-ALL_SLIDER_IDS.forEach(id=>$(id).addEventListener('input',recalc));
+NON_MIX_IDS.forEach(id=>{if($(id))$(id).addEventListener('input',recalc);});
 $('COMBINED_PRICING_TOGGLE').addEventListener('change',recalc);
+if($('VOL_MODE_TOGGLE')) $('VOL_MODE_TOGGLE').addEventListener('change',recalc);
+
+const MIX_IDS  =['MIX_50L','MIX_80L','MIX_150L','MIX_200L'];
+const ZONE_IDS =['ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi'];
+MIX_IDS.forEach(id  =>$(id).addEventListener('input',()=>{snapMixTo100(id,MIX_IDS);recalc();}));
+ZONE_IDS.forEach(id =>$(id).addEventListener('input',()=>{snapMixTo100(id,ZONE_IDS);recalc();}));
 
 /* ============================================================
    SIDEBAR RESIZE
