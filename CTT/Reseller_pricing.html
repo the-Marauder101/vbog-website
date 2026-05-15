@@ -9,192 +9,163 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:          #f5f7fa;
-  --bg2:         #ffffff;
-  --bg3:         #eef1f6;
-  --border:      #dde1ea;
-  --border2:     #c8cdd9;
-  --text:        #111827;
-  --text2:       #4b5563;
-  --text3:       #9ca3af;
-  --accent:      #2563eb;
-  --accent-dim:  rgba(37,99,235,0.07);
-  --blue:        #2563eb;
-  --blue-dim:    rgba(37,99,235,0.08);
-  --amber:       #d97706;
-  --amber-dim:   rgba(217,119,6,0.1);
-  --red:         #dc2626;
-  --red-dim:     rgba(220,38,38,0.1);
-  --green:       #16a34a;
-  --green-dim:   rgba(22,163,74,0.1);
-  --purple:      #7c3aed;
-  --purple-dim:  rgba(124,58,237,0.08);
-  --radius:      6px;
-  --radius-lg:   10px;
-  --mono:        'JetBrains Mono', monospace;
-  --sans:        'Inter', sans-serif;
-  --transition:  0.15s ease;
+  --bg:#f5f7fa;--bg2:#ffffff;--bg3:#eef1f6;--border:#dde1ea;--border2:#c8cdd9;
+  --text:#111827;--text2:#4b5563;--text3:#9ca3af;
+  --accent:#2563eb;--accent-dim:rgba(37,99,235,0.07);
+  --blue:#2563eb;--blue-dim:rgba(37,99,235,0.08);
+  --amber:#d97706;--amber-dim:rgba(217,119,6,0.1);
+  --red:#dc2626;--red-dim:rgba(220,38,38,0.1);
+  --green:#16a34a;--green-dim:rgba(22,163,74,0.1);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,0.08);
+  --radius:6px;--radius-lg:10px;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;--transition:0.15s ease;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; min-height: 100vh; }
-
-/* LAYOUT */
-.header { padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #1e2a3a; box-shadow: 0 2px 8px rgba(0,0,0,0.18); z-index: 100; }
-.logo { font-family: var(--mono); font-size: 12px; color: #7cb8ff; letter-spacing: 0.08em; text-transform: uppercase; }
-.header-title { font-size: 13px; color: rgba(255,255,255,0.6); font-family: var(--mono); }
-.header-badge { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.35); border: 1px solid rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 4px; }
-.main { display: flex; min-height: calc(100vh - 61px); }
-.sidebar { border-right: 1px solid var(--border); padding: 24px; overflow-y: auto; position: sticky; top: 61px; height: calc(100vh - 61px); min-width: 280px; max-width: 700px; overflow-x: hidden; width: 420px; }
-.resizer { width: 6px; cursor: col-resize; background: var(--border); position: sticky; top: 61px; height: calc(100vh - 61px); flex-shrink: 0; transition: background var(--transition); z-index: 10; }
-.resizer:hover, .resizer.dragging { background: var(--accent); }
-.resizer::after { content: ''; display: block; width: 2px; height: 40px; background: var(--border2); border-radius: 1px; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
-.resizer:hover::after, .resizer.dragging::after { background: var(--accent); }
-.content { padding: 24px 32px; overflow-y: auto; flex: 1; min-width: 0; }
-
-/* TAB NAVIGATION */
-.tab-nav { display: flex; gap: 4px; margin-bottom: 28px; background: var(--bg3); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border); }
-.tab-btn { flex: 1; padding: 8px 12px; font-size: 11px; font-family: var(--mono); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); background: transparent; border: none; border-radius: var(--radius); cursor: pointer; transition: all var(--transition); white-space: nowrap; }
-.tab-btn:hover { color: var(--text); background: var(--bg2); }
-.tab-btn.active { color: var(--accent); background: var(--bg2); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
-/* SECTION HEADERS */
-.section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-.section-gap { margin-bottom: 28px; }
-
-/* CONTROLS */
-.ctrl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
-.ctrl-row label { font-size: 12px; color: var(--text2); width: 170px; flex-shrink: 0; line-height: 1.3; }
-.ctrl-row input[type=range] { flex: 1; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
-.ctrl-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; transition: transform var(--transition); }
-.ctrl-row input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-.ctrl-val { font-family: var(--mono); font-size: 12px; color: var(--accent); min-width: 76px; text-align: right; white-space: nowrap; }
-
-/* TOGGLE */
-.toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 12px; background: var(--bg3); border-radius: var(--radius); border: 1px solid var(--border); }
-.toggle-row label { font-size: 12px; color: var(--text2); flex: 1; cursor: pointer; }
-.toggle-label-val { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 500; }
-.toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-track { position: absolute; inset: 0; background: var(--border2); border-radius: 11px; cursor: pointer; transition: background var(--transition); }
-.toggle-switch input:checked + .toggle-track { background: var(--accent); }
-.toggle-track::after { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform var(--transition); }
-.toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
-
-/* MIX SLIDERS */
-.mix-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
-.mix-label { font-size: 11px; color: var(--text2); width: 100px; flex-shrink: 0; }
-.mix-row input[type=range] { flex: 1; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
-.mix-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--blue); cursor: pointer; }
-.mix-pct { font-family: var(--mono); font-size: 11px; color: var(--blue); width: 40px; text-align: right; }
-
-/* Zone mix rows — 4 columns: label | slider | pct | fee */
-.zone-row { display: grid; grid-template-columns: 95px 1fr 36px 58px; align-items: center; gap: 6px; margin-bottom: 10px; }
-.zone-row input[type=range] { -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; width: 100%; }
-.zone-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--blue); cursor: pointer; }
-.zone-pct  { font-family: var(--mono); font-size: 11px; color: var(--blue); text-align: right; white-space: nowrap; }
-.zone-fee  { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: right; white-space: nowrap; }
-
-/* STAFF ROWS */
-.staff-row { display: grid; grid-template-columns: 1fr 82px 105px 84px; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; background: var(--bg2); transition: border-color var(--transition); }
-.staff-row:hover { border-color: var(--border2); }
-.staff-row.inactive { opacity: 0.45; }
-.staff-name { font-size: 12px; font-weight: 500; color: var(--text); }
-.staff-role { font-size: 10px; color: var(--text3); margin-top: 1px; }
-.staff-cost { font-family: var(--mono); font-size: 11px; color: var(--text2); }
-.staff-util-wrap { display: flex; align-items: center; gap: 4px; min-width: 0; }
-.staff-util-wrap input[type=range] { flex: 1; min-width: 0; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
-.staff-util-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--purple); cursor: pointer; }
-.staff-util-pct { font-family: var(--mono); font-size: 10px; color: var(--purple); width: 38px; text-align: right; flex-shrink: 0; }
-.staff-toggle { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
-.staff-alloc { font-family: var(--mono); font-size: 11px; color: var(--green); text-align: right; }
-
-/* OVERHEAD ROWS */
-.oh-row { display: grid; grid-template-columns: 1fr 74px 100px 82px; gap: 6px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--border); }
-.oh-row:last-child { border-bottom: none; }
-.oh-name { font-size: 11px; color: var(--text2); }
-.oh-amount { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: right; }
-.oh-alloc-wrap { display: flex; align-items: center; gap: 3px; min-width: 0; }
-.oh-alloc-wrap input[type=range] { flex: 1; min-width: 0; -webkit-appearance: none; appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none; cursor: pointer; }
-.oh-alloc-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--amber); cursor: pointer; }
-.oh-pct { font-family: var(--mono); font-size: 10px; color: var(--amber); width: 34px; text-align: right; flex-shrink: 0; }
-.oh-cost { font-family: var(--mono); font-size: 11px; color: var(--green); text-align: right; }
-
-
-/* METRIC CARDS */
-.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-.metrics-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-.metric-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; }
-.metric-card:hover { border-color: var(--border2); }
-.metric-label { font-size: 10px; color: var(--text2); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
-.metric-value { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.metric-value.accent { color: var(--accent); }
-.metric-value.blue   { color: var(--blue); }
-.metric-value.amber  { color: var(--amber); }
-.metric-value.green  { color: var(--green); }
-.metric-value.red    { color: var(--red); }
-.metric-value.purple { color: var(--purple); }
-.metric-sub { font-size: 10px; color: var(--text2); margin-top: 3px; font-family: var(--mono); }
-
-/* UTILISATION BAR */
-.util-bar-wrap { background: var(--bg3); border-radius: 4px; height: 8px; overflow: hidden; margin-top: 6px; }
-.util-bar { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
-
-/* TABLES */
-.table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; }
-.table-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.table-title { font-family: var(--mono); font-size: 11px; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; }
-table { width: 100%; border-collapse: collapse; }
-th { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 400; background: var(--bg3); }
-th.r { text-align: right; }
-td { padding: 10px 16px; font-size: 13px; color: var(--text2); border-bottom: 1px solid var(--border); font-family: var(--mono); }
-td.r { text-align: right; }
-td.bold { color: var(--text); font-weight: 500; }
-td.accent { color: var(--accent); } td.blue { color: var(--blue); } td.amber { color: var(--amber); }
-td.green { color: var(--green); } td.red { color: var(--red); } td.muted { color: var(--text3); } td.purple { color: var(--purple); }
-tr:last-child td { border-bottom: none; }
-tr.highlight td { background: var(--accent-dim); color: var(--text); }
-tr.highlight td.accent { color: var(--accent); }
-tr.cost-total td { background: var(--purple-dim); font-weight: 500; }
-tr.cost-total td.purple { color: var(--purple); }
-
-/* STATUS BAR */
-.status-bar { border-radius: var(--radius); padding: 10px 14px; font-family: var(--mono); font-size: 11px; margin-bottom: 20px; line-height: 1.6; border: 1px solid transparent; }
-.status-bar.ok   { background: var(--green-dim); border-color: rgba(22,163,74,0.25);  color: var(--green); }
-.status-bar.warn { background: var(--amber-dim); border-color: rgba(217,119,6,0.25);  color: var(--amber); }
-.status-bar.info { background: var(--blue-dim);  border-color: rgba(37,99,235,0.25);  color: var(--blue); }
-.status-bar.bad  { background: var(--red-dim);   border-color: rgba(220,38,38,0.25);  color: var(--red); }
-
-/* VOLUME TIERS */
-.vol-row { display: grid; grid-template-columns: 110px 110px 70px 1fr 1fr 70px; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); transition: background var(--transition); }
-.vol-row:hover { background: var(--bg3); }
-.vol-row:last-child { border-bottom: none; }
-.vol-row.head { background: var(--bg3); border-bottom: 1px solid var(--border2); }
-.vol-row span { font-family: var(--mono); font-size: 12px; color: var(--text2); }
-.vol-row.head span { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
-.vol-row span.highlight { color: var(--accent); font-weight: 500; }
-.vol-row span.bold { color: var(--text); font-weight: 500; }
-.vol-row span.right { text-align: right; }
-.vol-row span.green { color: var(--green); } .vol-row span.amber { color: var(--amber); }
-.vol-row span.red { color: var(--red); } .vol-row span.disc { color: var(--accent); }
-
-/* MISC */
-.tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 3px; border: 1px solid var(--border2); color: var(--text3); white-space: nowrap; }
-.tag.accent { border-color: rgba(37,99,235,0.3); color: var(--accent); }
-.tag.blue   { border-color: rgba(37,99,235,0.3); color: var(--blue); }
-.tag.green  { border-color: rgba(22,163,74,0.3); color: var(--green); }
-.tag.amber  { border-color: rgba(217,119,6,0.3); color: var(--amber); }
-.tag.purple { border-color: rgba(124,58,237,0.3); color: var(--purple); }
-.info-note { font-family: var(--mono); font-size: 10px; color: var(--text3); padding: 6px 10px; background: var(--bg3); border-radius: var(--radius); margin-bottom: 10px; border-left: 2px solid var(--border2); line-height: 1.5; }
-.footer { text-align: center; padding: 20px; font-family: var(--mono); font-size: 10px; color: var(--text3); border-top: 1px solid var(--border); }
-@media (max-width: 960px) {
-  .main { display: block; }
-  .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); width: 100% !important; }
-  .metrics-grid { grid-template-columns: repeat(2,1fr); }
-  .metrics-grid-3 { grid-template-columns: repeat(2,1fr); }
-  .vol-row { grid-template-columns: 90px 90px 55px 1fr 1fr 55px; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;}
+.header{padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#1e2a3a;box-shadow:0 2px 8px rgba(0,0,0,0.18);z-index:100;}
+.logo{font-family:var(--mono);font-size:12px;color:#7cb8ff;letter-spacing:0.08em;text-transform:uppercase;}
+.header-title{font-size:13px;color:rgba(255,255,255,0.6);font-family:var(--mono);}
+.header-badge{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.15);padding:3px 8px;border-radius:4px;}
+.main{display:flex;min-height:calc(100vh - 61px);}
+.sidebar{border-right:1px solid var(--border);padding:24px;overflow-y:auto;position:sticky;top:61px;height:calc(100vh - 61px);min-width:280px;max-width:700px;overflow-x:hidden;width:440px;}
+.resizer{width:6px;cursor:col-resize;background:var(--border);position:sticky;top:61px;height:calc(100vh - 61px);flex-shrink:0;transition:background var(--transition);z-index:10;}
+.resizer:hover,.resizer.dragging{background:var(--accent);}
+.resizer::after{content:'';display:block;width:2px;height:40px;background:var(--border2);border-radius:1px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+.content{padding:24px 32px;overflow-y:auto;flex:1;min-width:0;}
+/* Tabs */
+.tab-nav{display:flex;gap:4px;margin-bottom:28px;background:var(--bg3);padding:4px;border-radius:var(--radius-lg);border:1px solid var(--border);}
+.tab-btn{flex:1;padding:8px 12px;font-size:11px;font-family:var(--mono);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);background:transparent;border:none;border-radius:var(--radius);cursor:pointer;transition:all var(--transition);white-space:nowrap;}
+.tab-btn:hover{color:var(--text);background:var(--bg2);}
+.tab-btn.active{color:var(--accent);background:var(--bg2);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+/* Section */
+.section-label{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.section-gap{margin-bottom:28px;}
+/* Controls */
+.ctrl-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+.ctrl-row label{font-size:12px;color:var(--text2);width:170px;flex-shrink:0;line-height:1.3;}
+.ctrl-row input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+.ctrl-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;transition:transform var(--transition);}
+.ctrl-row input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.ctrl-val{font-family:var(--mono);font-size:12px;color:var(--accent);min-width:76px;text-align:right;white-space:nowrap;}
+/* Number inputs */
+.num-input-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.num-input-row label{font-size:12px;color:var(--text2);width:170px;flex-shrink:0;line-height:1.3;}
+.num-input{flex:1;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;outline:none;width:100%;}
+.num-input:focus{border-color:var(--accent);}
+.num-unit{font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;}
+/* Toggle */
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border);}
+.toggle-row label{font-size:12px;color:var(--text2);flex:1;cursor:pointer;}
+.toggle-label-val{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;}
+.toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:11px;cursor:pointer;transition:background var(--transition);}
+.toggle-switch input:checked+.toggle-track{background:var(--accent);}
+.toggle-track::after{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:white;border-radius:50%;transition:transform var(--transition);}
+.toggle-switch input:checked+.toggle-track::after{transform:translateX(18px);}
+/* Mix rows */
+.mix-row{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+.mix-label{font-size:11px;color:var(--text2);width:100px;flex-shrink:0;}
+.mix-row input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+.mix-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--blue);cursor:pointer;}
+.mix-pct{font-family:var(--mono);font-size:11px;color:var(--blue);width:40px;text-align:right;}
+/* Zone rows */
+.zone-row{display:grid;grid-template-columns:95px 1fr 36px 58px;align-items:center;gap:6px;margin-bottom:10px;}
+.zone-row input[type=range]{-webkit-appearance:none;appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;width:100%;}
+.zone-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--blue);cursor:pointer;}
+.zone-pct{font-family:var(--mono);font-size:11px;color:var(--blue);text-align:right;white-space:nowrap;}
+.zone-fee{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right;white-space:nowrap;}
+/* Staff rows */
+.staff-row{display:grid;grid-template-columns:1fr 82px 105px 84px;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;background:var(--bg2);}
+.staff-row.inactive{opacity:0.45;}
+.staff-name{font-size:12px;font-weight:500;color:var(--text);}
+.staff-role{font-size:10px;color:var(--text3);}
+.staff-cost{font-family:var(--mono);font-size:11px;color:var(--text2);}
+.staff-util-wrap{display:flex;align-items:center;gap:4px;min-width:0;}
+.staff-util-wrap input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+.staff-util-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--purple);cursor:pointer;}
+.staff-util-pct{font-family:var(--mono);font-size:10px;color:var(--purple);width:38px;text-align:right;flex-shrink:0;}
+.staff-toggle{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;}
+.staff-alloc{font-family:var(--mono);font-size:11px;color:var(--green);text-align:right;}
+/* Overhead rows */
+.oh-row{display:grid;grid-template-columns:1fr 74px 100px 82px;gap:6px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);}
+.oh-row:last-child{border-bottom:none;}
+.oh-name{font-size:11px;color:var(--text2);}
+.oh-amount{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right;}
+.oh-alloc-wrap{display:flex;align-items:center;gap:3px;min-width:0;}
+.oh-alloc-wrap input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+.oh-alloc-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--amber);cursor:pointer;}
+.oh-pct{font-family:var(--mono);font-size:10px;color:var(--amber);width:34px;text-align:right;flex-shrink:0;}
+.oh-cost{font-family:var(--mono);font-size:11px;color:var(--green);text-align:right;}
+/* Metric cards */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.metrics-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.metric-label{font-size:10px;color:var(--text2);font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;}
+.metric-value{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.metric-value.accent{color:var(--accent);}.metric-value.blue{color:var(--blue);}.metric-value.amber{color:var(--amber);}
+.metric-value.green{color:var(--green);}.metric-value.red{color:var(--red);}.metric-value.purple{color:var(--purple);}
+.metric-sub{font-size:10px;color:var(--text2);margin-top:3px;font-family:var(--mono);}
+/* Util bar */
+.util-bar-wrap{background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;margin-top:6px;}
+.util-bar{height:100%;border-radius:4px;transition:width 0.3s ease;}
+/* Tables */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;}
+.table-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.table-title{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:0.06em;text-transform:uppercase;}
+table{width:100%;border-collapse:collapse;}
+th{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);font-weight:400;background:var(--bg3);}
+th.r{text-align:right;}
+td{padding:10px 16px;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);font-family:var(--mono);}
+td.r{text-align:right;}td.bold{color:var(--text);font-weight:500;}
+td.accent{color:var(--accent);}td.blue{color:var(--blue);}td.amber{color:var(--amber);}
+td.green{color:var(--green);}td.red{color:var(--red);}td.muted{color:var(--text3);}td.purple{color:var(--purple);}
+tr:last-child td{border-bottom:none;}
+tr.highlight td{background:var(--accent-dim);color:var(--text);}
+tr.highlight td.accent{color:var(--accent);}
+tr.cost-total td{background:var(--purple-dim);font-weight:500;}
+tr.cost-total td.purple{color:var(--purple);}
+tr.profit-row td{background:var(--green-dim);font-weight:500;}
+tr.profit-row td.green{color:var(--green);}
+/* Status bar */
+.status-bar{border-radius:var(--radius);padding:10px 14px;font-family:var(--mono);font-size:11px;margin-bottom:20px;line-height:1.6;border:1px solid transparent;}
+.status-bar.ok{background:var(--green-dim);border-color:rgba(22,163,74,0.25);color:var(--green);}
+.status-bar.warn{background:var(--amber-dim);border-color:rgba(217,119,6,0.25);color:var(--amber);}
+.status-bar.info{background:var(--blue-dim);border-color:rgba(37,99,235,0.25);color:var(--blue);}
+.status-bar.bad{background:var(--red-dim);border-color:rgba(220,38,38,0.25);color:var(--red);}
+/* Volume tiers */
+.vol-row{display:grid;grid-template-columns:110px 110px 70px 1fr 1fr 70px;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);transition:background var(--transition);}
+.vol-row:hover{background:var(--bg3);}
+.vol-row:last-child{border-bottom:none;}
+.vol-row.head{background:var(--bg3);border-bottom:1px solid var(--border2);}
+.vol-row span{font-family:var(--mono);font-size:12px;color:var(--text2);}
+.vol-row.head span{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;}
+.vol-row span.highlight{color:var(--accent);font-weight:500;}
+.vol-row span.bold{color:var(--text);font-weight:500;}
+.vol-row span.right{text-align:right;}
+.vol-row span.green{color:var(--green);}.vol-row span.amber{color:var(--amber);}
+.vol-row span.red{color:var(--red);}.vol-row span.disc{color:var(--accent);}
+/* Misc */
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid var(--border2);color:var(--text3);white-space:nowrap;}
+.tag.accent{border-color:rgba(37,99,235,0.3);color:var(--accent);}
+.tag.blue{border-color:rgba(37,99,235,0.3);color:var(--blue);}
+.tag.green{border-color:rgba(22,163,74,0.3);color:var(--green);}
+.tag.amber{border-color:rgba(217,119,6,0.3);color:var(--amber);}
+.tag.purple{border-color:rgba(124,58,237,0.3);color:var(--purple);}
+.info-note{font-family:var(--mono);font-size:10px;color:var(--text3);padding:6px 10px;background:var(--bg3);border-radius:var(--radius);margin-bottom:10px;border-left:2px solid var(--border2);line-height:1.5;}
+.profit-uplift-box{background:var(--green-dim);border:1px solid rgba(22,163,74,0.3);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:20px;}
+.profit-uplift-label{font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
+.profit-uplift-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--green);}
+.profit-uplift-sub{font-family:var(--mono);font-size:11px;color:var(--green);opacity:0.75;margin-top:3px;}
+.footer{text-align:center;padding:20px;font-family:var(--mono);font-size:10px;color:var(--text3);border-top:1px solid var(--border);}
+@media(max-width:960px){
+  .main{display:block;}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border);width:100%!important;}
+  .metrics-grid{grid-template-columns:repeat(2,1fr);}
+  .metrics-grid-3{grid-template-columns:repeat(2,1fr);}
+  .vol-row{grid-template-columns:90px 90px 55px 1fr 1fr 55px;}
 }
 </style>
 </head>
@@ -203,13 +174,12 @@ tr.cost-total td.purple { color: var(--purple); }
 <header class="header">
   <div class="logo">CTT // Pricing Engine</div>
   <div class="header-title">Reseller — Pricing + Utilisation</div>
-  <div class="header-badge">v4.0 — VBOG</div>
+  <div class="header-badge">v5.0 — VBOG</div>
 </header>
 
 <div class="main">
 <aside class="sidebar">
 
-  <!-- TAB NAV IN SIDEBAR -->
   <div class="tab-nav" style="margin-bottom:20px">
     <button class="tab-btn active" data-tab="pricing" onclick="switchSidebarTab('pricing')">Pricing</button>
     <button class="tab-btn" data-tab="staff" onclick="switchSidebarTab('staff')">Staff</button>
@@ -221,7 +191,6 @@ tr.cost-total td.purple { color: var(--purple); }
 
     <div class="section-gap">
       <div class="section-label">Despatch anchor</div>
-      <div class="info-note">Customer-facing labour rates are derived from cost + target margin. Despatch is set here (Dubai anchor) and scales to other zones by their ratios; the labour component is whatever is needed to hit your target margin.</div>
       <div class="ctrl-row"><label>Base despatch — Dubai anchor</label><input type="range" id="BASE_DESPATCH" min="100" max="4000" step="50" value="700"><span class="ctrl-val" id="v_BASE_DESPATCH">AED 700</span></div>
       <div class="ctrl-row"><label>Despatch multiplier</label><input type="range" id="DESPATCH_MULTIPLIER" min="0.5" max="3" step="0.1" value="1.0"><span class="ctrl-val" id="v_DESPATCH_MULTIPLIER">1.0×</span></div>
       <div class="toggle-row">
@@ -231,18 +200,31 @@ tr.cost-total td.purple { color: var(--purple); }
     </div>
 
     <div class="section-gap">
-      <div class="section-label">Labour premiums</div>
-      <div class="ctrl-row"><label>Handling premium — heaters &gt; 150L</label><input type="range" id="HANDLING_PREMIUM" min="0" max="1000" step="25" value="200"><span class="ctrl-val" id="v_HANDLING_PREMIUM">AED 200</span></div>
-      <div class="info-note">Extra labour cost per job for 200L and 300L+ heaters (heavier, two-person handling). Adds to the cost base only for the share of jobs that are large heaters, then flows through the cost-up rate to the 200L and 300L+ lines on the rate card.</div>
+      <!-- FIX 2: Handling premium is REVENUE, not cost -->
+      <div class="section-label">Add-on premiums (revenue only)</div>
+      <div class="ctrl-row"><label>Handling premium — &gt;150L heaters</label><input type="range" id="HANDLING_PREMIUM" min="0" max="1000" step="25" value="200"><span class="ctrl-val" id="v_HANDLING_PREMIUM">AED 200</span></div>
+      <div class="info-note">Extra charge added to the customer rate for 200L and 300L+ jobs — heavier units, two-person handling. This is <strong>additional revenue</strong>, not a cost. It does not affect your cost base. It makes large-heater rates higher than the base cost-up rate.</div>
     </div>
 
     <div class="section-gap">
       <div class="section-label">Capacity &amp; margin</div>
-      <div class="ctrl-row"><label>Jobs per day (total)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span><span class="ctrl-sub" id="v_JOBS_PER_DAY_CAP" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:6px"></span></div>
+      <div class="ctrl-row"><label>Jobs per day (actual)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span><span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px" id="v_JOBS_CAP_HINT"></span></div>
       <div class="ctrl-row"><label>Working days / year</label><input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250"><span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span></div>
       <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="5" max="60" step="5" value="30"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">30%</span></div>
       <div class="ctrl-row"><label>Operational efficiency discount</label><input type="range" id="OPERATIONAL_EFFICIENCY_DISCOUNT" min="0" max="25" step="1" value="13"><span class="ctrl-val" id="v_OPERATIONAL_EFFICIENCY_DISCOUNT">13%</span></div>
-      <div class="info-note">Efficiency savings from job stacking on the same day — shared fuel, travel time and on-site overhead across multiple jobs at one stop or area. Reduces the cost base used to price each job, which lowers customer rates while keeping the implied margin equal to your target margin.</div>
+      <div class="info-note">Efficiency savings from job stacking — shared fuel and travel time. Reduces the cost base used to price each job while keeping the implied margin equal to your target.</div>
+
+      <!-- FIX 3: Cost recovery baseline — lock pricing to N jobs -->
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+        <div class="section-label" style="margin-bottom:8px">Cost recovery baseline</div>
+        <div class="info-note">Set the number of jobs at which ALL costs are fully recovered at your target margin. Rates are priced to recover costs at this number. Jobs above this baseline = pure profit at the same rate. Leave blank (or 0) to use actual jobs/day × days.</div>
+        <div class="num-input-row" style="margin-bottom:6px">
+          <label>Baseline jobs (pricing anchor)</label>
+          <input type="number" class="num-input" id="COST_RECOVERY_JOBS" min="0" step="50" value="0" placeholder="0 = use jobs/day × days" oninput="recalc()">
+          <span class="num-unit">jobs/yr</span>
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text3)" id="v_COST_RECOVERY_NOTE">—</div>
+      </div>
     </div>
 
     <div class="section-gap">
@@ -262,8 +244,7 @@ tr.cost-total td.purple { color: var(--purple); }
 
     <div class="section-gap">
       <div class="section-label">Zone mix <span id="zone-total-badge" class="tag accent">100%</span></div>
-      <div class="info-note">Set what % of your jobs come from each zone. This computes the blended despatch automatically — no more hardcoded 880.</div>
-
+      <div class="info-note">Set what % of your jobs come from each zone. Computes blended despatch automatically.</div>
       <div class="zone-row"><span class="mix-label">Dubai</span><input type="range" class="zone-slider" id="ZONE_Dubai" min="0" max="100" step="1" value="45"><span class="zone-pct" id="vz_Dubai">45%</span><span class="zone-fee" id="zfee_Dubai">AED 700</span></div>
       <div class="zone-row"><span class="mix-label">Sharjah/Ajman</span><input type="range" class="zone-slider" id="ZONE_Sharjah" min="0" max="100" step="1" value="20"><span class="zone-pct" id="vz_Sharjah">20%</span><span class="zone-fee" id="zfee_Sharjah">AED 650</span></div>
       <div class="zone-row"><span class="mix-label">UAQ</span><input type="range" class="zone-slider" id="ZONE_UAQ" min="0" max="100" step="1" value="10"><span class="zone-pct" id="vz_UAQ">10%</span><span class="zone-fee" id="zfee_UAQ">AED 850</span></div>
@@ -272,7 +253,6 @@ tr.cost-total td.purple { color: var(--purple); }
       <div class="zone-row"><span class="mix-label">Al Ain</span><input type="range" class="zone-slider" id="ZONE_AlAin" min="0" max="100" step="1" value="5"><span class="zone-pct" id="vz_AlAin">5%</span><span class="zone-fee" id="zfee_AlAin">AED 1,400</span></div>
       <div class="zone-row"><span class="mix-label">Abu Dhabi</span><input type="range" class="zone-slider" id="ZONE_AbuDhabi" min="0" max="100" step="1" value="4"><span class="zone-pct" id="vz_AbuDhabi">4%</span><span class="zone-fee" id="zfee_AbuDhabi">AED 1,550</span></div>
       <div class="zone-row"><span class="mix-label">Liwa/Ruwais <span class="tag blue">auto</span></span><input type="range" disabled style="opacity:0.3" value="1"><span class="zone-pct" id="vz_Liwa" style="color:var(--text3)">1%</span><span class="zone-fee" id="zfee_Liwa">AED 3,500</span></div>
-
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:8px 10px;background:var(--accent-dim);border-radius:var(--radius);border:1px solid rgba(37,99,235,0.2)">
         <span style="font-family:var(--mono);font-size:11px;color:var(--accent)">Blended despatch (computed)</span>
         <span style="font-family:var(--mono);font-size:14px;font-weight:500;color:var(--accent)" id="blended-despatch-display">AED —</span>
@@ -282,8 +262,7 @@ tr.cost-total td.purple { color: var(--purple); }
 
   <!-- ===== STAFF TAB ===== -->
   <div id="stab-staff" class="tab-panel">
-    <div class="info-note" style="margin-bottom:16px">All-in annual cost per person from the cost model (salary + housing + visa + gratuity + leave). Adjust utilisation % to set how much of each person's time is allocated to the reseller unit. Toggle off to exclude.</div>
-
+    <div class="info-note" style="margin-bottom:16px">All-in annual cost per person (salary + housing + visa + gratuity + leave). Adjust utilisation % to set how much of each person's time is allocated to the reseller unit. Toggle off to exclude.</div>
     <div style="display:grid;grid-template-columns:1fr 82px 105px 84px;gap:8px;padding:4px 10px;margin-bottom:6px">
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">Person / Role</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">All-in / yr</span>
@@ -291,7 +270,6 @@ tr.cost-total td.purple { color: var(--purple); }
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:right">Allocated</span>
     </div>
     <div id="staff-rows-container"></div>
-
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:10px 12px;background:var(--purple-dim);border-radius:var(--radius);border:1px solid rgba(124,58,237,0.2)">
       <span style="font-family:var(--mono);font-size:11px;color:var(--purple);font-weight:500">Total staff cost — reseller unit</span>
       <span style="font-family:var(--mono);font-size:14px;font-weight:500;color:var(--purple)" id="staff-total-display">AED 0</span>
@@ -300,8 +278,7 @@ tr.cost-total td.purple { color: var(--purple); }
 
   <!-- ===== OVERHEADS TAB ===== -->
   <div id="stab-overheads" class="tab-panel">
-    <div class="info-note" style="margin-bottom:16px">TB 2025 actuals. Adjust allocation % to assign each overhead to the reseller unit. Based on the same methodology as the Atlantic calculator.</div>
-
+    <div class="info-note" style="margin-bottom:16px">TB 2025 actuals. Adjust allocation % to assign each overhead to the reseller unit.</div>
     <div style="display:grid;grid-template-columns:1fr 74px 100px 82px;gap:6px;padding:4px 10px;margin-bottom:4px">
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">Overhead item</span>
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:right">TB (AED)</span>
@@ -309,20 +286,33 @@ tr.cost-total td.purple { color: var(--purple); }
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:right">Cost</span>
     </div>
     <div class="table-wrap" style="margin-bottom:12px"><div id="oh-rows-container"></div></div>
-
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--amber-dim);border-radius:var(--radius);border:1px solid rgba(217,119,6,0.25)">
       <span style="font-family:var(--mono);font-size:11px;color:var(--amber);font-weight:500">Total overhead cost — reseller unit</span>
       <span style="font-family:var(--mono);font-size:14px;font-weight:500;color:var(--amber)" id="oh-total-display">AED 0</span>
     </div>
+
+    <!-- COST BASE OVERRIDE -->
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div class="section-label" style="margin-bottom:8px">Cost base override</div>
+      <div class="info-note">Enter a single number to override ALL computed costs (staff + overheads). When set, this becomes your cost base — ignoring all sliders above. Leave blank or 0 to use the live calculated costs. Use this to pressure-test scenarios.</div>
+      <div class="num-input-row" style="margin-top:10px;margin-bottom:8px">
+        <label>Override cost base</label>
+        <input type="number" class="num-input" id="COST_BASE_OVERRIDE" min="0" step="1000" value="0"
+          placeholder="0 = use live costs"
+          oninput="recalc()">
+        <span class="num-unit">AED / yr</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:var(--radius);border:1px solid transparent" id="cost-base-status-box">
+        <span style="font-family:var(--mono);font-size:11px;font-weight:500" id="cost-base-status-label">Using live costs</span>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:500" id="cost-base-status-val">AED 0</span>
+      </div>
+    </div>
   </div>
 
 </aside>
-
 <div class="resizer" id="sidebar-resizer"></div>
 
 <main class="content">
-
-  <!-- CONTENT TAB NAV -->
   <div class="tab-nav">
     <button class="tab-btn active" data-tab="overview" onclick="switchContentTab('overview')">Overview</button>
     <button class="tab-btn" data-tab="utilisation" onclick="switchContentTab('utilisation')">Utilisation</button>
@@ -331,20 +321,32 @@ tr.cost-total td.purple { color: var(--purple); }
     <button class="tab-btn" data-tab="pnl" onclick="switchContentTab('pnl')">P&amp;L</button>
   </div>
 
-  <!-- ===== OVERVIEW TAB ===== -->
+  <!-- OVERVIEW -->
   <div id="ctab-overview" class="tab-panel active">
     <div class="metrics-grid">
-      <div class="metric-card"><div class="metric-label">Annual capacity</div><div class="metric-value accent" id="kpi-capacity">—</div><div class="metric-sub" id="kpi-capacity-sub">—</div></div>
-      <div class="metric-card"><div class="metric-label">Revenue (at capacity)</div><div class="metric-value blue" id="kpi-revenue">—</div><div class="metric-sub" id="kpi-revenue-sub">—</div></div>
-      <div class="metric-card"><div class="metric-label">Total cost base</div><div class="metric-value purple" id="kpi-cost-actual">—</div><div class="metric-sub">staff + overheads (live)</div></div>
-      <div class="metric-card"><div class="metric-label">Implied profit</div><div class="metric-value" id="kpi-profit">—</div><div class="metric-sub" id="kpi-margin-pct">at target margin</div></div>
+      <div class="metric-card"><div class="metric-label">Baseline jobs (pricing)</div><div class="metric-value accent" id="kpi-baseline">—</div><div class="metric-sub" id="kpi-baseline-sub">—</div></div>
+      <div class="metric-card"><div class="metric-label">Actual jobs (capacity)</div><div class="metric-value blue" id="kpi-actual-jobs">—</div><div class="metric-sub" id="kpi-actual-sub">—</div></div>
+      <div class="metric-card"><div class="metric-label">Total cost base</div><div class="metric-value purple" id="kpi-cost-actual">—</div><div class="metric-sub">staff + OH + additional</div></div>
+      <div class="metric-card"><div class="metric-label">Blended rate / job</div><div class="metric-value" id="kpi-blended">—</div><div class="metric-sub">fixed to baseline</div></div>
     </div>
     <div class="status-bar info" id="status-bar">Adjust controls to see your pricing model.</div>
-    <div class="metrics-grid-3">
-      <div class="metric-card"><div class="metric-label">Staff cost (reseller)</div><div class="metric-value purple" id="ov-staff-cost">—</div><div class="metric-sub" id="ov-staff-sub">—</div></div>
-      <div class="metric-card"><div class="metric-label">Overhead cost (reseller)</div><div class="metric-value amber" id="ov-oh-cost">—</div><div class="metric-sub" id="ov-oh-sub">—</div></div>
-      <div class="metric-card"><div class="metric-label">Blended rate / job</div><div class="metric-value" id="ov-blended">—</div><div class="metric-sub" id="ov-blended-sub">cost-up + margin − efficiency discount</div></div>
+
+    <!-- FIX 3: Profit uplift box — only shown when actual > baseline -->
+    <div class="profit-uplift-box" id="profit-uplift-box" style="display:none">
+      <div class="profit-uplift-label">Profit uplift — jobs above baseline</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px">
+        <div><div class="profit-uplift-val" id="uplift-extra-jobs">—</div><div class="profit-uplift-sub">extra jobs</div></div>
+        <div><div class="profit-uplift-val" id="uplift-extra-rev">—</div><div class="profit-uplift-sub">extra revenue</div></div>
+        <div><div class="profit-uplift-val" id="uplift-total-profit">—</div><div class="profit-uplift-sub">total profit</div></div>
+      </div>
     </div>
+
+    <div class="metrics-grid-3">
+      <div class="metric-card"><div class="metric-label">Staff cost</div><div class="metric-value purple" id="ov-staff-cost">—</div><div class="metric-sub" id="ov-staff-sub">—</div></div>
+      <div class="metric-card"><div class="metric-label">Overhead + additional</div><div class="metric-value amber" id="ov-oh-cost">—</div><div class="metric-sub" id="ov-oh-sub">—</div></div>
+      <div class="metric-card"><div class="metric-label">Baseline profit</div><div class="metric-value" id="ov-baseline-profit">—</div><div class="metric-sub" id="ov-margin-sub">at baseline jobs</div></div>
+    </div>
+
     <div class="table-wrap">
       <div class="table-head"><span class="table-title">Cost base breakdown</span><span class="tag purple" id="ov-total-cost-badge">—</span></div>
       <table>
@@ -354,7 +356,7 @@ tr.cost-total td.purple { color: var(--purple); }
     </div>
   </div>
 
-  <!-- ===== UTILISATION TAB ===== -->
+  <!-- UTILISATION -->
   <div id="ctab-utilisation" class="tab-panel">
     <div class="metrics-grid">
       <div class="metric-card"><div class="metric-label">Active team members</div><div class="metric-value accent" id="util-headcount">—</div><div class="metric-sub">allocated to reseller unit</div></div>
@@ -366,93 +368,77 @@ tr.cost-total td.purple { color: var(--purple); }
     <div class="table-wrap">
       <div class="table-head"><span class="table-title">Team utilisation — individual breakdown</span><span class="tag purple" id="util-badge">—</span></div>
       <table>
-        <thead><tr><th>Person</th><th>Role</th><th class="r">All-in cost</th><th class="r">Util %</th><th class="r">Allocated cost</th><th class="r">Jobs capacity</th><th class="r">Utilisation bar</th></tr></thead>
+        <thead><tr><th>Person</th><th>Role</th><th class="r">All-in cost</th><th class="r">Util %</th><th class="r">Allocated cost</th><th class="r">Jobs capacity</th><th class="r">Bar</th></tr></thead>
         <tbody id="util-table-body"></tbody>
       </table>
     </div>
     <div class="table-wrap">
-      <div class="table-head"><span class="table-title">Capacity vs demand analysis</span></div>
+      <div class="table-head"><span class="table-title">Capacity vs demand</span></div>
       <table>
-        <thead><tr><th>Metric</th><th class="r">Current setting</th><th class="r">At 100% util</th><th class="r">Gap</th></tr></thead>
+        <thead><tr><th>Metric</th><th class="r">Actual</th><th class="r">Max at 100% util</th><th class="r">Gap</th></tr></thead>
         <tbody id="util-demand-body"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ===== RATE CARDS TAB ===== -->
+  <!-- RATE CARDS -->
   <div id="ctab-ratecards" class="tab-panel">
     <div class="table-wrap">
       <div class="table-head">
         <span class="table-title">Rate card — by unit size</span>
         <div style="display:flex;gap:6px;align-items:center">
           <span class="tag accent" id="rc-mode-badge">Separate mode</span>
-          <span class="tag" id="rc-derived-badge">derived from cost</span>
+          <span class="tag" id="rc-derived-badge">—</span>
         </div>
       </div>
       <table><thead id="rate-card-head"></thead><tbody id="rate-card-body"></tbody></table>
     </div>
     <div class="table-wrap">
-      <div class="table-head"><span class="table-title">Revenue build — by job type</span><span class="tag blue" id="jobs-yr-badge">— jobs/yr</span></div>
+      <div class="table-head"><span class="table-title">Revenue build — by job type</span><span class="tag blue" id="jobs-yr-badge">—</span></div>
       <table>
-        <thead><tr><th>Unit type</th><th class="r">Rate / job</th><th class="r">Mix %</th><th class="r">Jobs / yr</th><th class="r">Revenue contrib</th></tr></thead>
+        <thead><tr><th>Unit type</th><th class="r">Rate / job</th><th class="r">Mix %</th><th class="r">Jobs / yr (actual)</th><th class="r">Revenue contrib</th></tr></thead>
         <tbody id="mix-body"></tbody>
       </table>
     </div>
-    <!-- ZONE DESPATCH REFERENCE TABLE -->
     <div class="table-wrap">
-      <div class="table-head">
-        <span class="table-title">Zone despatch fees — at current settings</span>
-        <span class="tag accent" id="rc-blended-despatch-badge">blended: AED —</span>
-      </div>
+      <div class="table-head"><span class="table-title">Zone despatch fees</span><span class="tag accent" id="rc-blended-despatch-badge">blended: —</span></div>
       <table>
-        <thead><tr><th>Zone</th><th class="r">Base fee</th><th class="r">Adjusted (×mlt)</th><th class="r">Your mix %</th><th class="r">Weighted contrib</th></tr></thead>
+        <thead><tr><th>Zone</th><th class="r">Base fee</th><th class="r">Adjusted (×mlt)</th><th class="r">Mix %</th><th class="r">Weighted contrib</th></tr></thead>
         <tbody id="zone-table-body"></tbody>
       </table>
     </div>
-
-    <!-- ADD-ONS REFERENCE TABLE -->
     <div class="table-wrap">
-      <div class="table-head">
-        <span class="table-title">Add-on charges — charged on top of despatch + labour</span>
-        <span class="tag">informational</span>
-      </div>
+      <div class="table-head"><span class="table-title">Add-on charges</span><span class="tag">informational — charged on top</span></div>
       <table>
-        <thead>
-          <tr>
-            <th>Add-on</th>
-            <th class="r">Rate (AED)</th>
-            <th class="r">Rate inc-VAT</th>
-            <th>When charged</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Add-on</th><th class="r">Rate (AED)</th><th class="r">inc-VAT</th><th>When charged</th></tr></thead>
         <tbody id="addons-body"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ===== VOLUME QUOTES TAB ===== -->
+  <!-- VOLUME QUOTES -->
   <div id="ctab-volume" class="tab-panel">
     <div class="status-bar info" id="vol-status">—</div>
     <div class="table-wrap">
-      <div class="table-head"><span class="table-title">Wholesaler volume quotes</span><span class="tag" id="disc-badge">max —% discount</span></div>
+      <div class="table-head"><span class="table-title">Wholesaler volume quotes</span><span class="tag" id="disc-badge">—</span></div>
       <div class="vol-row head"><span>Volume</span><span>Price / unit</span><span>Discount</span><span>Total ex-VAT</span><span>Total inc-VAT</span><span>Margin</span></div>
       <div id="vol-tiers-body"></div>
     </div>
   </div>
 
-  <!-- ===== P&L TAB ===== -->
+  <!-- P&L -->
   <div id="ctab-pnl" class="tab-panel">
     <div class="table-wrap">
-      <div class="table-head"><span class="table-title">P&amp;L summary — at full capacity</span><span class="tag purple" id="pnl-cost-badge">—</span></div>
+      <div class="table-head"><span class="table-title">P&amp;L summary</span><span class="tag purple" id="pnl-cost-badge">—</span></div>
       <table>
-        <thead><tr><th>Line</th><th class="r">Annual (AED)</th><th class="r">Per job (AED)</th><th class="r">% of revenue</th></tr></thead>
+        <thead><tr><th>Line</th><th class="r">At baseline jobs</th><th class="r">At actual jobs</th><th class="r">Per job (AED)</th></tr></thead>
         <tbody id="pnl-body"></tbody>
       </table>
     </div>
     <div class="table-wrap">
       <div class="table-head"><span class="table-title">Break-even analysis</span></div>
       <table>
-        <thead><tr><th>Scenario</th><th class="r">Revenue needed</th><th class="r">Jobs needed</th><th class="r">Jobs / day</th><th class="r">Feasible?</th></tr></thead>
+        <thead><tr><th>Scenario</th><th class="r">Revenue needed</th><th class="r">Jobs needed</th><th class="r">Jobs / day</th><th class="r">vs capacity</th></tr></thead>
         <tbody id="breakeven-body"></tbody>
       </table>
     </div>
@@ -460,7 +446,6 @@ tr.cost-total td.purple { color: var(--purple); }
 
 </main>
 </div>
-
 <footer class="footer">CTT Reseller Pricing Engine &nbsp;|&nbsp; v-bog.com &nbsp;|&nbsp; Confidential — internal use only</footer>
 
 <script>
@@ -468,7 +453,6 @@ tr.cost-total td.purple { color: var(--purple); }
    ALL CONFIGURABLE VARIABLES — EDIT HERE ONLY
    ============================================================ */
 
-// Labour scale ratios relative to 50L anchor
 const LABOUR_SCALE_RATIOS = {
   "Up to 50L": 1.000,
   "80L":       1.167,
@@ -477,42 +461,28 @@ const LABOUR_SCALE_RATIOS = {
   "300L+":     2.167,
 };
 
-// Zone despatch fees — as RATIOS of BASE_DESPATCH anchor (Dubai = 1.00 reference)
-// When BASE_DESPATCH slider changes, all zone fees scale proportionally
-// To change individual zone relativities, edit the ratios here
 const ZONE_DESPATCH_RATIOS = {
-  "Dubai":          1.000,   // anchor — BASE_DESPATCH slider sets this exactly
-  "Sharjah/Ajman":  0.929,   // 650/700
-  "UAQ":            1.214,   // 850/700
-  "RAK":            1.429,   // 1000/700
-  "Fujairah":       1.786,   // 1250/700
-  "Al Ain":         2.000,   // 1400/700
-  "Abu Dhabi":      2.214,   // 1550/700
-  "Liwa/Ruwais":    5.000,   // 3500/700
+  "Dubai":         1.000,
+  "Sharjah/Ajman": 0.929,
+  "UAQ":           1.214,
+  "RAK":           1.429,
+  "Fujairah":      1.786,
+  "Al Ain":        2.000,
+  "Abu Dhabi":     2.214,
+  "Liwa/Ruwais":   5.000,
 };
 
-// Default zone mix — what % of your jobs come from each zone
-// These are overridden by the zone mix sliders in the UI
-// Must sum to 100% — last zone auto-balances
-const ZONE_MIX_DEFAULT = {
-  "Dubai":          45,
-  "Sharjah/Ajman":  20,
-  "UAQ":            10,
-  "RAK":            10,
-  "Fujairah":        5,
-  "Al Ain":          5,
-  "Abu Dhabi":       4,
-  "Liwa/Ruwais":     1,
-};
+// Blended despatch at default zone mix — reference constant (computed live from sliders)
+const BLENDED_DESPATCH_BASE = 880;
 
-// Volume tiers for wholesaler quotes
 const VOLUME_TIERS = [100, 250, 500, 1000, 2000, 5000];
 
-// VAT rate
 const VAT_RATE = 0.05;
 
-// Add-on rates (AED) — flat additional charges per job, on top of despatch + labour
-// These are informational / used in rate card display; not in blended revenue model
+// FIX 2: Handling premium is REVENUE on large heaters — NOT a cost
+// Added to unitFullRates for 200L+ only, does not enter cost calc
+// (controlled by HANDLING_PREMIUM slider, applied in derive())
+
 const ADDON_RATES = {
   "False ceiling access":               350,
   "Roof access premium":                300,
@@ -520,55 +490,41 @@ const ADDON_RATES = {
   "Waiting after free 30 min (per hr)": 200,
 };
 
-// Margin colour thresholds
 const MARGIN_GREEN_THRESHOLD = 0.25;
 const MARGIN_AMBER_THRESHOLD = 0.10;
 
-// Staff roster — all-in annual costs from the cost model (TB-validated 2025)
-// id, name, role, allInCost, defaultUtil (0-100), defaultIncluded
 const STAFF_ROSTER = [
-  { id:'s_rafi',      name:'Muhd. Rafi',       role:'Site Mgr (placeholder)', allIn: 127731, util: 100, on: true  },
-  { id:'s_ashique',   name:'Ashique',           role:'Asst Supervisor',        allIn: 58007,  util: 100, on: true  },
-  { id:'s_imtiaz',    name:'Imtiaz Khan',       role:'Field Tech',             allIn: 28978,  util: 100, on: true  },
-  { id:'s_chiranjibi',name:'Chiranjibi',        role:'Field Tech',             allIn: 26551,  util: 100, on: true  },
-  { id:'s_daljit',    name:'Daljit Sing',       role:'Field Tech/Helper',      allIn: 30000,  util: 100, on: true  },
-  { id:'s_masood',    name:'Masood',            role:'Sales Engineer',         allIn: 87500,  util: 70,  on: true  },
-  { id:'s_jay',       name:'Jay Deliwala',      role:'Ops Manager',            allIn: 51000,  util: 60,  on: true  },
-  { id:'s_mets',      name:'Mets (Floradel)',   role:'Front Office',           allIn: 37503,  util: 100, on: true  },
-  { id:'s_new1',      name:'New Resource 1',    role:'Coordinator (new)',      allIn: 72000,  util: 100, on: true  },
-  { id:'s_new2',      name:'New Resource 2',    role:'To be confirmed',        allIn: 72000,  util: 0,   on: false },
+  { id:'s_rafi',       name:'Muhd. Rafi',     role:'Site Mgr (placeholder)', allIn:127731, util:100, on:true  },
+  { id:'s_ashique',    name:'Ashique',         role:'Asst Supervisor',        allIn:58007,  util:100, on:true  },
+  { id:'s_imtiaz',     name:'Imtiaz Khan',     role:'Field Tech',             allIn:28978,  util:100, on:true  },
+  { id:'s_chiranjibi', name:'Chiranjibi',      role:'Field Tech',             allIn:26551,  util:100, on:true  },
+  { id:'s_daljit',     name:'Daljit Sing',     role:'Field Tech/Helper',      allIn:30000,  util:100, on:true  },
+  { id:'s_masood',     name:'Masood',          role:'Sales Engineer',         allIn:87500,  util:70,  on:true  },
+  { id:'s_jay',        name:'Jay Deliwala',    role:'Ops Manager',            allIn:51000,  util:60,  on:true  },
+  { id:'s_mets',       name:'Mets (Floradel)', role:'Front Office',           allIn:37503,  util:100, on:true  },
+  { id:'s_new1',       name:'New Resource 1',  role:'Coordinator (new)',      allIn:72000,  util:100, on:true  },
+  { id:'s_new2',       name:'New Resource 2',  role:'To be confirmed',        allIn:72000,  util:0,   on:false },
 ];
 
-// Overhead items — TB 2025 actuals, default reseller allocation %
-// id, name, tbAmount, defaultAllocPct (0-100)
 const OVERHEAD_ITEMS = [
-  { id:'oh_veh',    name:'Vehicle running + fuel',     tb: 101078, pct: 50 },
-  { id:'oh_vehrep', name:'Vehicle repairs & maint',    tb: 83591,  pct: 50 },
-  { id:'oh_wh',     name:'Warehouse rent',             tb: 63295,  pct: 70 },
-  { id:'oh_accom',  name:'Labour accommodation',       tb: 29533,  pct: 100},
-  { id:'oh_visa',   name:'Visa expenses',              tb: 64327,  pct: 55 },
-  { id:'oh_tel',    name:'Telephone expenses',         tb: 37853,  pct: 55 },
-  { id:'oh_ins',    name:'Insurance (general)',        tb: 35496,  pct: 50 },
-  { id:'oh_comm',   name:'Sales commission',           tb: 115673, pct: 100},
-  { id:'oh_site',   name:'Site expenses',              tb: 144147, pct: 70 },
-  { id:'oh_dep',    name:'Depreciation — vehicles',   tb: 90689,  pct: 50 },
-  { id:'oh_freight',name:'Freight & shipping',         tb: 70228,  pct: 60 },
-  { id:'oh_admin',  name:'Admin / legal / license',   tb: 36265,  pct: 60 },
-  { id:'oh_it',     name:'IT services',                tb: 14158,  pct: 50 },
-  { id:'oh_misc',   name:'Misc (utilities, bank etc)', tb: 30000,  pct: 50 },
+  { id:'oh_veh',     name:'Vehicle running + fuel',     tb:101078, pct:50  },
+  { id:'oh_vehrep',  name:'Vehicle repairs & maint',    tb:83591,  pct:50  },
+  { id:'oh_wh',      name:'Warehouse rent',             tb:63295,  pct:70  },
+  { id:'oh_accom',   name:'Labour accommodation',       tb:29533,  pct:100 },
+  { id:'oh_visa',    name:'Visa expenses',              tb:64327,  pct:55  },
+  { id:'oh_tel',     name:'Telephone expenses',         tb:37853,  pct:55  },
+  { id:'oh_ins',     name:'Insurance (general)',        tb:35496,  pct:50  },
+  { id:'oh_comm',    name:'Sales commission',           tb:115673, pct:100 },
+  { id:'oh_site',    name:'Site expenses',              tb:144147, pct:70  },
+  { id:'oh_dep',     name:'Depreciation — vehicles',   tb:90689,  pct:50  },
+  { id:'oh_freight', name:'Freight & shipping',         tb:70228,  pct:60  },
+  { id:'oh_admin',   name:'Admin / legal / license',   tb:36265,  pct:60  },
+  { id:'oh_it',      name:'IT services',                tb:14158,  pct:50  },
+  { id:'oh_misc',    name:'Misc (utilities, bank etc)', tb:30000,  pct:50  },
 ];
 
-// Jobs per field tech per day at 100% utilisation
 const JOBS_PER_FIELD_TECH_PER_DAY = 2;
-
-// Field tech role identifiers (used for team/capacity calc)
 const FIELD_TECH_IDS = ['s_ashique','s_imtiaz','s_chiranjibi','s_daljit'];
-
-// Cost-up split: overheads are fixed; staff cost scales with volume (variable)
-// Used for the wholesaler volume-quote margin column so small tiers don't get
-// attributed the full fixed cost base.
-const STAFF_COST_VARIABILITY = 1.0;     // 1.0 = fully variable per job
-const OVERHEAD_COST_VARIABILITY = 0.0;  // 0.0 = fully fixed
 
 /* ============================================================
    DOM HELPERS
@@ -578,90 +534,62 @@ const fmtAED = n  => 'AED ' + Math.round(n).toLocaleString();
 const fmtNum = n  => Math.round(n).toLocaleString();
 const fmtPct = n  => n.toFixed(1) + '%';
 const fmtMul = n  => n.toFixed(1) + '×';
-
 function colorForMargin(m) {
-  if (m >= MARGIN_GREEN_THRESHOLD) return 'green';
-  if (m >= MARGIN_AMBER_THRESHOLD) return 'amber';
-  return 'red';
+  return m >= MARGIN_GREEN_THRESHOLD ? 'green' : m >= MARGIN_AMBER_THRESHOLD ? 'amber' : 'red';
 }
 
 /* ============================================================
    TAB SWITCHING
    ============================================================ */
 function switchSidebarTab(name) {
-  ['pricing','staff','overheads'].forEach(t => {
-    $('stab-'+t).classList.toggle('active', t===name);
-  });
-  document.querySelectorAll('.sidebar .tab-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab===name);
-  });
+  ['pricing','staff','overheads'].forEach(t => $('stab-'+t).classList.toggle('active', t===name));
+  document.querySelectorAll('.sidebar .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===name));
 }
-
 function switchContentTab(name) {
-  ['overview','utilisation','ratecards','volume','pnl'].forEach(t => {
-    $('ctab-'+t).classList.toggle('active', t===name);
-  });
-  document.querySelectorAll('.content .tab-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab===name);
-  });
+  ['overview','utilisation','ratecards','volume','pnl'].forEach(t => $('ctab-'+t).classList.toggle('active', t===name));
+  document.querySelectorAll('.content .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===name));
 }
 
 /* ============================================================
-   BUILD STAFF ROWS IN SIDEBAR
+   BUILD SIDEBAR ROWS
    ============================================================ */
 function buildStaffRows() {
-  const container = $('staff-rows-container');
-  container.innerHTML = '';
+  const c = $('staff-rows-container'); c.innerHTML = '';
   STAFF_ROSTER.forEach(s => {
     const row = document.createElement('div');
     row.className = 'staff-row' + (s.on ? '' : ' inactive');
     row.id = 'staffrow_' + s.id;
     row.innerHTML = `
-      <div>
-        <div class="staff-name">${s.name}</div>
-        <div class="staff-role">${s.role}</div>
-      </div>
+      <div><div class="staff-name">${s.name}</div><div class="staff-role">${s.role}</div></div>
       <div class="staff-cost">${fmtNum(s.allIn)}</div>
       <div class="staff-util-wrap">
-        <input type="range" id="util_${s.id}" min="0" max="100" step="5" value="${s.util}" ${s.on ? '' : 'disabled'}>
+        <input type="range" id="util_${s.id}" min="0" max="100" step="5" value="${s.util}" ${s.on?'':'disabled'}>
         <span class="staff-util-pct" id="utilv_${s.id}">${s.util}%</span>
       </div>
       <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-        <span class="staff-alloc" id="staffalloc_${s.id}">${fmtNum(s.allIn * s.util / 100)}</span>
-        <input type="checkbox" class="staff-toggle" id="on_${s.id}" ${s.on ? 'checked' : ''}>
-      </div>
-    `;
-    container.appendChild(row);
-
-    // Util slider
-    $('util_' + s.id).addEventListener('input', function() {
+        <span class="staff-alloc" id="staffalloc_${s.id}">${fmtNum(s.allIn*s.util/100)}</span>
+        <input type="checkbox" class="staff-toggle" id="on_${s.id}" ${s.on?'checked':''}>
+      </div>`;
+    c.appendChild(row);
+    $('util_'+s.id).addEventListener('input', function() {
       s.util = parseInt(this.value);
-      $('utilv_' + s.id).textContent = s.util + '%';
-      $('staffalloc_' + s.id).textContent = fmtNum(s.allIn * s.util / 100);
+      $('utilv_'+s.id).textContent = s.util+'%';
+      $('staffalloc_'+s.id).textContent = fmtNum(s.allIn*s.util/100);
       recalc();
     });
-
-    // Toggle checkbox
-    $('on_' + s.id).addEventListener('change', function() {
+    $('on_'+s.id).addEventListener('change', function() {
       s.on = this.checked;
-      const srow = $('staffrow_' + s.id);
-      srow.classList.toggle('inactive', !s.on);
-      $('util_' + s.id).disabled = !s.on;
+      $('staffrow_'+s.id).classList.toggle('inactive', !s.on);
+      $('util_'+s.id).disabled = !s.on;
       recalc();
     });
   });
 }
 
-/* ============================================================
-   BUILD OVERHEAD ROWS IN SIDEBAR
-   ============================================================ */
 function buildOverheadRows() {
-  const container = $('oh-rows-container');
-  container.innerHTML = '';
+  const c = $('oh-rows-container'); c.innerHTML = '';
   OVERHEAD_ITEMS.forEach(oh => {
-    const row = document.createElement('div');
-    row.className = 'oh-row';
-    const allocAED = Math.round(oh.tb * oh.pct / 100);
+    const row = document.createElement('div'); row.className = 'oh-row';
     row.innerHTML = `
       <span class="oh-name">${oh.name}</span>
       <span class="oh-amount">${fmtNum(oh.tb)}</span>
@@ -669,215 +597,170 @@ function buildOverheadRows() {
         <input type="range" id="ohpct_${oh.id}" min="0" max="100" step="5" value="${oh.pct}">
         <span class="oh-pct" id="ohpctv_${oh.id}">${oh.pct}%</span>
       </div>
-      <span class="oh-cost" id="ohcost_${oh.id}">${fmtNum(allocAED)}</span>
-    `;
-    container.appendChild(row);
-
-    $('ohpct_' + oh.id).addEventListener('input', function() {
+      <span class="oh-cost" id="ohcost_${oh.id}">${fmtNum(Math.round(oh.tb*oh.pct/100))}</span>`;
+    c.appendChild(row);
+    $('ohpct_'+oh.id).addEventListener('input', function() {
       oh.pct = parseInt(this.value);
-      $('ohpctv_' + oh.id).textContent = oh.pct + '%';
-      $('ohcost_' + oh.id).textContent = fmtNum(Math.round(oh.tb * oh.pct / 100));
+      $('ohpctv_'+oh.id).textContent = oh.pct+'%';
+      $('ohcost_'+oh.id).textContent = fmtNum(Math.round(oh.tb*oh.pct/100));
       recalc();
     });
   });
 }
 
 /* ============================================================
-   READ COST INPUTS
+   COST CALCULATIONS
    ============================================================ */
-function calcStaffCost() {
-  return STAFF_ROSTER.filter(s => s.on).reduce((sum, s) => sum + s.allIn * s.util / 100, 0);
-}
-
-function calcOverheadCost() {
-  return OVERHEAD_ITEMS.reduce((sum, oh) => sum + oh.tb * oh.pct / 100, 0);
-}
-
+function calcStaffCost()    { return STAFF_ROSTER.filter(s=>s.on).reduce((s,p)=>s+p.allIn*p.util/100, 0); }
+function calcOverheadCost() { return OVERHEAD_ITEMS.reduce((s,oh)=>s+oh.tb*oh.pct/100, 0); }
+// If COST_BASE_OVERRIDE is set (> 0), it replaces ALL computed costs entirely.
+// When blank/0, falls back to live staff + overhead calculation.
 function calcTotalCost() {
+  const override = parseFloat($('COST_BASE_OVERRIDE').value) || 0;
+  if (override > 0) return override;
   return calcStaffCost() + calcOverheadCost();
 }
 
-/* ============================================================
-   TEAM CAPACITY (field-tech derived)
-   ============================================================ */
 function teamCapacity() {
-  const fieldTechs = STAFF_ROSTER.filter(s => s.on && FIELD_TECH_IDS.includes(s.id));
-  // Util-weighted: each tech contributes (util/100 × jobs-per-tech-per-day)
-  const cap = fieldTechs.reduce((sum, s) => sum + (s.util / 100) * JOBS_PER_FIELD_TECH_PER_DAY, 0);
-  return { fieldTechCount: fieldTechs.length, teamsCount: Math.floor(fieldTechs.length / 2), maxJobsDay: cap };
+  const ft = STAFF_ROSTER.filter(s=>s.on && FIELD_TECH_IDS.includes(s.id));
+  const cap = ft.reduce((sum,s)=>sum+(s.util/100)*JOBS_PER_FIELD_TECH_PER_DAY, 0);
+  return { fieldTechCount:ft.length, teamsCount:Math.floor(ft.length/2), maxJobsDay:cap };
 }
 
 /* ============================================================
-   CLAMP HELPERS
-   ============================================================ */
-// Proportionally scale `values` so they sum to `capSum` if they currently exceed
-// it. If the sum is below, leave them untouched. Mutates the input slider DOM
-// values to match the clamped values so the UI reflects what's actually used.
-function clampToSum(ids, capSum) {
-  const raw = ids.map(id => parseFloat($(id).value) || 0);
-  const sum = raw.reduce((a, b) => a + b, 0);
-  if (sum <= capSum || sum === 0) return raw;
-  const scaled = raw.map(x => Math.round(x * capSum / sum));
-  // Fix rounding drift on last entry
-  const drift = capSum - scaled.reduce((a, b) => a + b, 0);
-  scaled[scaled.length - 1] += drift;
-  ids.forEach((id, i) => { $(id).value = scaled[i]; });
-  return scaled;
-}
-
-/* ============================================================
-   READ PRICING INPUTS
+   READ INPUTS
    ============================================================ */
 function readInputs() {
-  // Hard-clamp job-mix sliders to ≤100% sum (300L+ auto-fills the remainder)
-  const mixIds = ['MIX_50L','MIX_80L','MIX_150L','MIX_200L'];
-  const [mix50, mix80, mix150, mix200] = clampToSum(mixIds, 100);
-
-  // Hard-clamp zone sliders to ≤100% sum (Liwa/Ruwais auto-fills the remainder)
-  const zoneIds = ['ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi'];
-  const [zDub, zShj, zUaq, zRak, zFuj, zAla, zAbd] = clampToSum(zoneIds, 100);
-
-  // Hard-clamp JOBS_PER_DAY to team capacity
   const cap = teamCapacity();
-  let jobsPerDay = parseFloat($('JOBS_PER_DAY').value);
-  if (cap.maxJobsDay > 0 && jobsPerDay > cap.maxJobsDay) {
-    jobsPerDay = Math.floor(cap.maxJobsDay * 2) / 2;  // snap down to 0.5 step
-    $('JOBS_PER_DAY').value = jobsPerDay;
-  }
+
+  // Read zone sliders, auto-balance Liwa
+  const zIds = ['ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi'];
+  const zVals = zIds.map(id => parseInt($(id).value)||0);
+  const zSum  = zVals.reduce((a,b)=>a+b,0);
+  const zLiwa = Math.max(0, 100 - zSum);
+
+  // Mix sliders
+  const mix50  = parseInt($('MIX_50L').value)||0;
+  const mix80  = parseInt($('MIX_80L').value)||0;
+  const mix150 = parseInt($('MIX_150L').value)||0;
+  const mix200 = parseInt($('MIX_200L').value)||0;
+
+  // FIX 3: Cost recovery baseline
+  const crJobsRaw = parseInt($('COST_RECOVERY_JOBS').value)||0;
+  const jobsPerDay = parseFloat($('JOBS_PER_DAY').value);
+  const workDays   = parseInt($('WORKING_DAYS_PER_YEAR').value);
+  const actualJobsYr = jobsPerDay * workDays;
+  // If baseline = 0 or blank, use actual jobs
+  const baselineJobsYr = crJobsRaw > 0 ? crJobsRaw : actualJobsYr;
 
   return {
-    BASE_DESPATCH:           parseFloat($('BASE_DESPATCH').value),
-    DESPATCH_MULTIPLIER:     parseFloat($('DESPATCH_MULTIPLIER').value),
-    COMBINED_PRICING:        $('COMBINED_PRICING_TOGGLE').checked,
-    JOBS_PER_DAY:            jobsPerDay,
-    WORKING_DAYS_PER_YEAR:   parseInt($('WORKING_DAYS_PER_YEAR').value),
-    TARGET_MARGIN_PCT:       parseFloat($('TARGET_MARGIN_PCT').value) / 100,
-    OPERATIONAL_EFFICIENCY_DISCOUNT: parseFloat($('OPERATIONAL_EFFICIENCY_DISCOUNT').value) / 100,
-    HANDLING_PREMIUM:        parseFloat($('HANDLING_PREMIUM').value),
-    MIX_50L:                 mix50,
-    MIX_80L:                 mix80,
-    MIX_150L:                mix150,
-    MIX_200L:                mix200,
-    VOLUME_DISCOUNT_MAX_PCT: parseFloat($('VOLUME_DISCOUNT_MAX_PCT').value) / 100,
-    VOLUME_DISCOUNT_CURVE:   parseFloat($('VOLUME_DISCOUNT_CURVE').value),
-    ZONE_Dubai:    zDub,
-    ZONE_Sharjah:  zShj,
-    ZONE_UAQ:      zUaq,
-    ZONE_RAK:      zRak,
-    ZONE_Fujairah: zFuj,
-    ZONE_AlAin:    zAla,
-    ZONE_AbuDhabi: zAbd,
+    BASE_DESPATCH:                  parseFloat($('BASE_DESPATCH').value),
+    DESPATCH_MULTIPLIER:            parseFloat($('DESPATCH_MULTIPLIER').value),
+    COMBINED_PRICING:               $('COMBINED_PRICING_TOGGLE').checked,
+    HANDLING_PREMIUM:               parseFloat($('HANDLING_PREMIUM').value),  // FIX 2: revenue only
+    JOBS_PER_DAY:                   jobsPerDay,
+    WORKING_DAYS_PER_YEAR:          workDays,
+    TARGET_MARGIN_PCT:              parseFloat($('TARGET_MARGIN_PCT').value)/100,
+    OPERATIONAL_EFFICIENCY_DISCOUNT:parseFloat($('OPERATIONAL_EFFICIENCY_DISCOUNT').value)/100,
+    COST_BASE_OVERRIDE:             parseFloat($('COST_BASE_OVERRIDE').value)||0,
+    COST_RECOVERY_JOBS_RAW:         crJobsRaw,
+    BASELINE_JOBS_YR:               baselineJobsYr,   // FIX 3: pricing anchor
+    ACTUAL_JOBS_YR:                 actualJobsYr,
+    MIX_50L:mix50, MIX_80L:mix80, MIX_150L:mix150, MIX_200L:mix200,
+    VOLUME_DISCOUNT_MAX_PCT:        parseFloat($('VOLUME_DISCOUNT_MAX_PCT').value)/100,
+    VOLUME_DISCOUNT_CURVE:          parseFloat($('VOLUME_DISCOUNT_CURVE').value),
+    ZONE_Dubai:zVals[0], ZONE_Sharjah:zVals[1], ZONE_UAQ:zVals[2], ZONE_RAK:zVals[3],
+    ZONE_Fujairah:zVals[4], ZONE_AlAin:zVals[5], ZONE_AbuDhabi:zVals[6], ZONE_Liwa:zLiwa,
     _cap: cap,
   };
 }
 
 /* ============================================================
-   DERIVE PRICING MODEL — cost-up pricing
-   ============================================================
-   1. Total cost (staff util × all-in + OH × alloc) is the truth.
-   2. Cost per job = cost / (jobs/day × days/year).
-   3. Target rate = cost-per-job ÷ (1 − target margin).
-   4. Customer rate = target rate × (1 − operational efficiency discount).
-   5. Despatch is anchored by BASE_DESPATCH × zone ratios × zone mix.
-   6. Labour is the residual: customer rate − blended despatch,
-      then split across unit sizes by LABOUR_SCALE_RATIOS and mix.
-*/
+   DERIVE — cost-up pricing
+   ============================================================ */
 function derive(v) {
-  // ---- Unit-size mix (300L+ auto-fills remainder; inputs are clamped to ≤100)
-  const mixRaw  = { "Up to 50L": v.MIX_50L, "80L": v.MIX_80L, "100/150L": v.MIX_150L, "200L": v.MIX_200L };
-  const sumRaw  = Object.values(mixRaw).reduce((a,b) => a+b, 0);
-  const mix300  = Math.max(0, 100 - sumRaw);
-  const mix     = { ...mixRaw, "300L+": mix300 };
+  // Mix
+  const sumRaw = v.MIX_50L + v.MIX_80L + v.MIX_150L + v.MIX_200L;
+  const mix300 = Math.max(0, 100 - sumRaw);
+  const mix    = { "Up to 50L":v.MIX_50L, "80L":v.MIX_80L, "100/150L":v.MIX_150L, "200L":v.MIX_200L, "300L+":mix300 };
   const mixTotal = sumRaw + mix300;
 
-  // ---- Zone mix (Liwa/Ruwais auto-fills remainder; inputs are clamped to ≤100)
-  const zoneSumWithoutLiwa = v.ZONE_Dubai + v.ZONE_Sharjah + v.ZONE_UAQ + v.ZONE_RAK +
-                              v.ZONE_Fujairah + v.ZONE_AlAin + v.ZONE_AbuDhabi;
-  const zoneLiwa  = Math.max(0, 100 - zoneSumWithoutLiwa);
-  const zoneTotal = zoneSumWithoutLiwa + zoneLiwa;  // now always 100 thanks to clamp
-
-  const zoneFees = {};
-  for (const [zone, ratio] of Object.entries(ZONE_DESPATCH_RATIOS)) {
-    zoneFees[zone] = v.BASE_DESPATCH * ratio * v.DESPATCH_MULTIPLIER;
-  }
+  // Zone mix → blended despatch
   const zoneShares = {
-    "Dubai": v.ZONE_Dubai, "Sharjah/Ajman": v.ZONE_Sharjah, "UAQ": v.ZONE_UAQ,
-    "RAK": v.ZONE_RAK, "Fujairah": v.ZONE_Fujairah, "Al Ain": v.ZONE_AlAin,
-    "Abu Dhabi": v.ZONE_AbuDhabi, "Liwa/Ruwais": zoneLiwa,
+    "Dubai":v.ZONE_Dubai, "Sharjah/Ajman":v.ZONE_Sharjah, "UAQ":v.ZONE_UAQ,
+    "RAK":v.ZONE_RAK, "Fujairah":v.ZONE_Fujairah, "Al Ain":v.ZONE_AlAin,
+    "Abu Dhabi":v.ZONE_AbuDhabi, "Liwa/Ruwais":v.ZONE_Liwa,
   };
+  const zoneFees = {};
+  for (const [z,r] of Object.entries(ZONE_DESPATCH_RATIOS)) {
+    zoneFees[z] = v.BASE_DESPATCH * r * v.DESPATCH_MULTIPLIER;
+  }
+  const zoneTotal = Object.values(zoneShares).reduce((a,b)=>a+b,0);
   let blendedDespatch = 0;
-  for (const [zone, share] of Object.entries(zoneShares)) {
-    blendedDespatch += (share / 100) * zoneFees[zone];
+  for (const [z,share] of Object.entries(zoneShares)) {
+    blendedDespatch += (share/(zoneTotal||100)) * zoneFees[z];
   }
 
-  // ---- Cost-up rate. Efficiency from job stacking is modelled as a real
-  // cost saving (shared fuel / travel time / on-site overhead across stops),
-  // so it reduces the cost base used in the cost-up formula. The customer
-  // rate therefore drops with efficiency while implied margin still equals
-  // target margin exactly.
+  // Costs — override takes full precedence when set, else live staff+OH
+  // FIX 2: NO handling premium in costs (it's revenue-only)
+  const override     = v.COST_BASE_OVERRIDE;
   const staffCost    = calcStaffCost();
   const overheadCost = calcOverheadCost();
-  const jobsPerYear  = v.JOBS_PER_DAY * v.WORKING_DAYS_PER_YEAR;
+  const isOverridden = override > 0;
+  // grossCost = override (if set) OR live staff+OH
+  const grossCost    = isOverridden ? override : (staffCost + overheadCost);
+  const additionalCost = 0;  // no longer used — subsumed by override model
 
-  // Large heaters = 200L and 300L+. Handling premium hits only this share.
-  const largeShare    = ((mix["200L"] || 0) + (mix["300L+"] || 0)) / 100;
-  const handlingCost  = v.HANDLING_PREMIUM * jobsPerYear * largeShare;
-  const grossCost     = staffCost + overheadCost + handlingCost;
-  const efficiencySavings = grossCost * v.OPERATIONAL_EFFICIENCY_DISCOUNT;
-  const netCost       = grossCost - efficiencySavings;
-  // totalCost alias = netCost so existing renderers (Overview tile, badges,
-  // jobs-per-year column ratios) reflect the cost base actually used by the
-  // pricing formula. Gross / savings are separate fields for the breakdown.
-  const totalCost     = netCost;
+  // Efficiency savings (on gross cost)
+  const effSavings   = grossCost * v.OPERATIONAL_EFFICIENCY_DISCOUNT;
+  const netCost      = grossCost - effSavings;
+  const totalCost    = netCost;
 
-  const costPerJob   = jobsPerYear > 0 ? netCost / jobsPerYear : 0;
-  const marginDivisor = Math.max(0.01, 1 - v.TARGET_MARGIN_PCT);
-  const idealBlended  = costPerJob / marginDivisor;
-  const targetRate    = idealBlended;
+  // FIX 3: Price using BASELINE_JOBS_YR, not actual jobs
+  const baselineJobs = v.BASELINE_JOBS_YR;
+  const costPerJob   = baselineJobs > 0 ? netCost / baselineJobs : 0;
+  const marginDiv    = Math.max(0.01, 1 - v.TARGET_MARGIN_PCT);
+  const idealBlended = costPerJob / marginDiv;
 
-  // ---- Split blendedAllIn between despatch (anchored) and labour (residual).
-  // If anchored despatch alone exceeds the cost-up target, the customer rate
-  // floor becomes despatch itself (labour = 0) and blendedAllIn rises to match
-  // so rate card and revenue stay coherent.
-  const labourClipped = blendedDespatch > idealBlended;
-  const blendedAllIn  = labourClipped ? blendedDespatch : idealBlended;
-  const blendedLabour = blendedAllIn - blendedDespatch;
+  // Labour residual after anchoring despatch
+  const labourClipped  = blendedDespatch > idealBlended;
+  const blendedAllIn   = labourClipped ? blendedDespatch : idealBlended;
+  const blendedLabour  = blendedAllIn - blendedDespatch;
 
-  // Per-unit labour distribution: large units carry the handling premium on
-  // top of the scale-ratio split. Solve for baseLabour50L so the weighted
-  // sum still equals blendedLabour exactly (rate card stays coherent with
-  // revenue).
-  const isLarge = u => (u === "200L" || u === "300L+");
-  const labourMixWeight = Object.entries(mix).reduce(
-    (sum, [u, share]) => sum + (share / 100) * LABOUR_SCALE_RATIOS[u], 0);
-  const premiumWeighted = v.HANDLING_PREMIUM * largeShare;
-  const baseLabour50L = labourMixWeight > 0
-    ? Math.max(0, (blendedLabour - premiumWeighted) / labourMixWeight)
-    : 0;
-  const labourRates = {};
+  // Distribute labour across unit sizes by scale ratio
+  const labourMixWeight = Object.entries(mix).reduce((sum,[u,sh])=>sum+(sh/100)*LABOUR_SCALE_RATIOS[u], 0);
+  const baseLabour50L   = labourMixWeight > 0 ? blendedLabour / labourMixWeight : 0;
+
+  const labourRates  = {};
   const unitFullRates = {};
   for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-    const premium = isLarge(u) ? v.HANDLING_PREMIUM : 0;
-    labourRates[u]   = baseLabour50L * LABOUR_SCALE_RATIOS[u] + premium;
-    unitFullRates[u] = blendedDespatch + labourRates[u];
+    labourRates[u]    = baseLabour50L * LABOUR_SCALE_RATIOS[u];
+    // FIX 2: Handling premium added to RATE ONLY for large heaters — not to cost
+    const isLarge = (u === "200L" || u === "300L+");
+    unitFullRates[u]  = blendedDespatch + labourRates[u] + (isLarge ? v.HANDLING_PREMIUM : 0);
   }
 
-  // ---- P&L. Profit measured against the net cost actually incurred after
-  // operational savings, so actualMargin equals targetMargin (except in the
-  // labour-clipped edge case where despatch alone exceeds the cost-up rate).
-  const revenue      = blendedAllIn * jobsPerYear;
-  const profit       = revenue - netCost;
-  const actualMargin = revenue > 0 ? profit / revenue : 0;
-  const dailyRevenue = v.WORKING_DAYS_PER_YEAR > 0 ? revenue / v.WORKING_DAYS_PER_YEAR : 0;
+  // Revenue at ACTUAL jobs (rate is fixed, costs are fixed)
+  const actualJobsYr  = v.ACTUAL_JOBS_YR;
+  const baselineRev   = blendedAllIn * baselineJobs;   // revenue at baseline
+  const actualRev     = blendedAllIn * actualJobsYr;   // revenue at actual capacity
+
+  // FIX 3: Profit above baseline = pure profit (costs already recovered)
+  const extraJobs     = Math.max(0, actualJobsYr - baselineJobs);
+  const extraRev      = blendedAllIn * extraJobs;
+  const baselineProfit= baselineRev - netCost;          // profit at baseline
+  const totalProfit   = actualRev - netCost;            // total profit (baseline + uplift)
+  const baselineMargin= baselineRev > 0 ? baselineProfit / baselineRev : 0;
 
   return {
     mix, mixTotal, labourRates, baseLabour50L, blendedDespatch,
-    zoneFees, zoneShares, zoneLiwa, zoneTotal,
-    unitFullRates,
-    blendedAllIn, costPerJob, targetRate, labourClipped,
-    jobsPerYear, revenue, totalCost, profit, actualMargin, dailyRevenue,
-    staffCost, overheadCost, handlingCost, largeShare,
-    grossCost, efficiencySavings, netCost,
+    zoneFees, zoneShares, zoneTotal,
+    unitFullRates, blendedAllIn, blendedLabour, labourClipped,
+    staffCost, overheadCost, additionalCost, grossCost, effSavings, netCost, totalCost, isOverridden, override,
+    costPerJob, idealBlended,
+    baselineJobs, actualJobsYr, baselineRev, actualRev,
+    extraJobs, extraRev, baselineProfit, totalProfit, baselineMargin,
+    dailyRev: actualRev / (v.WORKING_DAYS_PER_YEAR||1),
   };
 }
 
@@ -885,459 +768,379 @@ function derive(v) {
    RENDER: SIDEBAR LABELS
    ============================================================ */
 function updateSidebarLabels(v, d) {
-  $('v_BASE_DESPATCH').textContent     = fmtAED(v.BASE_DESPATCH);
-  $('v_DESPATCH_MULTIPLIER').textContent = fmtMul(v.DESPATCH_MULTIPLIER) + (v.DESPATCH_MULTIPLIER===1?' (base)':'');
-  $('v_COMBINED_MODE').textContent     = v.COMBINED_PRICING ? 'Combined (one price)' : 'Separate (despatch + labour)';
-  $('v_JOBS_PER_DAY').textContent      = v.JOBS_PER_DAY + ' / day';
-  $('v_WORKING_DAYS_PER_YEAR').textContent = v.WORKING_DAYS_PER_YEAR + ' days';
-  $('v_TARGET_MARGIN_PCT').textContent = Math.round(v.TARGET_MARGIN_PCT*100) + '%';
+  $('v_BASE_DESPATCH').textContent      = fmtAED(v.BASE_DESPATCH);
+  $('v_DESPATCH_MULTIPLIER').textContent= fmtMul(v.DESPATCH_MULTIPLIER)+(v.DESPATCH_MULTIPLIER===1?' (base)':'');
+  $('v_COMBINED_MODE').textContent      = v.COMBINED_PRICING?'Combined (one price)':'Separate (despatch + labour)';
+  $('v_HANDLING_PREMIUM').textContent   = fmtAED(v.HANDLING_PREMIUM);
+  $('v_JOBS_PER_DAY').textContent       = v.JOBS_PER_DAY+' / day';
+  const capHint = $('v_JOBS_CAP_HINT');
+  if (capHint) capHint.textContent = v._cap.maxJobsDay>0 ? '(cap '+v._cap.maxJobsDay.toFixed(1)+')' : '';
+  $('v_WORKING_DAYS_PER_YEAR').textContent = v.WORKING_DAYS_PER_YEAR+' days';
+  $('v_TARGET_MARGIN_PCT').textContent  = Math.round(v.TARGET_MARGIN_PCT*100)+'%';
   $('v_OPERATIONAL_EFFICIENCY_DISCOUNT').textContent = Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)+'%';
-  $('v_HANDLING_PREMIUM').textContent  = fmtAED(v.HANDLING_PREMIUM);
   $('v_VOLUME_DISCOUNT_MAX_PCT').textContent = Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)+'%';
   const c = v.VOLUME_DISCOUNT_CURVE;
   $('v_VOLUME_DISCOUNT_CURVE').textContent = c.toFixed(1)+(c<1?' (convex)':c>1?' (concave)':' (linear)');
-
-  // Jobs/day cap hint
-  const capEl = $('v_JOBS_PER_DAY_CAP');
-  if (capEl) {
-    const max = v._cap.maxJobsDay;
-    capEl.textContent = max > 0 ? 'cap ' + max.toFixed(1) : 'no field techs';
-  }
-  // Dynamically tighten the slider max so the user can't drag past capacity.
-  // Floor at 1 so the slider stays operable even with zero field techs (the
-  // capacity warning surfaces on the Utilisation tab instead).
-  const jpdEl = $('JOBS_PER_DAY');
-  if (jpdEl) {
-    const snappedCap = Math.floor(v._cap.maxJobsDay * 2) / 2;
-    jpdEl.max = Math.max(1, snappedCap);
-  }
-
-  ['MIX_50L','MIX_80L','MIX_150L','MIX_200L'].forEach(k => { $('v_'+k).textContent = v[k]+'%'; });
+  ['MIX_50L','MIX_80L','MIX_150L','MIX_200L'].forEach(k=>{ $('v_'+k).textContent = v[k]+'%'; });
   $('v_MIX_300L').textContent = d.mix["300L+"]+'%';
+  const mb = $('mix-total-badge'); mb.textContent = d.mixTotal+'%'; mb.className='tag accent';
 
-  // Zone mix labels + live zone fees
-  const zoneLabelMap = {
-    Dubai:'Dubai', Sharjah:'Sharjah/Ajman', UAQ:'UAQ', RAK:'RAK',
-    Fujairah:'Fujairah', AlAin:'Al Ain', AbuDhabi:'Abu Dhabi',
-  };
-  for (const [key, zoneName] of Object.entries(zoneLabelMap)) {
-    const shareEl = $('vz_'+key);
-    if (shareEl) shareEl.textContent = (d.zoneShares[zoneName]||0)+'%';
-    const feeEl = $('zfee_'+key);
-    if (feeEl) feeEl.textContent = 'AED '+Math.round(d.zoneFees[zoneName]||0).toLocaleString();
+  // Zone labels
+  const zlm = {Dubai:'Dubai',Sharjah:'Sharjah/Ajman',UAQ:'UAQ',RAK:'RAK',Fujairah:'Fujairah',AlAin:'Al Ain',AbuDhabi:'Abu Dhabi'};
+  for (const [k,zn] of Object.entries(zlm)) {
+    const se=$('vz_'+k); if(se) se.textContent=(d.zoneShares[zn]||0)+'%';
+    const fe=$('zfee_'+k); if(fe) fe.textContent='AED '+Math.round(d.zoneFees[zn]||0).toLocaleString();
   }
-  const liwaShareEl = $('vz_Liwa');
-  if (liwaShareEl) liwaShareEl.textContent = d.zoneLiwa+'%';
-  const liwaFeeEl = $('zfee_Liwa');
-  if (liwaFeeEl) liwaFeeEl.textContent = 'AED '+Math.round(d.zoneFees['Liwa/Ruwais']||0).toLocaleString();
+  const lws=$('vz_Liwa'); if(lws) lws.textContent=v.ZONE_Liwa+'%';
+  const lwf=$('zfee_Liwa'); if(lwf) lwf.textContent='AED '+Math.round(d.zoneFees['Liwa/Ruwais']||0).toLocaleString();
+  const zb=$('zone-total-badge'); if(zb){zb.textContent=d.zoneTotal+'%';zb.className='tag accent';}
+  const bd=$('blended-despatch-display'); if(bd) bd.textContent='AED '+Math.round(d.blendedDespatch).toLocaleString();
 
-  // Zone total badge — clamped, so always 100 except when all zones are 0
-  const zBadge = $('zone-total-badge');
-  if (zBadge) {
-    zBadge.textContent = d.zoneTotal+'%';
-    zBadge.className = 'tag accent';
+  // FIX 3: Cost recovery note
+  const crNote = $('v_COST_RECOVERY_NOTE');
+  if (crNote) {
+    if (v.COST_RECOVERY_JOBS_RAW > 0) {
+      const diff = v.ACTUAL_JOBS_YR - v.COST_RECOVERY_JOBS_RAW;
+      if (diff > 0) crNote.textContent = `Pricing locked to ${fmtNum(v.BASELINE_JOBS_YR)} jobs. ${fmtNum(diff)} extra jobs → pure profit at AED ${fmtNum(d.blendedAllIn)}/job.`;
+      else if (diff < 0) crNote.textContent = `Baseline (${fmtNum(v.BASELINE_JOBS_YR)}) > actual (${fmtNum(v.ACTUAL_JOBS_YR)}) — costs not fully recovered yet.`;
+      else crNote.textContent = `Pricing and capacity aligned at ${fmtNum(v.BASELINE_JOBS_YR)} jobs.`;
+    } else {
+      crNote.textContent = `Using actual jobs (${fmtNum(v.ACTUAL_JOBS_YR)}/yr) as pricing baseline.`;
+    }
   }
-  // Blended despatch display
-  const bdEl = $('blended-despatch-display');
-  if (bdEl) bdEl.textContent = 'AED '+Math.round(d.blendedDespatch).toLocaleString();
 
-  // Mix total badge — clamped, so always 100
-  const badge = $('mix-total-badge');
-  badge.textContent = d.mixTotal+'%';
-  badge.className = 'tag accent';
-
-  // Staff + overhead totals in sidebar
+  // Sidebar totals
   $('staff-total-display').textContent = fmtAED(d.staffCost);
   $('oh-total-display').textContent    = fmtAED(d.overheadCost);
+  // Cost base override status box
+  const box   = $('cost-base-status-box');
+  const lbl   = $('cost-base-status-label');
+  const val   = $('cost-base-status-val');
+  if (box && lbl && val) {
+    if (d.isOverridden) {
+      box.style.background    = 'var(--amber-dim)';
+      box.style.borderColor   = 'rgba(217,119,6,0.35)';
+      lbl.style.color         = 'var(--amber)';
+      val.style.color         = 'var(--amber)';
+      lbl.textContent         = '⚠ Override active — live costs ignored';
+      val.textContent         = fmtAED(d.override);
+    } else {
+      box.style.background    = 'var(--green-dim)';
+      box.style.borderColor   = 'rgba(22,163,74,0.25)';
+      lbl.style.color         = 'var(--green)';
+      val.style.color         = 'var(--green)';
+      lbl.textContent         = '✓ Using live computed costs';
+      val.textContent         = fmtAED(d.totalCost);
+    }
+  }
 }
 
 /* ============================================================
-   RENDER: OVERVIEW TAB
+   RENDER: OVERVIEW
    ============================================================ */
 function updateOverview(v, d) {
-  $('kpi-capacity').textContent     = fmtNum(d.jobsPerYear)+' jobs';
-  $('kpi-capacity-sub').textContent = v.JOBS_PER_DAY+'/day × '+v.WORKING_DAYS_PER_YEAR+' days';
-  $('kpi-revenue').textContent      = fmtAED(d.revenue);
-  $('kpi-revenue-sub').textContent  = fmtAED(d.dailyRevenue)+'/day';
-  $('kpi-cost-actual').textContent  = fmtAED(d.totalCost);
+  $('kpi-baseline').textContent    = fmtNum(d.baselineJobs)+' jobs';
+  $('kpi-baseline-sub').textContent= v.COST_RECOVERY_JOBS_RAW>0 ? 'fixed baseline (locked pricing)' : 'actual jobs/day × days';
+  $('kpi-actual-jobs').textContent = fmtNum(d.actualJobsYr)+' jobs';
+  $('kpi-actual-sub').textContent  = v.JOBS_PER_DAY+'/day × '+v.WORKING_DAYS_PER_YEAR+' days';
+  $('kpi-cost-actual').textContent = fmtAED(d.totalCost);
+  const kpiCostCard = $('kpi-cost-actual');
+  if (kpiCostCard) kpiCostCard.className = 'metric-value '+(d.isOverridden?'amber':'purple');
+  $('kpi-blended').textContent     = fmtAED(d.blendedAllIn);
 
-  const profitEl = $('kpi-profit');
-  profitEl.textContent = fmtAED(d.profit);
-  profitEl.className   = 'metric-value '+colorForMargin(d.actualMargin);
-  $('kpi-margin-pct').textContent = fmtPct(d.actualMargin*100)+' actual margin';
+  // FIX 3: Profit uplift box
+  const upliftBox = $('profit-uplift-box');
+  if (d.extraJobs > 0) {
+    upliftBox.style.display = 'block';
+    $('uplift-extra-jobs').textContent   = fmtNum(d.extraJobs)+' jobs';
+    $('uplift-extra-rev').textContent    = fmtAED(d.extraRev);
+    $('uplift-total-profit').textContent = fmtAED(d.totalProfit);
+  } else {
+    upliftBox.style.display = 'none';
+  }
 
-  $('ov-staff-cost').textContent = fmtAED(d.staffCost);
-  $('ov-staff-sub').textContent  = fmtPct(d.totalCost>0?d.staffCost/d.totalCost*100:0)+' of cost base';
-  $('ov-oh-cost').textContent    = fmtAED(d.overheadCost);
-  $('ov-oh-sub').textContent     = fmtPct(d.totalCost>0?d.overheadCost/d.totalCost*100:0)+' of cost base';
-  $('ov-blended').textContent    = fmtAED(d.blendedAllIn);
-  $('ov-blended-sub').textContent = v.OPERATIONAL_EFFICIENCY_DISCOUNT > 0
-    ? `net cost + ${Math.round(v.TARGET_MARGIN_PCT*100)}% margin (after ${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% efficiency savings)`
-    : `cost + ${Math.round(v.TARGET_MARGIN_PCT*100)}% margin`;
+  const profEl = $('ov-baseline-profit');
+  profEl.textContent = fmtAED(d.baselineProfit);
+  profEl.className   = 'metric-value '+colorForMargin(d.baselineMargin);
+  $('ov-margin-sub').textContent  = fmtPct(d.baselineMargin*100)+' margin at baseline';
+  $('ov-staff-cost').textContent  = fmtAED(d.staffCost);
+  $('ov-staff-sub').textContent   = fmtPct(d.totalCost>0?d.staffCost/d.totalCost*100:0)+' of cost base';
+  $('ov-oh-cost').textContent     = fmtAED(d.overheadCost + d.additionalCost);
+  $('ov-oh-sub').textContent      = 'OH '+fmtAED(d.overheadCost)+' + add-on '+fmtAED(d.additionalCost);
   $('ov-total-cost-badge').textContent = 'Net cost: '+fmtAED(d.netCost);
 
   const bar = $('status-bar');
-  const m = d.actualMargin;
-  bar.textContent = `${v.JOBS_PER_DAY} jobs/day × ${v.WORKING_DAYS_PER_YEAR} days = ${fmtNum(d.jobsPerYear)} jobs/yr. Revenue: ${fmtAED(d.revenue)}. Cost base: ${fmtAED(d.totalCost)} (staff: ${fmtAED(d.staffCost)} + OH: ${fmtAED(d.overheadCost)}). Profit: ${fmtAED(d.profit)} (${fmtPct(m*100)} margin).`;
+  const m = d.baselineMargin;
+  const upliftNote = d.extraJobs>0 ? ` +${fmtNum(d.extraJobs)} jobs above baseline → extra ${fmtAED(d.extraRev)} pure profit.` : '';
+  bar.textContent = `Baseline: ${fmtNum(d.baselineJobs)} jobs. Actual: ${fmtNum(d.actualJobsYr)} jobs/yr. Cost base: ${fmtAED(d.totalCost)}. Baseline profit: ${fmtAED(d.baselineProfit)} (${fmtPct(m*100)}).${upliftNote}`;
   bar.className = 'status-bar '+(m>=MARGIN_GREEN_THRESHOLD?'ok':m>=MARGIN_AMBER_THRESHOLD?'warn':'bad');
 
-  const tbody = $('ov-cost-breakdown');
-  tbody.innerHTML = '';
+  // Cost breakdown table
+  const tbody = $('ov-cost-breakdown'); tbody.innerHTML='';
   const rows = [
-    { label:'Staff — field techs',    val: STAFF_ROSTER.filter(s=>s.on&&FIELD_TECH_IDS.includes(s.id)).reduce((sum,s)=>sum+s.allIn*s.util/100,0), cls:'' },
-    { label:'Staff — management/support', val: STAFF_ROSTER.filter(s=>s.on&&!FIELD_TECH_IDS.includes(s.id)).reduce((sum,s)=>sum+s.allIn*s.util/100,0), cls:'' },
-    { label:'Total staff cost',       val: d.staffCost,    cls:'purple bold', isSub:false },
-    { label:`Handling premium (large heaters, ${Math.round(d.largeShare*100)}% of jobs)`, val: d.handlingCost, cls:'' },
-    { label:'Vehicles & fuel',        val: OVERHEAD_ITEMS.filter(o=>['oh_veh','oh_vehrep'].includes(o.id)).reduce((sum,o)=>sum+o.tb*o.pct/100,0), cls:'' },
-    { label:'Accommodation & visa',   val: OVERHEAD_ITEMS.filter(o=>['oh_accom','oh_visa'].includes(o.id)).reduce((sum,o)=>sum+o.tb*o.pct/100,0), cls:'' },
-    { label:'Other overheads',        val: OVERHEAD_ITEMS.filter(o=>!['oh_veh','oh_vehrep','oh_accom','oh_visa'].includes(o.id)).reduce((sum,o)=>sum+o.tb*o.pct/100,0), cls:'' },
-    { label:'Total overhead cost',    val: d.overheadCost, cls:'amber bold' },
-    { label:'Gross cost base',        val: d.grossCost,    cls:'bold' },
-    { label:`Operational efficiency savings (${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% of gross)`, val: -d.efficiencySavings, cls:'green', isCredit:true },
-    { label:'NET COST BASE',          val: d.netCost,      cls:'bold', total:true },
+    ...(d.isOverridden
+      ? [{label:'⚠ Cost base override (all live costs ignored)', val:d.override, cls:'amber bold'}]
+      : [
+          {label:'Staff — field techs',        val:STAFF_ROSTER.filter(s=>s.on&&FIELD_TECH_IDS.includes(s.id)).reduce((s,p)=>s+p.allIn*p.util/100,0)},
+          {label:'Staff — management/support', val:STAFF_ROSTER.filter(s=>s.on&&!FIELD_TECH_IDS.includes(s.id)).reduce((s,p)=>s+p.allIn*p.util/100,0)},
+          {label:'Total staff cost',           val:d.staffCost,    cls:'purple bold'},
+          {label:'Overhead cost',              val:d.overheadCost, cls:'amber'},
+        ]),
+    {label:'Gross cost',                 val:d.grossCost,     cls:'bold'},
+    {label:`Efficiency savings (${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}%)`, val:-d.effSavings, cls:'green', credit:true},
+    {label:'NET COST BASE',              val:d.netCost,       cls:'bold', total:true},
   ];
-  rows.forEach(r => {
-    const tr = document.createElement('tr');
-    if (r.total) tr.className = 'cost-total';
-    const perJob = d.jobsPerYear>0 ? r.val/d.jobsPerYear : 0;
-    const denom  = d.grossCost > 0 ? d.grossCost : 1;
-    const pct    = r.val/denom*100;
-    const valStr = r.isCredit ? '('+fmtAED(Math.abs(r.val))+')' : fmtAED(r.val);
-    const perStr = r.isCredit ? '('+fmtAED(Math.abs(perJob))+')' : fmtAED(perJob);
-    const pctStr = r.total ? Math.round(d.netCost/d.grossCost*100)+'% of gross' : fmtPct(pct);
-    tr.innerHTML = `<td class="${r.cls||''}">${r.label}</td><td class="r ${r.cls||''}">${valStr}</td><td class="r">${perStr}</td><td class="r">${pctStr}</td>`;
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    if(r.total) tr.className='cost-total';
+    const perJob=d.baselineJobs>0?r.val/d.baselineJobs:0;
+    const pct=d.grossCost>0?Math.abs(r.val)/d.grossCost*100:0;
+    const vs=(r.val<0||r.credit)?'('+fmtAED(Math.abs(r.val))+')':fmtAED(r.val);
+    const ps=(perJob<0||r.credit)?'('+fmtAED(Math.abs(perJob))+')':fmtAED(perJob);
+    tr.innerHTML=`<td class="${r.cls||''}">${r.label}</td><td class="r ${r.cls||''}">${vs}</td><td class="r">${ps}</td><td class="r">${r.total?Math.round(d.netCost/d.grossCost*100)+'%':fmtPct(pct)}</td>`;
     tbody.appendChild(tr);
   });
 }
 
 /* ============================================================
-   RENDER: UTILISATION TAB
+   RENDER: UTILISATION
    ============================================================ */
-function updateUtilisation(v, d) {
-  const activeStaff = STAFF_ROSTER.filter(s => s.on);
-  const fieldTechs  = activeStaff.filter(s => FIELD_TECH_IDS.includes(s.id));
-  const teamsCount  = v._cap.teamsCount;
-  const maxJobsDay  = v._cap.maxJobsDay;
-  const utilMatch   = v.JOBS_PER_DAY <= maxJobsDay + 1e-6;
-  const avgUtil     = activeStaff.length > 0 ? activeStaff.reduce((sum,s) => sum + s.util, 0) / activeStaff.length : 0;
-  const fmtCap      = n => (Math.round(n*10)/10).toLocaleString();
+function updateUtilisation(v,d) {
+  const active  = STAFF_ROSTER.filter(s=>s.on);
+  const ft      = active.filter(s=>FIELD_TECH_IDS.includes(s.id));
+  const teams   = v._cap.teamsCount;
+  const maxJobs = v._cap.maxJobsDay;
+  const tAllIn  = active.reduce((s,p)=>s+p.allIn,0);
+  const avgUtil = tAllIn>0 ? active.reduce((s,p)=>s+p.util*p.allIn,0)/tAllIn : 0;
+  const ok      = v.JOBS_PER_DAY <= maxJobs+1e-6;
 
-  $('util-headcount').textContent = activeStaff.length;
-  $('util-teams').textContent     = teamsCount + ' team' + (teamsCount!==1?'s':'');
-  const avgEl = $('util-avg-pct');
-  avgEl.textContent = fmtPct(avgUtil);
-  avgEl.className   = 'metric-value '+(avgUtil>=80?'green':avgUtil>=50?'amber':'red');
-  const matchEl = $('util-capacity-match');
-  matchEl.textContent = utilMatch ? '✓ Covered' : '⚠ Over capacity';
-  matchEl.className   = 'metric-value '+(utilMatch?'green':'red');
-  $('util-capacity-sub').textContent = `${fieldTechs.length} field tech${fieldTechs.length!==1?'s':''} × ${JOBS_PER_FIELD_TECH_PER_DAY} jobs/day = max ${fmtCap(maxJobsDay)} jobs/day`;
-  $('util-badge').textContent        = activeStaff.length+' active';
+  $('util-headcount').textContent = active.length;
+  $('util-teams').textContent     = teams+' team'+(teams!==1?'s':'');
+  const ae=$('util-avg-pct'); ae.textContent=fmtPct(avgUtil); ae.className='metric-value '+(avgUtil>=80?'green':avgUtil>=50?'amber':'red');
+  const me=$('util-capacity-match'); me.textContent=ok?'✓ Covered':'⚠ Over'; me.className='metric-value '+(ok?'green':'red');
+  $('util-capacity-sub').textContent=`${ft.length} field tech${ft.length!==1?'s':''} × ${JOBS_PER_FIELD_TECH_PER_DAY} = max ${maxJobs.toFixed(1)}/day`;
+  $('util-badge').textContent=active.length+' active';
+  const ub=$('util-status');
+  ub.textContent=ok?`${ft.length} field tech${ft.length!==1?'s':''} support ${maxJobs.toFixed(1)} jobs/day — setting of ${v.JOBS_PER_DAY}/day is within capacity.`:`⚠ ${v.JOBS_PER_DAY}/day exceeds capacity of ${maxJobs.toFixed(1)}/day. Raise utilisation, add staff, or reduce jobs/day.`;
+  ub.className='status-bar '+(ok?'ok':'bad');
 
-  const uBar = $('util-status');
-  uBar.textContent  = utilMatch
-    ? `${fieldTechs.length} field tech${fieldTechs.length!==1?'s':''} at current util support ${fmtCap(maxJobsDay)} jobs/day — your setting of ${v.JOBS_PER_DAY} jobs/day is within capacity.`
-    : `⚠ ${v.JOBS_PER_DAY} jobs/day exceeds team capacity of ${fmtCap(maxJobsDay)} jobs/day. Raise field-tech utilisation, add staff, or reduce jobs/day.`;
-  uBar.className    = 'status-bar '+(utilMatch?'ok':'bad');
-
-  const tbody = $('util-table-body');
-  tbody.innerHTML = '';
-  activeStaff.forEach(s => {
-    const allocCost   = s.allIn * s.util / 100;
-    const isField     = FIELD_TECH_IDS.includes(s.id);
-    const jobsCap     = isField ? Math.round(s.util/100 * JOBS_PER_FIELD_TECH_PER_DAY * v.WORKING_DAYS_PER_YEAR) : '—';
-    const barColor    = s.util>=80?'var(--green)':s.util>=50?'var(--amber)':'var(--red)';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="bold">${s.name}</td>
-      <td>${s.role}</td>
-      <td class="r">${fmtAED(s.allIn)}</td>
-      <td class="r ${s.util>=80?'green':s.util>=50?'amber':'red'}">${s.util}%</td>
-      <td class="r purple">${fmtAED(allocCost)}</td>
-      <td class="r">${typeof jobsCap==='number'?fmtNum(jobsCap):jobsCap}</td>
-      <td style="padding:10px 16px;min-width:100px"><div class="util-bar-wrap"><div class="util-bar" style="width:${s.util}%;background:${barColor}"></div></div></td>
-    `;
-    tbody.appendChild(tr);
+  const tb=$('util-table-body'); tb.innerHTML='';
+  active.forEach(s=>{
+    const alloc=s.allIn*s.util/100;
+    const isF=FIELD_TECH_IDS.includes(s.id);
+    const cap=isF?Math.round(s.util/100*JOBS_PER_FIELD_TECH_PER_DAY*v.WORKING_DAYS_PER_YEAR):'—';
+    const bc=s.util>=80?'var(--green)':s.util>=50?'var(--amber)':'var(--red)';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${s.name}</td><td>${s.role}</td><td class="r">${fmtAED(s.allIn)}</td><td class="r ${s.util>=80?'green':s.util>=50?'amber':'red'}">${s.util}%</td><td class="r purple">${fmtAED(alloc)}</td><td class="r">${typeof cap==='number'?fmtNum(cap):cap}</td><td style="padding:10px 16px;min-width:100px"><div class="util-bar-wrap"><div class="util-bar" style="width:${s.util}%;background:${bc}"></div></div></td>`;
+    tb.appendChild(tr);
   });
 
-  const d2body = $('util-demand-body');
-  d2body.innerHTML = '';
-  // Required field techs at 100% util to support current jobs/day
-  const requiredTechs = Math.ceil(v.JOBS_PER_DAY / JOBS_PER_FIELD_TECH_PER_DAY);
-  const demandRows = [
-    { label:'Jobs per day', current: v.JOBS_PER_DAY, max: maxJobsDay },
-    { label:'Jobs per year', current: d.jobsPerYear, max: maxJobsDay * v.WORKING_DAYS_PER_YEAR },
-    { label:'Revenue', current: d.revenue, max: d.blendedAllIn * maxJobsDay * v.WORKING_DAYS_PER_YEAR, isMoney: true },
-    { label:'Field techs at 100% util', current: fieldTechs.length, max: requiredTechs },
-  ];
-  demandRows.forEach(r => {
-    const gap = r.current - r.max;
-    const tr  = document.createElement('tr');
-    const fmt = r.isMoney ? fmtAED : fmtNum;
-    const gapCls = gap < 0 ? 'red' : 'green';
-    tr.innerHTML = `<td class="bold">${r.label}</td><td class="r accent">${fmt(r.current)}</td><td class="r">${fmt(r.max)}</td><td class="r ${gapCls}">${gap===0?'—':(gap>0?'+':'')+fmt(gap)}</td>`;
-    d2body.appendChild(tr);
+  const db=$('util-demand-body'); db.innerHTML='';
+  const req=Math.ceil(v.JOBS_PER_DAY/JOBS_PER_FIELD_TECH_PER_DAY);
+  [{label:'Jobs/day',current:v.JOBS_PER_DAY,max:maxJobs},{label:'Jobs/yr',current:d.actualJobsYr,max:maxJobs*v.WORKING_DAYS_PER_YEAR},{label:'Revenue',current:d.actualRev,max:d.blendedAllIn*maxJobs*v.WORKING_DAYS_PER_YEAR,money:true},{label:'Field techs @ 100%',current:ft.length,max:req}].forEach(r=>{
+    const gap=r.current-r.max;
+    const tr=document.createElement('tr');
+    const fmt=r.money?fmtAED:fmtNum;
+    tr.innerHTML=`<td class="bold">${r.label}</td><td class="r accent">${fmt(r.current)}</td><td class="r">${fmt(r.max)}</td><td class="r ${gap<0?'red':'green'}">${gap===0?'—':(gap>0?'+':'')+fmt(gap)}</td>`;
+    db.appendChild(tr);
   });
 }
 
 /* ============================================================
-   RENDER: RATE CARD TAB
+   RENDER: RATE CARD
    ============================================================ */
-function updateRateCard(v, d) {
-  $('rc-mode-badge').textContent = v.COMBINED_PRICING ? 'Combined mode' : 'Separate mode';
-  const derivedBadge = $('rc-derived-badge');
-  if (derivedBadge) {
-    derivedBadge.textContent = d.labourClipped
-      ? '⚠ despatch > cost-up rate'
-      : `cost+${Math.round(v.TARGET_MARGIN_PCT*100)}% margin − ${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% eff`;
-  }
-  const thead = $('rate-card-head'), tbody = $('rate-card-body');
+function updateRateCard(v,d) {
+  $('rc-mode-badge').textContent = v.COMBINED_PRICING?'Combined mode':'Separate mode';
+  const rb=$('rc-derived-badge');
+  if(rb) rb.textContent=d.labourClipped?'⚠ despatch > cost-up rate':`cost+${Math.round(v.TARGET_MARGIN_PCT*100)}% margin − ${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}% eff`;
+  const thead=$('rate-card-head'), tbody=$('rate-card-body');
 
-  if (v.COMBINED_PRICING) {
-    thead.innerHTML = `<tr><th>Unit size</th><th class="r">Combined rate</th><th class="r">inc-VAT</th><th class="r">Mix %</th></tr>`;
-    tbody.innerHTML = '';
-    for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-      const full = d.unitFullRates[u];
-      const share = d.mix[u] || 0;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="bold">${u}</td><td class="r bold accent">${fmtNum(full)}</td><td class="r blue">${fmtNum(Math.round(full*(1+VAT_RATE)))}</td><td class="r">${share}%</td>`;
+  if(v.COMBINED_PRICING){
+    thead.innerHTML=`<tr><th>Unit size</th><th class="r">Rate ex-VAT</th><th class="r">Rate inc-VAT</th><th class="r">Mix %</th><th class="r">Note</th></tr>`;
+    tbody.innerHTML='';
+    for(const u of Object.keys(LABOUR_SCALE_RATIOS)){
+      const full=d.unitFullRates[u], share=d.mix[u]||0;
+      const isLarge=(u==="200L"||u==="300L+");
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="bold">${u}</td><td class="r bold accent">${fmtNum(Math.round(full))}</td><td class="r blue">${fmtNum(Math.round(full*(1+VAT_RATE)))}</td><td class="r">${share}%</td><td class="r muted" style="font-size:11px">${isLarge?'incl. +'+fmtNum(v.HANDLING_PREMIUM)+' handling':''}</td>`;
       tbody.appendChild(tr);
     }
   } else {
-    thead.innerHTML = `<tr><th>Unit size</th><th class="r">Despatch (blended)</th><th class="r">Labour (derived)</th><th class="r">Total ex-VAT</th><th class="r">Total inc-VAT</th><th class="r">Mix %</th></tr>`;
-    tbody.innerHTML = '';
-    for (const u of Object.keys(LABOUR_SCALE_RATIOS)) {
-      const adjD  = Math.round(d.blendedDespatch);
-      const adjL  = Math.round(d.labourRates[u]);
-      const total = adjD + adjL;
-      const share = d.mix[u] || 0;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="bold">${u}</td><td class="r accent">${fmtNum(adjD)}</td><td class="r accent">${fmtNum(adjL)}</td><td class="r bold">${fmtNum(total)}</td><td class="r blue">${fmtNum(Math.round(total*(1+VAT_RATE)))}</td><td class="r">${share}%</td>`;
+    thead.innerHTML=`<tr><th>Unit size</th><th class="r">Despatch (blended)</th><th class="r">Labour (derived)</th><th class="r">Handling</th><th class="r">Total ex-VAT</th><th class="r">Total inc-VAT</th><th class="r">Mix %</th></tr>`;
+    tbody.innerHTML='';
+    for(const u of Object.keys(LABOUR_SCALE_RATIOS)){
+      const adjD=Math.round(d.blendedDespatch);
+      const adjL=Math.round(d.labourRates[u]);
+      const isLarge=(u==="200L"||u==="300L+");
+      const handling=isLarge?Math.round(v.HANDLING_PREMIUM):0;
+      const total=adjD+adjL+handling;
+      const share=d.mix[u]||0;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="bold">${u}</td><td class="r accent">${fmtNum(adjD)}</td><td class="r accent">${fmtNum(adjL)}</td><td class="r ${handling>0?'green':'muted'}">${handling>0?'+'+fmtNum(handling):'—'}</td><td class="r bold">${fmtNum(total)}</td><td class="r blue">${fmtNum(Math.round(total*(1+VAT_RATE)))}</td><td class="r">${share}%</td>`;
       tbody.appendChild(tr);
     }
   }
 
-  // Mix table
-  $('jobs-yr-badge').textContent = fmtNum(d.jobsPerYear)+' jobs/yr';
-  const mtbody = $('mix-body'); mtbody.innerHTML = '';
-  let totalRev = 0;
-  const rows = [];
-  for (const [u, share] of Object.entries(d.mix)) {
-    const rate     = d.unitFullRates[u];
-    const jobsUnit = (share/100) * d.jobsPerYear;
-    const rev      = rate * jobsUnit;
-    totalRev += rev;
-    rows.push({ u, rate, share, jobsUnit, rev });
+  // Revenue mix table (uses actual jobs)
+  const jb=$('jobs-yr-badge'); if(jb) jb.textContent=fmtNum(d.actualJobsYr)+' actual jobs/yr (baseline: '+fmtNum(d.baselineJobs)+')';
+  const mb=$('mix-body'); mb.innerHTML='';
+  let totRev=0;
+  for(const [u,share] of Object.entries(d.mix)){
+    const rate=d.unitFullRates[u], jobs=(share/100)*d.actualJobsYr, rev=rate*jobs;
+    totRev+=rev;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${u}</td><td class="r accent">${fmtNum(Math.round(rate))}</td><td class="r">${share}%</td><td class="r">${fmtNum(jobs)}</td><td class="r">${fmtAED(rev)}</td>`;
+    mb.appendChild(tr);
   }
-  rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="bold">${r.u}</td><td class="r accent">${fmtNum(r.rate)}</td><td class="r">${r.share}%</td><td class="r">${fmtNum(r.jobsUnit)}</td><td class="r">${fmtAED(r.rev)}</td>`;
-    mtbody.appendChild(tr);
-  });
-  const totRow = document.createElement('tr'); totRow.className = 'highlight';
-  totRow.innerHTML = `<td class="bold">Total / blended</td><td class="r accent">${fmtAED(d.blendedAllIn)}</td><td class="r">100%</td><td class="r bold">${fmtNum(d.jobsPerYear)}</td><td class="r bold accent">${fmtAED(totalRev)}</td>`;
-  mtbody.appendChild(totRow);
+  const tot=document.createElement('tr'); tot.className='highlight';
+  tot.innerHTML=`<td class="bold">Total / blended</td><td class="r accent">${fmtAED(d.blendedAllIn)}</td><td class="r">100%</td><td class="r bold">${fmtNum(d.actualJobsYr)}</td><td class="r bold accent">${fmtAED(totRev)}</td>`;
+  mb.appendChild(tot);
 }
 
 /* ============================================================
-   RENDER: VOLUME QUOTES TAB
+   RENDER: ZONE TABLE
    ============================================================ */
-function updateVolumeQuotes(v, d) {
-  $('disc-badge').textContent = 'max '+Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)+'% discount';
-  const vs = $('vol-status');
-  vs.textContent = `Base rate for volume quotes: ${fmtAED(d.blendedAllIn)}/unit (cost-up + mix). Discounts applied on a ${v.VOLUME_DISCOUNT_CURVE<1?'convex (slow start, steep end)':v.VOLUME_DISCOUNT_CURVE>1?'concave (fast start, flattens)':'linear'} curve up to ${Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)}% at ${fmtNum(Math.max(...VOLUME_TIERS))} units. Margin column treats staff as variable and overheads as fixed.`;
-  vs.className = 'status-bar info';
-  const container = $('vol-tiers-body'); container.innerHTML = '';
-  const maxVol = Math.max(...VOLUME_TIERS);
-  VOLUME_TIERS.forEach(vol => {
-    const t           = Math.pow(vol/maxVol, v.VOLUME_DISCOUNT_CURVE);
-    const discFrac    = v.VOLUME_DISCOUNT_MAX_PCT * t;
-    const discPct     = Math.round(discFrac*100);
-    const adjRate     = d.blendedAllIn * (1-discFrac);
-    const totalEx     = adjRate * vol;
-    const totalInc    = totalEx * (1+VAT_RATE);
-    // Variable cost only (staff scales with volume; overheads are fixed and
-    // already absorbed by the rest of the year). Avoids attributing the full
-    // fixed cost base to a one-shot wholesale batch.
-    const volFrac      = d.jobsPerYear > 0 ? vol / d.jobsPerYear : 0;
-    const variableCost = d.staffCost * STAFF_COST_VARIABILITY +
-                          d.overheadCost * OVERHEAD_COST_VARIABILITY;
-    const adjMargin    = totalEx > 0 ? (totalEx - variableCost * volFrac) / totalEx : 0;
-    const mCol         = colorForMargin(adjMargin);
-    const row = document.createElement('div'); row.className = 'vol-row';
-    row.innerHTML = `<span class="bold">${fmtNum(vol)} units</span><span class="highlight">${fmtAED(adjRate)}</span><span class="${discPct>0?'disc':''}">${discPct>0?'-'+discPct+'%':'—'}</span><span class="right bold">${fmtAED(totalEx)}</span><span class="right">${fmtAED(totalInc)}</span><span class="${mCol} right">${fmtPct(adjMargin*100)}</span>`;
-    container.appendChild(row);
+function updateZoneTable(v,d){
+  const tb=$('zone-table-body'); if(!tb) return; tb.innerHTML='';
+  const b=$('rc-blended-despatch-badge'); if(b) b.textContent='blended: AED '+Math.round(d.blendedDespatch).toLocaleString();
+  ['Dubai','Sharjah/Ajman','UAQ','RAK','Fujairah','Al Ain','Abu Dhabi','Liwa/Ruwais'].forEach(zone=>{
+    const bF=Math.round(v.BASE_DESPATCH*ZONE_DESPATCH_RATIOS[zone]);
+    const aF=Math.round(d.zoneFees[zone]);
+    const sh=d.zoneShares[zone]||0;
+    const wt=(sh/(d.zoneTotal||100))*aF;
+    const tr=document.createElement('tr');
+    if(zone==='Dubai') tr.className='highlight';
+    tr.innerHTML=`<td class="${zone==='Dubai'?'bold accent':''}">${zone}${zone==='Dubai'?' (anchor)':''}</td><td class="r muted">${fmtNum(bF)}</td><td class="r ${aF!==bF?'accent':''}">${fmtNum(aF)}</td><td class="r">${sh}%</td><td class="r blue">${fmtNum(Math.round(wt))}</td>`;
+    tb.appendChild(tr);
   });
+  const tot=document.createElement('tr'); tot.className='cost-total';
+  tot.innerHTML=`<td class="bold">Blended despatch</td><td class="r" colspan="3">—</td><td class="r purple bold">AED ${Math.round(d.blendedDespatch).toLocaleString()}</td>`;
+  tb.appendChild(tot);
 }
 
 /* ============================================================
-   RENDER: P&L TAB
+   RENDER: ADD-ONS
    ============================================================ */
-function updatePnL(v, d) {
-  $('pnl-cost-badge').textContent = 'Net cost: '+fmtAED(d.netCost);
-  const tbody = $('pnl-body'); tbody.innerHTML = '';
-  const rows = [
-    { label:'Service revenue',           val: d.revenue,           color:'blue',   bold:true },
-    { label:'Staff cost',                val: -d.staffCost,        color:'purple', bold:false },
-    { label:'Handling premium (labour)', val: -d.handlingCost,     color:'purple', bold:false },
-    { label:'Overhead cost',             val: -d.overheadCost,     color:'amber',  bold:false },
-    { label:'Gross cost base',           val: -d.grossCost,        color:'',       bold:true },
-    { label:`Operational efficiency savings (${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}%)`, val: d.efficiencySavings, color:'green', bold:false },
-    { label:'Net cost base',             val: -d.netCost,          color:'',       bold:true },
-    { label:'Net profit',                val: d.profit,            color: d.profit>=0?'green':'red', bold:true },
-  ];
-  rows.forEach(r => {
-    const perJob = d.jobsPerYear>0 ? r.val/d.jobsPerYear : 0;
-    const pctRev = d.revenue>0 ? Math.abs(r.val)/d.revenue*100 : 0;
-    const cls    = (r.bold?'bold ':'')+(r.color||'');
-    const valStr = (r.val<0?'(':'') + fmtAED(Math.abs(r.val)) + (r.val<0?')':'');
-    const perStr = (perJob<0?'(':'') + fmtAED(Math.abs(perJob)) + (perJob<0?')':'');
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="${cls}">${r.label}</td><td class="r ${cls}">${valStr}</td><td class="r">${perStr}</td><td class="r">${fmtPct(pctRev)}</td>`;
-    tbody.appendChild(tr);
-  });
-
-  // Break-even table
-  const b2body = $('breakeven-body'); b2body.innerHTML = '';
-  const beScenarios = [
-    { label:'Break even (zero profit)',    rev: d.totalCost },
-    { label:'10% margin',                  rev: d.totalCost/(1-0.10) },
-    { label:'20% margin',                  rev: d.totalCost/(1-0.20) },
-    { label:'30% margin',                  rev: d.totalCost/(1-0.30) },
-    { label:'Target: '+Math.round(v.TARGET_MARGIN_PCT*100)+'% margin', rev: d.totalCost/(1-v.TARGET_MARGIN_PCT) },
-  ];
-  const capJobsPerDay = v._cap.maxJobsDay;
-  beScenarios.forEach(sc => {
-    const jobsNeeded       = d.blendedAllIn>0 ? sc.rev/d.blendedAllIn : 0;
-    const jobsPerDayNeeded = v.WORKING_DAYS_PER_YEAR>0 ? jobsNeeded / v.WORKING_DAYS_PER_YEAR : 0;
-    const withinCap        = jobsPerDayNeeded <= capJobsPerDay + 1e-6;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="bold">${sc.label}</td><td class="r accent">${fmtAED(sc.rev)}</td><td class="r">${fmtNum(jobsNeeded)}</td><td class="r ${withinCap?'green':'red'}">${jobsPerDayNeeded.toFixed(1)}/day</td><td class="r ${withinCap?'green':'red'}">${withinCap?'✓ Within capacity':'⚠ Exceeds capacity'}</td>`;
-    b2body.appendChild(tr);
-  });
-}
-
-/* ============================================================
-   RENDER: ZONE DESPATCH TABLE
-   ============================================================ */
-function updateZoneTable(v, d) {
-  const tbody = $('zone-table-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  const badge = $('rc-blended-despatch-badge');
-  if (badge) badge.textContent = 'blended: AED '+Math.round(d.blendedDespatch).toLocaleString();
-
-  const zoneOrder = ['Dubai','Sharjah/Ajman','UAQ','RAK','Fujairah','Al Ain','Abu Dhabi','Liwa/Ruwais'];
-  zoneOrder.forEach(zone => {
-    const baseFee  = Math.round(v.BASE_DESPATCH * ZONE_DESPATCH_RATIOS[zone]);
-    const adjFee   = Math.round(d.zoneFees[zone]);
-    const share    = d.zoneShares[zone] || 0;
-    const weighted = (share / 100) * adjFee;
-    const isAnchor = zone === 'Dubai';
-    const tr = document.createElement('tr');
-    if (isAnchor) tr.className = 'highlight';
-    tr.innerHTML = `
-      <td class="${isAnchor?'bold accent':''}">${zone}${isAnchor?' (anchor)':''}</td>
-      <td class="r muted">${fmtNum(baseFee)}</td>
-      <td class="r ${adjFee!==baseFee?'accent':''}">${fmtNum(adjFee)}</td>
-      <td class="r">${share}%</td>
-      <td class="r blue">${fmtNum(Math.round(weighted))}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-  // Total row
-  const totRow = document.createElement('tr');
-  totRow.className = 'cost-total';
-  totRow.innerHTML = `<td class="bold">Blended despatch (weighted avg)</td><td class="r" colspan="3">—</td><td class="r purple bold">AED ${Math.round(d.blendedDespatch).toLocaleString()}</td>`;
-  tbody.appendChild(totRow);
-}
-
-/* ============================================================
-   RENDER: ADD-ONS TABLE
-   ============================================================ */
-function updateAddons() {
-  const tbody = $('addons-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  const notes = {
-    "False ceiling access":               "When access panel must be removed and re-fixed",
-    "Roof access premium":                "Confirmed in advance with customer",
-    "Old heater removal (to ground fl.)": "Moving old unit from install location to ground floor",
-    "Waiting after free 30 min (per hr)": "Billed after first 30 min free allowance expires",
-  };
-  for (const [name, rate] of Object.entries(ADDON_RATES)) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="bold">${name}</td>
-      <td class="r accent">${fmtNum(rate)}</td>
-      <td class="r blue">${fmtNum(Math.round(rate * (1 + VAT_RATE)))}</td>
-      <td class="muted" style="font-size:12px">${notes[name] || '—'}</td>
-    `;
-    tbody.appendChild(tr);
+function updateAddons(){
+  const tb=$('addons-body'); if(!tb) return; tb.innerHTML='';
+  const notes={"False ceiling access":"Access panel removed and re-fixed","Roof access premium":"Confirmed in advance","Old heater removal (to ground fl.)":"Moving old unit to ground floor","Waiting after free 30 min (per hr)":"After first 30 min free allowance"};
+  for(const[name,rate] of Object.entries(ADDON_RATES)){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${name}</td><td class="r accent">${fmtNum(rate)}</td><td class="r blue">${fmtNum(Math.round(rate*(1+VAT_RATE)))}</td><td class="muted" style="font-size:12px">${notes[name]||'—'}</td>`;
+    tb.appendChild(tr);
   }
+}
+
+/* ============================================================
+   RENDER: VOLUME QUOTES
+   ============================================================ */
+function updateVolumeQuotes(v,d){
+  $('disc-badge').textContent='max '+Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)+'% discount';
+  const vs=$('vol-status');
+  vs.textContent=`Base rate: ${fmtAED(d.blendedAllIn)}/unit. Rate fixed to baseline of ${fmtNum(d.baselineJobs)} jobs. Discount curve: ${v.VOLUME_DISCOUNT_CURVE<1?'convex':v.VOLUME_DISCOUNT_CURVE>1?'concave':'linear'}, max ${Math.round(v.VOLUME_DISCOUNT_MAX_PCT*100)}% at ${fmtNum(Math.max(...VOLUME_TIERS))} units.`;
+  vs.className='status-bar info';
+  const con=$('vol-tiers-body'); con.innerHTML='';
+  const maxVol=Math.max(...VOLUME_TIERS);
+  VOLUME_TIERS.forEach(vol=>{
+    const t=Math.pow(vol/maxVol,v.VOLUME_DISCOUNT_CURVE);
+    const discFrac=v.VOLUME_DISCOUNT_MAX_PCT*t;
+    const discPct=Math.round(discFrac*100);
+    const adjRate=d.blendedAllIn*(1-discFrac);
+    const totalEx=adjRate*vol;
+    const totalInc=totalEx*(1+VAT_RATE);
+    // Margin: revenue vs cost attributed to this batch (pro-rata of annual cost)
+    const volFrac=d.baselineJobs>0?vol/d.baselineJobs:0;
+    const batchCost=d.netCost*Math.min(volFrac,1);  // cap at 100% of annual cost
+    const adjMargin=totalEx>0?(totalEx-batchCost)/totalEx:0;
+    const mCol=colorForMargin(adjMargin);
+    const row=document.createElement('div'); row.className='vol-row';
+    row.innerHTML=`<span class="bold">${fmtNum(vol)} units</span><span class="highlight">${fmtAED(adjRate)}</span><span class="${discPct>0?'disc':''}">${discPct>0?'-'+discPct+'%':'—'}</span><span class="right bold">${fmtAED(totalEx)}</span><span class="right">${fmtAED(totalInc)}</span><span class="${mCol} right">${fmtPct(adjMargin*100)}</span>`;
+    con.appendChild(row);
+  });
+}
+
+/* ============================================================
+   RENDER: P&L
+   ============================================================ */
+function updatePnL(v,d){
+  $('pnl-cost-badge').textContent='Net cost: '+fmtAED(d.netCost);
+  const tb=$('pnl-body'); tb.innerHTML='';
+  // FIX 3: Show both baseline and actual columns
+  const pnlRows=[
+    {label:'Service revenue',     base:d.baselineRev,  actual:d.actualRev,     color:'blue',   bold:true},
+    {label:'Staff cost',          base:-d.staffCost,   actual:-d.staffCost,    color:'purple'},
+    {label:'Overhead cost',       base:-d.overheadCost,actual:-d.overheadCost, color:'amber'},
+    {label:'Additional fixed',    base:-d.additionalCost,actual:-d.additionalCost,color:'red'},
+    {label:'Gross cost',          base:-d.grossCost,   actual:-d.grossCost,    bold:true},
+    {label:`Efficiency savings (${Math.round(v.OPERATIONAL_EFFICIENCY_DISCOUNT*100)}%)`,base:d.effSavings,actual:d.effSavings,color:'green'},
+    {label:'Net cost',            base:-d.netCost,     actual:-d.netCost,      bold:true},
+    {label:'Net profit',          base:d.baselineProfit,actual:d.totalProfit,  color:d.totalProfit>=0?'green':'red',bold:true},
+  ];
+  pnlRows.forEach(r=>{
+    const perJob=d.actualJobsYr>0?r.actual/d.actualJobsYr:0;
+    const cls=(r.bold?'bold ':'')+(r.color||'');
+    const fmt=n=>(n<0?'(':'')+'AED '+(Math.round(Math.abs(n))).toLocaleString()+(n<0?')':'');
+    const tr=document.createElement('tr');
+    if(r.label==='Net profit') tr.className='profit-row';
+    tr.innerHTML=`<td class="${cls}">${r.label}</td><td class="r ${cls}">${fmt(r.base)}</td><td class="r ${cls}">${fmt(r.actual)}</td><td class="r">${fmt(perJob)}</td>`;
+    tb.appendChild(tr);
+  });
+
+  const b2=$('breakeven-body'); b2.innerHTML='';
+  [{label:'Break even',rev:d.netCost},{label:'10% margin',rev:d.netCost/(1-0.10)},{label:'20% margin',rev:d.netCost/(1-0.20)},{label:'30% margin',rev:d.netCost/(1-0.30)},{label:'Target '+Math.round(v.TARGET_MARGIN_PCT*100)+'%',rev:d.netCost/(1-v.TARGET_MARGIN_PCT)}].forEach(sc=>{
+    const jobs=d.blendedAllIn>0?sc.rev/d.blendedAllIn:0;
+    const jpd=v.WORKING_DAYS_PER_YEAR>0?jobs/v.WORKING_DAYS_PER_YEAR:0;
+    const ok=jpd<=v._cap.maxJobsDay+1e-6;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${sc.label}</td><td class="r accent">${fmtAED(sc.rev)}</td><td class="r">${fmtNum(jobs)}</td><td class="r ${ok?'green':'red'}">${jpd.toFixed(1)}/day</td><td class="r ${ok?'green':'red'}">${ok?'✓ Within capacity':'⚠ Exceeds capacity'}</td>`;
+    b2.appendChild(tr);
+  });
 }
 
 /* ============================================================
    MASTER RECALCULATE
    ============================================================ */
-function recalc() {
-  const v = readInputs();
-  const d = derive(v);
-  updateSidebarLabels(v, d);
-  updateOverview(v, d);
-  updateUtilisation(v, d);
-  updateRateCard(v, d);
-  updateZoneTable(v, d);
+function recalc(){
+  const v=readInputs();
+  const d=derive(v);
+  updateSidebarLabels(v,d);
+  updateOverview(v,d);
+  updateUtilisation(v,d);
+  updateRateCard(v,d);
+  updateZoneTable(v,d);
   updateAddons();
-  updateVolumeQuotes(v, d);
-  updatePnL(v, d);
+  updateVolumeQuotes(v,d);
+  updatePnL(v,d);
 }
 
 /* ============================================================
    EVENT LISTENERS
    ============================================================ */
-const ALL_SLIDER_IDS = [
+const ALL_SLIDER_IDS=[
   'BASE_DESPATCH','DESPATCH_MULTIPLIER',
+  'HANDLING_PREMIUM',
   'JOBS_PER_DAY','WORKING_DAYS_PER_YEAR','TARGET_MARGIN_PCT',
-  'OPERATIONAL_EFFICIENCY_DISCOUNT','HANDLING_PREMIUM',
+  'OPERATIONAL_EFFICIENCY_DISCOUNT',
   'MIX_50L','MIX_80L','MIX_150L','MIX_200L',
   'VOLUME_DISCOUNT_MAX_PCT','VOLUME_DISCOUNT_CURVE',
   'ZONE_Dubai','ZONE_Sharjah','ZONE_UAQ','ZONE_RAK','ZONE_Fujairah','ZONE_AlAin','ZONE_AbuDhabi',
 ];
-ALL_SLIDER_IDS.forEach(id => $(id).addEventListener('input', recalc));
-$('COMBINED_PRICING_TOGGLE').addEventListener('change', recalc);
+ALL_SLIDER_IDS.forEach(id=>$(id).addEventListener('input',recalc));
+$('COMBINED_PRICING_TOGGLE').addEventListener('change',recalc);
 
 /* ============================================================
    SIDEBAR RESIZE
    ============================================================ */
-(function() {
-  const sidebar = document.querySelector('.sidebar');
-  const resizer = $('sidebar-resizer');
-  let isResizing = false, startX = 0, startWidth = 0;
-  resizer.addEventListener('mousedown', e => {
-    isResizing = true; startX = e.clientX; startWidth = sidebar.getBoundingClientRect().width;
-    resizer.classList.add('dragging'); document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none'; e.preventDefault();
-  });
-  document.addEventListener('mousemove', e => {
-    if (!isResizing) return;
-    const w = Math.min(700, Math.max(280, startWidth + e.clientX - startX));
-    sidebar.style.width = w+'px'; sidebar.style.flexShrink = '0';
-  });
-  document.addEventListener('mouseup', () => {
-    if (!isResizing) return;
-    isResizing = false; resizer.classList.remove('dragging');
-    document.body.style.cursor = ''; document.body.style.userSelect = '';
-  });
-  resizer.addEventListener('touchstart', e => {
-    isResizing = true; startX = e.touches[0].clientX; startWidth = sidebar.getBoundingClientRect().width;
-    resizer.classList.add('dragging'); e.preventDefault();
-  }, { passive: false });
-  document.addEventListener('touchmove', e => {
-    if (!isResizing) return;
-    const w = Math.min(700, Math.max(280, startWidth + e.touches[0].clientX - startX));
-    sidebar.style.width = w+'px'; sidebar.style.flexShrink = '0';
-  }, { passive: false });
-  document.addEventListener('touchend', () => { isResizing = false; resizer.classList.remove('dragging'); });
+(function(){
+  const sb=document.querySelector('.sidebar');
+  const rz=$('sidebar-resizer');
+  let isR=false,sX=0,sW=0;
+  rz.addEventListener('mousedown',e=>{isR=true;sX=e.clientX;sW=sb.getBoundingClientRect().width;rz.classList.add('dragging');document.body.style.cursor='col-resize';document.body.style.userSelect='none';e.preventDefault();});
+  document.addEventListener('mousemove',e=>{if(!isR)return;const w=Math.min(700,Math.max(280,sW+e.clientX-sX));sb.style.width=w+'px';sb.style.flexShrink='0';});
+  document.addEventListener('mouseup',()=>{if(!isR)return;isR=false;rz.classList.remove('dragging');document.body.style.cursor='';document.body.style.userSelect='';});
+  rz.addEventListener('touchstart',e=>{isR=true;sX=e.touches[0].clientX;sW=sb.getBoundingClientRect().width;rz.classList.add('dragging');e.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',e=>{if(!isR)return;const w=Math.min(700,Math.max(280,sW+e.touches[0].clientX-sX));sb.style.width=w+'px';sb.style.flexShrink='0';},{passive:false});
+  document.addEventListener('touchend',()=>{isR=false;rz.classList.remove('dragging');});
 })();
 
 /* ============================================================
