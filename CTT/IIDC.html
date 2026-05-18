@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheqpoint — Ticket Intake</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f1;color:#1a1a1a;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;}
+.app{background:#fff;border-radius:14px;border:1px solid #e2e2dc;width:100%;max-width:620px;padding:1.5rem 1.75rem;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #ebebea;}
+.logo-wrap{display:flex;align-items:center;gap:8px;}
+.logo{font-size:13px;font-weight:600;color:#444;letter-spacing:-0.01em;}
+.badges{display:flex;gap:5px;}
+.badge{font-size:11px;padding:2px 9px;border-radius:6px;font-weight:500;}
+.bdg-project{background:#eef3ff;color:#2255bb;}
+.bdg-retail{background:#f2f2ef;color:#666;}
+.bdg-priority{background:#fff0f0;color:#cc2222;}
+
+.step-num{font-size:11px;color:#bbb;margin-bottom:4px;}
+.question{font-size:16px;font-weight:500;color:#1a1a1a;line-height:1.45;margin-bottom:6px;}
+.hint{font-size:13px;color:#777;line-height:1.55;margin-bottom:1rem;}
+.opts{margin-top:1rem;}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 15px;background:#fff;border:1px solid #e2e2dc;border-radius:8px;cursor:pointer;font-size:14px;color:#1a1a1a;margin-bottom:7px;transition:all 0.1s;}
+.opt:hover{background:#f8f8f6;border-color:#bbb;}
+.opt i{font-size:15px;color:#999;flex-shrink:0;}
+
+.outcome{border-radius:10px;padding:1.25rem 1.5rem;}
+.oc-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.75rem;display:flex;align-items:center;gap:7px;}
+.oc-label i{font-size:15px;}
+.oc-title{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:1rem;}
+.oc-steps{display:flex;flex-direction:column;gap:8px;}
+.oc-step{display:flex;gap:10px;align-items:flex-start;}
+.oc-step-n{font-size:12px;font-weight:600;min-width:18px;padding-top:2px;flex-shrink:0;}
+.oc-step-t{font-size:14px;color:#1a1a1a;line-height:1.55;}
+
+.oc-success{background:#f0faf5;border:1px solid #b3e0c8;}
+.oc-success .oc-label,.oc-success .oc-step-n{color:#1a7a45;}
+.oc-warning{background:#fffbf0;border:1px solid #f0d080;}
+.oc-warning .oc-label,.oc-warning .oc-step-n{color:#7a5500;}
+.oc-dispatch{background:#eef4ff;border:1px solid #a8c8f5;}
+.oc-dispatch .oc-label,.oc-dispatch .oc-step-n{color:#1a4fa0;}
+.oc-flag{background:#fff4f4;border:1px solid #f0a8a8;}
+.oc-flag .oc-label,.oc-flag .oc-step-n{color:#a02020;}
+.oc-info{background:#f7f7f5;border:1px solid #ddddd8;}
+.oc-info .oc-label,.oc-info .oc-step-n{color:#555;}
+
+.foot{display:flex;align-items:center;margin-top:1rem;padding-top:1rem;border-top:1px solid #f0f0ec;}
+.tbtn{background:none;border:none;cursor:pointer;font-size:13px;color:#888;padding:0;display:inline-flex;align-items:center;gap:4px;}
+.tbtn:hover{color:#333;}
+.tbtn i{font-size:14px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo-wrap">
+      <i class="ti ti-clipboard-check" style="font-size:18px;color:#4a7fe8;"></i>
+      <span class="logo">Cheqpoint — Ticket Intake</span>
+    </div>
+    <div id="bdg" class="badges"></div>
+  </div>
+  <div id="main"></div>
+  <div id="foot"></div>
+</div>
+
+<script>
+const s={ctx:{},hist:[]};
+let cur='customer_type',isOut=false,opts=[];
+
+const STEPS={
+  customer_type:{
+    q:'Who is raising this ticket?',
+    opts:[
+      {l:'Project — Sadara / Reseller',i:'ti-building',fn:()=>{s.ctx.t='project';g('project_checklist');}},
+      {l:'Retail — End Customer',i:'ti-user',fn:()=>{s.ctx.t='retail';g('service_type');}},
+    ]
+  },
+  project_checklist:{
+    q:'Has the pre-inspection checklist been completed and returned by the site team?',
+    h:'Mandatory for all project tickets before any warranty assessment can begin.',
+    opts:[
+      {l:'Yes — checklist received and complete',i:'ti-check',fn:()=>g('service_type')},
+      {l:'No — not yet received',i:'ti-x',fn:()=>oc('send_checklist')},
+    ]
+  },
+  service_type:{
+    q:'What type of request is this?',
+    opts:[
+      {l:'Complaint / Warranty Claim',i:'ti-alert-circle',fn:()=>g('warranty_docs')},
+      {l:'Service Request (T&C, Training, Mockup, Other)',i:'ti-clipboard-list',fn:()=>oc('service_request')},
+    ]
+  },
+  warranty_docs:{
+    q:'Does the customer have proof of purchase or a warranty certificate?',
+    opts:[
+      {l:'Yes — documentation available',i:'ti-file-check',fn:()=>g('fault_type')},
+      {l:'No — missing documentation',i:'ti-file-x',fn:()=>oc('warranty_rejected_docs')},
+    ]
+  },
+  fault_type:{
+    q:'What is the main complaint?',
+    opts:[
+      {l:'Inadequate heating / lukewarm water',i:'ti-temperature',fn:()=>{s.ctx.f='heat';g('heat_q1');}},
+      {l:'No heating / heater not working',i:'ti-bolt-off',fn:()=>{s.ctx.f='noheat';s.ctx.hi=true;g('no_heat_q1');}},
+      {l:'Tripping / DB trip',i:'ti-plug',fn:()=>{s.ctx.f='trip';s.ctx.hi=true;g('trip_q1');}},
+      {l:'Leakage',i:'ti-droplet',fn:()=>{s.ctx.f='leak';g('leak_q0');}},
+      {l:'Safety valve issue',i:'ti-valve',fn:()=>{s.ctx.f='sv';g('sv_q1');}},
+      {l:'Rusty / discolored water',i:'ti-droplet-off',fn:()=>{s.ctx.f='rusty';g('rusty_q1');}},
+      {l:'Abnormal sound / noise',i:'ti-volume',fn:()=>{s.ctx.f='sound';g('sound_q1');}},
+      {l:'Physical damage / mishandling / defect',i:'ti-circle-x',fn:()=>oc('nonwarranty_damage')},
+    ]
+  },
+
+  // ── ABNORMAL SOUND ────────────────────────────────────────────────────────
+  sound_q1:{
+    q:'What type of sound is coming from the heater?',
+    opts:[
+      {l:'Rattling or knocking from inside the tank',i:'ti-player-pause',fn:()=>oc('dispatch_anode')},
+      {l:'Humming, buzzing, or electrical noise',i:'ti-bolt',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+      {l:'Other / unclear sound',i:'ti-help',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+    ]
+  },
+
+  // ── INADEQUATE HEATING ───────────────────────────────────────────────────
+  heat_q1:{
+    q:'Has the heater been switched ON continuously for at least 24 hours?',
+    opts:[
+      {l:'No — recently switched on or turned off',i:'ti-x',fn:()=>oc('desk_24hrs')},
+      {l:'Yes — has been on for 24+ hours',i:'ti-check',fn:()=>g('heat_q2')},
+    ]
+  },
+  heat_q2:{
+    q:'What is the thermostat setting on the unit?',
+    opts:[
+      {l:'Low — set between 1 and 3',i:'ti-thermometer',fn:()=>g('heat_q2b')},
+      {l:'Correct — set to 4 or 5',i:'ti-check',fn:()=>g('heat_q3')},
+      {l:'Unknown / cannot check remotely',i:'ti-help',fn:()=>g('heat_q3')},
+    ]
+  },
+  heat_q2b:{
+    q:'Can the customer or their team physically access and adjust the thermostat?',
+    opts:[
+      {l:'Yes — they can reach the heater',i:'ti-check',fn:()=>oc('desk_thermostat_setting')},
+      {l:'No — heater is inaccessible',i:'ti-x',fn:()=>oc('nonwarranty_thermostat_upsell')},
+    ]
+  },
+  heat_q3:{
+    q:()=>s.ctx.t==='project'?'Is there any suspected external cause?':'Can the customer access the heater, or are photos available?',
+    opts:()=>s.ctx.t==='project'?[
+      {l:'Electrical connections loose or improperly fixed',i:'ti-plug',fn:()=>oc('desk_electrical')},
+      {l:'DB / incoming power line issue',i:'ti-bolt',fn:()=>oc('flag_db')},
+      {l:'Plumbing network or fixtures causing the issue',i:'ti-tool',fn:()=>oc('flag_plumbing')},
+      {l:'No external cause — heater itself seems at fault',i:'ti-alert-circle',fn:()=>g('heat_q4')},
+    ]:[
+      {l:'Yes — accessible or photos are available',i:'ti-check',fn:()=>g('heat_q4')},
+      {l:'No — heater is inaccessible, no photos',i:'ti-x',fn:()=>oc('dispatch_noaccess')},
+    ]
+  },
+  heat_q4:{
+    q:'Has the thermostat safety cut-out potentially been triggered?',
+    h:'This activates automatically after overheating. A manual reset may resolve the issue without a visit.',
+    opts:[
+      {l:'Possibly — reset has not been tried yet',i:'ti-refresh',fn:()=>oc('desk_thermostat_reset')},
+      {l:'Already tried or not applicable — still not resolved',i:'ti-x',fn:()=>g('heat_q5')},
+    ]
+  },
+  heat_q5:{
+    q:'What does the initial assessment point to?',
+    opts:[
+      {l:'Thermostat faulty',i:'ti-temperature-minus',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+      {l:'Heating element faulty',i:'ti-bolt',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+      {l:'Dry heating suspected (element burnt / black / pink / deformed)',i:'ti-flame',fn:()=>oc('nonwarranty_dry_heating')},
+    ]
+  },
+
+  // ── NO HEATING ───────────────────────────────────────────────────────────
+  no_heat_q1:{
+    q:'Is the heater powered on and is the indicator light ON?',
+    opts:[
+      {l:'No — no power or indicator light is off',i:'ti-x',fn:()=>oc('desk_power_check')},
+      {l:'Yes — powered but still no heating',i:'ti-check',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+    ]
+  },
+
+  // ── TRIPPING ─────────────────────────────────────────────────────────────
+  trip_q1:{
+    q:()=>s.ctx.t==='project'
+      ?'Are the electrical connections properly secured?'
+      :'Is building maintenance or a technician available to check the heater?',
+    opts:()=>s.ctx.t==='project'?[
+      {l:'Connections are loose or not properly fixed',i:'ti-plug',fn:()=>oc('desk_electrical')},
+      {l:'Connections are OK — still tripping',i:'ti-check',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+    ]:[
+      {l:'Yes — maintenance or technician can check',i:'ti-check',fn:()=>g('trip_q1b')},
+      {l:'No — no technical access available',i:'ti-x',fn:()=>{s.ctx.wi='component';oc('dispatch_noaccess');}},
+    ]
+  },
+  trip_q1b:{
+    q:'Are the electrical connections properly secured?',
+    opts:[
+      {l:'Connections are loose or not properly fixed',i:'ti-plug',fn:()=>oc('desk_electrical')},
+      {l:'Connections are OK — still tripping',i:'ti-check',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+    ]
+  },
+
+  // ── LEAKAGE ──────────────────────────────────────────────────────────────
+  leak_q0:{
+    q:()=>s.ctx.t==='project'
+      ?'Where is the leak coming from?'
+      :'Can the customer access the heater or see where the leak is coming from?',
+    opts:()=>s.ctx.t==='project'?[
+      {l:'Pipe / plumbing connections (inlet or outlet)',i:'ti-tool',fn:()=>oc('desk_pipe_connections')},
+      {l:'Safety valve',i:'ti-valve',fn:()=>g('sv_q1')},
+      {l:'Tank body / pinhole leak',i:'ti-droplet',fn:()=>{s.ctx.wi='tank';g('warranty_check');}},
+      {l:'Heating element flange or lip gasket',i:'ti-bolt',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+      {l:'Cannot determine — need photos',i:'ti-camera',fn:()=>oc('req_photos_project')},
+    ]:[
+      {l:'Yes — can access or identify the leak source',i:'ti-check',fn:()=>g('leak_q1')},
+      {l:'No — heater is inaccessible or source unknown',i:'ti-x',fn:()=>oc('dispatch_noaccess')},
+    ]
+  },
+  leak_q1:{
+    q:'Where is the leak coming from?',
+    opts:[
+      {l:'Pipe / plumbing connections (inlet or outlet)',i:'ti-tool',fn:()=>oc('desk_pipe_connections')},
+      {l:'Safety valve',i:'ti-valve',fn:()=>g('sv_q1')},
+      {l:'Tank body / pinhole leak',i:'ti-droplet',fn:()=>{s.ctx.wi='tank';g('warranty_check');}},
+      {l:'Heating element flange or lip gasket',i:'ti-bolt',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+      {l:'Cannot determine from here',i:'ti-camera',fn:()=>oc('dispatch_noaccess')},
+    ]
+  },
+
+  // ── SAFETY VALVE ─────────────────────────────────────────────────────────
+  sv_q1:{
+    q:'Turn the heater OFF. Is the safety valve still dripping?',
+    h:'Wait a few minutes after switching off before observing.',
+    opts:[
+      {l:'No — stops when heater is off',i:'ti-check',fn:()=>g('sv_during')},
+      {l:'Yes — still dripping with heater switched off',i:'ti-droplet',fn:()=>g('sv_q3')},
+    ]
+  },
+  sv_during:{
+    q:'When the heater is running, how would you describe the discharge from the safety valve?',
+    h:'This helps distinguish normal thermal operation from an actual fault.',
+    opts:[
+      {l:'Occasional small drops — not a constant stream',i:'ti-droplet',fn:()=>oc('desk_sv_no_drain')},
+      {l:'Sustained or constant water discharge',i:'ti-wave-sine',fn:()=>g('sv_q2')},
+    ]
+  },
+  sv_q2:{
+    q:'Is a drain pipe installed for the safety valve discharge?',
+    opts:[
+      {l:'Yes — drain pipe is in place',i:'ti-check',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+      {l:'No — no drain pipe installed',i:'ti-x',fn:()=>oc('desk_sv_nodrain_sustained')},
+    ]
+  },
+  sv_q3:{
+    q:()=>s.ctx.t==='project'?'What is the working / line pressure?':'Was the heater fully switched OFF when you confirmed the valve was still dripping?',
+    opts:()=>s.ctx.t==='project'?[
+      {l:'High — above 3 bar',i:'ti-gauge',fn:()=>oc('desk_sv_pressure')},
+      {l:'Normal or unknown — 3 bar or below',i:'ti-check',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+    ]:[
+      {l:'Yes — heater was OFF and valve was still dripping, confirmed',i:'ti-check',fn:()=>{s.ctx.wi='component';g('warranty_check');}},
+    ]
+  },
+
+  // ── RUSTY WATER ──────────────────────────────────────────────────────────
+  rusty_q1:{
+    q:'What is the nature of the water issue?',
+    opts:[
+      {l:'Dirt / debris / brown or murky water',i:'ti-droplet-off',fn:()=>oc('nonwarranty_maintenance')},
+      {l:'Anode depleted or rusty smell',i:'ti-circle-x',fn:()=>oc('nonwarranty_anode')},
+      {l:'Red water',i:'ti-alert-triangle',fn:()=>oc('flag_red_water')},
+    ]
+  },
+
+  // ── WARRANTY CHECK ───────────────────────────────────────────────────────
+  warranty_check:{
+    q:()=>{
+      const item=s.ctx.wi==='tank'?'Tank':'Component';
+      const retail=s.ctx.wi==='tank'?'5 years':'2 years';
+      const period=s.ctx.t==='project'?'up to 5 years':retail;
+      return `Is the unit within its warranty period? (${item}: ${period})`;
+    },
+    opts:[
+      {l:'Yes — within warranty period',i:'ti-check',fn:()=>g('photos_check')},
+      {l:'No — outside warranty period',i:'ti-x',fn:()=>oc('nonwarranty_ood')},
+    ]
+  },
+  photos_check:{
+    q:()=>s.ctx.t==='project'?'Have photos and videos been received from the site?':'Are any photos available from the customer?',
+    h:()=>s.ctx.t==='project'?'Mandatory for project tickets — do not dispatch without visual confirmation.':'Optional for retail — do not delay if the heater is inaccessible.',
+    opts:[
+      {l:'Yes — photos received',i:'ti-camera',fn:()=>oc('dispatch_warranty')},
+      {l:'No — not available',i:'ti-x',fn:()=>oc(s.ctx.t==='project'?'req_photos_project':'dispatch_warranty')},
+    ]
+  },
+};
+
+// ── OUTCOMES ─────────────────────────────────────────────────────────────────
+const OC={
+  send_checklist:{tp:'info',ic:'ti-send',tt:'Action — send pre-inspection checklist',ll:[
+    'Send the Warranty Claim Pre-Inspection Checklist to the Sadara site team.',
+    'Checklist must be fully completed and returned before intake can continue.',
+    'Request photos and videos to accompany the completed checklist.',
+    'Resume intake once checklist is received and validated.',
+  ]},
+  service_request:{tp:'info',ic:'ti-clipboard-list',tt:'Service request — log and coordinate',ll:[
+    'This is not a complaint or warranty claim.',
+    'Log the request type: T&C, Training, Mockup, or Other.',
+    'Coordinate with the tech team for scheduling and dispatch.',
+    'No warranty assessment required.',
+  ]},
+  warranty_rejected_docs:{tp:'flag',ic:'ti-file-x',tt:'Warranty rejected — missing documentation',ll:[
+    'No proof of purchase or warranty certificate provided.',
+    'Warranty cannot be processed without documentation.',
+    'Inform the customer and offer a chargeable visit at AED 160 (VAT inc) if they wish to proceed.',
+    'Log ticket as rejected — documentation missing.',
+  ]},
+  desk_24hrs:{tp:'success',ic:'ti-clock',tt:'Desk resolution — heater not on long enough',ll:[
+    'Issue: heater has not been powered on continuously for 24 hours.',
+    'Advise the customer to keep the heater switched ON at all times.',
+    'Follow up after 24 hours to confirm the issue is resolved.',
+    'This is not a warranty issue — no dispatch needed.',
+  ]},
+  desk_thermostat_setting:{tp:'success',ic:'ti-temperature',tt:'Desk resolution — thermostat set too low',ll:[
+    'Issue: thermostat is set between 1–3 (too low for adequate heating).',
+    'Advise the customer to raise the setting to 4 or 5.',
+    'Check back after 1–2 hours to confirm improvement.',
+    'Thermostat adjustment is NOT covered under warranty — user responsibility.',
+  ]},
+  nonwarranty_thermostat_upsell:{tp:'warning',ic:'ti-temperature-minus',tt:'Non-warranty — thermostat upsell opportunity',ll:[
+    'Thermostat is set low but the heater is inaccessible to the customer.',
+    'Thermostat setting adjustment is NOT covered under warranty.',
+    'Inform the customer: chargeable visit at AED 160 (VAT inc) to adjust and verify.',
+    'If accepted — dispatch for chargeable visit. Prepare a quote if any parts are needed.',
+  ]},
+  desk_electrical:{tp:'success',ic:'ti-plug',tt:'Desk resolution — electrical connections',ll:[
+    'Issue: electrical connections are loose or not properly secured.',
+    'Advise the site team to check and re-secure all electrical connections.',
+    'This is an installation issue — NOT covered under warranty.',
+    'If they cannot fix on site: offer chargeable visit at AED 160.',
+  ]},
+  flag_db:{tp:'flag',ic:'ti-bolt',tt:'Flag — DB / power line issue',ll:[
+    'The water heater appears to be operating correctly.',
+    'Issue is likely with the customer\'s main DB or incoming power supply.',
+    'Advise them to contact a qualified electrician to check the supply.',
+    'Log as non-heater fault — no warranty action needed.',
+  ]},
+  flag_plumbing:{tp:'flag',ic:'ti-tool',tt:'Flag — plumbing network issue',ll:[
+    'The water heater is likely operating correctly.',
+    'Issue appears to be in the customer\'s plumbing network or fixtures.',
+    'If wait time is the complaint: recommend a re-circulation pump.',
+    'Log as non-heater fault — no warranty action needed.',
+  ]},
+  desk_thermostat_reset:{tp:'success',ic:'ti-refresh',tt:'Desk resolution — thermostat cut-out reset',ll:[
+    'Thermostat safety cut-out may have been triggered (overheating protection).',
+    'Advise the site team to reset the thermostat and safety switch manually.',
+    'Monitor — if it trips again, escalate for a full thermostat fault check.',
+    'A simple reset is not a warranty claim. Parts replacement would be.',
+  ]},
+  nonwarranty_dry_heating:{tp:'warning',ic:'ti-flame',tt:'Non-warranty — dry heating',ll:[
+    'Heating element shows signs of dry heating (burnt / black / pink / deformed).',
+    'Dry heating is NOT covered under warranty — caused by running without water.',
+    'Inform the customer: chargeable component replacement required.',
+    'Collect AED 160 call-out fee. Prepare and send a parts + labor quote.',
+  ]},
+  desk_power_check:{tp:'success',ic:'ti-plug',tt:'Desk resolution — power / connections check',ll:[
+    'Heater not powered or indicator light is off.',
+    'Advise the customer to check power supply, connections, and the circuit breaker.',
+    'Confirm the socket and DB switch are both ON.',
+    'If power is confirmed and issue persists: escalate for element or thermostat diagnosis.',
+  ]},
+  desk_pipe_connections:{tp:'success',ic:'ti-tool',tt:'Desk resolution — pipe connection leak',ll:[
+    'Leakage is from plumbing connections (inlet or outlet).',
+    'Advise: disconnect pipes, dry out 30–60 mins, apply fresh Teflon tape and reconnect.',
+    'This is an installation issue — NOT covered under warranty.',
+    'If they cannot fix on site: offer chargeable visit at AED 160.',
+  ]},
+  desk_sv_no_drain:{tp:'warning',ic:'ti-droplet',tt:'Non-warranty — drain pipe not installed',ll:[
+    'Occasional drops from the safety valve during heating are normal thermal operation.',
+    'However, a drain pipe is a mandatory part of proper installation.',
+    'Absence of drain pipe is NOT covered under warranty — installation responsibility.',
+    'Upsell: offer drain pipe installation at a chargeable rate.',
+  ]},
+  desk_sv_nodrain_sustained:{tp:'warning',ic:'ti-wave-sine',tt:'Non-warranty — sustained discharge, no drain pipe',ll:[
+    'Sustained discharge during operation may indicate a valve fault or high working pressure.',
+    'Additionally, no drain pipe is installed — this is a mandatory installation requirement.',
+    'Advise the customer to have the pressure and valve checked by a qualified plumber.',
+    'Upsell: offer full valve inspection and drain pipe installation at chargeable rate.',
+  ]},
+  desk_sv_pressure:{tp:'warning',ic:'ti-gauge',tt:'Non-warranty — high line pressure',ll:[
+    'Safety valve is discharging due to high working pressure (above 3 bar).',
+    'Advise: line pressure must be kept below 3 bar at all times.',
+    'Reducing the pressure should stop the premature discharge.',
+    'This is NOT a product defect — site installation responsibility.',
+  ]},
+  nonwarranty_maintenance:{tp:'warning',ic:'ti-droplet-off',tt:'Non-warranty — routine maintenance required',ll:[
+    'Dirt, debris, or tank buildup found — this is a routine maintenance issue.',
+    'Tank cleaning and servicing is NOT covered under warranty.',
+    'Advise the customer to arrange routine servicing.',
+    'Upsell: offer a chargeable service and cleaning visit.',
+  ]},
+  nonwarranty_anode:{tp:'warning',ic:'ti-circle-x',tt:'Non-warranty — anode depletion',ll:[
+    'Anode rod is depleted — this is a consumable maintenance item.',
+    'Anode replacement is NOT covered under warranty.',
+    'Upsell: offer anode replacement and full tank service at chargeable rate.',
+  ]},
+  flag_red_water:{tp:'flag',ic:'ti-alert-triangle',tt:'Escalate immediately — red water',ll:[
+    'Red or rust-colored water reported — immediate escalation required.',
+    'Do NOT advise the customer independently or close the ticket.',
+    'Escalate to the senior team or MD without delay.',
+    'Document all details (site, serial number, photos) and await instruction.',
+  ]},
+  nonwarranty_damage:{tp:'warning',ic:'ti-circle-x',tt:'Non-warranty — physical damage / mishandling',ll:[
+    'Damage from mishandling, incorrect installation, or external cause.',
+    'NOT covered under warranty.',
+    'Inform the customer: AED 160 chargeable visit + replacement or repair quote.',
+    'Request photos as documentation for the file.',
+  ]},
+  nonwarranty_ood:{tp:'warning',ic:'ti-calendar-x',tt:'Non-warranty — out of warranty',ll:[
+    'Unit is outside its warranty period.',
+    'Inform the customer: chargeable visit at AED 160 (VAT inclusive).',
+    'If accepted: prepare and send a parts + labor quote.',
+    'AED 160 will be deducted from the final invoice if full repairs are approved.',
+  ]},
+  dispatch_warranty:{tp:'dispatch',ic:'ti-truck',tt:'Dispatch — under warranty',ll:[
+    'Fault confirmed. Unit is within warranty period.',
+    'Complete Technical Evaluation with the tech team before dispatching.',
+    'Confirm site access, timing, and contact details with the client.',
+    'Coordinate with the field team and log the dispatch date.',
+  ]},
+  dispatch_anode:{tp:'dispatch',ic:'ti-player-pause',tt:'Dispatch — anode likely loose',ll:[
+    'Rattling or knocking typically indicates a loose or dislodged anode rod.',
+    'An on-site visit is required to re-tighten and re-secure the anode.',
+    'Verify warranty period — if within 2 years (retail) or 5 years (project), visit is covered.',
+    'Complete Technical Evaluation and coordinate dispatch timing with the customer.',
+  ]},
+  dispatch_noaccess:{tp:'dispatch',ic:'ti-home-off',tt:'Dispatch — on-site assessment required',ll:[
+    'Heater is inaccessible or fault cannot be diagnosed remotely.',
+    'Inform the customer: AED 160 call-out applies for on-site assessment (VAT inc).',
+    'If the fault is confirmed as warranty on site, the call-out charge will be waived.',
+    'Complete Technical Evaluation with the tech team and confirm timing with the customer.',
+  ]},
+  req_photos_project:{tp:'flag',ic:'ti-camera',tt:'Hold — awaiting photos (project)',ll:[
+    'Photos and videos are mandatory for all project tickets before dispatch.',
+    'Request photos and videos from the Sadara / site team immediately.',
+    'Once received: complete Technical Evaluation and confirm dispatch.',
+    'Flag ticket as pending media and follow up daily.',
+  ]},
+};
+
+// ── STYLES ────────────────────────────────────────────────────────────────────
+const TS={
+  success:{cls:'oc-success',lb:'Desk resolved'},
+  warning:{cls:'oc-warning',lb:'Non-warranty — chargeable'},
+  dispatch:{cls:'oc-dispatch',lb:'Dispatch'},
+  flag:{cls:'oc-flag',lb:'Escalate / Hold'},
+  info:{cls:'oc-info',lb:'Action required'},
+};
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function g(id){s.hist.push({id:cur,isOut});cur=id;isOut=false;render();}
+function oc(id){s.hist.push({id:cur,isOut});cur=id;isOut=true;render();}
+function back(){if(!s.hist.length)return;const p=s.hist.pop();cur=p.id;isOut=p.isOut;render();}
+function restart(){s.ctx={};s.hist=[];cur='customer_type';isOut=false;render();}
+function sel(i){opts[i].fn();}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  document.getElementById('bdg').innerHTML=[
+    s.ctx.t&&`<span class="badge ${s.ctx.t==='project'?'bdg-project':'bdg-retail'}">${s.ctx.t==='project'?'Project':'Retail'}</span>`,
+    s.ctx.hi&&`<span class="badge bdg-priority">High priority</span>`,
+  ].filter(Boolean).join('');
+
+  const main=document.getElementById('main');
+  const foot=document.getElementById('foot');
+
+  if(isOut){
+    const o=OC[cur];
+    if(!o){main.innerHTML=`<p style="color:#c00;font-size:13px;">Unknown outcome: ${cur}</p>`;return;}
+    const ts=TS[o.tp]||TS.info;
+    main.innerHTML=`
+      <div class="outcome ${ts.cls}">
+        <div class="oc-label"><i class="ti ${o.ic}"></i>${ts.lb}</div>
+        <div class="oc-title">${o.tt}</div>
+        <div class="oc-steps">
+          ${o.ll.map((l,i)=>`<div class="oc-step"><span class="oc-step-n">${i+1}</span><span class="oc-step-t">${l}</span></div>`).join('')}
+        </div>
+      </div>`;
+    foot.innerHTML=`<div class="foot">${s.hist.length?`<button class="tbtn" onclick="back()"><i class="ti ti-arrow-left"></i> Back</button>`:''}<button class="tbtn" style="margin-left:auto;" onclick="restart()"><i class="ti ti-refresh"></i> New ticket</button></div>`;
+    return;
+  }
+
+  const step=STEPS[cur];
+  if(!step){main.innerHTML=`<p style="color:#c00;font-size:13px;">Unknown step: ${cur}</p>`;return;}
+  const q=typeof step.q==='function'?step.q():step.q;
+  const h=step.h?(typeof step.h==='function'?step.h():step.h):null;
+  const stepOpts=typeof step.opts==='function'?step.opts():step.opts;
+  opts=stepOpts;
+
+  main.innerHTML=`
+    <div class="step-num">Step ${s.hist.length+1}</div>
+    <div class="question">${q}</div>
+    ${h?`<div class="hint">${h}</div>`:''}
+    <div class="opts">
+      ${opts.map((o,i)=>`<button class="opt" onclick="sel(${i})"><i class="ti ${o.i||'ti-circle'}" ></i><span>${o.l}</span></button>`).join('')}
+    </div>`;
+  foot.innerHTML=s.hist.length?`<div class="foot"><button class="tbtn" onclick="back()"><i class="ti ti-arrow-left"></i> Back</button></div>`:'';
+}
+
+render();
+</script>
+</body>
+</html>
