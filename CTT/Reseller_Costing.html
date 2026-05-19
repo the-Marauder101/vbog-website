@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CTT Reseller Pricing Engine v6</title>
+<title>CTT Reseller Pricing Engine v7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
@@ -1547,11 +1547,11 @@ function updateSidebarLabels(d) {
   }
 
   // Wholesale-led variable cost panel
-  const {blended:varBlended, varByZone} = calcBlendedVarCost('R');
+  const {blended:varBlended, varByZone:varByZonePanel} = calcBlendedVarCost('R');
   el('v_blended_var_cost').textContent = fmtAED(varBlended);
   const varZoneEl = $('v_var_cost_by_zone');
   if(varZoneEl) {
-    varZoneEl.innerHTML = ZONES.map(z=>`${z}: AED ${Math.round(varByZone[z]).toLocaleString()}/job`).join(' &nbsp;·&nbsp; ');
+    varZoneEl.innerHTML = ZONES.map(z=>`${z}: AED ${Math.round(varByZonePanel[z]).toLocaleString()}/job`).join(' &nbsp;·&nbsp; ');
   }
 
   // Split solver output
