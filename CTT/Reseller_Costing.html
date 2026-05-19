@@ -36,10 +36,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 /* ============================================================
    COST RECOVERED GLOBAL STATE — applied to <body> when triggered
    ============================================================ */
-body.cost-recovered { --header-bg: var(--recovered-bg); }
-body.cost-recovered .header { background: var(--recovered-bg); border-bottom: 2px solid var(--recovered-accent); }
+body.cost-recovered { --header-bg: #052e16; }
+body.cost-recovered .header { background: #052e16; border-bottom: 2px solid #00e676; box-shadow: 0 2px 12px rgba(0,230,118,0.15); }
 body.cost-recovered .recovery-banner { display: flex !important; }
-body.cost-recovered .logo { color: var(--recovered-accent) !important; }
+body.cost-recovered .logo { color: #00e676 !important; }
 
 /* ============================================================
    HEADER
@@ -608,6 +608,7 @@ tr.memo-row td{background:var(--amber-dim);font-style:italic;}
       <!-- RETAIL ZONE MIX -->
       <div class="channel-panel">
         <div class="channel-label retail">Retail — zone mix <span id="r-zone-badge" class="tag accent">100%</span></div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:8px;padding:4px 6px;background:var(--bg3);border-radius:3px;border-left:2px solid var(--border2)" id="r-zone-fee-label">Rate card despatch ref (informational)</div>
         <div class="zone-row"><span class="mix-label" style="font-size:10px">Dubai</span><input type="range" id="R_ZONE_Dubai" min="0" max="100" step="1" value="55" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Dubai">55%</span><span class="zone-fee" id="rzfee_Dubai">AED 700</span></div>
         <div class="zone-row"><span class="mix-label" style="font-size:10px">Sharjah/Ajman</span><input type="range" id="R_ZONE_Sharjah" min="0" max="100" step="1" value="20" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Sharjah">20%</span><span class="zone-fee" id="rzfee_Sharjah">AED 650</span></div>
         <div class="zone-row"><span class="mix-label" style="font-size:10px">UAQ</span><input type="range" id="R_ZONE_UAQ" min="0" max="100" step="1" value="10" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_UAQ">10%</span><span class="zone-fee" id="rzfee_UAQ">AED 850</span></div>
@@ -633,6 +634,7 @@ tr.memo-row td{background:var(--amber-dim);font-style:italic;}
       <!-- WHOLESALE ZONE MIX -->
       <div class="channel-panel">
         <div class="channel-label wholesale">Wholesale — zone mix <span id="w-zone-badge" class="tag teal">100%</span></div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:8px;padding:4px 6px;background:var(--bg3);border-radius:3px;border-left:2px solid var(--border2)" id="w-zone-fee-label">Rate card despatch ref (informational)</div>
         <div class="zone-row"><span class="mix-label" style="font-size:10px">Dubai</span><input type="range" id="W_ZONE_Dubai" min="0" max="100" step="1" value="35" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_Dubai">35%</span><span class="zone-fee" id="wzfee_Dubai">AED 700</span></div>
         <div class="zone-row"><span class="mix-label" style="font-size:10px">Sharjah/Ajman</span><input type="range" id="W_ZONE_Sharjah" min="0" max="100" step="1" value="20" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_Sharjah">20%</span><span class="zone-fee" id="wzfee_Sharjah">AED 650</span></div>
         <div class="zone-row"><span class="mix-label" style="font-size:10px">UAQ</span><input type="range" id="W_ZONE_UAQ" min="0" max="100" step="1" value="10" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_UAQ">10%</span><span class="zone-fee" id="wzfee_UAQ">AED 850</span></div>
@@ -817,7 +819,18 @@ tr.memo-row td{background:var(--amber-dim);font-style:italic;}
 
     <div class="status-bar info" id="vol-status-bar">—</div>
 
-    <!-- TIER COLUMN HEADERS -->
+    <!-- EDITABLE FIELDS HINT -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:500">✎ Editable fields:</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">Volume (jobs)</span>
+      <span style="color:var(--border2)">·</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--amber)">Cost disc %</span>
+      <span style="color:var(--border2)">·</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--green)">Markup %</span>
+      <span style="color:var(--border2)">·</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--purple)">Rebate %</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px">— all other columns are calculated</span>
+    </div>
     <div class="vol-tier-row" style="background:var(--bg3)">
       <div class="vol-tier-header">
         <div class="vth">Volume (jobs)</div>
@@ -878,7 +891,7 @@ tr.memo-row td{background:var(--amber-dim);font-style:italic;}
    GOOGLE SHEETS INTEGRATION
    PASTE YOUR DEPLOYED APPS SCRIPT URL HERE:
    ============================================================ */
-const APPS_SCRIPT_URL = ''; // <-- PASTE YOUR WEB APP URL HERE
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTxaeyI-SzCi5dHtm4-Q7nvdvwHNaJDwM8oVl6g_IEbTA1McHhlAcuIa5rnyhGT3brfQ/exec'; // Google Apps Script web app URL
 
 /* ============================================================
    CONSTANTS — do not hardcode business numbers elsewhere
@@ -1455,16 +1468,49 @@ function updateSidebarLabels(d) {
   // Zone labels — retail
   const rZKeys=['Dubai','Sharjah','UAQ','RAK','Fujairah','AlAin','AbuDhabi'];
   const rZNames=['Dubai','Sharjah/Ajman','UAQ','RAK','Fujairah','Al Ain','Abu Dhabi'];
+  // In Wholesale-Led mode: show variable cost per zone (actual cost retail bears per trip)
+  // In all other modes: show rate card despatch component (informational reference only)
+  const isWholesaleLed = currentMode === 'wholesale';
+  const varByZone = calcVariableCostByZone();
   let rZTotal=0;
   rZKeys.forEach((k,i)=>{
     const v=parseInt($('R_ZONE_'+k).value)||0; rZTotal+=v;
     el('rvz_'+k).textContent = v+'%';
-    el('rzfee_'+k).textContent = 'AED '+Math.round(d.rZoneFees[rZNames[i]]||0).toLocaleString();
+    if(isWholesaleLed) {
+      // Variable cost — what retail actually pays per trip in this zone
+      el('rzfee_'+k).textContent = 'AED '+Math.round(varByZone[rZNames[i]]||0).toLocaleString();
+    } else {
+      // Rate card despatch reference — part of the blended rate, not a standalone cost
+      el('rzfee_'+k).textContent = 'AED '+Math.round(d.rZoneFees[rZNames[i]]||0).toLocaleString();
+    }
   });
   el('rvz_Liwa').textContent = Math.max(0,100-rZTotal)+'%';
-  el('rzfee_Liwa').textContent = 'AED '+Math.round(d.rZoneFees['Liwa/Ruwais']||0).toLocaleString();
+  el('rzfee_Liwa').textContent = isWholesaleLed
+    ? 'AED '+Math.round(varByZone['Liwa/Ruwais']||0).toLocaleString()
+    : 'AED '+Math.round(d.rZoneFees['Liwa/Ruwais']||0).toLocaleString();
   const rZBadge=$('r-zone-badge'); if(rZBadge){rZBadge.textContent=rZTotal+(Math.max(0,100-rZTotal))+'%';}
-  el('r_blended_despatch').textContent = fmtAED(d.rBlendedDespatch);
+  el('r_blended_despatch').textContent = isWholesaleLed
+    ? fmtAED(calcBlendedVarCost('R').blended)
+    : fmtAED(d.rBlendedDespatch);
+  // Update retail zone fee label
+  const rFeeLabel=$('r-zone-fee-label');
+  if(rFeeLabel) {
+    if(isWholesaleLed) {
+      rFeeLabel.textContent = '▸ Variable cost/trip (fuel + wear) — retail bears this per job';
+      rFeeLabel.style.borderLeftColor = 'var(--teal)';
+      rFeeLabel.style.color = 'var(--teal)';
+    } else {
+      rFeeLabel.textContent = '▸ Rate card despatch component — already inside blended rate, informational only';
+      rFeeLabel.style.borderLeftColor = 'var(--border2)';
+      rFeeLabel.style.color = 'var(--text3)';
+    }
+  }
+  // Update retail blended result label
+  el('r_blended_despatch').parentElement && (
+    el('r_blended_despatch').previousElementSibling
+      ? el('r_blended_despatch').previousElementSibling.textContent = isWholesaleLed ? 'Blended variable cost/job' : 'Blended retail despatch (ref)'
+      : null
+  );
 
   // Zone labels — wholesale
   const wZKeys=['Dubai','Sharjah','UAQ','RAK','Fujairah','AlAin','AbuDhabi'];
@@ -1472,12 +1518,21 @@ function updateSidebarLabels(d) {
   wZKeys.forEach((k,i)=>{
     const v=parseInt($('W_ZONE_'+k).value)||0; wZTotal+=v;
     el('wvz_'+k).textContent = v+'%';
+    // Wholesale zone fee is always the rate card despatch component
+    // (wholesale cost per job comes from cost allocation, not from despatch fee)
     el('wzfee_'+k).textContent = 'AED '+Math.round(d.wZoneFees[rZNames[i]]||0).toLocaleString();
   });
   el('wvz_Liwa').textContent = Math.max(0,100-wZTotal)+'%';
   el('wzfee_Liwa').textContent = 'AED '+Math.round(d.wZoneFees['Liwa/Ruwais']||0).toLocaleString();
   const wZBadge=$('w-zone-badge'); if(wZBadge){wZBadge.textContent=(wZTotal+Math.max(0,100-wZTotal))+'%';}
   el('w_blended_despatch').textContent = fmtAED(d.wBlendedDespatch);
+  // Update wholesale zone fee label
+  const wFeeLabel=$('w-zone-fee-label');
+  if(wFeeLabel) {
+    wFeeLabel.textContent = '▸ Rate card despatch component — part of blended wholesale rate';
+    wFeeLabel.style.borderLeftColor = 'var(--border2)';
+    wFeeLabel.style.color = 'var(--text3)';
+  }
 
   // Cost recovery note
   const crNote = $('v_COST_RECOVERY_NOTE');
