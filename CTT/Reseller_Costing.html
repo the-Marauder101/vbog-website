@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTT Reseller Pricing Engine v6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   CSS VARIABLES & RESET
+   ============================================================ */
+:root {
+  --bg:#f5f7fa;--bg2:#ffffff;--bg3:#eef1f6;--bg4:#e4e8f0;
+  --border:#dde1ea;--border2:#c8cdd9;
+  --text:#111827;--text2:#4b5563;--text3:#9ca3af;
+  --accent:#2563eb;--accent-dim:rgba(37,99,235,0.07);
+  --blue:#2563eb;--blue-dim:rgba(37,99,235,0.08);
+  --amber:#d97706;--amber-dim:rgba(217,119,6,0.10);
+  --red:#dc2626;--red-dim:rgba(220,38,38,0.10);
+  --green:#16a34a;--green-dim:rgba(22,163,74,0.10);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,0.08);
+  --teal:#0891b2;--teal-dim:rgba(8,145,178,0.08);
+  /* COST RECOVERED STATE */
+  --recovered-bg:#052e16;--recovered-accent:#00e676;
+  --recovered-border:#00e676;
+  --radius:6px;--radius-lg:10px;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --transition:0.15s ease;
+  --header-bg:#1e2a3a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;}
+
+/* ============================================================
+   COST RECOVERED GLOBAL STATE — applied to <body> when triggered
+   ============================================================ */
+body.cost-recovered { --header-bg: var(--recovered-bg); }
+body.cost-recovered .header { background: var(--recovered-bg); border-bottom: 2px solid var(--recovered-accent); }
+body.cost-recovered .recovery-banner { display: flex !important; }
+body.cost-recovered .logo { color: var(--recovered-accent) !important; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header{
+  padding:16px 32px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:#1e2a3a;
+  box-shadow:0 2px 8px rgba(0,0,0,0.18);z-index:100;
+  transition:background 0.4s ease, border-color 0.4s ease;
+}
+.logo{font-family:var(--mono);font-size:12px;color:#7cb8ff;letter-spacing:0.08em;text-transform:uppercase;transition:color 0.4s ease;}
+.header-title{font-size:13px;color:rgba(255,255,255,0.6);font-family:var(--mono);}
+.header-right{display:flex;align-items:center;gap:12px;}
+.header-badge{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.15);padding:3px 8px;border-radius:4px;}
+.mode-badge{font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:3px;border:1px solid;font-weight:500;}
+.mode-badge.wholesale-led{color:#0891b2;border-color:#0891b2;background:rgba(8,145,178,0.10);}
+.mode-badge.retail-led{color:#2563eb;border-color:#2563eb;background:rgba(37,99,235,0.10);}
+.mode-badge.cost-split{color:#7c3aed;border-color:#7c3aed;background:rgba(124,58,237,0.10);}
+.mode-badge.single-channel{color:#d97706;border-color:#d97706;background:rgba(217,119,6,0.10);}
+
+/* RECOVERY BANNER */
+.recovery-banner{
+  display:none;position:sticky;top:61px;z-index:99;
+  background:var(--recovered-bg);border-bottom:2px solid var(--recovered-accent);
+  padding:10px 32px;align-items:center;justify-content:space-between;gap:16px;
+}
+.recovery-banner-text{font-family:var(--mono);font-size:11px;color:#00e676;letter-spacing:0.06em;}
+.recovery-banner-sub{font-family:var(--mono);font-size:10px;color:rgba(0,230,118,0.7);}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.main{display:flex;min-height:calc(100vh - 61px);}
+.sidebar{
+  border-right:1px solid var(--border);padding:24px;overflow-y:auto;
+  position:sticky;top:61px;height:calc(100vh - 61px);
+  min-width:280px;max-width:700px;width:440px;overflow-x:hidden;
+}
+.resizer{
+  width:6px;cursor:col-resize;background:var(--border);
+  position:sticky;top:61px;height:calc(100vh - 61px);flex-shrink:0;
+  transition:background var(--transition);z-index:10;
+}
+.resizer:hover,.resizer.dragging{background:var(--accent);}
+.content{padding:24px 32px;overflow-y:auto;flex:1;min-width:0;}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+.tab-nav{
+  display:flex;gap:4px;margin-bottom:28px;background:var(--bg3);
+  padding:4px;border-radius:var(--radius-lg);border:1px solid var(--border);
+}
+.tab-btn{
+  flex:1;padding:8px 12px;font-size:11px;font-family:var(--mono);font-weight:500;
+  letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);
+  background:transparent;border:none;border-radius:var(--radius);cursor:pointer;
+  transition:all var(--transition);white-space:nowrap;
+}
+.tab-btn:hover{color:var(--text);background:var(--bg2);}
+.tab-btn.active{color:var(--accent);background:var(--bg2);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+
+/* ============================================================
+   SECTION LABELS
+   ============================================================ */
+.section-label{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.section-gap{margin-bottom:28px;}
+
+/* ============================================================
+   COST ALLOCATION MODE SELECTOR
+   ============================================================ */
+.mode-selector{margin-bottom:24px;}
+.mode-option{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+  border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;
+  cursor:pointer;transition:all var(--transition);
+}
+.mode-option:hover{border-color:var(--border2);background:var(--bg3);}
+.mode-option.active{border-color:var(--accent);background:var(--accent-dim);}
+.mode-option.active.wholesale{border-color:var(--teal);background:var(--teal-dim);}
+.mode-option.active.retail{border-color:var(--blue);background:var(--blue-dim);}
+.mode-option.active.split{border-color:var(--purple);background:var(--purple-dim);}
+.mode-option.active.single{border-color:var(--amber);background:var(--amber-dim);}
+.mode-radio{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;margin-top:2px;transition:all var(--transition);position:relative;}
+.mode-option.active .mode-radio{border-color:var(--accent);}
+.mode-option.active.wholesale .mode-radio{border-color:var(--teal);}
+.mode-option.active.retail .mode-radio{border-color:var(--blue);}
+.mode-option.active.split .mode-radio{border-color:var(--purple);}
+.mode-option.active.single .mode-radio{border-color:var(--amber);}
+.mode-option.active .mode-radio::after{content:'';position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent);top:50%;left:50%;transform:translate(-50%,-50%);}
+.mode-option.active.wholesale .mode-radio::after{background:var(--teal);}
+.mode-option.active.retail .mode-radio::after{background:var(--blue);}
+.mode-option.active.split .mode-radio::after{background:var(--purple);}
+.mode-option.active.single .mode-radio::after{background:var(--amber);}
+.mode-title{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.mode-desc{font-size:11px;color:var(--text3);line-height:1.4;}
+
+/* ============================================================
+   CONTROLS — sliders, inputs, toggles
+   ============================================================ */
+.ctrl-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+.ctrl-row label{font-size:12px;color:var(--text2);width:170px;flex-shrink:0;line-height:1.3;}
+.ctrl-row input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+.ctrl-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;transition:transform var(--transition);}
+.ctrl-row input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.ctrl-val{font-family:var(--mono);font-size:12px;color:var(--accent);min-width:76px;text-align:right;white-space:nowrap;}
+.num-input-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.num-input-row label{font-size:12px;color:var(--text2);width:170px;flex-shrink:0;line-height:1.3;}
+.num-input{
+  flex:1;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);
+  padding:7px 10px;outline:none;width:100%;
+}
+.num-input:focus{border-color:var(--accent);}
+.num-unit{font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;}
+.mix-row{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+.mix-label{font-size:11px;color:var(--text2);width:100px;flex-shrink:0;}
+.mix-row input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+.mix-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--blue);cursor:pointer;}
+.mix-pct{font-family:var(--mono);font-size:11px;color:var(--blue);width:40px;text-align:right;}
+.zone-row{display:grid;grid-template-columns:95px 1fr 36px 58px;align-items:center;gap:5px;margin-bottom:10px;}
+.zone-row input[type=range]{-webkit-appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;width:100%;}
+.zone-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--blue);cursor:pointer;}
+.zone-pct{font-family:var(--mono);font-size:11px;color:var(--blue);text-align:right;white-space:nowrap;}
+.zone-fee{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right;white-space:nowrap;}
+
+/* split solver toggle */
+.solver-row{display:flex;gap:4px;margin-bottom:14px;background:var(--bg3);padding:3px;border-radius:var(--radius);border:1px solid var(--border);}
+.solver-btn{flex:1;padding:5px 6px;font-size:9px;font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);background:transparent;border:none;border-radius:3px;cursor:pointer;transition:all var(--transition);}
+.solver-btn.active{color:var(--purple);background:var(--bg2);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+
+/* staff rows */
+.staff-row{display:grid;grid-template-columns:1fr 82px 105px 84px;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;background:var(--bg2);}
+.staff-row.inactive{opacity:0.45;}
+.staff-name{font-size:12px;font-weight:500;color:var(--text);}
+.staff-role{font-size:10px;color:var(--text3);}
+.staff-cost{font-family:var(--mono);font-size:11px;color:var(--text2);}
+.staff-util-wrap{display:flex;align-items:center;gap:4px;min-width:0;}
+.staff-util-wrap input[type=range]{flex:1;min-width:0;-webkit-appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+.staff-util-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--purple);cursor:pointer;}
+.staff-util-pct{font-family:var(--mono);font-size:10px;color:var(--purple);width:38px;text-align:right;flex-shrink:0;}
+.staff-toggle{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;}
+.staff-alloc{font-family:var(--mono);font-size:11px;color:var(--green);text-align:right;}
+/* overhead rows */
+.oh-row{display:grid;grid-template-columns:1fr 74px 100px 82px;gap:6px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);}
+.oh-row:last-child{border-bottom:none;}
+.oh-name{font-size:11px;color:var(--text2);}
+.oh-amount{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right;}
+.oh-alloc-wrap{display:flex;align-items:center;gap:3px;min-width:0;}
+.oh-alloc-wrap input[type=range]{flex:1;min-width:0;-webkit-appearance:none;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;}
+.oh-alloc-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--amber);cursor:pointer;}
+.oh-pct{font-family:var(--mono);font-size:10px;color:var(--amber);width:34px;text-align:right;flex-shrink:0;}
+.oh-cost{font-family:var(--mono);font-size:11px;color:var(--green);text-align:right;}
+
+/* ============================================================
+   METRIC CARDS
+   ============================================================ */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.metrics-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.metrics-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+.metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.metric-label{font-size:10px;color:var(--text2);font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;}
+.metric-value{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.metric-value.accent{color:var(--accent);}.metric-value.blue{color:var(--blue);}
+.metric-value.amber{color:var(--amber);}.metric-value.green{color:var(--green);}
+.metric-value.red{color:var(--red);}.metric-value.purple{color:var(--purple);}
+.metric-value.teal{color:var(--teal);}
+.metric-sub{font-size:10px;color:var(--text2);margin-top:3px;font-family:var(--mono);}
+.util-bar-wrap{background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;margin-top:6px;}
+.util-bar{height:100%;border-radius:4px;transition:width 0.3s ease;}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;}
+.table-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.table-title{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:0.06em;text-transform:uppercase;}
+table{width:100%;border-collapse:collapse;}
+th{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);font-weight:400;background:var(--bg3);}
+th.r{text-align:right;}
+td{padding:10px 16px;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);font-family:var(--mono);}
+td.r{text-align:right;}td.bold{color:var(--text);font-weight:500;}
+td.accent{color:var(--accent);}td.blue{color:var(--blue);}td.amber{color:var(--amber);}
+td.green{color:var(--green);}td.red{color:var(--red);}td.muted{color:var(--text3);}td.purple{color:var(--purple);}td.teal{color:var(--teal);}
+tr:last-child td{border-bottom:none;}
+tr.highlight td{background:var(--accent-dim);color:var(--text);}
+tr.cost-total td{background:var(--purple-dim);font-weight:500;}
+tr.profit-row td{background:var(--green-dim);font-weight:500;}
+tr.memo-row td{background:var(--amber-dim);font-style:italic;}
+
+/* ============================================================
+   STATUS BARS
+   ============================================================ */
+.status-bar{border-radius:var(--radius);padding:10px 14px;font-family:var(--mono);font-size:11px;margin-bottom:20px;line-height:1.6;border:1px solid transparent;}
+.status-bar.ok{background:var(--green-dim);border-color:rgba(22,163,74,0.25);color:var(--green);}
+.status-bar.warn{background:var(--amber-dim);border-color:rgba(217,119,6,0.25);color:var(--amber);}
+.status-bar.info{background:var(--blue-dim);border-color:rgba(37,99,235,0.25);color:var(--blue);}
+.status-bar.bad{background:var(--red-dim);border-color:rgba(220,38,38,0.25);color:var(--red);}
+.status-bar.teal{background:var(--teal-dim);border-color:rgba(8,145,178,0.25);color:var(--teal);}
+
+/* ============================================================
+   INFO NOTES & TAGS
+   ============================================================ */
+.info-note{font-family:var(--mono);font-size:10px;color:var(--text3);padding:6px 10px;background:var(--bg3);border-radius:var(--radius);margin-bottom:10px;border-left:2px solid var(--border2);line-height:1.5;}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid var(--border2);color:var(--text3);white-space:nowrap;}
+.tag.accent{border-color:rgba(37,99,235,0.3);color:var(--accent);}
+.tag.green{border-color:rgba(22,163,74,0.3);color:var(--green);}
+.tag.amber{border-color:rgba(217,119,6,0.3);color:var(--amber);}
+.tag.purple{border-color:rgba(124,58,237,0.3);color:var(--purple);}
+.tag.teal{border-color:rgba(8,145,178,0.3);color:var(--teal);}
+.tag.blue{border-color:rgba(37,99,235,0.3);color:var(--blue);}
+.tag.red{border-color:rgba(220,38,38,0.3);color:var(--red);}
+
+/* ============================================================
+   VOLUME QUOTES TAB
+   ============================================================ */
+.pipeline-summary{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-lg);
+  padding:14px 16px;margin-bottom:20px;
+}
+.pipeline-summary.recovered{
+  background:var(--recovered-bg);border-color:var(--recovered-accent);
+}
+.pipeline-title{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+.pipeline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.pipeline-stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px;}
+.pipeline-stat-val{font-family:var(--mono);font-size:16px;font-weight:500;}
+
+/* vol tier rows */
+.vol-tier-row{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:8px;overflow:hidden;
+}
+.vol-tier-header{
+  display:grid;grid-template-columns:140px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 120px;
+  gap:0;padding:0;background:var(--bg3);border-bottom:1px solid var(--border);
+}
+.vol-tier-body{
+  display:grid;grid-template-columns:140px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 120px;
+  gap:0;align-items:center;
+}
+.vth{font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);padding:6px 8px;border-right:1px solid var(--border);}
+.vth:last-child{border-right:none;}
+.vtd{font-family:var(--mono);font-size:11px;color:var(--text2);padding:8px 8px;border-right:1px solid var(--border);}
+.vtd:last-child{border-right:none;}
+.vtd.accent{color:var(--accent);}
+.vtd.green{color:var(--green);}
+.vtd.amber{color:var(--amber);}
+.vtd.teal{color:var(--teal);}
+.vtd input[type=number]{
+  width:100%;background:transparent;border:none;outline:none;
+  font-family:var(--mono);font-size:11px;color:var(--text);
+  padding:0;
+}
+.vtd input[type=number]:focus{color:var(--accent);}
+/* hide spinners */
+.vtd input[type=number]::-webkit-outer-spin-button,
+.vtd input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+.vol-tier-actions{padding:6px 10px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg3);}
+.btn{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:3px;border:1px solid;cursor:pointer;transition:all var(--transition);}
+.btn-save{color:var(--green);border-color:rgba(61,214,140,0.3);background:var(--green-dim);}
+.btn-save:hover{background:rgba(61,214,140,0.2);}
+.btn-baseline{color:var(--teal);border-color:rgba(45,212,191,0.3);background:var(--teal-dim);}
+.btn-baseline:hover{background:rgba(45,212,191,0.2);}
+.btn-baseline.active{background:var(--teal);color:var(--bg);border-color:var(--teal);}
+.btn-del{color:var(--red);border-color:rgba(232,85,85,0.3);background:var(--red-dim);}
+.btn-del:hover{background:rgba(232,85,85,0.2);}
+.btn-add{color:var(--accent);border-color:rgba(79,142,247,0.3);background:var(--accent-dim);}
+.btn-add:hover{background:rgba(79,142,247,0.2);}
+
+/* saved quotes table */
+.saved-row td{font-size:11px;}
+
+/* ============================================================
+   CITY MATRIX
+   ============================================================ */
+.city-matrix-toggle{display:flex;gap:4px;margin-bottom:14px;background:var(--bg3);padding:3px;border-radius:var(--radius);border:1px solid var(--border);width:fit-content;}
+.cmt-btn{padding:5px 12px;font-size:9px;font-family:var(--mono);letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);background:transparent;border:none;border-radius:3px;cursor:pointer;transition:all var(--transition);}
+.cmt-btn.active{color:var(--accent);background:var(--bg2);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+.city-matrix-wrap{overflow-x:auto;}
+.city-matrix{border-collapse:collapse;min-width:900px;}
+.city-matrix th{font-family:var(--mono);font-size:9px;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);padding:8px 10px;text-align:right;border:1px solid var(--border);background:var(--bg3);}
+.city-matrix th:first-child{text-align:left;}
+.city-matrix td{font-family:var(--mono);font-size:11px;padding:8px 10px;text-align:right;border:1px solid var(--border);color:var(--text2);}
+.city-matrix td:first-child{text-align:left;color:var(--text);font-weight:500;}
+.city-matrix td.best{color:var(--green);}
+.city-matrix td.worst{color:var(--amber);}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer{text-align:center;padding:20px;font-family:var(--mono);font-size:10px;color:var(--text3);border-top:1px solid var(--border);}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:960px){
+  .main{display:block;}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border);width:100%!important;}
+  .metrics-grid{grid-template-columns:repeat(2,1fr);}
+  .metrics-grid-3{grid-template-columns:repeat(2,1fr);}
+  .vol-tier-header,.vol-tier-body{grid-template-columns:repeat(4,1fr);}
+}
+
+/* mode-specific sidebar panels */
+.mode-panel{display:none;}
+.mode-panel.visible{display:block;}
+.channel-panel{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:12px;}
+.channel-label{font-family:var(--mono);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.channel-label.retail{color:var(--blue);}
+.channel-label.wholesale{color:var(--teal);}
+.blended-result{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg4);border-radius:var(--radius);margin-top:8px;border:1px solid var(--border);}
+.blended-result-label{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.blended-result-val{font-family:var(--mono);font-size:13px;font-weight:500;}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     GOOGLE APPS SCRIPT SETUP
+     ============================================================
+     STEP 1: Create a new Google Sheet named "Volume Quotes - Backend"
+     STEP 2: Rename the first tab to "Volume Quotes Sent"
+     STEP 3: In the sheet, go to Extensions > Apps Script
+     STEP 4: Delete all existing code, paste the script below, save.
+     STEP 5: Click Deploy > New Deployment > Web App
+             - Execute as: Me
+             - Who has access: Anyone
+     STEP 6: Copy the Web App URL
+     STEP 7: Paste it into APPS_SCRIPT_URL constant below (in the JS section)
+
+     ---- PASTE THIS INTO APPS SCRIPT ----
+
+     function doPost(e) {
+       var sheet = SpreadsheetApp.getActiveSpreadsheet()
+         .getSheetByName("Volume Quotes Sent");
+       var data = JSON.parse(e.postData.contents);
+       // Ensure header row exists
+       if (sheet.getLastRow() === 0) {
+         sheet.appendRow([
+           "Date","Client","Volume","Unit Mix","Zone",
+           "Sell Price/Job","Total Revenue","Rebate %","Rebate AED/Job",
+           "Mode","Cost Discount %","Markup %","Effective Cost/Job"
+         ]);
+       }
+       sheet.appendRow([
+         data.date, data.client, data.volume, data.unitMix, data.zone,
+         data.sellPrice, data.totalRevenue, data.rebatePct, data.rebateAED,
+         data.mode, data.costDiscPct, data.markupPct, data.effCost
+       ]);
+       return ContentService.createTextOutput(
+         JSON.stringify({status:"ok"})
+       ).setMimeType(ContentService.MimeType.JSON);
+     }
+
+     function doGet(e) {
+       var sheet = SpreadsheetApp.getActiveSpreadsheet()
+         .getSheetByName("Volume Quotes Sent");
+       var rows = sheet.getDataRange().getValues();
+       if (rows.length <= 1) {
+         return ContentService.createTextOutput(
+           JSON.stringify({rows:[]})
+         ).setMimeType(ContentService.MimeType.JSON);
+       }
+       var headers = rows[0];
+       var data = rows.slice(1).map(function(r){
+         var obj = {};
+         headers.forEach(function(h,i){ obj[h] = r[i]; });
+         return obj;
+       });
+       return ContentService.createTextOutput(
+         JSON.stringify({rows:data})
+       ).setMimeType(ContentService.MimeType.JSON);
+     }
+
+     ---- END APPS SCRIPT ----
+     ============================================================ -->
+
+<header class="header" id="main-header">
+  <div class="logo" id="logo-text">CTT // Pricing Engine</div>
+  <div class="header-title">Reseller — v6.0</div>
+  <div class="header-right">
+    <span class="mode-badge wholesale-led" id="header-mode-badge">Wholesale-Led</span>
+    <div class="header-badge">v6.0 — VBOG</div>
+  </div>
+</header>
+
+<!-- COST RECOVERED BANNER -->
+<div class="recovery-banner" id="recovery-banner">
+  <div>
+    <div class="recovery-banner-text">⚡ COSTS FULLY RECOVERED — All remaining jobs are pure profit</div>
+    <div class="recovery-banner-sub" id="recovery-banner-sub">Committed pipeline has absorbed AED 0 of AED 686,000 cost base</div>
+  </div>
+  <div style="font-family:var(--mono);font-size:20px;font-weight:500;color:var(--recovered-accent)" id="recovery-surplus">+AED 0</div>
+</div>
+
+<div class="main">
+<aside class="sidebar">
+
+  <div class="tab-nav" style="margin-bottom:18px">
+    <button class="tab-btn active" data-tab="mode" onclick="switchSidebarTab('mode')">Mode</button>
+    <button class="tab-btn" data-tab="pricing" onclick="switchSidebarTab('pricing')">Pricing</button>
+    <button class="tab-btn" data-tab="staff" onclick="switchSidebarTab('staff')">Staff</button>
+    <button class="tab-btn" data-tab="overheads" onclick="switchSidebarTab('overheads')">Overheads</button>
+  </div>
+
+  <!-- ===== MODE TAB ===== -->
+  <div id="stab-mode" class="tab-panel active">
+    <div class="section-label" style="margin-bottom:14px">Cost allocation mode</div>
+    <div class="mode-selector">
+
+      <div class="mode-option wholesale active" id="mopt-wholesale" onclick="setMode('wholesale')">
+        <div class="mode-radio"></div>
+        <div>
+          <div class="mode-title" style="color:var(--teal)">Wholesale-Led</div>
+          <div class="mode-desc">Volume jobs absorb all fixed costs. Retail prices off variable cost only (fuel + wear per trip).</div>
+        </div>
+      </div>
+
+      <div class="mode-option retail" id="mopt-retail" onclick="setMode('retail')">
+        <div class="mode-radio"></div>
+        <div>
+          <div class="mode-title" style="color:var(--blue)">Retail-Led</div>
+          <div class="mode-desc">Retail jobs absorb all fixed costs. Volume quotes are discounts off the retail rate.</div>
+        </div>
+      </div>
+
+      <div class="mode-option split" id="mopt-split" onclick="setMode('split')">
+        <div class="mode-radio"></div>
+        <div>
+          <div class="mode-title" style="color:var(--purple)">Cost Split</div>
+          <div class="mode-desc">Both channels share costs. You control the split. Solve for rates, job counts, or the split itself.</div>
+        </div>
+      </div>
+
+      <div class="mode-option single" id="mopt-single" onclick="setMode('single')">
+        <div class="mode-radio"></div>
+        <div>
+          <div class="mode-title" style="color:var(--amber)">Single Channel</div>
+          <div class="mode-desc">One channel only absorbs everything. The other is inactive.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- WHOLESALE-LED PANEL -->
+    <div id="mode-panel-wholesale" class="mode-panel visible">
+      <div class="section-label">Variable cost — retail (wholesale absorbs fixed)</div>
+      <div class="info-note">When wholesale absorbs all fixed costs, retail only bears the variable cost of each trip: fuel + vehicle wear. Auto-calculated per zone from current UAE fuel price. Override manually if needed.</div>
+      <div class="num-input-row">
+        <label>Fuel price (AED/litre)</label>
+        <input type="number" class="num-input" id="FUEL_PRICE" value="3.55" step="0.01" min="0" oninput="recalc()">
+        <span class="num-unit">AED/L</span>
+      </div>
+      <div class="num-input-row">
+        <label>Van efficiency</label>
+        <input type="number" class="num-input" id="VAN_KML" value="9" step="0.5" min="1" oninput="recalc()">
+        <span class="num-unit">km/L</span>
+      </div>
+      <div class="num-input-row">
+        <label>Wear &amp; tear flat</label>
+        <input type="number" class="num-input" id="WEAR_FLAT" value="25" step="5" min="0" oninput="recalc()">
+        <span class="num-unit">AED/job</span>
+      </div>
+      <div class="num-input-row">
+        <label>Override variable cost</label>
+        <input type="number" class="num-input" id="VAR_COST_OVERRIDE" value="0" step="10" min="0" placeholder="0 = auto-calculate" oninput="recalc()">
+        <span class="num-unit">AED/job</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--teal-dim);border-radius:var(--radius);border:1px solid rgba(45,212,191,0.2);margin-top:6px">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--teal)">Blended variable cost/job</span>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--teal)" id="v_blended_var_cost">—</span>
+      </div>
+      <div style="margin-top:14px;font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.6" id="v_var_cost_by_zone"></div>
+    </div>
+
+    <!-- RETAIL-LED PANEL -->
+    <div id="mode-panel-retail" class="mode-panel">
+      <div class="info-note">Retail absorbs 100% of fixed costs. Rate cards are built on full cost/job + target margin. Volume quotes discount off the retail rate. No additional inputs needed — controlled by Pricing tab settings.</div>
+    </div>
+
+    <!-- COST SPLIT PANEL -->
+    <div id="mode-panel-split" class="mode-panel">
+      <div class="section-label">Solver — solve for</div>
+      <div class="solver-row">
+        <button class="solver-btn active" id="sbtn-rates" onclick="setSolver('rates')">Rates</button>
+        <button class="solver-btn" id="sbtn-jobs" onclick="setSolver('jobs')">Job counts</button>
+        <button class="solver-btn" id="sbtn-split" onclick="setSolver('split')">Cost split</button>
+      </div>
+      <div class="info-note" id="solver-note">Fix cost split % and job counts → rates are derived.</div>
+
+      <div id="split-input-split">
+        <div class="ctrl-row"><label>Retail bears % of costs</label><input type="range" id="SPLIT_RETAIL_PCT" min="0" max="100" step="5" value="60" oninput="recalc()"><span class="ctrl-val" id="v_SPLIT_RETAIL_PCT">60%</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:10px">Wholesale bears: <span id="v_SPLIT_WHOLESALE_PCT" style="color:var(--teal)">40%</span></div>
+      </div>
+
+      <div id="split-input-jobs">
+        <div class="num-input-row"><label>Expected retail jobs/yr</label><input type="number" class="num-input" id="SPLIT_RETAIL_JOBS" value="600" step="50" min="1" oninput="recalc()"><span class="num-unit">jobs</span></div>
+        <div class="num-input-row"><label>Expected wholesale jobs/yr</label><input type="number" class="num-input" id="SPLIT_WHOLESALE_JOBS" value="400" step="50" min="1" oninput="recalc()"><span class="num-unit">jobs</span></div>
+      </div>
+
+      <div id="split-rates-input" style="display:none">
+        <div class="num-input-row"><label>Target retail rate/job</label><input type="number" class="num-input" id="SPLIT_RETAIL_RATE" value="950" step="10" min="1" oninput="recalc()"><span class="num-unit">AED</span></div>
+        <div class="num-input-row"><label>Target wholesale rate/job</label><input type="number" class="num-input" id="SPLIT_WHOLESALE_RATE" value="700" step="10" min="1" oninput="recalc()"><span class="num-unit">AED</span></div>
+      </div>
+
+      <div style="background:var(--purple-dim);border:1px solid rgba(167,139,250,0.2);border-radius:var(--radius);padding:10px;margin-top:8px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--purple);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Split solver output</div>
+        <div id="split-solver-output" style="font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.8">—</div>
+      </div>
+    </div>
+
+    <!-- SINGLE CHANNEL PANEL -->
+    <div id="mode-panel-single" class="mode-panel">
+      <div class="section-label">Active channel</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <div id="sc-retail" onclick="setSingleChannel('retail')" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text2);transition:all var(--transition)">Retail Only</div>
+        <div id="sc-wholesale" onclick="setSingleChannel('wholesale')" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text2);transition:all var(--transition)">Wholesale Only</div>
+      </div>
+      <div class="info-note">Active channel absorbs 100% of AED 686,000. Inactive channel tab shows dormant state.</div>
+    </div>
+
+  </div>
+
+  <!-- ===== PRICING TAB ===== -->
+  <div id="stab-pricing" class="tab-panel">
+
+    <div class="section-gap">
+      <div class="section-label">Despatch anchor</div>
+      <div class="ctrl-row"><label>Base despatch — Dubai anchor</label><input type="range" id="BASE_DESPATCH" min="100" max="4000" step="50" value="700" oninput="recalc()"><span class="ctrl-val" id="v_BASE_DESPATCH">AED 700</span></div>
+      <div class="ctrl-row"><label>Despatch multiplier</label><input type="range" id="DESPATCH_MULTIPLIER" min="0.5" max="3" step="0.1" value="1.0" oninput="recalc()"><span class="ctrl-val" id="v_DESPATCH_MULTIPLIER">1.0×</span></div>
+      <div class="ctrl-row"><label>Handling premium (&gt;150L)</label><input type="range" id="HANDLING_PREMIUM" min="0" max="1000" step="25" value="200" oninput="recalc()"><span class="ctrl-val" id="v_HANDLING_PREMIUM">AED 200</span></div>
+      <div class="info-note">Handling premium is additional revenue on 200L+ jobs — not a cost. Does not affect cost base.</div>
+    </div>
+
+    <div class="section-gap">
+      <div class="section-label">Capacity &amp; margin</div>
+      <div class="ctrl-row"><label>Jobs per day (actual)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4" oninput="recalc()"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span></div>
+      <div class="ctrl-row"><label>Working days / year</label><input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250" oninput="recalc()"><span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span></div>
+      <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="0" max="60" step="5" value="25" oninput="recalc()"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">25%</span></div>
+      <div class="ctrl-row"><label>Efficiency discount</label><input type="range" id="OPERATIONAL_EFFICIENCY_DISCOUNT" min="0" max="25" step="1" value="0" oninput="recalc()"><span class="ctrl-val" id="v_OPERATIONAL_EFFICIENCY_DISCOUNT">0%</span></div>
+      <div class="num-input-row">
+        <label>Baseline jobs (pricing anchor)</label>
+        <input type="number" class="num-input" id="COST_RECOVERY_JOBS" min="0" step="50" value="0" placeholder="0 = use jobs/day × days" oninput="recalc()">
+        <span class="num-unit">jobs/yr</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="v_COST_RECOVERY_NOTE">—</div>
+    </div>
+
+    <!-- RETAIL MIX -->
+    <div class="section-gap">
+      <div class="channel-panel">
+        <div class="channel-label retail">Retail — unit mix</div>
+        <div class="mix-row"><span class="mix-label">Up to 50L</span><input type="range" id="R_MIX_50L" min="0" max="100" step="5" value="20" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_50L">20%</span></div>
+        <div class="mix-row"><span class="mix-label">80L</span><input type="range" id="R_MIX_80L" min="0" max="100" step="5" value="35" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_80L">35%</span></div>
+        <div class="mix-row"><span class="mix-label">100/150L</span><input type="range" id="R_MIX_150L" min="0" max="100" step="5" value="25" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_150L">25%</span></div>
+        <div class="mix-row"><span class="mix-label">200L</span><input type="range" id="R_MIX_200L" min="0" max="100" step="5" value="15" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_200L">15%</span></div>
+        <div class="mix-row"><span class="mix-label">300L+ <span class="tag">auto</span></span><input type="range" disabled style="flex:1;opacity:0.3" value="5"><span class="mix-pct" id="v_R_MIX_300L" style="color:var(--text3)">5%</span></div>
+      </div>
+      <!-- RETAIL ZONE MIX -->
+      <div class="channel-panel">
+        <div class="channel-label retail">Retail — zone mix <span id="r-zone-badge" class="tag accent">100%</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Dubai</span><input type="range" id="R_ZONE_Dubai" min="0" max="100" step="1" value="55" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Dubai">55%</span><span class="zone-fee" id="rzfee_Dubai">AED 700</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Sharjah/Ajman</span><input type="range" id="R_ZONE_Sharjah" min="0" max="100" step="1" value="20" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Sharjah">20%</span><span class="zone-fee" id="rzfee_Sharjah">AED 650</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">UAQ</span><input type="range" id="R_ZONE_UAQ" min="0" max="100" step="1" value="10" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_UAQ">10%</span><span class="zone-fee" id="rzfee_UAQ">AED 850</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">RAK</span><input type="range" id="R_ZONE_RAK" min="0" max="100" step="1" value="8" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_RAK">8%</span><span class="zone-fee" id="rzfee_RAK">AED 1,000</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Fujairah</span><input type="range" id="R_ZONE_Fujairah" min="0" max="100" step="1" value="4" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Fujairah">4%</span><span class="zone-fee" id="rzfee_Fujairah">AED 1,250</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Al Ain</span><input type="range" id="R_ZONE_AlAin" min="0" max="100" step="1" value="2" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_AlAin">2%</span><span class="zone-fee" id="rzfee_AlAin">AED 1,400</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Abu Dhabi</span><input type="range" id="R_ZONE_AbuDhabi" min="0" max="100" step="1" value="1" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_AbuDhabi">1%</span><span class="zone-fee" id="rzfee_AbuDhabi">AED 1,550</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Liwa/Ruwais <span class="tag">auto</span></span><input type="range" disabled style="opacity:0.3" value="0"><span class="zone-pct" id="rvz_Liwa" style="color:var(--text3)">0%</span><span class="zone-fee" id="rzfee_Liwa">AED 3,500</span></div>
+        <div class="blended-result"><span class="blended-result-label">Blended retail despatch</span><span class="blended-result-val" style="color:var(--blue)" id="r_blended_despatch">—</span></div>
+      </div>
+    </div>
+
+    <!-- WHOLESALE MIX -->
+    <div class="section-gap">
+      <div class="channel-panel">
+        <div class="channel-label wholesale">Wholesale — unit mix</div>
+        <div class="mix-row"><span class="mix-label">Up to 50L</span><input type="range" id="W_MIX_50L" min="0" max="100" step="5" value="10" oninput="snapMix('W',this.id)"><span class="mix-pct" id="v_W_MIX_50L">10%</span></div>
+        <div class="mix-row"><span class="mix-label">80L</span><input type="range" id="W_MIX_80L" min="0" max="100" step="5" value="25" oninput="snapMix('W',this.id)"><span class="mix-pct" id="v_W_MIX_80L">25%</span></div>
+        <div class="mix-row"><span class="mix-label">100/150L</span><input type="range" id="W_MIX_150L" min="0" max="100" step="5" value="40" oninput="snapMix('W',this.id)"><span class="mix-pct" id="v_W_MIX_150L">40%</span></div>
+        <div class="mix-row"><span class="mix-label">200L</span><input type="range" id="W_MIX_200L" min="0" max="100" step="5" value="20" oninput="snapMix('W',this.id)"><span class="mix-pct" id="v_W_MIX_200L">20%</span></div>
+        <div class="mix-row"><span class="mix-label">300L+ <span class="tag">auto</span></span><input type="range" disabled style="flex:1;opacity:0.3" value="5"><span class="mix-pct" id="v_W_MIX_300L" style="color:var(--text3)">5%</span></div>
+      </div>
+      <!-- WHOLESALE ZONE MIX -->
+      <div class="channel-panel">
+        <div class="channel-label wholesale">Wholesale — zone mix <span id="w-zone-badge" class="tag teal">100%</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Dubai</span><input type="range" id="W_ZONE_Dubai" min="0" max="100" step="1" value="35" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_Dubai">35%</span><span class="zone-fee" id="wzfee_Dubai">AED 700</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Sharjah/Ajman</span><input type="range" id="W_ZONE_Sharjah" min="0" max="100" step="1" value="20" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_Sharjah">20%</span><span class="zone-fee" id="wzfee_Sharjah">AED 650</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">UAQ</span><input type="range" id="W_ZONE_UAQ" min="0" max="100" step="1" value="10" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_UAQ">10%</span><span class="zone-fee" id="wzfee_UAQ">AED 850</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">RAK</span><input type="range" id="W_ZONE_RAK" min="0" max="100" step="1" value="10" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_RAK">10%</span><span class="zone-fee" id="wzfee_RAK">AED 1,000</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Fujairah</span><input type="range" id="W_ZONE_Fujairah" min="0" max="100" step="1" value="8" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_Fujairah">8%</span><span class="zone-fee" id="wzfee_Fujairah">AED 1,250</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Al Ain</span><input type="range" id="W_ZONE_AlAin" min="0" max="100" step="1" value="7" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_AlAin">7%</span><span class="zone-fee" id="wzfee_AlAin">AED 1,400</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Abu Dhabi</span><input type="range" id="W_ZONE_AbuDhabi" min="0" max="100" step="1" value="9" oninput="snapZone('W',this.id)"><span class="zone-pct" id="wvz_AbuDhabi">9%</span><span class="zone-fee" id="wzfee_AbuDhabi">AED 1,550</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Liwa/Ruwais <span class="tag">auto</span></span><input type="range" disabled style="opacity:0.3" value="1"><span class="zone-pct" id="wvz_Liwa" style="color:var(--text3)">1%</span><span class="zone-fee" id="wzfee_Liwa">AED 3,500</span></div>
+        <div class="blended-result"><span class="blended-result-label">Blended wholesale despatch</span><span class="blended-result-val" style="color:var(--teal)" id="w_blended_despatch">—</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== STAFF TAB ===== -->
+  <div id="stab-staff" class="tab-panel">
+    <div class="info-note" style="margin-bottom:14px">All-in annual cost per person. Toggle off to exclude. Adjust utilisation to set allocation to reseller unit.</div>
+    <div style="display:grid;grid-template-columns:1fr 78px 100px 80px;gap:6px;padding:3px 9px;margin-bottom:5px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">Person</span>
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">All-in/yr</span>
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:center">Util %</span>
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:right">Alloc</span>
+    </div>
+    <div id="staff-rows-container"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:9px 11px;background:var(--purple-dim);border-radius:var(--radius);border:1px solid rgba(167,139,250,0.2)">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--purple)">Total staff — reseller unit</span>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--purple)" id="staff-total-display">AED 0</span>
+    </div>
+  </div>
+
+  <!-- ===== OVERHEADS TAB ===== -->
+  <div id="stab-overheads" class="tab-panel">
+    <div class="info-note" style="margin-bottom:14px">TB 2025 actuals. Adjust allocation % to assign each line to the reseller unit.</div>
+    <div style="display:grid;grid-template-columns:1fr 70px 96px 78px;gap:5px;padding:3px 9px;margin-bottom:4px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">Item</span>
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:right">TB (AED)</span>
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:center">Alloc %</span>
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:right">Cost</span>
+    </div>
+    <div class="table-wrap" style="margin-bottom:10px"><div id="oh-rows-container"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;background:var(--amber-dim);border-radius:var(--radius);border:1px solid rgba(240,160,48,0.2)">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--amber)">Total overheads — reseller unit</span>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--amber)" id="oh-total-display">AED 0</span>
+    </div>
+    <!-- COST BASE OVERRIDE -->
+    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="section-label" style="margin-bottom:8px">Cost base override</div>
+      <div class="info-note">Override ALL computed costs with a single number. When set, this becomes your cost base. Leave 0 to use live computed costs. Default: AED 686,000 (minimum cost to meet).</div>
+      <div class="num-input-row" style="margin-top:10px">
+        <label>Override cost base</label>
+        <!-- DEFAULT 686000 — minimum cost target from prior financial analysis. Change only if actuals differ significantly. -->
+        <input type="number" class="num-input" id="COST_BASE_OVERRIDE" min="0" step="1000" value="686000" oninput="recalc()">
+        <span class="num-unit">AED/yr</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:var(--radius);border:1px solid transparent" id="cost-base-status-box">
+        <span style="font-family:var(--mono);font-size:10px;font-weight:500" id="cost-base-status-label">—</span>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:500" id="cost-base-status-val">—</span>
+      </div>
+    </div>
+  </div>
+
+</aside>
+<div class="resizer" id="sidebar-resizer"></div>
+
+<main class="content">
+  <div class="tab-nav">
+    <button class="tab-btn active" data-tab="overview" onclick="switchContentTab('overview')">Overview</button>
+    <button class="tab-btn" data-tab="utilisation" onclick="switchContentTab('utilisation')">Utilisation</button>
+    <button class="tab-btn" data-tab="ratecards" onclick="switchContentTab('ratecards')">Rate Cards</button>
+    <button class="tab-btn" data-tab="volume" onclick="switchContentTab('volume')">Volume Quotes</button>
+    <button class="tab-btn" data-tab="pnl" onclick="switchContentTab('pnl')">P&amp;L</button>
+  </div>
+
+  <!-- ======================================================
+       OVERVIEW
+       ====================================================== -->
+  <div id="ctab-overview" class="tab-panel active">
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-label">Total cost base</div><div class="metric-value purple" id="kpi-cost">—</div><div class="metric-sub" id="kpi-cost-sub">—</div></div>
+      <div class="metric-card"><div class="metric-label">Remaining to recover</div><div class="metric-value amber" id="kpi-remaining">—</div><div class="metric-sub" id="kpi-remaining-sub">after committed pipeline</div></div>
+      <div class="metric-card"><div class="metric-label">Blended rate / job</div><div class="metric-value accent" id="kpi-blended">—</div><div class="metric-sub" id="kpi-blended-sub">—</div></div>
+      <div class="metric-card"><div class="metric-label">Actual capacity</div><div class="metric-value blue" id="kpi-jobs">—</div><div class="metric-sub" id="kpi-jobs-sub">—</div></div>
+    </div>
+    <div class="status-bar info" id="ov-status-bar">Adjust controls to model your pricing.</div>
+    <div class="metrics-grid-3">
+      <div class="metric-card"><div class="metric-label">Staff cost</div><div class="metric-value purple" id="ov-staff">—</div><div class="metric-sub" id="ov-staff-sub">—</div></div>
+      <div class="metric-card"><div class="metric-label">Overhead cost</div><div class="metric-value amber" id="ov-oh">—</div><div class="metric-sub">—</div></div>
+      <div class="metric-card"><div class="metric-label">Net profit (baseline)</div><div class="metric-value green" id="ov-profit">—</div><div class="metric-sub" id="ov-margin-sub">—</div></div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-head"><span class="table-title">Cost base breakdown</span><span class="tag purple" id="ov-cost-badge">—</span></div>
+      <table><thead><tr><th>Category</th><th class="r">Annual (AED)</th><th class="r">Per job (AED)</th><th class="r">% of total</th></tr></thead>
+      <tbody id="ov-cost-breakdown"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       UTILISATION
+       ====================================================== -->
+  <div id="ctab-utilisation" class="tab-panel">
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-label">Active members</div><div class="metric-value accent" id="util-headcount">—</div><div class="metric-sub">allocated to unit</div></div>
+      <div class="metric-card"><div class="metric-label">Field teams</div><div class="metric-value blue" id="util-teams">—</div><div class="metric-sub">2 techs per team</div></div>
+      <div class="metric-card"><div class="metric-label">Avg utilisation</div><div class="metric-value" id="util-avg">—</div><div class="metric-sub">weighted by cost</div></div>
+      <div class="metric-card"><div class="metric-label">Capacity match</div><div class="metric-value" id="util-match">—</div><div class="metric-sub" id="util-match-sub">—</div></div>
+    </div>
+    <div class="status-bar info" id="util-status">—</div>
+    <div class="table-wrap">
+      <div class="table-head"><span class="table-title">Team utilisation</span><span class="tag purple" id="util-badge">—</span></div>
+      <table><thead><tr><th>Person</th><th>Role</th><th class="r">All-in cost</th><th class="r">Util %</th><th class="r">Allocated</th><th class="r">Job capacity/yr</th><th class="r">Bar</th></tr></thead>
+      <tbody id="util-table-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       RATE CARDS
+       ====================================================== -->
+  <div id="ctab-ratecards" class="tab-panel">
+    <div class="city-matrix-toggle">
+      <button class="cmt-btn active" id="rcview-blended" onclick="setRCView('blended')">Blended</button>
+      <button class="cmt-btn" id="rcview-city" onclick="setRCView('city')">By City</button>
+    </div>
+
+    <!-- BLENDED VIEW -->
+    <div id="rc-blended-view">
+      <div class="metrics-grid-2">
+        <div class="metric-card"><div class="metric-label">Retail blended rate/job</div><div class="metric-value blue" id="rc-retail-rate">—</div><div class="metric-sub" id="rc-retail-sub">—</div></div>
+        <div class="metric-card"><div class="metric-label">Wholesale blended rate/job</div><div class="metric-value teal" id="rc-wholesale-rate">—</div><div class="metric-sub" id="rc-wholesale-sub">—</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-title">Retail rate card — by unit size</span><span class="tag blue" id="rc-retail-badge">—</span></div>
+        <table><thead id="rc-retail-head"></thead><tbody id="rc-retail-body"></tbody></table>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-title">Wholesale rate card — by unit size</span><span class="tag teal" id="rc-wholesale-badge">—</span></div>
+        <table><thead id="rc-wholesale-head"></thead><tbody id="rc-wholesale-body"></tbody></table>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-title">Add-on charges</span><span class="tag">charged on top</span></div>
+        <table><thead><tr><th>Add-on</th><th class="r">Rate ex-VAT</th><th class="r">inc-VAT</th><th>When charged</th></tr></thead>
+        <tbody id="addons-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- CITY MATRIX VIEW -->
+    <div id="rc-city-view" style="display:none">
+      <div class="status-bar info">Rate = zone despatch fee + labour for that unit size. Labour is constant across cities; despatch varies by zone ratio × base × multiplier.</div>
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-title">Retail — rate by unit size × city (ex-VAT)</span></div>
+        <div class="city-matrix-wrap"><table class="city-matrix" id="city-matrix-retail"></table></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-title">Retail — rate by unit size × city (inc-VAT)</span></div>
+        <div class="city-matrix-wrap"><table class="city-matrix" id="city-matrix-retail-vat"></table></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-title">Wholesale — rate by unit size × city (ex-VAT)</span></div>
+        <div class="city-matrix-wrap"><table class="city-matrix" id="city-matrix-wholesale"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       VOLUME QUOTES
+       ====================================================== -->
+  <div id="ctab-volume" class="tab-panel">
+
+    <!-- PIPELINE SUMMARY -->
+    <div class="pipeline-summary" id="pipeline-summary-box">
+      <div class="pipeline-title">Committed pipeline — loaded from Google Sheets</div>
+      <div class="pipeline-grid">
+        <div><div class="pipeline-stat-label">Committed jobs</div><div class="pipeline-stat-val green" id="pipe-jobs">0</div></div>
+        <div><div class="pipeline-stat-label">Committed revenue</div><div class="pipeline-stat-val green" id="pipe-rev">AED 0</div></div>
+        <div><div class="pipeline-stat-label">Cost absorbed</div><div class="pipeline-stat-val amber" id="pipe-absorbed">AED 0</div></div>
+        <div><div class="pipeline-stat-label">Remaining cost</div><div class="pipeline-stat-val accent" id="pipe-remaining">AED 686,000</div></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <button onclick="loadPipeline()" class="btn btn-save" style="font-size:9px;padding:3px 8px">↻ Refresh from Sheets</button>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text3)" id="pipe-status">Not connected — set APPS_SCRIPT_URL to enable.</span>
+      </div>
+    </div>
+
+    <div class="status-bar info" id="vol-status-bar">—</div>
+
+    <!-- TIER COLUMN HEADERS -->
+    <div class="vol-tier-row" style="background:var(--bg3)">
+      <div class="vol-tier-header">
+        <div class="vth">Volume (jobs)</div>
+        <div class="vth">Full cost/job</div>
+        <div class="vth">Total batch cost</div>
+        <div class="vth">Cost disc %</div>
+        <div class="vth">Eff. cost/job</div>
+        <div class="vth">Markup %</div>
+        <div class="vth">Sell price/job</div>
+        <div class="vth">Rebate %</div>
+        <div class="vth">Rebate AED/job</div>
+        <div class="vth">Total revenue</div>
+        <div class="vth">Margin %</div>
+        <div class="vth">Actions</div>
+      </div>
+    </div>
+
+    <div id="vol-tiers-container"></div>
+
+    <button onclick="addVolTier()" class="btn btn-add" style="margin-top:8px">+ Add tier</button>
+
+    <!-- SAVED QUOTES LOG -->
+    <div class="table-wrap" style="margin-top:24px">
+      <div class="table-head"><span class="table-title">Saved quotes log</span><span class="tag green" id="saved-count-badge">0 saved</span></div>
+      <table>
+        <thead><tr><th>Date</th><th>Client</th><th class="r">Volume</th><th>Zone</th><th class="r">Sell/job</th><th class="r">Total rev</th><th class="r">Rebate %</th><th>Mode</th></tr></thead>
+        <tbody id="saved-quotes-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       P&L
+       ====================================================== -->
+  <div id="ctab-pnl" class="tab-panel">
+    <div class="table-wrap">
+      <div class="table-head"><span class="table-title">P&amp;L summary</span><span class="tag purple" id="pnl-cost-badge">—</span></div>
+      <table>
+        <thead><tr><th>Line</th><th class="r">At baseline</th><th class="r">At actual jobs</th><th class="r">Per job</th></tr></thead>
+        <tbody id="pnl-body"></tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <div class="table-head"><span class="table-title">Break-even analysis</span></div>
+      <table>
+        <thead><tr><th>Scenario</th><th class="r">Revenue needed</th><th class="r">Jobs needed</th><th class="r">Jobs/day</th><th class="r">vs capacity</th></tr></thead>
+        <tbody id="breakeven-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+</div>
+<footer class="footer">CTT Reseller Pricing Engine &nbsp;|&nbsp; v6.0 &nbsp;|&nbsp; v-bog.com &nbsp;|&nbsp; Confidential — internal use only</footer>
+
+<script>
+/* ============================================================
+   GOOGLE SHEETS INTEGRATION
+   PASTE YOUR DEPLOYED APPS SCRIPT URL HERE:
+   ============================================================ */
+const APPS_SCRIPT_URL = ''; // <-- PASTE YOUR WEB APP URL HERE
+
+/* ============================================================
+   CONSTANTS — do not hardcode business numbers elsewhere
+   ============================================================ */
+const TOTAL_COST_TARGET = 686000; // AED — minimum annual cost to recover (from financial analysis)
+const VAT_RATE          = 0.05;
+
+// Zone distances (2-way km) from Atlantic 2023 pricelist
+const ZONE_DISTANCES_KM = {
+  'Dubai':20, 'Sharjah/Ajman':50, 'UAQ':100,
+  'RAK':200, 'Fujairah':240, 'Al Ain':300,
+  'Abu Dhabi':360, 'Liwa/Ruwais':800,
+};
+// Note: Dubai set to 20km (city dispatch, not 120km 2-way — Dubai is local base)
+
+const ZONE_DESPATCH_RATIOS = {
+  'Dubai':1.000,'Sharjah/Ajman':0.929,'UAQ':1.214,
+  'RAK':1.429,'Fujairah':1.786,'Al Ain':2.000,
+  'Abu Dhabi':2.214,'Liwa/Ruwais':5.000,
+};
+
+const LABOUR_SCALE_RATIOS = {
+  'Up to 50L':1.000,'80L':1.167,'100/150L':1.417,
+  '200L':1.667,'300L+':2.167,
+};
+
+const UNIT_SIZES = Object.keys(LABOUR_SCALE_RATIOS);
+const ZONES      = Object.keys(ZONE_DESPATCH_RATIOS);
+
+const ADDON_RATES = {
+  'False ceiling access':350,
+  'Roof access premium':300,
+  'Old heater removal (to ground fl.)':200,
+  'Waiting after free 30 min (per hr)':200,
+};
+const ADDON_NOTES = {
+  'False ceiling access':'Access panel removed and re-fixed',
+  'Roof access premium':'Confirmed in advance',
+  'Old heater removal (to ground fl.)':'Moving old unit to ground floor',
+  'Waiting after free 30 min (per hr)':'After first 30 min free allowance',
+};
+
+const MARGIN_GREEN = 0.25;
+const MARGIN_AMBER = 0.10;
+const FIELD_TECH_IDS = ['s_ashique','s_imtiaz','s_chiranjibi','s_daljit'];
+const JOBS_PER_FIELD_TECH_PER_DAY = 2;
+
+const STAFF_ROSTER = [
+  {id:'s_rafi',       name:'Muhd. Rafi',     role:'Site Mgr',            allIn:127731, util:100, on:true },
+  {id:'s_ashique',    name:'Ashique',         role:'Asst Supervisor',     allIn:58007,  util:100, on:true },
+  {id:'s_imtiaz',     name:'Imtiaz Khan',     role:'Field Tech',          allIn:28978,  util:100, on:true },
+  {id:'s_chiranjibi', name:'Chiranjibi',      role:'Field Tech',          allIn:26551,  util:100, on:true },
+  {id:'s_daljit',     name:'Daljit Sing',     role:'Field Tech/Helper',   allIn:30000,  util:100, on:true },
+  {id:'s_masood',     name:'Masood',          role:'Sales Engineer',      allIn:87500,  util:70,  on:true },
+  {id:'s_jay',        name:'Jay Deliwala',    role:'Ops Manager',         allIn:51000,  util:60,  on:true },
+  {id:'s_mets',       name:'Mets (Floradel)', role:'Front Office',        allIn:37503,  util:100, on:true },
+  {id:'s_new1',       name:'New Resource 1',  role:'Coordinator (new)',   allIn:72000,  util:100, on:true },
+  {id:'s_new2',       name:'New Resource 2',  role:'TBC',                 allIn:72000,  util:0,   on:false},
+];
+
+const OVERHEAD_ITEMS = [
+  {id:'oh_veh',     name:'Vehicle running + fuel',     tb:101078, pct:50},
+  {id:'oh_vehrep',  name:'Vehicle repairs & maint',    tb:83591,  pct:50},
+  {id:'oh_wh',      name:'Warehouse rent',             tb:63295,  pct:70},
+  {id:'oh_accom',   name:'Labour accommodation',       tb:29533,  pct:100},
+  {id:'oh_visa',    name:'Visa expenses',              tb:64327,  pct:55},
+  {id:'oh_tel',     name:'Telephone expenses',         tb:37853,  pct:55},
+  {id:'oh_ins',     name:'Insurance (general)',        tb:35496,  pct:50},
+  {id:'oh_comm',    name:'Sales commission',           tb:115673, pct:100},
+  {id:'oh_site',    name:'Site expenses',              tb:144147, pct:70},
+  {id:'oh_dep',     name:'Depreciation — vehicles',   tb:90689,  pct:50},
+  {id:'oh_freight', name:'Freight & shipping',         tb:70228,  pct:60},
+  {id:'oh_admin',   name:'Admin / legal / license',   tb:36265,  pct:60},
+  {id:'oh_it',      name:'IT services',                tb:14158,  pct:50},
+  {id:'oh_misc',    name:'Misc (utilities, bank etc)', tb:30000,  pct:50},
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentMode         = 'wholesale'; // wholesale | retail | split | single
+let currentSolver       = 'rates';     // rates | jobs | split
+let currentSingleCh     = 'retail';    // retail | wholesale
+let currentRCView       = 'blended';   // blended | city
+let activeBaselineTier  = null;        // index of tier set as baseline, or null
+let savedQuotes         = [];          // loaded from Google Sheets
+let committedJobs       = 0;
+let committedRevenue    = 0;
+
+// Volume tier data — each entry: {volume, costDisc, markup, rebate}
+let volTiers = [
+  {volume:100,  costDisc:0,  markup:15, rebate:0},
+  {volume:250,  costDisc:5,  markup:12, rebate:0},
+  {volume:500,  costDisc:10, markup:10, rebate:5},
+  {volume:1000, costDisc:15, markup:8,  rebate:8},
+  {volume:2000, costDisc:20, markup:6,  rebate:10},
+  {volume:5000, costDisc:30, markup:4,  rebate:12},
+];
+
+/* ============================================================
+   DOM HELPERS
+   ============================================================ */
+const $      = id => document.getElementById(id);
+const fmtAED = n  => 'AED ' + Math.round(n).toLocaleString();
+const fmtNum = n  => Math.round(n).toLocaleString();
+const fmtPct = n  => (typeof n==='number' ? n.toFixed(1) : '0.0') + '%';
+function colorForMargin(m) {
+  return m >= MARGIN_GREEN ? 'green' : m >= MARGIN_AMBER ? 'amber' : 'red';
+}
+
+/* ============================================================
+   MODE SWITCHING
+   ============================================================ */
+function setMode(mode) {
+  currentMode = mode;
+  ['wholesale','retail','split','single'].forEach(m => {
+    $('mopt-'+m).classList.toggle('active', m===mode);
+    $('mopt-'+m).classList.remove('wholesale','retail','split','single');
+    $('mode-panel-'+m).classList.toggle('visible', m===mode);
+  });
+  $('mopt-'+mode).classList.add('active', mode);
+  // Update header badge
+  const badge = $('header-mode-badge');
+  const labels = {wholesale:'Wholesale-Led',retail:'Retail-Led',split:'Cost Split',single:'Single Channel'};
+  const classes = {wholesale:'wholesale-led',retail:'retail-led',split:'cost-split',single:'single-channel'};
+  badge.textContent = labels[mode];
+  badge.className = 'mode-badge ' + classes[mode];
+  // Show/hide set-baseline buttons (only in wholesale mode)
+  document.querySelectorAll('.btn-baseline').forEach(b => {
+    b.style.display = mode==='wholesale' ? 'inline-block' : 'none';
+  });
+  recalc();
+}
+
+function setSolver(solver) {
+  currentSolver = solver;
+  ['rates','jobs','split'].forEach(s => $('sbtn-'+s).classList.toggle('active', s===solver));
+  // show/hide inputs
+  $('split-input-split').style.display = (solver==='jobs' || solver==='rates') ? 'block' : 'none';
+  $('split-input-jobs').style.display  = (solver==='rates' || solver==='split') ? 'block' : 'none';
+  $('split-rates-input').style.display = solver==='jobs' ? 'block' : 'none';
+  const notes = {
+    rates:'Fix cost split % and job counts → rates are derived.',
+    jobs: 'Fix cost split % and target rates → required job counts are derived.',
+    split:'Fix job counts and target rates → cost split % is derived.'
+  };
+  $('solver-note').textContent = notes[solver];
+  recalc();
+}
+
+function setSingleChannel(ch) {
+  currentSingleCh = ch;
+  $('sc-retail').style.borderColor    = ch==='retail'    ? 'var(--amber)' : 'var(--border)';
+  $('sc-retail').style.color          = ch==='retail'    ? 'var(--amber)' : 'var(--text2)';
+  $('sc-wholesale').style.borderColor = ch==='wholesale' ? 'var(--amber)' : 'var(--border)';
+  $('sc-wholesale').style.color       = ch==='wholesale' ? 'var(--amber)' : 'var(--text2)';
+  recalc();
+}
+
+function setRCView(view) {
+  currentRCView = view;
+  $('rcview-blended').classList.toggle('active', view==='blended');
+  $('rcview-city').classList.toggle('active', view==='city');
+  $('rc-blended-view').style.display = view==='blended' ? 'block' : 'none';
+  $('rc-city-view').style.display    = view==='city'    ? 'block' : 'none';
+}
+
+/* ============================================================
+   TAB SWITCHING
+   ============================================================ */
+function switchSidebarTab(name) {
+  ['mode','pricing','staff','overheads'].forEach(t =>
+    $('stab-'+t).classList.toggle('active', t===name));
+  document.querySelectorAll('.sidebar .tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab===name));
+}
+function switchContentTab(name) {
+  ['overview','utilisation','ratecards','volume','pnl'].forEach(t =>
+    $('ctab-'+t).classList.toggle('active', t===name));
+  document.querySelectorAll('.content .tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab===name));
+}
+
+/* ============================================================
+   BUILD SIDEBAR ROWS
+   ============================================================ */
+function buildStaffRows() {
+  const c = $('staff-rows-container'); c.innerHTML='';
+  STAFF_ROSTER.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'staff-row' + (s.on?'':' inactive');
+    row.id = 'staffrow_'+s.id;
+    row.innerHTML = `
+      <div><div class="staff-name">${s.name}</div><div class="staff-role">${s.role}</div></div>
+      <div class="staff-cost">${fmtNum(s.allIn)}</div>
+      <div class="staff-util-wrap">
+        <input type="range" id="util_${s.id}" min="0" max="100" step="5" value="${s.util}" ${s.on?'':'disabled'}>
+        <span class="staff-util-pct" id="utilv_${s.id}">${s.util}%</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px">
+        <span class="staff-alloc" id="staffalloc_${s.id}">${fmtNum(s.allIn*s.util/100)}</span>
+        <input type="checkbox" class="staff-toggle" id="on_${s.id}" ${s.on?'checked':''}>
+      </div>`;
+    c.appendChild(row);
+    $('util_'+s.id).addEventListener('input', function(){
+      s.util = parseInt(this.value);
+      $('utilv_'+s.id).textContent = s.util+'%';
+      $('staffalloc_'+s.id).textContent = fmtNum(s.allIn*s.util/100);
+      recalc();
+    });
+    $('on_'+s.id).addEventListener('change', function(){
+      s.on = this.checked;
+      $('staffrow_'+s.id).classList.toggle('inactive', !s.on);
+      $('util_'+s.id).disabled = !s.on;
+      recalc();
+    });
+  });
+}
+
+function buildOverheadRows() {
+  const c = $('oh-rows-container'); c.innerHTML='';
+  OVERHEAD_ITEMS.forEach(oh => {
+    const row = document.createElement('div'); row.className='oh-row';
+    row.innerHTML = `
+      <span class="oh-name">${oh.name}</span>
+      <span class="oh-amount">${fmtNum(oh.tb)}</span>
+      <div class="oh-alloc-wrap">
+        <input type="range" id="ohpct_${oh.id}" min="0" max="100" step="5" value="${oh.pct}">
+        <span class="oh-pct" id="ohpctv_${oh.id}">${oh.pct}%</span>
+      </div>
+      <span class="oh-cost" id="ohcost_${oh.id}">${fmtNum(Math.round(oh.tb*oh.pct/100))}</span>`;
+    c.appendChild(row);
+    $('ohpct_'+oh.id).addEventListener('input', function(){
+      oh.pct = parseInt(this.value);
+      $('ohpctv_'+oh.id).textContent = oh.pct+'%';
+      $('ohcost_'+oh.id).textContent = fmtNum(Math.round(oh.tb*oh.pct/100));
+      recalc();
+    });
+  });
+}
+
+/* ============================================================
+   VOLUME TIER UI
+   ============================================================ */
+function buildVolTiers() {
+  const c = $('vol-tiers-container'); c.innerHTML='';
+  volTiers.forEach((t,i) => {
+    const row = document.createElement('div');
+    row.className = 'vol-tier-row';
+    row.id = 'voltier_'+i;
+    row.innerHTML = `
+      <div class="vol-tier-body">
+        <div class="vtd"><input type="number" id="vt_vol_${i}" value="${t.volume}" min="1" step="50" oninput="volTierChange(${i},'volume',this.value)"></div>
+        <div class="vtd accent" id="vt_fullcost_${i}">—</div>
+        <div class="vtd" id="vt_batchcost_${i}">—</div>
+        <div class="vtd amber"><input type="number" id="vt_cd_${i}" value="${t.costDisc}" min="0" max="100" step="1" oninput="volTierChange(${i},'costDisc',this.value)"></div>
+        <div class="vtd" id="vt_effcost_${i}">—</div>
+        <div class="vtd green"><input type="number" id="vt_mu_${i}" value="${t.markup}" min="0" max="200" step="1" oninput="volTierChange(${i},'markup',this.value)"></div>
+        <div class="vtd teal bold" id="vt_sellprice_${i}">—</div>
+        <div class="vtd purple"><input type="number" id="vt_rb_${i}" value="${t.rebate}" min="0" max="100" step="1" oninput="volTierChange(${i},'rebate',this.value)"></div>
+        <div class="vtd" id="vt_rebateaed_${i}">—</div>
+        <div class="vtd green bold" id="vt_totrev_${i}">—</div>
+        <div class="vtd" id="vt_margin_${i}">—</div>
+        <div class="vtd" style="padding:6px">
+          <button class="btn btn-baseline" id="vt_baseline_${i}" onclick="setTierBaseline(${i})" style="font-size:8px;padding:3px 6px;display:${currentMode==='wholesale'?'inline-block':'none'}">⚓ Set baseline</button>
+        </div>
+      </div>
+      <div class="vol-tier-actions">
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn btn-save" onclick="saveQuote(${i})">💾 Save quote</button>
+          <button class="btn btn-del" onclick="deleteVolTier(${i})">✕ Remove</button>
+        </div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)" id="vt_save_status_${i}"></div>
+      </div>`;
+    c.appendChild(row);
+  });
+}
+
+function volTierChange(i, field, val) {
+  volTiers[i][field] = parseFloat(val)||0;
+  recalc();
+}
+
+function addVolTier() {
+  volTiers.push({volume:500, costDisc:10, markup:10, rebate:5});
+  buildVolTiers();
+  recalc();
+}
+
+function deleteVolTier(i) {
+  volTiers.splice(i,1);
+  if(activeBaselineTier === i) activeBaselineTier = null;
+  else if(activeBaselineTier > i) activeBaselineTier--;
+  buildVolTiers();
+  recalc();
+}
+
+function setTierBaseline(i) {
+  if(currentMode !== 'wholesale') return;
+  activeBaselineTier = (activeBaselineTier===i) ? null : i;
+  // Update button states
+  volTiers.forEach((_,idx) => {
+    const btn = $('vt_baseline_'+idx);
+    if(btn) btn.classList.toggle('active', idx===activeBaselineTier);
+  });
+  // Push volume to baseline field
+  if(activeBaselineTier !== null) {
+    $('COST_RECOVERY_JOBS').value = volTiers[activeBaselineTier].volume;
+  }
+  recalc();
+}
+
+/* ============================================================
+   COST CALCULATIONS
+   ============================================================ */
+function calcStaffCost()    { return STAFF_ROSTER.filter(s=>s.on).reduce((s,p)=>s+p.allIn*p.util/100, 0); }
+function calcOverheadCost() { return OVERHEAD_ITEMS.reduce((s,oh)=>s+oh.tb*oh.pct/100, 0); }
+function calcTotalCost() {
+  const ov = parseFloat($('COST_BASE_OVERRIDE').value)||0;
+  // AED 686,000 override is the minimum cost target. If override > 0 use it, else use live costs.
+  return ov > 0 ? ov : calcStaffCost() + calcOverheadCost();
+}
+function teamCapacity() {
+  const ft = STAFF_ROSTER.filter(s=>s.on && FIELD_TECH_IDS.includes(s.id));
+  const cap = ft.reduce((sum,s)=>sum+(s.util/100)*JOBS_PER_FIELD_TECH_PER_DAY, 0);
+  return {fieldTechCount:ft.length, teamsCount:Math.floor(ft.length/2), maxJobsDay:cap};
+}
+
+/* ============================================================
+   BLENDED DESPATCH — per channel
+   ============================================================ */
+function calcBlendedDespatch(channel) {
+  // channel = 'R' (retail) or 'W' (wholesale)
+  const BASE_D = parseFloat($('BASE_DESPATCH').value);
+  const MULT   = parseFloat($('DESPATCH_MULTIPLIER').value);
+  const prefix = channel==='R' ? 'R_ZONE_' : 'W_ZONE_';
+  const vprefix= channel==='R' ? 'rvz_'    : 'wvz_';
+  const zKeys  = ['Dubai','Sharjah','UAQ','RAK','Fujairah','AlAin','AbuDhabi'];
+  const zNames = ['Dubai','Sharjah/Ajman','UAQ','RAK','Fujairah','Al Ain','Abu Dhabi'];
+
+  let shares={}, total=0;
+  zKeys.forEach((k,i) => {
+    const v = parseInt($(prefix+k).value)||0;
+    shares[zNames[i]] = v; total += v;
+  });
+  const liwa = Math.max(0, 100-total);
+  shares['Liwa/Ruwais'] = liwa;
+
+  // Compute zone fees
+  const zoneFees = {};
+  ZONES.forEach(z => { zoneFees[z] = BASE_D * ZONE_DESPATCH_RATIOS[z] * MULT; });
+
+  // Blended
+  let blended = 0;
+  const fullTotal = Object.values(shares).reduce((a,b)=>a+b,0);
+  ZONES.forEach(z => { blended += (shares[z]/(fullTotal||100)) * zoneFees[z]; });
+
+  return {blended, zoneFees, shares};
+}
+
+/* ============================================================
+   BLENDED LABOUR — per channel
+   ============================================================ */
+function calcBlendedLabour(channel, costPerJob, blendedDespatch) {
+  const prefix = channel==='R' ? 'R_MIX_' : 'W_MIX_';
+  const mix50  = parseInt($(prefix+'50L').value)||0;
+  const mix80  = parseInt($(prefix+'80L').value)||0;
+  const mix150 = parseInt($(prefix+'150L').value)||0;
+  const mix200 = parseInt($(prefix+'200L').value)||0;
+  const mix300 = Math.max(0, 100-mix50-mix80-mix150-mix200);
+  const mix = {'Up to 50L':mix50,'80L':mix80,'100/150L':mix150,'200L':mix200,'300L+':mix300};
+
+  // Weight of labour scale ratios given this mix
+  const mixWeight = Object.entries(mix).reduce((s,[u,sh])=>s+(sh/100)*LABOUR_SCALE_RATIOS[u], 0);
+  // Labour residual after despatch anchoring
+  const labourClipped = blendedDespatch > costPerJob;
+  const blendedAllIn  = labourClipped ? blendedDespatch : costPerJob;
+  const blendedLabour = blendedAllIn - blendedDespatch;
+  const baseLabour50L = mixWeight > 0 ? blendedLabour / mixWeight : 0;
+
+  const labourRates={}, fullRates={};
+  UNIT_SIZES.forEach(u => {
+    labourRates[u] = baseLabour50L * LABOUR_SCALE_RATIOS[u];
+    const isLarge = u==='200L' || u==='300L+';
+    const handling = isLarge ? (parseFloat($('HANDLING_PREMIUM').value)||0) : 0;
+    fullRates[u] = blendedDespatch + labourRates[u] + handling;
+  });
+
+  return {mix, mixWeight, labourRates, fullRates, blendedAllIn, blendedLabour, labourClipped, baseLabour50L};
+}
+
+/* ============================================================
+   VARIABLE COST PER JOB — zone-specific (Wholesale-Led mode)
+   ============================================================ */
+function calcVariableCostByZone() {
+  const fuelPrice = parseFloat($('FUEL_PRICE').value)||3.55;
+  const vanKML    = parseFloat($('VAN_KML').value)||9;
+  const wearFlat  = parseFloat($('WEAR_FLAT').value)||25;
+  const override  = parseFloat($('VAR_COST_OVERRIDE').value)||0;
+  const result = {};
+  ZONES.forEach(z => {
+    if(override > 0) { result[z] = override; }
+    else {
+      const km = ZONE_DISTANCES_KM[z];
+      const fuel = (km / vanKML) * fuelPrice;
+      result[z] = fuel + wearFlat;
+    }
+  });
+  return result;
+}
+
+function calcBlendedVarCost(channel) {
+  const varByZone = calcVariableCostByZone();
+  const {shares} = calcBlendedDespatch(channel);
+  const total = Object.values(shares).reduce((a,b)=>a+b,0);
+  let blended = 0;
+  ZONES.forEach(z => { blended += (shares[z]/(total||100)) * varByZone[z]; });
+  return {blended, varByZone};
+}
+
+/* ============================================================
+   CORE DERIVE — all pricing logic
+   ============================================================ */
+function derive() {
+  const totalCost  = calcTotalCost();
+  const staffCost  = calcStaffCost();
+  const ohCost     = calcOverheadCost();
+  const isOverride = (parseFloat($('COST_BASE_OVERRIDE').value)||0) > 0;
+
+  const jobsPerDay  = parseFloat($('JOBS_PER_DAY').value);
+  const workDays    = parseInt($('WORKING_DAYS_PER_YEAR').value);
+  const actualJobs  = jobsPerDay * workDays;
+  const crRaw       = parseInt($('COST_RECOVERY_JOBS').value)||0;
+  const baselineJobs= crRaw > 0 ? crRaw : actualJobs;
+  const targetMargin= parseFloat($('TARGET_MARGIN_PCT').value)/100;
+  const effDisc     = parseFloat($('OPERATIONAL_EFFICIENCY_DISCOUNT').value)/100;
+
+  // Remaining cost after committed pipeline
+  const remainingCost = Math.max(0, totalCost - committedRevenue);
+  const costsFullyRecovered = committedRevenue >= totalCost;
+
+  // Effective cost base
+  const grossCost  = totalCost;
+  const effSavings = grossCost * effDisc;
+  const netCost    = grossCost - effSavings;
+
+  // Per-channel cost allocation
+  let retailCostPool=0, wholesaleCostPool=0;
+  let retailJobs=0, wholesaleJobs=0;
+  let retailCostPerJob=0, wholesaleCostPerJob=0;
+  let splitPct=0.6; // retail bears 60% by default
+
+  if(currentMode === 'wholesale') {
+    // Wholesale absorbs all fixed costs
+    wholesaleCostPool = netCost - committedRevenue;
+    wholesaleJobs     = baselineJobs;
+    wholesaleCostPerJob = wholesaleJobs > 0 ? Math.max(0, wholesaleCostPool) / wholesaleJobs : 0;
+    // Retail bears only variable cost
+    const {blended:varBlended} = calcBlendedVarCost('R');
+    retailCostPerJob = varBlended;
+    retailJobs = actualJobs;
+
+  } else if(currentMode === 'retail') {
+    // Retail absorbs all fixed costs
+    retailCostPool   = netCost;
+    retailJobs       = baselineJobs;
+    retailCostPerJob = retailJobs > 0 ? retailCostPool / retailJobs : 0;
+    wholesaleJobs    = actualJobs;
+    wholesaleCostPerJob = retailCostPerJob; // wholesale discounts off retail rate
+
+  } else if(currentMode === 'split') {
+    splitPct = (parseInt($('SPLIT_RETAIL_PCT').value)||60) / 100;
+    retailCostPool    = netCost * splitPct;
+    wholesaleCostPool = netCost * (1-splitPct);
+
+    if(currentSolver === 'rates') {
+      // Fix split + jobs → derive rates
+      retailJobs    = parseInt($('SPLIT_RETAIL_JOBS').value)||600;
+      wholesaleJobs = parseInt($('SPLIT_WHOLESALE_JOBS').value)||400;
+      retailCostPerJob    = retailJobs>0    ? retailCostPool / retailJobs : 0;
+      wholesaleCostPerJob = wholesaleJobs>0 ? wholesaleCostPool / wholesaleJobs : 0;
+    } else if(currentSolver === 'jobs') {
+      // Fix split + rates → derive job counts
+      const rRate = parseFloat($('SPLIT_RETAIL_RATE').value)||950;
+      const wRate = parseFloat($('SPLIT_WHOLESALE_RATE').value)||700;
+      retailCostPerJob    = rRate * (1-targetMargin);
+      wholesaleCostPerJob = wRate * (1-targetMargin);
+      retailJobs    = retailCostPerJob    > 0 ? Math.ceil(retailCostPool / retailCostPerJob)    : 0;
+      wholesaleJobs = wholesaleCostPerJob > 0 ? Math.ceil(wholesaleCostPool / wholesaleCostPerJob) : 0;
+    } else {
+      // Fix jobs + rates → derive split
+      retailJobs    = parseInt($('SPLIT_RETAIL_JOBS').value)||600;
+      wholesaleJobs = parseInt($('SPLIT_WHOLESALE_JOBS').value)||400;
+      const rRate = parseFloat($('SPLIT_RETAIL_RATE').value)||950;
+      const wRate = parseFloat($('SPLIT_WHOLESALE_RATE').value)||700;
+      const rRev  = rRate * (1-targetMargin) * retailJobs;
+      const wRev  = wRate * (1-targetMargin) * wholesaleJobs;
+      const tot   = rRev + wRev;
+      splitPct = tot>0 ? rRev/tot : 0.6;
+      retailCostPerJob    = retailJobs    > 0 ? (netCost*splitPct)    / retailJobs    : 0;
+      wholesaleCostPerJob = wholesaleJobs > 0 ? (netCost*(1-splitPct))/ wholesaleJobs : 0;
+    }
+
+  } else { // single
+    if(currentSingleCh === 'retail') {
+      retailCostPool=netCost; retailJobs=baselineJobs;
+      retailCostPerJob = retailJobs>0 ? retailCostPool/retailJobs : 0;
+      wholesaleCostPerJob = 0; wholesaleJobs = 0;
+    } else {
+      wholesaleCostPool=netCost; wholesaleJobs=baselineJobs;
+      wholesaleCostPerJob = wholesaleJobs>0 ? wholesaleCostPool/wholesaleJobs : 0;
+      retailCostPerJob = 0; retailJobs = 0;
+    }
+  }
+
+  // --- RETAIL CHANNEL PRICING ---
+  const marginDiv = Math.max(0.001, 1-targetMargin);
+  const rIdealBlended = retailCostPerJob / marginDiv;
+  const {blended:rBlendedDespatch, zoneFees:rZoneFees, shares:rShares} = calcBlendedDespatch('R');
+  const rLabour = calcBlendedLabour('R', rIdealBlended, rBlendedDespatch);
+
+  // --- WHOLESALE CHANNEL PRICING ---
+  const wIdealBlended = wholesaleCostPerJob / marginDiv;
+  const {blended:wBlendedDespatch, zoneFees:wZoneFees, shares:wShares} = calcBlendedDespatch('W');
+  const wLabour = calcBlendedLabour('W', wIdealBlended, wBlendedDespatch);
+
+  // Revenue calculations
+  const rRev = rLabour.blendedAllIn * retailJobs;
+  const wRev = wLabour.blendedAllIn * wholesaleJobs;
+  const totalRev = rRev + wRev;
+  const totalProfit = totalRev - netCost;
+  const blendedMargin = totalRev > 0 ? totalProfit / totalRev : 0;
+  const combinedBlendedRate = (retailJobs+wholesaleJobs) > 0
+    ? totalRev / (retailJobs+wholesaleJobs) : 0;
+
+  return {
+    totalCost, staffCost, ohCost, isOverride, grossCost, effSavings, netCost,
+    baselineJobs, actualJobs, jobsPerDay, workDays, targetMargin, effDisc,
+    retailCostPerJob, wholesaleCostPerJob, retailJobs, wholesaleJobs,
+    retailCostPool, wholesaleCostPool, splitPct,
+    rBlendedDespatch, rZoneFees, rShares, rLabour, rIdealBlended,
+    wBlendedDespatch, wZoneFees, wShares, wLabour, wIdealBlended,
+    rRev, wRev, totalRev, totalProfit, blendedMargin, combinedBlendedRate,
+    remainingCost, costsFullyRecovered,
+    cap: teamCapacity(),
+  };
+}
+
+/* ============================================================
+   RENDER: SIDEBAR LABELS
+   ============================================================ */
+function updateSidebarLabels(d) {
+  // Pricing tab labels
+  const el = id => $(id) ? $(id) : {textContent:''};
+  el('v_BASE_DESPATCH').textContent     = 'AED '+(parseFloat($('BASE_DESPATCH').value)||0);
+  el('v_DESPATCH_MULTIPLIER').textContent = (parseFloat($('DESPATCH_MULTIPLIER').value)||1).toFixed(1)+'×';
+  el('v_HANDLING_PREMIUM').textContent  = 'AED '+(parseFloat($('HANDLING_PREMIUM').value)||0);
+  el('v_JOBS_PER_DAY').textContent      = (parseFloat($('JOBS_PER_DAY').value)||4)+' / day';
+  el('v_WORKING_DAYS_PER_YEAR').textContent = (parseInt($('WORKING_DAYS_PER_YEAR').value)||250)+' days';
+  el('v_TARGET_MARGIN_PCT').textContent = (parseInt($('TARGET_MARGIN_PCT').value)||0)+'%';
+  el('v_OPERATIONAL_EFFICIENCY_DISCOUNT').textContent = (parseInt($('OPERATIONAL_EFFICIENCY_DISCOUNT').value)||0)+'%';
+
+  // Mix labels — retail
+  ['50L','80L','150L','200L'].forEach(u => {
+    el('v_R_MIX_'+u).textContent = (parseInt($('R_MIX_'+u).value)||0)+'%';
+  });
+  el('v_R_MIX_300L').textContent = Math.max(0,100-(parseInt($('R_MIX_50L').value)||0)-(parseInt($('R_MIX_80L').value)||0)-(parseInt($('R_MIX_150L').value)||0)-(parseInt($('R_MIX_200L').value)||0))+'%';
+  // Mix labels — wholesale
+  ['50L','80L','150L','200L'].forEach(u => {
+    el('v_W_MIX_'+u).textContent = (parseInt($('W_MIX_'+u).value)||0)+'%';
+  });
+  el('v_W_MIX_300L').textContent = Math.max(0,100-(parseInt($('W_MIX_50L').value)||0)-(parseInt($('W_MIX_80L').value)||0)-(parseInt($('W_MIX_150L').value)||0)-(parseInt($('W_MIX_200L').value)||0))+'%';
+
+  // Zone labels — retail
+  const rZKeys=['Dubai','Sharjah','UAQ','RAK','Fujairah','AlAin','AbuDhabi'];
+  const rZNames=['Dubai','Sharjah/Ajman','UAQ','RAK','Fujairah','Al Ain','Abu Dhabi'];
+  let rZTotal=0;
+  rZKeys.forEach((k,i)=>{
+    const v=parseInt($('R_ZONE_'+k).value)||0; rZTotal+=v;
+    el('rvz_'+k).textContent = v+'%';
+    el('rzfee_'+k).textContent = 'AED '+Math.round(d.rZoneFees[rZNames[i]]||0).toLocaleString();
+  });
+  el('rvz_Liwa').textContent = Math.max(0,100-rZTotal)+'%';
+  el('rzfee_Liwa').textContent = 'AED '+Math.round(d.rZoneFees['Liwa/Ruwais']||0).toLocaleString();
+  const rZBadge=$('r-zone-badge'); if(rZBadge){rZBadge.textContent=rZTotal+(Math.max(0,100-rZTotal))+'%';}
+  el('r_blended_despatch').textContent = fmtAED(d.rBlendedDespatch);
+
+  // Zone labels — wholesale
+  const wZKeys=['Dubai','Sharjah','UAQ','RAK','Fujairah','AlAin','AbuDhabi'];
+  let wZTotal=0;
+  wZKeys.forEach((k,i)=>{
+    const v=parseInt($('W_ZONE_'+k).value)||0; wZTotal+=v;
+    el('wvz_'+k).textContent = v+'%';
+    el('wzfee_'+k).textContent = 'AED '+Math.round(d.wZoneFees[rZNames[i]]||0).toLocaleString();
+  });
+  el('wvz_Liwa').textContent = Math.max(0,100-wZTotal)+'%';
+  el('wzfee_Liwa').textContent = 'AED '+Math.round(d.wZoneFees['Liwa/Ruwais']||0).toLocaleString();
+  const wZBadge=$('w-zone-badge'); if(wZBadge){wZBadge.textContent=(wZTotal+Math.max(0,100-wZTotal))+'%';}
+  el('w_blended_despatch').textContent = fmtAED(d.wBlendedDespatch);
+
+  // Cost recovery note
+  const crNote = $('v_COST_RECOVERY_NOTE');
+  if(crNote) {
+    const crRaw = parseInt($('COST_RECOVERY_JOBS').value)||0;
+    if(crRaw>0) {
+      const diff = d.actualJobs - crRaw;
+      crNote.textContent = diff>0 ? `Locked to ${fmtNum(crRaw)} jobs. ${fmtNum(diff)} above → pure profit.` : diff<0 ? `Baseline (${fmtNum(crRaw)}) > actual (${fmtNum(d.actualJobs)}).` : `Aligned at ${fmtNum(crRaw)} jobs.`;
+    } else {
+      crNote.textContent = `Using actual ${fmtNum(d.actualJobs)} jobs/yr as baseline.`;
+    }
+  }
+
+  // Wholesale-led variable cost panel
+  const {blended:varBlended, varByZone} = calcBlendedVarCost('R');
+  el('v_blended_var_cost').textContent = fmtAED(varBlended);
+  const varZoneEl = $('v_var_cost_by_zone');
+  if(varZoneEl) {
+    varZoneEl.innerHTML = ZONES.map(z=>`${z}: AED ${Math.round(varByZone[z]).toLocaleString()}/job`).join(' &nbsp;·&nbsp; ');
+  }
+
+  // Split solver output
+  const splitOut = $('split-solver-output');
+  if(splitOut && currentMode==='split') {
+    el('v_SPLIT_RETAIL_PCT').textContent = (parseInt($('SPLIT_RETAIL_PCT').value)||60)+'%';
+    el('v_SPLIT_WHOLESALE_PCT').textContent = (100-(parseInt($('SPLIT_RETAIL_PCT').value)||60))+'%';
+    if(currentSolver==='rates') {
+      splitOut.innerHTML = `Retail cost/job: <span style="color:var(--blue)">${fmtAED(d.retailCostPerJob)}</span><br>Wholesale cost/job: <span style="color:var(--teal)">${fmtAED(d.wholesaleCostPerJob)}</span><br>Retail rate/job: <span style="color:var(--blue)">${fmtAED(d.rLabour.blendedAllIn)}</span><br>Wholesale rate/job: <span style="color:var(--teal)">${fmtAED(d.wLabour.blendedAllIn)}</span><br>Combined blended: <span style="color:var(--accent)">${fmtAED(d.combinedBlendedRate)}</span>`;
+    } else if(currentSolver==='jobs') {
+      splitOut.innerHTML = `Retail jobs needed: <span style="color:var(--blue)">${fmtNum(d.retailJobs)}</span><br>Wholesale jobs needed: <span style="color:var(--teal)">${fmtNum(d.wholesaleJobs)}</span><br>Total jobs: <span style="color:var(--accent)">${fmtNum(d.retailJobs+d.wholesaleJobs)}</span>`;
+    } else {
+      splitOut.innerHTML = `Derived cost split:<br>Retail bears: <span style="color:var(--blue)">${fmtPct(d.splitPct*100)}</span><br>Wholesale bears: <span style="color:var(--teal)">${fmtPct((1-d.splitPct)*100)}</span><br>Combined blended: <span style="color:var(--accent)">${fmtAED(d.combinedBlendedRate)}</span>`;
+    }
+  }
+
+  // Staff + OH totals
+  el('staff-total-display').textContent = fmtAED(d.staffCost);
+  el('oh-total-display').textContent    = fmtAED(d.ohCost);
+
+  // Cost base override status
+  const box=el('cost-base-status-box'), lbl=el('cost-base-status-label'), val=el('cost-base-status-val');
+  if(d.isOverride){
+    $('cost-base-status-box').style.background='var(--amber-dim)';
+    $('cost-base-status-box').style.borderColor='rgba(240,160,48,0.3)';
+    lbl.style.color='var(--amber)'; val.style.color='var(--amber)';
+    lbl.textContent='⚠ Override active — live costs ignored';
+    val.textContent=fmtAED(parseFloat($('COST_BASE_OVERRIDE').value)||0);
+  } else {
+    $('cost-base-status-box').style.background='var(--green-dim)';
+    $('cost-base-status-box').style.borderColor='rgba(61,214,140,0.25)';
+    lbl.style.color='var(--green)'; val.style.color='var(--green)';
+    lbl.textContent='✓ Using live computed costs';
+    val.textContent=fmtAED(d.netCost);
+  }
+}
+
+/* ============================================================
+   RENDER: RECOVERY STATE
+   ============================================================ */
+function updateRecoveryState(d) {
+  const recovered = d.costsFullyRecovered;
+  document.body.classList.toggle('cost-recovered', recovered);
+  const banner = $('recovery-banner');
+  if(recovered) {
+    $('recovery-banner-sub').textContent = `Committed pipeline (${fmtAED(committedRevenue)}) has fully absorbed AED ${fmtNum(d.totalCost)} cost base.`;
+    $('recovery-surplus').textContent = '+'+fmtAED(committedRevenue - d.totalCost)+' surplus';
+  }
+}
+
+/* ============================================================
+   RENDER: OVERVIEW
+   ============================================================ */
+function updateOverview(d) {
+  $('kpi-cost').textContent     = fmtAED(d.netCost);
+  $('kpi-cost-sub').textContent = d.isOverride ? '⚠ override active' : 'live computed';
+  $('kpi-remaining').textContent= fmtAED(d.remainingCost);
+  $('kpi-blended').textContent  = fmtAED(d.combinedBlendedRate);
+  $('kpi-blended-sub').textContent = 'across both channels';
+  $('kpi-jobs').textContent     = fmtNum(d.actualJobs)+' jobs';
+  $('kpi-jobs-sub').textContent = d.jobsPerDay+'/day × '+d.workDays+' days';
+
+  const profEl = $('ov-profit');
+  profEl.textContent   = fmtAED(d.totalProfit);
+  profEl.className     = 'metric-value '+colorForMargin(d.blendedMargin);
+  $('ov-margin-sub').textContent = fmtPct(d.blendedMargin*100)+' blended margin';
+  $('ov-staff').textContent = fmtAED(d.staffCost);
+  $('ov-staff-sub').textContent = fmtPct(d.totalCost>0?d.staffCost/d.totalCost*100:0)+' of cost base';
+  $('ov-oh').textContent   = fmtAED(d.ohCost);
+  $('ov-cost-badge').textContent = 'Net: '+fmtAED(d.netCost);
+
+  const bar = $('ov-status-bar');
+  const m = d.blendedMargin;
+  bar.textContent = `Mode: ${currentMode.replace('-',' ')}. Retail cost/job: ${fmtAED(d.retailCostPerJob)}. Wholesale cost/job: ${fmtAED(d.wholesaleCostPerJob)}. Combined margin: ${fmtPct(m*100)}.`;
+  bar.className = 'status-bar '+(m>=MARGIN_GREEN?'ok':m>=MARGIN_AMBER?'warn':'bad');
+
+  // Cost breakdown table
+  const tbody=$('ov-cost-breakdown'); tbody.innerHTML='';
+  const rows = d.isOverride
+    ? [{label:'⚠ Cost base override',val:d.grossCost,cls:'amber bold'}]
+    : [
+        {label:'Staff — field techs',val:STAFF_ROSTER.filter(s=>s.on&&FIELD_TECH_IDS.includes(s.id)).reduce((a,p)=>a+p.allIn*p.util/100,0)},
+        {label:'Staff — mgmt/support',val:STAFF_ROSTER.filter(s=>s.on&&!FIELD_TECH_IDS.includes(s.id)).reduce((a,p)=>a+p.allIn*p.util/100,0)},
+        {label:'Total staff',val:d.staffCost,cls:'purple bold'},
+        {label:'Overheads',val:d.ohCost,cls:'amber'},
+      ];
+  rows.push(
+    {label:'Gross cost',val:d.grossCost,cls:'bold'},
+    {label:`Efficiency savings (${Math.round(d.effDisc*100)}%)`,val:-d.effSavings,cls:'green',credit:true},
+    {label:'NET COST BASE',val:d.netCost,cls:'bold',total:true}
+  );
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    if(r.total) tr.className='cost-total';
+    const base=d.baselineJobs>0?r.val/d.baselineJobs:0;
+    const pct=d.grossCost>0?Math.abs(r.val)/d.grossCost*100:0;
+    const fv=n=>(n<0||r.credit)?'('+fmtAED(Math.abs(n))+')':fmtAED(n);
+    tr.innerHTML=`<td class="${r.cls||''}">${r.label}</td><td class="r ${r.cls||''}">${fv(r.val)}</td><td class="r">${fv(base)}</td><td class="r">${r.total?Math.round(d.netCost/d.grossCost*100)+'%':fmtPct(pct)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ============================================================
+   RENDER: UTILISATION
+   ============================================================ */
+function updateUtilisation(d) {
+  const active = STAFF_ROSTER.filter(s=>s.on);
+  const ft     = active.filter(s=>FIELD_TECH_IDS.includes(s.id));
+  const avgUtil= active.reduce((s,p)=>s+p.allIn,0)>0 ? active.reduce((s,p)=>s+p.util*p.allIn,0)/active.reduce((s,p)=>s+p.allIn,0) : 0;
+  const ok     = d.jobsPerDay <= d.cap.maxJobsDay+1e-6;
+
+  $('util-headcount').textContent = active.length;
+  $('util-teams').textContent     = d.cap.teamsCount+' team'+(d.cap.teamsCount!==1?'s':'');
+  const ae=$('util-avg'); ae.textContent=fmtPct(avgUtil); ae.className='metric-value '+(avgUtil>=80?'green':avgUtil>=50?'amber':'red');
+  const me=$('util-match'); me.textContent=ok?'✓ Covered':'⚠ Over'; me.className='metric-value '+(ok?'green':'red');
+  $('util-match-sub').textContent=`max ${d.cap.maxJobsDay.toFixed(1)}/day`;
+  $('util-badge').textContent=active.length+' active';
+  const ub=$('util-status');
+  ub.textContent=ok?`${ft.length} field techs → capacity ${d.cap.maxJobsDay.toFixed(1)}/day. Setting ${d.jobsPerDay}/day is within capacity.`:`⚠ ${d.jobsPerDay}/day exceeds ${d.cap.maxJobsDay.toFixed(1)}/day capacity.`;
+  ub.className='status-bar '+(ok?'ok':'bad');
+
+  const tb=$('util-table-body'); tb.innerHTML='';
+  active.forEach(s=>{
+    const alloc=s.allIn*s.util/100;
+    const isF=FIELD_TECH_IDS.includes(s.id);
+    const cap=isF?Math.round(s.util/100*JOBS_PER_FIELD_TECH_PER_DAY*d.workDays):'—';
+    const bc=s.util>=80?'var(--green)':s.util>=50?'var(--amber)':'var(--red)';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${s.name}</td><td>${s.role}</td><td class="r">${fmtAED(s.allIn)}</td><td class="r ${s.util>=80?'green':s.util>=50?'amber':'red'}">${s.util}%</td><td class="r purple">${fmtAED(alloc)}</td><td class="r">${typeof cap==='number'?fmtNum(cap):cap}</td><td style="padding:8px 14px;min-width:90px"><div class="util-bar-wrap"><div class="util-bar" style="width:${s.util}%;background:${bc}"></div></div></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ============================================================
+   RENDER: RATE CARDS
+   ============================================================ */
+function updateRatecards(d) {
+  // Metrics
+  $('rc-retail-rate').textContent   = fmtAED(d.rLabour.blendedAllIn);
+  $('rc-wholesale-rate').textContent= fmtAED(d.wLabour.blendedAllIn);
+  $('rc-retail-sub').textContent    = `cost/job: ${fmtAED(d.retailCostPerJob)} | margin: ${fmtPct((1-d.retailCostPerJob/(d.rLabour.blendedAllIn||1))*100)}`;
+  $('rc-wholesale-sub').textContent = `cost/job: ${fmtAED(d.wholesaleCostPerJob)} | margin: ${fmtPct((1-d.wholesaleCostPerJob/(d.wLabour.blendedAllIn||1))*100)}`;
+  $('rc-retail-badge').textContent  = currentMode==='single'&&currentSingleCh==='wholesale' ? 'Inactive' : 'Active';
+  $('rc-wholesale-badge').textContent = currentMode==='single'&&currentSingleCh==='retail' ? 'Inactive' : 'Active';
+
+  // Retail rate card table
+  const rHead=$('rc-retail-head'), rBody=$('rc-retail-body');
+  rHead.innerHTML=`<tr><th>Unit</th><th class="r">Despatch</th><th class="r">Labour</th><th class="r">Handling</th><th class="r">Total ex-VAT</th><th class="r">Total inc-VAT</th><th class="r">Mix %</th></tr>`;
+  rBody.innerHTML='';
+  UNIT_SIZES.forEach(u=>{
+    const adjD=Math.round(d.rBlendedDespatch);
+    const adjL=Math.round(d.rLabour.labourRates[u]);
+    const isLg=u==='200L'||u==='300L+';
+    const hp=isLg?Math.round(parseFloat($('HANDLING_PREMIUM').value)||0):0;
+    const tot=adjD+adjL+hp;
+    const mix=d.rLabour.mix[u]||0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${u}</td><td class="r blue">${fmtNum(adjD)}</td><td class="r accent">${fmtNum(adjL)}</td><td class="r ${hp>0?'green':'muted'}">${hp>0?'+'+fmtNum(hp):'—'}</td><td class="r bold">${fmtNum(tot)}</td><td class="r blue">${fmtNum(Math.round(tot*(1+VAT_RATE)))}</td><td class="r">${mix}%</td>`;
+    rBody.appendChild(tr);
+  });
+
+  // Wholesale rate card table
+  const wHead=$('rc-wholesale-head'), wBody=$('rc-wholesale-body');
+  wHead.innerHTML=`<tr><th>Unit</th><th class="r">Despatch</th><th class="r">Labour</th><th class="r">Handling</th><th class="r">Total ex-VAT</th><th class="r">Total inc-VAT</th><th class="r">Mix %</th></tr>`;
+  wBody.innerHTML='';
+  UNIT_SIZES.forEach(u=>{
+    const adjD=Math.round(d.wBlendedDespatch);
+    const adjL=Math.round(d.wLabour.labourRates[u]);
+    const isLg=u==='200L'||u==='300L+';
+    const hp=isLg?Math.round(parseFloat($('HANDLING_PREMIUM').value)||0):0;
+    const tot=adjD+adjL+hp;
+    const mix=d.wLabour.mix[u]||0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${u}</td><td class="r teal">${fmtNum(adjD)}</td><td class="r accent">${fmtNum(adjL)}</td><td class="r ${hp>0?'green':'muted'}">${hp>0?'+'+fmtNum(hp):'—'}</td><td class="r bold">${fmtNum(tot)}</td><td class="r teal">${fmtNum(Math.round(tot*(1+VAT_RATE)))}</td><td class="r">${mix}%</td>`;
+    wBody.appendChild(tr);
+  });
+
+  // Add-ons
+  const ab=$('addons-body'); ab.innerHTML='';
+  Object.entries(ADDON_RATES).forEach(([name,rate])=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${name}</td><td class="r accent">${fmtNum(rate)}</td><td class="r blue">${fmtNum(Math.round(rate*(1+VAT_RATE)))}</td><td class="muted" style="font-size:11px">${ADDON_NOTES[name]||'—'}</td>`;
+    ab.appendChild(tr);
+  });
+
+  // City matrix
+  updateCityMatrix(d);
+}
+
+function updateCityMatrix(d) {
+  const buildMatrix = (channel, tableId, incVAT) => {
+    const tbl = $(tableId); if(!tbl) return;
+    tbl.innerHTML='';
+    // Header row
+    const hdTr=document.createElement('tr');
+    hdTr.innerHTML='<th>Unit Size</th>'+ZONES.map(z=>`<th>${z}</th>`).join('');
+    tbl.appendChild(hdTr);
+    // Labour rates (same across cities for both channels)
+    const BASE_D = parseFloat($('BASE_DESPATCH').value)||700;
+    const MULT   = parseFloat($('DESPATCH_MULTIPLIER').value)||1;
+    const labourPerUnit = channel==='R' ? d.rLabour.labourRates : d.wLabour.labourRates;
+    const zoneFees      = channel==='R' ? d.rZoneFees           : d.wZoneFees;
+
+    UNIT_SIZES.forEach(u=>{
+      const tr=document.createElement('tr');
+      const cells = ZONES.map(z=>{
+        const isLg=u==='200L'||u==='300L+';
+        const hp=isLg?Math.round(parseFloat($('HANDLING_PREMIUM').value)||0):0;
+        const raw = Math.round((zoneFees[z]||0)+(labourPerUnit[u]||0)+hp);
+        const val = incVAT ? Math.round(raw*(1+VAT_RATE)) : raw;
+        // Color cheapest green, most expensive amber per row
+        return val;
+      });
+      const minV=Math.min(...cells), maxV=Math.max(...cells);
+      tr.innerHTML=`<td>${u}</td>`+cells.map(v=>`<td class="${v===minV?'best':v===maxV?'worst':''}">${fmtNum(v)}</td>`).join('');
+      tbl.appendChild(tr);
+    });
+  };
+  buildMatrix('R','city-matrix-retail',     false);
+  buildMatrix('R','city-matrix-retail-vat', true);
+  buildMatrix('W','city-matrix-wholesale',  false);
+}
+
+/* ============================================================
+   RENDER: VOLUME QUOTES
+   ============================================================ */
+function updateVolumeQuotes(d) {
+  const wsFullCostPerJob = d.wholesaleCostPerJob;
+  const wsCostsRecovered = d.costsFullyRecovered;
+
+  // Pipeline summary
+  $('pipe-jobs').textContent      = fmtNum(committedJobs);
+  $('pipe-rev').textContent       = fmtAED(committedRevenue);
+  $('pipe-absorbed').textContent  = fmtAED(Math.min(committedRevenue, d.totalCost));
+  $('pipe-remaining').textContent = fmtAED(d.remainingCost);
+  const pipBox = $('pipeline-summary-box');
+  pipBox.classList.toggle('recovered', d.costsFullyRecovered);
+
+  // Vol tier rows — update computed cells
+  volTiers.forEach((t,i)=>{
+    const fullCost = wsFullCostPerJob;
+    const batchCost= fullCost * t.volume;
+    const cdFrac   = t.costDisc/100;
+    const effCost  = fullCost * (1-cdFrac);
+    const muFrac   = t.markup/100;
+    const sellPrice= effCost * (1+muFrac);
+    const rebateAED= sellPrice * (t.rebate/100);
+    const totRev   = sellPrice * t.volume;
+    const margin   = sellPrice>0 ? (sellPrice-effCost)/sellPrice : 0;
+
+    const set=(id,val,cls)=>{ const el=$(id); if(el){el.textContent=val; if(cls) el.className='vtd '+cls;} };
+    set('vt_fullcost_'+i,  fmtAED(fullCost), 'accent');
+    set('vt_batchcost_'+i, fmtAED(batchCost), '');
+    set('vt_effcost_'+i,   fmtAED(effCost), '');
+    set('vt_sellprice_'+i, fmtAED(sellPrice), 'teal bold');
+    set('vt_rebateaed_'+i, fmtAED(rebateAED), 'muted');
+    set('vt_totrev_'+i,    fmtAED(totRev), 'green bold');
+    const mEl=$('vt_margin_'+i);
+    if(mEl) { mEl.textContent=fmtPct(margin*100); mEl.className='vtd '+colorForMargin(margin); }
+  });
+
+  // Volume status bar
+  const vs=$('vol-status-bar');
+  const modeLabels={wholesale:'Wholesale-Led: volume absorbs fixed costs. Retail prices off variable cost only.',retail:'Retail-Led: retail absorbs fixed costs. Volume is discounted off retail rate.',split:'Cost Split: both channels share costs.',single:'Single Channel: one channel active.'};
+  vs.textContent = modeLabels[currentMode]||'';
+  vs.className   = 'status-bar '+(d.costsFullyRecovered?'ok':'info');
+
+  // Saved quotes count badge
+  $('saved-count-badge').textContent = savedQuotes.length+' saved';
+}
+
+/* ============================================================
+   RENDER: P&L
+   ============================================================ */
+function updatePnL(d) {
+  $('pnl-cost-badge').textContent = 'Net cost: '+fmtAED(d.netCost);
+  const tb=$('pnl-body'); tb.innerHTML='';
+
+  // Total rebates payable across all tiers
+  const totalRebatePayable = volTiers.reduce((sum,t)=>{
+    const effC = d.wholesaleCostPerJob*(1-t.costDisc/100);
+    const sell = effC*(1+t.markup/100);
+    return sum + sell*(t.rebate/100)*t.volume;
+  },0);
+
+  const rows=[
+    {label:'Retail revenue',         base:d.rRev,           actual:d.rRev,          cls:'blue bold'},
+    {label:'Wholesale revenue',       base:d.wRev,           actual:d.wRev,          cls:'teal bold'},
+    {label:'Total revenue',           base:d.totalRev,       actual:d.totalRev,      cls:'accent bold'},
+    {label:'Staff cost',              base:-d.staffCost,     actual:-d.staffCost,    cls:'purple'},
+    {label:'Overhead cost',           base:-d.ohCost,        actual:-d.ohCost,       cls:'amber'},
+    {label:'Gross cost',              base:-d.grossCost,     actual:-d.grossCost,    cls:'bold'},
+    {label:`Efficiency savings (${Math.round(d.effDisc*100)}%)`,base:d.effSavings,actual:d.effSavings,cls:'green'},
+    {label:'Net cost',                base:-d.netCost,       actual:-d.netCost,      cls:'bold'},
+    {label:'Net profit',              base:d.totalProfit,    actual:d.totalProfit,   cls:(d.totalProfit>=0?'green':'red')+' bold', isProfit:true},
+    {label:'↳ Reseller rebates payable (memo — not deducted)', base:-totalRebatePayable, actual:-totalRebatePayable, cls:'amber', isMemo:true},
+  ];
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    if(r.isProfit) tr.className='profit-row';
+    if(r.isMemo)   tr.className='memo-row';
+    const jobs=(d.retailJobs+d.wholesaleJobs)||1;
+    const perJob=r.actual/jobs;
+    const fmt=n=>(n<0?'(':'')+'AED '+Math.round(Math.abs(n)).toLocaleString()+(n<0?')':'');
+    tr.innerHTML=`<td class="${r.cls||''}">${r.label}</td><td class="r ${r.cls||''}">${fmt(r.base)}</td><td class="r ${r.cls||''}">${fmt(r.actual)}</td><td class="r">${fmt(perJob)}</td>`;
+    tb.appendChild(tr);
+  });
+
+  const b2=$('breakeven-body'); b2.innerHTML='';
+  [{label:'Break even',rev:d.netCost},{label:'10% margin',rev:d.netCost/(1-0.10)},{label:'20% margin',rev:d.netCost/(1-0.20)},{label:'25% margin',rev:d.netCost/(1-0.25)},{label:'30% margin',rev:d.netCost/(1-0.30)},{label:'Target '+Math.round(d.targetMargin*100)+'%',rev:d.netCost/(1-d.targetMargin)}].forEach(sc=>{
+    const rate=d.combinedBlendedRate||1;
+    const jobs=sc.rev/rate;
+    const jpd=d.workDays>0?jobs/d.workDays:0;
+    const ok=jpd<=d.cap.maxJobsDay+1e-6;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="bold">${sc.label}</td><td class="r accent">${fmtAED(sc.rev)}</td><td class="r">${fmtNum(jobs)}</td><td class="r ${ok?'green':'red'}">${jpd.toFixed(1)}/day</td><td class="r ${ok?'green':'red'}">${ok?'✓ Within capacity':'⚠ Exceeds capacity'}</td>`;
+    b2.appendChild(tr);
+  });
+}
+
+/* ============================================================
+   SAVE QUOTE TO GOOGLE SHEETS
+   ============================================================ */
+async function saveQuote(i) {
+  if(!APPS_SCRIPT_URL) {
+    alert('Set APPS_SCRIPT_URL in the script constants to enable saving.');
+    return;
+  }
+  const t = volTiers[i];
+  const d = derive(); // get current state
+  const effC = d.wholesaleCostPerJob*(1-t.costDisc/100);
+  const sell = effC*(1+t.markup/100);
+  const totRev = sell*t.volume;
+  const rebateAED = sell*(t.rebate/100);
+
+  // Get zone label from wholesale zone (dominant zone)
+  const wZKeys=['Dubai','Sharjah','UAQ','RAK','Fujairah','AlAin','AbuDhabi'];
+  const wZNames=['Dubai','Sharjah/Ajman','UAQ','RAK','Fujairah','Al Ain','Abu Dhabi'];
+  let dominantZone='Mixed'; let maxShare=0;
+  wZKeys.forEach((k,idx)=>{ const v=parseInt($('W_ZONE_'+k).value)||0; if(v>maxShare){maxShare=v;dominantZone=wZNames[idx];} });
+
+  const payload = {
+    date:       new Date().toISOString().split('T')[0],
+    client:     prompt('Client name for this quote:','') || 'Unknown',
+    volume:     t.volume,
+    unitMix:    `${$('W_MIX_50L').value}% 50L / ${$('W_MIX_80L').value}% 80L / ${$('W_MIX_150L').value}% 150L / ${$('W_MIX_200L').value}% 200L`,
+    zone:       dominantZone,
+    sellPrice:  Math.round(sell),
+    totalRevenue: Math.round(totRev),
+    rebatePct:  t.rebate,
+    rebateAED:  Math.round(rebateAED),
+    mode:       currentMode,
+    costDiscPct:t.costDisc,
+    markupPct:  t.markup,
+    effCost:    Math.round(effC),
+  };
+
+  const statusEl = $('vt_save_status_'+i);
+  if(statusEl) statusEl.textContent = 'Saving…';
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify(payload),
+      headers:{'Content-Type':'application/json'},
+    });
+    if(statusEl) statusEl.textContent = '✓ Saved '+new Date().toLocaleTimeString();
+    await loadPipeline();
+  } catch(e) {
+    if(statusEl) statusEl.textContent = '✗ Error: '+e.message;
+  }
+}
+
+/* ============================================================
+   LOAD PIPELINE FROM GOOGLE SHEETS
+   ============================================================ */
+async function loadPipeline() {
+  if(!APPS_SCRIPT_URL) {
+    $('pipe-status').textContent = 'Not connected — set APPS_SCRIPT_URL to enable.';
+    return;
+  }
+  $('pipe-status').textContent = 'Loading…';
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL+'?action=read');
+    const data = await res.json();
+    savedQuotes = data.rows || [];
+    // Sum committed jobs and revenue
+    committedJobs    = savedQuotes.reduce((s,r)=>s+(parseFloat(r['Volume'])||0), 0);
+    committedRevenue = savedQuotes.reduce((s,r)=>s+(parseFloat(r['Total Revenue'])||0), 0);
+    $('pipe-status').textContent = `Last loaded: ${new Date().toLocaleTimeString()} — ${savedQuotes.length} quotes`;
+    renderSavedQuotes();
+    recalc();
+  } catch(e) {
+    $('pipe-status').textContent = '✗ Load error: '+e.message;
+  }
+}
+
+function renderSavedQuotes() {
+  const tb=$('saved-quotes-body'); tb.innerHTML='';
+  if(!savedQuotes.length){
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td colspan="8" class="muted" style="text-align:center;padding:16px">No saved quotes yet.</td>';
+    tb.appendChild(tr); return;
+  }
+  savedQuotes.forEach(r=>{
+    const tr=document.createElement('tr'); tr.className='saved-row';
+    tr.innerHTML=`<td>${r['Date']||'—'}</td><td>${r['Client']||'—'}</td><td class="r">${fmtNum(r['Volume']||0)}</td><td>${r['Zone']||'—'}</td><td class="r teal">${fmtAED(r['Sell Price/Job']||0)}</td><td class="r green">${fmtAED(r['Total Revenue']||0)}</td><td class="r">${r['Rebate %']||0}%</td><td class="muted">${r['Mode']||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  $('saved-count-badge').textContent = savedQuotes.length+' saved';
+}
+
+/* ============================================================
+   MIX SNAP — keeps total at 100%
+   ============================================================ */
+function snapMix(channel, changedId) {
+  const prefix = channel==='R' ? 'R_MIX_' : 'W_MIX_';
+  const ids=['50L','80L','150L','200L'].map(u=>prefix+u);
+  const val = parseInt($(changedId).value)||0;
+  const others = ids.filter(id=>id!==changedId);
+  const otherVals = others.map(id=>parseInt($(id).value)||0);
+  const otherSum  = otherVals.reduce((a,b)=>a+b,0);
+  const remaining = Math.max(0,100-val);
+  let newVals;
+  if(otherSum===0) {
+    const each=Math.floor(remaining/others.length);
+    newVals=otherVals.map((_,i)=>i<others.length-1?each:remaining-each*(others.length-1));
+  } else {
+    newVals=otherVals.map(v=>Math.round(v/otherSum*remaining));
+    const drift=remaining-newVals.reduce((a,b)=>a+b,0);
+    newVals[newVals.length-1]+=drift;
+  }
+  others.forEach((id,i)=>{ $(id).value=Math.max(0,newVals[i]); });
+  recalc();
+}
+
+function snapZone(channel, changedId) {
+  const prefix = channel==='R' ? 'R_ZONE_' : 'W_ZONE_';
+  const keys   = ['Dubai','Sharjah','UAQ','RAK','Fujairah','AlAin','AbuDhabi'];
+  const ids    = keys.map(k=>prefix+k);
+  const val    = parseInt($(changedId).value)||0;
+  const others = ids.filter(id=>id!==changedId);
+  const otherVals=others.map(id=>parseInt($(id).value)||0);
+  const otherSum =otherVals.reduce((a,b)=>a+b,0);
+  const remaining=Math.max(0,100-val);
+  let newVals;
+  if(otherSum===0){
+    const each=Math.floor(remaining/others.length);
+    newVals=otherVals.map((_,i)=>i<others.length-1?each:remaining-each*(others.length-1));
+  } else {
+    newVals=otherVals.map(v=>Math.round(v/otherSum*remaining));
+    const drift=remaining-newVals.reduce((a,b)=>a+b,0);
+    newVals[newVals.length-1]+=drift;
+  }
+  others.forEach((id,i)=>{ $(id).value=Math.max(0,newVals[i]); });
+  recalc();
+}
+
+/* ============================================================
+   MASTER RECALCULATE
+   ============================================================ */
+function recalc() {
+  const d = derive();
+  updateSidebarLabels(d);
+  updateRecoveryState(d);
+  updateOverview(d);
+  updateUtilisation(d);
+  updateRatecards(d);
+  updateVolumeQuotes(d);
+  updatePnL(d);
+}
+
+/* ============================================================
+   SIDEBAR RESIZER
+   ============================================================ */
+(function(){
+  const sb=document.querySelector('.sidebar');
+  const rz=$('sidebar-resizer');
+  let isR=false,sX=0,sW=0;
+  rz.addEventListener('mousedown',e=>{isR=true;sX=e.clientX;sW=sb.getBoundingClientRect().width;rz.classList.add('dragging');document.body.style.cursor='col-resize';document.body.style.userSelect='none';e.preventDefault();});
+  document.addEventListener('mousemove',e=>{if(!isR)return;const w=Math.min(680,Math.max(260,sW+e.clientX-sX));sb.style.width=w+'px';sb.style.flexShrink='0';});
+  document.addEventListener('mouseup',()=>{if(!isR)return;isR=false;rz.classList.remove('dragging');document.body.style.cursor='';document.body.style.userSelect='';});
+})();
+
+/* ============================================================
+   INITIALISE
+   ============================================================ */
+buildStaffRows();
+buildOverheadRows();
+buildVolTiers();
+setSingleChannel('retail');
+setMode('wholesale');
+setSolver('rates');
+recalc();
+// Attempt pipeline load on startup if URL is set
+if(APPS_SCRIPT_URL) loadPipeline();
+</script>
+</body>
+</html>
