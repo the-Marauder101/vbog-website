@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CTT Reseller Pricing Engine v7</title>
+<title>CTT Reseller Pricing Engine v8</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
@@ -426,10 +426,10 @@ tr.memo-row td{background:var(--amber-dim);font-style:italic;}
 
 <header class="header" id="main-header">
   <div class="logo" id="logo-text">CTT // Pricing Engine</div>
-  <div class="header-title">Reseller — v7.0</div>
+  <div class="header-title">Reseller — v8.0</div>
   <div class="header-right">
     <span class="mode-badge wholesale-led" id="header-mode-badge">Wholesale-Led</span>
-    <div class="header-badge">v6.0 — VBOG</div>
+    <div class="header-badge">v8.0 — VBOG</div>
   </div>
 </header>
 
@@ -575,7 +575,7 @@ tr.memo-row td{background:var(--amber-dim);font-style:italic;}
 
     <div class="section-gap">
       <div class="section-label">Despatch anchor</div>
-      <div class="ctrl-row"><label>Base despatch — Dubai anchor</label><input type="range" id="BASE_DESPATCH" min="100" max="4000" step="50" value="700" oninput="recalc()"><span class="ctrl-val" id="v_BASE_DESPATCH">AED 700</span></div>
+      <div class="ctrl-row"><label>Base despatch — Dubai anchor</label><input type="range" id="BASE_DESPATCH" min="100" max="4000" step="50" value="100" oninput="recalc()"><span class="ctrl-val" id="v_BASE_DESPATCH">AED 100</span></div>
       <div class="ctrl-row"><label>Despatch multiplier</label><input type="range" id="DESPATCH_MULTIPLIER" min="0.5" max="3" step="0.1" value="1.0" oninput="recalc()"><span class="ctrl-val" id="v_DESPATCH_MULTIPLIER">1.0×</span></div>
       <div class="ctrl-row"><label>Handling premium (&gt;150L)</label><input type="range" id="HANDLING_PREMIUM" min="0" max="1000" step="25" value="200" oninput="recalc()"><span class="ctrl-val" id="v_HANDLING_PREMIUM">AED 200</span></div>
       <div class="info-note">Handling premium is additional revenue on 200L+ jobs — not a cost. Does not affect cost base.</div>
@@ -585,11 +585,11 @@ tr.memo-row td{background:var(--amber-dim);font-style:italic;}
       <div class="section-label">Capacity &amp; margin</div>
       <div class="ctrl-row"><label>Jobs per day (actual)</label><input type="range" id="JOBS_PER_DAY" min="1" max="8" step="0.5" value="4" oninput="recalc()"><span class="ctrl-val" id="v_JOBS_PER_DAY">4 / day</span></div>
       <div class="ctrl-row"><label>Working days / year</label><input type="range" id="WORKING_DAYS_PER_YEAR" min="200" max="313" step="5" value="250" oninput="recalc()"><span class="ctrl-val" id="v_WORKING_DAYS_PER_YEAR">250 days</span></div>
-      <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="0" max="60" step="5" value="25" oninput="recalc()"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">25%</span></div>
+      <div class="ctrl-row"><label>Target margin %</label><input type="range" id="TARGET_MARGIN_PCT" min="0" max="60" step="5" value="0" oninput="recalc()"><span class="ctrl-val" id="v_TARGET_MARGIN_PCT">0%</span></div>
       <div class="ctrl-row"><label>Efficiency discount</label><input type="range" id="OPERATIONAL_EFFICIENCY_DISCOUNT" min="0" max="25" step="1" value="0" oninput="recalc()"><span class="ctrl-val" id="v_OPERATIONAL_EFFICIENCY_DISCOUNT">0%</span></div>
       <div class="num-input-row">
         <label>Baseline jobs (pricing anchor)</label>
-        <input type="number" class="num-input" id="COST_RECOVERY_JOBS" min="0" step="50" value="0" placeholder="0 = use jobs/day × days" oninput="recalc()">
+        <input type="number" class="num-input" id="COST_RECOVERY_JOBS" min="0" step="50" value="1000" placeholder="0 = use jobs/day × days" oninput="recalc()">
         <span class="num-unit">jobs/yr</span>
       </div>
       <div style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="v_COST_RECOVERY_NOTE">—</div>
@@ -599,23 +599,27 @@ tr.memo-row td{background:var(--amber-dim);font-style:italic;}
     <div class="section-gap">
       <div class="channel-panel">
         <div class="channel-label retail">Retail — unit mix</div>
-        <div class="mix-row"><span class="mix-label">Up to 50L</span><input type="range" id="R_MIX_50L" min="0" max="100" step="5" value="20" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_50L">20%</span></div>
-        <div class="mix-row"><span class="mix-label">80L</span><input type="range" id="R_MIX_80L" min="0" max="100" step="5" value="35" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_80L">35%</span></div>
-        <div class="mix-row"><span class="mix-label">100/150L</span><input type="range" id="R_MIX_150L" min="0" max="100" step="5" value="25" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_150L">25%</span></div>
-        <div class="mix-row"><span class="mix-label">200L</span><input type="range" id="R_MIX_200L" min="0" max="100" step="5" value="15" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_200L">15%</span></div>
-        <div class="mix-row"><span class="mix-label">300L+ <span class="tag">auto</span></span><input type="range" disabled style="flex:1;opacity:0.3" value="5"><span class="mix-pct" id="v_R_MIX_300L" style="color:var(--text3)">5%</span></div>
+        <!-- Default unit mix: your actual 2025 capacity distribution, normalised -->
+        <!-- 80L 39%, 50L 32%, 200L 10%, 100/150L 7% combined, 300L+ auto ~12% -->
+        <div class="mix-row"><span class="mix-label">Up to 50L</span><input type="range" id="R_MIX_50L" min="0" max="100" step="5" value="32" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_50L">32%</span></div>
+        <div class="mix-row"><span class="mix-label">80L</span><input type="range" id="R_MIX_80L" min="0" max="100" step="5" value="39" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_80L">39%</span></div>
+        <div class="mix-row"><span class="mix-label">100/150L</span><input type="range" id="R_MIX_150L" min="0" max="100" step="5" value="7" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_150L">7%</span></div>
+        <div class="mix-row"><span class="mix-label">200L</span><input type="range" id="R_MIX_200L" min="0" max="100" step="5" value="10" oninput="snapMix('R',this.id)"><span class="mix-pct" id="v_R_MIX_200L">10%</span></div>
+        <div class="mix-row"><span class="mix-label">300L+ <span class="tag">auto</span></span><input type="range" disabled style="flex:1;opacity:0.3" value="12"><span class="mix-pct" id="v_R_MIX_300L" style="color:var(--text3)">12%</span></div>
       </div>
       <!-- RETAIL ZONE MIX -->
       <div class="channel-panel">
         <div class="channel-label retail">Retail — zone mix <span id="r-zone-badge" class="tag accent">100%</span></div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:8px;padding:4px 6px;background:var(--bg3);border-radius:3px;border-left:2px solid var(--border2)" id="r-zone-fee-label">Rate card despatch ref (informational)</div>
-        <div class="zone-row"><span class="mix-label" style="font-size:10px">Dubai</span><input type="range" id="R_ZONE_Dubai" min="0" max="100" step="1" value="55" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Dubai">55%</span><span class="zone-fee" id="rzfee_Dubai">AED 700</span></div>
-        <div class="zone-row"><span class="mix-label" style="font-size:10px">Sharjah/Ajman</span><input type="range" id="R_ZONE_Sharjah" min="0" max="100" step="1" value="20" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Sharjah">20%</span><span class="zone-fee" id="rzfee_Sharjah">AED 650</span></div>
-        <div class="zone-row"><span class="mix-label" style="font-size:10px">UAQ</span><input type="range" id="R_ZONE_UAQ" min="0" max="100" step="1" value="10" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_UAQ">10%</span><span class="zone-fee" id="rzfee_UAQ">AED 850</span></div>
-        <div class="zone-row"><span class="mix-label" style="font-size:10px">RAK</span><input type="range" id="R_ZONE_RAK" min="0" max="100" step="1" value="8" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_RAK">8%</span><span class="zone-fee" id="rzfee_RAK">AED 1,000</span></div>
-        <div class="zone-row"><span class="mix-label" style="font-size:10px">Fujairah</span><input type="range" id="R_ZONE_Fujairah" min="0" max="100" step="1" value="4" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Fujairah">4%</span><span class="zone-fee" id="rzfee_Fujairah">AED 1,250</span></div>
-        <div class="zone-row"><span class="mix-label" style="font-size:10px">Al Ain</span><input type="range" id="R_ZONE_AlAin" min="0" max="100" step="1" value="2" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_AlAin">2%</span><span class="zone-fee" id="rzfee_AlAin">AED 1,400</span></div>
-        <div class="zone-row"><span class="mix-label" style="font-size:10px">Abu Dhabi</span><input type="range" id="R_ZONE_AbuDhabi" min="0" max="100" step="1" value="1" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_AbuDhabi">1%</span><span class="zone-fee" id="rzfee_AbuDhabi">AED 1,550</span></div>
+        <!-- Default zone mix: your actual 2025 job distribution, normalised to 100% -->
+        <!-- Dubai 51%, Sharjah+Ajman 21%, Fujairah 9%, Abu Dhabi 9%, RAK 6%, UAQ 2%, Al Ain 1%, Liwa auto 1% -->
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Dubai</span><input type="range" id="R_ZONE_Dubai" min="0" max="100" step="1" value="51" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Dubai">51%</span><span class="zone-fee" id="rzfee_Dubai">AED 700</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Sharjah/Ajman</span><input type="range" id="R_ZONE_Sharjah" min="0" max="100" step="1" value="21" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Sharjah">21%</span><span class="zone-fee" id="rzfee_Sharjah">AED 650</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">UAQ</span><input type="range" id="R_ZONE_UAQ" min="0" max="100" step="1" value="2" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_UAQ">2%</span><span class="zone-fee" id="rzfee_UAQ">AED 850</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">RAK</span><input type="range" id="R_ZONE_RAK" min="0" max="100" step="1" value="6" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_RAK">6%</span><span class="zone-fee" id="rzfee_RAK">AED 1,000</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Fujairah</span><input type="range" id="R_ZONE_Fujairah" min="0" max="100" step="1" value="9" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_Fujairah">9%</span><span class="zone-fee" id="rzfee_Fujairah">AED 1,250</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Al Ain</span><input type="range" id="R_ZONE_AlAin" min="0" max="100" step="1" value="1" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_AlAin">1%</span><span class="zone-fee" id="rzfee_AlAin">AED 1,400</span></div>
+        <div class="zone-row"><span class="mix-label" style="font-size:10px">Abu Dhabi</span><input type="range" id="R_ZONE_AbuDhabi" min="0" max="100" step="1" value="9" oninput="snapZone('R',this.id)"><span class="zone-pct" id="rvz_AbuDhabi">9%</span><span class="zone-fee" id="rzfee_AbuDhabi">AED 1,550</span></div>
         <div class="zone-row"><span class="mix-label" style="font-size:10px">Liwa/Ruwais <span class="tag">auto</span></span><input type="range" disabled style="opacity:0.3" value="0"><span class="zone-pct" id="rvz_Liwa" style="color:var(--text3)">0%</span><span class="zone-fee" id="rzfee_Liwa">AED 3,500</span></div>
         <div class="blended-result"><span class="blended-result-label">Blended retail despatch</span><span class="blended-result-val" style="color:var(--blue)" id="r_blended_despatch">—</span></div>
       </div>
@@ -1355,12 +1359,14 @@ function derive() {
     retailJobs = actualJobs;
 
   } else if(currentMode === 'retail') {
-    // Retail absorbs all fixed costs
+    // Retail absorbs ALL fixed costs.
+    // Wholesale revenue only comes from saved/committed quotes — not projected here.
+    // wholesaleJobs and wholesaleCostPerJob are 0 in this mode for projection purposes.
     retailCostPool   = netCost;
     retailJobs       = baselineJobs;
     retailCostPerJob = retailJobs > 0 ? retailCostPool / retailJobs : 0;
-    wholesaleJobs    = actualJobs;
-    wholesaleCostPerJob = retailCostPerJob; // wholesale discounts off retail rate
+    wholesaleJobs    = 0;
+    wholesaleCostPerJob = 0; // wholesale has no cost burden in retail-led mode
 
   } else if(currentMode === 'split') {
     splitPct = (parseInt($('SPLIT_RETAIL_PCT').value)||60) / 100;
@@ -1419,13 +1425,15 @@ function derive() {
   const wLabour = calcBlendedLabour('W', wIdealBlended, wBlendedDespatch);
 
   // Revenue calculations
+  // In Retail-Led mode: wholesale revenue = committed pipeline only (saved quotes).
+  // In all other modes: wholesale revenue = projected from wholesaleJobs × blended rate.
   const rRev = rLabour.blendedAllIn * retailJobs;
-  const wRev = wLabour.blendedAllIn * wholesaleJobs;
+  const wRev = currentMode === 'retail' ? committedRevenue : wLabour.blendedAllIn * wholesaleJobs;
   const totalRev = rRev + wRev;
   const totalProfit = totalRev - netCost;
   const blendedMargin = totalRev > 0 ? totalProfit / totalRev : 0;
-  const combinedBlendedRate = (retailJobs+wholesaleJobs) > 0
-    ? totalRev / (retailJobs+wholesaleJobs) : 0;
+  const combinedBlendedRate = (retailJobs + wholesaleJobs) > 0
+    ? totalRev / (retailJobs + wholesaleJobs) : (rLabour.blendedAllIn || 0);
 
   return {
     totalCost, staffCost, ohCost, isOverride, grossCost, effSavings, netCost,
@@ -1837,16 +1845,32 @@ function updatePnL(d) {
     return sum + sell*(t.rebate/100)*t.volume;
   },0);
 
+  const isRetailLed = currentMode === 'retail';
+  const wRevLabel = isRetailLed
+    ? `Wholesale revenue (saved quotes only${committedRevenue===0?' — none yet':''})`
+    : 'Wholesale revenue';
+
+  // When cost base override is active, showing live staff + overhead alongside
+  // the override is misleading (they don't add up to gross cost).
+  // Show only the override as a single cost line instead.
+  const costRows = d.isOverride
+    ? [
+        {label:'⚠ Cost base override (live staff + OH suppressed)', base:-d.grossCost, actual:-d.grossCost, cls:'amber bold'},
+      ]
+    : [
+        {label:'Staff cost',     base:-d.staffCost,  actual:-d.staffCost,  cls:'purple'},
+        {label:'Overhead cost',  base:-d.ohCost,     actual:-d.ohCost,     cls:'amber'},
+        {label:'Gross cost',     base:-d.grossCost,  actual:-d.grossCost,  cls:'bold'},
+      ];
+
   const rows=[
-    {label:'Retail revenue',         base:d.rRev,           actual:d.rRev,          cls:'blue bold'},
-    {label:'Wholesale revenue',       base:d.wRev,           actual:d.wRev,          cls:'teal bold'},
-    {label:'Total revenue',           base:d.totalRev,       actual:d.totalRev,      cls:'accent bold'},
-    {label:'Staff cost',              base:-d.staffCost,     actual:-d.staffCost,    cls:'purple'},
-    {label:'Overhead cost',           base:-d.ohCost,        actual:-d.ohCost,       cls:'amber'},
-    {label:'Gross cost',              base:-d.grossCost,     actual:-d.grossCost,    cls:'bold'},
-    {label:`Efficiency savings (${Math.round(d.effDisc*100)}%)`,base:d.effSavings,actual:d.effSavings,cls:'green'},
-    {label:'Net cost',                base:-d.netCost,       actual:-d.netCost,      cls:'bold'},
-    {label:'Net profit',              base:d.totalProfit,    actual:d.totalProfit,   cls:(d.totalProfit>=0?'green':'red')+' bold', isProfit:true},
+    {label:'Retail revenue',   base:d.rRev,        actual:d.rRev,        cls:'blue bold'},
+    {label:wRevLabel,          base:d.wRev,        actual:d.wRev,        cls:'teal bold'},
+    {label:'Total revenue',    base:d.totalRev,    actual:d.totalRev,    cls:'accent bold'},
+    ...costRows,
+    {label:`Efficiency savings (${Math.round(d.effDisc*100)}%)`, base:d.effSavings, actual:d.effSavings, cls:'green'},
+    {label:'Net cost',         base:-d.netCost,    actual:-d.netCost,    cls:'bold'},
+    {label:'Net profit',       base:d.totalProfit, actual:d.totalProfit, cls:(d.totalProfit>=0?'green':'red')+' bold', isProfit:true},
     {label:'↳ Reseller rebates payable (memo — not deducted)', base:-totalRebatePayable, actual:-totalRebatePayable, cls:'amber', isMemo:true},
   ];
   rows.forEach(r=>{
@@ -2043,7 +2067,7 @@ buildStaffRows();
 buildOverheadRows();
 buildVolTiers();
 setSingleChannel('retail');
-setMode('wholesale');
+setMode('retail'); // Default: Retail-Led — retail absorbs all AED 686,000 fixed costs
 setSolver('rates');
 recalc();
 // Attempt pipeline load on startup if URL is set
