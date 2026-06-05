@@ -570,18 +570,19 @@
     ],
 
     // Delivery — flat rate auto-applied based on chosen city. The dropdown
-    // only shows the city name; the delivery charge appears in the final
-    // quote breakdown. `laborCity` points at the column in laborMatrix.
+    // shows city name only; the delivery charge appears in the final quote
+    // breakdown when the rate is > 0. All prices are TODO until owner
+    // supplies them. `laborCity` points at the column in laborMatrix.
     locations: [
-      { label: "Dubai",          price: 50,  laborCity: "Dubai"         },
-      { label: "Sharjah",        price: 75,  laborCity: "Sharjah/Ajman" },
-      { label: "Ajman",          price: 100, laborCity: "Sharjah/Ajman" },
-      { label: "Umm Al Quwain",  price: 125, laborCity: "UAQ"           },
-      { label: "Ras Al Khaimah", price: 175, laborCity: "RAK"           },
-      { label: "Fujairah",       price: 200, laborCity: "Fujairah"      },
-      { label: "Al Ain",         price: 225, laborCity: "Al Ain"        },
-      { label: "Abu Dhabi",      price: 150, laborCity: "Abu Dhabi"     },
-      { label: "Liwa / Ruwais",  price: 300, laborCity: "Liwa/Ruwais"   }  // TODO delivery rate
+      { label: "Dubai",          price: 0, laborCity: "Dubai"         }, // TODO delivery rate
+      { label: "Sharjah",        price: 0, laborCity: "Sharjah/Ajman" }, // TODO delivery rate
+      { label: "Ajman",          price: 0, laborCity: "Sharjah/Ajman" }, // TODO delivery rate
+      { label: "Umm Al Quwain",  price: 0, laborCity: "UAQ"           }, // TODO delivery rate
+      { label: "Ras Al Khaimah", price: 0, laborCity: "RAK"           }, // TODO delivery rate
+      { label: "Fujairah",       price: 0, laborCity: "Fujairah"      }, // TODO delivery rate
+      { label: "Al Ain",         price: 0, laborCity: "Al Ain"        }, // TODO delivery rate
+      { label: "Abu Dhabi",      price: 0, laborCity: "Abu Dhabi"     }, // TODO delivery rate
+      { label: "Liwa / Ruwais",  price: 0, laborCity: "Liwa/Ruwais"   }  // TODO delivery rate
     ],
 
     // Retail labor rates (inc-VAT), AED per unit. Indexed by size bucket
@@ -786,7 +787,7 @@
         pipingTotal = Math.min(feet * size.pipingRatePerFoot, PRICING.piping.maxPrice);
       }
 
-      html += lineHTML("Delivery", location.label, deliveryTotal);
+      if (deliveryTotal   > 0) html += lineHTML("Delivery", location.label, deliveryTotal);
       if (ceiling.price   > 0) html += lineHTML("False Ceiling Cutting", ceiling.label + " cm", ceilingTotal);
       if (connector.price > 0) html += lineHTML("Plumbing Connectors", connector.label, connectorTotal);
       if (valve.price     > 0) html += lineHTML("Valves", valve.label, valveTotal);
