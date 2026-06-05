@@ -387,7 +387,6 @@
         <span class="box" aria-hidden="true"></span>
         <span>Reinstallation needed</span>
       </label>
-      <p class="hint">Uncheck if the customer only wants to purchase the heater. The reinstallation sections below will be disabled.</p>
     </div>
 
     <!-- Everything below greys out when reinstallation is unchecked -->
@@ -565,27 +564,41 @@
       vertical:   "heater_vertical.jpg"
     },
 
-    // Each capacity carries its own photo and piping rate (AED per ft).
+    // Each capacity carries its own photo, piping rate (AED per ft),
+    // and the labor matrix bucket it belongs to.
     sizes: [
-      { label: "50 L",  price: 500,  pipingRatePerFoot: 5,  photo: "heater_50l.jpg"  },
-      { label: "80 L",  price: 550,  pipingRatePerFoot: 6,  photo: "heater_80l.jpg"  },
-      { label: "100 L", price: 600,  pipingRatePerFoot: 7,  photo: "heater_100l.jpg" },
-      { label: "150 L", price: 900,  pipingRatePerFoot: 8,  photo: "heater_150l.jpg" },
-      { label: "200 L", price: 1400, pipingRatePerFoot: 9,  photo: "heater_200l.jpg" },
-      { label: "300 L", price: 2300, pipingRatePerFoot: 10, photo: "heater_300l.jpg" }
+      { label: "50 L",  price: 500,  pipingRatePerFoot: 5,  photo: "heater_50l.jpg",  laborBucket: "Up to 50L" }, // TODO heater price
+      { label: "80 L",  price: 550,  pipingRatePerFoot: 6,  photo: "heater_80l.jpg",  laborBucket: "80L"       }, // TODO heater price
+      { label: "100 L", price: 600,  pipingRatePerFoot: 7,  photo: "heater_100l.jpg", laborBucket: "100/150L"  }, // TODO heater price
+      { label: "150 L", price: 900,  pipingRatePerFoot: 8,  photo: "heater_150l.jpg", laborBucket: "100/150L"  }, // TODO heater price
+      { label: "200 L", price: 1400, pipingRatePerFoot: 9,  photo: "heater_200l.jpg", laborBucket: "200L"      }, // TODO heater price
+      { label: "300 L", price: 2300, pipingRatePerFoot: 10, photo: "heater_300l.jpg", laborBucket: "300L+"     }  // TODO heater price
     ],
 
-    // Delivery — flat rate auto-applied based on chosen city.
+    // Delivery — flat rate auto-applied based on chosen city. The dropdown
+    // only shows the city name; the delivery charge appears in the final
+    // quote breakdown. `laborCity` points at the column in laborMatrix.
     locations: [
-      { label: "Dubai",          price: 50 },
-      { label: "Sharjah",        price: 75 },
-      { label: "Ajman",          price: 100 },
-      { label: "Umm Al Quwain",  price: 125 },
-      { label: "Abu Dhabi",      price: 150 },
-      { label: "Ras Al Khaimah", price: 175 },
-      { label: "Fujairah",       price: 200 },
-      { label: "Al Ain",         price: 225 }
+      { label: "Dubai",          price: 50,  laborCity: "Dubai"         },
+      { label: "Sharjah",        price: 75,  laborCity: "Sharjah/Ajman" },
+      { label: "Ajman",          price: 100, laborCity: "Sharjah/Ajman" },
+      { label: "Umm Al Quwain",  price: 125, laborCity: "UAQ"           },
+      { label: "Ras Al Khaimah", price: 175, laborCity: "RAK"           },
+      { label: "Fujairah",       price: 200, laborCity: "Fujairah"      },
+      { label: "Al Ain",         price: 225, laborCity: "Al Ain"        },
+      { label: "Abu Dhabi",      price: 150, laborCity: "Abu Dhabi"     },
+      { label: "Liwa / Ruwais",  price: 300, laborCity: "Liwa/Ruwais"   }  // TODO delivery rate
     ],
+
+    // Retail labor rates (inc-VAT), AED per unit. Indexed by size bucket
+    // then by city. Source: owner-supplied retail rate sheet.
+    laborMatrix: {
+      "Up to 50L": { "Dubai": 672,  "Sharjah/Ajman": 665,  "UAQ": 694,  "RAK": 717,  "Fujairah": 754,  "Al Ain": 777,  "Abu Dhabi": 799,  "Liwa/Ruwais": 1092 },
+      "80L":       { "Dubai": 767,  "Sharjah/Ajman": 759,  "UAQ": 789,  "RAK": 812,  "Fujairah": 849,  "Al Ain": 872,  "Abu Dhabi": 894,  "Liwa/Ruwais": 1187 },
+      "100/150L":  { "Dubai": 908,  "Sharjah/Ajman": 901,  "UAQ": 930,  "RAK": 953,  "Fujairah": 990,  "Al Ain": 1013, "Abu Dhabi": 1035, "Liwa/Ruwais": 1328 },
+      "200L":      { "Dubai": 1260, "Sharjah/Ajman": 1253, "UAQ": 1282, "RAK": 1305, "Fujairah": 1342, "Al Ain": 1365, "Abu Dhabi": 1387, "Liwa/Ruwais": 1680 },
+      "300L+":     { "Dubai": 1544, "Sharjah/Ajman": 1536, "UAQ": 1566, "RAK": 1589, "Fujairah": 1625, "Al Ain": 1649, "Abu Dhabi": 1671, "Liwa/Ruwais": 1964 }
+    },
 
     // False ceiling cutting by panel size (cm). One photo per option.
     falseCeiling: [
@@ -615,10 +628,9 @@
     // pipingRatePerFoot, capped at maxPrice.
     piping: { minFeet: 10, maxFeet: 200, defaultFeet: 10, maxPrice: 2000, photo: "piping.jpg" },
 
-    // Add-ons charged per unit.
-    laborPerUnit:   300,
+    // Add-ons. Labor rate now comes from laborMatrix above (city × size).
     laborPhoto:     "labor.jpg",
-    installPerUnit: 300,
+    installPerUnit: 300, // TODO install rate
     installPhoto:   "installation.jpg",
 
     // Folder where the jpgs live (relative to this HTML).
@@ -670,25 +682,32 @@
   };
 
   /* ===== Populate dropdowns ===== */
-  function buildOptions(selectEl, items, prefix) {
+  function buildOptions(selectEl, items, prefix, showPrice) {
     prefix = prefix || "";
+    if (showPrice === undefined) showPrice = true;
     selectEl.innerHTML = "";
     items.forEach((item, i) => {
       const opt = document.createElement("option");
       opt.value = String(i);
-      opt.textContent = item.price > 0
+      opt.textContent = (showPrice && item.price > 0)
         ? prefix + item.label + " — " + fmt(item.price)
         : prefix + item.label;
       selectEl.appendChild(opt);
     });
   }
   buildOptions(el.size, PRICING.sizes, PRICING.brand + " ");
-  buildOptions(el.location, PRICING.locations);
+  buildOptions(el.location, PRICING.locations, "", false); // city only — price shown in quote
   buildOptions(el.ceiling, PRICING.falseCeiling);
   buildOptions(el.connector, PRICING.plumbingConnectors);
   buildOptions(el.valve, PRICING.valves);
-  el.laborPrice.textContent = fmt(PRICING.laborPerUnit) + " / unit";
+  // Labor rate is set dynamically by recalc() (depends on city × size).
   el.installPrice.textContent = fmt(PRICING.installPerUnit) + " / unit";
+
+  /* ===== Labor lookup — city × unit size matrix ===== */
+  function laborRateFor(size, location) {
+    const row = PRICING.laborMatrix[size.laborBucket];
+    return row ? (row[location.laborCity] || 0) : 0;
+  }
 
   el.pipingFeet.min = PRICING.piping.minFeet;
   el.pipingFeet.max = PRICING.piping.maxFeet;
@@ -748,6 +767,10 @@
     el.pipingFeet.disabled = !reinstall || !el.piping.checked;
     el.pipingRate.textContent = fmt(size.pipingRatePerFoot) + " / ft";
 
+    // Labor rate is a function of the chosen city × unit size.
+    const laborRate = laborRateFor(size, location);
+    el.laborPrice.textContent = fmt(laborRate) + " / unit";
+
     const heaterTotal = size.price * qty;
 
     let html = "";
@@ -764,7 +787,7 @@
       const ceilingTotal   = ceiling.price;
       const connectorTotal = connector.price;
       const valveTotal     = valve.price;
-      const laborTotal     = el.labor.checked   ? PRICING.laborPerUnit   * qty : 0;
+      const laborTotal     = el.labor.checked   ? laborRate              * qty : 0;
       const installTotal   = el.install.checked ? PRICING.installPerUnit * qty : 0;
 
       let feet = 0, pipingTotal = 0;
@@ -782,7 +805,7 @@
         const sub = feet + " ft @ " + fmt(size.pipingRatePerFoot) + "/ft" + (capped ? " (capped)" : "");
         html += lineHTML("Piping", sub, pipingTotal);
       }
-      if (el.labor.checked)   html += lineHTML("Labor", "Standard &times; " + qty, laborTotal);
+      if (el.labor.checked)   html += lineHTML("Labor", size.label + " &middot; " + location.label + " &times; " + qty + " @ " + fmt(laborRate) + "/unit", laborTotal);
       if (el.install.checked) html += lineHTML("Installation", qty + " unit" + (qty > 1 ? "s" : ""), installTotal);
 
       total += deliveryTotal + ceilingTotal + connectorTotal + valveTotal + pipingTotal + laborTotal + installTotal;
