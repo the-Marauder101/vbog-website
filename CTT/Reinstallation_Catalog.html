@@ -445,12 +445,6 @@
         <label>Optional Add-ons</label>
         <div class="checks">
           <label class="check">
-            <input type="checkbox" id="labor">
-            <span class="box" aria-hidden="true"></span>
-            <span>Add Standard Labor</span>
-            <span class="price" id="laborPrice"></span>
-          </label>
-          <label class="check">
             <input type="checkbox" id="install">
             <span class="box" aria-hidden="true"></span>
             <span class="addon-icon" aria-hidden="true">
@@ -655,9 +649,7 @@
     piping: document.getElementById("piping"),
     pipingFeet: document.getElementById("pipingFeet"),
     pipingRate: document.getElementById("pipingRate"),
-    labor: document.getElementById("labor"),
     install: document.getElementById("install"),
-    laborPrice: document.getElementById("laborPrice"),
     installPrice: document.getElementById("installPrice"),
     breakdown: document.getElementById("breakdown"),
     subtotal: document.getElementById("subtotal"),
@@ -695,12 +687,11 @@
       selectEl.appendChild(opt);
     });
   }
-  buildOptions(el.size, PRICING.sizes, PRICING.brand + " ");
-  buildOptions(el.location, PRICING.locations, "", false); // city only — price shown in quote
+  buildOptions(el.size, PRICING.sizes, PRICING.brand + " ", false); // capacity only — price shown in quote
+  buildOptions(el.location, PRICING.locations, "", false);          // city only — price shown in quote
   buildOptions(el.ceiling, PRICING.falseCeiling);
   buildOptions(el.connector, PRICING.plumbingConnectors);
   buildOptions(el.valve, PRICING.valves);
-  // Labor rate is set dynamically by recalc() (depends on city × size).
   el.installPrice.textContent = fmt(PRICING.installPerUnit) + " / unit";
 
   /* ===== Labor lookup — city × unit size matrix ===== */
@@ -767,9 +758,8 @@
     el.pipingFeet.disabled = !reinstall || !el.piping.checked;
     el.pipingRate.textContent = fmt(size.pipingRatePerFoot) + " / ft";
 
-    // Labor rate is a function of the chosen city × unit size.
+    // Labor rate is auto-included; comes from city × unit-size matrix.
     const laborRate = laborRateFor(size, location);
-    el.laborPrice.textContent = fmt(laborRate) + " / unit";
 
     const heaterTotal = size.price * qty;
 
@@ -787,7 +777,7 @@
       const ceilingTotal   = ceiling.price;
       const connectorTotal = connector.price;
       const valveTotal     = valve.price;
-      const laborTotal     = el.labor.checked   ? laborRate              * qty : 0;
+      const laborTotal     = laborRate * qty;                                       // always included with reinstallation
       const installTotal   = el.install.checked ? PRICING.installPerUnit * qty : 0;
 
       let feet = 0, pipingTotal = 0;
@@ -805,7 +795,7 @@
         const sub = feet + " ft @ " + fmt(size.pipingRatePerFoot) + "/ft" + (capped ? " (capped)" : "");
         html += lineHTML("Piping", sub, pipingTotal);
       }
-      if (el.labor.checked)   html += lineHTML("Labor", size.label + " &middot; " + location.label + " &times; " + qty + " @ " + fmt(laborRate) + "/unit", laborTotal);
+      html += lineHTML("Labor", size.label + " &middot; " + location.label + " &times; " + qty + " @ " + fmt(laborRate) + "/unit", laborTotal);
       if (el.install.checked) html += lineHTML("Installation", qty + " unit" + (qty > 1 ? "s" : ""), installTotal);
 
       total += deliveryTotal + ceilingTotal + connectorTotal + valveTotal + pipingTotal + laborTotal + installTotal;
@@ -829,7 +819,6 @@
     el.valve.addEventListener(evt, recalc);
     el.piping.addEventListener(evt, recalc);
     el.pipingFeet.addEventListener(evt, recalc);
-    el.labor.addEventListener(evt, recalc);
     el.install.addEventListener(evt, recalc);
   });
   document.querySelectorAll('input[name="orientation"]').forEach((r) => {
@@ -936,7 +925,6 @@
     if (horiz) horiz.checked = true;
     el.piping.checked = false;
     el.pipingFeet.value = PRICING.piping.defaultFeet;
-    el.labor.checked = false;
     el.install.checked = false;
     recalc();
   });
