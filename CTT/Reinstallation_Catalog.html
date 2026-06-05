@@ -398,7 +398,7 @@
       </div>
 
       <div class="field">
-        <label for="location">Delivery Location</label>
+        <label for="location">Location</label>
         <select id="location"></select>
       </div>
 
@@ -544,10 +544,9 @@
      Rates marked TODO are placeholders; owner will supply real
      values. Photo filenames map to files in CTT/photos/.
 
-     Charged PER UNIT (× quantity):  labor, installation
-     Charged PER ORDER (flat):       delivery, false ceiling,
-                                     plumbing connectors, valves,
-                                     piping
+     Charged PER UNIT (× quantity):  heater, labor, installation
+     Charged PER ORDER (flat):       false ceiling, plumbing
+                                     connectors, valves, piping
      ========================================================= */
   const PRICING = {
     brand: "Atlantic",
@@ -569,20 +568,18 @@
       { label: "300 L", price: 2300, pipingRatePerFoot: 10, photo: "heater_300l.jpg", laborBucket: "300L+"     }  // TODO heater price
     ],
 
-    // Delivery — flat rate auto-applied based on chosen city. The dropdown
-    // shows city name only; the delivery charge appears in the final quote
-    // breakdown when the rate is > 0. All prices are TODO until owner
-    // supplies them. `laborCity` points at the column in laborMatrix.
+    // City picker — used only to look up the labor rate from laborMatrix.
+    // No delivery charge: heater + labor are the only base costs.
     locations: [
-      { label: "Dubai",          price: 0, laborCity: "Dubai"         }, // TODO delivery rate
-      { label: "Sharjah",        price: 0, laborCity: "Sharjah/Ajman" }, // TODO delivery rate
-      { label: "Ajman",          price: 0, laborCity: "Sharjah/Ajman" }, // TODO delivery rate
-      { label: "Umm Al Quwain",  price: 0, laborCity: "UAQ"           }, // TODO delivery rate
-      { label: "Ras Al Khaimah", price: 0, laborCity: "RAK"           }, // TODO delivery rate
-      { label: "Fujairah",       price: 0, laborCity: "Fujairah"      }, // TODO delivery rate
-      { label: "Al Ain",         price: 0, laborCity: "Al Ain"        }, // TODO delivery rate
-      { label: "Abu Dhabi",      price: 0, laborCity: "Abu Dhabi"     }, // TODO delivery rate
-      { label: "Liwa / Ruwais",  price: 0, laborCity: "Liwa/Ruwais"   }  // TODO delivery rate
+      { label: "Dubai",          laborCity: "Dubai"         },
+      { label: "Sharjah",        laborCity: "Sharjah/Ajman" },
+      { label: "Ajman",          laborCity: "Sharjah/Ajman" },
+      { label: "Umm Al Quwain",  laborCity: "UAQ"           },
+      { label: "Ras Al Khaimah", laborCity: "RAK"           },
+      { label: "Fujairah",       laborCity: "Fujairah"      },
+      { label: "Al Ain",         laborCity: "Al Ain"        },
+      { label: "Abu Dhabi",      laborCity: "Abu Dhabi"     },
+      { label: "Liwa / Ruwais",  laborCity: "Liwa/Ruwais"   }
     ],
 
     // Retail labor rates (inc-VAT), AED per unit. Indexed by size bucket
@@ -774,7 +771,6 @@
     let total = heaterTotal;
 
     if (reinstall) {
-      const deliveryTotal  = location.price;
       const ceilingTotal   = ceiling.price;
       const connectorTotal = connector.price;
       const valveTotal     = valve.price;
@@ -787,7 +783,7 @@
         pipingTotal = Math.min(feet * size.pipingRatePerFoot, PRICING.piping.maxPrice);
       }
 
-      if (deliveryTotal   > 0) html += lineHTML("Delivery", location.label, deliveryTotal);
+      html += lineHTML("Labor", size.label + " &middot; " + location.label + " &times; " + qty + " @ " + fmt(laborRate) + "/unit", laborTotal);
       if (ceiling.price   > 0) html += lineHTML("False Ceiling Cutting", ceiling.label + " cm", ceilingTotal);
       if (connector.price > 0) html += lineHTML("Plumbing Connectors", connector.label, connectorTotal);
       if (valve.price     > 0) html += lineHTML("Valves", valve.label, valveTotal);
@@ -796,10 +792,9 @@
         const sub = feet + " ft @ " + fmt(size.pipingRatePerFoot) + "/ft" + (capped ? " (capped)" : "");
         html += lineHTML("Piping", sub, pipingTotal);
       }
-      html += lineHTML("Labor", size.label + " &middot; " + location.label + " &times; " + qty + " @ " + fmt(laborRate) + "/unit", laborTotal);
       if (el.install.checked) html += lineHTML("Installation", qty + " unit" + (qty > 1 ? "s" : ""), installTotal);
 
-      total += deliveryTotal + ceilingTotal + connectorTotal + valveTotal + pipingTotal + laborTotal + installTotal;
+      total += ceilingTotal + connectorTotal + valveTotal + pipingTotal + laborTotal + installTotal;
     } else {
       html += lineHTML("Reinstallation", "Not required — purchase only", 0);
     }
