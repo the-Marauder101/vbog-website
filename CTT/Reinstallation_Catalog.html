@@ -5,20 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Water Heater Price Calculator</title>
 <style>
-  /* ===== Black & white, minimal ===== */
   :root {
     --black: #000;
     --white: #fff;
     --line: #000;
     --muted: #767676;
     --hairline: #e0e0e0;
+    --soft: #f5f5f5;
   }
 
   * { box-sizing: border-box; }
 
   html, body {
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     background: var(--white);
     color: var(--black);
     font-family: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
@@ -26,297 +25,154 @@
     line-height: 1.5;
   }
 
-  /* ===== Header ===== */
-  header {
-    border-bottom: 1px solid var(--line);
-    padding: 32px 24px;
-  }
+  header { border-bottom: 1px solid var(--line); padding: 32px 24px; }
   .header-inner { max-width: 1040px; margin: 0 auto; }
-  header h1 {
-    margin: 0;
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
+  header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
   header p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
 
-  /* ===== Layout ===== */
   main {
-    max-width: 1040px;
-    margin: 0 auto;
-    padding: 40px 24px 64px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 48px;
-    align-items: start;
+    max-width: 1040px; margin: 0 auto; padding: 40px 24px 64px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;
   }
 
-  /* ===== Calculator (left) ===== */
   .field { margin-bottom: 28px; }
   .field:last-child { margin-bottom: 0; }
 
   label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 10px;
+    display: block; font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
   }
-
   .hint {
-    font-size: 12px;
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: normal;
-    color: var(--muted);
-    margin: -4px 0 12px;
+    font-size: 12px; font-weight: 400; text-transform: none; letter-spacing: normal;
+    color: var(--muted); margin: -4px 0 12px;
   }
 
-  select,
-  input[type="number"] {
-    width: 100%;
-    padding: 12px 14px;
-    font-size: 16px;
-    font-family: inherit;
-    color: var(--black);
-    background: var(--white);
-    border: 1px solid var(--line);
-    border-radius: 0;
-    appearance: none;
-    -webkit-appearance: none;
+  select, input[type="number"] {
+    width: 100%; padding: 12px 14px; font-size: 16px; font-family: inherit;
+    color: var(--black); background: var(--white);
+    border: 1px solid var(--line); border-radius: 0; appearance: none; -webkit-appearance: none;
   }
-
   select {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='black' stroke-width='1.5'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 38px;
-    cursor: pointer;
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; cursor: pointer;
+  }
+  select:focus, input[type="number"]:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  input[type="number"]:disabled, select:disabled {
+    border-color: var(--hairline); color: var(--muted); background-color: var(--soft); cursor: not-allowed;
+  }
+  select:disabled {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23767676' stroke-width='1.5'/></svg>");
   }
 
-  select:focus,
-  input[type="number"]:focus { outline: 2px solid var(--black); outline-offset: -1px; }
-
-  input[type="number"]:disabled {
-    border-color: var(--hairline);
-    color: var(--muted);
-    cursor: not-allowed;
-  }
-
-  /* ===== Orientation picture tiles ===== */
+  /* Tiles (orientation + pathway) */
   .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .tile {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 16px 12px;
-    border: 1px solid var(--line);
-    cursor: pointer;
-    text-transform: none;
-    letter-spacing: normal;
-    font-weight: 400;
-    margin: 0;
+    position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 16px 12px; border: 1px solid var(--line); cursor: pointer;
+    text-transform: none; letter-spacing: normal; font-weight: 400; margin: 0;
   }
   .tile input { position: absolute; opacity: 0; width: 0; height: 0; }
   .tile-pic { height: 88px; display: flex; align-items: center; justify-content: center; }
   .tile-pic svg { height: 100%; width: auto; color: var(--black); }
   .tile-label { font-size: 14px; }
-  /* selected: thicker border, padding compensated so nothing shifts */
   .tile:has(input:checked) { border-width: 2px; padding: 15px 11px; }
   .tile:has(input:focus-visible) { outline: 2px solid var(--black); outline-offset: 2px; }
 
-  /* ===== Checkboxes ===== */
+  /* Pathway cards */
+  .path { align-items: flex-start; text-align: left; gap: 4px; justify-content: center; min-height: 84px; }
+  .path-title { font-size: 15px; font-weight: 700; }
+  .path-desc { font-size: 12px; color: var(--muted); }
+
+  /* Checkboxes */
   .checks { display: flex; flex-direction: column; gap: 14px; }
   .check {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: normal;
-    margin: 0;
+    display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 15px;
+    font-weight: 400; text-transform: none; letter-spacing: normal; margin: 0;
   }
   .check input { position: absolute; opacity: 0; width: 0; height: 0; }
   .box {
-    flex: 0 0 auto;
-    width: 20px;
-    height: 20px;
-    border: 1px solid var(--line);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    flex: 0 0 auto; width: 20px; height: 20px; border: 1px solid var(--line);
+    display: inline-flex; align-items: center; justify-content: center;
   }
-  .check input:checked + .box::after {
-    content: "";
-    width: 12px;
-    height: 12px;
-    background: var(--black);
-  }
+  .check input:checked + .box::after { content: ""; width: 12px; height: 12px; background: var(--black); }
   .check input:focus-visible + .box { outline: 2px solid var(--black); outline-offset: 2px; }
-  .addon-icon { flex: 0 0 auto; width: 22px; height: 22px; display: inline-flex; }
-  .addon-icon svg { width: 100%; height: 100%; color: var(--black); }
-  .check .price { color: var(--muted); margin-left: auto; white-space: nowrap; }
 
-  /* ===== Sub-field (piping length) ===== */
+  /* Sub-blocks + small print */
   .subfield { margin-top: 14px; padding-left: 32px; }
   .subfield .sublabel {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: none;
-    letter-spacing: normal;
-    color: var(--muted);
-    margin-bottom: 6px;
+    font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: normal;
+    color: var(--muted); margin-bottom: 6px;
   }
+  .subblock { margin-top: 16px; padding-left: 32px; }
+  .subblock[hidden] { display: none; }
+  .info { margin-top: 10px; }
+  .info summary {
+    font-size: 12px; color: var(--muted); cursor: pointer; list-style: none;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .info summary::-webkit-details-marker { display: none; }
+  .info p { font-size: 12px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
+  .disclaimer { font-size: 11px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
 
-  /* ===== False ceiling picture ===== */
-  .ceiling-pic {
-    border: 1px solid var(--hairline);
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  .ceiling-pic { border: 1px solid var(--hairline); padding: 16px; display: flex; align-items: center; justify-content: center; }
   .ceiling-pic svg { width: 150px; height: auto; color: var(--black); }
-  .ceiling-pic img { max-width: 100%; max-height: 120px; object-fit: contain; display: block; }
-  .ceiling-caption {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: center;
-    margin: 8px 0 12px;
-  }
+  .ceiling-caption { font-size: 12px; color: var(--muted); text-align: center; margin: 8px 0 12px; }
 
-  /* ===== Disabled cascade (reinstallation unchecked) ===== */
-  .is-disabled { opacity: 0.45; pointer-events: none; }
-
-  /* ===== Summary (right) ===== */
+  /* Summary */
   .summary { border: 1px solid var(--line); padding: 28px; position: sticky; top: 24px; }
-  .summary h2 {
-    margin: 0 0 20px;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
+  .summary h2 { margin: 0 0 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
   .line {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 16px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--hairline);
-    font-size: 15px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+    padding: 12px 0; border-bottom: 1px solid var(--hairline); font-size: 15px;
   }
   .line .desc { color: var(--black); }
   .line .desc small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
   .line .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
   .line.subtotal { border-bottom: 1px solid var(--line); font-weight: 600; }
-
   .total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 22px; }
   .total .label { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
   .total .amt { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-
   .note { margin-top: 18px; font-size: 12px; color: var(--muted); line-height: 1.5; }
 
-  /* ===== Reset button ===== */
   .reset {
-    margin-top: 32px;
-    width: 100%;
-    padding: 13px 16px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--black);
-    background: var(--white);
-    border: 1px solid var(--line);
-    border-radius: 0;
-    cursor: pointer;
+    margin-top: 32px; width: 100%; padding: 13px 16px; font-family: inherit; font-size: 13px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--black);
+    background: var(--white); border: 1px solid var(--line); border-radius: 0; cursor: pointer;
   }
   .reset:hover { background: var(--black); color: var(--white); }
   .reset:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
 
-  /* ===== "View photos" trigger ===== */
   .link-btn {
-    margin-top: 18px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: none;
-    border: none;
-    padding: 0;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--black);
-    cursor: pointer;
+    margin-top: 18px; display: inline-flex; align-items: center; gap: 8px; background: none; border: none;
+    padding: 0; font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--black); cursor: pointer;
   }
   .link-btn .txt { text-decoration: underline; text-underline-offset: 3px; }
   .link-btn:hover { opacity: 0.65; }
   .link-btn:focus-visible { outline: 2px solid var(--black); outline-offset: 3px; }
 
-  /* ===== Inline photo gallery (modal) ===== */
-  .modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
+  /* Gallery modal */
+  .modal { display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 24px; }
   .modal.open { display: flex; }
-  .modal-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55); }
-  .modal-box {
-    position: relative;
-    background: var(--white);
-    border: 1px solid var(--line);
-    width: 100%;
-    max-width: 880px;
-    max-height: 90vh;
-    overflow: auto;
-    padding: 28px;
-  }
+  .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+  .modal-box { position: relative; background: var(--white); border: 1px solid var(--line); width: 100%; max-width: 880px; max-height: 90vh; overflow: auto; padding: 28px; }
   .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
   .modal-head h2 { margin: 0; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
-  .modal-close {
-    background: var(--white);
-    border: 1px solid var(--line);
-    width: 38px;
-    height: 38px;
-    font-size: 22px;
-    line-height: 1;
-    color: var(--black);
-    cursor: pointer;
-    border-radius: 0;
-  }
+  .modal-close { background: var(--white); border: 1px solid var(--line); width: 38px; height: 38px; font-size: 22px; line-height: 1; color: var(--black); cursor: pointer; border-radius: 0; }
   .modal-close:hover { background: var(--black); color: var(--white); }
   .modal-close:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
-
-  .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .gallery-item {
-    margin: 0;
-    border: 1px solid var(--line);
-    padding: 22px 18px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-  }
-  .gallery-pic { height: 160px; display: flex; align-items: center; justify-content: center; width: 100%; }
-  .gallery-pic svg { height: 100%; width: auto; color: var(--black); }
-  .gallery-pic img { max-height: 100%; max-width: 100%; width: auto; object-fit: contain; }
+  .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .gallery-item { margin: 0; display: flex; flex-direction: column; gap: 10px; }
   .gallery-item figcaption { font-size: 14px; font-weight: 600; text-align: center; color: var(--black); }
   .gallery-item figcaption small { display: block; font-weight: 400; color: var(--muted); margin-top: 4px; }
+  .photo-frame { position: relative; width: 100%; aspect-ratio: 4 / 3; border: 1px dashed var(--line); display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--white); }
+  .photo-frame.filled { border-style: solid; }
+  .photo-frame img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .photo-frame.filled img { display: block; }
+  .photo-frame .placeholder { font-size: 12px; color: var(--muted); text-align: center; padding: 16px; line-height: 1.5; }
+  .photo-frame .placeholder small { display: block; margin-top: 6px; font-size: 11px; }
+  .photo-frame.filled .placeholder { display: none; }
 
-  /* ===== Mobile ===== */
   @media (max-width: 720px) {
     main { grid-template-columns: 1fr; gap: 40px; padding: 32px 20px 56px; }
     .summary { position: static; }
@@ -338,14 +194,29 @@
 </header>
 
 <main>
-  <!-- ===== Calculator ===== -->
   <section class="calculator" aria-label="Calculator">
 
-    <!-- Water Heater: Atlantic, horizontal/vertical + capacity -->
+    <!-- PATHWAY -->
+    <div class="field">
+      <label>How can we help?</label>
+      <div class="tiles" role="radiogroup" aria-label="Service pathway">
+        <label class="tile path">
+          <input type="radio" name="pathway" value="reinstallation" checked>
+          <span class="path-title">Reinstallation</span>
+          <span class="path-desc">Replacing an existing heater</span>
+        </label>
+        <label class="tile path">
+          <input type="radio" name="pathway" value="newInstallation">
+          <span class="path-title">New Installation</span>
+          <span class="path-desc">First-time heater in a new site</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- HEATER -->
     <div class="field">
       <label>Water Heater — Atlantic</label>
-      <p class="hint">Atlantic brand only. Every capacity below is available in both horizontal and vertical variations — choose orientation, then capacity.</p>
-
+      <p class="hint">Atlantic brand only. Capacities 50–100 L come in horizontal &amp; vertical; larger sizes are floor-standing.</p>
       <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
         <label class="tile">
           <input type="radio" name="orientation" value="horizontal" checked>
@@ -361,7 +232,6 @@
           </span>
           <span class="tile-label">Horizontal</span>
         </label>
-
         <label class="tile">
           <input type="radio" name="orientation" value="vertical">
           <span class="tile-pic" aria-hidden="true">
@@ -376,92 +246,86 @@
           <span class="tile-label">Vertical</span>
         </label>
       </div>
-
       <select id="size" style="margin-top:14px"></select>
     </div>
 
-    <!-- Reinstallation Needed toggle -->
-    <div class="field" id="reinstallToggleField">
-      <label class="check">
-        <input type="checkbox" id="reinstallNeeded" checked>
-        <span class="box" aria-hidden="true"></span>
-        <span>Reinstallation needed</span>
-      </label>
+    <div class="field">
+      <label for="qty">Quantity</label>
+      <input type="number" id="qty" min="1" step="1" value="1">
     </div>
 
-    <!-- Everything below greys out when reinstallation is unchecked -->
-    <div id="reinstallSections">
+    <!-- CITY -->
+    <div class="field">
+      <label for="location">City</label>
+      <select id="location"></select>
+    </div>
 
-      <div class="field">
-        <label for="qty">Quantity</label>
-        <input type="number" id="qty" min="1" step="1" value="1">
+    <!-- FALSE CEILING MODIFICATION -->
+    <div class="field">
+      <label>False Ceiling Modification</label>
+      <div class="checks">
+        <label class="check">
+          <input type="checkbox" id="ceilingNeeded">
+          <span class="box" aria-hidden="true"></span>
+          <span>False ceiling modification needed?</span>
+        </label>
       </div>
+      <details class="info">
+        <summary>What's included</summary>
+        <p>Cutting the false ceiling, fixing it back, applying putty, applying paint, and providing an access panel where necessary.</p>
+      </details>
+      <p class="disclaimer">If false-ceiling work is found necessary on site and not selected here, it will be charged separately on site.</p>
 
-      <div class="field">
-        <label for="location">Location</label>
-        <select id="location"></select>
-      </div>
-
-      <!-- False ceiling cutting -->
-      <div class="field">
-        <label for="ceiling">False Ceiling Cutting</label>
-        <div class="ceiling-pic"><img id="ceilingPic" src="" alt="False ceiling cut preview"></div>
+      <div class="subblock" id="ceilingBlock" hidden>
+        <div class="ceiling-pic" aria-hidden="true">
+          <svg id="ceilingSvg" viewBox="0 0 120 100" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="6" width="108" height="88"/>
+            <line x1="60" y1="6" x2="60" y2="94" stroke-width="1"/>
+            <line x1="6" y1="50" x2="114" y2="50" stroke-width="1"/>
+            <rect id="ceilingCut" x="24" y="14" width="72" height="72" stroke-dasharray="5 4"/>
+          </svg>
+        </div>
+        <p class="ceiling-caption" id="ceilingCaption"></p>
         <select id="ceiling"></select>
       </div>
+    </div>
 
-      <!-- Plumbing Connectors -->
-      <div class="field">
-        <label for="connector">Plumbing Connectors</label>
-        <div class="ceiling-pic"><img id="connectorPic" src="" alt="Plumbing connector preview"></div>
-        <select id="connector"></select>
+    <!-- FLEXIBLE CONNECTORS -->
+    <div class="field">
+      <label for="connectors">Flexible Connectors</label>
+      <select id="connectors">
+        <option value="no" selected>No</option>
+        <option value="yes">Yes</option>
+      </select>
+    </div>
+
+    <!-- VALVES -->
+    <div class="field">
+      <label for="valves">Valves</label>
+      <select id="valves"></select>
+      <p class="disclaimer" id="valvesNote" style="display:none"></p>
+    </div>
+
+    <!-- PIPING -->
+    <div class="field">
+      <label>Piping</label>
+      <div class="checks">
+        <label class="check">
+          <input type="checkbox" id="piping">
+          <span class="box" aria-hidden="true"></span>
+          <span>Add piping</span>
+        </label>
       </div>
-
-      <!-- Valves -->
-      <div class="field">
-        <label for="valve">Valves</label>
-        <div class="ceiling-pic"><img id="valvePic" src="" alt="Valve preview"></div>
-        <select id="valve"></select>
+      <div class="subblock" id="pipingBlock" hidden>
+        <label class="sublabel" for="pipeSize">Pipe size</label>
+        <select id="pipeSize"></select>
+        <label class="sublabel" for="pipingFeet" style="margin-top:14px">Length (feet)</label>
+        <input type="number" id="pipingFeet" min="10" max="200" step="1" value="10">
       </div>
-
-      <!-- Piping -->
-      <div class="field">
-        <label>Piping</label>
-        <div class="checks">
-          <label class="check">
-            <input type="checkbox" id="piping">
-            <span class="box" aria-hidden="true"></span>
-            <span>Add Piping</span>
-            <span class="price" id="pipingRate"></span>
-          </label>
-        </div>
-        <div class="subfield">
-          <label class="sublabel" for="pipingFeet">Length (feet)</label>
-          <input type="number" id="pipingFeet" min="10" max="200" step="1" value="10" disabled>
-        </div>
-      </div>
-
-      <!-- Optional add-ons -->
-      <div class="field">
-        <label>Optional Add-ons</label>
-        <div class="checks">
-          <label class="check">
-            <input type="checkbox" id="install">
-            <span class="box" aria-hidden="true"></span>
-            <span class="addon-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-              </svg>
-            </span>
-            <span>Add Installation</span>
-            <span class="price" id="installPrice"></span>
-          </label>
-        </div>
-      </div>
-
     </div>
   </section>
 
-  <!-- ===== Summary ===== -->
+  <!-- SUMMARY -->
   <section class="summary" aria-label="Estimate summary" aria-live="polite">
     <h2>Estimate</h2>
     <div id="breakdown"></div>
@@ -487,7 +351,7 @@
   </section>
 </main>
 
-<!-- ===== Inline photo gallery (same tab, no navigation) ===== -->
+<!-- ===== Inline photo gallery (empty frames; fill via WORK_PHOTOS) ===== -->
 <div class="modal" id="gallery" aria-hidden="true">
   <div class="modal-backdrop" data-close></div>
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="galleryTitle">
@@ -495,138 +359,108 @@
       <h2 id="galleryTitle">Photos of Our Works</h2>
       <button type="button" class="modal-close" id="galleryClose" aria-label="Close gallery">&times;</button>
     </div>
-
     <div class="gallery-grid">
-      <!-- Water heater (photo reflects chosen orientation) -->
       <figure class="gallery-item">
-        <div class="gallery-pic"><img id="galHeaterImg" src="" alt="Selected water heater"></div>
-        <figcaption id="galHeaterCap">Water Heater</figcaption>
+        <div class="photo-frame" id="frameHeater"><img alt="Water heater"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.heater</small></span></div>
+        <figcaption id="capHeater">Water Heater</figcaption>
       </figure>
-
-      <!-- False ceiling cutting (photo reflects chosen size) -->
       <figure class="gallery-item">
-        <div class="gallery-pic"><img id="galCeilingImg" src="" alt="False ceiling cut"></div>
-        <figcaption id="galCeilingCap">False Ceiling Cutting</figcaption>
+        <div class="photo-frame" id="frameInstall"><img alt="Installation work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.install</small></span></div>
+        <figcaption id="capInstall">Installation</figcaption>
       </figure>
-
-      <!-- Plumbing Connectors -->
       <figure class="gallery-item">
-        <div class="gallery-pic"><img id="galConnectorImg" src="" alt="Plumbing connectors"></div>
-        <figcaption id="galConnectorCap">Plumbing Connectors</figcaption>
+        <div class="photo-frame" id="frameCeiling"><img alt="False ceiling work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.falseCeiling</small></span></div>
+        <figcaption id="capCeiling">False Ceiling Modification</figcaption>
       </figure>
-
-      <!-- Valves -->
       <figure class="gallery-item">
-        <div class="gallery-pic"><img id="galValveImg" src="" alt="Valves"></div>
-        <figcaption id="galValveCap">Valves</figcaption>
-      </figure>
-
-      <!-- Piping -->
-      <figure class="gallery-item">
-        <div class="gallery-pic"><img id="galPipingImg" src="" alt="Piping work"></div>
-        <figcaption id="galPipingCap">Piping</figcaption>
-      </figure>
-
-      <!-- Installation -->
-      <figure class="gallery-item">
-        <div class="gallery-pic"><img id="galInstallImg" src="" alt="Installation work"></div>
-        <figcaption id="galInstallCap">Installation</figcaption>
+        <div class="photo-frame" id="framePipes"><img alt="Piping work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.pipes</small></span></div>
+        <figcaption id="capPipes">Piping</figcaption>
       </figure>
     </div>
-
-    <p class="note">Illustrative views of typical works — final result varies by site.</p>
+    <p class="note">Photos are illustrative — final result varies by site.</p>
   </div>
 </div>
 
 <script>
   /* =========================================================
-     PRICING DATA — edit values here. All prices in AED.
-     Rates marked TODO are placeholders; owner will supply real
-     values. Photo filenames map to files in CTT/photos/.
+     WORK PHOTOS — paste image URLs to fill the popup frames.
+     Leave "" for an empty placeholder.
+     ========================================================= */
+  const WORK_PHOTOS = { heater: "", install: "", falseCeiling: "", pipes: "" };
 
-     Charged PER UNIT (× quantity):  heater, labor, installation
-     Charged PER ORDER (flat):       false ceiling, plumbing
-                                     connectors, valves, piping
+  /* =========================================================
+     PRICING DATA — all AED. Many values are PLACEHOLDERS that
+     you'll replace later (anchoring, valves, connectors, piping,
+     and prices for the newly added capacities).
+
+     Per unit (× qty):  heater, installation, anchoring
+     Flat per order:    delivery (city), false ceiling, connectors,
+                        valves, piping
      ========================================================= */
   const PRICING = {
     brand: "Atlantic",
 
-    // Photo per orientation (real jpgs uploaded to CTT/photos/).
-    orientationPhotos: {
-      horizontal: "heater_horizontal.jpg",
-      vertical:   "heater_vertical.jpg"
+    // Two pathways. The ONLY difference is the anchoring charge.
+    // anchoring values below are PLACEHOLDERS — awaiting real figures.
+    pathways: {
+      reinstallation:  { label: "Reinstallation",  anchoring: 100 },
+      newInstallation: { label: "New Installation", anchoring: 250 }
     },
 
-    // Each capacity carries its own photo, piping rate (AED per ft),
-    // and the labor matrix bucket it belongs to.
+    // litres drives the valve gate (>= valvesMinLitres).
+    // installPerUnit = installation labour for that size (per unit).
+    // pipingRatePerFoot = piping rate (pricing to be finalised).
+    // NOTE: prices for 10/15/30/250/500 L are PLACEHOLDERS.
     sizes: [
-      { label: "50 L",  price: 500,  pipingRatePerFoot: 5,  photo: "heater_50l.jpg",  laborBucket: "Up to 50L" }, // TODO heater price
-      { label: "80 L",  price: 550,  pipingRatePerFoot: 6,  photo: "heater_80l.jpg",  laborBucket: "80L"       }, // TODO heater price
-      { label: "100 L", price: 600,  pipingRatePerFoot: 7,  photo: "heater_100l.jpg", laborBucket: "100/150L"  }, // TODO heater price
-      { label: "150 L", price: 900,  pipingRatePerFoot: 8,  photo: "heater_150l.jpg", laborBucket: "100/150L"  }, // TODO heater price
-      { label: "200 L", price: 1400, pipingRatePerFoot: 9,  photo: "heater_200l.jpg", laborBucket: "200L"      }, // TODO heater price
-      { label: "300 L", price: 2300, pipingRatePerFoot: 10, photo: "heater_300l.jpg", laborBucket: "300L+"     }  // TODO heater price
+      { label: "10 L",  litres: 10,  price: 300,  installPerUnit: 300,  pipingRatePerFoot: 4  },
+      { label: "15 L",  litres: 15,  price: 330,  installPerUnit: 300,  pipingRatePerFoot: 4  },
+      { label: "30 L",  litres: 30,  price: 400,  installPerUnit: 300,  pipingRatePerFoot: 5  },
+      { label: "50 L",  litres: 50,  price: 500,  installPerUnit: 300,  pipingRatePerFoot: 5  },
+      { label: "80 L",  litres: 80,  price: 550,  installPerUnit: 300,  pipingRatePerFoot: 6  },
+      { label: "100 L", litres: 100, price: 600,  installPerUnit: 300,  pipingRatePerFoot: 7  },
+      { label: "150 L", litres: 150, price: 900,  installPerUnit: 300,  pipingRatePerFoot: 8  },
+      { label: "200 L", litres: 200, price: 1400, installPerUnit: 600,  pipingRatePerFoot: 9  },
+      { label: "250 L", litres: 250, price: 1850, installPerUnit: 800,  pipingRatePerFoot: 9  },
+      { label: "300 L", litres: 300, price: 2300, installPerUnit: 1000, pipingRatePerFoot: 10 },
+      { label: "500 L", litres: 500, price: 3500, installPerUnit: 1500, pipingRatePerFoot: 12 }
     ],
 
-    // City picker — used only to look up the labor rate from laborMatrix.
-    // No delivery charge: heater + labor are the only base costs.
+    // City / delivery (flat per order). Placeholder.
     locations: [
-      { label: "Dubai",          laborCity: "Dubai"         },
-      { label: "Sharjah",        laborCity: "Sharjah/Ajman" },
-      { label: "Ajman",          laborCity: "Sharjah/Ajman" },
-      { label: "Umm Al Quwain",  laborCity: "UAQ"           },
-      { label: "Ras Al Khaimah", laborCity: "RAK"           },
-      { label: "Fujairah",       laborCity: "Fujairah"      },
-      { label: "Al Ain",         laborCity: "Al Ain"        },
-      { label: "Abu Dhabi",      laborCity: "Abu Dhabi"     },
-      { label: "Liwa / Ruwais",  laborCity: "Liwa/Ruwais"   }
+      { label: "Dubai",          price: 50 },
+      { label: "Sharjah",        price: 75 },
+      { label: "Ajman",          price: 100 },
+      { label: "Umm Al Quwain",  price: 125 },
+      { label: "Abu Dhabi",      price: 150 },
+      { label: "Ras Al Khaimah", price: 175 },
+      { label: "Fujairah",       price: 200 },
+      { label: "Al Ain",         price: 225 }
     ],
 
-    // Retail labor rates (inc-VAT), AED per unit. Indexed by size bucket
-    // then by city. Source: owner-supplied retail rate sheet.
-    laborMatrix: {
-      "Up to 50L": { "Dubai": 672,  "Sharjah/Ajman": 665,  "UAQ": 694,  "RAK": 717,  "Fujairah": 754,  "Al Ain": 777,  "Abu Dhabi": 799,  "Liwa/Ruwais": 1092 },
-      "80L":       { "Dubai": 767,  "Sharjah/Ajman": 759,  "UAQ": 789,  "RAK": 812,  "Fujairah": 849,  "Al Ain": 872,  "Abu Dhabi": 894,  "Liwa/Ruwais": 1187 },
-      "100/150L":  { "Dubai": 908,  "Sharjah/Ajman": 901,  "UAQ": 930,  "RAK": 953,  "Fujairah": 990,  "Al Ain": 1013, "Abu Dhabi": 1035, "Liwa/Ruwais": 1328 },
-      "200L":      { "Dubai": 1260, "Sharjah/Ajman": 1253, "UAQ": 1282, "RAK": 1305, "Fujairah": 1342, "Al Ain": 1365, "Abu Dhabi": 1387, "Liwa/Ruwais": 1680 },
-      "300L+":     { "Dubai": 1544, "Sharjah/Ajman": 1536, "UAQ": 1566, "RAK": 1589, "Fujairah": 1625, "Al Ain": 1649, "Abu Dhabi": 1671, "Liwa/Ruwais": 1964 }
-    },
-
-    // False ceiling cutting by panel size (cm). One photo per option.
+    // False ceiling modification by panel size (flat per order). Placeholder.
     falseCeiling: [
-      { label: "None",      dim: 0,   price: 0,    photo: "falseceiling_none.jpg" },
-      { label: "40 × 40",   dim: 40,  price: 600,  photo: "falseceiling_40.jpg"   },
-      { label: "80 × 80",   dim: 80,  price: 1200, photo: "falseceiling_80.jpg"   },
-      { label: "120 × 120", dim: 120, price: 1800, photo: "falseceiling_120.jpg"  },
-      { label: "160 × 160", dim: 160, price: 2400, photo: "falseceiling_160.jpg"  },
-      { label: "200 × 200", dim: 200, price: 3000, photo: "falseceiling_200.jpg"  }
+      { label: "40 × 40",   dim: 40,  price: 600 },
+      { label: "80 × 80",   dim: 80,  price: 1200 },
+      { label: "120 × 120", dim: 120, price: 1800 },
+      { label: "160 × 160", dim: 160, price: 2400 },
+      { label: "200 × 200", dim: 200, price: 3000 }
     ],
 
-    // Plumbing connectors — TODO labels & prices (owner to supply).
-    plumbingConnectors: [
-      { label: "None",          price: 0, photo: "connector_none.jpg" },
-      { label: "TODO Option A", price: 0, photo: "connector_a.jpg"    },
-      { label: "TODO Option B", price: 0, photo: "connector_b.jpg"    }
-    ],
+    // Flexible connectors: flat add-on. Price hidden in the UI.
+    flexibleConnectorsPrice: 80,
 
-    // Valves — TODO labels & prices (owner to supply).
+    // Valves — DUMMY prices, hidden in the UI. Only for >= valvesMinLitres.
     valves: [
-      { label: "None",          price: 0, photo: "valve_none.jpg" },
-      { label: "TODO Option A", price: 0, photo: "valve_a.jpg"    },
-      { label: "TODO Option B", price: 0, photo: "valve_b.jpg"    }
+      { label: "None",            price: 0  },
+      { label: "Isolating valve", price: 60 },
+      { label: "Angle valve",     price: 40 }
     ],
+    valvesMinLitres: 150,
 
-    // Piping (flat per order). Price = feet × selected size's
-    // pipingRatePerFoot, capped at maxPrice.
-    piping: { minFeet: 10, maxFeet: 200, defaultFeet: 10, maxPrice: 2000, photo: "piping.jpg" },
-
-    // Add-ons. Labor rate now comes from laborMatrix above (city × size).
-    laborPhoto:     "labor.jpg",
-    installPerUnit: 300, // TODO install rate
-    installPhoto:   "installation.jpg",
-
-    // Folder where the jpgs live (relative to this HTML).
-    photoDir: "photos/"
+    // Piping (flat per order). Pricing to be finalised. Pipe size has no
+    // price impact yet.
+    piping: { minFeet: 10, maxFeet: 200, defaultFeet: 10, maxPrice: 2000 },
+    pipeSizes: ['1/2"', '3/4"']
   };
 
   /* ===== Helpers ===== */
@@ -636,170 +470,151 @@
     size: document.getElementById("size"),
     qty: document.getElementById("qty"),
     location: document.getElementById("location"),
-    reinstallNeeded: document.getElementById("reinstallNeeded"),
-    reinstallSections: document.getElementById("reinstallSections"),
+    ceilingNeeded: document.getElementById("ceilingNeeded"),
+    ceilingBlock: document.getElementById("ceilingBlock"),
     ceiling: document.getElementById("ceiling"),
-    ceilingPic: document.getElementById("ceilingPic"),
-    connector: document.getElementById("connector"),
-    connectorPic: document.getElementById("connectorPic"),
-    valve: document.getElementById("valve"),
-    valvePic: document.getElementById("valvePic"),
+    ceilingCut: document.getElementById("ceilingCut"),
+    ceilingCaption: document.getElementById("ceilingCaption"),
+    connectors: document.getElementById("connectors"),
+    valves: document.getElementById("valves"),
+    valvesNote: document.getElementById("valvesNote"),
     piping: document.getElementById("piping"),
+    pipingBlock: document.getElementById("pipingBlock"),
+    pipeSize: document.getElementById("pipeSize"),
     pipingFeet: document.getElementById("pipingFeet"),
-    pipingRate: document.getElementById("pipingRate"),
-    install: document.getElementById("install"),
-    installPrice: document.getElementById("installPrice"),
     breakdown: document.getElementById("breakdown"),
     subtotal: document.getElementById("subtotal"),
     grandTotal: document.getElementById("grandTotal"),
     reset: document.getElementById("reset"),
-    // Gallery
     gallery: document.getElementById("gallery"),
     galleryOpen: document.getElementById("galleryOpen"),
     galleryClose: document.getElementById("galleryClose"),
-    galHeaterImg: document.getElementById("galHeaterImg"),
-    galHeaterCap: document.getElementById("galHeaterCap"),
-    galCeilingImg: document.getElementById("galCeilingImg"),
-    galCeilingCap: document.getElementById("galCeilingCap"),
-    galConnectorImg: document.getElementById("galConnectorImg"),
-    galConnectorCap: document.getElementById("galConnectorCap"),
-    galValveImg: document.getElementById("galValveImg"),
-    galValveCap: document.getElementById("galValveCap"),
-    galPipingImg: document.getElementById("galPipingImg"),
-    galPipingCap: document.getElementById("galPipingCap"),
-    galInstallImg: document.getElementById("galInstallImg"),
-    galInstallCap: document.getElementById("galInstallCap")
+    frameHeater: document.getElementById("frameHeater"),
+    frameInstall: document.getElementById("frameInstall"),
+    frameCeiling: document.getElementById("frameCeiling"),
+    framePipes: document.getElementById("framePipes"),
+    capHeater: document.getElementById("capHeater"),
+    capInstall: document.getElementById("capInstall"),
+    capCeiling: document.getElementById("capCeiling"),
+    capPipes: document.getElementById("capPipes")
   };
 
   /* ===== Populate dropdowns ===== */
   function buildOptions(selectEl, items, prefix, showPrice) {
     prefix = prefix || "";
-    if (showPrice === undefined) showPrice = true;
     selectEl.innerHTML = "";
     items.forEach((item, i) => {
       const opt = document.createElement("option");
       opt.value = String(i);
-      opt.textContent = (showPrice && item.price > 0)
+      // showPrice=false keeps the option label price-free (valves, etc.)
+      opt.textContent = (showPrice !== false && item.price > 0)
         ? prefix + item.label + " — " + fmt(item.price)
         : prefix + item.label;
       selectEl.appendChild(opt);
     });
   }
-  buildOptions(el.size, PRICING.sizes, PRICING.brand + " ", false); // capacity only — price shown in quote
-  buildOptions(el.location, PRICING.locations, "", false);          // city only — price shown in quote
+  buildOptions(el.size, PRICING.sizes, PRICING.brand + " ");
+  buildOptions(el.location, PRICING.locations);
   buildOptions(el.ceiling, PRICING.falseCeiling);
-  buildOptions(el.connector, PRICING.plumbingConnectors);
-  buildOptions(el.valve, PRICING.valves);
-  el.installPrice.textContent = fmt(PRICING.installPerUnit) + " / unit";
-
-  /* ===== Labor lookup — city × unit size matrix ===== */
-  function laborRateFor(size, location) {
-    const row = PRICING.laborMatrix[size.laborBucket];
-    return row ? (row[location.laborCity] || 0) : 0;
-  }
+  buildOptions(el.valves, PRICING.valves, "", false);   // no prices shown
+  PRICING.pipeSizes.forEach((s, i) => {
+    const o = document.createElement("option"); o.value = String(i); o.textContent = s; el.pipeSize.appendChild(o);
+  });
 
   el.pipingFeet.min = PRICING.piping.minFeet;
   el.pipingFeet.max = PRICING.piping.maxFeet;
   el.pipingFeet.value = PRICING.piping.defaultFeet;
 
-  /* ===== Render a breakdown line ===== */
+  /* ===== Breakdown line ===== */
   function lineHTML(desc, sub, amount) {
     const small = sub ? "<small>" + sub + "</small>" : "";
     return '<div class="line"><span class="desc">' + desc + small +
            '</span><span class="amt">' + fmt(amount) + '</span></div>';
   }
 
-  /* ===== Clamp helpers ===== */
-  function getQty() {
-    let q = parseInt(el.qty.value, 10);
-    if (isNaN(q) || q < 1) q = 1;
-    return q;
-  }
+  /* ===== Clamp / read helpers ===== */
+  function getQty() { let q = parseInt(el.qty.value, 10); if (isNaN(q) || q < 1) q = 1; return q; }
   function getFeet() {
     let f = parseInt(el.pipingFeet.value, 10);
     if (isNaN(f) || f < PRICING.piping.minFeet) f = PRICING.piping.minFeet;
     if (f > PRICING.piping.maxFeet) f = PRICING.piping.maxFeet;
     return f;
   }
-  function getOrientation() {
-    const r = document.querySelector('input[name="orientation"]:checked');
-    return r ? r.value : "horizontal";
+  function getOrientation() { const r = document.querySelector('input[name="orientation"]:checked'); return r ? r.value : "horizontal"; }
+  function getPathway() { const r = document.querySelector('input[name="pathway"]:checked'); return r ? r.value : "reinstallation"; }
+
+  function updateCeilingPic(ceiling) {
+    if (!ceiling) return;
+    const side = Math.round((ceiling.dim / 200) * 72);
+    el.ceilingCut.setAttribute("width", side);
+    el.ceilingCut.setAttribute("height", side);
+    el.ceilingCut.setAttribute("x", 60 - side / 2);
+    el.ceilingCut.setAttribute("y", 50 - side / 2);
+    el.ceilingCaption.textContent = "Cut opening: " + ceiling.label + " cm";
   }
 
-  /* ===== Core calculation + render ===== */
+  /* ===== Core calc ===== */
   function recalc() {
-    const size      = PRICING.sizes[Number(el.size.value)]                   || PRICING.sizes[0];
-    const location  = PRICING.locations[Number(el.location.value)]           || PRICING.locations[0];
-    const ceiling   = PRICING.falseCeiling[Number(el.ceiling.value)]         || PRICING.falseCeiling[0];
-    const connector = PRICING.plumbingConnectors[Number(el.connector.value)] || PRICING.plumbingConnectors[0];
-    const valve     = PRICING.valves[Number(el.valve.value)]                 || PRICING.valves[0];
+    const size = PRICING.sizes[Number(el.size.value)] || PRICING.sizes[0];
+    const location = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
     const qty = getQty();
     const orientationLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
-    const reinstall = el.reinstallNeeded.checked;
+    const pathway = PRICING.pathways[getPathway()];
 
-    // Update the small section preview photos so the customer can see the
-    // currently selected option without opening the modal.
-    el.ceilingPic.src   = PRICING.photoDir + ceiling.photo;
-    el.ceilingPic.alt   = ceiling.dim ? ceiling.label + " cm cut" : "No cutting selected";
-    el.connectorPic.src = PRICING.photoDir + connector.photo;
-    el.connectorPic.alt = connector.label + " plumbing connector";
-    el.valvePic.src     = PRICING.photoDir + valve.photo;
-    el.valvePic.alt     = valve.label + " valve";
+    // False ceiling show/hide
+    const ceilingNeeded = el.ceilingNeeded.checked;
+    el.ceilingBlock.hidden = !ceilingNeeded;
+    const ceiling = PRICING.falseCeiling[Number(el.ceiling.value)] || PRICING.falseCeiling[0];
+    if (ceilingNeeded) updateCeilingPic(ceiling);
 
-    // Cascade enable/disable: when reinstallation isn't needed, everything
-    // below the heater greys out and is excluded from the total.
-    el.reinstallSections.classList.toggle("is-disabled", !reinstall);
-    el.reinstallSections.querySelectorAll("input, select").forEach((node) => {
-      node.disabled = !reinstall;
-    });
-    // Piping length has its own enable rule on top of the cascade.
-    el.pipingFeet.disabled = !reinstall || !el.piping.checked;
-    el.pipingRate.textContent = fmt(size.pipingRatePerFoot) + " / ft";
+    // Valves gate (>= 150 L)
+    const valvesOk = size.litres >= PRICING.valvesMinLitres;
+    el.valves.disabled = !valvesOk;
+    if (!valvesOk) el.valves.value = "0";
+    el.valvesNote.textContent = valvesOk ? "" : "Available for " + PRICING.valvesMinLitres + " L and above.";
+    el.valvesNote.style.display = valvesOk ? "none" : "block";
+    const valve = PRICING.valves[Number(el.valves.value)] || PRICING.valves[0];
 
-    // Labor rate is auto-included; comes from city × unit-size matrix.
-    const laborRate = laborRateFor(size, location);
+    // Connectors
+    const connectorsYes = el.connectors.value === "yes";
 
-    const heaterTotal = size.price * qty;
-
-    let html = "";
-    html += lineHTML(
-      "Water Heater",
-      PRICING.brand + " " + size.label + " &middot; " + orientationLabel + " &times; " + qty,
-      heaterTotal
-    );
-
-    let total = heaterTotal;
-
-    if (reinstall) {
-      const ceilingTotal   = ceiling.price;
-      const connectorTotal = connector.price;
-      const valveTotal     = valve.price;
-      const laborTotal     = laborRate * qty;                                       // always included with reinstallation
-      const installTotal   = el.install.checked ? PRICING.installPerUnit * qty : 0;
-
-      let feet = 0, pipingTotal = 0;
-      if (el.piping.checked) {
-        feet = getFeet();
-        pipingTotal = Math.min(feet * size.pipingRatePerFoot, PRICING.piping.maxPrice);
-      }
-
-      html += lineHTML("Labor", size.label + " &middot; " + location.label + " &times; " + qty + " @ " + fmt(laborRate) + "/unit", laborTotal);
-      if (ceiling.price   > 0) html += lineHTML("False Ceiling Cutting", ceiling.label + " cm", ceilingTotal);
-      if (connector.price > 0) html += lineHTML("Plumbing Connectors", connector.label, connectorTotal);
-      if (valve.price     > 0) html += lineHTML("Valves", valve.label, valveTotal);
-      if (el.piping.checked) {
-        const capped = feet * size.pipingRatePerFoot > PRICING.piping.maxPrice;
-        const sub = feet + " ft @ " + fmt(size.pipingRatePerFoot) + "/ft" + (capped ? " (capped)" : "");
-        html += lineHTML("Piping", sub, pipingTotal);
-      }
-      if (el.install.checked) html += lineHTML("Installation", qty + " unit" + (qty > 1 ? "s" : ""), installTotal);
-
-      total += ceilingTotal + connectorTotal + valveTotal + pipingTotal + laborTotal + installTotal;
-    } else {
-      html += lineHTML("Reinstallation", "Not required — purchase only", 0);
+    // Piping
+    el.pipingBlock.hidden = !el.piping.checked;
+    let feet = 0, pipingTotal = 0, pipeSizeLabel = "";
+    if (el.piping.checked) {
+      feet = getFeet();
+      pipeSizeLabel = PRICING.pipeSizes[Number(el.pipeSize.value)] || PRICING.pipeSizes[0];
+      pipingTotal = Math.min(feet * size.pipingRatePerFoot, PRICING.piping.maxPrice);
     }
 
+    // Totals
+    const heaterTotal = size.price * qty;
+    const installTotal = size.installPerUnit * qty;
+    const anchoringTotal = pathway.anchoring * qty;          // per unit
+    const deliveryTotal = location.price;                    // flat
+    const ceilingTotal = ceilingNeeded ? ceiling.price : 0;  // flat
+    const connectorsTotal = connectorsYes ? PRICING.flexibleConnectorsPrice : 0;
+    const valvesTotal = (valvesOk && valve.price) ? valve.price : 0;
+
+    // Breakdown
+    let html = "";
+    html += lineHTML("Water Heater", PRICING.brand + " " + size.label + " &middot; " + orientationLabel + " &times; " + qty, heaterTotal);
+    html += lineHTML("Installation", qty + " unit" + (qty > 1 ? "s" : "") + " @ " + fmt(size.installPerUnit), installTotal);
+    if (anchoringTotal > 0) {
+      html += lineHTML("Anchoring", pathway.label + (qty > 1 ? " &times; " + qty : ""), anchoringTotal);
+    }
+    html += lineHTML("Delivery", location.label, deliveryTotal);
+    if (ceilingNeeded) html += lineHTML("False Ceiling Modification", ceiling.label + " cm", ceilingTotal);
+    if (connectorsYes) html += lineHTML("Flexible Connectors", "Included", connectorsTotal);
+    if (valvesOk && valve.price > 0) html += lineHTML("Valves", valve.label, valvesTotal);
+    if (el.piping.checked) {
+      const capped = feet * size.pipingRatePerFoot > PRICING.piping.maxPrice;
+      html += lineHTML("Piping", pipeSizeLabel + " &middot; " + feet + " ft" + (capped ? " (capped)" : ""), pipingTotal);
+    }
     el.breakdown.innerHTML = html;
+
+    const total = heaterTotal + installTotal + anchoringTotal + deliveryTotal +
+                  ceilingTotal + connectorsTotal + valvesTotal + pipingTotal;
     el.subtotal.textContent = fmt(total);
     el.grandTotal.textContent = fmt(total);
   }
@@ -809,78 +624,43 @@
     el.size.addEventListener(evt, recalc);
     el.qty.addEventListener(evt, recalc);
     el.location.addEventListener(evt, recalc);
-    el.reinstallNeeded.addEventListener(evt, recalc);
+    el.ceilingNeeded.addEventListener(evt, recalc);
     el.ceiling.addEventListener(evt, recalc);
-    el.connector.addEventListener(evt, recalc);
-    el.valve.addEventListener(evt, recalc);
+    el.connectors.addEventListener(evt, recalc);
+    el.valves.addEventListener(evt, recalc);
     el.piping.addEventListener(evt, recalc);
+    el.pipeSize.addEventListener(evt, recalc);
     el.pipingFeet.addEventListener(evt, recalc);
-    el.install.addEventListener(evt, recalc);
   });
-  document.querySelectorAll('input[name="orientation"]').forEach((r) => {
+  document.querySelectorAll('input[name="orientation"], input[name="pathway"]').forEach((r) => {
     r.addEventListener("change", recalc);
   });
-
   el.qty.addEventListener("blur", () => { el.qty.value = getQty(); recalc(); });
-  el.pipingFeet.addEventListener("blur", () => {
-    if (el.piping.checked) el.pipingFeet.value = getFeet();
-    recalc();
-  });
+  el.pipingFeet.addEventListener("blur", () => { if (el.piping.checked) el.pipingFeet.value = getFeet(); recalc(); });
 
-  /* ===== Inline photo gallery (same tab) ===== */
-  // Sync the gallery so each tile shows the photo for the current selection.
-  function refreshGallery() {
-    const size      = PRICING.sizes[Number(el.size.value)]                   || PRICING.sizes[0];
-    const ceiling   = PRICING.falseCeiling[Number(el.ceiling.value)]         || PRICING.falseCeiling[0];
-    const connector = PRICING.plumbingConnectors[Number(el.connector.value)] || PRICING.plumbingConnectors[0];
-    const valve     = PRICING.valves[Number(el.valve.value)]                 || PRICING.valves[0];
-    const qty = getQty();
-    const orientation = getOrientation();
-    const orientationLabel = orientation === "vertical" ? "Vertical" : "Horizontal";
-    const reinstall = el.reinstallNeeded.checked;
-
-    // Heater photo follows orientation; caption shows capacity + qty.
-    el.galHeaterImg.src = PRICING.photoDir + (PRICING.orientationPhotos[orientation] || PRICING.orientationPhotos.horizontal);
-    el.galHeaterImg.alt = PRICING.brand + " " + size.label + " " + orientationLabel + " water heater";
-    el.galHeaterCap.innerHTML = PRICING.brand + " " + size.label +
-      "<small>" + orientationLabel + " &middot; Qty " + qty + "</small>";
-
-    // False ceiling.
-    el.galCeilingImg.src = PRICING.photoDir + ceiling.photo;
-    el.galCeilingImg.alt = ceiling.dim ? ceiling.label + " cm cut" : "No ceiling cutting";
-    el.galCeilingCap.innerHTML = (reinstall && ceiling.dim)
-      ? "False Ceiling Cutting<small>" + ceiling.label + " cm</small>"
-      : "False Ceiling Cutting<small>Not in this quote</small>";
-
-    // Plumbing connectors.
-    el.galConnectorImg.src = PRICING.photoDir + connector.photo;
-    el.galConnectorImg.alt = connector.label + " plumbing connector";
-    el.galConnectorCap.innerHTML = (reinstall && connector.price > 0)
-      ? "Plumbing Connectors<small>" + connector.label + "</small>"
-      : "Plumbing Connectors<small>Not in this quote</small>";
-
-    // Valves.
-    el.galValveImg.src = PRICING.photoDir + valve.photo;
-    el.galValveImg.alt = valve.label + " valve";
-    el.galValveCap.innerHTML = (reinstall && valve.price > 0)
-      ? "Valves<small>" + valve.label + "</small>"
-      : "Valves<small>Not in this quote</small>";
-
-    // Piping.
-    el.galPipingImg.src = PRICING.photoDir + PRICING.piping.photo;
-    el.galPipingImg.alt = "Piping work";
-    el.galPipingCap.innerHTML = (reinstall && el.piping.checked)
-      ? "Piping<small>" + getFeet() + " ft run</small>"
-      : "Piping<small>Not in this quote</small>";
-
-    // Installation.
-    el.galInstallImg.src = PRICING.photoDir + PRICING.installPhoto;
-    el.galInstallImg.alt = "Installation work";
-    el.galInstallCap.innerHTML = (reinstall && el.install.checked)
-      ? "Installation<small>Standard fit &amp; commissioning</small>"
-      : "Installation<small>Not in this quote</small>";
+  /* ===== Gallery ===== */
+  function setFrame(frameEl, url) {
+    const img = frameEl.querySelector("img");
+    if (url) { img.src = url; frameEl.classList.add("filled"); }
+    else { img.removeAttribute("src"); frameEl.classList.remove("filled"); }
   }
+  function refreshGallery() {
+    const size = PRICING.sizes[Number(el.size.value)] || PRICING.sizes[0];
+    const ceiling = PRICING.falseCeiling[Number(el.ceiling.value)] || PRICING.falseCeiling[0];
+    const qty = getQty();
+    const orientationLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
+    const pathway = PRICING.pathways[getPathway()];
 
+    setFrame(el.frameHeater, WORK_PHOTOS.heater);
+    setFrame(el.frameInstall, WORK_PHOTOS.install);
+    setFrame(el.frameCeiling, WORK_PHOTOS.falseCeiling);
+    setFrame(el.framePipes, WORK_PHOTOS.pipes);
+
+    el.capHeater.innerHTML = PRICING.brand + " " + size.label + "<small>" + orientationLabel + " &middot; Qty " + qty + "</small>";
+    el.capInstall.innerHTML = "Installation<small>" + pathway.label + "</small>";
+    el.capCeiling.innerHTML = "False Ceiling Modification<small>" + (el.ceilingNeeded.checked ? ceiling.label + " cm" : "Not in this quote") + "</small>";
+    el.capPipes.innerHTML = "Piping<small>" + (el.piping.checked ? getFeet() + " ft run" : "Not in this quote") + "</small>";
+  }
   let lastFocused = null;
   function openGallery() {
     lastFocused = document.activeElement;
@@ -896,38 +676,31 @@
     document.body.style.overflow = "";
     if (lastFocused && lastFocused.focus) lastFocused.focus();
   }
-
   el.galleryOpen.addEventListener("click", openGallery);
   el.galleryClose.addEventListener("click", closeGallery);
-  // Click outside the box (on the backdrop) closes it.
-  el.gallery.addEventListener("click", (e) => {
-    if (e.target.hasAttribute("data-close")) closeGallery();
-  });
-  // Esc closes.
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && el.gallery.classList.contains("open")) closeGallery();
-  });
+  el.gallery.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close")) closeGallery(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.gallery.classList.contains("open")) closeGallery(); });
 
   /* ===== Reset ===== */
   el.reset.addEventListener("click", () => {
-    el.size.value = "0";
-    el.location.value = "0";
-    el.ceiling.value = "0";
-    el.connector.value = "0";
-    el.valve.value = "0";
-    el.qty.value = "1";
-    el.reinstallNeeded.checked = true;
+    const reinstall = document.querySelector('input[name="pathway"][value="reinstallation"]');
+    if (reinstall) reinstall.checked = true;
     const horiz = document.querySelector('input[name="orientation"][value="horizontal"]');
     if (horiz) horiz.checked = true;
+    el.size.value = "0";
+    el.qty.value = "1";
+    el.location.value = "0";
+    el.ceilingNeeded.checked = false;
+    el.ceiling.value = "0";
+    el.connectors.value = "no";
+    el.valves.value = "0";
     el.piping.checked = false;
+    el.pipeSize.value = "0";
     el.pipingFeet.value = PRICING.piping.defaultFeet;
-    el.install.checked = false;
     recalc();
   });
 
-  // Initial render
   recalc();
 </script>
 </body>
 </html>
-
