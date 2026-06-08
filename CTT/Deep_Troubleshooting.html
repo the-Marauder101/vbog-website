@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CTT Field Diagnostic</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0f11;
+    --surface:  #161a1e;
+    --border:   #252b32;
+    --muted:    #3a4149;
+    --text:     #dde2e8;
+    --subtext:  #7a8694;
+    --orange:   #E8622A;
+    --orange-d: #c4511f;
+    --green:    #27ae60;
+    --blue:     #2980b9;
+    --yellow:   #e67e22;
+    --red:      #c0392b;
+    --grey:     #576574;
+    --flag-red: #e74c3c;
+    --flag-ora: #e67e22;
+    --mono:     'IBM Plex Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-dot {
+    width: 8px; height: 8px;
+    background: var(--orange);
+    border-radius: 50%;
+  }
+  .header-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--subtext);
+    text-transform: uppercase;
+  }
+  .header-title span { color: var(--orange); }
+  .breadcrumb {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    background: var(--surface);
+    padding: 0 20px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--orange);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN CONTAINER ── */
+  .main { padding: 20px 20px 80px; max-width: 560px; margin: 0 auto; }
+
+  /* ── SCREEN ── */
+  .screen { display: none; animation: fadeIn 0.25s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 6px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .section-sub {
+    font-size: 13px;
+    color: var(--subtext);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  /* ── CHOICE BUTTONS ── */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .choice-btn:active, .choice-btn:hover {
+    border-color: var(--orange);
+    background: #1a1f25;
+  }
+  .choice-icon {
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .choice-text {}
+  .choice-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    display: block;
+  }
+  .choice-desc {
+    font-size: 12px;
+    color: var(--subtext);
+    margin-top: 2px;
+    display: block;
+    line-height: 1.5;
+  }
+
+  /* ── FAULT GRID ── */
+  .fault-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .fault-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .fault-tile:active, .fault-tile:hover {
+    border-color: var(--orange);
+    background: #1a1f25;
+  }
+  .fault-tile-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+  .fault-tile-label { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; }
+
+  /* ── INLINE ALERT ── */
+  .alert {
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-left: 3px solid;
+  }
+  .alert-warn { background: #1f1a10; border-color: var(--yellow); color: #d4a843; }
+  .alert-info  { background: #101820; border-color: var(--blue);   color: #6db3d4; }
+  .alert-stop  { background: #1f1010; border-color: var(--red);    color: #e08080; }
+
+  /* ── FLAG CHIPS ── */
+  .flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .flag-red { background: #2a1015; border: 1px solid #5a2020; color: var(--flag-red); }
+  .flag-orange { background: #2a1e10; border: 1px solid #5a3a15; color: var(--flag-ora); }
+
+  /* ── REPAIR STEPS ── */
+  .repair-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .repair-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .repair-header-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--subtext);
+  }
+  .repair-steps {
+    padding: 12px 16px;
+    counter-reset: step;
+  }
+  .repair-step {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .repair-step:last-child { margin-bottom: 0; }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--orange);
+    background: #1f1510;
+    border: 1px solid #3a2510;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+  .step-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    padding-top: 2px;
+  }
+  .step-text .critical {
+    color: #e08080;
+    font-weight: 500;
+  }
+
+  /* ── PART LINE ── */
+  .part-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: #111518;
+  }
+  .part-label {
+    font-size: 12px;
+    color: var(--subtext);
+    flex: 1;
+    line-height: 1.5;
+  }
+
+  /* ── OUTCOME CARDS ── */
+  .outcome-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid;
+    margin-bottom: 16px;
+  }
+  .outcome-header {
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .outcome-icon { font-size: 28px; }
+  .outcome-type {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    display: block;
+  }
+  .outcome-title { font-size: 17px; font-weight: 600; display: block; margin-top: 1px; }
+  .outcome-body { padding: 14px 18px; background: rgba(0,0,0,0.3); }
+  .outcome-body p { font-size: 13px; line-height: 1.6; margin-bottom: 10px; }
+  .outcome-body p:last-child { margin-bottom: 0; }
+
+  .oc-green  { border-color: #1f4d33; }
+  .oc-green .outcome-header  { background: #0d2b1c; color: #4ecf84; }
+  .oc-blue   { border-color: #1a3a54; }
+  .oc-blue .outcome-header   { background: #0d1f30; color: #5ba8d4; }
+  .oc-yellow { border-color: #4d3a1a; }
+  .oc-yellow .outcome-header { background: #2a1f0a; color: #d4a030; }
+  .oc-red    { border-color: #4d1a1a; }
+  .oc-red .outcome-header    { background: #2a0d0d; color: #e08080; }
+  .oc-grey   { border-color: #2a3240; }
+  .oc-grey .outcome-header   { background: #141c24; color: #8a9bb0; }
+
+  /* ── INFO ROWS ── */
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--subtext); }
+  .info-val { font-weight: 500; color: var(--text); text-align: right; }
+  .info-val.ok { color: var(--green); }
+  .info-val.warn { color: var(--yellow); }
+  .info-val.bad { color: var(--red); }
+
+  /* ── PILL ── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+  }
+  .pill-green  { background: #0d2b1c; color: #4ecf84; border: 1px solid #1f4d33; }
+  .pill-red    { background: #2a0d0d; color: #e08080; border: 1px solid #4d1a1a; }
+  .pill-yellow { background: #2a1f0a; color: #d4a030; border: 1px solid #4d3a1a; }
+  .pill-blue   { background: #0d1f30; color: #5ba8d4; border: 1px solid #1a3a54; }
+  .pill-grey   { background: #141c24; color: #8a9bb0; border: 1px solid #2a3240; }
+
+  /* ── CUSTOMER MESSAGE BOX ── */
+  .message-box {
+    background: #111518;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .message-box-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--subtext);
+    margin-bottom: 8px;
+  }
+  .message-box-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  /* ── PARTS LOG ── */
+  .parts-log { margin-top: 16px; }
+  .parts-log-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--subtext);
+    margin-bottom: 8px;
+  }
+  .part-entry {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .part-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+  }
+  .part-input:focus { border-color: var(--orange); }
+  .part-input::placeholder { color: var(--muted); }
+
+  /* ── SIGN OFF ── */
+  .signoff-area {
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .signoff-label {
+    padding: 10px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--subtext);
+  }
+  .signoff-canvas {
+    width: 100%;
+    height: 120px;
+    background: #0a0c0e;
+    cursor: crosshair;
+    display: block;
+    touch-action: none;
+  }
+  .signoff-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-family: var(--sans);
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-primary {
+    background: var(--orange);
+    color: #fff;
+    border-color: var(--orange);
+  }
+  .btn-primary:hover { background: var(--orange-d); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--subtext);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* ── BACK BUTTON ── */
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--subtext);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 20px;
+    font-family: var(--sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .back-btn:hover { color: var(--text); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  /* ── COLLAPSIBLE ── */
+  .collapsible-trigger {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .collapsible-trigger:hover { border-color: var(--muted); }
+  .collapsible-arrow { transition: transform 0.2s; color: var(--subtext); }
+  .collapsible-trigger.open .collapsible-arrow { transform: rotate(180deg); }
+  .collapsible-body {
+    display: none;
+    padding: 0;
+    margin-bottom: 12px;
+  }
+  .collapsible-body.open { display: block; }
+
+  /* ── STICKY BOTTOM ── */
+  .sticky-bottom {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    gap: 10px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  /* ── UTILS ── */
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .mt16 { margin-top: 16px; }
+  .mb12 { margin-bottom: 12px; }
+  .gap8 { display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; }
+
+  @media (max-width: 400px) {
+    .fault-grid { grid-template-columns: 1fr 1fr; }
+    .section-title { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="header-dot"></div>
+    <div class="header-title"><span>CTT</span> Field Diagnostic</div>
+  </div>
+  <div class="breadcrumb" id="breadcrumb">START</div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:5%"></div></div>
+  <div class="progress-label" id="progressLabel">Step 1 of 6</div>
+</div>
+
+<div class="main">
+
+  <!-- ═══════════════════════════════════════════════
+       S0 — CHANNEL SELECT
+  ═══════════════════════════════════════════════ -->
+  <div class="screen active" id="s0">
+    <div class="section-label">Step 1 — Channel</div>
+    <div class="section-title">Who is the complaint from?</div>
+    <div class="section-sub">This affects how we handle photos, checklists, and AED 160.</div>
+    <div class="choices">
+      <div class="choice-btn" onclick="setChannel('project')">
+        <div class="choice-icon">🏗️</div>
+        <div class="choice-text">
+          <span class="choice-label">Project — Sadara / Site</span>
+          <span class="choice-desc">Complaint routed via Sadara or contractor. Engineer present on site. Mandatory photo and checklist protocol applies.</span>
+        </div>
+      </div>
+      <div class="choice-btn" onclick="setChannel('retail')">
+        <div class="choice-icon">🏠</div>
+        <div class="choice-text">
+          <span class="choice-label">Retail — End Customer</span>
+          <span class="choice-desc">Direct complaint from individual unit owner. No engineer. AED 160 confirmed before dispatch. Best-effort photos.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       S1 — UNIT INFO
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="s1">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div class="section-label">Step 2 — Unit Details</div>
+    <div class="section-title">Confirm the unit</div>
+    <div class="section-sub">Check the rating plate on the unit. Serial number format: confirm before proceeding.</div>
+
+    <div class="gap8 mb12">
+      <label style="font-size:12px;color:var(--subtext);font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;">Serial Number</label>
+      <input class="part-input" id="serialInput" placeholder="e.g. ATL-24-XXXXXXXX" style="width:100%">
+    </div>
+
+    <div class="gap8 mb12">
+      <label style="font-size:12px;color:var(--subtext);font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;margin-top:8px;">Tank Capacity</label>
+      <div class="choices" id="capacityChoices">
+        <div class="choice-btn" onclick="setCapacity('small','10–30L')"><div class="choice-icon">🔹</div><div class="choice-text"><span class="choice-label">10L / 15L / 30L</span><span class="choice-desc">Small domestic — under-sink, single point</span></div></div>
+        <div class="choice-btn" onclick="setCapacity('medium','50–80L')"><div class="choice-icon">🔸</div><div class="choice-text"><span class="choice-label">50L / 75L / 80L</span><span class="choice-desc">Mid-range domestic — 1–2 bathroom apartment</span></div></div>
+        <div class="choice-btn" onclick="setCapacity('large','100–150L')"><div class="choice-icon">🔶</div><div class="choice-text"><span class="choice-label">100L / 120L / 150L</span><span class="choice-desc">Large domestic — villa or large apartment</span></div></div>
+        <div class="choice-btn" onclick="setCapacity('central','200L+')"><div class="choice-icon">🏭</div><div class="choice-text"><span class="choice-label">200L / 300L / 500L+</span><span class="choice-desc">Central system / calorifier — apply central system logic</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       S1b — UNIT AGE
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="s1b">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div class="section-label">Step 3 — Unit Age</div>
+    <div class="section-title">How old is the unit?</div>
+    <div class="section-sub">Check purchase bill / warranty card. Age determines warranty eligibility and dry heating probability.</div>
+    <div class="choices">
+      <div class="choice-btn" onclick="setAge('lt6m','Under 6 months')"><div class="choice-icon">🆕</div><div class="choice-text"><span class="choice-label">Under 6 months</span><span class="choice-desc">New install — dry heating is the primary suspect for any heating fault</span></div></div>
+      <div class="choice-btn" onclick="setAge('6mto2y','6 months – 2 years')"><div class="choice-icon">📅</div><div class="choice-text"><span class="choice-label">6 months – 2 years</span><span class="choice-desc">Within component warranty (thermostat, element, valve, gasket)</span></div></div>
+      <div class="choice-btn" onclick="setAge('2yto5y','2 – 5 years')"><div class="choice-icon">📆</div><div class="choice-text"><span class="choice-label">2 – 5 years</span><span class="choice-desc">Component warranty expired. Tank warranty still active (5yr).</span></div></div>
+      <div class="choice-btn" onclick="setAge('gt5y','Over 5 years')"><div class="choice-icon">⌛</div><div class="choice-text"><span class="choice-label">Over 5 years</span><span class="choice-desc">All warranty periods expired — any repair is non-warranty</span></div></div>
+      <div class="choice-btn" onclick="setAge('unknown','Unknown')"><div class="choice-icon">❓</div><div class="choice-text"><span class="choice-label">Unknown / No docs available</span><span class="choice-desc">Proceed with AED 160 confirmed. Cannot confirm warranty without purchase date.</span></div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       S2 — FAULT SELECT
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="s2">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div class="section-label">Step 4 — Fault Type</div>
+    <div class="section-title">What is the complaint?</div>
+    <div class="section-sub">Select the primary reported problem. Use the customer's words to guide your choice.</div>
+    <div class="fault-grid">
+      <div class="fault-tile" onclick="startFault('F1')"><span class="fault-tile-icon">🔴</span><span class="fault-tile-label">No Hot Water / Not Heating</span></div>
+      <div class="fault-tile" onclick="startFault('F2')"><span class="fault-tile-icon">🟡</span><span class="fault-tile-label">Not Enough Hot Water</span></div>
+      <div class="fault-tile" onclick="startFault('F3')"><span class="fault-tile-icon">⚡</span><span class="fault-tile-label">DB Tripping / Electrical Trip</span></div>
+      <div class="fault-tile" onclick="startFault('F4')"><span class="fault-tile-icon">💧</span><span class="fault-tile-label">Leakage / Dripping</span></div>
+      <div class="fault-tile" onclick="startFault('F5')"><span class="fault-tile-icon">🔧</span><span class="fault-tile-label">Safety Valve Discharging</span></div>
+      <div class="fault-tile" onclick="startFault('F6')"><span class="fault-tile-icon">🟤</span><span class="fault-tile-label">Rusty / Discoloured Water</span></div>
+      <div class="fault-tile" onclick="startFault('F7')"><span class="fault-tile-icon">🔊</span><span class="fault-tile-label">Abnormal Noise / Sound</span></div>
+      <div class="fault-tile" onclick="startFault('F8')"><span class="fault-tile-icon">💥</span><span class="fault-tile-label">Physical / External Damage</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       S3 — DIAGNOSTIC QUESTIONS (dynamic)
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="s3">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div class="section-label" id="q-label">Step 5 — Diagnosis</div>
+    <div class="section-title" id="q-title"></div>
+    <div class="section-sub" id="q-sub"></div>
+    <div id="q-alert"></div>
+    <div class="choices" id="q-choices"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       S4 — WARRANTY CHECK
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="s4">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div class="section-label">Step 5 — Warranty Check</div>
+    <div class="section-title">Verify warranty status</div>
+    <div class="section-sub">Do not proceed without checking documentation. Warranty decisions cannot be reversed on site.</div>
+
+    <div class="repair-block">
+      <div class="repair-header">
+        <span class="repair-header-label">Unit Summary</span>
+      </div>
+      <div style="padding:12px 16px;">
+        <div class="info-row"><span class="info-key">Channel</span><span class="info-val" id="w-channel">—</span></div>
+        <div class="info-row"><span class="info-key">Capacity</span><span class="info-val" id="w-capacity">—</span></div>
+        <div class="info-row"><span class="info-key">Unit Age</span><span class="info-val" id="w-age">—</span></div>
+        <div class="info-row"><span class="info-key">Fault Type</span><span class="info-val" id="w-fault">—</span></div>
+        <div class="info-row"><span class="info-key">Warranty Window</span><span class="info-val" id="w-window">—</span></div>
+        <div class="info-row"><span class="info-key">Status</span><span class="info-val" id="w-status">—</span></div>
+      </div>
+    </div>
+
+    <div class="section-label mt12">Documentation</div>
+    <div class="choices mt8">
+      <div class="choice-btn" onclick="setDocs('yes')"><div class="choice-icon">✅</div><div class="choice-text"><span class="choice-label">Purchase bill / warranty card on hand</span><span class="choice-desc">Docs confirmed. Warranty period can be verified.</span></div></div>
+      <div class="choice-btn" onclick="setDocs('promised')"><div class="choice-icon">📤</div><div class="choice-text"><span class="choice-label">Customer will send docs</span><span class="choice-desc">Proceed with caution. Do not commit to warranty repair until docs received.</span></div></div>
+      <div class="choice-btn" onclick="setDocs('no')"><div class="choice-icon">❌</div><div class="choice-text"><span class="choice-label">No docs available</span><span class="choice-desc">Cannot confirm warranty. AED 160 applies. Treat as non-warranty until docs provided.</span></div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       S5 — OUTCOME CARD
+  ═══════════════════════════════════════════════ -->
+  <div class="screen" id="s5">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div class="section-label">Step 6 — Outcome</div>
+    <div id="outcome-content"></div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const state = {
+  channel: null,
+  capacity: null,
+  capacityLabel: null,
+  age: null,
+  ageLabel: null,
+  fault: null,
+  faultLabel: null,
+  diagPath: [],     // array of question keys answered
+  diagAnswers: {},  // key → answer
+  warrantyType: null, // 'component' | 'tank' | 'none'
+  docs: null,
+  outcome: null,
+  outcomeData: null,
+  screenHistory: []
+};
+
+// ═══════════════════════════════════════════════════════
+// SCREENS
+// ═══════════════════════════════════════════════════════
+const SCREENS = ['s0','s1','s1b','s2','s3','s4','s5'];
+const PROGRESS_LABELS = {
+  s0:  {pct:5,  label:'Step 1 of 6 — Channel',      bc:'S0'},
+  s1:  {pct:18, label:'Step 2 of 6 — Unit Details', bc:'UNIT'},
+  s1b: {pct:30, label:'Step 3 of 6 — Unit Age',     bc:'AGE'},
+  s2:  {pct:45, label:'Step 4 of 6 — Fault',        bc:'FAULT'},
+  s3:  {pct:60, label:'Step 5 of 6 — Diagnosis',    bc:'DIAG'},
+  s4:  {pct:78, label:'Step 5 of 6 — Warranty',     bc:'WARRANTY'},
+  s5:  {pct:100,label:'Step 6 of 6 — Outcome',      bc:'OUTCOME'},
+};
+
+function show(id) {
+  SCREENS.forEach(s => {
+    const el = document.getElementById(s);
+    el.classList.remove('active');
+  });
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  window.scrollTo(0,0);
+  const p = PROGRESS_LABELS[id];
+  if(p) {
+    document.getElementById('progressFill').style.width = p.pct + '%';
+    document.getElementById('progressLabel').textContent = p.label;
+    document.getElementById('breadcrumb').textContent = p.bc;
+  }
+}
+
+function pushScreen(id) {
+  state.screenHistory.push(id);
+  show(id);
+}
+
+function goBack() {
+  if(state.screenHistory.length <= 1) return;
+  state.screenHistory.pop();
+  const prev = state.screenHistory[state.screenHistory.length - 1];
+  show(prev);
+}
+
+// ═══════════════════════════════════════════════════════
+// STEP HANDLERS
+// ═══════════════════════════════════════════════════════
+function setChannel(ch) {
+  state.channel = ch;
+  state.screenHistory = ['s0'];
+  pushScreen('s1');
+}
+
+function setCapacity(bucket, label) {
+  state.capacity = bucket;
+  state.capacityLabel = label;
+  if(bucket === 'central') {
+    alert('⚠️ CENTRAL SYSTEM — 150L+ logic applies. Count pipes at unit: 2 pipes only = no recirculation = plumbing/installation fault, not warranty. Proceed, but note this.');
+  }
+  pushScreen('s1b');
+}
+
+function setAge(ageKey, ageLabel) {
+  state.age = ageKey;
+  state.ageLabel = ageLabel;
+  pushScreen('s2');
+}
+
+function startFault(faultCode) {
+  state.fault = faultCode;
+  state.diagAnswers = {};
+  state.diagPath = [];
+  const faultNames = {
+    F1:'No Heating', F2:'Inadequate Heating', F3:'DB Tripping',
+    F4:'Leakage', F5:'Safety Valve', F6:'Rusty Water',
+    F7:'Noise', F8:'Physical Damage'
+  };
+  state.faultLabel = faultNames[faultCode];
+  pushScreen('s3');
+  runDiag();
+}
+
+// ═══════════════════════════════════════════════════════
+// DIAGNOSTIC ENGINE
+// ═══════════════════════════════════════════════════════
+function runDiag() {
+  const q = getNextQuestion();
+  if(!q) return; // should not happen — questions always resolve to outcome
+  renderQuestion(q);
+}
+
+function answer(key, val) {
+  state.diagAnswers[key] = val;
+  state.diagPath.push(key);
+  const q = getNextQuestion();
+  if(q) {
+    renderQuestion(q);
+  } else {
+    resolveOutcome();
+  }
+}
+
+function getNextQuestion() {
+  const f = state.fault;
+  const ans = state.diagAnswers;
+  const age = state.age;
+  const ch = state.channel;
+
+  // ── F1: No Heating ──
+  if(f === 'F1') {
+    if(!ans.f1_power) return Q('f1_power','Is the power indicator light ON?','Check the light/LED on the unit face.', null, [
+      {val:'yes', label:'Yes — light is ON', desc:'Power is reaching the unit.'},
+      {val:'no',  label:'No — no light at all', desc:'No power or display.'},
+    ]);
+    if(ans.f1_power === 'no') {
+      if(!ans.f1_db) return Q('f1_db','Can power be checked at the DB?','Is there a maintenance person or engineer who can check the distribution board?', null, [
+        {val:'yes_ok', label:'Yes — power confirmed OK at DB', desc:'Supply voltage present, circuit breaker not tripped.'},
+        {val:'no_db',  label:'No / DB not accessible', desc:'Cannot verify power supply on site.'},
+        {val:'tripped', label:'Breaker was tripped — reset it', desc:'CB was off, now reset. Monitor.'},
+      ]);
+      return null; // → resolveOutcome handles these
+    }
+    // power is ON
+    if(!ans.f1_drycheck) {
+      const isNew = (age === 'lt6m');
+      return Q('f1_drycheck',
+        isNew ? 'NEW UNIT: Inspect the element — visible signs of dry heating?' : 'Did the unit work before, then stop — or has it never worked?',
+        isNew ? 'Dry heating signs: element is pink, black, soft/easy to bend, split, cracked, melted plastic sleeves. DO NOT power on if suspected.' : 'Important: distinguish between a new fault and a unit that was never commissioned correctly.',
+        isNew ? null : null,
+        isNew ? [
+          {val:'dry_yes', label:'Yes — element burnt/soft/discoloured', desc:'Dry heating confirmed. Non-warranty.'},
+          {val:'dry_no',  label:'No — element looks normal', desc:'Dry heating likely but not confirmed. Proceed cautiously — still non-warranty default for new units.'},
+        ] : [
+          {val:'worked_stopped', label:'Was working, then stopped', desc:'Fault developed — element or thermostat.'},
+          {val:'never_worked',   label:'Never worked / since installation', desc:'May be installation/commissioning issue.'},
+        ]
+      );
+    }
+    if(ans.f1_drycheck === 'never_worked') return null;
+    if(ans.f1_drycheck === 'dry_yes' || ans.f1_drycheck === 'dry_no') return null;
+    // worked_stopped branch
+    if(!ans.f1_cutout) return Q('f1_cutout','Check if the thermostat cutout has tripped','Remove cover (power OFF first). Look for a reset button on the thermostat body.',
+      {type:'info', text:'Safety: Cut power at DB BEFORE removing cover.'},
+      [
+        {val:'cutout_yes', label:'Found reset button — pressed it', desc:'Reset done. Monitor for one full heating cycle.'},
+        {val:'cutout_no',  label:'No reset needed / not found', desc:'Cutout not tripped. Element open circuit likely.'},
+      ]
+    );
+    return null;
+  }
+
+  // ── F2: Inadequate Heating ──
+  if(f === 'F2') {
+    if(!ans.f2_capacity) return Q('f2_capacity','Is the unit capacity appropriate for the demand?','Cross-check: a 30L unit cannot supply an entire apartment. Undersizing is not a product fault.',
+      null,
+      [
+        {val:'undersized', label:'Unit is too small for the demand', desc:'e.g. 10-30L serving a full household with multiple users.'},
+        {val:'appropriate', label:'Capacity is appropriate', desc:'Unit size matches usage profile.'},
+      ]
+    );
+    if(ans.f2_capacity === 'undersized') return null;
+    if(!ans.f2_thermostat) return Q('f2_thermostat','What is the thermostat dial currently set to?','Check the dial on the unit. 1 = lowest, 5 = highest. Optimal is 4–5.',
+      null,
+      [
+        {val:'low', label:'Set below 4 (position 1, 2, or 3)', desc:'Thermostat setting is the cause — not a product fault.'},
+        {val:'ok',  label:'Set at 4 or 5', desc:'Setting is correct. Continue diagnosis.'},
+      ]
+    );
+    if(ans.f2_thermostat === 'low') return null;
+    if(!ans.f2_24hrs) return Q('f2_24hrs','Has the unit been ON continuously for at least 24 hours?','Cold start requires 24hrs for consistent output. Shorter = not recovered yet.',
+      null,
+      [
+        {val:'no_24',  label:'No — unit was recently switched on', desc:'Not enough time to recover. User education needed.'},
+        {val:'yes_24', label:'Yes — on for 24+ hours', desc:'Recovery time not the issue.'},
+      ]
+    );
+    if(ans.f2_24hrs === 'no_24') return null;
+    if(!ans.f2_scale) return Q('f2_scale','Any hissing noise or scale visible on the element?','Access cover if safe to do so. Scale on element insulates it, reducing heating efficiency.',
+      {type:'warn', text:'Cut power before accessing element. Only if safe to inspect.'},
+      [
+        {val:'scale_yes', label:'Yes — scale/noise evident', desc:'Scale build-up. Non-warranty maintenance.'},
+        {val:'scale_no',  label:'No — element looks clean', desc:'Scale not the cause. Thermostat fault likely.'},
+      ]
+    );
+    return null;
+  }
+
+  // ── F3: DB Tripping ──
+  if(f === 'F3') {
+    if(!ans.f3_site) {
+      if(ch === 'project') {
+        return Q('f3_site_proj','Has the site engineer confirmed electrical and water supply are OK?',
+          'Project protocol: engineer should confirm before any diagnosis proceeds.',
+          null,
+          [
+            {val:'confirmed', label:'Yes — electrical and water confirmed OK', desc:'Continue with age-based diagnosis.'},
+            {val:'awaiting',  label:'Awaiting confirmation', desc:'Hold. Do not dispatch yet.'},
+            {val:'cannot',    label:'Cannot confirm / engineer unavailable', desc:'Dispatch required with AED 160.'},
+          ]
+        );
+      } else {
+        return Q('f3_site_ret','Is a maintenance person or electrician available on site?',
+          'Retail: no engineer typically available. Check if maintenance can assist.',
+          null,
+          [
+            {val:'maint_yes', label:'Yes — checked connections, all tight', desc:'Connections verified. Continue diagnosis.'},
+            {val:'maint_fixed','label':'Found loose connection — re-secured', desc:'Desk resolution if stable now.'},
+            {val:'maint_no',  label:'No — no one can check', desc:'Dispatch required with AED 160.'},
+          ]
+        );
+      }
+    }
+    const s3ans = ans.f3_site || ans.f3_site_proj || ans.f3_site_ret;
+    if(s3ans === 'awaiting' || s3ans === 'cannot' || s3ans === 'maint_no' || s3ans === 'maint_fixed') return null;
+    if(!ans.f3_age_check) return Q('f3_age_check','Age-based diagnosis','Unit age is ' + state.ageLabel + '. This determines the likely fault.',
+      null,
+      [
+        {val:'new_trip',  label:'Confirmed: under 1 year', desc:'New unit tripping → dry heating is primary suspect. Non-warranty.'},
+        {val:'old_trip',  label:'Confirmed: over 1 year', desc:'Older unit → element or thermostat fault. Warranty check.'},
+      ]
+    );
+    return null;
+  }
+
+  // ── F4: Leakage ──
+  if(f === 'F4') {
+    if(!ans.f4_photos) {
+      return Q('f4_photos',
+        ch === 'project' ? 'MANDATORY: Photos taken and sent to office?' : 'Photos taken?',
+        ch === 'project' ? 'Project protocol requires photos BEFORE any action. Cannot proceed without them.' : 'Best effort for retail. Proceed with AED 160 caveat if no photos.',
+        ch === 'project' ? {type:'stop', text:'DO NOT PROCEED on a project job without photos. This is mandatory.'} : {type:'warn', text:'No photos = AED 160 applies regardless of fault found.'},
+        ch === 'project' ? [
+          {val:'photos_yes',  label:'Yes — photos taken and sent', desc:'Mandatory step complete.'},
+          {val:'photos_no',   label:'No — cannot take photos now', desc:'STOP. Do not proceed on project job.'},
+        ] : [
+          {val:'photos_yes',  label:'Yes — photos taken', desc:'Good. Continue.'},
+          {val:'photos_no',   label:'No photos', desc:'Proceed with AED 160 caveat noted.'},
+        ]
+      );
+    }
+    if(ans.f4_photos === 'photos_no' && ch === 'project') return null; // hard stop
+    if(!ans.f4_source) return Q('f4_source','Where is the water coming from?','Identify the leak source before touching anything.',
+      null,
+      [
+        {val:'pipe',    label:'Pipe or plumbing connection', desc:'Water at joints, fittings, or where pipes meet unit.'},
+        {val:'sv',      label:'Safety / pressure relief valve', desc:'Water from the valve body or drain pipe.'},
+        {val:'tank',    label:'Tank body or pinhole', desc:'Water seeping directly from the tank wall or body.'},
+        {val:'flange',  label:'Flange or lip gasket', desc:'Water around the element flange plate at the tank.'},
+        {val:'element', label:'Around element housing', desc:'Water from around the heating element sleeve.'},
+        {val:'unknown', label:'Cannot determine source', desc:'Source unclear — need further assessment.'},
+      ]
+    );
+    return null;
+  }
+
+  // ── F5: Safety Valve ──
+  if(f === 'F5') {
+    if(!ans.f5_offtest) return Q('f5_offtest',
+      'ACTION: Turn heater OFF now. Wait 5 minutes. Still dripping?',
+      'This is the critical diagnostic test. Heater OFF + valve still dripping = faulty valve. Always do this test first.',
+      {type:'warn', text:'If you have not turned the heater OFF yet, do it now before answering.'},
+      [
+        {val:'still_dripping', label:'Yes — still dripping with heater OFF', desc:'Faulty valve. Heater off = no thermal expansion = valve should be closed.'},
+        {val:'stopped',        label:'No — stops when heater is off', desc:'Thermal expansion related. Need to classify the dripping type.'},
+      ]
+    );
+    if(ans.f5_offtest === 'still_dripping') return null;
+    if(!ans.f5_type) return Q('f5_type','Describe the dripping during heating:','Think back to what you observed when the heater was ON.',
+      null,
+      [
+        {val:'small_drops',    label:'Small occasional drops', desc:'A few drops during heating cycle — not a stream.'},
+        {val:'sustained_flow', label:'Sustained continuous flow', desc:'Constant or heavy discharge during heating.'},
+      ]
+    );
+    if(!ans.f5_drain) return Q('f5_drain','Is a drain pipe installed on the valve outlet?','The valve outlet should have a pipe directing discharge away safely.',
+      null,
+      [
+        {val:'drain_yes', label:'Yes — drain pipe installed', desc:'Proper installation. Classify against drip type.'},
+        {val:'drain_no',  label:'No drain pipe', desc:'Non-warranty installation issue regardless of drip type.'},
+      ]
+    );
+    return null;
+  }
+
+  // ── F6: Rusty Water ──
+  if(f === 'F6') {
+    if(!ans.f6_type) return Q('f6_type','Describe the water condition:','Have customer run hot water and describe what comes out.',
+      null,
+      [
+        {val:'murky',    label:'Murky / cloudy / debris / sediment', desc:'Particles visible. Tank sediment build-up.'},
+        {val:'rusty',    label:'Rusty smell / discoloured / dark', desc:'Anode depletion. Corrosion products in water.'},
+        {val:'red',      label:'RED water', desc:'⚠️ Immediate escalation required.'},
+      ]
+    );
+    return null;
+  }
+
+  // ── F7: Noise ──
+  if(f === 'F7') {
+    if(!ans.f7_type) return Q('f7_type','Describe the sound:','Listen carefully and match to the closest description.',
+      null,
+      [
+        {val:'rattle',   label:'Rattling / knocking', desc:'Metallic knocking sound. Often intermittent.'},
+        {val:'hum',      label:'Humming / buzzing / electrical hum', desc:'Electrical/mechanical sound from within unit.'},
+        {val:'hiss',     label:'Hissing / singing during heating', desc:'Steam-like hiss when heating element is active.'},
+      ]
+    );
+    if(ans.f7_type === 'rattle') {
+      if(!ans.f7_warehouse) return Q('f7_warehouse','Can customer bring unit to CTT warehouse?','Saves a dispatch visit if unit is portable and accessible.',
+        null,
+        [
+          {val:'wh_yes', label:'Yes — customer can bring to warehouse', desc:'Efficient option. Anode inspection/replace at workshop.'},
+          {val:'wh_no',  label:'No — dispatch required', desc:'Technician will visit site.'},
+        ]
+      );
+    }
+    return null;
+  }
+
+  // ── F8: Physical Damage ──
+  if(f === 'F8') {
+    if(!ans.f8_cause) return Q('f8_cause','Was this damage caused by Cheqpoint during delivery or installation?',
+      'Answer honestly. If yes, escalation is mandatory — no exceptions.',
+      {type:'stop', text:'If Cheqpoint caused this damage, DO NOT communicate anything to the customer. Escalate to MD only.'},
+      [
+        {val:'ctt_caused', label:'Yes — Cheqpoint caused this', desc:'During our delivery or installation work.'},
+        {val:'not_ctt',    label:'No — not caused by Cheqpoint', desc:'Third party, misuse, or unknown cause.'},
+      ]
+    );
+    return null;
+  }
+
+  return null;
+}
+
+function Q(key, title, sub, alert, choices) {
+  return {key, title, sub, alert, choices};
+}
+
+function renderQuestion(q) {
+  document.getElementById('q-title').textContent = q.title;
+  document.getElementById('q-sub').textContent = q.sub || '';
+
+  const alertEl = document.getElementById('q-alert');
+  if(q.alert) {
+    const cls = q.alert.type === 'stop' ? 'alert-stop' : q.alert.type === 'warn' ? 'alert-warn' : 'alert-info';
+    alertEl.innerHTML = `<div class="alert ${cls}">${q.alert.text}</div>`;
+  } else {
+    alertEl.innerHTML = '';
+  }
+
+  const choicesEl = document.getElementById('q-choices');
+  choicesEl.innerHTML = q.choices.map(c => `
+    <div class="choice-btn" onclick="answer('${q.key}','${c.val}')">
+      <div class="choice-text">
+        <span class="choice-label">${c.label}</span>
+        ${c.desc ? `<span class="choice-desc">${c.desc}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// OUTCOME RESOLUTION
+// ═══════════════════════════════════════════════════════
+function resolveOutcome() {
+  const f = state.fault;
+  const ans = state.diagAnswers;
+  const age = state.age;
+  const ch = state.channel;
+
+  let outcome = null;
+
+  // ── F1 ──
+  if(f === 'F1') {
+    if(ans.f1_power === 'no') {
+      if(ans.f1_db === 'tripped') {
+        outcome = makeOutcome('DESK','CB was tripped — reset and monitoring','cb_reset');
+      } else {
+        outcome = makeOutcome('QUOTE','Power supply issue — not a product fault. Cannot confirm warranty without power.',
+          'power_issue', {aed160: true});
+      }
+    } else if(ans.f1_drycheck === 'dry_yes') {
+      outcome = makeOutcome('QUOTE','Dry heating confirmed — element damaged. Non-warranty, no exceptions.','dry_heating_confirmed',{aed160:true});
+    } else if(ans.f1_drycheck === 'dry_no') {
+      outcome = makeOutcome('QUOTE','New unit — dry heating likely even without visible signs. Non-warranty default.','dry_heating_likely',{aed160:true});
+    } else if(ans.f1_drycheck === 'never_worked') {
+      outcome = makeOutcome('DESK','Unit may never have been commissioned. Check installation.','commissioning',{aed160:true});
+    } else if(ans.f1_cutout === 'cutout_yes') {
+      outcome = makeOutcome('WARRANTY_OR_QUOTE','Thermostat cutout reset done — monitor. If it trips again: thermostat fault.',
+        'thermostat_reset_monitor', {warrantyType:'component'});
+    } else if(ans.f1_cutout === 'cutout_no') {
+      outcome = makeOutcome('WARRANTY_OR_QUOTE','Element open circuit likely. Continuity test to confirm.',
+        'element_fault', {warrantyType:'component'});
+    }
+  }
+
+  // ── F2 ──
+  if(f === 'F2') {
+    if(ans.f2_capacity === 'undersized') {
+      outcome = makeOutcome('DESK','Unit undersized for demand — not a product fault. Customer education.','undersized');
+    } else if(ans.f2_thermostat === 'low') {
+      outcome = makeOutcome('DESK','Thermostat set too low — not a fault. Advise customer to set to 4 or 5.','thermostat_low');
+    } else if(ans.f2_24hrs === 'no_24') {
+      outcome = makeOutcome('DESK','Unit not on long enough — cold start requires 24hrs. Customer education.','cold_start');
+    } else if(ans.f2_scale === 'scale_yes') {
+      outcome = makeOutcome('QUOTE','Scale build-up on element reducing efficiency. Non-warranty maintenance.','scale_maintenance',{aed160:true});
+    } else if(ans.f2_scale === 'scale_no') {
+      outcome = makeOutcome('WARRANTY_OR_QUOTE','Thermostat fault suspected — inadequate heating with correct settings and clean element.',
+        'thermostat_fault_inadequate',{warrantyType:'component'});
+    }
+  }
+
+  // ── F3 ──
+  if(f === 'F3') {
+    const s = ans.f3_site_proj || ans.f3_site_ret;
+    if(s === 'awaiting') {
+      outcome = makeOutcome('HOLD','Awaiting engineer confirmation. Do not dispatch yet.','hold_awaiting');
+    } else if(s === 'cannot' || s === 'maint_no') {
+      outcome = makeOutcome('QUOTE','Cannot confirm site conditions. Dispatch required.',
+        'dispatch_assess',{aed160:true});
+    } else if(s === 'maint_fixed') {
+      outcome = makeOutcome('DESK','Loose connection found and re-secured. Monitor for stability.','loose_connection_fixed');
+    } else if(ans.f3_age_check === 'new_trip') {
+      outcome = makeOutcome('QUOTE','New unit tripping — dry heating primary suspect. Non-warranty.','dry_heating_trip',{aed160:true});
+    } else if(ans.f3_age_check === 'old_trip') {
+      outcome = makeOutcome('WARRANTY_OR_QUOTE','Element or thermostat fault causing trip. Age-appropriate fault.',
+        'element_thermostat_trip',{warrantyType:'component'});
+    }
+  }
+
+  // ── F4 ──
+  if(f === 'F4') {
+    if(ans.f4_photos === 'photos_no' && ch === 'project') {
+      outcome = makeOutcome('HOLD','STOP — mandatory photos not taken. Cannot proceed on project job.','project_no_photos');
+    } else if(ans.f4_source === 'pipe') {
+      outcome = makeOutcome('QUOTE','Pipe/plumbing connection leak — Teflon fix. Not a product fault. Non-warranty.',
+        'pipe_teflon',{aed160:true});
+    } else if(ans.f4_source === 'sv') {
+      // redirect to safety valve flow
+      outcome = makeOutcome('REDIRECT','Safety valve dripping — run Safety Valve diagnostic (F5).','redirect_sv');
+    } else if(ans.f4_source === 'tank') {
+      outcome = makeOutcome('WARRANTY_OR_QUOTE','Tank body or pinhole leak. Warranty window: 5 years (tank warranty).',
+        'tank_leak',{warrantyType:'tank'});
+    } else if(ans.f4_source === 'flange') {
+      outcome = makeOutcome('WARRANTY_OR_QUOTE','Flange or lip gasket leak. Warranty window: 2 years (component warranty).',
+        'flange_gasket',{warrantyType:'component'});
+    } else if(ans.f4_source === 'element') {
+      outcome = makeOutcome('QUOTE','Element housing leak — non-warranty. Not a tank or gasket fault. AED 160 + quote.',
+        'element_leak',{aed160:true});
+    } else if(ans.f4_source === 'unknown') {
+      outcome = makeOutcome('QUOTE','Source undetermined. Dispatch for full assessment. AED 160 applies.',
+        'unknown_leak',{aed160:true});
+    }
+  }
+
+  // ── F5 ──
+  if(f === 'F5') {
+    if(ans.f5_offtest === 'still_dripping') {
+      outcome = makeOutcome('WARRANTY_OR_QUOTE','Valve still drips with heater OFF — faulty safety valve. Warranty: 2 years (component).',
+        'sv_faulty',{warrantyType:'component'});
+    } else if(ans.f5_type === 'small_drops') {
+      if(ans.f5_drain === 'drain_yes') {
+        outcome = makeOutcome('DESK','Small drops during heating with drain pipe installed — NORMAL OPERATION. No fault. Customer education.',
+          'sv_normal_operation');
+      } else {
+        outcome = makeOutcome('QUOTE','No drain pipe installed — non-warranty installation issue. Upsell drain pipe installation.',
+          'sv_no_drain_small',{aed160:true});
+      }
+    } else if(ans.f5_type === 'sustained_flow') {
+      if(ans.f5_drain === 'drain_yes') {
+        outcome = makeOutcome('WARRANTY_OR_QUOTE','Sustained flow during heating with drain installed — faulty valve. Warranty: 2 years.',
+          'sv_faulty_sustained',{warrantyType:'component'});
+      } else {
+        outcome = makeOutcome('QUOTE','Sustained flow and no drain pipe — non-warranty. Upsell drain pipe + valve inspection.',
+          'sv_no_drain_sustained',{aed160:true});
+      }
+    }
+  }
+
+  // ── F6 ──
+  if(f === 'F6') {
+    if(ans.f6_type === 'red') {
+      outcome = makeOutcome('ESCALATE','RED WATER — Escalate to MD immediately. Say nothing to customer.',
+        'red_water');
+    } else if(ans.f6_type === 'murky') {
+      outcome = makeOutcome('QUOTE','Sediment / debris — routine maintenance. Always chargeable. Non-warranty.',
+        'sediment_maintenance',{aed160:true});
+    } else if(ans.f6_type === 'rusty') {
+      outcome = makeOutcome('QUOTE','Anode rod depleted — consumable. Non-warranty. Recommend anode replacement + tank flush.',
+        'anode_depleted',{aed160:true});
+    }
+  }
+
+  // ── F7 ──
+  if(f === 'F7') {
+    if(ans.f7_type === 'hiss') {
+      outcome = makeOutcome('DESK','Hissing during heating — scale on element. Normal but advise maintenance. Not warranty.',
+        'hiss_scale_normal');
+    } else if(ans.f7_type === 'rattle') {
+      const wh = ans.f7_warehouse === 'wh_yes';
+      outcome = makeOutcome('WARRANTY_OR_QUOTE',
+        wh ? 'Anode rod loose/dislodged. Customer bringing unit to warehouse. Warranty: 2 years (component).'
+           : 'Anode rod loose/dislodged. Dispatch required. Warranty: 2 years (component).',
+        wh ? 'anode_rattle_warehouse' : 'anode_rattle_dispatch',
+        {warrantyType:'component', warehouse: wh});
+    } else if(ans.f7_type === 'hum') {
+      outcome = makeOutcome('WARRANTY_OR_QUOTE','Electrical hum — element or thermostat issue. Warranty: 2 years (component).',
+        'hum_electrical',{warrantyType:'component'});
+    }
+  }
+
+  // ── F8 ──
+  if(f === 'F8') {
+    if(ans.f8_cause === 'ctt_caused') {
+      outcome = makeOutcome('ESCALATE','CHEQPOINT-CAUSED DAMAGE — Escalate to MD immediately. Do NOT speak to customer about liability.',
+        'ctt_damage');
+    } else {
+      outcome = makeOutcome('QUOTE','Non-Cheqpoint physical damage — non-warranty. AED 160 + quote for repair.',
+        'physical_damage_non_ctt',{aed160:true});
+    }
+  }
+
+  if(!outcome) {
+    outcome = makeOutcome('QUOTE','Outcome could not be determined automatically. Escalate to Jay.','manual_review');
+  }
+
+  state.outcome = outcome.type;
+  state.outcomeData = outcome;
+  state.warrantyType = outcome.warrantyType || null;
+
+  // If needs warranty check and is warrantable
+  if(outcome.type === 'WARRANTY_OR_QUOTE') {
+    fillWarrantyScreen(outcome);
+    pushScreen('s4');
+  } else {
+    renderOutcome(outcome);
+    pushScreen('s5');
+  }
+}
+
+function makeOutcome(type, summary, repairKey, opts={}) {
+  return {type, summary, repairKey, ...opts};
+}
+
+// ═══════════════════════════════════════════════════════
+// WARRANTY SCREEN FILL
+// ═══════════════════════════════════════════════════════
+function fillWarrantyScreen(outcome) {
+  document.getElementById('w-channel').textContent = state.channel === 'project' ? 'Project / Sadara' : 'Retail';
+  document.getElementById('w-capacity').textContent = state.capacityLabel || '—';
+  document.getElementById('w-age').textContent = state.ageLabel || '—';
+  document.getElementById('w-fault').textContent = state.faultLabel || '—';
+
+  const wType = outcome.warrantyType;
+  const wWindow = wType === 'tank' ? '5 years (Tank)' : wType === 'component' ? '2 years (Component)' : 'None';
+  document.getElementById('w-window').textContent = wWindow;
+
+  const age = state.age;
+  let statusEl = document.getElementById('w-status');
+  let statusText = '—';
+  let statusClass = '';
+  if(age === 'unknown') {
+    statusText = 'UNKNOWN — docs required';
+    statusClass = 'warn';
+  } else if(wType === 'none' || age === 'gt5y') {
+    statusText = 'OUT OF WARRANTY';
+    statusClass = 'bad';
+  } else if(wType === 'tank' && (age === 'lt6m' || age === '6mto2y' || age === '2yto5y')) {
+    statusText = 'LIKELY IN WARRANTY (Tank)';
+    statusClass = 'ok';
+  } else if(wType === 'component' && (age === 'lt6m' || age === '6mto2y')) {
+    statusText = 'LIKELY IN WARRANTY (Component)';
+    statusClass = 'ok';
+  } else if(wType === 'component' && age === '2yto5y') {
+    statusText = 'COMPONENT WARRANTY EXPIRED';
+    statusClass = 'bad';
+  } else {
+    statusText = 'Check docs carefully';
+    statusClass = 'warn';
+  }
+  statusEl.textContent = statusText;
+  statusEl.className = 'info-val ' + statusClass;
+}
+
+function setDocs(docsVal) {
+  state.docs = docsVal;
+  const outcome = state.outcomeData;
+  const age = state.age;
+  const wType = state.warrantyType;
+
+  let finalType;
+  if(docsVal === 'no') {
+    // No docs = non-warranty
+    finalType = 'QUOTE';
+    outcome.docNote = 'No warranty docs — treated as non-warranty until documents provided.';
+    outcome.aed160 = true;
+  } else if(docsVal === 'promised') {
+    finalType = 'QUOTE';
+    outcome.docNote = 'Docs promised — do not commit to warranty repair. Conditional.';
+    outcome.aed160 = true;
+    outcome.conditional = true;
+  } else {
+    // docs yes
+    if(age === 'unknown') {
+      finalType = 'QUOTE';
+      outcome.docNote = 'Age unknown — cannot confirm warranty period.';
+      outcome.aed160 = true;
+    } else if(wType === 'component' && (age === 'lt6m' || age === '6mto2y')) {
+      finalType = 'WARRANTY';
+    } else if(wType === 'tank' && (age === 'lt6m' || age === '6mto2y' || age === '2yto5y')) {
+      finalType = 'REPLACEMENT_AUTH';
+    } else {
+      finalType = 'QUOTE';
+      outcome.docNote = 'Warranty period expired for this fault type.';
+      outcome.aed160 = true;
+    }
+  }
+  outcome.type = finalType;
+  renderOutcome(outcome);
+  pushScreen('s5');
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER OUTCOME
+// ═══════════════════════════════════════════════════════
+function renderOutcome(outcome) {
+  const el = document.getElementById('outcome-content');
+  const type = outcome.type;
+
+  const configs = {
+    'WARRANTY':          {cls:'oc-green',  icon:'✅', typeLabel:'WARRANTY REPAIR', title:'Covered Under Warranty'},
+    'REPLACEMENT_AUTH':  {cls:'oc-blue',   icon:'📦', typeLabel:'REPLACEMENT AUTH', title:'Replacement Authorised'},
+    'QUOTE':             {cls:'oc-yellow', icon:'🧾', typeLabel:'NON-WARRANTY', title:'Not Covered — Chargeable'},
+    'ESCALATE':          {cls:'oc-red',    icon:'🚨', typeLabel:'ESCALATE TO MD', title:'Stop — Escalate Immediately'},
+    'DESK':              {cls:'oc-grey',   icon:'📋', typeLabel:'DESK RESOLUTION', title:'No Dispatch / Educate Customer'},
+    'HOLD':              {cls:'oc-grey',   icon:'⏸️', typeLabel:'ON HOLD', title:'Cannot Proceed Yet'},
+    'REDIRECT':          {cls:'oc-grey',   icon:'🔄', typeLabel:'RE-ROUTE', title:'Use Different Fault Flow'},
+  };
+
+  const cfg = configs[type] || configs['QUOTE'];
+  const repair = getRepairSteps(outcome.repairKey, type);
+  const customerMsg = getCustomerMessage(outcome.repairKey, type);
+
+  let html = `
+    <div class="outcome-card ${cfg.cls}">
+      <div class="outcome-header">
+        <span class="outcome-icon">${cfg.icon}</span>
+        <div>
+          <span class="outcome-type">${cfg.typeLabel}</span>
+          <span class="outcome-title">${cfg.title}</span>
+        </div>
+      </div>
+      <div class="outcome-body">
+        <p>${outcome.summary}</p>
+        ${outcome.docNote ? `<p style="color:var(--flag-ora)">${outcome.docNote}</p>` : ''}
+        ${outcome.conditional ? `<div class="alert alert-warn mt8">Conditional — do not commit to warranty coverage until docs received and verified.</div>` : ''}
+      </div>
+    </div>`;
+
+  // AED 160 pill
+  if(type !== 'ESCALATE' && type !== 'HOLD') {
+    html += `
+      <div class="repair-block">
+        <div class="repair-header"><span class="repair-header-label">Commercial</span></div>
+        <div style="padding:10px 16px;">
+          <div class="info-row">
+            <span class="info-key">AED 160 Call-Out</span>
+            <span class="info-val ${outcome.aed160 ? 'warn':'ok'}">
+              ${outcome.aed160 ? '⚠️ APPLICABLE — confirm collected' : '✓ NOT applicable'}
+            </span>
+          </div>
+          ${type === 'WARRANTY' ? `<div class="info-row"><span class="info-key">Billing</span><span class="info-val ok">Warranty — invoice to Atlantic</span></div>` : ''}
+          ${type === 'REPLACEMENT_AUTH' ? `<div class="info-row"><span class="info-key">Action</span><span class="info-val" style="color:var(--blue)">PO to reseller required</span></div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // ESCALATE specific
+  if(type === 'ESCALATE') {
+    html += `
+      <div class="alert alert-stop">
+        <strong>STOP. Do NOT say anything to the customer about cause, liability, or next steps.</strong><br>
+        Call Jay / Sunil immediately.
+      </div>
+      <a href="tel:+971" style="display:block;margin-top:12px;">
+        <button class="btn btn-primary btn-full" style="background:var(--red);border-color:var(--red);">
+          📞 Call Jay Now
+          <span class="flag flag-orange" style="margin-left:4px">⚑ ADD NUMBER</span>
+        </button>
+      </a>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  // HOLD specific
+  if(type === 'HOLD') {
+    html += `<div class="alert alert-warn">Do not dispatch. Do not commit to any timeline. Inform customer that assessment is pending confirmation.</div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  // REPLACEMENT AUTH specific
+  if(type === 'REPLACEMENT_AUTH') {
+    html += `
+      <div class="repair-block">
+        <div class="repair-header"><span class="repair-header-label">Replacement Instructions</span></div>
+        <div style="padding:12px 16px;">
+          <div class="info-row"><span class="info-key">Step 1</span><span class="info-val">Confirm unit details to office</span></div>
+          <div class="info-row"><span class="info-key">Step 2</span><span class="info-val">Office issues PO to nearest reseller</span></div>
+          <div class="info-row"><span class="info-key">Step 3</span><span class="info-val">Customer collects with proof of purchase</span></div>
+          <div class="info-row"><span class="info-key">Installation</span><span class="info-val ok">Offer — delivery FREE if they want install</span></div>
+          <div class="info-row"><span class="info-key">Reseller</span><span class="info-val"><span class="flag flag-red">⚑ CONFIRM WITH JAY</span></span></div>
+        </div>
+      </div>`;
+  }
+
+  // REPAIR STEPS
+  if(repair && (type === 'WARRANTY' || type === 'QUOTE')) {
+    html += `
+      <button class="collapsible-trigger" onclick="toggleCollapsible(this)">
+        🔧 Repair Procedure
+        <span class="collapsible-arrow">▾</span>
+      </button>
+      <div class="collapsible-body">
+        ${repair}
+      </div>`;
+  }
+
+  // CUSTOMER MESSAGE
+  if(customerMsg) {
+    html += `
+      <div class="message-box">
+        <div class="message-box-label">Show / Read to Customer</div>
+        <div class="message-box-text">${customerMsg}</div>
+      </div>`;
+  }
+
+  // PARTS LOG (warranty/quote only)
+  if(type === 'WARRANTY' || type === 'QUOTE') {
+    html += `
+      <div class="parts-log">
+        <div class="parts-log-label">Parts Used on This Visit</div>
+        <div id="partsContainer">
+          <div class="part-entry">
+            <input class="part-input" placeholder="Part description / ref number" style="flex:2">
+            <input class="part-input" placeholder="Qty" style="flex:0.4;min-width:50px">
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm mt8" onclick="addPart()">+ Add Part</button>
+      </div>`;
+  }
+
+  // SIGN-OFF
+  if(type !== 'HOLD' && type !== 'REDIRECT') {
+    html += `
+      <div class="signoff-area mt16">
+        <div class="signoff-label">Customer Signature</div>
+        <canvas class="signoff-canvas" id="sigCanvas"></canvas>
+        <div class="signoff-actions">
+          <button class="btn btn-ghost btn-sm" onclick="clearSig()">Clear</button>
+          <span style="font-size:11px;color:var(--subtext);margin-left:auto;align-self:center;">Sign with finger</span>
+        </div>
+      </div>`;
+  }
+
+  // NEW JOB button
+  html += `
+    <div class="divider"></div>
+    <button class="btn btn-ghost btn-full" onclick="resetTool()">← Start New Job</button>
+  `;
+
+  el.innerHTML = html;
+
+  // Init signature canvas
+  setTimeout(() => {
+    const canvas = document.getElementById('sigCanvas');
+    if(canvas) initSignature(canvas);
+    // Open first collapsible
+    const ct = document.querySelector('.collapsible-trigger');
+    if(ct) toggleCollapsible(ct);
+  }, 100);
+}
+
+// ═══════════════════════════════════════════════════════
+// REPAIR STEPS LIBRARY
+// ═══════════════════════════════════════════════════════
+function getRepairSteps(key, outcomeType) {
+  const FLAG_PART = `<span class="flag flag-red" style="margin-left:4px">⚑ PART REF NEEDED</span>`;
+  const FLAG_JAY  = `<span class="flag flag-orange" style="margin-left:4px">⚑ CONFIRM WITH JAY</span>`;
+
+  const steps = {
+    thermostat_reset_monitor: () => repairBlock([
+      'Cut power at DB — confirm OFF at unit (light out)',
+      'Remove plastic cover (4 corner screws)',
+      'Locate reset button on thermostat body — small red or black button',
+      'Press firmly until audible click heard',
+      'Replace cover, restore power',
+      'Monitor for one full heating cycle — if trips again, thermostat replacement required',
+    ], []),
+
+    element_fault: () => repairBlock([
+      'Cut power at DB before any access',
+      'Test element continuity with multimeter across terminals',
+      {text: 'Expected reading: continuity present = element OK | no continuity = open circuit, replace element', cls:'critical'},
+      'If element faulty: drain unit fully',
+      'Remove element access cover, photograph wiring before disconnecting',
+      'Unscrew element flange bolts in cross pattern',
+      'Remove element and old gasket — clean flange face',
+      'Fit new gasket (dry, no sealant) and new element',
+      'Cross-tighten bolts — firm but do not overtighten',
+      'Reconnect wiring per photograph',
+      {text:'DO NOT power on until unit is fully refilled with water', cls:'critical'},
+      'Restore power — check for leaks after first heat cycle, tighten if needed',
+    ], [
+      {label:'Heating element — Atlantic ref for this model + capacity', flagType:'part'},
+      {label:'Flange gasket — Atlantic ref for this model', flagType:'part'},
+    ]),
+
+    thermostat_fault_inadequate: () => repairBlock([
+      'Cut power at DB',
+      'Drain unit (close cold inlet, open hot tap, operate safety valve drain)',
+      'Remove cover — photograph thermostat wiring before disconnecting',
+      'Confirm thermostat is flush against tank wall — if not flush, reposition and test first',
+      'Disconnect thermostat wiring',
+      'Unscrew thermostat from tank wall',
+      'Fit new thermostat flush against tank surface',
+      'Reconnect wiring per photograph',
+      'Replace cover, refill, restore power',
+      'Check for leaks after first heat',
+    ], [
+      {label:'Thermostat — Atlantic ref for this model', flagType:'part'},
+    ]),
+
+    dry_heating_confirmed: () => repairBlock([
+      {text:'NON-WARRANTY — dry heating voids warranty on the element regardless of unit age', cls:'critical'},
+      'Cut power at DB',
+      'Remove element access cover',
+      'Inspect element: pink/black/soft/bent/split = dry heated confirmed',
+      'Drain unit fully',
+      'Remove damaged element and gasket',
+      'Fit new element and gasket',
+      'Cross-tighten bolts in cross pattern',
+      {text:'DO NOT power on until unit is fully refilled', cls:'critical'},
+      'Restore power and check for leaks',
+      'Issue quote and collect AED 160 or deduct from repair total',
+    ], [
+      {label:'Replacement heating element — Atlantic ref for this model + capacity', flagType:'part'},
+      {label:'Flange gasket — Atlantic ref for this model', flagType:'part'},
+    ]),
+
+    dry_heating_likely: () => repairBlock([
+      {text:'NON-WARRANTY — new unit default. Dry heating until proven otherwise.', cls:'critical'},
+      'Cut power at DB',
+      'Inspect element visually — check for softness, discolouration, bending',
+      'Even if not visually obvious, treat as dry heating for new units',
+      'If replacing: drain, remove element and gasket, fit new element',
+      {text:'DO NOT power on until unit fully refilled', cls:'critical'},
+    ], [
+      {label:'Replacement heating element — Atlantic ref for this model + capacity', flagType:'part'},
+      {label:'Flange gasket', flagType:'part'},
+    ]),
+
+    dry_heating_trip: () => repairBlock([
+      {text:'NON-WARRANTY — dry heating for new unit', cls:'critical'},
+      'Cut power at DB',
+      'Do NOT reset DB until element is inspected',
+      'Drain unit, remove and inspect element',
+      'Replace element and gasket if dry-fire damage confirmed',
+      {text:'DO NOT power on until unit fully refilled', cls:'critical'},
+    ], [
+      {label:'Replacement heating element — Atlantic ref for this model + capacity', flagType:'part'},
+      {label:'Flange gasket', flagType:'part'},
+    ]),
+
+    element_thermostat_trip: () => repairBlock([
+      'Cut power at DB — confirm element and thermostat are the likely cause of trip',
+      'Test element continuity with multimeter',
+      'If element faulty → replace (see element replacement steps)',
+      'If element OK → thermostat fault — reset ECO cutout or replace thermostat',
+      {text:'One fault at a time — confirm element before replacing thermostat', cls:'critical'},
+    ], [
+      {label:'Heating element — Atlantic ref for this model + capacity', flagType:'part'},
+      {label:'Thermostat — Atlantic ref for this model', flagType:'part'},
+    ]),
+
+    pipe_teflon: () => repairBlock([
+      {text:'NOTE: This is a plumbing fix — not a heater fault. Inform customer.', cls:'critical'},
+      'Close water supply to the heater',
+      'Unscrew leaking fitting — have cloth ready',
+      'Remove ALL old Teflon tape completely from threads',
+      'Wrap with 3–5 turns of fresh Teflon tape, clockwise direction',
+      'Refit fitting — firm hand tight + ¼ turn with wrench. Do not overtighten.',
+      'Open water supply, observe for 5 minutes',
+      'AED 160 applies — this is not a product fault',
+    ], []),
+
+    tank_leak: () => repairBlock([
+      {text:'Tank body / pinhole leak = REPLACEMENT AUTH if in warranty. Do not attempt to repair the tank.', cls:'critical'},
+      'Photograph the leak source clearly',
+      'Confirm serial number and note on photos',
+      'Drain unit to prevent further damage',
+      'Do not attempt any repair — tank cannot be patched',
+      'Contact office to initiate Replacement Auth PO',
+    ], []),
+
+    flange_gasket: () => repairBlock([
+      'Cut power at DB',
+      'Drain unit fully',
+      'Remove flange cover panel',
+      'Count and photograph bolt positions before removal',
+      'Unscrew all flange bolts in cross pattern',
+      'Remove flange carefully — support it as it comes free',
+      'Remove old gasket — clean mating surfaces completely (no residue)',
+      'Fit new gasket DRY — no sealant',
+      'Refit flange, cross-tighten bolts evenly',
+      {text:'DO NOT power on until unit fully refilled', cls:'critical'},
+      'Check for leaks after first heat, re-tighten if needed',
+    ], [
+      {label:'Lip gasket — Atlantic ref for this flange size', flagType:'part'},
+    ]),
+
+    sv_faulty: () => repairBlock([
+      'Cut power at DB',
+      'Close cold water inlet',
+      'Open nearest hot tap to relieve system pressure',
+      'Unscrew old safety valve — have cloth ready',
+      'Wrap new valve threads with Teflon tape (3 wraps, clockwise)',
+      'Fit new valve — hand tight then ¼ turn with wrench',
+      'Reconnect drain pipe to valve outlet',
+      'Open cold inlet, restore power, observe for leaks',
+    ], [
+      {label:'Safety valve — Atlantic ref (confirm size: ½" or ¾")', flagType:'part'},
+    ]),
+
+    sv_faulty_sustained: () => repairBlock([
+      'Cut power at DB',
+      'Close cold water inlet',
+      'Open nearest hot tap to relieve system pressure',
+      'Unscrew old safety valve',
+      'Wrap new valve threads with Teflon tape (3 wraps)',
+      'Fit new valve — hand tight + ¼ turn wrench',
+      'Reconnect drain pipe',
+      'Open inlet, restore power, observe',
+    ], [
+      {label:'Safety valve — Atlantic ref (confirm size: ½" or ¾")', flagType:'part'},
+    ]),
+
+    sv_no_drain_small: () => repairBlock([
+      {text:'Non-warranty — no drain pipe is an installation fault', cls:'critical'},
+      'Explain to customer: valve operating normally but drain pipe missing',
+      'Upsell: offer drain pipe installation to CTT',
+      'Do not modify valve — leave as is',
+      'Collect AED 160 for visit',
+    ], [
+      {label:'Drain pipe and fittings for this installation', flagType:'jay'},
+    ]),
+
+    sv_no_drain_sustained: () => repairBlock([
+      {text:'Non-warranty — no drain pipe, plus potential valve fault', cls:'critical'},
+      'Install drain pipe (upsell)',
+      'After drain pipe installed, retest valve to confirm if sustained flow continues',
+      'If still sustained after drain pipe: replace valve',
+      'Collect AED 160 for visit',
+    ], [
+      {label:'Safety valve — Atlantic ref (confirm size: ½" or ¾")', flagType:'part'},
+      {label:'Drain pipe and fittings', flagType:'jay'},
+    ]),
+
+    scale_maintenance: () => repairBlock([
+      {text:'Chargeable maintenance — not warranty. Confirm AED 160 collected.', cls:'critical'},
+      'Cut power at DB',
+      'Drain unit',
+      'Remove element access cover',
+      'Gently brush scale from element sheath — soft brush only',
+      {text:'DO NOT scratch, chip, or strike scale off tank walls — damages coating', cls:'critical'},
+      'Replace gasket when refitting element',
+      'Refill, check for leaks after first heat',
+    ], [
+      {label:'Replacement flange gasket if damaged during access', flagType:'part'},
+    ]),
+
+    sediment_maintenance: () => repairBlock([
+      {text:'Chargeable maintenance — not warranty', cls:'critical'},
+      'Cut power at DB',
+      'Close cold water inlet',
+      'Drain tank via safety valve drain',
+      'Flush with fresh water several times until clear',
+      'Inspect element for scale while unit is drained',
+      'Refill, restore power, check for leaks',
+    ], []),
+
+    anode_depleted: () => repairBlock([
+      {text:'Anode is a consumable — non-warranty, always chargeable', cls:'critical'},
+      'Cut power at DB',
+      'Close cold water inlet',
+      'Partially drain to reduce pressure',
+      'Locate anode hex head at top of unit (may require removing top panel)',
+      'Unscrew anode rod — may require 1-1/16" socket',
+      'Inspect: if core wire visible >6 inches OR diameter <10mm → confirm replacement needed',
+      'Wrap new anode threads with Teflon tape',
+      'Insert and tighten new anode rod',
+      'Refill, check for leaks',
+    ], [
+      {label:'Magnesium anode rod — Atlantic ref for this tank model', flagType:'part'},
+    ]),
+
+    anode_rattle_warehouse: () => repairBlock([
+      'Customer bringing unit to CTT warehouse',
+      {text:'Confirm warehouse appointment time with office', cls:'critical'},
+      'At warehouse: cut power, drain unit partially',
+      'Remove anode hex head, inspect rod',
+      'If loose: remove, re-wrap threads with Teflon, refit and tighten',
+      'If damaged: replace anode rod',
+    ], [
+      {label:'Magnesium anode rod — Atlantic ref for this tank model', flagType:'part'},
+    ]),
+
+    anode_rattle_dispatch: () => repairBlock([
+      'On site: cut power at DB',
+      'Close cold water inlet',
+      'Partially drain unit',
+      'Locate anode hex head at top of unit',
+      'Unscrew, inspect — if loose: re-wrap threads, refit and tighten',
+      'If damaged: replace',
+      'Refill, check for leaks',
+    ], [
+      {label:'Magnesium anode rod — Atlantic ref for this tank model', flagType:'part'},
+    ]),
+
+    hum_electrical: () => repairBlock([
+      'Cut power at DB',
+      'Test element continuity with multimeter',
+      'If element faulty: drain, replace element and gasket',
+      'If element OK: thermostat may be the source — check thermostat flush to tank wall',
+      'If thermostat not flush: reposition and test',
+      'If still humming after correct positioning: replace thermostat',
+    ], [
+      {label:'Heating element — Atlantic ref for this model + capacity', flagType:'part'},
+      {label:'Thermostat — Atlantic ref for this model', flagType:'part'},
+    ]),
+
+    element_leak: () => repairBlock([
+      {text:'Non-warranty — element housing leak is not a tank or gasket fault', cls:'critical'},
+      'Cut power at DB',
+      'Drain unit',
+      'Inspect element housing for cracks or corrosion',
+      'Replace element and gasket if element housing is the leak source',
+      'AED 160 applies + quote for element replacement',
+    ], [
+      {label:'Heating element — Atlantic ref for this model + capacity', flagType:'part'},
+      {label:'Flange gasket', flagType:'part'},
+    ]),
+
+    cb_reset: () => repairBlock([
+      'CB was tripped and has been reset',
+      'Monitor for one full heating cycle',
+      'If CB trips again → diagnose element or thermostat fault',
+      'If stable → note in job report as resolved',
+    ], []),
+
+    commissioning: () => repairBlock([
+      {text:'May be a commissioning/installation issue — not necessarily a product fault', cls:'critical'},
+      'Verify: unit is fully filled with water before power was applied',
+      'Verify: correct electrical supply (230V, correct circuit breaker rating)',
+      'Verify: cold inlet and hot outlet pipes correctly connected',
+      'Verify: safety valve installed and not blocked',
+      'If all correct and unit still does not heat: diagnose element',
+    ], [
+      {label:'Commissioning checklist specific to this model', flagType:'jay'},
+    ]),
+
+    power_issue: () => repairBlock([
+      'Check DB — is correct breaker active?',
+      'Check socket or hardwired connection at unit',
+      'Check cable condition — any damage or burning?',
+      'If supply confirmed OK and unit still dark: internal wiring fault',
+      {text:'Electrical supply issues are not covered under water heater warranty', cls:'critical'},
+      'AED 160 applies unless fault is traced back to heater internal wiring',
+    ], []),
+
+    physical_damage_non_ctt: () => repairBlock([
+      {text:'Non-warranty — physical damage not caused by Cheqpoint', cls:'critical'},
+      'Photograph all damage thoroughly',
+      'Document: nature of damage, likely cause (if evident)',
+      'Assess if unit is safe to operate — if not, advise customer to switch off',
+      'Provide quote for repair or replacement',
+      'AED 160 for site visit + quote',
+    ], []),
+  };
+
+  const fn = steps[key];
+  return fn ? fn() : null;
+}
+
+function repairBlock(stepList, parts) {
+  const FLAG_PART = `<span class="flag flag-red">⚑ PART REF NEEDED</span>`;
+  const FLAG_JAY  = `<span class="flag flag-orange">⚑ CONFIRM WITH JAY</span>`;
+
+  let html = `<div class="repair-block">
+    <div class="repair-header"><span class="repair-header-label">Steps</span></div>
+    <div class="repair-steps">`;
+
+  stepList.forEach((s, i) => {
+    const text = typeof s === 'string' ? s : s.text;
+    const cls  = typeof s === 'object' && s.cls ? ` class="${s.cls}"` : '';
+    html += `<div class="repair-step">
+      <div class="step-num">${i+1}</div>
+      <div class="step-text"${cls}>${text}</div>
+    </div>`;
+  });
+
+  html += `</div>`;
+
+  if(parts && parts.length) {
+    parts.forEach(p => {
+      const flag = p.flagType === 'part' ? FLAG_PART : FLAG_JAY;
+      html += `<div class="part-line"><span class="part-label">🔩 ${p.label}</span>${flag}</div>`;
+    });
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════
+// CUSTOMER MESSAGES
+// ═══════════════════════════════════════════════════════
+function getCustomerMessage(key, type) {
+  const msgs = {
+    WARRANTY:          'We have confirmed this fault is covered under your product warranty. We will carry out the repair at no charge to you. Please sign below to confirm the work completed.',
+    REPLACEMENT_AUTH:  'Your unit has a fault covered under warranty. We are authorising a replacement unit for you. You will receive a call from our office with collection details. Please keep your proof of purchase ready.',
+    undersized:        'Your water heater capacity is not large enough for the current demand. This is not a product fault. We recommend upgrading to a larger unit. Our office can advise on suitable options.',
+    thermostat_low:    'Your thermostat was set too low. We have adjusted it to the correct position. Please allow up to 30 minutes for the water to heat. If the issue continues, call us.',
+    cold_start:        'Your heater needs to be kept switched on continuously for at least 24 hours before it reaches full hot water output. Please leave it on and check again tomorrow.',
+    sv_normal_operation: 'The small amount of water dripping from your safety valve during heating is completely normal. It is caused by water expanding when heated. No action is needed.',
+    hiss_scale_normal: 'The hissing sound you hear during heating is caused by mineral deposits on the element. This is normal. We recommend a maintenance clean periodically to reduce the noise.',
+    aed160_general:    'As the fault found is not covered under warranty, a call-out fee of AED 160 applies to this visit. If you proceed with the repair today, this amount will be deducted from the final repair total.',
+    pipe_teflon:       'The water leak was from the pipe connection to your heater, not from the heater itself. We have resealed the connection. A call-out fee of AED 160 applies as this is not a product fault.',
+    sv_no_drain_small: 'Your safety valve is working correctly, but the outlet pipe that should carry away the water has not been installed. This is a required installation item. We can arrange to install this for you.',
+    dry_heating:       'Your heater element was damaged because the unit was powered on without sufficient water inside. This is not covered under warranty. We have provided a quote for the element replacement.',
+  };
+
+  if(type === 'WARRANTY') return msgs.WARRANTY;
+  if(type === 'REPLACEMENT_AUTH') return msgs.REPLACEMENT_AUTH;
+  const specific = msgs[key];
+  if(specific) return specific;
+  if(type === 'QUOTE' || (type === 'QUOTE' && !specific)) return msgs.aed160_general;
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════
+function toggleCollapsible(btn) {
+  btn.classList.toggle('open');
+  const body = btn.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function addPart() {
+  const container = document.getElementById('partsContainer');
+  const div = document.createElement('div');
+  div.className = 'part-entry';
+  div.innerHTML = `<input class="part-input" placeholder="Part description / ref number" style="flex:2"><input class="part-input" placeholder="Qty" style="flex:0.4;min-width:50px">`;
+  container.appendChild(div);
+}
+
+function resetTool() {
+  Object.keys(state).forEach(k => {
+    state[k] = Array.isArray(state[k]) ? [] : typeof state[k] === 'object' ? {} : null;
+  });
+  state.screenHistory = [];
+  show('s0');
+}
+
+// ═══════════════════════════════════════════════════════
+// SIGNATURE PAD
+// ═══════════════════════════════════════════════════════
+function initSignature(canvas) {
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 120;
+  ctx.strokeStyle = '#dde2e8';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  let drawing = false, lastX = 0, lastY = 0;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return [src.clientX - rect.left, src.clientY - rect.top];
+  }
+  function start(e) { drawing = true; [lastX, lastY] = getPos(e); e.preventDefault(); }
+  function draw(e) {
+    if(!drawing) return;
+    e.preventDefault();
+    const [x, y] = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    [lastX, lastY] = [x, y];
+  }
+  function stop() { drawing = false; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stop);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', draw, {passive:false});
+  canvas.addEventListener('touchend', stop);
+}
+
+function clearSig() {
+  const canvas = document.getElementById('sigCanvas');
+  if(canvas) canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+state.screenHistory = ['s0'];
+show('s0');
+</script>
+</body>
+</html>
