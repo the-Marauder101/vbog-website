@@ -349,8 +349,8 @@
     brand: "Atlantic",
 
     pathways: {
-      reinstallation:  { label: "Reinstallation",  anchoring: 100 },
-      newInstallation: { label: "New Installation", anchoring: 250 }
+      reinstallation:  { label: "Reinstallation",  anchoring: 0 },
+      newInstallation: { label: "New Installation", anchoring: 100 }
     },
 
     sizes: [
@@ -386,7 +386,7 @@
       { label: "200 × 200", dim: 200, price: 3000 }
     ],
 
-    flexibleConnectorsPrice: 80,
+    flexibleConnectorsPrice: 85,
 
     // Piping: material priced per meter by size.
     // Labor: first 1 m free, then AED 240 for every 2 m added.
@@ -447,8 +447,8 @@
       selectEl.appendChild(opt);
     });
   }
-  buildOptions(el.size, PRICING.sizes, PRICING.brand + " ");
-  buildOptions(el.location, PRICING.locations);
+  buildOptions(el.size, PRICING.sizes, "", false);
+  buildOptions(el.location, PRICING.locations, "", false);
 
   /* ===== Per-unit state ===== */
   // { ceilingNeeded, ceilingIdx, connectors, isolValveIdx, angleValveIdx, piping, pipeSizeIdx, pipeMeters }
@@ -482,14 +482,14 @@
       // Header
       const hdr = document.createElement("div");
       hdr.className = "unit-card-header";
-      hdr.textContent = "Unit " + (i + 1) + " — " + PRICING.brand + " " + size.label;
+      hdr.textContent = "Unit " + (i + 1) + " — " + size.label;
       card.appendChild(hdr);
 
       // False ceiling
       const ceilField = document.createElement("div");
       ceilField.className = "unit-field";
       const ceilOpts = PRICING.falseCeiling.map((c, ci) =>
-        `<option value="${ci}" ${u.ceilingIdx === ci ? "selected" : ""}>${c.label} cm — ${fmt(c.price)}</option>`
+        `<option value="${ci}" ${u.ceilingIdx === ci ? "selected" : ""}>${c.label} cm</option>`
       ).join("");
       ceilField.innerHTML =
         `<label class="unit-label">False Ceiling Modification</label>` +
@@ -520,10 +520,10 @@
         const valveField = document.createElement("div");
         valveField.className = "unit-field";
         const isolOpts = PRICING.isolationValves.map((v, vi) =>
-          `<option value="${vi}" ${u.isolValveIdx === vi ? "selected" : ""}>${v.label}${v.price > 0 ? " — " + fmt(v.price) : ""}</option>`
+          `<option value="${vi}" ${u.isolValveIdx === vi ? "selected" : ""}>${v.label}</option>`
         ).join("");
         const angleOpts = PRICING.angleValves.map((v, vi) =>
-          `<option value="${vi}" ${u.angleValveIdx === vi ? "selected" : ""}>${v.label}${v.price > 0 ? " — " + fmt(v.price) : ""}</option>`
+          `<option value="${vi}" ${u.angleValveIdx === vi ? "selected" : ""}>${v.label}</option>`
         ).join("");
         valveField.innerHTML =
           `<label class="unit-label">Valves</label>` +
@@ -538,7 +538,7 @@
       const pipeField = document.createElement("div");
       pipeField.className = "unit-field";
       const pipeSizeOpts = PRICING.pipeSizes.map((p, pi) =>
-        `<option value="${pi}" ${u.pipeSizeIdx === pi ? "selected" : ""}>${p.label} — ${fmt(p.pricePerMeter)}/m</option>`
+        `<option value="${pi}" ${u.pipeSizeIdx === pi ? "selected" : ""}>${p.label}</option>`
       ).join("");
       pipeField.innerHTML =
         `<label class="unit-label">Piping</label>` +
