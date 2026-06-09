@@ -187,6 +187,28 @@
   .photo-frame .placeholder small { display: block; margin-top: 6px; font-size: 11px; }
   .photo-frame.filled .placeholder { display: none; }
 
+  /* Disclaimer modal */
+  .disclaimer-modal { display: none; position: fixed; inset: 0; z-index: 60; align-items: center; justify-content: center; padding: 24px; }
+  .disclaimer-modal.open { display: flex; }
+  .disclaimer-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+  .disclaimer-box {
+    position: relative; background: #fffbeb; border: 1px solid #d97706;
+    width: 100%; max-width: 540px; padding: 32px;
+  }
+  .disclaimer-icon { font-size: 26px; margin-bottom: 12px; line-height: 1; }
+  .disclaimer-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: #92400e; margin: 0 0 14px;
+  }
+  .disclaimer-text { font-size: 14px; line-height: 1.7; color: #1c1c1c; margin: 0 0 26px; }
+  .disclaimer-ack {
+    width: 100%; padding: 13px 16px; font-family: inherit; font-size: 13px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #fff; background: #92400e; border: none; border-radius: 0; cursor: pointer;
+  }
+  .disclaimer-ack:hover { background: #78350f; }
+  .disclaimer-ack:focus-visible { outline: 2px solid #92400e; outline-offset: 2px; }
+
   @media (max-width: 720px) {
     main { grid-template-columns: 1fr; gap: 40px; padding: 32px 20px 56px; }
     .summary { position: static; }
@@ -301,7 +323,7 @@
 
     <p class="note">This is an estimate. Final quote may vary based on site conditions.</p>
 
-    <button type="button" class="reset" id="reset">Reset</button>
+    <button type="button" class="reset" id="confirm">Confirm</button>
   </section>
 </main>
 
@@ -332,6 +354,17 @@
       </figure>
     </div>
     <p class="note">Photos are illustrative — final result varies by site.</p>
+  </div>
+</div>
+
+<!-- Disclaimer modal (shown for 200 L+ on confirm) -->
+<div class="disclaimer-modal" id="disclaimerModal" aria-hidden="true">
+  <div class="disclaimer-backdrop" data-close-disclaimer></div>
+  <div class="disclaimer-box" role="dialog" aria-modal="true" aria-labelledby="disclaimerTitle">
+    <div class="disclaimer-icon" aria-hidden="true">&#9888;</div>
+    <h2 class="disclaimer-title" id="disclaimerTitle">Important Notice</h2>
+    <p class="disclaimer-text" id="disclaimerText"></p>
+    <button type="button" class="disclaimer-ack" id="disclaimerAck">I Acknowledge &amp; Confirm</button>
   </div>
 </div>
 
@@ -420,7 +453,10 @@
     breakdown:   document.getElementById("breakdown"),
     subtotal:    document.getElementById("subtotal"),
     grandTotal:  document.getElementById("grandTotal"),
-    reset:       document.getElementById("reset"),
+    confirm:         document.getElementById("confirm"),
+    disclaimerModal: document.getElementById("disclaimerModal"),
+    disclaimerText:  document.getElementById("disclaimerText"),
+    disclaimerAck:   document.getElementById("disclaimerAck"),
     gallery:     document.getElementById("gallery"),
     galleryOpen: document.getElementById("galleryOpen"),
     galleryClose:document.getElementById("galleryClose"),
@@ -764,18 +800,38 @@
   el.gallery.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close")) closeGallery(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.gallery.classList.contains("open")) closeGallery(); });
 
-  /* ===== Reset ===== */
-  el.reset.addEventListener("click", () => {
-    const reinstall = document.querySelector('input[name="pathway"][value="reinstallation"]');
-    if (reinstall) reinstall.checked = true;
-    const horiz = document.querySelector('input[name="orientation"][value="horizontal"]');
-    if (horiz) horiz.checked = true;
-    el.size.value     = "0";
-    el.qty.value      = "1";
-    el.location.value = "0";
-    unitStates = [];
-    buildUnitDetails();
-    recalc();
+  /* ===== Disclaimer modal ===== */
+  const DISCLAIMER_MIN_LITRES = 200;
+
+  function openDisclaimer() {
+    const size = PRICING.sizes[Number(el.size.value)] || PRICING.sizes[0];
+    el.disclaimerText.textContent =
+      "If the " + size.label + " unit needs to be lifted to an upper level, we want to make you aware " +
+      "that this carries some physical risk during the lifting process. Our team will take all reasonable precautions. " +
+      "However, by confirming this message, you acknowledge that CTT shall not be held liable for any accidental " +
+      "damage to the unit or surrounding property during the lifting operation, and that any replacement unit, " +
+      "if required, will be chargeable separately.";
+    el.disclaimerModal.classList.add("open");
+    el.disclaimerModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    el.disclaimerAck.focus();
+  }
+  function closeDisclaimer() {
+    el.disclaimerModal.classList.remove("open");
+    el.disclaimerModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    el.confirm.focus();
+  }
+  el.disclaimerAck.addEventListener("click", closeDisclaimer);
+  el.disclaimerModal.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close-disclaimer")) closeDisclaimer(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.disclaimerModal.classList.contains("open")) closeDisclaimer(); });
+
+  /* ===== Confirm ===== */
+  el.confirm.addEventListener("click", () => {
+    const size = PRICING.sizes[Number(el.size.value)] || PRICING.sizes[0];
+    if (size.litres >= DISCLAIMER_MIN_LITRES) {
+      openDisclaimer();
+    }
   });
 
   /* ===== Init ===== */
