@@ -1,3 +1,6 @@
+Here's the complete, current code (with the capacity-price fix applied) — copy-paste the whole block into `ctt-quote-calculator.html`:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -356,7 +359,7 @@
     <div id="heaterSection">
       <div class="field">
         <label>Water Heater — Atlantic</label>
-        <p class="hint">Atlantic brand only. Capacities 50–100 L come in horizontal &amp; vertical; larger sizes are floor-standing.</p>
+        <p class="hint">Atlantic brand only. Choose orientation first — the capacities shown are the ones available in that orientation.</p>
         <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
           <label class="tile">
             <input type="radio" name="orientation" value="horizontal" checked>
@@ -550,18 +553,38 @@
       repair:          { label: "Repair" }
     },
 
-    sizes: [
-      { label: "10 L",  litres: 10,  price: 300,  installPerUnit: 300  },
-      { label: "15 L",  litres: 15,  price: 330,  installPerUnit: 300  },
-      { label: "30 L",  litres: 30,  price: 400,  installPerUnit: 300  },
-      { label: "50 L",  litres: 50,  price: 500,  installPerUnit: 300  },
-      { label: "80 L",  litres: 80,  price: 550,  installPerUnit: 300  },
-      { label: "100 L", litres: 100, price: 600,  installPerUnit: 300  },
-      { label: "150 L", litres: 150, price: 900,  installPerUnit: 300  },
-      { label: "200 L", litres: 200, price: 1400, installPerUnit: 600  },
-      { label: "250 L", litres: 250, price: 1850, installPerUnit: 800  },
-      { label: "300 L", litres: 300, price: 2300, installPerUnit: 1000 },
-      { label: "500 L", litres: 500, price: 3500, installPerUnit: 1500 }
+    /* Heaters are split by orientation. Selecting an orientation shows
+       ONLY the capacities available in that orientation, at their price. */
+    sizesByOrientation: {
+      horizontal: [
+        { label: "50 L",  litres: 50,  price: 420,  installPerUnit: 300 },
+        { label: "80 L",  litres: 80,  price: 460,  installPerUnit: 300 },
+        { label: "100 L", litres: 100, price: 550,  installPerUnit: 300 },
+        { label: "200 L", litres: 200, price: 2300, installPerUnit: 600 }
+      ],
+      vertical: [
+        { label: "30 L",             litres: 30,  price: 355,  installPerUnit: 300  },
+        { label: "50 L",             litres: 50,  price: 380,  installPerUnit: 300  },
+        { label: "80 L",             litres: 80,  price: 415,  installPerUnit: 300  },
+        { label: "100 L",            litres: 100, price: 515,  installPerUnit: 300  },
+        { label: "150 L",            litres: 150, price: 1500, installPerUnit: 300  },
+        { label: "200 L Wall Mount", litres: 200, price: 2200, installPerUnit: 600  },
+        { label: "200 L Stab Floor", litres: 200, price: 2350, installPerUnit: 600  },
+        { label: "300 L",            litres: 300, price: 3300, installPerUnit: 1000 },
+        { label: "500 L",            litres: 500, price: 6000, installPerUnit: 1500 }
+      ]
+    },
+
+    /* Repair is orientation-agnostic — just the capacity being repaired. */
+    repairSizes: [
+      { label: "30 L",  litres: 30  },
+      { label: "50 L",  litres: 50  },
+      { label: "80 L",  litres: 80  },
+      { label: "100 L", litres: 100 },
+      { label: "150 L", litres: 150 },
+      { label: "200 L", litres: 200 },
+      { label: "300 L", litres: 300 },
+      { label: "500 L", litres: 500 }
     ],
 
     /* deliveryPrice used for installation; callOutStdExVAT used for repair */
@@ -620,7 +643,7 @@
   };
 
   /* ===== Helpers ===== */
-  const fmt = (n) => "AED " + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt = (n) => "AED " + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const el = {
     jobNumber:        document.getElementById("jobNumber"),
@@ -657,6 +680,18 @@
     pService:         document.getElementById("pService")
   };
 
+  /* ===== Read helpers ===== */
+  function getPathway()    { const r = document.querySelector('input[name="pathway"]:checked');    return r ? r.value : "reinstallation"; }
+  function getCallOut()    { const r = document.querySelector('input[name="callOut"]:checked');    return r ? r.value : "standard"; }
+  function getOrientation(){ const r = document.querySelector('input[name="orientation"]:checked'); return r ? r.value : "horizontal"; }
+  function getQty()        { const q = parseInt(el.qty.value, 10);       return (isNaN(q) || q < 1) ? 1 : q; }
+  function getRepairQty()  { const q = parseInt(el.repairQty.value, 10); return (isNaN(q) || q < 1) ? 1 : q; }
+  function isRepair()      { return getPathway() === "repair"; }
+
+  /* Size list for the current orientation (installation), or repair list. */
+  function currentSizes() { return PRICING.sizesByOrientation[getOrientation()] || PRICING.sizesByOrientation.horizontal; }
+  function unitSizeList() { return isRepair() ? PRICING.repairSizes : currentSizes(); }
+
   /* ===== Populate global dropdowns ===== */
   function populateSelect(sel, items, textFn) {
     sel.innerHTML = "";
@@ -667,7 +702,7 @@
       sel.appendChild(opt);
     });
   }
-  populateSelect(el.size, PRICING.sizes, (s) => s.label);
+  populateSelect(el.size, currentSizes(), (s) => s.label);
   populateSelect(el.location, PRICING.locations, (l) => l.label);
 
   /* ===== State ===== */
@@ -696,14 +731,6 @@
     repairUnitStates.length = qty;
   }
 
-  /* ===== Read helpers ===== */
-  function getPathway()    { const r = document.querySelector('input[name="pathway"]:checked');    return r ? r.value : "reinstallation"; }
-  function getCallOut()    { const r = document.querySelector('input[name="callOut"]:checked');    return r ? r.value : "standard"; }
-  function getOrientation(){ const r = document.querySelector('input[name="orientation"]:checked'); return r ? r.value : "horizontal"; }
-  function getQty()        { const q = parseInt(el.qty.value, 10);       return (isNaN(q) || q < 1) ? 1 : q; }
-  function getRepairQty()  { const q = parseInt(el.repairQty.value, 10); return (isNaN(q) || q < 1) ? 1 : q; }
-  function isRepair()      { return getPathway() === "repair"; }
-
   /* ===== Toggle sections ===== */
   function toggleSections() {
     const repair = isRepair();
@@ -714,19 +741,21 @@
 
   /* ===== Build installation unit cards ===== */
   function buildUnitDetails() {
+    const sizes = currentSizes();
     const qty = getQty();
     syncUnitStates(qty);
     el.unitDetails.innerHTML = "";
 
     for (let i = 0; i < qty; i++) {
       const u = unitStates[i];
-      const size = PRICING.sizes[u.sizeIdx] || PRICING.sizes[0];
+      if (u.sizeIdx >= sizes.length) u.sizeIdx = 0;     // clamp to current orientation
+      const size = sizes[u.sizeIdx] || sizes[0];
       const valvesOk = size.litres >= PRICING.valvesMinLitres;
       const card = document.createElement("div");
       card.className = "unit-card";
 
-      /* Header — per-unit capacity selector */
-      const sizeOpts = PRICING.sizes.map((s, si) =>
+      /* Header — per-unit capacity selector (filtered to orientation) */
+      const sizeOpts = sizes.map((s, si) =>
         `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`
       ).join("");
       const hdr = document.createElement("div");
@@ -812,6 +841,7 @@
 
   /* ===== Build repair unit cards ===== */
   function buildRepairUnitDetails() {
+    const sizes = PRICING.repairSizes;
     const qty = getRepairQty();
     syncRepairUnitStates(qty);
     el.repairUnitDetails.innerHTML = "";
@@ -822,7 +852,7 @@
       card.className = "unit-card";
 
       /* Header — capacity selector */
-      const sizeOpts = PRICING.sizes.map((s, si) =>
+      const sizeOpts = sizes.map((s, si) =>
         `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`
       ).join("");
       const hdr = document.createElement("div");
@@ -989,7 +1019,7 @@
       syncRepairUnitStates(qty);
       for (let i = 0; i < qty; i++) {
         const u = repairUnitStates[i];
-        const size = PRICING.sizes[u.sizeIdx] || PRICING.sizes[0];
+        const size = PRICING.repairSizes[u.sizeIdx] || PRICING.repairSizes[0];
         const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
         const labor = PRICING.repair.laborExVAT * (1 + VAT);
         html += lineHTML("Repair Labour" + tag, size.label + " · 350 + 5% VAT", labor);
@@ -1003,6 +1033,7 @@
 
     } else {
       /* Installation / Reinstallation */
+      const sizes = currentSizes();
       const qty = getQty();
       const pathway = PRICING.pathways[getPathway()];
       const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
@@ -1012,18 +1043,18 @@
       const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
       let heaterTotal = 0, installTotal = 0;
       unitStates.slice(0, qty).forEach((u) => {
-        const s = PRICING.sizes[u.sizeIdx] || PRICING.sizes[0];
+        const s = sizes[u.sizeIdx] || sizes[0];
         heaterTotal  += s.price;
         installTotal += s.installPerUnit;
       });
 
       if (allSame && qty > 0) {
-        const s = PRICING.sizes[unitStates[0].sizeIdx] || PRICING.sizes[0];
+        const s = sizes[unitStates[0].sizeIdx] || sizes[0];
         html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}`, heaterTotal);
         html += lineHTML("Installation", `${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(s.installPerUnit)}`, installTotal);
       } else {
         for (let i = 0; i < qty; i++) {
-          const s = PRICING.sizes[unitStates[i].sizeIdx] || PRICING.sizes[0];
+          const s = sizes[unitStates[i].sizeIdx] || sizes[0];
           html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, s.price);
           html += lineHTML(`Installation (Unit ${i + 1})`, fmt(s.installPerUnit) + " / unit", s.installPerUnit);
         }
@@ -1039,7 +1070,7 @@
       /* Per-unit extras */
       for (let i = 0; i < qty; i++) {
         const u = unitStates[i];
-        const size = PRICING.sizes[u.sizeIdx] || PRICING.sizes[0];
+        const size = sizes[u.sizeIdx] || sizes[0];
         const valvesOk = size.litres >= PRICING.valvesMinLitres;
         const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
 
@@ -1074,8 +1105,26 @@
   }
 
   /* ===== Global change triggers ===== */
+  // Quantity change: rebuild cards (new units default to the global size),
+  // keep any per-unit sizes already chosen.
   function onGlobalInstallChange() { buildUnitDetails(); recalc(); }
+  // Main capacity dropdown is the master: it sets the size for EVERY unit,
+  // so changing it always updates the heater price.
+  function onGlobalSizeChange() {
+    const idx = Number(el.size.value) || 0;
+    unitStates.forEach((u) => { u.sizeIdx = idx; });
+    buildUnitDetails();
+    recalc();
+  }
   function onRepairQtyChange()     { buildRepairUnitDetails(); recalc(); }
+  function onOrientationChange() {
+    /* Different orientation = different capacity list, so repopulate + reset. */
+    populateSelect(el.size, currentSizes(), (s) => s.label);
+    el.size.value = "0";
+    unitStates.forEach((u) => { u.sizeIdx = 0; });
+    buildUnitDetails();
+    recalc();
+  }
   function onPathwayChange() {
     toggleSections();
     if (isRepair()) { buildRepairUnitDetails(); }
@@ -1084,7 +1133,7 @@
   }
 
   ["change", "input"].forEach((evt) => {
-    el.size.addEventListener(evt, onGlobalInstallChange);
+    el.size.addEventListener(evt, onGlobalSizeChange);
     el.qty.addEventListener(evt, onGlobalInstallChange);
     el.location.addEventListener(evt, recalc);
     el.repairQty.addEventListener(evt, onRepairQtyChange);
@@ -1092,7 +1141,7 @@
   el.qty.addEventListener("blur",      () => { el.qty.value = getQty(); onGlobalInstallChange(); });
   el.repairQty.addEventListener("blur", () => { el.repairQty.value = getRepairQty(); onRepairQtyChange(); });
 
-  document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", recalc));
+  document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", onOrientationChange));
   document.querySelectorAll('input[name="pathway"]').forEach((r) => r.addEventListener("change", onPathwayChange));
   document.querySelectorAll('input[name="callOut"]').forEach((r) => r.addEventListener("change", recalc));
 
@@ -1103,12 +1152,13 @@
     else { img.removeAttribute("src"); frameEl.classList.remove("filled"); }
   }
   function refreshGallery() {
+    const sizes = currentSizes();
     const qty = getQty();
     const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
     const pathway = PRICING.pathways[getPathway()];
     const anyCeiling = unitStates.some((u) => u.ceilingNeeded);
     const anyPiping  = unitStates.some((u) => u.piping);
-    const size = PRICING.sizes[(unitStates[0] || {sizeIdx:0}).sizeIdx] || PRICING.sizes[0];
+    const size = sizes[(unitStates[0] || { sizeIdx: 0 }).sizeIdx] || sizes[0];
     setFrame(el.frameHeater,  WORK_PHOTOS.heater);
     setFrame(el.frameInstall, WORK_PHOTOS.install);
     setFrame(el.frameCeiling, WORK_PHOTOS.falseCeiling);
@@ -1142,17 +1192,19 @@
   const DISCLAIMER_MIN_LITRES = 200;
 
   function largestUnitLitres() {
+    const list = unitSizeList();
     const states = isRepair() ? repairUnitStates : unitStates;
     return states.reduce((max, u) => {
-      const s = PRICING.sizes[u.sizeIdx] || PRICING.sizes[0];
+      const s = list[u.sizeIdx] || list[0];
       return Math.max(max, s.litres);
     }, 0);
   }
   function largestUnitLabel() {
+    const list = unitSizeList();
     const states = isRepair() ? repairUnitStates : unitStates;
-    let best = PRICING.sizes[0];
+    let best = list[0];
     states.forEach((u) => {
-      const s = PRICING.sizes[u.sizeIdx] || PRICING.sizes[0];
+      const s = list[u.sizeIdx] || list[0];
       if (s.litres > best.litres) best = s;
     });
     return best.label;
@@ -1206,3 +1258,6 @@
 </script>
 </body>
 </html>
+```
+
+That's the full file with the capacity fix in (see the `onGlobalSizeChange` function near the bottom of the script — that's what makes the main capacity dropdown update the price).
