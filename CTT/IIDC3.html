@@ -80,6 +80,21 @@ body.editor-active{overflow:hidden;}
 .r-sub{font-size:13px;color:var(--subtext);line-height:1.55;margin-bottom:20px;}
 .r-say{background:var(--blue-dim);border-left:3px solid var(--blue);border-radius:6px;padding:11px 14px;margin-bottom:18px;
   font-size:13px;color:#6db3d4;line-height:1.5;}
+.r-note{background:var(--yellow-dim);border-left:3px solid var(--yellow);border-radius:6px;padding:11px 14px;margin-bottom:18px;
+  font-size:13px;color:#d4a843;line-height:1.5;}
+.r-disc{background:var(--yellow-dim);border:1px solid #4d3a1a;border-left:3px solid var(--yellow);border-radius:9px;
+  padding:16px 18px;margin-bottom:6px;}
+.r-disc-head{font-size:14px;font-weight:600;color:#e8b44a;margin-bottom:8px;}
+.r-disc-body{font-size:14px;color:var(--text);line-height:1.6;white-space:pre-wrap;}
+.ss{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-bottom:14px;display:flex;flex-direction:column;gap:7px;}
+.ss-row{display:flex;flex-wrap:wrap;align-items:center;gap:5px 14px;}
+.ss-item{font-size:11px;color:var(--subtext);}
+.ss-item b{color:var(--text);font-weight:600;margin-left:3px;}
+.ss-status{font-size:11px;font-weight:600;margin-left:auto;padding:2px 9px;border-radius:5px;white-space:nowrap;}
+.ss-status.ok{background:#0d2b1c;color:#4ecf84;}
+.ss-status.warn{background:#2a1f0a;color:#d4a843;}
+.ss-status.bad{background:#2a0d0d;color:#e08080;}
+.ss-central{margin-bottom:14px;}
 .r-choices{display:flex;flex-direction:column;gap:9px;}
 .r-choice{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:9px;
   padding:13px 16px;cursor:pointer;font-family:var(--sans);transition:border-color .14s,background .14s;}
@@ -167,7 +182,13 @@ body.editor-active{overflow:hidden;}
 #view-editor{position:fixed;inset:0;display:none;flex-direction:column;}
 #view-editor.active{display:flex;}
 .ed-toolbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;
-  padding:0 14px;gap:7px;z-index:50;flex-shrink:0;}
+  padding:0 14px;gap:7px;z-index:55;position:absolute;top:0;left:0;right:0;transition:transform .25s ease;box-shadow:0 5px 16px rgba(0,0,0,.45);}
+.ed-toolbar.tucked{transform:translateY(-100%);}
+.ed-revealzone{position:absolute;top:0;left:0;right:0;height:16px;z-index:54;}
+.ed-pulltab{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:54;font-family:var(--mono);font-size:9px;
+  letter-spacing:.12em;color:var(--subtext);background:var(--surface);border:1px solid var(--border);border-top:none;
+  border-radius:0 0 7px 7px;padding:2px 14px;cursor:pointer;opacity:0;transition:opacity .2s;pointer-events:none;}
+.ed-pulltab.show{opacity:1;pointer-events:auto;}
 .ed-brand{display:flex;align-items:center;gap:9px;margin-right:10px;}
 .ed-dot{width:8px;height:8px;background:var(--orange);border-radius:50%;}
 .ed-title{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--subtext);text-transform:uppercase;}
@@ -330,7 +351,7 @@ body.editor-active{overflow:hidden;}
     <div class="ed-sep"></div>
     <button class="tbtn" onclick="edAddNode('q')">+ Question</button>
     <button class="tbtn" onclick="edAddNode('o')">+ Outcome</button>
-    <button class="tbtn" onclick="autoLayout();edRenderAll();toast('Arranged')">⊞ Arrange</button>
+    <button class="tbtn" onclick="doArrange()">⊞ Arrange</button>
     <div class="ed-sep"></div>
     <button class="tbtn" onclick="exportJSON()">⬇ Backup</button>
     <button class="tbtn" onclick="document.getElementById('impFile').click()">⬆ Restore</button>
@@ -342,6 +363,8 @@ body.editor-active{overflow:hidden;}
     <button class="tbtn save" onclick="edSave()">✓ Save</button>
     <button class="tbtn exit" onclick="exitEditor()">Exit</button>
   </div>
+  <div class="ed-revealzone" id="edRevealZone"></div>
+  <div class="ed-pulltab" id="edPullTab" onclick="tbShow()">⋯ toolbar ⋯</div>
   <div class="canvas-wrap" id="canvasWrap">
     <div class="canvas" id="canvas"><svg id="edgeLayer"></svg></div>
     <div class="legend">
@@ -974,14 +997,65 @@ function runStartField(){
 }
 
 function runChoose(opt){
+  if(opt && opt.disclaimer){ showDisclaimer(opt); return; }
+  runAdvance(opt);
+}
+function runAdvance(opt){
   if(opt.set){ Object.keys(opt.set).forEach(k=>{ session[k]=opt.set[k]; }); }
   if(!opt.target || !graph().nodes[opt.target]){ toast('This option is not linked — fix in editor'); return; }
   runStack.push(opt.target);
   renderRun();
 }
+let _pendingOpt=null;
+function showDisclaimer(opt){
+  _pendingOpt=opt;
+  const area=document.getElementById('runArea');
+  area.innerHTML=`<div class="r-label">Check before continuing</div>
+    <div class="r-disc">
+      <div class="r-disc-head">⚠️ Please confirm</div>
+      <div class="r-disc-body">${esc(opt.disclaimer)}</div>
+    </div>
+    <div class="run-foot">
+      <button class="btn btn-ghost btn-sm" onclick="renderRun()">← Back</button>
+      <button class="btn btn-primary btn-sm" onclick="discContinue()">Continue →</button>
+    </div>`;
+  window.scrollTo(0,0);
+}
+function discContinue(){ const o=_pendingOpt; _pendingOpt=null; if(o) runAdvance(o); }
 function runBack(){ if(runStack.length>1){ runStack.pop(); renderRun(); } }
 function runRestart(){ runStack=[runStack[0]]; renderRun(); }
 function graph(){ return GRAPHS[runGraphName]; }
+
+// Computed warranty window + status from unit age (fault-independent).
+function warrantyReadout(){
+  const a=session.age;
+  if(!a) return null;
+  if(a==='lt6m'||a==='6mto2y') return {window:'Component 2yr · Tank 5yr', status:'In warranty — component & tank', cls:'ok'};
+  if(a==='2yto5y')             return {window:'Component 2yr · Tank 5yr', status:'Component expired · tank active', cls:'warn'};
+  if(a==='gt5y')               return {window:'Component 2yr · Tank 5yr', status:'Out of warranty — all expired', cls:'bad'};
+  return {window:'Component 2yr · Tank 5yr', status:'Unknown — purchase docs required', cls:'warn'};
+}
+
+// Persistent session context strip shown in the runner once context is known.
+function sessionStrip(){
+  let html='';
+  const parts=[];
+  if(session.customerType) parts.push(`<span class="ss-item">Channel<b>${CT_LABEL[session.customerType]||session.customerType}</b></span>`);
+  if(session.capacity)     parts.push(`<span class="ss-item">Capacity<b>${CAP_LABEL[session.capacity]||session.capacity}</b></span>`);
+  if(session.age)          parts.push(`<span class="ss-item">Age<b>${AGE_LABEL[session.age]||session.age}</b></span>`);
+  const wr=warrantyReadout();
+  if(parts.length||wr){
+    html+=`<div class="ss">`;
+    if(parts.length) html+=`<div class="ss-row">${parts.join('')}</div>`;
+    if(wr) html+=`<div class="ss-row"><span class="ss-item">Warranty<b>${wr.window}</b></span><span class="ss-status ${wr.cls}">${wr.status}</span></div>`;
+    html+=`</div>`;
+  }
+  // Central-system advisory — fires automatically for large/central units (150L+).
+  if(session.capacity==='large'||session.capacity==='central'){
+    html+=`<div class="r-note ss-central">🔁 <b>Central-system check (150L+).</b> Atlantic's Central Domestic range starts at 150L. If this is a central / villa unit, "takes too long to get hot" is usually recirculation / distribution — <b>plumbing, not warranty</b>. Count the pipes: 2 = no recirculation = outside CTT warranty scope. Warranty ends at the heater outlet. <i>(Standard 100–120L apartment unit? Ignore this.)</i></div>`;
+  }
+  return html;
+}
 
 function renderRun(){
   const g=graph();
@@ -1001,14 +1075,18 @@ function renderRun(){
   else { renderRunOutcome(n,area); }
 }
 
+function noteBlock(n){ return n.note?`<div class="r-note">📌 ${esc(n.note)}</div>`:''; }
+
 function renderRunQuestion(n,area){
   const isSay = /^Say:/.test(n.sub||'') || /TECH CHECK/i.test(n.title);
-  let html=`<div class="r-label">${runGraphName==='intake'?'Intake':'Field'} — Step ${runStack.length}</div>`;
+  let html=sessionStrip();
+  html+=`<div class="r-label">${runGraphName==='intake'?'Intake':'Field'} — Step ${runStack.length}</div>`;
   html+=`<div class="r-q">${esc(n.title)}</div>`;
   if(n.sub){
     if(/^Say:/.test(n.sub)) html+=`<div class="r-say">💬 ${esc(n.sub)}</div>`;
     else html+=`<div class="r-sub">${esc(n.sub)}</div>`;
   }
+  html+=noteBlock(n);
   html+=`<div class="r-choices">`;
   (n.opts||[]).forEach((o,i)=>{
     const linked=o.target&&graph().nodes[o.target];
@@ -1028,13 +1106,15 @@ function currentId(){ return runStack[runStack.length-1]; }
 
 function renderRunOutcome(n,area){
   const m=OTYPE_META[n.otype]||OTYPE_META.INFO;
-  let html=`<div class="r-label">${runGraphName==='intake'?'Intake':'Field'} — Outcome</div>`;
+  let html=sessionStrip();
+  html+=`<div class="r-label">${runGraphName==='intake'?'Intake':'Field'} — Outcome</div>`;
   html+=`<div class="oc t-${n.otype}">
     <div class="oc-head"><span class="oc-ic">${m.icon}</span>
       <div><span class="oc-type">${m.label}</span><span class="oc-ttl">${esc(n.title)}</span></div>
     </div>
     <div class="oc-body">${esc(n.summary||'')}</div>
   </div>`;
+  html+=noteBlock(n);
 
   // ESCALATE / HOLD special
   if(n.otype==='ESCALATE'){
@@ -1122,7 +1202,8 @@ function checklistCard(type){
 }
 
 function msgBlock(n){
-  const ch = n.msgch==='email'?'✉️ Email template':'💬 WhatsApp template';
+  const CH={email:'✉️ Email template',whatsapp:'💬 WhatsApp template',phone:'📞 Phone — call script'};
+  const ch = CH[n.msgch] || CH.whatsapp;
   const mid='msgbody_'+Math.random().toString(36).slice(2,8);
   return `<div class="msg"><div class="msg-head"><span class="msg-label">${ch}</span>
     <button class="msg-copy" onclick="copyText('${mid}',this)">Copy</button></div>
@@ -1158,7 +1239,7 @@ function clearSig(){const c=document.getElementById('sigCanvas');if(c)c.getConte
 // ════════════════════════════════════════════════════════════════
 let edGraphName='intake', selectedId=null, nodeCounter=1;
 
-function openEditor(){ showView('view-editor'); switchGraph(edGraphName); }
+function openEditor(){ showView('view-editor'); switchGraph(edGraphName); tbInit(); tbShow(); tbTuck(1800); }
 function exitEditor(){ closePanel(); goHome(); }
 function switchGraph(name){
   edGraphName=name; selectedId=null; closePanel();
@@ -1175,7 +1256,19 @@ function edRenderAll(){
   const cv=canvasEl();
   cv.querySelectorAll('.node').forEach(e=>e.remove());
   Object.keys(EG().nodes).forEach(id=>edRenderNode(id));
+  fitCanvas();
   requestAnimationFrame(drawEdges);
+}
+function fitCanvas(){
+  const cv=canvasEl(); let maxX=0,maxY=0;
+  Object.values(EG().nodes).forEach(n=>{
+    const w=n.kind==='q'?236:216;
+    const h=n.kind==='q'?(90+((n.opts||[]).length)*24):110;
+    if((n.x||0)+w>maxX)maxX=(n.x||0)+w;
+    if((n.y||0)+h>maxY)maxY=(n.y||0)+h;
+  });
+  cv.style.width=Math.max(6000,Math.round(maxX)+400)+'px';
+  cv.style.height=Math.max(4600,Math.round(maxY)+400)+'px';
 }
 
 function edRenderNode(id){
@@ -1186,12 +1279,12 @@ function edRenderNode(id){
   let head, body='';
   if(n.kind==='q'){
     head=`<div class="node-head"><span class="ntag tag-Q">Question</span></div>`;
-    body=`<div class="node-title">${esc(n.title)}</div>`+(n.sub?`<div class="node-sub">${esc(n.sub.slice(0,80))}</div>`:'')+`<div class="node-opts">`+
-      (n.opts||[]).map((o,i)=>{const lk=o.target&&EG().nodes[o.target];return `<div class="node-opt" data-opt="${i}"><span class="node-opt-l">${esc(o.label)}</span><span class="port ${lk?'linked':'unlinked'}"></span></div>`;}).join('')+`</div>`+`<div class="node-addport" title="Drag to a node to add a new branch">＋ branch<span class="port addport"></span></div>`;
+    body=`<div class="node-title">${esc(n.title)}${n.note?' 📌':''}</div>`+(n.sub?`<div class="node-sub">${esc(n.sub.slice(0,80))}</div>`:'')+`<div class="node-opts">`+
+      (n.opts||[]).map((o,i)=>{const lk=o.target&&EG().nodes[o.target];return `<div class="node-opt" data-opt="${i}"><span class="node-opt-l">${esc(o.label)}${o.disclaimer?' <span style="color:#e8915a">⚠</span>':''}</span><span class="port ${lk?'linked':'unlinked'}"></span></div>`;}).join('')+`</div>`+`<div class="node-addport" title="Drag to a node to add a new branch">＋ branch<span class="port addport"></span></div>`;
   } else {
     const m=OTYPE_META[n.otype]||OTYPE_META.INFO;
     head=`<div class="node-head"><span class="ntag tag-${n.otype}">${m.icon} ${m.label}</span></div>`;
-    body=`<div class="node-title">${esc(n.title)}</div><div class="node-sub">${esc((n.summary||'').slice(0,84))}${(n.summary||'').length>84?'…':''}</div>`;
+    body=`<div class="node-title">${esc(n.title)}${n.note?' 📌':''}</div><div class="node-sub">${esc((n.summary||'').slice(0,84))}${(n.summary||'').length>84?'…':''}</div>`;
   }
   el.innerHTML=head+body+(id===EG().start?'<span class="start-badge">START</span>':'');
   canvasEl().appendChild(el);
@@ -1301,7 +1394,8 @@ function openPanel(id){
   selectedId=id; const n=EG().nodes[id];
   document.getElementById('panelTitle').textContent=(n.kind==='q'?'Question':'Outcome')+' — '+id;
   let html=`<div class="fld"><label class="fld-l">Title</label><textarea id="e_title" rows="2">${esc(n.title)}</textarea></div>
-    <div class="fld"><label class="fld-l">${n.kind==='q'?'Hint / what to say':'Internal note'}</label><textarea id="e_sub" rows="2">${esc(n.sub||'')}</textarea></div>`;
+    <div class="fld"><label class="fld-l">${n.kind==='q'?'Hint / what to say':'Internal note'}</label><textarea id="e_sub" rows="2">${esc(n.sub||'')}</textarea></div>
+    <div class="fld"><label class="fld-l">📌 Node note (shown on this screen — "did you check…")</label><textarea id="e_note" rows="2" placeholder="Optional. Leave blank for none.">${esc(n.note||'')}</textarea></div>`;
   if(n.kind==='o'){
     html+=`<div class="fld"><label class="fld-l">Outcome type</label><select id="e_otype">${Object.keys(OTYPE_META).map(t=>`<option value="${t}" ${n.otype===t?'selected':''}>${OTYPE_META[t].icon} ${OTYPE_META[t].label}</option>`).join('')}</select></div>
       <div class="fld"><label class="fld-l">Summary (outcome card)</label><textarea id="e_summary" rows="4">${esc(n.summary||'')}</textarea></div>
@@ -1314,8 +1408,9 @@ function openPanel(id){
         <option value="" ${!n.msgch?'selected':''}>No message</option>
         <option value="whatsapp" ${n.msgch==='whatsapp'?'selected':''}>💬 WhatsApp</option>
         <option value="email" ${n.msgch==='email'?'selected':''}>✉️ Email</option>
+        <option value="phone" ${n.msgch==='phone'?'selected':''}>📞 Phone call</option>
       </select></div>
-      <div class="fld"><label class="fld-l">Customer message template</label><textarea id="e_msg" rows="6">${esc(n.msg||'')}</textarea></div>
+      <div class="fld"><label class="fld-l">Customer message template${n.msgch==='phone'?' / call script':''}</label><textarea id="e_msg" rows="6">${esc(n.msg||'')}</textarea></div>
       <label class="cbrow"><input type="checkbox" id="e_partslog" ${n.partsLog?'checked':''}> Show parts log + signature (field)</label>
       <div class="fld"><label class="fld-l">Repair steps (field) — one per line. Prefix [CRIT] for warnings.</label>
         <textarea id="e_repair" rows="6">${esc((n.repairSteps||[]).join('\n'))}</textarea></div>`;
@@ -1326,6 +1421,7 @@ function openPanel(id){
       html+=`<div class="opt-ed"><button class="opt-del" onclick="delOpt(${i})">✕</button>
         <input type="text" placeholder="Option label" value="${esc(o.label)}" oninput="updOpt(${i},'label',this.value)">
         <input type="text" placeholder="Description (optional)" value="${esc(o.desc||'')}" oninput="updOpt(${i},'desc',this.value)">
+        <input type="text" placeholder="⚠️ Disclaimer on tap (optional — blocks until confirmed)" value="${esc(o.disclaimer||'')}" oninput="updOpt(${i},'disclaimer',this.value)">
         <select onchange="updOpt(${i},'target',this.value)"><option value="">— not linked —</option>
           ${all.map(a=>`<option value="${a.id}" ${o.target===a.id?'selected':''}>${esc(a.t.slice(0,50))}</option>`).join('')}
         </select></div>`;
@@ -1346,6 +1442,7 @@ function applyEdits(){
   if(!selectedId)return; const n=EG().nodes[selectedId];
   n.title=document.getElementById('e_title').value;
   n.sub=document.getElementById('e_sub').value;
+  n.note=document.getElementById('e_note').value||null;
   if(n.kind==='o'){
     n.otype=document.getElementById('e_otype').value;
     n.summary=document.getElementById('e_summary').value;
@@ -1398,28 +1495,90 @@ async function edSave(){
 // ════════════════════════════════════════════════════════════════
 function autoLayoutBoth(){ ['intake','field'].forEach(g=>autoLayoutGraph(GRAPHS[g])); }
 function autoLayout(){ autoLayoutGraph(EG()); }
+
+// Layered layout: longest-path layering + barycenter crossing reduction + generous spacing.
 function autoLayoutGraph(G){
-  const depths={}, visited=new Set(), queue=[[G.start,0]];
-  while(queue.length){
-    const [id,d]=queue.shift();
-    if(!G.nodes[id])continue;
-    if(visited.has(id)){ if(d>depths[id])depths[id]=d; continue; }
-    visited.add(id); depths[id]=d;
-    (G.nodes[id].opts||[]).forEach(o=>{ if(o.target&&G.nodes[o.target])queue.push([o.target,d+1]); });
-  }
-  let maxD=0; Object.values(depths).forEach(d=>{if(d>maxD)maxD=d;});
-  Object.keys(G.nodes).forEach(id=>{ if(!(id in depths))depths[id]=maxD+1; });
-  const cols={};
-  Object.keys(G.nodes).forEach(id=>{const d=depths[id];(cols[d]=cols[d]||[]).push(id);});
-  const COLW=300;
-  Object.keys(cols).sort((a,b)=>a-b).forEach(d=>{
-    let y=50;
-    cols[d].forEach(id=>{
-      const n=G.nodes[id]; n.x=50+d*COLW; n.y=y;
-      const oc=(n.opts||[]).length;
-      y += (n.kind==='q'?(80+oc*24):96)+24;
+  const ids=Object.keys(G.nodes);
+  if(!ids.length) return;
+  const start=(G.start && G.nodes[G.start]) ? G.start : ids[0];
+
+  // adjacency (out) and parents (in)
+  const out={}, parents={};
+  ids.forEach(id=>{ out[id]=[]; parents[id]=[]; });
+  ids.forEach(id=>{
+    (G.nodes[id].opts||[]).forEach(o=>{
+      if(o.target && G.nodes[o.target] && o.target!==id){ out[id].push(o.target); parents[o.target].push(id); }
     });
   });
+
+  // longest-path depth from start via relaxation (cycle-safe: capped iterations)
+  const depth={}; ids.forEach(id=>depth[id]=0);
+  for(let iter=0; iter<ids.length+2; iter++){
+    let changed=false;
+    ids.forEach(id=>{ out[id].forEach(t=>{ if(depth[t] < depth[id]+1){ depth[t]=depth[id]+1; changed=true; } }); });
+    if(!changed) break;
+  }
+  // orphan nodes (no incoming, not start) → push to the far right so they don't clutter column 0
+  let maxD=0; ids.forEach(id=>{ if(depth[id]>maxD)maxD=depth[id]; });
+  ids.forEach(id=>{ if(id!==start && parents[id].length===0 && depth[id]===0) depth[id]=maxD+1; });
+  maxD=0; ids.forEach(id=>{ if(depth[id]>maxD)maxD=depth[id]; });
+
+  // BFS order from start for stable initial ordering / tie-breaks
+  const bfsIx={}; let bi=0; const seen=new Set([start]); const q=[start]; bfsIx[start]=bi++;
+  while(q.length){ const id=q.shift(); out[id].forEach(t=>{ if(!seen.has(t)){ seen.add(t); bfsIx[t]=bi++; q.push(t); } }); }
+  ids.forEach(id=>{ if(!(id in bfsIx)) bfsIx[id]=bi++; });
+
+  // group into layers
+  const layers=[]; for(let d=0; d<=maxD; d++) layers[d]=[];
+  ids.forEach(id=> layers[depth[id]].push(id));
+  layers.forEach(L=> L.sort((a,b)=> bfsIx[a]-bfsIx[b]));
+
+  // barycenter sweeps to reduce edge crossings
+  const pos={}; const record=()=> layers.forEach(L=> L.forEach((id,i)=> pos[id]=i));
+  record();
+  const bary=(id,refs)=> refs.length ? refs.reduce((s,r)=> s+(pos[r]||0),0)/refs.length : (pos[id]||0);
+  for(let sweep=0; sweep<5; sweep++){
+    for(let d=1; d<=maxD; d++){ layers[d].sort((a,b)=> bary(a,parents[a])-bary(b,parents[b])); record(); }
+    for(let d=maxD-1; d>=0; d--){ layers[d].sort((a,b)=> bary(a,out[a])-bary(b,out[b])); record(); }
+  }
+
+  // assign coordinates — wide columns, tall gaps, vertically centred per column
+  const COLW=370, VGAP=48, PADX=60, PADY=60;
+  const nodeH=id=>{ const n=G.nodes[id]; const oc=(n.opts||[]).length; return n.kind==='q'?(90+oc*24):110; };
+  const colH=layers.map(L=> L.reduce((s,id)=> s+nodeH(id)+VGAP, 0) - (L.length?VGAP:0));
+  const tallest=Math.max(1, ...colH);
+  layers.forEach((L,d)=>{
+    let y=PADY + (tallest - colH[d])/2;
+    L.forEach(id=>{ const n=G.nodes[id]; n.x=PADX + d*COLW; n.y=Math.round(y); y += nodeH(id)+VGAP; });
+  });
+}
+
+function doArrange(){
+  if(!confirm('Re-arrange all nodes in this graph?\n\nThis repositions every node into a clean layout and overrides any manual positioning. Your saved layout is only changed when you Save afterwards.')) return;
+  autoLayout(); edRenderAll(); toast('Arranged — click Save to keep it');
+}
+
+// ── editor toolbar auto-hide ──
+let _tbTuckTimer=null;
+function tbShow(){
+  clearTimeout(_tbTuckTimer);
+  document.querySelector('.ed-toolbar')?.classList.remove('tucked');
+  document.getElementById('edPullTab')?.classList.remove('show');
+}
+function tbTuck(delay){
+  clearTimeout(_tbTuckTimer);
+  _tbTuckTimer=setTimeout(()=>{
+    document.querySelector('.ed-toolbar')?.classList.add('tucked');
+    document.getElementById('edPullTab')?.classList.add('show');
+  }, delay==null?400:delay);
+}
+function tbInit(){
+  const tb=document.querySelector('.ed-toolbar');
+  const rz=document.getElementById('edRevealZone');
+  if(!tb || tb._wired) return; tb._wired=true;
+  tb.addEventListener('mouseenter', tbShow);
+  tb.addEventListener('mouseleave', ()=>tbTuck());
+  if(rz) rz.addEventListener('mouseenter', tbShow);
 }
 
 // ════════════════════════════════════════════════════════════════
