@@ -3,353 +3,407 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CTT Flow Editor</title>
+<title>CTT Service Tool</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#0d0f11;--surface:#161a1e;--surface2:#1c2128;--border:#252b32;--muted:#3a4149;
-  --text:#dde2e8;--subtext:#7a8694;--orange:#E8622A;--orange-d:#c4511f;
-  --green:#27ae60;--blue:#2980b9;--yellow:#e67e22;--red:#c0392b;
+  --text:#dde2e8;--subtext:#7a8694;--orange:#E8622A;--orange-d:#c4511f;--orange-dim:#2a1810;
+  --green:#27ae60;--green-dim:#0d2b1c;--blue:#2980b9;--blue-dim:#0d1f30;
+  --yellow:#e67e22;--yellow-dim:#2a1f0a;--red:#c0392b;--red-dim:#2a0d0d;--grey-dim:#141c24;
   --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
 }
-html,body{background:var(--bg);color:var(--text);font-family:var(--sans);height:100%;overflow:hidden;font-size:14px;}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);height:100%;font-size:14px;-webkit-font-smoothing:antialiased;}
+body.editor-active{overflow:hidden;}
 
-/* ── TOOLBAR ── */
-.toolbar{
-  height:52px;background:var(--surface);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 16px;gap:8px;position:relative;z-index:50;
-}
-.tb-brand{display:flex;align-items:center;gap:9px;margin-right:14px;}
-.tb-dot{width:8px;height:8px;background:var(--orange);border-radius:50%;}
-.tb-title{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--subtext);text-transform:uppercase;}
-.tb-title span{color:var(--orange);}
-.tb-btn{
-  background:var(--surface2);border:1px solid var(--border);border-radius:6px;
-  color:var(--text);font-size:12px;font-weight:500;font-family:var(--sans);
-  padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;
-  transition:border-color .12s,background .12s;white-space:nowrap;
-}
-.tb-btn:hover{border-color:var(--muted);}
-.tb-btn.primary{background:var(--orange);border-color:var(--orange);color:#fff;}
-.tb-btn.primary:hover{background:var(--orange-d);}
-.tb-sep{width:1px;height:24px;background:var(--border);margin:0 4px;}
-.tb-spacer{flex:1;}
-.tb-hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em;}
+/* ════ VIEW SWITCH ════ */
+.view{display:none;}
+.view.active{display:block;}
 
-/* ── CANVAS ── */
-.canvas-wrap{
-  position:absolute;top:52px;left:0;right:0;bottom:0;overflow:auto;
-  background:
-    radial-gradient(circle, #1a1f25 1px, transparent 1px);
-  background-size:24px 24px;
-  background-color:var(--bg);
-}
-.canvas{position:relative;width:5200px;height:4200px;}
+/* ════ LANDING ════ */
+#view-landing{min-height:100vh;display:flex;flex-direction:column;}
+.land-top{height:56px;border-bottom:1px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:space-between;padding:0 18px;}
+.land-brand{display:flex;align-items:center;gap:10px;}
+.land-dot{width:9px;height:9px;background:var(--orange);border-radius:50%;}
+.land-brandtxt{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:var(--subtext);text-transform:uppercase;}
+.land-brandtxt span{color:var(--orange);}
+.gear-btn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--subtext);
+  font-size:12px;padding:7px 13px;cursor:pointer;font-family:var(--sans);display:inline-flex;align-items:center;gap:6px;}
+.gear-btn:hover{border-color:var(--muted);color:var(--text);}
+.land-main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
+.land-inner{width:100%;max-width:600px;}
+.land-hero{text-align:center;margin-bottom:34px;}
+.land-logo{width:54px;height:54px;background:var(--orange);border-radius:15px;display:inline-flex;align-items:center;
+  justify-content:center;font-family:var(--mono);font-size:21px;color:#fff;margin-bottom:18px;}
+.land-h1{font-size:27px;font-weight:600;letter-spacing:-.02em;margin-bottom:8px;}
+.land-sub{font-size:14px;color:var(--subtext);line-height:1.6;max-width:440px;margin:0 auto;}
+.land-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.land-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:24px 20px;cursor:pointer;
+  text-align:left;transition:border-color .15s,background .15s,transform .12s;}
+.land-card:hover{border-color:var(--orange);background:var(--surface2);}
+.land-card:active{transform:scale(.98);}
+.lc-icon{font-size:34px;display:block;margin-bottom:15px;}
+.lc-title{font-size:17px;font-weight:600;margin-bottom:6px;}
+.lc-desc{font-size:12.5px;color:var(--subtext);line-height:1.55;}
+.lc-tag{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:10px;letter-spacing:.07em;
+  text-transform:uppercase;padding:2px 9px;border-radius:4px;}
+.lc-tag-g{background:var(--green-dim);color:#4ecf84;border:1px solid #1f4d33;}
+.lc-tag-o{background:var(--orange-dim);color:var(--orange);border:1px solid #4a2815;}
+.land-ctx{margin-top:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px;
+  display:none;}
+.land-ctx.show{display:block;}
+.land-ctx-label{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:9px;}
+.land-ctx-rows{display:flex;gap:18px;flex-wrap:wrap;}
+.land-ctx-item{font-size:12px;color:var(--subtext);}
+.land-ctx-item b{color:var(--text);font-weight:500;}
+.land-ctx-clear{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;margin-left:auto;text-decoration:underline;}
+
+/* ════ RUNNER ════ */
+#view-runner{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 0 60px;}
+.run-top{width:100%;height:52px;border-bottom:1px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:20;}
+.run-top-left{display:flex;align-items:center;gap:9px;}
+.run-back-home{background:none;border:none;color:var(--subtext);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.run-back-home:hover{color:var(--text);}
+.run-mode-tag{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:4px;}
+.run-mode-intake{background:var(--green-dim);color:#8ab860;border:1px solid #3a4a20;}
+.run-mode-field{background:var(--orange-dim);color:var(--orange);border:1px solid #4a2815;}
+.run-prog{width:100%;max-width:560px;padding:14px 18px 0;}
+.run-prog-track{height:2px;background:var(--border);border-radius:2px;overflow:hidden;}
+.run-prog-fill{height:100%;background:var(--orange);transition:width .35s ease;}
+.run-prog-path{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.03em;margin-top:7px;line-height:1.6;word-break:break-word;}
+.run-area{width:100%;max-width:560px;padding:18px;}
+.r-label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:7px;}
+.r-q{font-size:20px;font-weight:600;line-height:1.32;margin-bottom:7px;}
+.r-sub{font-size:13px;color:var(--subtext);line-height:1.55;margin-bottom:20px;}
+.r-say{background:var(--blue-dim);border-left:3px solid var(--blue);border-radius:6px;padding:11px 14px;margin-bottom:18px;
+  font-size:13px;color:#6db3d4;line-height:1.5;}
+.r-choices{display:flex;flex-direction:column;gap:9px;}
+.r-choice{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:13px 16px;cursor:pointer;font-family:var(--sans);transition:border-color .14s,background .14s;}
+.r-choice:hover{border-color:var(--orange);background:var(--surface2);}
+.r-choice-l{font-size:14px;font-weight:500;color:var(--text);display:block;}
+.r-choice-d{font-size:12px;color:var(--subtext);margin-top:2px;display:block;line-height:1.45;}
+.r-choice.unlinked{opacity:.5;border-style:dashed;cursor:not-allowed;}
+
+/* outcome card */
+.oc{border-radius:11px;overflow:hidden;border:1px solid;margin-bottom:14px;}
+.oc-head{padding:16px 18px;display:flex;align-items:center;gap:12px;}
+.oc-ic{font-size:27px;}
+.oc-type{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;display:block;}
+.oc-ttl{font-size:16px;font-weight:600;display:block;margin-top:1px;}
+.oc-body{padding:14px 18px;font-size:13px;line-height:1.6;background:rgba(0,0,0,.25);}
+.t-DESK{border-color:#1f4d33;} .t-DESK .oc-head{background:var(--green-dim);color:#4ecf84;}
+.t-WARRANTY{border-color:#1f4d33;} .t-WARRANTY .oc-head{background:var(--green-dim);color:#4ecf84;}
+.t-QUOTE{border-color:#4d3a1a;} .t-QUOTE .oc-head{background:var(--yellow-dim);color:#d4a030;}
+.t-DISPATCH{border-color:#1a3a54;} .t-DISPATCH .oc-head{background:var(--blue-dim);color:#5ba8d4;}
+.t-REPLACEMENT{border-color:#243a64;} .t-REPLACEMENT .oc-head{background:#101a30;color:#7a9ae0;}
+.t-ESCALATE{border-color:#4d1a1a;} .t-ESCALATE .oc-head{background:var(--red-dim);color:#e08080;}
+.t-HOLD{border-color:#2a3240;} .t-HOLD .oc-head{background:var(--grey-dim);color:#8a9bb0;}
+.t-FLAG{border-color:#4a2815;} .t-FLAG .oc-head{background:var(--orange-dim);color:#e8915a;}
+.t-INFO{border-color:#2a3240;} .t-INFO .oc-head{background:var(--grey-dim);color:#8a9bb0;}
+
+/* commercial + repair + checklist + msg blocks */
+.blk{background:var(--surface);border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:14px;}
+.blk-head{padding:11px 15px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--subtext);}
+.inforow{display:flex;justify-content:space-between;align-items:center;padding:8px 15px;border-bottom:1px solid var(--border);font-size:13px;}
+.inforow:last-child{border-bottom:none;}
+.infok{color:var(--subtext);} .infov{font-weight:500;text-align:right;}
+.infov.warn{color:var(--yellow);} .infov.ok{color:var(--green);} .infov.bad{color:var(--red);}
+.rsteps{padding:12px 15px;}
+.rstep{display:flex;gap:11px;margin-bottom:9px;align-items:flex-start;}
+.rstep:last-child{margin-bottom:0;}
+.rstep-n{font-family:var(--mono);font-size:11px;color:var(--orange);background:var(--orange-dim);border:1px solid #3a2510;
+  width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:500;}
+.rstep-t{font-size:12.5px;line-height:1.5;padding-top:2px;}
+.rstep-t.crit{color:#e08080;font-weight:500;}
+.chk{border:1px solid #4a2815;border-radius:9px;overflow:hidden;margin-bottom:14px;}
+.chk-head{background:var(--orange-dim);padding:12px 15px;font-size:14px;font-weight:600;color:var(--orange);}
+.chk-items{padding:12px 15px;background:var(--surface);}
+.chk-item{display:flex;gap:10px;font-size:12.5px;line-height:1.5;margin-bottom:8px;}
+.chk-item:last-child{margin-bottom:0;}
+.chk-item::before{content:'☐';color:var(--orange);flex-shrink:0;}
+.msg{background:var(--surface);border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:14px;}
+.msg-head{padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;
+  justify-content:space-between;align-items:center;}
+.msg-label{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--subtext);}
+.msg-copy{background:none;border:1px solid var(--border);border-radius:5px;color:var(--subtext);font-size:10px;padding:3px 10px;cursor:pointer;font-family:var(--sans);}
+.msg-copy:hover{color:var(--text);border-color:var(--muted);}
+.msg-body{padding:12px 13px;font-size:12.5px;line-height:1.65;white-space:pre-wrap;max-height:260px;overflow-y:auto;}
+.alert{border-radius:6px;padding:11px 14px;margin-bottom:14px;font-size:13px;line-height:1.5;border-left:3px solid;}
+.alert-warn{background:var(--yellow-dim);border-color:var(--yellow);color:#d4a843;}
+.alert-stop{background:var(--red-dim);border-color:var(--red);color:#e08080;}
+.alert-ok{background:var(--green-dim);border-color:var(--green);color:#4ecf84;}
+
+/* parts + signature */
+.parts{margin-bottom:14px;}
+.parts-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);margin-bottom:8px;}
+.part-entry{display:flex;gap:7px;margin-bottom:7px;}
+.part-in{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:9px 11px;color:var(--text);
+  font-family:var(--mono);font-size:12px;outline:none;width:100%;}
+.part-in:focus{border-color:var(--orange);}
+.sig{border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:14px;}
+.sig-label{padding:9px 13px;background:var(--surface);border-bottom:1px solid var(--border);font-family:var(--mono);
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--subtext);}
+.sig-canvas{width:100%;height:110px;background:#0a0c0e;display:block;touch-action:none;cursor:crosshair;}
+.sig-act{display:flex;gap:8px;padding:9px 13px;background:var(--surface);border-top:1px solid var(--border);}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:7px;font-size:13px;
+  font-weight:500;cursor:pointer;border:1px solid transparent;font-family:var(--sans);transition:all .14s;}
+.btn-primary{background:var(--orange);color:#fff;border-color:var(--orange);}
+.btn-primary:hover{background:var(--orange-d);}
+.btn-ghost{background:transparent;color:var(--subtext);border-color:var(--border);}
+.btn-ghost:hover{border-color:var(--muted);color:var(--text);}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-full{width:100%;}
+.run-foot{display:flex;gap:8px;margin-top:16px;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+
+/* ════ EDITOR ════ (canvas) ════ */
+#view-editor{position:fixed;inset:0;display:none;flex-direction:column;}
+#view-editor.active{display:flex;}
+.ed-toolbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 14px;gap:7px;z-index:50;flex-shrink:0;}
+.ed-brand{display:flex;align-items:center;gap:9px;margin-right:10px;}
+.ed-dot{width:8px;height:8px;background:var(--orange);border-radius:50%;}
+.ed-title{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--subtext);text-transform:uppercase;}
+.ed-title span{color:var(--orange);}
+.gswitch{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-right:6px;}
+.gswitch button{background:none;border:none;color:var(--subtext);font-size:12px;font-weight:500;padding:7px 14px;cursor:pointer;font-family:var(--sans);}
+.gswitch button.active{background:var(--orange);color:#fff;}
+.tbtn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-weight:500;
+  font-family:var(--sans);padding:7px 11px;cursor:pointer;white-space:nowrap;}
+.tbtn:hover{border-color:var(--muted);}
+.tbtn.save{background:var(--orange);border-color:var(--orange);color:#fff;}
+.tbtn.save:hover{background:var(--orange-d);}
+.tbtn.exit{background:none;}
+.ed-sep{width:1px;height:24px;background:var(--border);margin:0 3px;}
+.ed-spacer{flex:1;}
+.ed-hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.03em;}
+.canvas-wrap{flex:1;overflow:auto;position:relative;background:radial-gradient(circle,#1a1f25 1px,transparent 1px);
+  background-size:24px 24px;background-color:var(--bg);}
+.canvas{position:relative;width:6000px;height:4600px;}
 #edgeLayer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
-
-/* ── NODES ── */
-.node{
-  position:absolute;width:232px;background:var(--surface);
-  border:1px solid var(--border);border-radius:9px;cursor:grab;
-  user-select:none;box-shadow:0 2px 10px rgba(0,0,0,.35);
-  transition:box-shadow .12s;
-}
+.node{position:absolute;width:236px;background:var(--surface);border:1px solid var(--border);border-radius:9px;cursor:grab;
+  user-select:none;box-shadow:0 2px 10px rgba(0,0,0,.35);transition:box-shadow .12s;}
 .node:hover{box-shadow:0 4px 16px rgba(0,0,0,.5);}
 .node.selected{border-color:var(--orange);box-shadow:0 0 0 2px rgba(232,98,42,.35);}
 .node.dragging{cursor:grabbing;opacity:.92;z-index:30;}
-.node-head{
-  padding:8px 11px;border-bottom:1px solid var(--border);border-radius:9px 9px 0 0;
-  display:flex;align-items:center;gap:7px;
-}
-.node-type-tag{
-  font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;
-  padding:1px 6px;border-radius:3px;font-weight:500;flex-shrink:0;
-}
-.node-title{font-size:12px;font-weight:600;line-height:1.35;color:var(--text);padding:8px 11px 4px;}
+.node-head{padding:8px 11px;border-bottom:1px solid var(--border);border-radius:9px 9px 0 0;display:flex;align-items:center;gap:7px;}
+.ntag{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:1px 6px;border-radius:3px;font-weight:500;flex-shrink:0;}
+.node-title{font-size:12px;font-weight:600;line-height:1.35;padding:8px 11px 4px;}
 .node-sub{font-size:10px;color:var(--subtext);line-height:1.4;padding:0 11px 7px;}
 .node-opts{padding:0 0 7px;}
-.node-opt{
-  display:flex;align-items:center;justify-content:space-between;gap:6px;
-  padding:4px 11px;font-size:11px;color:var(--subtext);position:relative;
-}
-.node-opt-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-.node-opt-port{
-  width:9px;height:9px;border-radius:50%;flex-shrink:0;
-  border:2px solid var(--muted);background:var(--bg);
-}
-.node-opt-port.linked{border-color:var(--orange);background:var(--orange);}
-.node-opt-port.unlinked{border-color:var(--red);}
-/* question node */
-.node.q .node-head{background:#13202c;}
-.node.q .node-type-tag{background:#0d1f30;color:#5ba8d4;border:1px solid #1a3a54;}
-/* outcome variants */
-.node.o .node-head{background:#15191d;}
-.node.o{width:212px;}
-.tag-DESK{background:#0d2b1c;color:#4ecf84;border:1px solid #1f4d33;}
+.node-opt{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 11px;font-size:11px;color:var(--subtext);}
+.node-opt-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.port{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:2px solid var(--muted);background:var(--bg);}
+.port.linked{border-color:var(--orange);background:var(--orange);}
+.port.unlinked{border-color:var(--red);}
+.tag-Q{background:#0d1f30;color:#5ba8d4;border:1px solid #1a3a54;}
+.tag-DESK,.tag-WARRANTY{background:#0d2b1c;color:#4ecf84;border:1px solid #1f4d33;}
 .tag-QUOTE{background:#2a1f0a;color:#d4a030;border:1px solid #4d3a1a;}
 .tag-DISPATCH{background:#0d1f30;color:#5ba8d4;border:1px solid #1a3a54;}
-.tag-WARRANTY{background:#0d2b1c;color:#4ecf84;border:1px solid #1f4d33;}
 .tag-REPLACEMENT{background:#101a30;color:#7a9ae0;border:1px solid #243a64;}
 .tag-ESCALATE{background:#2a0d0d;color:#e08080;border:1px solid #4d1a1a;}
-.tag-HOLD{background:#141c24;color:#8a9bb0;border:1px solid #2a3240;}
+.tag-HOLD,.tag-INFO{background:#141c24;color:#8a9bb0;border:1px solid #2a3240;}
 .tag-FLAG{background:#2a1810;color:#e8915a;border:1px solid #4a2815;}
-.tag-INFO{background:#141c24;color:#8a9bb0;border:1px solid #2a3240;}
-.node-start-badge{
-  position:absolute;top:-9px;left:10px;font-family:var(--mono);font-size:9px;
-  background:var(--orange);color:#fff;padding:1px 7px;border-radius:3px;
-  letter-spacing:.06em;font-weight:500;
-}
+.start-badge{position:absolute;top:-9px;left:10px;font-family:var(--mono);font-size:9px;background:var(--orange);color:#fff;
+  padding:1px 7px;border-radius:3px;letter-spacing:.06em;font-weight:500;}
+.node.o{width:216px;}
 
-/* ── EDITOR PANEL ── */
-.panel{
-  position:absolute;top:52px;right:0;bottom:0;width:340px;
-  background:var(--surface);border-left:1px solid var(--border);
-  transform:translateX(100%);transition:transform .2s ease;z-index:60;
-  display:flex;flex-direction:column;
-}
+/* editor panel */
+.panel{position:fixed;top:52px;right:0;bottom:0;width:350px;background:var(--surface);border-left:1px solid var(--border);
+  transform:translateX(100%);transition:transform .2s ease;z-index:60;display:flex;flex-direction:column;}
 .panel.open{transform:translateX(0);}
-.panel-head{
-  padding:14px 16px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-}
+.panel-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .panel-title{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);}
-.panel-close{background:none;border:none;color:var(--subtext);font-size:18px;cursor:pointer;padding:0 4px;}
-.panel-close:hover{color:var(--text);}
+.panel-x{background:none;border:none;color:var(--subtext);font-size:18px;cursor:pointer;}
+.panel-x:hover{color:var(--text);}
 .panel-body{flex:1;overflow-y:auto;padding:14px 16px 60px;}
 .fld{margin-bottom:13px;}
-.fld-label{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--subtext);margin-bottom:5px;display:block;}
-.fld input[type=text],.fld textarea,.fld select{
-  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
-  padding:8px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;
-}
+.fld-l{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--subtext);margin-bottom:5px;display:block;}
+.fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  padding:8px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;}
 .fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--orange);}
 .fld textarea{resize:vertical;min-height:54px;line-height:1.5;}
 .fld select{cursor:pointer;}
-.opt-editor{
-  background:var(--bg);border:1px solid var(--border);border-radius:7px;
-  padding:9px;margin-bottom:8px;position:relative;
-}
-.opt-editor input,.opt-editor select{
-  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;
-  padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans);outline:none;margin-bottom:6px;
-}
-.opt-editor input:focus,.opt-editor select:focus{border-color:var(--orange);}
-.opt-editor select{margin-bottom:0;cursor:pointer;}
-.opt-del{
-  position:absolute;top:6px;right:7px;background:none;border:none;color:var(--muted);
-  font-size:13px;cursor:pointer;padding:0 3px;
-}
+.opt-ed{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px;margin-bottom:8px;position:relative;}
+.opt-ed input,.opt-ed select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;
+  padding:6px 8px;color:var(--text);font-size:11px;font-family:var(--sans);outline:none;margin-bottom:6px;}
+.opt-ed select{margin-bottom:0;cursor:pointer;}
+.opt-ed input:focus,.opt-ed select:focus{border-color:var(--orange);}
+.opt-del{position:absolute;top:6px;right:7px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;}
 .opt-del:hover{color:var(--red);}
-.panel-btn{
-  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;
-  color:var(--text);font-size:12px;padding:8px;cursor:pointer;font-family:var(--sans);
-  margin-bottom:8px;transition:border-color .12s;
-}
-.panel-btn:hover{border-color:var(--muted);}
-.panel-btn.danger{color:#e08080;border-color:#4d1a1a;}
-.panel-btn.danger:hover{background:#2a0d0d;}
-.panel-btn.accent{background:var(--orange);border-color:var(--orange);color:#fff;}
-.checkbox-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);margin-bottom:6px;cursor:pointer;}
-.checkbox-row input{accent-color:var(--orange);}
-
-/* ── RUN MODAL ── */
-.run-overlay{
-  position:fixed;inset:0;background:rgba(8,10,12,.86);z-index:200;
-  display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:36px 16px;
-}
-.run-overlay.open{display:flex;}
-.run-card{
-  width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);
-  border-radius:12px;overflow:hidden;animation:popIn .18s ease;
-}
-@keyframes popIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-.run-head{
-  padding:13px 18px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;background:var(--surface2);
-}
-.run-head-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);}
-.run-body{padding:20px 18px;}
-.run-q{font-size:17px;font-weight:600;line-height:1.35;margin-bottom:6px;}
-.run-sub{font-size:12.5px;color:var(--subtext);line-height:1.55;margin-bottom:16px;}
-.run-choice{
-  display:block;width:100%;text-align:left;background:var(--bg);border:1px solid var(--border);
-  border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;
-  font-family:var(--sans);transition:border-color .12s,background .12s;
-}
-.run-choice:hover{border-color:var(--orange);background:var(--surface2);}
-.run-choice-label{font-size:13.5px;font-weight:500;color:var(--text);display:block;}
-.run-choice-desc{font-size:11.5px;color:var(--subtext);margin-top:2px;display:block;line-height:1.45;}
-.run-outcome-head{padding:16px 18px;display:flex;align-items:center;gap:12px;}
-.run-outcome-icon{font-size:26px;}
-.run-outcome-type{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;display:block;}
-.run-outcome-title{font-size:16px;font-weight:600;display:block;margin-top:1px;}
-.run-outcome-body{padding:14px 18px;font-size:13px;line-height:1.6;background:rgba(0,0,0,.25);}
-.oc-DESK .run-outcome-head{background:#0d2b1c;color:#4ecf84;}
-.oc-QUOTE .run-outcome-head{background:#2a1f0a;color:#d4a030;}
-.oc-DISPATCH .run-outcome-head{background:#0d1f30;color:#5ba8d4;}
-.oc-WARRANTY .run-outcome-head{background:#0d2b1c;color:#4ecf84;}
-.oc-REPLACEMENT .run-outcome-head{background:#101a30;color:#7a9ae0;}
-.oc-ESCALATE .run-outcome-head{background:#2a0d0d;color:#e08080;}
-.oc-HOLD .run-outcome-head{background:#141c24;color:#8a9bb0;}
-.oc-FLAG .run-outcome-head{background:#2a1810;color:#e8915a;}
-.oc-INFO .run-outcome-head{background:#141c24;color:#8a9bb0;}
-.run-checklist{
-  margin:14px 18px;border:1px solid #4a2815;border-radius:8px;overflow:hidden;
-}
-.run-checklist-head{
-  background:#2a1810;padding:10px 14px;font-size:13px;font-weight:600;color:var(--orange);
-}
-.run-checklist-items{padding:10px 14px;background:var(--bg);}
-.run-checklist-item{
-  display:flex;gap:9px;font-size:12.5px;color:var(--text);line-height:1.5;margin-bottom:7px;
-}
-.run-checklist-item::before{content:'☐';color:var(--orange);flex-shrink:0;}
-.run-msg{
-  margin:0 18px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;
-}
-.run-msg-head{
-  padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);
-  display:flex;justify-content:space-between;align-items:center;
-}
-.run-msg-label{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--subtext);}
-.run-msg-copy{background:none;border:1px solid var(--border);border-radius:5px;color:var(--subtext);font-size:10px;padding:3px 9px;cursor:pointer;font-family:var(--sans);}
-.run-msg-copy:hover{color:var(--text);border-color:var(--muted);}
-.run-msg-body{padding:11px 12px;font-size:12px;line-height:1.65;white-space:pre-wrap;color:var(--text);max-height:220px;overflow-y:auto;}
-.run-foot{
-  padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--surface2);
-}
-.run-btn{
-  flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;
-  color:var(--text);font-size:12px;padding:9px;cursor:pointer;font-family:var(--sans);
-}
-.run-btn:hover{border-color:var(--muted);}
-.run-btn.accent{background:var(--orange);border-color:var(--orange);color:#fff;}
-.run-path{
-  font-family:var(--mono);font-size:9px;color:var(--muted);padding:8px 18px 0;letter-spacing:.03em;
-  line-height:1.6;word-break:break-word;
-}
-
-/* ── LEGEND ── */
-.legend{
-  position:absolute;bottom:14px;left:14px;background:var(--surface);
-  border:1px solid var(--border);border-radius:8px;padding:10px 13px;z-index:40;
-  display:flex;gap:11px;flex-wrap:wrap;max-width:560px;
-}
-.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--subtext);}
-.legend-dot{width:8px;height:8px;border-radius:2px;}
+.pbtn{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;
+  padding:8px;cursor:pointer;font-family:var(--sans);margin-bottom:8px;}
+.pbtn:hover{border-color:var(--muted);}
+.pbtn.danger{color:#e08080;border-color:#4d1a1a;}
+.pbtn.danger:hover{background:#2a0d0d;}
+.pbtn.accent{background:var(--orange);border-color:var(--orange);color:#fff;}
+.cbrow{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:10px;cursor:pointer;}
+.cbrow input{accent-color:var(--orange);width:15px;height:15px;}
+.legend{position:absolute;bottom:14px;left:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:9px 12px;z-index:40;display:flex;gap:11px;flex-wrap:wrap;max-width:540px;}
+.lgi{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--subtext);}
+.lgd{width:8px;height:8px;border-radius:2px;}
 
 /* toast */
-.toast{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);
-  background:var(--surface2);border:1px solid var(--border);color:var(--text);
-  font-size:12px;padding:9px 18px;border-radius:8px;z-index:300;transition:transform .25s ease;
-}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);
+  border:1px solid var(--border);color:var(--text);font-size:12px;padding:9px 18px;border-radius:8px;z-index:300;
+  transition:transform .25s ease;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+
+@media(max-width:430px){.land-cards{grid-template-columns:1fr;}.r-q{font-size:18px;}}
 </style>
 </head>
 <body>
 
-<div class="toolbar">
-  <div class="tb-brand">
-    <div class="tb-dot"></div>
-    <div class="tb-title"><span>CTT</span> Flow Editor</div>
+<!-- ═══════════ LANDING ═══════════ -->
+<div class="view active" id="view-landing">
+  <div class="land-top">
+    <div class="land-brand"><div class="land-dot"></div><div class="land-brandtxt"><span>CTT</span> Service</div></div>
+    <button class="gear-btn" onclick="openEditor()">⚙ Edit flows</button>
   </div>
-  <button class="tb-btn primary" onclick="startRun()">▶ Test Flow</button>
-  <div class="tb-sep"></div>
-  <button class="tb-btn" onclick="addNode('q')">+ Question</button>
-  <button class="tb-btn" onclick="addNode('o')">+ Outcome</button>
-  <div class="tb-sep"></div>
-  <button class="tb-btn" onclick="autoLayout();renderAll();toast('Auto-arranged')">⊞ Auto-arrange</button>
-  <button class="tb-btn" onclick="exportJSON()">⬇ Export</button>
-  <button class="tb-btn" onclick="document.getElementById('importFile').click()">⬆ Import</button>
-  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
-  <button class="tb-btn" onclick="resetToSeed()">↺ Reset to Default</button>
-  <div class="tb-spacer"></div>
-  <span class="tb-hint">DRAG node to move · CLICK node to edit · Red port = unlinked option</span>
+  <div class="land-main">
+    <div class="land-inner">
+      <div class="land-hero">
+        <div class="land-logo">CT</div>
+        <div class="land-h1">CTT Service Tool</div>
+        <div class="land-sub">Front desk: start with Intake. On site or dispatched: use Field Diagnostic. Context carries across.</div>
+      </div>
+      <div class="land-cards">
+        <div class="land-card" onclick="runStartIntake()">
+          <span class="lc-icon">📋</span>
+          <div class="lc-title">Intake</div>
+          <div class="lc-desc">New complaint coming in by phone, email, or WhatsApp. Triage and resolve.</div>
+          <span class="lc-tag lc-tag-g">Front desk</span>
+        </div>
+        <div class="land-card" onclick="runStartField()">
+          <span class="lc-icon">🔧</span>
+          <div class="lc-title">Field Diagnostic</div>
+          <div class="lc-desc">On site or dispatched. Deep fault diagnosis, repair steps, parts, sign-off.</div>
+          <span class="lc-tag lc-tag-o">On site</span>
+        </div>
+      </div>
+      <div class="land-ctx" id="landCtx">
+        <div class="land-ctx-label">Carried from intake</div>
+        <div class="land-ctx-rows" id="landCtxRows"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="canvas-wrap" id="canvasWrap">
-  <div class="canvas" id="canvas">
-    <svg id="edgeLayer"></svg>
+<!-- ═══════════ RUNNER ═══════════ -->
+<div class="view" id="view-runner">
+  <div class="run-top">
+    <div class="run-top-left">
+      <button class="run-back-home" onclick="goHome()">← Home</button>
+      <span class="run-mode-tag" id="runModeTag"></span>
+    </div>
+    <button class="gear-btn" onclick="openEditor()">⚙ Edit</button>
   </div>
-  <div class="legend">
-    <div class="legend-item"><span class="legend-dot" style="background:#5ba8d4"></span>Question</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#4ecf84"></span>Desk / Warranty</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#d4a030"></span>Non-warranty</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#7a9ae0"></span>Replacement</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#e08080"></span>Escalate</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#e8915a"></span>Flag</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#8a9bb0"></span>Hold / Info</div>
+  <div class="run-prog">
+    <div class="run-prog-track"><div class="run-prog-fill" id="runProgFill" style="width:8%"></div></div>
+    <div class="run-prog-path" id="runProgPath"></div>
   </div>
+  <div class="run-area" id="runArea"></div>
 </div>
 
-<!-- EDITOR PANEL -->
-<div class="panel" id="panel">
-  <div class="panel-head">
-    <span class="panel-title" id="panelTitle">Edit Node</span>
-    <button class="panel-close" onclick="closePanel()">✕</button>
+<!-- ═══════════ EDITOR ═══════════ -->
+<div class="view" id="view-editor">
+  <div class="ed-toolbar">
+    <div class="ed-brand"><div class="ed-dot"></div><div class="ed-title"><span>CTT</span> Flow Editor</div></div>
+    <div class="gswitch">
+      <button id="gsw-intake" class="active" onclick="switchGraph('intake')">Intake</button>
+      <button id="gsw-field" onclick="switchGraph('field')">Field</button>
+    </div>
+    <div class="ed-sep"></div>
+    <button class="tbtn" onclick="edAddNode('q')">+ Question</button>
+    <button class="tbtn" onclick="edAddNode('o')">+ Outcome</button>
+    <button class="tbtn" onclick="autoLayout();edRenderAll();toast('Arranged')">⊞ Arrange</button>
+    <div class="ed-sep"></div>
+    <button class="tbtn" onclick="exportJSON()">⬇ Backup</button>
+    <button class="tbtn" onclick="document.getElementById('impFile').click()">⬆ Restore</button>
+    <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(event)">
+    <button class="tbtn" onclick="resetSeed()">↺ Default</button>
+    <div class="ed-spacer"></div>
+    <span class="ed-hint">Drag to move · Click to edit · Red port = unlinked</span>
+    <div class="ed-sep"></div>
+    <button class="tbtn save" onclick="edSave()">✓ Save</button>
+    <button class="tbtn exit" onclick="exitEditor()">Exit</button>
   </div>
-  <div class="panel-body" id="panelBody"></div>
-</div>
-
-<!-- RUN MODAL -->
-<div class="run-overlay" id="runOverlay">
-  <div class="run-card" id="runCard"></div>
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="canvas" id="canvas"><svg id="edgeLayer"></svg></div>
+    <div class="legend">
+      <div class="lgi"><span class="lgd" style="background:#5ba8d4"></span>Question</div>
+      <div class="lgi"><span class="lgd" style="background:#4ecf84"></span>Desk/Warranty</div>
+      <div class="lgi"><span class="lgd" style="background:#d4a030"></span>Non-warranty</div>
+      <div class="lgi"><span class="lgd" style="background:#5ba8d4"></span>Dispatch</div>
+      <div class="lgi"><span class="lgd" style="background:#7a9ae0"></span>Replacement</div>
+      <div class="lgi"><span class="lgd" style="background:#e08080"></span>Escalate</div>
+      <div class="lgi"><span class="lgd" style="background:#e8915a"></span>Flag</div>
+      <div class="lgi"><span class="lgd" style="background:#8a9bb0"></span>Hold/Email</div>
+    </div>
+  </div>
+  <div class="panel" id="panel">
+    <div class="panel-head"><span class="panel-title" id="panelTitle">Edit Node</span><button class="panel-x" onclick="closePanel()">✕</button></div>
+    <div class="panel-body" id="panelBody"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// SEED GRAPH — the complete intake decision tree.
-// Edit freely in the UI. Reset restores this.
-// Node: {id, kind:'q'|'o', title, sub, opts:[{label,desc,target}],
-//        For outcomes: otype, summary, checklist:'dispatch'|'aed160'|null, msg, msgch}
+// SEED GRAPHS
+// Node: {kind:'q'|'o', title, sub, x, y, opts:[{label,desc,target,set?}]}
+//   set: optional {customerType|capacity|age: value} written to session when chosen
+// Outcome adds: {otype, summary, checklist:'dispatch'|'aed160'|null, msg, msgch,
+//                repairSteps:[..], partsLog:bool}  (last two = field only)
 // ════════════════════════════════════════════════════════════════
-function seedGraph(){
+function seedGraphs(){
 return {
-start:'n_contact',
-nodes:{
 
-// ── STAGE 1: CONTACT & ORIGIN ─────────────────────────────────
+// ───────────────────────────────────────────────────────────────
+intake:{ start:'n_contact', nodes:{
+
 n_contact:{kind:'q',title:'How did the complaint come in?',sub:'Determines the response protocol.',opts:[
  {label:'📞 Phone',desc:'Live call — triage immediately',target:'n_origin_pw'},
  {label:'💬 WhatsApp',desc:'Live chat — triage like a call',target:'n_origin_pw'},
  {label:'✉️ Email',desc:'Written — checklist-first protocol',target:'n_origin_e'},
 ]},
-
 n_origin_pw:{kind:'q',title:'Where did the heater come from?',sub:'Ask the customer directly.',opts:[
- {label:'Bought it myself / retail store',desc:'Retail channel',target:'n_capacity'},
- {label:'Installed by developer / contractor / Sadara',desc:'Project channel',target:'n_tech'},
- {label:'Came with the apartment / moved in',desc:'Need to establish FM involvement',target:'n_fm_pw'},
+ {label:'Bought it myself / retail store',desc:'Retail channel',target:'n_capacity',set:{customerType:'retail'}},
+ {label:'Installed by developer / contractor / Sadara',desc:'Project channel',target:'n_tech',set:{customerType:'project'}},
+ {label:'Came with the apartment / moved in',desc:'Establish FM involvement',target:'n_fm_pw'},
 ]},
 n_fm_pw:{kind:'q',title:'Is there an FM company or building maintenance?',sub:'For pre-installed units.',opts:[
- {label:'Yes — FM / maintenance manages property',desc:'Treat as Project',target:'n_tech'},
- {label:'No — owner-managed',desc:'Treat as Retail',target:'n_capacity'},
+ {label:'Yes — FM / maintenance manages property',desc:'Treat as Project',target:'n_tech',set:{customerType:'project'}},
+ {label:'No — owner-managed',desc:'Treat as Retail',target:'n_capacity',set:{customerType:'retail'}},
 ]},
-
 n_origin_e:{kind:'q',title:'(Email) Where did the heater come from?',sub:'Check the email content or reply to ask.',opts:[
- {label:'Retail purchase',desc:'',target:'o_email_retail'},
- {label:'Developer / contractor / Sadara',desc:'',target:'o_email_project'},
+ {label:'Retail purchase',desc:'',target:'o_email_retail',set:{customerType:'retail'}},
+ {label:'Developer / contractor / Sadara',desc:'',target:'o_email_project',set:{customerType:'project'}},
  {label:'Moved in / unclear',desc:'Check FM involvement',target:'n_fm_e'},
 ]},
 n_fm_e:{kind:'q',title:'(Email) FM company involved?',sub:'',opts:[
- {label:'Yes — FM involved',desc:'',target:'o_email_project'},
- {label:'No / unclear',desc:'',target:'o_email_retail'},
+ {label:'Yes — FM involved',desc:'',target:'o_email_project',set:{customerType:'project'}},
+ {label:'No / unclear',desc:'',target:'o_email_retail',set:{customerType:'retail'}},
 ]},
 
 o_email_retail:{kind:'o',otype:'INFO',title:'Send retail email + checklist',
  summary:'No questionnaire needed. Send the retail response email with the checklist attached. Await completed checklist, photos, serial number, and proof of purchase before any scheduling.',
  checklist:null,msgch:'email',
  msg:'Dear [Customer Name],\n\nThank you for reaching out to Cheqpoint After-Sales regarding your Atlantic water heater.\n\nTo allow us to proceed, please provide:\n\n1. Proof of purchase or warranty certificate.\n2. Photos/video of the fault and the rating plate (model + serial number).\n3. Your address and a convenient visit time if needed.\n\nIf an on-site visit is required and the fault is outside product warranty scope, a call-out fee of AED 160 (VAT inclusive) applies.\n\nPlease complete and return the attached Warranty Claim Checklist.\n\nKind regards,\nMetalyn Juntura\nCheqpoint After-Sales'},
-
 o_email_project:{kind:'o',otype:'INFO',title:'Send Sadara acknowledgement + checklist email',
  summary:'Two emails: (1) acknowledgement to Sadara, (2) checklist requirements to the contractor/client. No dispatch until completed checklist, photos, and warranty certificate are received. Incomplete submissions close after 48 hours.',
  checklist:null,msgch:'email',
  msg:'EMAIL 1 — TO SADARA:\n\nDear [Sadara Contact],\n\nWe hereby acknowledge the complaint regarding [fault] at [site/unit]. Our technical team will review and coordinate directly with the client for documents, assessment, and action.\n\nBest regards,\nMetalyn Juntura\nAtlantic AfterSales\n\n────────────────\n\nEMAIL 2 — TO CONTRACTOR:\n\nDear [Contact Name],\n\nAll contractor-managed complaints are processed only after receipt of a fully completed "Warranty Claim Request – Checklist and Declaration" form.\n\nRequired: warranty certificate; photos/video of fault + serial label; site location pin + access instructions; site contact name and mobile.\n\nIf the issue is out of warranty, installation-related, or misuse, the visit is chargeable at AED 160 (VAT inc). Incomplete submissions are closed after 48 hours.\n\nKind regards,\nMetalyn Juntura\nAtlantic AfterSales'},
 
-// ── STAGE 2: PROJECT TECH WALK-THROUGH ────────────────────────
 n_tech:{kind:'q',title:'Does the customer have a technician / FM available right now?',sub:'If yes, get them on the call — we may avoid a dispatch.',opts:[
  {label:'Yes — technician available',desc:'Bring them onto the call',target:'n_tc1'},
  {label:'No — no technical help right now',desc:'Proceed with standard questions',target:'n_capacity'},
@@ -400,25 +454,22 @@ o_dispatch_leak:{kind:'o',otype:'DISPATCH',title:'Dispatch — leakage found on 
  msg:'Hi [Contact], a leak has been identified at the unit. Our technical team will visit to assess the source and confirm warranty eligibility. Before the visit, please return the completed checklist and send photos of the leak and the unit serial label.\n\nCheqpoint After-Sales'},
 o_dispatch_assess:{kind:'o',otype:'DISPATCH',title:'Dispatch — on-site assessment required',
  summary:'All remote checks done; fault cannot be resolved remotely. Dispatch for full on-site assessment. AED 160 applies if found non-warranty on arrival.',
- checklist:'dispatch',msgch:'whatsapp',
+ checklist:'aed160',msgch:'whatsapp',
  msg:'Hi [Contact], we were unable to resolve the issue remotely. Our team will visit for a full assessment. Note: if the fault is found to be outside product warranty, a call-out fee of AED 160 (VAT inc) applies. Please return the completed checklist and photos before the visit.\n\nCheqpoint After-Sales'},
 
-// ── STAGE 3: UNIT DETAILS ──────────────────────────────────────
 n_capacity:{kind:'q',title:'Tank capacity?',sub:'Ask customer to check the label, or use the size description.',opts:[
- {label:'10–30L — small / under-sink',desc:'',target:'n_age'},
- {label:'50–80L — mid range',desc:'',target:'n_age'},
- {label:'100–150L — large',desc:'',target:'n_age'},
- {label:'200L+ — central system',desc:'Apply central logic — count pipes!',target:'n_age'},
+ {label:'10–30L — small / under-sink',desc:'',target:'n_age',set:{capacity:'small'}},
+ {label:'50–80L — mid range',desc:'',target:'n_age',set:{capacity:'medium'}},
+ {label:'100–150L — large',desc:'',target:'n_age',set:{capacity:'large'}},
+ {label:'200L+ — central system',desc:'Apply central logic — count pipes!',target:'n_age',set:{capacity:'central'}},
 ]},
 n_age:{kind:'q',title:'How old is the unit?',sub:'Ask for the purchase bill / warranty card. Age drives warranty eligibility.',opts:[
- {label:'Under 6 months',desc:'Dry heating = primary suspect for heating faults',target:'n_fault'},
- {label:'6 months – 2 years',desc:'Within component warranty',target:'n_fault'},
- {label:'2 – 5 years',desc:'Component expired, tank warranty active',target:'n_fault'},
- {label:'Over 5 years',desc:'All warranty expired',target:'n_fault'},
- {label:'Unknown / no docs',desc:'Non-warranty default until docs provided',target:'n_fault'},
+ {label:'Under 6 months',desc:'Dry heating = primary suspect for heating faults',target:'n_fault',set:{age:'lt6m'}},
+ {label:'6 months – 2 years',desc:'Within component warranty',target:'n_fault',set:{age:'6mto2y'}},
+ {label:'2 – 5 years',desc:'Component expired, tank warranty active',target:'n_fault',set:{age:'2yto5y'}},
+ {label:'Over 5 years',desc:'All warranty expired',target:'n_fault',set:{age:'gt5y'}},
+ {label:'Unknown / no docs',desc:'Non-warranty default until docs provided',target:'n_fault',set:{age:'unknown'}},
 ]},
-
-// ── STAGE 4: FAULT SELECT ──────────────────────────────────────
 n_fault:{kind:'q',title:'What is the complaint?',sub:'Use the customer\'s own words.',opts:[
  {label:'🔴 No hot water / not heating',desc:'',target:'n_f1_power'},
  {label:'🟡 Not enough hot water',desc:'',target:'n_f2_capacity'},
@@ -429,8 +480,6 @@ n_fault:{kind:'q',title:'What is the complaint?',sub:'Use the customer\'s own wo
  {label:'🔊 Abnormal noise / sound',desc:'',target:'n_f7_type'},
  {label:'💥 Physical / external damage',desc:'',target:'n_f8_cause'},
 ]},
-
-// ── F1: NO HEATING ─────────────────────────────────────────────
 n_f1_power:{kind:'q',title:'F1 — Is the power indicator light ON?',sub:'Ask: "Is there a light on the front of the heater?"',opts:[
  {label:'Yes — light is ON',desc:'Power reaching unit',target:'n_f1_history'},
  {label:'No — no light at all',desc:'Power issue',target:'n_f1_db'},
@@ -450,8 +499,6 @@ n_f1_cutout:{kind:'q',title:'F1 — Can the thermostat safety cutout be reset?',
  {label:'No reset found / cutout not tripped',desc:'Element open circuit likely',target:'n_wc_comp'},
  {label:'No one can access the unit',desc:'Dispatch with AED 160 confirmed',target:'o_dispatch_160'},
 ]},
-
-// ── F2: NOT ENOUGH HOT WATER ───────────────────────────────────
 n_f2_capacity:{kind:'q',title:'F2 — Is the unit capacity appropriate for the demand?',sub:'A 30L unit cannot supply a full household. Undersizing is not a fault.',opts:[
  {label:'Unit too small for the demand',desc:'Customer education',target:'o_undersized'},
  {label:'Capacity is appropriate',desc:'',target:'n_f2_thermo'},
@@ -469,8 +516,6 @@ n_f2_hiss:{kind:'q',title:'F2 — Does the customer hear hissing / sizzling when
  {label:'Yes — hissing or sizzling sound',desc:'Scale build-up likely — non-warranty maintenance',target:'o_scale'},
  {label:'No / not sure',desc:'Thermostat fault suspected',target:'n_wc_comp'},
 ]},
-
-// ── F3: DB TRIPPING ────────────────────────────────────────────
 n_f3_site:{kind:'q',title:'F3 — Is an engineer / maintenance person available to check connections and supply?',sub:'Project: site engineer must confirm. Retail: building maintenance if available.',opts:[
  {label:'Checked — all OK, still tripping',desc:'',target:'n_f3_age'},
  {label:'Found loose connection — re-secured',desc:'Desk resolution if stable',target:'o_desk_elec2'},
@@ -481,8 +526,6 @@ n_f3_age:{kind:'q',title:'F3 — Unit age check',sub:'New units that trip = dry 
  {label:'Under 1 year — new unit',desc:'Dry heating suspect — non-warranty',target:'o_dry_trip'},
  {label:'Over 1 year — was working before',desc:'Component fault — warranty check',target:'n_wc_comp'},
 ]},
-
-// ── F4: LEAKAGE ────────────────────────────────────────────────
 n_f4_photos:{kind:'q',title:'F4 — Photos of the leak available?',sub:'MANDATORY for project tickets. Best-effort for retail.',opts:[
  {label:'Yes — photos received / being sent',desc:'',target:'n_f4_source'},
  {label:'No photos — RETAIL customer',desc:'Proceed with AED 160 caveat noted',target:'n_f4_source'},
@@ -496,8 +539,6 @@ n_f4_source:{kind:'q',title:'F4 — Where is the water coming from?',sub:'From p
  {label:'Around element housing',desc:'Non-warranty',target:'o_element_leak'},
  {label:'Cannot determine',desc:'Dispatch to assess',target:'o_dispatch_160'},
 ]},
-
-// ── F5: SAFETY VALVE ───────────────────────────────────────────
 n_f5_offtest:{kind:'q',title:'F5 — THE TEST: heater OFF, wait 5 mins. Still dripping?',sub:'Critical diagnostic. Heater off = no thermal expansion = valve should be closed.',opts:[
  {label:'Yes — still dripping with heater OFF',desc:'Faulty valve confirmed',target:'n_wc_comp'},
  {label:'No — stops when heater is off',desc:'Thermal expansion related',target:'n_f5_type'},
@@ -514,28 +555,20 @@ n_f5_drain2:{kind:'q',title:'F5 — Drain pipe installed? (sustained flow)',sub:
  {label:'Yes — drain installed',desc:'Faulty valve — warranty check',target:'n_wc_comp'},
  {label:'No drain pipe',desc:'Installation issue + valve inspection',target:'o_sv_nodrain_sus'},
 ]},
-
-// ── F6: RUSTY WATER ────────────────────────────────────────────
 n_f6_type:{kind:'q',title:'F6 — Describe the water condition',sub:'Have customer run hot water and describe what comes out.',opts:[
  {label:'Murky / cloudy / debris',desc:'Tank sediment build-up',target:'o_sediment'},
  {label:'Rusty smell / discoloured / dark',desc:'Anode depletion',target:'o_anode'},
  {label:'RED water',desc:'⚠️ Immediate escalation',target:'o_escalate_red'},
 ]},
-
-// ── F7: NOISE ──────────────────────────────────────────────────
 n_f7_type:{kind:'q',title:'F7 — Describe the sound',sub:'Ask the customer to describe or record the sound.',opts:[
  {label:'Rattling / knocking from inside',desc:'Anode rod loose — warranty check',target:'n_wc_comp'},
  {label:'Humming / buzzing / electrical',desc:'Element or thermostat — warranty check',target:'n_wc_comp'},
  {label:'Hissing / singing during heating',desc:'Scale — normal, advise maintenance',target:'o_hiss_normal'},
 ]},
-
-// ── F8: PHYSICAL DAMAGE ────────────────────────────────────────
 n_f8_cause:{kind:'q',title:'F8 — Was the damage caused by Cheqpoint during delivery / installation?',sub:'⚠️ If yes: say NOTHING to the customer. Escalate only.',opts:[
  {label:'Yes — Cheqpoint caused it',desc:'ESCALATE — do not speak to customer',target:'o_escalate_md'},
  {label:'No — third party / misuse / external',desc:'Non-warranty',target:'o_damage'},
 ]},
-
-// ── WARRANTY CHECK NODES ───────────────────────────────────────
 n_wc_comp:{kind:'q',title:'WARRANTY CHECK — Component (2 years)',sub:'Is the unit within 2 years of purchase AND are docs (bill / warranty card) confirmed?',opts:[
  {label:'Yes — within 2 years, docs on hand',desc:'Warranty repair confirmed',target:'o_warranty'},
  {label:'Docs promised — not yet received',desc:'Conditional — do not commit',target:'o_conditional'},
@@ -547,590 +580,776 @@ n_wc_tank:{kind:'q',title:'WARRANTY CHECK — Tank (5 years)',sub:'Is the unit w
  {label:'Expired / no docs',desc:'Non-warranty — quote for replacement',target:'o_nonwarranty'},
 ]},
 
-// ── OUTCOMES: DESK ─────────────────────────────────────────────
-o_cb_reset:{kind:'o',otype:'DESK',title:'Desk — CB reset, monitoring',
- summary:'Breaker was tripped and has been reset. Monitor for one full heating cycle. If it trips again, diagnose element or thermostat fault.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Customer Name], the circuit breaker was tripped and has been reset. Please monitor for one full heating cycle. If it trips again, please let us know and we will arrange a technical visit.\n\nCheqpoint After-Sales'},
-o_commissioning:{kind:'o',otype:'DESK',title:'Desk — commissioning issue suspected',
- summary:'Unit may never have been commissioned correctly. Verify: unit fully filled with water before power applied, correct supply, pipes connected correctly, valve not blocked. If all correct and still no heat, escalate to diagnosis.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Customer Name], the unit may not have been correctly set up at installation. Please confirm it was completely filled with water before power was switched on. If the issue persists after checking, let us know and we will advise next steps.\n\nCheqpoint After-Sales'},
-o_monitor_cycle:{kind:'o',otype:'DESK',title:'Desk — cutout reset, monitor',
- summary:'Thermostat safety cutout was reset. Monitor for one full heating cycle. If it trips again, the thermostat is faulty → run warranty check and arrange visit.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Contact], the thermostat safety cutout has been reset — this is an overheat protection feature. Please monitor for one heating cycle. If the issue recurs, we will arrange a technical assessment.\n\nCheqpoint After-Sales'},
-o_undersized:{kind:'o',otype:'DESK',title:'Desk — unit undersized for demand',
- summary:'Hot water supply matches the unit capacity — not a product fault. Explain that tank size determines available hot water. Recommend a larger unit if demand consistently exceeds capacity.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Customer Name], based on what you have described, the hot water supply matches your unit\'s capacity. Tank size determines how much hot water is available at one time — once used, the unit needs time to reheat. This is normal operation, not a fault. If your household needs more hot water, we can advise on a larger unit.\n\nCheqpoint After-Sales'},
-o_desk_thermo:{kind:'o',otype:'DESK',title:'Desk — thermostat set too low',
- summary:'Thermostat below 4. Advise customer to set the dial to 4 or 5 and check after 1–2 hours. If issue persists after adjustment, continue diagnosis.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Customer Name], the thermostat on your unit appears to be set too low. Please set the dial to 4 or 5 and check again after an hour or two. Let us know if the issue continues.\n\nCheqpoint After-Sales'},
-o_cold_start:{kind:'o',otype:'DESK',title:'Desk — needs 24hrs continuous ON',
- summary:'Unit not powered long enough. Advise to keep it ON continuously and check after 24 hours. Follow up to confirm.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Customer Name], water heaters need to be ON continuously for at least 24 hours to maintain consistent hot water. Please leave it switched on and check again tomorrow. If the issue continues, let us know.\n\nCheqpoint After-Sales'},
-o_sv_normal:{kind:'o',otype:'DESK',title:'Desk — safety valve operating normally',
- summary:'Small drops during heating with drain pipe installed = normal pressure relief. No fault. Customer education only.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Customer Name], the small amount of water from the safety valve during heating is completely normal — it is a pressure relief function and shows the unit is working as designed. No action needed.\n\nCheqpoint After-Sales'},
-o_hiss_normal:{kind:'o',otype:'DESK',title:'Desk — hissing is scale (normal, advise maintenance)',
- summary:'Hissing during heating is caused by mineral scale on the element. Normal but advise periodic maintenance cleaning to reduce noise and protect efficiency.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Customer Name], the hissing sound during heating is caused by mineral deposits on the heating element — this is common and not a fault. We recommend a periodic maintenance clean to reduce the noise and keep the unit efficient. We can arrange this at a chargeable rate if you wish.\n\nCheqpoint After-Sales'},
-o_desk_elec2:{kind:'o',otype:'DESK',title:'Desk — loose connection re-secured',
- summary:'Loose connection found and re-secured. Installation issue — not warranty. Monitor; if tripping recurs, dispatch required.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Customer Name], a loose electrical connection was found and re-secured — this is an installation matter, not covered under warranty. Please monitor. If the tripping recurs, we will arrange a visit.\n\nCheqpoint After-Sales'},
+o_cb_reset:{kind:'o',otype:'DESK',title:'Desk — CB reset, monitoring',summary:'Breaker was tripped and has been reset. Monitor for one full heating cycle. If it trips again, diagnose element or thermostat fault.',checklist:null,msgch:'whatsapp',msg:'Hi [Customer Name], the circuit breaker was tripped and has been reset. Please monitor for one full heating cycle. If it trips again, please let us know and we will arrange a technical visit.\n\nCheqpoint After-Sales'},
+o_commissioning:{kind:'o',otype:'DESK',title:'Desk — commissioning issue suspected',summary:'Unit may never have been commissioned correctly. Verify: unit fully filled with water before power applied, correct supply, pipes connected correctly, valve not blocked. If all correct and still no heat, escalate to diagnosis.',checklist:null,msgch:'whatsapp',msg:'Hi [Customer Name], the unit may not have been correctly set up at installation. Please confirm it was completely filled with water before power was switched on. If the issue persists after checking, let us know and we will advise next steps.\n\nCheqpoint After-Sales'},
+o_monitor_cycle:{kind:'o',otype:'DESK',title:'Desk — cutout reset, monitor',summary:'Thermostat safety cutout was reset. Monitor for one full heating cycle. If it trips again, the thermostat is faulty → run warranty check and arrange visit.',checklist:null,msgch:'whatsapp',msg:'Hi [Contact], the thermostat safety cutout has been reset — this is an overheat protection feature. Please monitor for one heating cycle. If the issue recurs, we will arrange a technical assessment.\n\nCheqpoint After-Sales'},
+o_undersized:{kind:'o',otype:'DESK',title:'Desk — unit undersized for demand',summary:'Hot water supply matches the unit capacity — not a product fault. Explain that tank size determines available hot water. Recommend a larger unit if demand consistently exceeds capacity.',checklist:null,msgch:'whatsapp',msg:'Hi [Customer Name], based on what you have described, the hot water supply matches your unit\'s capacity. Tank size determines how much hot water is available at one time — once used, the unit needs time to reheat. This is normal operation, not a fault. If your household needs more hot water, we can advise on a larger unit.\n\nCheqpoint After-Sales'},
+o_desk_thermo:{kind:'o',otype:'DESK',title:'Desk — thermostat set too low',summary:'Thermostat below 4. Advise customer to set the dial to 4 or 5 and check after 1–2 hours. If issue persists after adjustment, continue diagnosis.',checklist:null,msgch:'whatsapp',msg:'Hi [Customer Name], the thermostat on your unit appears to be set too low. Please set the dial to 4 or 5 and check again after an hour or two. Let us know if the issue continues.\n\nCheqpoint After-Sales'},
+o_cold_start:{kind:'o',otype:'DESK',title:'Desk — needs 24hrs continuous ON',summary:'Unit not powered long enough. Advise to keep it ON continuously and check after 24 hours. Follow up to confirm.',checklist:null,msgch:'whatsapp',msg:'Hi [Customer Name], water heaters need to be ON continuously for at least 24 hours to maintain consistent hot water. Please leave it switched on and check again tomorrow. If the issue continues, let us know.\n\nCheqpoint After-Sales'},
+o_sv_normal:{kind:'o',otype:'DESK',title:'Desk — safety valve operating normally',summary:'Small drops during heating with drain pipe installed = normal pressure relief. No fault. Customer education only.',checklist:null,msgch:'whatsapp',msg:'Hi [Customer Name], the small amount of water from the safety valve during heating is completely normal — it is a pressure relief function and shows the unit is working as designed. No action needed.\n\nCheqpoint After-Sales'},
+o_hiss_normal:{kind:'o',otype:'DESK',title:'Desk — hissing is scale (normal)',summary:'Hissing during heating is caused by mineral scale on the element. Normal but advise periodic maintenance cleaning to reduce noise and protect efficiency.',checklist:null,msgch:'whatsapp',msg:'Hi [Customer Name], the hissing sound during heating is caused by mineral deposits on the heating element — this is common and not a fault. We recommend a periodic maintenance clean to reduce the noise and keep the unit efficient. We can arrange this at a chargeable rate if you wish.\n\nCheqpoint After-Sales'},
+o_desk_elec2:{kind:'o',otype:'DESK',title:'Desk — loose connection re-secured',summary:'Loose connection found and re-secured. Installation issue — not warranty. Monitor; if tripping recurs, dispatch required.',checklist:null,msgch:'whatsapp',msg:'Hi [Customer Name], a loose electrical connection was found and re-secured — this is an installation matter, not covered under warranty. Please monitor. If the tripping recurs, we will arrange a visit.\n\nCheqpoint After-Sales'},
+o_power_issue:{kind:'o',otype:'QUOTE',title:'Non-warranty — power supply issue',summary:'Supply OK at DB but unit dark — internal wiring or supply path issue. Electrical supply issues are not covered under heater warranty. AED 160 applies unless fault traces to heater internal wiring.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], the issue appears to be with the power supply to the unit rather than the heater itself. A chargeable visit is available at AED 160 (VAT inc) to assess. If the fault is found to be inside the heater\'s own wiring, the charge will be waived under warranty review.\n\nCheqpoint After-Sales'},
+o_dry_heating:{kind:'o',otype:'QUOTE',title:'Non-warranty — dry heating (new unit)',summary:'New unit not heating = dry heating until proven otherwise. Dry heating voids element warranty under ALL circumstances. Element replacement quote + AED 160.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], based on the details shared, the issue is consistent with dry heating — when the heater is powered on without sufficient water inside. Dry heating damage is not covered under warranty under any circumstance. A call-out visit is available at AED 160 (VAT inc); we will assess and share a full quote before any work begins.\n\nCheqpoint After-Sales'},
+o_dry_trip:{kind:'o',otype:'QUOTE',title:'Non-warranty — dry heating (tripping)',summary:'New unit tripping = dry heating primary suspect. Do NOT reset the DB until element inspected. Non-warranty. AED 160 + element replacement quote.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], a new unit causing electrical trips usually indicates dry heating damage to the element. Please do NOT keep resetting the breaker. A visit is available at AED 160 (VAT inc) to inspect and quote for element replacement — this damage is not covered under warranty.\n\nCheqpoint After-Sales'},
+o_scale:{kind:'o',otype:'QUOTE',title:'Non-warranty — scale build-up',summary:'Hissing confirms scale on the element, reducing heating efficiency. Routine maintenance — always chargeable. AED 160 + cleaning service quote.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], the hissing and reduced heating point to mineral scale build-up on the element — a routine maintenance matter not covered under warranty. We can arrange a chargeable cleaning and service visit at AED 160 call-out (VAT inc), deducted from the final invoice if you proceed.\n\nCheqpoint After-Sales'},
+o_pipe_teflon:{kind:'o',otype:'QUOTE',title:'Non-warranty — pipe connection leak',summary:'Leak from plumbing connections, not the unit. Advise: disconnect, dry 30–60 min, fresh Teflon tape, reconnect firmly. AED 160 applies if we visit and it is a pipe/Teflon matter.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], the leak appears to be from the pipe connections rather than the heater. To fix: disconnect the pipes, let the area dry for 30–60 minutes, apply fresh Teflon tape to the threads, and reconnect firmly. This is an installation matter, not warranty. If a visit is needed and the issue is found to be pipework, AED 160 (VAT inc) applies.\n\nCheqpoint After-Sales'},
+o_element_leak:{kind:'o',otype:'QUOTE',title:'Non-warranty — element housing leak',summary:'Element housing leak is not a tank or gasket fault. AED 160 + element replacement quote.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], the leak appears to be from the element housing, which falls outside tank and gasket warranty coverage. A visit is available at AED 160 (VAT inc) with a full quote for element replacement before any work begins.\n\nCheqpoint After-Sales'},
+o_sv_nodrain:{kind:'o',otype:'QUOTE',title:'Non-warranty — normal drops, no drain pipe',summary:'Valve is working normally but the mandatory drain pipe is missing — installation issue. AED 160 + upsell drain pipe installation.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], the dripping during heating is actually normal pressure relief. However, a drain pipe to carry the discharge away safely is a mandatory installation item and is missing. We can install one at a chargeable rate — please let us know if you would like to arrange it.\n\nCheqpoint After-Sales'},
+o_sv_nodrain_sus:{kind:'o',otype:'QUOTE',title:'Non-warranty — sustained flow, no drain',summary:'Sustained discharge may indicate high pressure or valve issue; drain pipe also missing (mandatory). Upsell: valve inspection + drain pipe install. AED 160.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], the sustained discharge from the safety valve may indicate high working pressure or a valve issue. Additionally no drain pipe is installed — a mandatory item. We recommend a visit to check the pressure and valve and install the drain pipe, on a chargeable basis. Please confirm if you would like to proceed.\n\nCheqpoint After-Sales'},
+o_sediment:{kind:'o',otype:'QUOTE',title:'Non-warranty — sediment / tank cleaning',summary:'Dirt/debris = sediment build-up. Routine maintenance, always chargeable. Tank flush + service quote. AED 160.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], the murky water points to sediment build-up inside the tank — a routine maintenance matter not covered under warranty. A chargeable cleaning and service visit is required. Please let us know if you would like to arrange it.\n\nCheqpoint After-Sales'},
+o_anode:{kind:'o',otype:'QUOTE',title:'Non-warranty — anode depleted',summary:'Rusty smell / discoloured water = depleted anode rod, a consumable. Never warranty. Upsell anode replacement + tank flush. AED 160.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], the rusty smell points to a depleted anode rod — a consumable part that degrades naturally and requires periodic replacement. This is routine maintenance, not covered under warranty. We can arrange anode replacement and a full tank service at a chargeable rate.\n\nCheqpoint After-Sales'},
+o_damage:{kind:'o',otype:'QUOTE',title:'Non-warranty — physical damage (not CTT)',summary:'Damage from mishandling, third party, or external cause. Not warranty. Photograph everything. AED 160 + repair/replacement quote.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], after reviewing the details, the damage appears to be from mishandling or an external cause, which is not attributable to a manufacturing defect and not covered under warranty. A chargeable visit is available at AED 160 (VAT inc), with a full quote before any work begins. Please send photos of the damage for our records.\n\nCheqpoint After-Sales'},
+o_nonwarranty:{kind:'o',otype:'QUOTE',title:'Non-warranty — expired / docs missing',summary:'Outside warranty period, or documentation not confirmed. Chargeable visit at AED 160 (VAT inc), deducted from final invoice if repair approved.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], we have reviewed the details of your claim. The unit is outside its warranty period (or warranty cannot be confirmed without documentation), so we are unable to process this as a warranty case. We can assist with a chargeable visit at AED 160 (VAT inc) — deducted from the final invoice if repairs are approved. Please confirm and we will arrange a time.\n\nCheqpoint After-Sales'},
+o_conditional:{kind:'o',otype:'QUOTE',title:'Conditional — docs promised, not received',summary:'Customer will send documentation. Do NOT commit to warranty repair. Treat as chargeable until docs are received and verified. AED 160 noted.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], thank you. To confirm warranty coverage we need your proof of purchase or warranty certificate — please send it at your earliest. Until received, any visit would be on a chargeable basis at AED 160 (VAT inc), refunded/waived if warranty is subsequently confirmed.\n\nCheqpoint After-Sales'},
+o_dispatch_160:{kind:'o',otype:'DISPATCH',title:'Dispatch — assessment, AED 160 confirmed',summary:'Cannot diagnose remotely. Dispatch for on-site assessment. AED 160 (VAT inc) applies — waived if fault is confirmed as warranty on site. Confirm the charge with the customer BEFORE scheduling.',checklist:'aed160',msgch:'whatsapp',msg:'Hi [Customer Name], since we cannot fully diagnose the issue remotely, an on-site visit is needed. A call-out charge of AED 160 (VAT inc) applies — waived if the fault is confirmed as a manufacturing defect under warranty. Please confirm and share a convenient date and time.\n\nCheqpoint After-Sales'},
+o_warranty:{kind:'o',otype:'WARRANTY',title:'Warranty repair — dispatch confirmed',summary:'Fault confirmed under component warranty. Invoice to Atlantic. Complete Technical Evaluation with the tech team, confirm site access and timing, then dispatch. If unit is portable (e.g. anode rattle), offer warehouse drop-off as a faster option.',checklist:'dispatch',msgch:'whatsapp',msg:'Hi [Customer Name], good news — the fault has been reviewed and is covered under warranty. Our technical team will visit to carry out the repair at no charge. We will confirm the date and time shortly. Please ensure access to the unit is available.\n\nCheqpoint After-Sales'},
+o_replacement:{kind:'o',otype:'REPLACEMENT',title:'Replacement Authorization — tank warranty',summary:'Tank defect confirmed under 5-year warranty. Tank cannot be repaired. Issue Replacement Auth: office sends PO to nearest reseller; customer collects with proof of purchase. Delivery NOT included — but FREE if customer wants CTT installation (upsell).',checklist:'dispatch',msgch:'whatsapp',msg:'Hi [Customer Name], the fault has been confirmed as a manufacturing defect covered under the tank warranty. We are issuing a Replacement Authorization. You may collect the replacement from the nearest Groupe Atlantic reseller or our warehouse — please bring your proof of purchase. Delivery is not included, but if you would like us to install the new unit, delivery is free. We will follow up with the formal authorization shortly.\n\nCheqpoint After-Sales'},
+o_escalate_red:{kind:'o',otype:'ESCALATE',title:'ESCALATE — red water',summary:'RED water = immediate escalation to senior team / MD. Do NOT advise the customer or close the ticket. Document site, serial number, photos. Await instruction.',checklist:null,msgch:null,msg:null},
+o_escalate_md:{kind:'o',otype:'ESCALATE',title:'ESCALATE — possible Cheqpoint liability',summary:'Damage may have been caused by Cheqpoint delivery or installation. Say NOTHING to the customer about cause or liability. Escalate to manager/MD immediately with all details and photos. Await decision.',checklist:null,msgch:null,msg:null},
+o_hold_eng:{kind:'o',otype:'HOLD',title:'Hold — awaiting engineer confirmation',summary:'Do not dispatch until the site engineer confirms electrical and plumbing are OK. Remind contractor: if issues on arrival trace to electrical/plumbing, AED 160 applies per checklist terms.',checklist:null,msgch:'whatsapp',msg:'Hi [Contact Name], before we schedule a visit, could the site engineer please confirm: (1) electrical connections to the heater are secure with no power issues, and (2) water supply and plumbing connections are in order? Note: if a visit finds the fault is electrical or plumbing related, AED 160 (VAT inc) applies per the agreed terms. Kindly revert with confirmation.\n\nCheqpoint After-Sales'},
+o_hold_photos:{kind:'o',otype:'HOLD',title:'Hold — project photos mandatory',summary:'Photos and videos are MANDATORY for project tickets before any action. Request from the site team immediately. Flag ticket as pending media; follow up daily. Resume once received.',checklist:null,msgch:'whatsapp',msg:'Hi [Contact Name], just following up regarding [Site / Project Name] — Ref: [Ref No.]. We are still awaiting the photos/video of the fault and the completed checklist. Could you please share these at your earliest so we can proceed with the assessment?\n\nCheqpoint After-Sales'},
 
-// ── OUTCOMES: NON-WARRANTY (QUOTE) ────────────────────────────
-o_power_issue:{kind:'o',otype:'QUOTE',title:'Non-warranty — power supply issue',
- summary:'Supply OK at DB but unit dark — internal wiring or supply path issue. Electrical supply issues are not covered under heater warranty. AED 160 applies unless fault traces to heater internal wiring.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], the issue appears to be with the power supply to the unit rather than the heater itself. A chargeable visit is available at AED 160 (VAT inc) to assess. If the fault is found to be inside the heater\'s own wiring, the charge will be waived under warranty review.\n\nCheqpoint After-Sales'},
-o_dry_heating:{kind:'o',otype:'QUOTE',title:'Non-warranty — dry heating (new unit)',
- summary:'New unit not heating = dry heating until proven otherwise. Dry heating voids element warranty under ALL circumstances. Element replacement quote + AED 160.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], based on the details shared, the issue is consistent with dry heating — when the heater is powered on without sufficient water inside. Dry heating damage is not covered under warranty under any circumstance. A call-out visit is available at AED 160 (VAT inc); we will assess and share a full quote before any work begins.\n\nCheqpoint After-Sales'},
-o_dry_trip:{kind:'o',otype:'QUOTE',title:'Non-warranty — dry heating (tripping, new unit)',
- summary:'New unit tripping = dry heating primary suspect. Do NOT reset the DB until element inspected. Non-warranty. AED 160 + element replacement quote.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], a new unit causing electrical trips usually indicates dry heating damage to the element. Please do NOT keep resetting the breaker. A visit is available at AED 160 (VAT inc) to inspect and quote for element replacement — this damage is not covered under warranty.\n\nCheqpoint After-Sales'},
-o_scale:{kind:'o',otype:'QUOTE',title:'Non-warranty — scale build-up',
- summary:'Hissing confirms scale on the element, reducing heating efficiency. Routine maintenance — always chargeable. AED 160 + cleaning service quote.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], the hissing and reduced heating point to mineral scale build-up on the element — a routine maintenance matter not covered under warranty. We can arrange a chargeable cleaning and service visit at AED 160 call-out (VAT inc), deducted from the final invoice if you proceed.\n\nCheqpoint After-Sales'},
-o_pipe_teflon:{kind:'o',otype:'QUOTE',title:'Non-warranty — pipe connection leak (Teflon fix)',
- summary:'Leak from plumbing connections, not the unit. Advise: disconnect, dry 30–60 min, fresh Teflon tape, reconnect firmly. AED 160 applies if we visit and it is a pipe/Teflon matter.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], the leak appears to be from the pipe connections rather than the heater. To fix: disconnect the pipes, let the area dry for 30–60 minutes, apply fresh Teflon tape to the threads, and reconnect firmly. This is an installation matter, not warranty. If a visit is needed and the issue is found to be pipework, AED 160 (VAT inc) applies.\n\nCheqpoint After-Sales'},
-o_element_leak:{kind:'o',otype:'QUOTE',title:'Non-warranty — element housing leak',
- summary:'Element housing leak is not a tank or gasket fault. AED 160 + element replacement quote.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], the leak appears to be from the element housing, which falls outside tank and gasket warranty coverage. A visit is available at AED 160 (VAT inc) with a full quote for element replacement before any work begins.\n\nCheqpoint After-Sales'},
-o_sv_nodrain:{kind:'o',otype:'QUOTE',title:'Non-warranty — normal drops, no drain pipe',
- summary:'Valve is working normally but the mandatory drain pipe is missing — installation issue. AED 160 + upsell drain pipe installation.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], the dripping during heating is actually normal pressure relief. However, a drain pipe to carry the discharge away safely is a mandatory installation item and is missing. We can install one at a chargeable rate — please let us know if you would like to arrange it.\n\nCheqpoint After-Sales'},
-o_sv_nodrain_sus:{kind:'o',otype:'QUOTE',title:'Non-warranty — sustained flow, no drain pipe',
- summary:'Sustained discharge may indicate high pressure or valve issue; drain pipe also missing (mandatory). Upsell: valve inspection + drain pipe install. AED 160.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], the sustained discharge from the safety valve may indicate high working pressure or a valve issue. Additionally no drain pipe is installed — a mandatory item. We recommend a visit to check the pressure and valve and install the drain pipe, on a chargeable basis. Please confirm if you would like to proceed.\n\nCheqpoint After-Sales'},
-o_sediment:{kind:'o',otype:'QUOTE',title:'Non-warranty — sediment / tank cleaning',
- summary:'Dirt/debris = sediment build-up. Routine maintenance, always chargeable. Tank flush + service quote. AED 160.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], the murky water points to sediment build-up inside the tank — a routine maintenance matter not covered under warranty. A chargeable cleaning and service visit is required. Please let us know if you would like to arrange it.\n\nCheqpoint After-Sales'},
-o_anode:{kind:'o',otype:'QUOTE',title:'Non-warranty — anode depleted',
- summary:'Rusty smell / discoloured water = depleted anode rod, a consumable. Never warranty. Upsell anode replacement + tank flush. AED 160.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], the rusty smell points to a depleted anode rod — a consumable part that degrades naturally and requires periodic replacement. This is routine maintenance, not covered under warranty. We can arrange anode replacement and a full tank service at a chargeable rate.\n\nCheqpoint After-Sales'},
-o_damage:{kind:'o',otype:'QUOTE',title:'Non-warranty — physical damage (not CTT)',
- summary:'Damage from mishandling, third party, or external cause. Not warranty. Photograph everything. AED 160 + repair/replacement quote.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], after reviewing the details, the damage appears to be from mishandling or an external cause, which is not attributable to a manufacturing defect and not covered under warranty. A chargeable visit is available at AED 160 (VAT inc), with a full quote before any work begins. Please send photos of the damage for our records.\n\nCheqpoint After-Sales'},
-o_nonwarranty:{kind:'o',otype:'QUOTE',title:'Non-warranty — expired / docs missing',
- summary:'Outside warranty period, or documentation not confirmed. Chargeable visit at AED 160 (VAT inc), deducted from final invoice if repair approved.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], we have reviewed the details of your claim. The unit is outside its warranty period (or warranty cannot be confirmed without documentation), so we are unable to process this as a warranty case. We can assist with a chargeable visit at AED 160 (VAT inc) — deducted from the final invoice if repairs are approved. Please confirm and we will arrange a time.\n\nCheqpoint After-Sales'},
-o_conditional:{kind:'o',otype:'QUOTE',title:'Conditional — docs promised, not received',
- summary:'Customer will send documentation. Do NOT commit to warranty repair. Treat as chargeable until docs are received and verified. AED 160 noted.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], thank you. To confirm warranty coverage we need your proof of purchase or warranty certificate — please send it at your earliest. Until received, any visit would be on a chargeable basis at AED 160 (VAT inc), refunded/waived if warranty is subsequently confirmed.\n\nCheqpoint After-Sales'},
-o_dispatch_160:{kind:'o',otype:'DISPATCH',title:'Dispatch — assessment with AED 160 confirmed',
- summary:'Cannot diagnose remotely. Dispatch for on-site assessment. AED 160 (VAT inc) applies — waived if fault is confirmed as warranty on site. Confirm the charge with the customer BEFORE scheduling.',
- checklist:'aed160',msgch:'whatsapp',
- msg:'Hi [Customer Name], since we cannot fully diagnose the issue remotely, an on-site visit is needed. A call-out charge of AED 160 (VAT inc) applies — waived if the fault is confirmed as a manufacturing defect under warranty. Please confirm and share a convenient date and time.\n\nCheqpoint After-Sales'},
+}},
 
-// ── OUTCOMES: WARRANTY / REPLACEMENT ──────────────────────────
-o_warranty:{kind:'o',otype:'WARRANTY',title:'Warranty repair — dispatch confirmed',
- summary:'Fault confirmed under component warranty. Invoice to Atlantic. Complete Technical Evaluation with the tech team, confirm site access and timing, then dispatch. If unit is portable (e.g. anode rattle), offer warehouse drop-off as a faster option.',
- checklist:'dispatch',msgch:'whatsapp',
- msg:'Hi [Customer Name], good news — the fault has been reviewed and is covered under warranty. Our technical team will visit to carry out the repair at no charge. We will confirm the date and time shortly. Please ensure access to the unit is available.\n\nCheqpoint After-Sales'},
-o_replacement:{kind:'o',otype:'REPLACEMENT',title:'Replacement Authorization — tank warranty',
- summary:'Tank defect confirmed under 5-year warranty. Tank cannot be repaired. Issue Replacement Auth: office sends PO to nearest reseller; customer collects with proof of purchase. Delivery NOT included — but FREE if customer wants CTT installation (upsell).',
- checklist:'dispatch',msgch:'whatsapp',
- msg:'Hi [Customer Name], the fault has been confirmed as a manufacturing defect covered under the tank warranty. We are issuing a Replacement Authorization. You may collect the replacement from the nearest Groupe Atlantic reseller or our warehouse — please bring your proof of purchase. Delivery is not included, but if you would like us to install the new unit, delivery is free. We will follow up with the formal authorization shortly.\n\nCheqpoint After-Sales'},
+// ───────────────────────────────────────────────────────────────
+field:{ start:'fn_custtype', nodes:{
 
-// ── OUTCOMES: ESCALATE / HOLD ─────────────────────────────────
-o_escalate_red:{kind:'o',otype:'ESCALATE',title:'ESCALATE — red water',
- summary:'RED water = immediate escalation to senior team / MD. Do NOT advise the customer or close the ticket. Document site, serial number, photos. Await instruction.',
- checklist:null,msgch:null,msg:null},
-o_escalate_md:{kind:'o',otype:'ESCALATE',title:'ESCALATE — possible Cheqpoint liability',
- summary:'Damage may have been caused by Cheqpoint delivery or installation. Say NOTHING to the customer about cause or liability. Escalate to manager/MD immediately with all details and photos. Await decision.',
- checklist:null,msgch:null,msg:null},
-o_hold_eng:{kind:'o',otype:'HOLD',title:'Hold — awaiting engineer confirmation',
- summary:'Do not dispatch until the site engineer confirms electrical and plumbing are OK. Remind contractor: if issues on arrival trace to electrical/plumbing, AED 160 applies per checklist terms.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Contact Name], before we schedule a visit, could the site engineer please confirm: (1) electrical connections to the heater are secure with no power issues, and (2) water supply and plumbing connections are in order? Note: if a visit finds the fault is electrical or plumbing related, AED 160 (VAT inc) applies per the agreed terms. Kindly revert with confirmation.\n\nCheqpoint After-Sales'},
-o_hold_photos:{kind:'o',otype:'HOLD',title:'Hold — project photos mandatory',
- summary:'Photos and videos are MANDATORY for project tickets before any action. Request from the site team immediately. Flag ticket as pending media; follow up daily. Resume once received.',
- checklist:null,msgch:'whatsapp',
- msg:'Hi [Contact Name], just following up regarding [Site / Project Name] — Ref: [Ref No.]. We are still awaiting the photos/video of the fault and the completed checklist. Could you please share these at your earliest so we can proceed with the assessment?\n\nCheqpoint After-Sales'},
+fn_custtype:{kind:'q',title:'Project site or retail customer?',sub:'Determines protocol for photos, checklists, and AED 160.',opts:[
+ {label:'🏗️ Project — Sadara / FM / contractor',desc:'Mandatory photos. Checklist protocol.',target:'fn_capacity',set:{customerType:'project'}},
+ {label:'🏠 Retail — end customer / direct',desc:'AED 160 confirmed before any visit.',target:'fn_capacity',set:{customerType:'retail'}},
+]},
+fn_capacity:{kind:'q',title:'Tank capacity?',sub:'Check the rating plate on the unit.',opts:[
+ {label:'10–30L — small (under-sink)',desc:'',target:'fn_age',set:{capacity:'small'}},
+ {label:'50–80L — mid range',desc:'',target:'fn_age',set:{capacity:'medium'}},
+ {label:'100–150L — large (villa)',desc:'',target:'fn_age',set:{capacity:'large'}},
+ {label:'200L+ — central / calorifier',desc:'Central logic — count pipes',target:'fn_age',set:{capacity:'central'}},
+]},
+fn_age:{kind:'q',title:'Unit age / warranty status?',sub:'Check purchase bill or warranty card on site.',opts:[
+ {label:'Under 6 months',desc:'Dry heating primary suspect',target:'fn_fault',set:{age:'lt6m'}},
+ {label:'6 months – 2 years',desc:'Within component warranty',target:'fn_fault',set:{age:'6mto2y'}},
+ {label:'2 – 5 years',desc:'Component expired, tank active',target:'fn_fault',set:{age:'2yto5y'}},
+ {label:'Over 5 years',desc:'All warranty expired',target:'fn_fault',set:{age:'gt5y'}},
+ {label:'Unknown / no docs',desc:'Non-warranty default',target:'fn_fault',set:{age:'unknown'}},
+]},
+fn_fault:{kind:'q',title:'What is the fault?',sub:'Select the primary complaint to begin diagnosis.',opts:[
+ {label:'🔴 No hot water / not heating',desc:'',target:'ff1_power'},
+ {label:'🟡 Not enough hot water',desc:'',target:'ff2_cap'},
+ {label:'⚡ DB tripping',desc:'',target:'ff3_site'},
+ {label:'💧 Leakage / dripping',desc:'',target:'ff4_photos'},
+ {label:'🔧 Safety valve discharging',desc:'',target:'ff5_offtest'},
+ {label:'🟤 Rusty / discoloured water',desc:'',target:'ff6_type'},
+ {label:'🔊 Abnormal noise',desc:'',target:'ff7_type'},
+ {label:'💥 Physical / external damage',desc:'',target:'ff8_cause'},
+]},
 
-}};
-}
+ff1_power:{kind:'q',title:'F1 — Power indicator light ON?',sub:'Check the LED on the unit face.',opts:[
+ {label:'Yes — light ON',desc:'Power reaching unit',target:'ff1_hist'},
+ {label:'No — no light',desc:'Power issue',target:'ff1_db'},
+]},
+ff1_db:{kind:'q',title:'F1 — Check DB / breaker',sub:'Verify supply at the distribution board.',opts:[
+ {label:'Breaker tripped — reset it',desc:'Monitor',target:'fo_cb_reset'},
+ {label:'Supply confirmed OK, unit dark',desc:'Internal wiring/supply',target:'fo_power_issue'},
+ {label:'Cannot verify supply',desc:'Assess on site',target:'fo_dispatch_assess'},
+]},
+ff1_hist:{kind:'q',title:'F1 — Unit history?',sub:'New unit vs developed fault.',opts:[
+ {label:'New unit (under 6 months) — inspect element',desc:'Dry heating suspect',target:'ff1_dry'},
+ {label:'Was working, then stopped',desc:'Element or thermostat',target:'ff1_cutout'},
+ {label:'Never worked since installation',desc:'Commissioning issue',target:'fo_commissioning'},
+]},
+ff1_dry:{kind:'q',title:'F1 — Element inspection (POWER OFF first)',sub:'Dry heating signs: pink, black, soft, split, melted sleeves. DO NOT power on if suspected.',opts:[
+ {label:'Element burnt / soft / discoloured',desc:'Dry heating confirmed',target:'fo_dry_confirmed'},
+ {label:'Element looks normal',desc:'Still non-warranty default for new units',target:'fo_dry_likely'},
+]},
+ff1_cutout:{kind:'q',title:'F1 — Thermostat cutout check',sub:'Power OFF, remove cover, look for reset button on thermostat body.',opts:[
+ {label:'Reset button found and pressed',desc:'Monitor one cycle',target:'fo_monitor'},
+ {label:'No reset / element open circuit',desc:'Element fault — warranty check',target:'fwc_element'},
+]},
+ff2_cap:{kind:'q',title:'F2 — Capacity appropriate for demand?',sub:'Undersizing is not a product fault.',opts:[
+ {label:'Unit too small for demand',desc:'Customer education',target:'fo_undersized'},
+ {label:'Capacity appropriate',desc:'',target:'ff2_thermo'},
+]},
+ff2_thermo:{kind:'q',title:'F2 — Thermostat dial setting?',sub:'1=lowest, 5=highest. Optimal 4–5.',opts:[
+ {label:'Below 4 (1–3)',desc:'Setting too low',target:'fo_thermo_low'},
+ {label:'Set at 4 or 5',desc:'',target:'ff2_24h'},
+]},
+ff2_24h:{kind:'q',title:'F2 — On continuously for 24+ hours?',sub:'Cold start requires 24hrs.',opts:[
+ {label:'No — recently switched on',desc:'Not recovered',target:'fo_cold_start'},
+ {label:'Yes — 24+ hours',desc:'',target:'ff2_scale'},
+]},
+ff2_scale:{kind:'q',title:'F2 — Scale on element or hissing?',sub:'Cut power before accessing element. Scale insulates and reduces efficiency.',opts:[
+ {label:'Yes — scale / hissing evident',desc:'Non-warranty maintenance',target:'fo_scale'},
+ {label:'No — element clean',desc:'Thermostat fault likely',target:'fwc_thermo'},
+]},
+ff3_site:{kind:'q',title:'F3 — Connections and supply confirmed OK?',sub:'Engineer (project) or maintenance (retail) checks.',opts:[
+ {label:'All OK, still tripping',desc:'',target:'ff3_age'},
+ {label:'Loose connection — re-secured',desc:'Desk resolution',target:'fo_loose_fixed'},
+ {label:'Awaiting confirmation (project)',desc:'Hold',target:'fo_hold_eng'},
+ {label:'Cannot confirm',desc:'Assess on site',target:'fo_dispatch_assess'},
+]},
+ff3_age:{kind:'q',title:'F3 — Age check',sub:'New = dry heating. Old = element/thermostat.',opts:[
+ {label:'Under 1 year',desc:'Dry heating — non-warranty',target:'fo_dry_trip'},
+ {label:'Over 1 year',desc:'Component fault — warranty check',target:'fwc_element_thermo'},
+]},
+ff4_photos:{kind:'q',title:'F4 — Photos taken and sent to office?',sub:'MANDATORY for project. Best-effort for retail.',opts:[
+ {label:'Yes — photos done',desc:'',target:'ff4_source'},
+ {label:'No — RETAIL (proceed with AED 160 noted)',desc:'',target:'ff4_source'},
+ {label:'No — PROJECT (STOP)',desc:'Cannot proceed',target:'fo_hold_photos'},
+]},
+ff4_source:{kind:'q',title:'F4 — Leak source?',sub:'Identify before touching anything.',opts:[
+ {label:'Pipe / plumbing connection',desc:'Teflon fix — non-warranty',target:'fo_pipe_teflon'},
+ {label:'Safety / pressure relief valve',desc:'Run F5 test',target:'ff5_offtest'},
+ {label:'Tank body / pinhole',desc:'Tank warranty 5yr',target:'fwc_tank'},
+ {label:'Flange or lip gasket',desc:'Component warranty 2yr',target:'fwc_flange'},
+ {label:'Around element housing',desc:'Non-warranty',target:'fo_element_leak'},
+ {label:'Cannot determine',desc:'Full assessment',target:'fo_dispatch_assess'},
+]},
+ff5_offtest:{kind:'q',title:'F5 — THE TEST: heater OFF, wait 5 mins. Still dripping?',sub:'Heater off = no thermal expansion = valve should be closed.',opts:[
+ {label:'Yes — still dripping OFF',desc:'Faulty valve',target:'fwc_sv'},
+ {label:'No — stops when off',desc:'Thermal expansion',target:'ff5_type'},
+]},
+ff5_type:{kind:'q',title:'F5 — Dripping during heating?',sub:'',opts:[
+ {label:'Small occasional drops',desc:'',target:'ff5_drain1'},
+ {label:'Sustained continuous flow',desc:'',target:'ff5_drain2'},
+]},
+ff5_drain1:{kind:'q',title:'F5 — Drain pipe installed?',sub:'',opts:[
+ {label:'Yes — drain installed',desc:'Normal operation',target:'fo_sv_normal'},
+ {label:'No drain pipe',desc:'Installation issue',target:'fo_sv_nodrain'},
+]},
+ff5_drain2:{kind:'q',title:'F5 — Drain pipe installed? (sustained)',sub:'',opts:[
+ {label:'Yes — drain installed',desc:'Faulty valve — warranty check',target:'fwc_sv'},
+ {label:'No drain pipe',desc:'Install + inspect',target:'fo_sv_nodrain_sus'},
+]},
+ff6_type:{kind:'q',title:'F6 — Water condition?',sub:'Run hot water and observe.',opts:[
+ {label:'Murky / debris / sediment',desc:'Tank cleaning',target:'fo_sediment'},
+ {label:'Rusty / discoloured / dark',desc:'Anode depletion',target:'fo_anode'},
+ {label:'RED water',desc:'⚠️ Escalate',target:'fo_escalate_red'},
+]},
+ff7_type:{kind:'q',title:'F7 — Sound type?',sub:'',opts:[
+ {label:'Rattling / knocking',desc:'Anode loose — warranty check',target:'fwc_anode'},
+ {label:'Humming / buzzing',desc:'Element/thermostat — warranty check',target:'fwc_hum'},
+ {label:'Hissing / singing',desc:'Scale — normal',target:'fo_hiss_normal'},
+]},
+ff8_cause:{kind:'q',title:'F8 — Damage caused by Cheqpoint?',sub:'⚠️ If yes: say NOTHING to customer. Escalate only.',opts:[
+ {label:'Yes — Cheqpoint caused it',desc:'Escalate to MD',target:'fo_escalate_md'},
+ {label:'No — third party / misuse',desc:'Non-warranty',target:'fo_damage'},
+]},
 
-// ════════════════════════════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════════════════════════════
-let G = null;            // {start, nodes}
-let selectedId = null;
-let runStack = [];
+fwc_element:{kind:'q',title:'WARRANTY CHECK — Element (component, 2yr)',sub:'Within 2 years AND docs confirmed?',opts:[
+ {label:'Yes — in warranty, docs on hand',desc:'',target:'fo_warranty_element'},
+ {label:'Docs promised',desc:'Conditional',target:'fo_conditional'},
+ {label:'Expired / no docs',desc:'Non-warranty',target:'fo_quote_element'},
+]},
+fwc_thermo:{kind:'q',title:'WARRANTY CHECK — Thermostat (component, 2yr)',sub:'Within 2 years AND docs confirmed?',opts:[
+ {label:'Yes — in warranty, docs on hand',desc:'',target:'fo_warranty_thermo'},
+ {label:'Docs promised',desc:'Conditional',target:'fo_conditional'},
+ {label:'Expired / no docs',desc:'Non-warranty',target:'fo_quote_thermo'},
+]},
+fwc_element_thermo:{kind:'q',title:'WARRANTY CHECK — Element/Thermostat (2yr)',sub:'Within 2 years AND docs confirmed?',opts:[
+ {label:'Yes — in warranty, docs on hand',desc:'',target:'fo_warranty_eltherm'},
+ {label:'Docs promised',desc:'Conditional',target:'fo_conditional'},
+ {label:'Expired / no docs',desc:'Non-warranty',target:'fo_quote_eltherm'},
+]},
+fwc_flange:{kind:'q',title:'WARRANTY CHECK — Flange gasket (component, 2yr)',sub:'Within 2 years AND docs confirmed?',opts:[
+ {label:'Yes — in warranty, docs on hand',desc:'',target:'fo_warranty_flange'},
+ {label:'Docs promised',desc:'Conditional',target:'fo_conditional'},
+ {label:'Expired / no docs',desc:'Non-warranty',target:'fo_quote_flange'},
+]},
+fwc_sv:{kind:'q',title:'WARRANTY CHECK — Safety valve (component, 2yr)',sub:'Within 2 years AND docs confirmed?',opts:[
+ {label:'Yes — in warranty, docs on hand',desc:'',target:'fo_warranty_sv'},
+ {label:'Docs promised',desc:'Conditional',target:'fo_conditional'},
+ {label:'Expired / no docs',desc:'Non-warranty',target:'fo_quote_sv'},
+]},
+fwc_anode:{kind:'q',title:'WARRANTY CHECK — Anode rattle (component, 2yr)',sub:'Within 2 years AND docs confirmed? If portable, warehouse drop-off is an option.',opts:[
+ {label:'Yes — in warranty, docs on hand',desc:'',target:'fo_warranty_anode'},
+ {label:'Docs promised',desc:'Conditional',target:'fo_conditional'},
+ {label:'Expired / no docs',desc:'Non-warranty',target:'fo_quote_anode'},
+]},
+fwc_hum:{kind:'q',title:'WARRANTY CHECK — Hum / element (component, 2yr)',sub:'Within 2 years AND docs confirmed?',opts:[
+ {label:'Yes — in warranty, docs on hand',desc:'',target:'fo_warranty_hum'},
+ {label:'Docs promised',desc:'Conditional',target:'fo_conditional'},
+ {label:'Expired / no docs',desc:'Non-warranty',target:'fo_quote_hum'},
+]},
+fwc_tank:{kind:'q',title:'WARRANTY CHECK — Tank (5yr)',sub:'Within 5 years AND docs confirmed? Tank cannot be repaired.',opts:[
+ {label:'Yes — in warranty, docs on hand',desc:'Replacement auth',target:'fo_replacement'},
+ {label:'Docs promised',desc:'Conditional',target:'fo_conditional'},
+ {label:'Expired / no docs',desc:'Quote for replacement',target:'fo_quote_tank'},
+]},
 
-const LS_KEY = 'ctt_flow_v1';
+fo_cb_reset:{kind:'o',otype:'DESK',title:'CB reset — monitor',summary:'Breaker tripped and reset. Monitor one full heating cycle. If trips again, diagnose element/thermostat.',checklist:null,repairSteps:['CB was tripped and has been reset','Monitor for one full heating cycle','If CB trips again → diagnose element or thermostat fault','If stable → note in job report as resolved'],partsLog:false},
+fo_power_issue:{kind:'o',otype:'QUOTE',title:'Non-warranty — power supply issue',summary:'Supply OK but unit dark. Electrical supply not covered. AED 160 unless fault traces to heater internal wiring.',checklist:'aed160',repairSteps:['Check DB — is correct breaker active?','Check socket or hardwired connection at unit','Check cable condition — any damage or burning?','If supply OK and unit still dark: internal wiring fault','[CRIT] Electrical supply issues are not covered under water heater warranty','AED 160 applies unless fault traces to heater internal wiring'],partsLog:false},
+fo_commissioning:{kind:'o',otype:'DESK',title:'Commissioning issue suspected',summary:'May be installation issue, not product fault. Verify fill, supply, pipework, valve before diagnosing element.',checklist:null,repairSteps:['[CRIT] May be commissioning/installation issue — not necessarily product fault','Verify: unit fully filled with water before power applied','Verify: correct electrical supply (230V, correct CB rating)','Verify: cold inlet and hot outlet correctly connected','Verify: safety valve installed and not blocked','If all correct and still no heat: diagnose element'],partsLog:false},
+fo_dry_confirmed:{kind:'o',otype:'QUOTE',title:'Dry heating confirmed — element damaged',summary:'NON-WARRANTY, no exceptions. Element replacement. AED 160 + quote.',checklist:'aed160',repairSteps:['[CRIT] NON-WARRANTY — dry heating voids element warranty regardless of unit age','Cut power at DB','Remove element access cover','Inspect element: pink/black/soft/bent/split = dry heating confirmed','Drain unit fully','Remove damaged element and gasket','🔩 Heating element — Atlantic ref for this model + capacity [PART REF NEEDED]','🔩 Flange gasket — Atlantic ref [PART REF NEEDED]','Fit new element and gasket (dry, no sealant)','Cross-tighten bolts','[CRIT] DO NOT power on until unit fully refilled','Restore power — check for leaks','Issue quote, collect AED 160 or deduct from repair total'],partsLog:true},
+fo_dry_likely:{kind:'o',otype:'QUOTE',title:'Dry heating likely (new unit)',summary:'New unit default — non-warranty even without visible signs. AED 160 + quote.',checklist:'aed160',repairSteps:['[CRIT] NON-WARRANTY — new unit default. Dry heating until proven otherwise.','Cut power at DB','Inspect element visually — softness, discolouration, bending','Treat as dry heating for new units even if not visually obvious','🔩 Heating element — Atlantic ref for this model + capacity [PART REF NEEDED]','🔩 Flange gasket [PART REF NEEDED]','If replacing: drain, remove element and gasket, fit new','[CRIT] DO NOT power on until unit fully refilled'],partsLog:true},
+fo_dry_trip:{kind:'o',otype:'QUOTE',title:'Dry heating — tripping (new unit)',summary:'New unit tripping = dry heating. Do NOT reset DB until element inspected. AED 160 + quote.',checklist:'aed160',repairSteps:['[CRIT] NON-WARRANTY — dry heating for new unit','Cut power at DB','Do NOT reset DB until element inspected','Drain unit, remove and inspect element','🔩 Heating element — Atlantic ref for this model + capacity [PART REF NEEDED]','🔩 Flange gasket [PART REF NEEDED]','Replace element and gasket if dry-fire damage confirmed','[CRIT] DO NOT power on until unit fully refilled'],partsLog:true},
+fo_monitor:{kind:'o',otype:'DESK',title:'Cutout reset — monitor',summary:'Thermostat cutout reset. Monitor one cycle. If trips again, thermostat fault → warranty check.',checklist:null,repairSteps:['Cut power at DB — confirm OFF at unit','Remove plastic cover (4 corner screws)','Locate reset button on thermostat body','Press firmly until audible click','Replace cover, restore power','Monitor one heating cycle — if trips again, replace thermostat'],partsLog:false},
+fo_undersized:{kind:'o',otype:'DESK',title:'Undersized for demand',summary:'Not a product fault. Customer education. Recommend larger unit if demand exceeds capacity.',checklist:null,repairSteps:['Explain: tank size determines available hot water','Not a fault — no repair needed','Recommend larger capacity unit if demand consistently exceeds supply'],partsLog:false},
+fo_thermo_low:{kind:'o',otype:'DESK',title:'Thermostat set too low',summary:'Set dial to 4–5. Check after 1–2 hrs. Not a fault.',checklist:null,repairSteps:['Set thermostat dial to position 4 or 5','Check again after 1–2 hours','If still inadequate with correct setting: continue diagnosis'],partsLog:false},
+fo_cold_start:{kind:'o',otype:'DESK',title:'Cold start — needs 24hrs',summary:'Keep unit ON continuously. Check after 24 hours. Customer education.',checklist:null,repairSteps:['Advise: keep heater ON continuously','Check again after 24 hours','If still inadequate after 24hrs: continue diagnosis'],partsLog:false},
+fo_scale:{kind:'o',otype:'QUOTE',title:'Scale build-up — maintenance',summary:'Chargeable maintenance, not warranty. Clean element gently. AED 160.',checklist:'aed160',repairSteps:['[CRIT] Chargeable maintenance — not warranty. Confirm AED 160 collected.','Cut power at DB','Drain unit','Remove element access cover','Gently brush scale from element sheath — soft brush only','[CRIT] DO NOT scratch/chip/strike scale off tank walls — damages coating','🔩 Replacement flange gasket if damaged during access [PART REF NEEDED]','Replace gasket when refitting element','Refill, check for leaks after first heat'],partsLog:true},
+fo_pipe_teflon:{kind:'o',otype:'QUOTE',title:'Pipe connection leak — Teflon fix',summary:'Plumbing fix, not a heater fault. AED 160 applies.',checklist:'aed160',repairSteps:['[CRIT] Plumbing fix — not a heater fault. Inform customer.','Close water supply to the heater','Unscrew leaking fitting — have cloth ready','Remove ALL old Teflon tape from threads','Wrap 3–5 turns fresh Teflon tape, clockwise','Refit fitting — firm hand tight + ¼ turn with wrench','Open water supply, observe 5 minutes','AED 160 applies — not a product fault'],partsLog:false},
+fo_element_leak:{kind:'o',otype:'QUOTE',title:'Element housing leak — non-warranty',summary:'Not a tank or gasket fault. AED 160 + element replacement.',checklist:'aed160',repairSteps:['[CRIT] Non-warranty — element housing leak is not a tank or gasket fault','Cut power at DB','Drain unit','Inspect element housing for cracks or corrosion','🔩 Heating element — Atlantic ref for this model + capacity [PART REF NEEDED]','🔩 Flange gasket [PART REF NEEDED]','Replace element and gasket if housing is leak source','AED 160 applies + quote'],partsLog:true},
+fo_sv_normal:{kind:'o',otype:'DESK',title:'Safety valve normal operation',summary:'Small drops with drain installed = normal pressure relief. No fault.',checklist:null,repairSteps:['Small drops during heating with drain pipe = normal pressure relief','No fault — no action required','Advise customer this behaviour is by design'],partsLog:false},
+fo_sv_nodrain:{kind:'o',otype:'QUOTE',title:'No drain pipe — install (upsell)',summary:'Valve normal but mandatory drain pipe missing. AED 160 + drain pipe install.',checklist:'aed160',repairSteps:['[CRIT] Non-warranty — no drain pipe is an installation fault','Explain: valve operating normally but drain pipe missing','🔩 Drain pipe and fittings [CONFIRM WITH JAY]','Upsell: offer drain pipe installation','Do not modify valve','Collect AED 160 for visit'],partsLog:true},
+fo_sv_nodrain_sus:{kind:'o',otype:'QUOTE',title:'Sustained flow + no drain',summary:'Possible valve fault + missing drain. Install drain, retest, replace valve if needed. AED 160.',checklist:'aed160',repairSteps:['[CRIT] Non-warranty — no drain pipe, plus potential valve fault','🔩 Drain pipe and fittings [CONFIRM WITH JAY]','Install drain pipe (upsell)','After drain installed, retest valve','🔩 Safety valve — Atlantic ref (confirm ½" or ¾") [PART REF NEEDED]','If still sustained: replace valve','Collect AED 160 for visit'],partsLog:true},
+fo_sediment:{kind:'o',otype:'QUOTE',title:'Sediment — tank cleaning',summary:'Routine maintenance, always chargeable. Tank flush. AED 160.',checklist:'aed160',repairSteps:['[CRIT] Chargeable maintenance — not warranty','Cut power at DB','Close cold water inlet','Drain tank via safety valve drain','Flush with fresh water several times until clear','Inspect element for scale while drained','Refill, restore power, check for leaks'],partsLog:false},
+fo_anode:{kind:'o',otype:'QUOTE',title:'Anode depleted (rusty water)',summary:'Consumable — non-warranty, always chargeable. Replace anode + flush. AED 160.',checklist:'aed160',repairSteps:['[CRIT] Anode is a consumable — non-warranty, always chargeable','Cut power at DB','Close cold water inlet','Partially drain to reduce pressure','Locate anode hex head at top of unit','Unscrew anode rod — may require 1-1/16" socket','Inspect: core wire visible >6in OR diameter <10mm → replace','🔩 Magnesium anode rod — Atlantic ref for this tank model [PART REF NEEDED]','Wrap new anode threads with Teflon tape','Insert and tighten new anode rod','Refill, check for leaks'],partsLog:true},
+fo_damage:{kind:'o',otype:'QUOTE',title:'Physical damage (not CTT)',summary:'Non-warranty. Photograph everything. AED 160 + repair/replacement quote.',checklist:'aed160',repairSteps:['[CRIT] Non-warranty — physical damage not caused by Cheqpoint','Photograph all damage thoroughly','Document: nature of damage, likely cause if evident','Assess if unit is safe to operate — if not, advise switch off','Provide quote for repair or replacement','AED 160 for site visit + quote'],partsLog:false},
+fo_loose_fixed:{kind:'o',otype:'DESK',title:'Loose connection re-secured',summary:'Installation issue, not warranty. Monitor for stability.',checklist:null,repairSteps:['Loose electrical connection found and re-secured','Installation matter — not warranty','Monitor for stability','If tripping recurs, full dispatch required'],partsLog:false},
+fo_dispatch_assess:{kind:'o',otype:'DISPATCH',title:'On-site assessment required',summary:'Cannot diagnose from current checks. Full assessment needed. AED 160 if non-warranty on arrival.',checklist:'aed160',repairSteps:['Complete Technical Evaluation with tech team','Confirm site access and timing','AED 160 applies if non-warranty on arrival','Document all observations'],partsLog:false},
 
-function loadGraph(){
-  try{
-    const raw = localStorage.getItem(LS_KEY);
-    if(raw){ G = JSON.parse(raw); return; }
-  }catch(e){}
-  G = seedGraph();
-  autoLayout();
-}
-function saveGraph(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(G)); }catch(e){}
-}
+fo_warranty_element:{kind:'o',otype:'WARRANTY',title:'Warranty — element replacement',summary:'Element fault under warranty. Invoice to Atlantic.',checklist:'dispatch',repairSteps:['Cut power at DB before any access','Test element continuity with multimeter across terminals','[CRIT] Continuity = OK | no continuity = open circuit, replace','Drain unit fully','Remove element access cover, photograph wiring','Unscrew flange bolts in cross pattern','Remove element and old gasket — clean flange face','🔩 Heating element — Atlantic ref for this model + capacity [PART REF NEEDED]','🔩 Flange gasket [PART REF NEEDED]','Fit new gasket (dry, no sealant) and new element','Cross-tighten bolts — firm, do not overtighten','Reconnect wiring per photograph','[CRIT] DO NOT power on until unit fully refilled','Restore power — check leaks after first heat'],partsLog:true},
+fo_quote_element:{kind:'o',otype:'QUOTE',title:'Non-warranty — element replacement',summary:'Element fault, out of warranty. AED 160 + quote.',checklist:'aed160',repairSteps:['Cut power at DB before any access','Test element continuity with multimeter','Drain unit fully','Remove element access cover, photograph wiring','Unscrew flange bolts in cross pattern','Remove element and old gasket — clean flange face','🔩 Heating element — Atlantic ref for this model + capacity [PART REF NEEDED]','🔩 Flange gasket [PART REF NEEDED]','Fit new gasket (dry) and new element','Cross-tighten bolts','Reconnect wiring per photograph','[CRIT] DO NOT power on until unit fully refilled','AED 160 + quote for parts and labour'],partsLog:true},
+fo_warranty_thermo:{kind:'o',otype:'WARRANTY',title:'Warranty — thermostat replacement',summary:'Thermostat fault under warranty. Invoice to Atlantic.',checklist:'dispatch',repairSteps:['Cut power at DB','Drain unit','Remove cover — photograph thermostat wiring','Confirm thermostat flush against tank wall','Disconnect thermostat wiring','Unscrew thermostat from tank wall','🔩 Thermostat — Atlantic ref for this model [PART REF NEEDED]','Fit new thermostat flush against tank surface','Reconnect wiring per photograph','Replace cover, refill, restore power','Check leaks after first heat'],partsLog:true},
+fo_quote_thermo:{kind:'o',otype:'QUOTE',title:'Non-warranty — thermostat replacement',summary:'Thermostat fault, out of warranty. AED 160 + quote.',checklist:'aed160',repairSteps:['Cut power at DB','Drain unit','Remove cover — photograph thermostat wiring','Disconnect and unscrew thermostat','🔩 Thermostat — Atlantic ref for this model [PART REF NEEDED]','Fit new thermostat flush against tank surface','Reconnect wiring, replace cover, refill','AED 160 + quote'],partsLog:true},
+fo_warranty_eltherm:{kind:'o',otype:'WARRANTY',title:'Warranty — element/thermostat (trip)',summary:'Trip from element or thermostat, under warranty. Invoice to Atlantic.',checklist:'dispatch',repairSteps:['Cut power at DB — confirm element/thermostat is cause of trip','Test element continuity with multimeter','If element faulty → replace (see element steps)','If element OK → thermostat fault, reset ECO cutout or replace','[CRIT] One fault at a time — confirm element before replacing thermostat','🔩 Heating element — Atlantic ref [PART REF NEEDED]','🔩 Thermostat — Atlantic ref [PART REF NEEDED]'],partsLog:true},
+fo_quote_eltherm:{kind:'o',otype:'QUOTE',title:'Non-warranty — element/thermostat (trip)',summary:'Trip from element or thermostat, out of warranty. AED 160 + quote.',checklist:'aed160',repairSteps:['Cut power at DB','Test element continuity','Replace element or thermostat as diagnosed','[CRIT] One fault at a time — confirm element first','🔩 Heating element — Atlantic ref [PART REF NEEDED]','🔩 Thermostat — Atlantic ref [PART REF NEEDED]','AED 160 + quote'],partsLog:true},
+fo_warranty_flange:{kind:'o',otype:'WARRANTY',title:'Warranty — flange gasket',summary:'Flange/gasket leak under warranty. Invoice to Atlantic.',checklist:'dispatch',repairSteps:['Cut power at DB','Drain unit fully','Remove flange cover panel','Count and photograph bolt positions','Unscrew all flange bolts in cross pattern','Remove flange carefully','Remove old gasket — clean mating surfaces completely','🔩 Lip gasket — Atlantic ref for this flange size [PART REF NEEDED]','Fit new gasket DRY — no sealant','Refit flange, cross-tighten bolts evenly','[CRIT] DO NOT power on until unit fully refilled','Check leaks after first heat, re-tighten if needed'],partsLog:true},
+fo_quote_flange:{kind:'o',otype:'QUOTE',title:'Non-warranty — flange gasket',summary:'Flange/gasket leak, out of warranty. AED 160 + quote.',checklist:'aed160',repairSteps:['Cut power at DB','Drain unit fully','Remove flange cover, photograph bolts','Unscrew flange bolts in cross pattern','Remove flange and old gasket — clean surfaces','🔩 Lip gasket — Atlantic ref for this flange size [PART REF NEEDED]','Fit new gasket DRY, refit flange, cross-tighten','[CRIT] DO NOT power on until unit fully refilled','AED 160 + quote'],partsLog:true},
+fo_warranty_sv:{kind:'o',otype:'WARRANTY',title:'Warranty — safety valve',summary:'Faulty valve under warranty. Invoice to Atlantic.',checklist:'dispatch',repairSteps:['Cut power at DB','Close cold water inlet','Open nearest hot tap to relieve pressure','Unscrew old safety valve — cloth ready','🔩 Safety valve — Atlantic ref (confirm ½" or ¾") [PART REF NEEDED]','Wrap new valve threads with Teflon (3 wraps clockwise)','Fit new valve — hand tight + ¼ turn wrench','Reconnect drain pipe to valve outlet','Open inlet, restore power, observe for leaks'],partsLog:true},
+fo_quote_sv:{kind:'o',otype:'QUOTE',title:'Non-warranty — safety valve',summary:'Faulty valve, out of warranty. AED 160 + quote.',checklist:'aed160',repairSteps:['Cut power at DB','Close cold inlet, relieve pressure at hot tap','Unscrew old safety valve','🔩 Safety valve — Atlantic ref (confirm ½" or ¾") [PART REF NEEDED]','Wrap threads with Teflon, fit new valve','Reconnect drain pipe, restore, observe','AED 160 + quote'],partsLog:true},
+fo_warranty_anode:{kind:'o',otype:'WARRANTY',title:'Warranty — anode (rattle)',summary:'Loose anode under warranty. Warehouse drop-off offered if portable.',checklist:'dispatch',repairSteps:['If portable: offer warehouse drop-off (confirm appointment with office)','On site: cut power at DB','Close cold water inlet','Partially drain unit','Locate anode hex head at top of unit','Unscrew, inspect — if loose: re-wrap threads, refit and tighten','🔩 Magnesium anode rod — Atlantic ref for this tank model [PART REF NEEDED]','If damaged: replace','Refill, check for leaks'],partsLog:true},
+fo_quote_anode:{kind:'o',otype:'QUOTE',title:'Non-warranty — anode (rattle)',summary:'Loose anode, out of warranty. AED 160 + quote.',checklist:'aed160',repairSteps:['Cut power at DB','Close cold inlet, partially drain','Unscrew anode hex head, inspect','🔩 Magnesium anode rod — Atlantic ref for this tank model [PART REF NEEDED]','If loose: re-wrap threads, refit; if damaged: replace','Refill, check leaks','AED 160 + quote'],partsLog:true},
+fo_warranty_hum:{kind:'o',otype:'WARRANTY',title:'Warranty — hum (element/thermostat)',summary:'Electrical hum under warranty. Invoice to Atlantic.',checklist:'dispatch',repairSteps:['Cut power at DB','Test element continuity with multimeter','If element faulty: drain, replace element and gasket','If element OK: check thermostat flush to tank wall','If not flush: reposition and test','If still humming: replace thermostat','🔩 Heating element — Atlantic ref [PART REF NEEDED]','🔩 Thermostat — Atlantic ref [PART REF NEEDED]'],partsLog:true},
+fo_quote_hum:{kind:'o',otype:'QUOTE',title:'Non-warranty — hum (element/thermostat)',summary:'Electrical hum, out of warranty. AED 160 + quote.',checklist:'aed160',repairSteps:['Cut power at DB','Test element continuity','Replace element or thermostat as diagnosed','🔩 Heating element — Atlantic ref [PART REF NEEDED]','🔩 Thermostat — Atlantic ref [PART REF NEEDED]','AED 160 + quote'],partsLog:true},
+fo_replacement:{kind:'o',otype:'REPLACEMENT',title:'Replacement Authorization — tank',summary:'Tank defect under 5yr warranty. Do not repair tank. Office issues PO; customer collects with proof of purchase. Delivery free if CTT installs.',checklist:'dispatch',repairSteps:['[CRIT] Tank cannot be patched — replacement only','Photograph leak source clearly','Confirm serial number — note on photos','Drain unit to prevent further damage','Contact office to initiate Replacement Auth PO','🔩 Reseller for collection [CONFIRM WITH JAY]'],partsLog:false},
+fo_quote_tank:{kind:'o',otype:'QUOTE',title:'Non-warranty — tank (replacement quote)',summary:'Tank leak, out of warranty. Tank cannot be repaired — quote for full replacement unit. AED 160.',checklist:'aed160',repairSteps:['[CRIT] Tank cannot be patched — replacement only','Photograph leak source, confirm serial','Drain unit to prevent further damage','Quote for full replacement unit','AED 160 for visit'],partsLog:false},
+fo_conditional:{kind:'o',otype:'QUOTE',title:'Conditional — docs promised',summary:'Do NOT commit to warranty. Treat as chargeable until docs received and verified. AED 160 noted.',checklist:'aed160',repairSteps:['Do not commit to warranty coverage','Request proof of purchase / warranty certificate','Treat as chargeable (AED 160) until docs verified','If warranty confirmed later, waive/refund AED 160'],partsLog:false},
+fo_hiss_normal:{kind:'o',otype:'DESK',title:'Hissing is scale — normal',summary:'Scale on element causes hissing. Normal but advise maintenance clean.',checklist:null,repairSteps:['Hissing during heating = mineral scale on element','Normal operation — not a fault','Advise periodic maintenance clean to reduce noise','Offer chargeable cleaning service if wanted'],partsLog:false},
+fo_hold_eng:{kind:'o',otype:'HOLD',title:'Hold — awaiting engineer',summary:'Do not dispatch until engineer confirms electrical and plumbing OK. AED 160 reminder per terms.',checklist:null,repairSteps:[],partsLog:false},
+fo_hold_photos:{kind:'o',otype:'HOLD',title:'Hold — project photos mandatory',summary:'STOP — photos mandatory for project tickets before any action. Request from site team. Follow up daily.',checklist:null,repairSteps:[],partsLog:false},
+fo_escalate_red:{kind:'o',otype:'ESCALATE',title:'ESCALATE — red water',summary:'RED water = immediate escalation to MD. Say nothing to customer. Document site, serial, photos. Await instruction.',checklist:null,repairSteps:[],partsLog:false},
+fo_escalate_md:{kind:'o',otype:'ESCALATE',title:'ESCALATE — Cheqpoint liability',summary:'Possible Cheqpoint-caused damage. Say NOTHING to customer about cause or liability. Escalate to MD with photos. Await decision.',checklist:null,repairSteps:[],partsLog:false},
 
-// ════════════════════════════════════════════════════════════════
-// AUTO LAYOUT — BFS depth columns
-// ════════════════════════════════════════════════════════════════
-function autoLayout(){
-  const depths = {};
-  const visited = new Set();
-  const queue = [[G.start,0]];
-  while(queue.length){
-    const [id,d] = queue.shift();
-    if(!G.nodes[id]) continue;
-    if(visited.has(id)){
-      if(d > depths[id]) depths[id] = d; // push deeper if reachable later
-      continue;
-    }
-    visited.add(id); depths[id]=d;
-    (G.nodes[id].opts||[]).forEach(o=>{
-      if(o.target && G.nodes[o.target]) queue.push([o.target,d+1]);
-    });
-  }
-  // unreachable nodes go to last column
-  let maxD = 0; Object.values(depths).forEach(d=>{if(d>maxD)maxD=d;});
-  Object.keys(G.nodes).forEach(id=>{ if(!(id in depths)) depths[id]=maxD+1; });
+}},
 
-  // group by depth, stack vertically
-  const cols = {};
-  Object.keys(G.nodes).forEach(id=>{
-    const d = depths[id];
-    if(!cols[d]) cols[d]=[];
-    cols[d].push(id);
-  });
-  const COLW = 310;
-  Object.keys(cols).sort((a,b)=>a-b).forEach(d=>{
-    let y = 50;
-    cols[d].forEach(id=>{
-      const n = G.nodes[id];
-      n.x = 50 + d*COLW;
-      n.y = y;
-      const optCount = (n.opts||[]).length;
-      const estH = (n.kind==='q') ? (78 + optCount*24) : 96;
-      y += estH + 26;
-    });
-  });
-}
-
-// ════════════════════════════════════════════════════════════════
-// RENDERING
-// ════════════════════════════════════════════════════════════════
-const canvas = document.getElementById('canvas');
-const edgeLayer = document.getElementById('edgeLayer');
-
-const OTYPE_META = {
-  DESK:{icon:'📋',label:'Desk Resolution'},
-  QUOTE:{icon:'🧾',label:'Non-Warranty'},
-  DISPATCH:{icon:'🚚',label:'Dispatch'},
-  WARRANTY:{icon:'✅',label:'Warranty Repair'},
-  REPLACEMENT:{icon:'📦',label:'Replacement Auth'},
-  ESCALATE:{icon:'🚨',label:'Escalate to MD'},
-  HOLD:{icon:'⏸️',label:'On Hold'},
-  FLAG:{icon:'⚠️',label:'Flag'},
-  INFO:{icon:'✉️',label:'Email Action'},
 };
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// STATE & PERSISTENCE
+// ════════════════════════════════════════════════════════════════
+let GRAPHS = null;
+const session = { customerType:null, capacity:null, age:null };
+
+// ── JSONBin config ──────────────────────────────────────────────
+const JSONBIN_BIN_ID  = '6a2a513eda38895dfeab6440';
+const JSONBIN_API_KEY = '$2a$10$jpX2/IJ46WCUgNwJqXJWteJmo4VQS56/L8ieqS5hjUtlPIsl7GmVm';
+const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+const LS_CACHE_KEY    = 'ctt_unified_cache_v1'; // offline fallback only
+// ───────────────────────────────────────────────────────────────
+
+const CAP_LABEL = {small:'10–30L',medium:'50–80L',large:'100–150L',central:'200L+'};
+const AGE_LABEL = {lt6m:'Under 6 months','6mto2y':'6m – 2yr','2yto5y':'2 – 5yr',gt5y:'Over 5yr',unknown:'Unknown'};
+const CT_LABEL  = {project:'Project / FM',retail:'Retail'};
+
+// Show a loading overlay while fetching from JSONBin on startup
+function showLoader(msg){
+  let el=document.getElementById('_loader');
+  if(!el){
+    el=document.createElement('div');el.id='_loader';
+    el.style.cssText='position:fixed;inset:0;background:#0d0f11;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px;';
+    el.innerHTML=`<div style="width:36px;height:36px;border:3px solid #252b32;border-top-color:#E8622A;border-radius:50%;animation:spin 0.7s linear infinite"></div>
+      <div id="_loaderMsg" style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:#7a8694;letter-spacing:.08em;"></div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+    document.body.appendChild(el);
+  }
+  document.getElementById('_loaderMsg').textContent=msg||'Loading…';
+}
+function hideLoader(){ const el=document.getElementById('_loader'); if(el)el.remove(); }
+
+async function loadGraphs(){
+  showLoader('Syncing flows…');
+  try{
+    const res = await fetch(JSONBIN_URL+'/latest', {
+      headers:{ 'X-Master-Key': JSONBIN_API_KEY }
+    });
+    if(!res.ok) throw new Error('fetch failed: '+res.status);
+    const data = await res.json();
+    const record = data.record;
+    // If the bin still has the placeholder {"ready":true} or no intake key, seed it
+    if(!record.intake || !record.field){
+      GRAPHS = seedGraphs(); autoLayoutBoth();
+      await pushToJSONBin(); // write seed to bin so it's ready next time
+    } else {
+      GRAPHS = record;
+    }
+    // cache locally for offline fallback
+    try{ localStorage.setItem(LS_CACHE_KEY, JSON.stringify(GRAPHS)); }catch(e){}
+  } catch(err){
+    console.warn('JSONBin fetch failed, using local cache:', err);
+    // offline / network error → fall back to local cache
+    try{
+      const raw = localStorage.getItem(LS_CACHE_KEY);
+      if(raw){ GRAPHS = JSON.parse(raw); toast('Offline — using cached flows'); }
+      else { GRAPHS = seedGraphs(); autoLayoutBoth(); toast('No cache — using defaults'); }
+    }catch(e){ GRAPHS = seedGraphs(); autoLayoutBoth(); }
+  }
+  hideLoader();
+  refreshLandingCtx();
+}
+
+async function saveGraphs(){
+  // always cache locally first (instant)
+  try{ localStorage.setItem(LS_CACHE_KEY, JSON.stringify(GRAPHS)); }catch(e){}
+  // then push to JSONBin
+  await pushToJSONBin();
+}
+
+async function pushToJSONBin(){
+  const res = await fetch(JSONBIN_URL, {
+    method: 'PUT',
+    headers:{
+      'Content-Type': 'application/json',
+      'X-Master-Key': JSONBIN_API_KEY
+    },
+    body: JSON.stringify(GRAPHS)
+  });
+  if(!res.ok) throw new Error('JSONBin save failed: '+res.status);
+}
 
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-function renderAll(){
-  // remove old node divs
-  canvas.querySelectorAll('.node').forEach(el=>el.remove());
-  Object.keys(G.nodes).forEach(id=>renderNode(id));
-  requestAnimationFrame(drawEdges);
-  saveGraph();
+const OTYPE_META = {
+  DESK:{icon:'📋',label:'Desk Resolution'}, QUOTE:{icon:'🧾',label:'Non-Warranty'},
+  DISPATCH:{icon:'🚚',label:'Dispatch'}, WARRANTY:{icon:'✅',label:'Warranty Repair'},
+  REPLACEMENT:{icon:'📦',label:'Replacement Auth'}, ESCALATE:{icon:'🚨',label:'Escalate to MD'},
+  HOLD:{icon:'⏸️',label:'On Hold'}, FLAG:{icon:'⚠️',label:'Flag'}, INFO:{icon:'✉️',label:'Email Action'},
+};
+
+// ════════════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ════════════════════════════════════════════════════════════════
+function showView(id){
+  ['view-landing','view-runner','view-editor'].forEach(v=>document.getElementById(v).classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.body.classList.toggle('editor-active', id==='view-editor');
+  window.scrollTo(0,0);
+}
+function goHome(){ refreshLandingCtx(); showView('view-landing'); }
+
+function refreshLandingCtx(){
+  const box=document.getElementById('landCtx'), rows=document.getElementById('landCtxRows');
+  if(session.customerType||session.capacity||session.age){
+    box.classList.add('show');
+    let h='';
+    if(session.customerType) h+=`<span class="land-ctx-item">Channel: <b>${CT_LABEL[session.customerType]||session.customerType}</b></span>`;
+    if(session.capacity)     h+=`<span class="land-ctx-item">Capacity: <b>${CAP_LABEL[session.capacity]||session.capacity}</b></span>`;
+    if(session.age)          h+=`<span class="land-ctx-item">Age: <b>${AGE_LABEL[session.age]||session.age}</b></span>`;
+    h+=`<button class="land-ctx-clear" onclick="clearSession()">clear</button>`;
+    rows.innerHTML=h;
+  } else box.classList.remove('show');
+}
+function clearSession(){ session.customerType=null;session.capacity=null;session.age=null; refreshLandingCtx(); }
+
+// ════════════════════════════════════════════════════════════════
+// RUNNER
+// ════════════════════════════════════════════════════════════════
+let runGraphName=null, runStack=[];
+
+function runStartIntake(){
+  runGraphName='intake'; runStack=[GRAPHS.intake.start]; renderRun();
+  document.getElementById('runModeTag').textContent='Intake';
+  document.getElementById('runModeTag').className='run-mode-tag run-mode-intake';
+  showView('view-runner');
+}
+function runStartField(){
+  runGraphName='field';
+  const g=GRAPHS.field;
+  // skip preamble if session already has context
+  if(session.customerType&&session.capacity&&session.age&&g.nodes['fn_fault']){
+    runStack=['fn_fault'];
+  } else { runStack=[g.start]; }
+  renderRun();
+  document.getElementById('runModeTag').textContent='Field Diagnostic';
+  document.getElementById('runModeTag').className='run-mode-tag run-mode-field';
+  showView('view-runner');
 }
 
-function renderNode(id){
-  const n = G.nodes[id];
-  const el = document.createElement('div');
-  el.className = 'node '+n.kind+(id===selectedId?' selected':'');
-  el.style.left = (n.x||50)+'px';
-  el.style.top  = (n.y||50)+'px';
-  el.dataset.id = id;
+function runChoose(opt){
+  if(opt.set){ Object.keys(opt.set).forEach(k=>{ session[k]=opt.set[k]; }); }
+  if(!opt.target || !graph().nodes[opt.target]){ toast('This option is not linked — fix in editor'); return; }
+  runStack.push(opt.target);
+  renderRun();
+}
+function runBack(){ if(runStack.length>1){ runStack.pop(); renderRun(); } }
+function runRestart(){ runStack=[runStack[0]]; renderRun(); }
+function graph(){ return GRAPHS[runGraphName]; }
 
+function renderRun(){
+  const g=graph();
+  const id=runStack[runStack.length-1];
+  const n=g.nodes[id];
+  const area=document.getElementById('runArea');
+  const fill=document.getElementById('runProgFill');
+  const pathEl=document.getElementById('runProgPath');
+
+  const total=8;
+  fill.style.width=Math.min(100, runStack.length/total*100)+'%';
+  pathEl.textContent = runStack.map(s=>g.nodes[s]?g.nodes[s].title.slice(0,22):s).join('  →  ');
+
+  if(!n){ area.innerHTML=`<div class="r-q" style="color:#e08080">Broken link</div><div class="r-sub">This points to a missing node. Fix it in the editor.</div><div class="run-foot"><button class="btn btn-ghost" onclick="runBack()">← Back</button></div>`; return; }
+
+  if(n.kind==='q'){ renderRunQuestion(n,area); }
+  else { renderRunOutcome(n,area); }
+}
+
+function renderRunQuestion(n,area){
+  const isSay = /^Say:/.test(n.sub||'') || /TECH CHECK/i.test(n.title);
+  let html=`<div class="r-label">${runGraphName==='intake'?'Intake':'Field'} — Step ${runStack.length}</div>`;
+  html+=`<div class="r-q">${esc(n.title)}</div>`;
+  if(n.sub){
+    if(/^Say:/.test(n.sub)) html+=`<div class="r-say">💬 ${esc(n.sub)}</div>`;
+    else html+=`<div class="r-sub">${esc(n.sub)}</div>`;
+  }
+  html+=`<div class="r-choices">`;
+  (n.opts||[]).forEach((o,i)=>{
+    const linked=o.target&&graph().nodes[o.target];
+    html+=`<button class="r-choice${linked?'':' unlinked'}" ${linked?`onclick="runChoose(graph().nodes['${currentId()}'].opts[${i}])"`:''}>
+      <span class="r-choice-l">${esc(o.label)}${linked?'':' ⚠ unlinked'}</span>
+      ${o.desc?`<span class="r-choice-d">${esc(o.desc)}</span>`:''}
+    </button>`;
+  });
+  html+=`</div>`;
+  html+=`<div class="run-foot">
+    ${runStack.length>1?'<button class="btn btn-ghost btn-sm" onclick="runBack()">← Back</button>':''}
+    <button class="btn btn-ghost btn-sm" onclick="runRestart()">↺ Restart</button>
+  </div>`;
+  area.innerHTML=html;
+}
+function currentId(){ return runStack[runStack.length-1]; }
+
+function renderRunOutcome(n,area){
+  const m=OTYPE_META[n.otype]||OTYPE_META.INFO;
+  let html=`<div class="r-label">${runGraphName==='intake'?'Intake':'Field'} — Outcome</div>`;
+  html+=`<div class="oc t-${n.otype}">
+    <div class="oc-head"><span class="oc-ic">${m.icon}</span>
+      <div><span class="oc-type">${m.label}</span><span class="oc-ttl">${esc(n.title)}</span></div>
+    </div>
+    <div class="oc-body">${esc(n.summary||'')}</div>
+  </div>`;
+
+  // ESCALATE / HOLD special
+  if(n.otype==='ESCALATE'){
+    html+=`<div class="alert alert-stop"><strong>STOP. Do NOT communicate cause or liability to the customer.</strong> Call Jay / Sunil immediately.</div>`;
+    html+=runFootFinal(); area.innerHTML=html; postRun(n); return;
+  }
+  if(n.otype==='HOLD'){
+    html+=`<div class="alert alert-warn">Do not dispatch. Do not commit to any timeline. Inform the customer assessment is pending.</div>`;
+    if(n.msg) html+=msgBlock(n);
+    html+=runFootFinal(); area.innerHTML=html; postRun(n); return;
+  }
+
+  // commercial row
+  const aed = (n.checklist==='aed160');
+  html+=`<div class="blk"><div class="blk-head">Commercial</div>
+    <div class="inforow"><span class="infok">AED 160 call-out</span>
+      <span class="infov ${aed?'warn':'ok'}">${aed?'⚠️ Applicable — confirm collected':'✓ Not applicable'}</span></div>
+    ${n.otype==='WARRANTY'?`<div class="inforow"><span class="infok">Billing</span><span class="infov ok">Warranty — invoice to Atlantic</span></div>`:''}
+    ${n.otype==='REPLACEMENT'?`<div class="inforow"><span class="infok">Action</span><span class="infov" style="color:#7a9ae0">PO to reseller required</span></div>`:''}
+  </div>`;
+
+  // field: repair steps
+  if(runGraphName==='field' && n.repairSteps && n.repairSteps.length){
+    html+=`<div class="blk"><div class="blk-head">Repair Procedure</div><div class="rsteps">`;
+    n.repairSteps.forEach((s,i)=>{
+      let txt=s, crit=false;
+      if(s.indexOf('[CRIT]')===0){ crit=true; txt=s.replace('[CRIT]','').trim(); }
+      txt=txt.replace(/\[PART REF NEEDED\]/g,'<span style="font-family:var(--mono);font-size:10px;color:#e74c3c;border:1px solid #5a2020;background:#2a1015;padding:1px 6px;border-radius:4px;margin-left:4px;">⚑ PART REF</span>')
+             .replace(/\[CONFIRM WITH JAY\]/g,'<span style="font-family:var(--mono);font-size:10px;color:#e67e22;border:1px solid #5a3a15;background:#2a1e10;padding:1px 6px;border-radius:4px;margin-left:4px;">⚑ ASK JAY</span>');
+      html+=`<div class="rstep"><div class="rstep-n">${i+1}</div><div class="rstep-t ${crit?'crit':''}">${txt}</div></div>`;
+    });
+    html+=`</div></div>`;
+  }
+
+  // checklist card
+  if(n.checklist==='dispatch') html+=checklistCard('dispatch');
+  else if(n.checklist==='aed160') html+=checklistCard('aed160');
+  else if(n.otype==='DESK') html+=`<div class="alert alert-ok">✅ Resolved remotely — no dispatch needed. Log the ticket and note the resolution.</div>`;
+
+  // message template
+  if(n.msg) html+=msgBlock(n);
+
+  // field: parts + signature
+  if(runGraphName==='field' && n.partsLog){
+    html+=`<div class="parts"><div class="parts-label">Parts Used on This Visit</div>
+      <div id="partsContainer"><div class="part-entry"><input class="part-in" placeholder="Part description / ref" style="flex:2"><input class="part-in" placeholder="Qty" style="flex:.4;min-width:50px"></div></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addPart()">+ Add Part</button></div>`;
+  }
+  if(runGraphName==='field' && n.otype!=='HOLD'){
+    html+=`<div class="sig"><div class="sig-label">Customer Signature</div>
+      <canvas class="sig-canvas" id="sigCanvas"></canvas>
+      <div class="sig-act"><button class="btn btn-ghost btn-sm" onclick="clearSig()">Clear</button>
+      <span style="font-size:11px;color:var(--subtext);margin-left:auto;align-self:center;">Sign with finger</span></div></div>`;
+  }
+
+  html+=runFootFinal();
+  area.innerHTML=html;
+  postRun(n);
+}
+
+function postRun(n){
+  if(runGraphName==='field' && n.partsLog!==undefined){
+    const c=document.getElementById('sigCanvas'); if(c) initSig(c);
+  }
+}
+
+function runFootFinal(){
+  return `<div class="run-foot">
+    ${runStack.length>1?'<button class="btn btn-ghost btn-sm" onclick="runBack()">← Back</button>':''}
+    <button class="btn btn-ghost btn-sm" onclick="runRestart()">↺ New Ticket</button>
+    <button class="btn btn-ghost btn-sm" onclick="goHome()">Home</button>
+  </div>`;
+}
+
+function checklistCard(type){
+  let title, items;
+  if(type==='dispatch'){
+    title='📋 Before dispatch — checklist must be received';
+    items=['Completed Warranty Claim Checklist & Declaration received and signed','Photos / video of the fault received','Serial number and model label confirmed','Proof of purchase / warranty certificate confirmed','Site access, contact, and visit time confirmed'];
+  } else {
+    title='🧾 Before proceeding — AED 160 confirmed + checklist sent';
+    items=['AED 160 call-out confirmed with the customer','Customer understands AED 160 is deducted if repair approved','Checklist sent — awaiting return before scheduling','Photos of fault and serial number requested'];
+  }
+  return `<div class="chk"><div class="chk-head">${title}</div><div class="chk-items">${items.map(i=>`<div class="chk-item">${i}</div>`).join('')}</div></div>`;
+}
+
+function msgBlock(n){
+  const ch = n.msgch==='email'?'✉️ Email template':'💬 WhatsApp template';
+  const mid='msgbody_'+Math.random().toString(36).slice(2,8);
+  return `<div class="msg"><div class="msg-head"><span class="msg-label">${ch}</span>
+    <button class="msg-copy" onclick="copyText('${mid}',this)">Copy</button></div>
+    <div class="msg-body" id="${mid}">${esc(n.msg)}</div></div>`;
+}
+
+function addPart(){
+  const c=document.getElementById('partsContainer'); if(!c) return;
+  const d=document.createElement('div'); d.className='part-entry';
+  d.innerHTML='<input class="part-in" placeholder="Part description / ref" style="flex:2"><input class="part-in" placeholder="Qty" style="flex:.4;min-width:50px">';
+  c.appendChild(d);
+}
+function copyText(id,btn){
+  const el=document.getElementById(id); if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1800);})
+    .catch(()=>{const ta=document.createElement('textarea');ta.value=el.textContent;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1800);});
+}
+function initSig(canvas){
+  const ctx=canvas.getContext('2d'); canvas.width=canvas.offsetWidth; canvas.height=110;
+  ctx.strokeStyle='#dde2e8'; ctx.lineWidth=2; ctx.lineCap='round';
+  let d=false,lx=0,ly=0;
+  const pos=e=>{const r=canvas.getBoundingClientRect();const s=e.touches?e.touches[0]:e;return [s.clientX-r.left,s.clientY-r.top];};
+  const st=e=>{d=true;[lx,ly]=pos(e);e.preventDefault();};
+  const dr=e=>{if(!d)return;e.preventDefault();const[x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();[lx,ly]=[x,y];};
+  const sp=()=>{d=false;};
+  canvas.addEventListener('mousedown',st);canvas.addEventListener('mousemove',dr);canvas.addEventListener('mouseup',sp);
+  canvas.addEventListener('touchstart',st,{passive:false});canvas.addEventListener('touchmove',dr,{passive:false});canvas.addEventListener('touchend',sp);
+}
+function clearSig(){const c=document.getElementById('sigCanvas');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);}
+
+// ════════════════════════════════════════════════════════════════
+// EDITOR
+// ════════════════════════════════════════════════════════════════
+let edGraphName='intake', selectedId=null, nodeCounter=1;
+
+function openEditor(){ showView('view-editor'); switchGraph(edGraphName); }
+function exitEditor(){ closePanel(); goHome(); }
+function switchGraph(name){
+  edGraphName=name; selectedId=null; closePanel();
+  document.getElementById('gsw-intake').classList.toggle('active',name==='intake');
+  document.getElementById('gsw-field').classList.toggle('active',name==='field');
+  edRenderAll();
+}
+function EG(){ return GRAPHS[edGraphName]; }
+
+const canvasEl=()=>document.getElementById('canvas');
+const edgeEl=()=>document.getElementById('edgeLayer');
+
+function edRenderAll(){
+  const cv=canvasEl();
+  cv.querySelectorAll('.node').forEach(e=>e.remove());
+  Object.keys(EG().nodes).forEach(id=>edRenderNode(id));
+  requestAnimationFrame(drawEdges);
+}
+
+function edRenderNode(id){
+  const n=EG().nodes[id];
+  const el=document.createElement('div');
+  el.className='node '+(n.kind==='q'?'q':'o')+(id===selectedId?' selected':'');
+  el.style.left=(n.x||50)+'px'; el.style.top=(n.y||50)+'px'; el.dataset.id=id;
   let head, body='';
   if(n.kind==='q'){
-    head = `<div class="node-head"><span class="node-type-tag tag-DISPATCH" style="background:#0d1f30;color:#5ba8d4;border-color:#1a3a54;">Question</span></div>`;
-    body = `<div class="node-title">${esc(n.title)}</div>`
-         + (n.sub?`<div class="node-sub">${esc(n.sub)}</div>`:'')
-         + `<div class="node-opts">`
-         + (n.opts||[]).map((o,i)=>{
-             const linked = o.target && G.nodes[o.target];
-             return `<div class="node-opt" data-opt="${i}">
-               <span class="node-opt-label">${esc(o.label)}</span>
-               <span class="node-opt-port ${linked?'linked':'unlinked'}"></span>
-             </div>`;
-           }).join('')
-         + `</div>`;
+    head=`<div class="node-head"><span class="ntag tag-Q">Question</span></div>`;
+    body=`<div class="node-title">${esc(n.title)}</div>`+(n.sub?`<div class="node-sub">${esc(n.sub.slice(0,80))}</div>`:'')+`<div class="node-opts">`+
+      (n.opts||[]).map((o,i)=>{const lk=o.target&&EG().nodes[o.target];return `<div class="node-opt" data-opt="${i}"><span class="node-opt-l">${esc(o.label)}</span><span class="port ${lk?'linked':'unlinked'}"></span></div>`;}).join('')+`</div>`;
   } else {
-    const m = OTYPE_META[n.otype]||OTYPE_META.INFO;
-    head = `<div class="node-head"><span class="node-type-tag tag-${n.otype}">${m.icon} ${m.label}</span></div>`;
-    body = `<div class="node-title">${esc(n.title)}</div>`
-         + `<div class="node-sub">${esc((n.summary||'').slice(0,90))}${(n.summary||'').length>90?'…':''}</div>`;
+    const m=OTYPE_META[n.otype]||OTYPE_META.INFO;
+    head=`<div class="node-head"><span class="ntag tag-${n.otype}">${m.icon} ${m.label}</span></div>`;
+    body=`<div class="node-title">${esc(n.title)}</div><div class="node-sub">${esc((n.summary||'').slice(0,84))}${(n.summary||'').length>84?'…':''}</div>`;
   }
-  el.innerHTML = head + body + (id===G.start?'<span class="node-start-badge">START</span>':'');
-  canvas.appendChild(el);
+  el.innerHTML=head+body+(id===EG().start?'<span class="start-badge">START</span>':'');
+  canvasEl().appendChild(el);
 
-  // drag + click
-  let dragMoved=false, sx=0, sy=0, ox=0, oy=0;
-  el.addEventListener('pointerdown', e=>{
-    if(e.button!==0) return;
-    dragMoved=false; sx=e.clientX; sy=e.clientY; ox=n.x; oy=n.y;
-    el.setPointerCapture(e.pointerId);
-    el.classList.add('dragging');
-    const move = ev=>{
-      const dx=ev.clientX-sx, dy=ev.clientY-sy;
-      if(Math.abs(dx)>3||Math.abs(dy)>3) dragMoved=true;
-      n.x = Math.max(0, ox+dx); n.y = Math.max(0, oy+dy);
-      el.style.left=n.x+'px'; el.style.top=n.y+'px';
-      drawEdges();
-    };
-    const up = ()=>{
-      el.classList.remove('dragging');
-      el.removeEventListener('pointermove',move);
-      el.removeEventListener('pointerup',up);
-      saveGraph();
-      if(!dragMoved){ openPanel(id); }
-    };
-    el.addEventListener('pointermove',move);
-    el.addEventListener('pointerup',up);
+  let moved=false,sx,sy,ox,oy;
+  el.addEventListener('pointerdown',e=>{
+    if(e.button!==0)return;
+    moved=false;sx=e.clientX;sy=e.clientY;ox=n.x;oy=n.y;
+    el.setPointerCapture(e.pointerId); el.classList.add('dragging');
+    const mv=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(Math.abs(dx)>3||Math.abs(dy)>3)moved=true;n.x=Math.max(0,ox+dx);n.y=Math.max(0,oy+dy);el.style.left=n.x+'px';el.style.top=n.y+'px';drawEdges();};
+    const up=()=>{el.classList.remove('dragging');el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);if(!moved)openPanel(id);};
+    el.addEventListener('pointermove',mv);el.addEventListener('pointerup',up);
   });
 }
 
 function drawEdges(){
-  const W = canvas.offsetWidth, H = canvas.offsetHeight;
-  let svg = `<defs>
-    <marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-      <path d="M0,0 L9,4.5 L0,9 z" fill="#E8622A"/>
-    </marker>
-    <marker id="arrDim" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-      <path d="M0,0 L9,4.5 L0,9 z" fill="#4a5560"/>
-    </marker>
+  const cv=canvasEl();
+  let svg=`<defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#E8622A"/></marker>
+    <marker id="arrD" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#4a5560"/></marker>
   </defs>`;
-  Object.keys(G.nodes).forEach(id=>{
-    const n = G.nodes[id];
-    if(n.kind!=='q') return;
-    const srcEl = canvas.querySelector(`.node[data-id="${id}"]`);
-    if(!srcEl) return;
+  Object.keys(EG().nodes).forEach(id=>{
+    const n=EG().nodes[id]; if(n.kind!=='q')return;
+    const src=cv.querySelector(`.node[data-id="${id}"]`); if(!src)return;
     (n.opts||[]).forEach((o,i)=>{
-      if(!o.target || !G.nodes[o.target]) return;
-      const tgtEl = canvas.querySelector(`.node[data-id="${o.target}"]`);
-      if(!tgtEl) return;
-      const optEl = srcEl.querySelector(`.node-opt[data-opt="${i}"]`);
-      let x1, y1;
-      if(optEl){
-        x1 = srcEl.offsetLeft + srcEl.offsetWidth - 13;
-        y1 = srcEl.offsetTop + optEl.offsetTop + optEl.offsetHeight/2;
-      } else {
-        x1 = srcEl.offsetLeft + srcEl.offsetWidth;
-        y1 = srcEl.offsetTop + srcEl.offsetHeight/2;
-      }
-      const x2 = tgtEl.offsetLeft - 4;
-      const y2 = tgtEl.offsetTop + 20;
-      const dx = Math.max(45, Math.abs(x2-x1)*0.45);
-      const sel = (id===selectedId || o.target===selectedId);
-      svg += `<path d="M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}"
-        fill="none" stroke="${sel?'#E8622A':'#39424c'}" stroke-width="${sel?2:1.4}"
-        marker-end="url(#${sel?'arr':'arrDim'})" opacity="${sel?1:0.85}"/>`;
+      if(!o.target||!EG().nodes[o.target])return;
+      const tgt=cv.querySelector(`.node[data-id="${o.target}"]`); if(!tgt)return;
+      const opt=src.querySelector(`.node-opt[data-opt="${i}"]`);
+      let x1,y1;
+      if(opt){x1=src.offsetLeft+src.offsetWidth-13;y1=src.offsetTop+opt.offsetTop+opt.offsetHeight/2;}
+      else{x1=src.offsetLeft+src.offsetWidth;y1=src.offsetTop+src.offsetHeight/2;}
+      const x2=tgt.offsetLeft-4, y2=tgt.offsetTop+20;
+      const dx=Math.max(45,Math.abs(x2-x1)*0.45);
+      const sel=(id===selectedId||o.target===selectedId);
+      svg+=`<path d="M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}" fill="none" stroke="${sel?'#E8622A':'#39424c'}" stroke-width="${sel?2:1.4}" marker-end="url(#${sel?'arr':'arrD'})" opacity="${sel?1:.85}"/>`;
     });
   });
-  edgeLayer.innerHTML = svg;
-  edgeLayer.setAttribute('width',W);
-  edgeLayer.setAttribute('height',H);
+  edgeEl().innerHTML=svg;
+  edgeEl().setAttribute('width',cv.offsetWidth);
+  edgeEl().setAttribute('height',cv.offsetHeight);
 }
 
-// ════════════════════════════════════════════════════════════════
-// EDITOR PANEL
-// ════════════════════════════════════════════════════════════════
 function openPanel(id){
-  selectedId = id;
-  const n = G.nodes[id];
-  const panel = document.getElementById('panel');
-  const body  = document.getElementById('panelBody');
-  document.getElementById('panelTitle').textContent = (n.kind==='q'?'Question Node':'Outcome Node')+' — '+id;
-
-  let html = `
-    <div class="fld"><label class="fld-label">Title</label>
-      <textarea id="e_title" rows="2">${esc(n.title)}</textarea></div>
-    <div class="fld"><label class="fld-label">${n.kind==='q'?'Hint / what to say':'Internal note'}</label>
-      <textarea id="e_sub" rows="2">${esc(n.sub||'')}</textarea></div>
-  `;
-
+  selectedId=id; const n=EG().nodes[id];
+  document.getElementById('panelTitle').textContent=(n.kind==='q'?'Question':'Outcome')+' — '+id;
+  let html=`<div class="fld"><label class="fld-l">Title</label><textarea id="e_title" rows="2">${esc(n.title)}</textarea></div>
+    <div class="fld"><label class="fld-l">${n.kind==='q'?'Hint / what to say':'Internal note'}</label><textarea id="e_sub" rows="2">${esc(n.sub||'')}</textarea></div>`;
   if(n.kind==='o'){
-    html += `
-      <div class="fld"><label class="fld-label">Outcome type</label>
-        <select id="e_otype">
-          ${Object.keys(OTYPE_META).map(t=>`<option value="${t}" ${n.otype===t?'selected':''}>${OTYPE_META[t].icon} ${OTYPE_META[t].label}</option>`).join('')}
-        </select></div>
-      <div class="fld"><label class="fld-label">Summary (shown on outcome card)</label>
-        <textarea id="e_summary" rows="4">${esc(n.summary||'')}</textarea></div>
-      <div class="fld"><label class="fld-label">Final checklist card</label>
-        <select id="e_checklist">
-          <option value="" ${!n.checklist?'selected':''}>None (e.g. desk resolution)</option>
-          <option value="dispatch" ${n.checklist==='dispatch'?'selected':''}>Dispatch — checklist must be received</option>
-          <option value="aed160" ${n.checklist==='aed160'?'selected':''}>AED 160 — confirm before proceeding</option>
-        </select></div>
-      <div class="fld"><label class="fld-label">Customer message channel</label>
-        <select id="e_msgch">
-          <option value="" ${!n.msgch?'selected':''}>No message</option>
-          <option value="whatsapp" ${n.msgch==='whatsapp'?'selected':''}>💬 WhatsApp</option>
-          <option value="email" ${n.msgch==='email'?'selected':''}>✉️ Email</option>
-        </select></div>
-      <div class="fld"><label class="fld-label">Customer message template</label>
-        <textarea id="e_msg" rows="7">${esc(n.msg||'')}</textarea></div>
-    `;
+    html+=`<div class="fld"><label class="fld-l">Outcome type</label><select id="e_otype">${Object.keys(OTYPE_META).map(t=>`<option value="${t}" ${n.otype===t?'selected':''}>${OTYPE_META[t].icon} ${OTYPE_META[t].label}</option>`).join('')}</select></div>
+      <div class="fld"><label class="fld-l">Summary (outcome card)</label><textarea id="e_summary" rows="4">${esc(n.summary||'')}</textarea></div>
+      <div class="fld"><label class="fld-l">Final checklist card</label><select id="e_checklist">
+        <option value="" ${!n.checklist?'selected':''}>None (e.g. desk resolution)</option>
+        <option value="dispatch" ${n.checklist==='dispatch'?'selected':''}>Dispatch — checklist must be received</option>
+        <option value="aed160" ${n.checklist==='aed160'?'selected':''}>AED 160 — confirm before proceeding</option>
+      </select></div>
+      <div class="fld"><label class="fld-l">Message channel</label><select id="e_msgch">
+        <option value="" ${!n.msgch?'selected':''}>No message</option>
+        <option value="whatsapp" ${n.msgch==='whatsapp'?'selected':''}>💬 WhatsApp</option>
+        <option value="email" ${n.msgch==='email'?'selected':''}>✉️ Email</option>
+      </select></div>
+      <div class="fld"><label class="fld-l">Customer message template</label><textarea id="e_msg" rows="6">${esc(n.msg||'')}</textarea></div>
+      <label class="cbrow"><input type="checkbox" id="e_partslog" ${n.partsLog?'checked':''}> Show parts log + signature (field)</label>
+      <div class="fld"><label class="fld-l">Repair steps (field) — one per line. Prefix [CRIT] for warnings.</label>
+        <textarea id="e_repair" rows="6">${esc((n.repairSteps||[]).join('\n'))}</textarea></div>`;
   } else {
-    // options editor
-    const allNodes = Object.keys(G.nodes).map(nid=>({id:nid,t:G.nodes[nid].title}));
-    html += `<label class="fld-label" style="margin-top:4px;">Answer options → arrows</label>`;
+    const all=Object.keys(EG().nodes).map(nid=>({id:nid,t:EG().nodes[nid].title}));
+    html+=`<label class="fld-l" style="margin-top:4px">Answer options → arrows</label>`;
     (n.opts||[]).forEach((o,i)=>{
-      html += `
-        <div class="opt-editor">
-          <button class="opt-del" onclick="delOption(${i})" title="Delete option">✕</button>
-          <input type="text" placeholder="Option label" value="${esc(o.label)}" oninput="updOption(${i},'label',this.value)">
-          <input type="text" placeholder="Small description (optional)" value="${esc(o.desc||'')}" oninput="updOption(${i},'desc',this.value)">
-          <select onchange="updOption(${i},'target',this.value)">
-            <option value="">— not linked (red port) —</option>
-            ${allNodes.map(an=>`<option value="${an.id}" ${o.target===an.id?'selected':''}>${esc(an.t.slice(0,52))}</option>`).join('')}
-          </select>
-        </div>
-      `;
+      html+=`<div class="opt-ed"><button class="opt-del" onclick="delOpt(${i})">✕</button>
+        <input type="text" placeholder="Option label" value="${esc(o.label)}" oninput="updOpt(${i},'label',this.value)">
+        <input type="text" placeholder="Description (optional)" value="${esc(o.desc||'')}" oninput="updOpt(${i},'desc',this.value)">
+        <select onchange="updOpt(${i},'target',this.value)"><option value="">— not linked —</option>
+          ${all.map(a=>`<option value="${a.id}" ${o.target===a.id?'selected':''}>${esc(a.t.slice(0,50))}</option>`).join('')}
+        </select></div>`;
     });
-    html += `<button class="panel-btn" onclick="addOption()">+ Add option</button>`;
+    html+=`<button class="pbtn" onclick="addOpt()">+ Add option</button>`;
   }
-
-  html += `
-    <div style="height:10px"></div>
-    <button class="panel-btn" onclick="setAsStart()">⚑ Set as start node</button>
-    <button class="panel-btn accent" onclick="applyNodeEdits()">✓ Apply changes</button>
-    <button class="panel-btn danger" onclick="deleteNode()">🗑 Delete node</button>
-  `;
-  body.innerHTML = html;
-  panel.classList.add('open');
-  renderAll();
+  html+=`<div style="height:10px"></div>
+    <button class="pbtn" onclick="setStart()">⚑ Set as start node</button>
+    <button class="pbtn accent" onclick="applyEdits()">✓ Apply</button>
+    <button class="pbtn danger" onclick="delNode()">🗑 Delete node</button>`;
+  document.getElementById('panelBody').innerHTML=html;
+  document.getElementById('panel').classList.add('open');
+  edRenderAll();
 }
+function closePanel(){ selectedId=null; document.getElementById('panel').classList.remove('open'); edRenderAll(); }
 
-function closePanel(){
-  selectedId = null;
-  document.getElementById('panel').classList.remove('open');
-  renderAll();
-}
-
-function applyNodeEdits(){
-  if(!selectedId) return;
-  const n = G.nodes[selectedId];
-  n.title = document.getElementById('e_title').value;
-  n.sub   = document.getElementById('e_sub').value;
+function applyEdits(){
+  if(!selectedId)return; const n=EG().nodes[selectedId];
+  n.title=document.getElementById('e_title').value;
+  n.sub=document.getElementById('e_sub').value;
   if(n.kind==='o'){
-    n.otype = document.getElementById('e_otype').value;
-    n.summary = document.getElementById('e_summary').value;
-    n.checklist = document.getElementById('e_checklist').value || null;
-    n.msgch = document.getElementById('e_msgch').value || null;
-    n.msg   = document.getElementById('e_msg').value || null;
+    n.otype=document.getElementById('e_otype').value;
+    n.summary=document.getElementById('e_summary').value;
+    n.checklist=document.getElementById('e_checklist').value||null;
+    n.msgch=document.getElementById('e_msgch').value||null;
+    n.msg=document.getElementById('e_msg').value||null;
+    n.partsLog=document.getElementById('e_partslog').checked;
+    const rt=document.getElementById('e_repair').value.split('\n').map(s=>s.trim()).filter(s=>s);
+    n.repairSteps=rt;
   }
-  renderAll();
-  toast('Saved');
+  edRenderAll(); toast('Applied (remember to Save)');
+}
+function updOpt(i,f,v){ if(!selectedId)return; EG().nodes[selectedId].opts[i][f]=v; if(f==='target')edRenderAll(); }
+function addOpt(){ if(!selectedId)return; EG().nodes[selectedId].opts.push({label:'New option',desc:'',target:''}); openPanel(selectedId); }
+function delOpt(i){ if(!selectedId)return; EG().nodes[selectedId].opts.splice(i,1); openPanel(selectedId); }
+function setStart(){ if(!selectedId)return; EG().start=selectedId; edRenderAll(); toast('Start node set'); }
+function delNode(){
+  if(!selectedId)return;
+  if(!confirm('Delete this node? Arrows to it become unlinked (red).'))return;
+  const id=selectedId; delete EG().nodes[id];
+  Object.values(EG().nodes).forEach(n=>(n.opts||[]).forEach(o=>{if(o.target===id)o.target='';}));
+  if(EG().start===id) EG().start=Object.keys(EG().nodes)[0]||null;
+  closePanel(); edRenderAll(); toast('Node deleted');
+}
+function edAddNode(kind){
+  let id; do{ id=(kind==='q'?'q_new_':'o_new_')+nodeCounter++; }while(EG().nodes[id]);
+  const wrap=document.getElementById('canvasWrap');
+  const x=wrap.scrollLeft+120, y=wrap.scrollTop+110;
+  if(kind==='q') EG().nodes[id]={kind:'q',title:'New question',sub:'',x,y,opts:[{label:'Option 1',desc:'',target:''},{label:'Option 2',desc:'',target:''}]};
+  else EG().nodes[id]={kind:'o',otype:'DESK',title:'New outcome',sub:'',summary:'Describe the resolution.',checklist:null,msgch:null,msg:null,repairSteps:[],partsLog:false,x,y,opts:[]};
+  edRenderAll(); openPanel(id);
 }
 
-function updOption(i, field, val){
-  if(!selectedId) return;
-  G.nodes[selectedId].opts[i][field] = val;
-  if(field==='target'){ renderAll(); }
-  saveGraph();
-}
-function addOption(){
-  if(!selectedId) return;
-  G.nodes[selectedId].opts.push({label:'New option',desc:'',target:''});
-  openPanel(selectedId);
-}
-function delOption(i){
-  if(!selectedId) return;
-  G.nodes[selectedId].opts.splice(i,1);
-  openPanel(selectedId);
-}
-function setAsStart(){
-  if(!selectedId) return;
-  G.start = selectedId;
-  renderAll();
-  toast('Start node set');
-}
-function deleteNode(){
-  if(!selectedId) return;
-  if(!confirm('Delete this node? Arrows pointing to it will become unlinked (red).')) return;
-  const id = selectedId;
-  delete G.nodes[id];
-  // unlink references
-  Object.values(G.nodes).forEach(n=>{
-    (n.opts||[]).forEach(o=>{ if(o.target===id) o.target=''; });
-  });
-  if(G.start===id) G.start = Object.keys(G.nodes)[0]||null;
-  closePanel();
-  renderAll();
-  toast('Node deleted');
-}
-
-let nodeCounter = 1;
-function addNode(kind){
-  let id;
-  do { id = (kind==='q'?'n_new_':'o_new_')+nodeCounter++; } while(G.nodes[id]);
-  const wrap = document.getElementById('canvasWrap');
-  const x = wrap.scrollLeft + 120, y = wrap.scrollTop + 110;
-  if(kind==='q'){
-    G.nodes[id] = {kind:'q',title:'New question',sub:'',x,y,opts:[{label:'Option 1',desc:'',target:''},{label:'Option 2',desc:'',target:''}]};
-  } else {
-    G.nodes[id] = {kind:'o',otype:'DESK',title:'New outcome',sub:'',summary:'Describe the resolution steps here.',checklist:null,msgch:null,msg:null,x,y,opts:[]};
+async function edSave(){
+  const btn=document.querySelector('.tbtn.save');
+  if(btn){ btn.textContent='Saving…'; btn.disabled=true; }
+  try{
+    await saveGraphs();
+    toast('✓ Saved — all devices updated');
+  }catch(err){
+    toast('⚠ Save failed — check connection');
+    console.error(err);
+  }finally{
+    if(btn){ btn.textContent='✓ Save'; btn.disabled=false; }
   }
-  renderAll();
-  openPanel(id);
 }
 
 // ════════════════════════════════════════════════════════════════
-// TEST / RUN MODE
+// AUTO LAYOUT
 // ════════════════════════════════════════════════════════════════
-function startRun(){
-  runStack = [G.start];
-  renderRun();
-  document.getElementById('runOverlay').classList.add('open');
-}
-function closeRun(){
-  document.getElementById('runOverlay').classList.remove('open');
-}
-function runGo(target){
-  runStack.push(target);
-  renderRun();
-}
-function runBack(){
-  if(runStack.length>1){ runStack.pop(); renderRun(); }
-}
-function renderRun(){
-  const id = runStack[runStack.length-1];
-  const n = G.nodes[id];
-  const card = document.getElementById('runCard');
-  if(!n){
-    card.innerHTML = `<div class="run-body"><div class="run-q" style="color:#e08080;">Broken link</div>
-      <div class="run-sub">This arrow points to a node that doesn't exist. Fix it in the editor (red port).</div></div>
-      <div class="run-foot">
-        <button class="run-btn" onclick="runBack()">← Back</button>
-        <button class="run-btn" onclick="closeRun()">Close</button>
-      </div>`;
-    return;
+function autoLayoutBoth(){ ['intake','field'].forEach(g=>autoLayoutGraph(GRAPHS[g])); }
+function autoLayout(){ autoLayoutGraph(EG()); }
+function autoLayoutGraph(G){
+  const depths={}, visited=new Set(), queue=[[G.start,0]];
+  while(queue.length){
+    const [id,d]=queue.shift();
+    if(!G.nodes[id])continue;
+    if(visited.has(id)){ if(d>depths[id])depths[id]=d; continue; }
+    visited.add(id); depths[id]=d;
+    (G.nodes[id].opts||[]).forEach(o=>{ if(o.target&&G.nodes[o.target])queue.push([o.target,d+1]); });
   }
-  const pathStr = runStack.map(s=>G.nodes[s]?G.nodes[s].title.slice(0,26):s).join('  →  ');
-
-  if(n.kind==='q'){
-    card.innerHTML = `
-      <div class="run-head">
-        <span class="run-head-label">Test Flow — Step ${runStack.length}</span>
-        <button class="panel-close" onclick="closeRun()">✕</button>
-      </div>
-      <div class="run-path">${esc(pathStr)}</div>
-      <div class="run-body">
-        <div class="run-q">${esc(n.title)}</div>
-        ${n.sub?`<div class="run-sub">${esc(n.sub)}</div>`:''}
-        ${(n.opts||[]).map(o=>`
-          <button class="run-choice" ${o.target&&G.nodes[o.target]?`onclick="runGo('${o.target}')"`:`onclick="toast('This option is not linked — fix in editor')" style="opacity:.55;border-style:dashed;"`}>
-            <span class="run-choice-label">${esc(o.label)} ${!(o.target&&G.nodes[o.target])?' ⚠ unlinked':''}</span>
-            ${o.desc?`<span class="run-choice-desc">${esc(o.desc)}</span>`:''}
-          </button>`).join('')}
-      </div>
-      <div class="run-foot">
-        ${runStack.length>1?'<button class="run-btn" onclick="runBack()">← Back</button>':''}
-        <button class="run-btn" onclick="runStack=[G.start];renderRun();">↺ Restart</button>
-        <button class="run-btn" onclick="closeRun()">Close</button>
-      </div>
-    `;
-  } else {
-    const m = OTYPE_META[n.otype]||OTYPE_META.INFO;
-    let checklistHTML='';
-    if(n.checklist==='dispatch'){
-      checklistHTML = `<div class="run-checklist">
-        <div class="run-checklist-head">📋 Before dispatch — checklist must be received</div>
-        <div class="run-checklist-items">
-          <div class="run-checklist-item">Completed Warranty Claim Checklist & Declaration received and signed</div>
-          <div class="run-checklist-item">Photos / video of the fault received</div>
-          <div class="run-checklist-item">Serial number and model label confirmed</div>
-          <div class="run-checklist-item">Proof of purchase / warranty certificate confirmed</div>
-          <div class="run-checklist-item">Site access, contact, and visit time confirmed</div>
-        </div></div>`;
-    } else if(n.checklist==='aed160'){
-      checklistHTML = `<div class="run-checklist">
-        <div class="run-checklist-head">🧾 Before proceeding — AED 160 confirmed + checklist sent</div>
-        <div class="run-checklist-items">
-          <div class="run-checklist-item">AED 160 call-out confirmed with the customer</div>
-          <div class="run-checklist-item">Customer understands AED 160 is deducted if repair approved</div>
-          <div class="run-checklist-item">Checklist sent — awaiting return before scheduling</div>
-          <div class="run-checklist-item">Photos of fault and serial number requested</div>
-        </div></div>`;
-    }
-    let msgHTML='';
-    if(n.msg){
-      msgHTML = `<div class="run-msg">
-        <div class="run-msg-head">
-          <span class="run-msg-label">${n.msgch==='email'?'✉️ Email template':'💬 WhatsApp template'}</span>
-          <button class="run-msg-copy" onclick="copyRunMsg(this)">Copy</button>
-        </div>
-        <div class="run-msg-body">${esc(n.msg)}</div>
-      </div>`;
-    }
-    card.innerHTML = `
-      <div class="run-head">
-        <span class="run-head-label">Test Flow — Outcome</span>
-        <button class="panel-close" onclick="closeRun()">✕</button>
-      </div>
-      <div class="run-path">${esc(pathStr)}</div>
-      <div class="oc-${n.otype}">
-        <div class="run-outcome-head">
-          <span class="run-outcome-icon">${m.icon}</span>
-          <div>
-            <span class="run-outcome-type">${m.label}</span>
-            <span class="run-outcome-title">${esc(n.title)}</span>
-          </div>
-        </div>
-        <div class="run-outcome-body">${esc(n.summary||'')}</div>
-      </div>
-      ${checklistHTML}
-      ${msgHTML}
-      <div class="run-foot">
-        <button class="run-btn" onclick="runBack()">← Back</button>
-        <button class="run-btn accent" onclick="runStack=[G.start];renderRun();">↺ New Ticket</button>
-        <button class="run-btn" onclick="closeRun()">Close</button>
-      </div>
-    `;
-  }
-}
-function copyRunMsg(btn){
-  const body = btn.closest('.run-msg').querySelector('.run-msg-body').textContent;
-  navigator.clipboard.writeText(body).then(()=>{
-    btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',1800);
-  }).catch(()=>{
-    const ta=document.createElement('textarea');ta.value=body;document.body.appendChild(ta);
-    ta.select();document.execCommand('copy');document.body.removeChild(ta);
-    btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',1800);
+  let maxD=0; Object.values(depths).forEach(d=>{if(d>maxD)maxD=d;});
+  Object.keys(G.nodes).forEach(id=>{ if(!(id in depths))depths[id]=maxD+1; });
+  const cols={};
+  Object.keys(G.nodes).forEach(id=>{const d=depths[id];(cols[d]=cols[d]||[]).push(id);});
+  const COLW=300;
+  Object.keys(cols).sort((a,b)=>a-b).forEach(d=>{
+    let y=50;
+    cols[d].forEach(id=>{
+      const n=G.nodes[id]; n.x=50+d*COLW; n.y=y;
+      const oc=(n.opts||[]).length;
+      y += (n.kind==='q'?(80+oc*24):96)+24;
+    });
   });
 }
 
@@ -1138,65 +1357,45 @@ function copyRunMsg(btn){
 // IMPORT / EXPORT / RESET
 // ════════════════════════════════════════════════════════════════
 function exportJSON(){
-  const blob = new Blob([JSON.stringify(G,null,2)],{type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'ctt_flow_'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-  toast('Exported');
+  const blob=new Blob([JSON.stringify(GRAPHS,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='ctt_flows_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); toast('Backed up');
 }
 function importJSON(ev){
-  const file = ev.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e=>{
-    try{
-      const data = JSON.parse(e.target.result);
-      if(!data.nodes || !data.start) throw new Error('bad format');
-      G = data;
-      renderAll();
-      toast('Imported');
-    }catch(err){ toast('Import failed — invalid file'); }
-  };
-  reader.readAsText(file);
-  ev.target.value='';
+  const f=ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=async e=>{ try{
+    const d=JSON.parse(e.target.result);
+    if(!d.intake||!d.field)throw new Error('bad');
+    GRAPHS=d; toast('Saving restore…');
+    await saveGraphs(); switchGraph(edGraphName); toast('✓ Restored and synced');
+  }catch(err){ toast('Import failed — invalid file'); } };
+  r.readAsText(f); ev.target.value='';
 }
-function resetToSeed(){
-  if(!confirm('Reset the entire flow to the default intake tree? Your edits will be lost (export first if needed).')) return;
-  G = seedGraph();
-  autoLayout();
-  selectedId = null;
-  closePanel();
-  renderAll();
-  toast('Reset to default');
+async function resetSeed(){
+  if(!confirm('Reset BOTH flows to default? Your edits are lost (back up first).'))return;
+  GRAPHS=seedGraphs(); autoLayoutBoth(); toast('Saving reset…');
+  try{ await saveGraphs(); }catch(e){ toast('⚠ Reset saved locally only — check connection'); }
+  selectedId=null; closePanel(); switchGraph(edGraphName); toast('↺ Reset to default — synced');
 }
 
-// ── TOAST ──
+// ── toast ──
 let toastTimer=null;
-function toast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
-}
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2200); }
 
-// ── CLICK EMPTY CANVAS TO DESELECT ──
-document.getElementById('canvasWrap').addEventListener('pointerdown', e=>{
-  if(e.target.id==='canvas' || e.target.id==='canvasWrap' || e.target.id==='edgeLayer'){
-    closePanel();
-  }
+// ── canvas deselect / keyboard ──
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('canvasWrap').addEventListener('pointerdown',e=>{
+    if(e.target.id==='canvas'||e.target.id==='canvasWrap'||e.target.id==='edgeLayer')closePanel();
+  });
 });
-
-// keyboard: Esc closes panel/run
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){ closeRun(); closePanel(); }
-});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closePanel(); });
+window.addEventListener('resize',()=>{ if(document.getElementById('view-editor').classList.contains('active'))drawEdges(); });
 
 // ── INIT ──
-loadGraph();
-renderAll();
-window.addEventListener('resize', drawEdges);
+// loadGraphs is async — it fetches from JSONBin, then calls refreshLandingCtx internally
+loadGraphs();
+
 </script>
 </body>
 </html>
