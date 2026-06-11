@@ -187,7 +187,7 @@ body.editor-active{overflow:hidden;}
 .canvas-wrap{flex:1;overflow:auto;position:relative;background:radial-gradient(circle,#1a1f25 1px,transparent 1px);
   background-size:24px 24px;background-color:var(--bg);}
 .canvas{position:relative;width:6000px;height:4600px;}
-#edgeLayer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+#edgeLayer{position:absolute;top:0;left:0;width:100%;height:100%;}
 .node{position:absolute;width:236px;background:var(--surface);border:1px solid var(--border);border-radius:9px;cursor:grab;
   user-select:none;box-shadow:0 2px 10px rgba(0,0,0,.35);transition:box-shadow .12s;}
 .node:hover{box-shadow:0 4px 16px rgba(0,0,0,.5);}
@@ -200,9 +200,15 @@ body.editor-active{overflow:hidden;}
 .node-opts{padding:0 0 7px;}
 .node-opt{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 11px;font-size:11px;color:var(--subtext);}
 .node-opt-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-.port{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:2px solid var(--muted);background:var(--bg);}
+.port{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:2px solid var(--muted);background:var(--bg);cursor:crosshair;transition:transform .1s,box-shadow .1s;}
+.port:hover{transform:scale(1.6);box-shadow:0 0 0 3px rgba(232,98,42,.2);}
 .port.linked{border-color:var(--orange);background:var(--orange);}
 .port.unlinked{border-color:var(--red);}
+.node-addport{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:4px 11px 5px;margin-top:3px;
+  border-top:1px dashed var(--border);font-family:var(--mono);font-size:9px;letter-spacing:.05em;color:var(--muted);cursor:crosshair;}
+.node-addport:hover{color:var(--orange);}
+.port.addport{border-style:dashed;background:transparent;border-color:var(--muted);}
+.node-addport:hover .port.addport{border-color:var(--orange);}
 .tag-Q{background:#0d1f30;color:#5ba8d4;border:1px solid #1a3a54;}
 .tag-DESK,.tag-WARRANTY{background:#0d2b1c;color:#4ecf84;border:1px solid #1f4d33;}
 .tag-QUOTE{background:#2a1f0a;color:#d4a030;border:1px solid #4d3a1a;}
@@ -331,7 +337,7 @@ body.editor-active{overflow:hidden;}
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(event)">
     <button class="tbtn" onclick="resetSeed()">↺ Default</button>
     <div class="ed-spacer"></div>
-    <span class="ed-hint">Drag to move · Click to edit · Red port = unlinked</span>
+    <span class="ed-hint">Drag node = move · Click node = edit · Drag ○ → node = connect · Drop on blank = detach · Click arrow = delete</span>
     <div class="ed-sep"></div>
     <button class="tbtn save" onclick="edSave()">✓ Save</button>
     <button class="tbtn exit" onclick="exitEditor()">Exit</button>
@@ -1181,7 +1187,7 @@ function edRenderNode(id){
   if(n.kind==='q'){
     head=`<div class="node-head"><span class="ntag tag-Q">Question</span></div>`;
     body=`<div class="node-title">${esc(n.title)}</div>`+(n.sub?`<div class="node-sub">${esc(n.sub.slice(0,80))}</div>`:'')+`<div class="node-opts">`+
-      (n.opts||[]).map((o,i)=>{const lk=o.target&&EG().nodes[o.target];return `<div class="node-opt" data-opt="${i}"><span class="node-opt-l">${esc(o.label)}</span><span class="port ${lk?'linked':'unlinked'}"></span></div>`;}).join('')+`</div>`;
+      (n.opts||[]).map((o,i)=>{const lk=o.target&&EG().nodes[o.target];return `<div class="node-opt" data-opt="${i}"><span class="node-opt-l">${esc(o.label)}</span><span class="port ${lk?'linked':'unlinked'}"></span></div>`;}).join('')+`</div>`+`<div class="node-addport" title="Drag to a node to add a new branch">＋ branch<span class="port addport"></span></div>`;
   } else {
     const m=OTYPE_META[n.otype]||OTYPE_META.INFO;
     head=`<div class="node-head"><span class="ntag tag-${n.otype}">${m.icon} ${m.label}</span></div>`;
@@ -1189,6 +1195,15 @@ function edRenderNode(id){
   }
   el.innerHTML=head+body+(id===EG().start?'<span class="start-badge">START</span>':'');
   canvasEl().appendChild(el);
+
+  // connection ports: drag from a port to another node to connect / re-route
+  el.querySelectorAll('.node-opt').forEach(optEl=>{
+    const port=optEl.querySelector('.port'); if(!port)return;
+    const oi=+optEl.dataset.opt;
+    port.addEventListener('pointerdown',ev=>{ ev.stopPropagation(); startConnDrag(ev,id,oi,optEl); });
+  });
+  const addRow=el.querySelector('.node-addport');
+  if(addRow){ addRow.addEventListener('pointerdown',ev=>{ ev.stopPropagation(); startConnDrag(ev,id,-1,addRow); }); }
 
   let moved=false,sx,sy,ox,oy;
   el.addEventListener('pointerdown',e=>{
@@ -1220,12 +1235,66 @@ function drawEdges(){
       const x2=tgt.offsetLeft-4, y2=tgt.offsetTop+20;
       const dx=Math.max(45,Math.abs(x2-x1)*0.45);
       const sel=(id===selectedId||o.target===selectedId);
-      svg+=`<path d="M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}" fill="none" stroke="${sel?'#E8622A':'#39424c'}" stroke-width="${sel?2:1.4}" marker-end="url(#${sel?'arr':'arrD'})" opacity="${sel?1:.85}"/>`;
+      const pathD=`M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`;
+      svg+=`<path d="${pathD}" data-src="${id}" data-opt="${i}" fill="none" stroke="transparent" stroke-width="14" style="pointer-events:${connecting?'none':'stroke'};cursor:pointer"/>`;
+      svg+=`<path d="${pathD}" fill="none" stroke="${sel?'#E8622A':'#39424c'}" stroke-width="${sel?2:1.4}" marker-end="url(#${sel?'arr':'arrD'})" opacity="${sel?1:.85}" style="pointer-events:none"/>`;
     });
   });
   edgeEl().innerHTML=svg;
   edgeEl().setAttribute('width',cv.offsetWidth);
   edgeEl().setAttribute('height',cv.offsetHeight);
+}
+
+// ── visual connect / detach (drag from port to node; drop on blank to detach) ──
+let connDrag=null, connecting=false;
+function startConnDrag(e,srcId,optIdx,rowEl){
+  e.preventDefault();
+  const cv=canvasEl(); const srcEl=cv.querySelector(`.node[data-id="${srcId}"]`); if(!srcEl)return;
+  const x1=srcEl.offsetLeft+srcEl.offsetWidth-13;
+  const y1=srcEl.offsetTop+rowEl.offsetTop+rowEl.offsetHeight/2;
+  connDrag={srcId,optIdx,x1,y1}; connecting=true;
+  document.body.style.cursor='crosshair';
+  const move=ev=>drawTempEdge(ev.clientX,ev.clientY);
+  const up=ev=>{
+    document.removeEventListener('pointermove',move);
+    document.removeEventListener('pointerup',up);
+    document.body.style.cursor='';
+    finishConnDrag(ev);
+  };
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+}
+function drawTempEdge(clientX,clientY){
+  if(!connDrag)return;
+  drawEdges();
+  const cv=canvasEl(); const rect=cv.getBoundingClientRect();
+  const x2=clientX-rect.left, y2=clientY-rect.top;
+  const {x1,y1}=connDrag; const dx=Math.max(45,Math.abs(x2-x1)*0.45);
+  edgeEl().innerHTML += `<path d="M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}" fill="none" stroke="#E8622A" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr)" opacity=".95" style="pointer-events:none"/>`;
+}
+function finishConnDrag(ev){
+  const cd=connDrag; connDrag=null;
+  const tgt=document.elementFromPoint(ev.clientX,ev.clientY);   // DOM still shows hit-paths as none
+  const tgtNode=tgt?tgt.closest('.node'):null;
+  connecting=false;
+  if(!cd){ edRenderAll(); return; }
+  if(tgtNode){
+    const tgtId=tgtNode.dataset.id;
+    if(tgtId&&tgtId!==cd.srcId&&EG().nodes[tgtId]){
+      if(cd.optIdx===-1){
+        EG().nodes[cd.srcId].opts.push({label:'New branch',desc:'',target:tgtId});
+        toast('Branch added (Save to sync)');
+      } else {
+        EG().nodes[cd.srcId].opts[cd.optIdx].target=tgtId;
+        toast('Connected (Save to sync)');
+      }
+    }
+  } else if(cd.optIdx!==-1){
+    EG().nodes[cd.srcId].opts[cd.optIdx].target='';   // dropped on blank → detach
+    toast('Detached (Save to sync)');
+  }
+  edRenderAll();
+  if(selectedId)openPanel(selectedId);
 }
 
 function openPanel(id){
@@ -1387,6 +1456,14 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('canvasWrap').addEventListener('pointerdown',e=>{
     if(e.target.id==='canvas'||e.target.id==='canvasWrap'||e.target.id==='edgeLayer')closePanel();
+  });
+  document.getElementById('edgeLayer').addEventListener('click',e=>{
+    const p=e.target.closest('path[data-src]'); if(!p)return;
+    const srcId=p.dataset.src, oi=+p.dataset.opt;
+    const n=EG().nodes[srcId]; if(!n||!n.opts||!n.opts[oi])return;
+    if(confirm(`Delete this connection ("${n.opts[oi].label}")?\n\nThe option stays on the node but becomes unlinked (red).`)){
+      n.opts[oi].target=''; edRenderAll(); if(selectedId)openPanel(selectedId); toast('Connection removed (Save to sync)');
+    }
   });
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape')closePanel(); });
