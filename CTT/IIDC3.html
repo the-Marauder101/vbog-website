@@ -841,7 +841,7 @@ const session = { customerType:null, capacity:null, age:null };
 
 // ── JSONBin config ──────────────────────────────────────────────
 const JSONBIN_BIN_ID  = '6a2a513eda38895dfeab6440';
-const JSONBIN_API_KEY = '$2a$10$jpX2/IJ46WCUgNwJqXJWteJmo4VQS56/L8ieqS5hjUtlPIsl7GmVm';
+const JSONBIN_ACCESS_KEY = '$2a$10$jpX2/IJ46WCUgNwJqXJWteJmo4VQS56/L8ieqS5hjUtlPIsl7GmVm'; // scoped Access Key (safe for public hosting)
 const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 const LS_CACHE_KEY    = 'ctt_unified_cache_v1'; // offline fallback only
 // ───────────────────────────────────────────────────────────────
@@ -869,7 +869,7 @@ async function loadGraphs(){
   showLoader('Syncing flows…');
   try{
     const res = await fetch(JSONBIN_URL+'/latest', {
-      headers:{ 'X-Master-Key': JSONBIN_API_KEY }
+      headers:{ 'X-Access-Key': JSONBIN_ACCESS_KEY }
     });
     if(!res.ok) throw new Error('fetch failed: '+res.status);
     const data = await res.json();
@@ -908,7 +908,7 @@ async function pushToJSONBin(){
     method: 'PUT',
     headers:{
       'Content-Type': 'application/json',
-      'X-Master-Key': JSONBIN_API_KEY
+      'X-Access-Key': JSONBIN_ACCESS_KEY
     },
     body: JSON.stringify(GRAPHS)
   });
