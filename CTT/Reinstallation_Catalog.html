@@ -1236,7 +1236,7 @@
     let exVAT = 0;
 
     if (isHeatPump()) {
-      /* Heat pump spare parts + delivery */
+      /* Heat pump spare parts */
       const range = HEAT_PUMP_PRICING.ranges[heatPumpRange];
       const states = heatPumpStates[heatPumpRange] || [];
       let anyPart = false;
@@ -1321,8 +1321,7 @@
       if (anchoringTotal > 0) {
         html += lineHTML("Anchoring", `${pathway.label}${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
       }
-      html += lineHTML("Delivery", loc.label, loc.deliveryPrice);
-      exVAT = heaterTotal + installTotal + anchoringTotal + loc.deliveryPrice;
+      exVAT = heaterTotal + installTotal + anchoringTotal;
 
       for (let i = 0; i < qty; i++) {
         const u = unitStates[i];
