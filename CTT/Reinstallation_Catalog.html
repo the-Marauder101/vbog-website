@@ -454,7 +454,7 @@
 
       <!-- ===== SPARE PARTS SECTION ===== -->
       <div id="sparePartsSection" hidden>
-        <p class="hint" style="margin-bottom:16px">Select parts and quantities. Delivery is based on city selected above. All prices ex-VAT.</p>
+        <p class="hint" style="margin-bottom:16px">Select parts and quantities. All prices ex-VAT.</p>
         <div id="sparePartsList" class="spare-list"></div>
       </div>
 
@@ -1236,7 +1236,7 @@
     let exVAT = 0;
 
     if (isHeatPump()) {
-      /* Heat pump spare parts + delivery */
+      /* Heat pump spare parts */
       const range = HEAT_PUMP_PRICING.ranges[heatPumpRange];
       const states = heatPumpStates[heatPumpRange] || [];
       let anyPart = false;
@@ -1249,10 +1249,6 @@
         exVAT += lineTotal;
         anyPart = true;
       });
-      if (anyPart) {
-        html += lineHTML("Delivery", loc.label, loc.deliveryPrice);
-        exVAT += loc.deliveryPrice;
-      }
 
     } else if (isRepair()) {
       const callOutExVAT = calcCallOutExVAT();
@@ -1290,10 +1286,6 @@
         exVAT += lineTotal;
         anyPart = true;
       });
-      if (anyPart) {
-        html += lineHTML("Delivery", loc.label, loc.deliveryPrice);
-        exVAT += loc.deliveryPrice;
-      }
 
     } else {
       /* Installation / Reinstallation */
@@ -1329,8 +1321,7 @@
       if (anchoringTotal > 0) {
         html += lineHTML("Anchoring", `${pathway.label}${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
       }
-      html += lineHTML("Delivery", loc.label, loc.deliveryPrice);
-      exVAT = heaterTotal + installTotal + anchoringTotal + loc.deliveryPrice;
+      exVAT = heaterTotal + installTotal + anchoringTotal;
 
       for (let i = 0; i < qty; i++) {
         const u = unitStates[i];
