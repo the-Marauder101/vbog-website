@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,6 +35,20 @@
     max-width: 1040px; margin: 0 auto; padding: 40px 24px 64px;
     display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;
   }
+
+  /* Product type tabs */
+  .product-tabs {
+    display: flex; border-bottom: 2px solid var(--line); margin-bottom: 32px;
+  }
+  .product-tab {
+    flex: 1; padding: 14px 16px; font-family: inherit; font-size: 14px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; background: none; border: none;
+    cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+    color: var(--muted);
+  }
+  .product-tab[aria-selected="true"] { border-bottom-color: var(--black); color: var(--black); }
+  .product-tab:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
+  .product-tab:hover { color: var(--black); }
 
   /* Global fields row */
   .global-row {
@@ -155,16 +168,39 @@
   }
   .unit-sublabel:first-child { margin-top: 0; }
 
-  /* Spare parts */
+  /* Spare parts list */
   .spare-list { display: flex; flex-direction: column; gap: 10px; }
   .spare-item {
-    display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px;
-    font-weight: 400; text-transform: none; letter-spacing: normal; margin: 0;
+    display: grid;
+    grid-template-columns: 20px 1fr auto auto;
+    align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 400; text-transform: none; letter-spacing: normal;
   }
-  .spare-item input { position: absolute; opacity: 0; width: 0; height: 0; }
-  .spare-item input:checked + .box::after { content: ""; width: 12px; height: 12px; background: var(--black); }
-  .spare-item input:focus-visible + .box { outline: 2px solid var(--black); outline-offset: 2px; }
-  .spare-price { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .spare-item-checkbox { position: absolute; opacity: 0; width: 0; height: 0; }
+  .spare-item-checkbox:checked + .box::after { content: ""; width: 12px; height: 12px; background: var(--black); }
+  .spare-item-checkbox:focus-visible + .box { outline: 2px solid var(--black); outline-offset: 2px; }
+  .spare-item-label { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+  .part-code { font-size: 10px; font-family: monospace; color: var(--muted); letter-spacing: 0.05em; }
+  .part-note { font-size: 10px; color: var(--muted); font-style: italic; }
+  .spare-qty {
+    width: 60px; padding: 5px 7px; font-size: 13px; font-family: inherit; text-align: center;
+    border: 1px solid var(--hairline); border-radius: 0; appearance: none; -webkit-appearance: none;
+    background: var(--white); color: var(--black);
+  }
+  .spare-qty:disabled { background: var(--soft); color: var(--muted); border-color: var(--hairline); }
+  .spare-price { font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; text-align: right; }
+
+  /* Heat pump range tabs */
+  .range-tabs { display: flex; gap: 0; margin-bottom: 20px; }
+  .range-tab {
+    padding: 10px 20px; font-family: inherit; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; background: var(--white);
+    border: 1px solid var(--line); cursor: pointer; color: var(--muted);
+  }
+  .range-tab + .range-tab { border-left: none; }
+  .range-tab[aria-selected="true"] { background: var(--black); color: var(--white); }
+  .range-tab:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
+  .coming-soon { font-size: 13px; color: var(--muted); padding: 24px 0; text-align: center; border: 1px dashed var(--hairline); }
 
   /* Summary */
   .summary { border: 1px solid var(--line); padding: 28px; position: sticky; top: 24px; }
@@ -177,6 +213,7 @@
   .line .desc small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
   .line .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
   .line.subtotal { border-bottom: 1px solid var(--line); font-weight: 600; }
+  .line.vat-line { font-size: 13px; color: var(--muted); }
   .total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 22px; }
   .total .label { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
   .total .amt { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
@@ -248,49 +285,21 @@
 
   @media print {
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
     header { display: none !important; }
     .modal, .disclaimer-modal { display: none !important; }
     .calculator { display: none !important; }
-
-    main {
-      display: block !important;
-      max-width: 100% !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-
-    .summary {
-      border: none !important;
-      padding: 0 !important;
-      position: static !important;
-      width: 100% !important;
-    }
-
+    main { display: block !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    .summary { border: none !important; padding: 0 !important; position: static !important; width: 100% !important; }
     .summary h2 { font-size: 16px !important; margin-bottom: 16px !important; }
-
     .btn, .link-btn { display: none !important; }
-
-    #printMeta {
-      display: block !important;
-      margin-bottom: 32px;
-      padding-bottom: 24px;
-      border-bottom: 2px solid #000;
-    }
-
-    .print-logo-area {
-      font-size: 30px; font-weight: 900; letter-spacing: -0.03em;
-      margin-bottom: 2px; color: #000;
-    }
+    #printMeta { display: block !important; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #000; }
+    .print-logo-area { font-size: 30px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 2px; color: #000; }
     .print-tagline { font-size: 12px; color: #555; margin-bottom: 16px; }
     .print-fields { display: flex; gap: 40px; flex-wrap: wrap; }
-    .print-field { }
     .print-field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #777; margin-bottom: 2px; }
     .print-field-value { font-size: 14px; font-weight: 600; color: #000; }
-
     .line { border-bottom-color: #ddd !important; }
     .line.subtotal { border-bottom-color: #000 !important; }
-
     @page { margin: 18mm 18mm; }
   }
 
@@ -304,6 +313,7 @@
     .modal-box { padding: 20px; }
     .global-row { grid-template-columns: 1fr; }
     .tiles-3 { grid-template-columns: 1fr; }
+    .spare-item { grid-template-columns: 20px 1fr auto auto; }
   }
 </style>
 </head>
@@ -311,13 +321,19 @@
 
 <header>
   <div class="header-inner">
-    <h1>CTT — Water Heater Quote Calculator</h1>
+    <h1>CTT — Quote Calculator</h1>
     <p>Internal use only. Configure the quote below for an instant estimate.</p>
   </div>
 </header>
 
 <main>
   <section class="calculator" aria-label="Calculator">
+
+    <!-- ===== PRODUCT TYPE TABS ===== -->
+    <div class="product-tabs" role="tablist" aria-label="Product type">
+      <button class="product-tab" role="tab" id="tabHeater" aria-selected="true" data-tab="heater">Heater</button>
+      <button class="product-tab" role="tab" id="tabHeatPump" aria-selected="false" data-tab="heatPump">Heat Pump</button>
+    </div>
 
     <!-- ===== GLOBAL FIELDS ===== -->
     <div class="global-row">
@@ -331,106 +347,129 @@
       </div>
     </div>
 
-    <!-- ===== PATHWAY ===== -->
-    <div class="field">
-      <label>Service Type</label>
-      <div class="tiles tiles-3" role="radiogroup" aria-label="Service type">
-        <label class="tile path">
-          <input type="radio" name="pathway" value="reinstallation" checked>
-          <span class="path-title">Reinstallation</span>
-          <span class="path-desc">Replacing an existing heater</span>
-        </label>
-        <label class="tile path">
-          <input type="radio" name="pathway" value="newInstallation">
-          <span class="path-title">New Installation</span>
-          <span class="path-desc">First-time heater, new site</span>
-        </label>
-        <label class="tile path">
-          <input type="radio" name="pathway" value="repair">
-          <span class="path-title">Repair</span>
-          <span class="path-desc">Service &amp; spare parts</span>
-        </label>
-      </div>
-    </div>
+    <!-- ===== HEATER MODE ===== -->
+    <div id="heaterMode">
 
-    <!-- ===== HEATER SECTION (reinstallation / new installation) ===== -->
-    <div id="heaterSection">
+      <!-- ===== PATHWAY ===== -->
       <div class="field">
-        <label>Water Heater — Atlantic</label>
-        <p class="hint">Atlantic brand only. Choose orientation first — the capacities shown are the ones available in that orientation.</p>
-        <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
-          <label class="tile">
-            <input type="radio" name="orientation" value="horizontal" checked>
-            <span class="tile-pic" aria-hidden="true">
-              <svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="6" y="14" width="104" height="38" rx="19"/>
-                <line x1="90" y1="16" x2="90" y2="50"/>
-                <circle cx="28" cy="33" r="7"/>
-                <line x1="28" y1="33" x2="28" y2="28"/>
-                <line x1="58" y1="52" x2="58" y2="64"/>
-                <line x1="70" y1="52" x2="70" y2="64"/>
-              </svg>
-            </span>
-            <span class="tile-label">Horizontal</span>
-          </label>
-          <label class="tile">
-            <input type="radio" name="orientation" value="vertical">
-            <span class="tile-pic" aria-hidden="true">
-              <svg viewBox="0 0 70 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="14" y="6" width="42" height="104" rx="21"/>
-                <line x1="14" y1="88" x2="56" y2="88"/>
-                <circle cx="35" cy="98" r="7"/>
-                <line x1="27" y1="110" x2="27" y2="118"/>
-                <line x1="43" y1="110" x2="43" y2="118"/>
-              </svg>
-            </span>
-            <span class="tile-label">Vertical</span>
-          </label>
-        </div>
-        <select id="size" style="margin-top:14px"></select>
-      </div>
-
-      <div class="field">
-        <label for="qty">Quantity</label>
-        <input type="number" id="qty" min="1" step="1" value="1">
-      </div>
-    </div>
-
-    <!-- Per-unit cards (reinstallation / new installation) -->
-    <div id="unitDetails"></div>
-
-    <!-- ===== REPAIR SECTION ===== -->
-    <div id="repairSection" hidden>
-
-      <div class="field">
-        <label for="repairQty">Number of Units to Repair</label>
-        <input type="number" id="repairQty" min="1" step="1" value="1">
-      </div>
-
-      <div class="field">
-        <label>Call Out Type</label>
-        <div class="tiles tiles-3" role="radiogroup" aria-label="Call out type">
+        <label>Service Type</label>
+        <div class="tiles" role="radiogroup" aria-label="Service type">
           <label class="tile path">
-            <input type="radio" name="callOut" value="standard" checked>
-            <span class="path-title">Standard</span>
-            <span class="path-desc">Attend in 1–2 days</span>
+            <input type="radio" name="pathway" value="reinstallation" checked>
+            <span class="path-title">Reinstallation</span>
+            <span class="path-desc">Replacing an existing heater</span>
           </label>
           <label class="tile path">
-            <input type="radio" name="callOut" value="flexi">
-            <span class="path-title">Flexi</span>
-            <span class="path-desc">Attend in 3–5 days</span>
+            <input type="radio" name="pathway" value="newInstallation">
+            <span class="path-title">New Installation</span>
+            <span class="path-desc">First-time heater, new site</span>
           </label>
           <label class="tile path">
-            <input type="radio" name="callOut" value="save">
-            <span class="path-title">Save</span>
-            <span class="path-desc">Attend in 5–7 days</span>
+            <input type="radio" name="pathway" value="repair">
+            <span class="path-title">Repair</span>
+            <span class="path-desc">Service &amp; spare parts</span>
+          </label>
+          <label class="tile path">
+            <input type="radio" name="pathway" value="spareParts">
+            <span class="path-title">Spare Parts</span>
+            <span class="path-desc">Parts supply quote</span>
           </label>
         </div>
       </div>
 
-      <!-- Per-repair-unit cards -->
-      <div id="repairUnitDetails"></div>
+      <!-- ===== HEATER SECTION (reinstallation / new installation) ===== -->
+      <div id="heaterSection">
+        <div class="field">
+          <label>Water Heater — Atlantic</label>
+          <p class="hint">Atlantic brand only. Choose orientation first — the capacities shown are the ones available in that orientation.</p>
+          <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
+            <label class="tile">
+              <input type="radio" name="orientation" value="horizontal" checked>
+              <span class="tile-pic" aria-hidden="true">
+                <svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="6" y="14" width="104" height="38" rx="19"/>
+                  <line x1="90" y1="16" x2="90" y2="50"/>
+                  <circle cx="28" cy="33" r="7"/>
+                  <line x1="28" y1="33" x2="28" y2="28"/>
+                  <line x1="58" y1="52" x2="58" y2="64"/>
+                  <line x1="70" y1="52" x2="70" y2="64"/>
+                </svg>
+              </span>
+              <span class="tile-label">Horizontal</span>
+            </label>
+            <label class="tile">
+              <input type="radio" name="orientation" value="vertical">
+              <span class="tile-pic" aria-hidden="true">
+                <svg viewBox="0 0 70 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="14" y="6" width="42" height="104" rx="21"/>
+                  <line x1="14" y1="88" x2="56" y2="88"/>
+                  <circle cx="35" cy="98" r="7"/>
+                  <line x1="27" y1="110" x2="27" y2="118"/>
+                  <line x1="43" y1="110" x2="43" y2="118"/>
+                </svg>
+              </span>
+              <span class="tile-label">Vertical</span>
+            </label>
+          </div>
+          <select id="size" style="margin-top:14px"></select>
+        </div>
 
+        <div class="field">
+          <label for="qty">Quantity</label>
+          <input type="number" id="qty" min="1" step="1" value="1">
+        </div>
+      </div>
+
+      <!-- Per-unit cards (reinstallation / new installation) -->
+      <div id="unitDetails"></div>
+
+      <!-- ===== REPAIR SECTION ===== -->
+      <div id="repairSection" hidden>
+        <div class="field">
+          <label for="repairQty">Number of Units to Repair</label>
+          <input type="number" id="repairQty" min="1" step="1" value="1">
+        </div>
+        <div class="field">
+          <label>Call Out Type</label>
+          <div class="tiles tiles-3" role="radiogroup" aria-label="Call out type">
+            <label class="tile path">
+              <input type="radio" name="callOut" value="standard" checked>
+              <span class="path-title">Standard</span>
+              <span class="path-desc">Attend in 1–2 days</span>
+            </label>
+            <label class="tile path">
+              <input type="radio" name="callOut" value="flexi">
+              <span class="path-title">Flexi</span>
+              <span class="path-desc">Attend in 3–5 days</span>
+            </label>
+            <label class="tile path">
+              <input type="radio" name="callOut" value="save">
+              <span class="path-title">Save</span>
+              <span class="path-desc">Attend in 5–7 days</span>
+            </label>
+          </div>
+        </div>
+        <div id="repairUnitDetails"></div>
+      </div>
+
+      <!-- ===== SPARE PARTS SECTION ===== -->
+      <div id="sparePartsSection" hidden>
+        <p class="hint" style="margin-bottom:16px">Select parts and quantities. Delivery is based on city selected above. All prices ex-VAT.</p>
+        <div id="sparePartsList" class="spare-list"></div>
+      </div>
+
+    </div><!-- end #heaterMode -->
+
+    <!-- ===== HEAT PUMP MODE ===== -->
+    <div id="heatPumpMode" hidden>
+      <div class="field">
+        <label>Product Range</label>
+        <div class="range-tabs" role="tablist" aria-label="Heat pump range">
+          <button class="range-tab" role="tab" id="rangeCalypso" aria-selected="true" data-range="calypso">Calypso</button>
+          <button class="range-tab" role="tab" id="rangeExplorer" aria-selected="false" data-range="explorer">Explorer</button>
+        </div>
+        <div id="hpPartsList"></div>
+      </div>
     </div>
 
   </section>
@@ -466,13 +505,17 @@
     <div id="breakdown"></div>
 
     <div class="line subtotal">
-      <span class="desc">Total (incl. VAT where shown)</span>
-      <span class="amt" id="subtotal">AED 0</span>
+      <span class="desc">Subtotal (ex-VAT)</span>
+      <span class="amt" id="subtotal">AED 0.00</span>
+    </div>
+    <div class="line vat-line">
+      <span class="desc">VAT (5%)</span>
+      <span class="amt" id="vatAmount">AED 0.00</span>
     </div>
 
     <div class="total">
       <span class="label">Grand Total</span>
-      <span class="amt" id="grandTotal">AED 0</span>
+      <span class="amt" id="grandTotal">AED 0.00</span>
     </div>
 
     <button type="button" class="link-btn" id="galleryOpen">
@@ -480,7 +523,7 @@
       <span aria-hidden="true">&rarr;</span>
     </button>
 
-    <p class="note">This is an estimate. Final quote may vary based on site conditions.</p>
+    <p class="note">This is an estimate. Final quote may vary based on site conditions. All amounts ex-VAT unless stated.</p>
 
     <button type="button" class="btn btn-outline" id="confirm">Confirm</button>
     <button type="button" class="btn btn-fill" id="btnPrint">&#128438; Print / Save as PDF</button>
@@ -541,6 +584,8 @@
 
   /* =========================================================
      PRICING DATA
+     All prices stored ex-VAT. VAT is calculated and shown
+     as a single line at the bottom of every quote.
      ========================================================= */
   const PRICING = {
     brand: "Atlantic",
@@ -548,11 +593,10 @@
     pathways: {
       reinstallation:  { label: "Reinstallation",   anchoring: 0 },
       newInstallation: { label: "New Installation",  anchoring: 100 },
-      repair:          { label: "Repair" }
+      repair:          { label: "Repair" },
+      spareParts:      { label: "Spare Parts" }
     },
 
-    /* Heaters are split by orientation. Selecting an orientation shows
-       ONLY the capacities available in that orientation, at their price. */
     sizesByOrientation: {
       horizontal: [
         { label: "50 L",  litres: 50,  price: 420,  installPerUnit: 300 },
@@ -566,6 +610,7 @@
         { label: "80 L",             litres: 80,  price: 415,  installPerUnit: 300  },
         { label: "100 L",            litres: 100, price: 515,  installPerUnit: 300  },
         { label: "150 L",            litres: 150, price: 1500, installPerUnit: 300  },
+        { label: "150 L Wall Mount", litres: 150, price: null, installPerUnit: 300  },
         { label: "200 L Wall Mount", litres: 200, price: 2200, installPerUnit: 600  },
         { label: "200 L Stab Floor", litres: 200, price: 2350, installPerUnit: 600  },
         { label: "300 L",            litres: 300, price: 3300, installPerUnit: 1000 },
@@ -573,7 +618,6 @@
       ]
     },
 
-    /* Repair is orientation-agnostic — just the capacity being repaired. */
     repairSizes: [
       { label: "30 L",  litres: 30  },
       { label: "50 L",  litres: 50  },
@@ -585,7 +629,6 @@
       { label: "500 L", litres: 500 }
     ],
 
-    /* deliveryPrice used for installation; callOutStdExVAT used for repair */
     locations: [
       { label: "Dubai",          deliveryPrice: 50,  callOutStdExVAT: 700  },
       { label: "Sharjah",        deliveryPrice: 75,  callOutStdExVAT: 650  },
@@ -609,7 +652,7 @@
     flexibleConnectorsPrice: 85,
 
     pipeSizes: [
-      { label: '1/2"', pricePerMeter: 6.3  },
+      { label: '1/2"', pricePerMeter: 6.3   },
       { label: '3/4"', pricePerMeter: 10.14 }
     ],
     piping: { laborFreeMeters: 1, laborPer2Meters: 240 },
@@ -627,34 +670,91 @@
 
     repair: {
       laborExVAT: 350,
+
+      /* spareParts — all priceExVAT values (ex-VAT).
+         Prices that were previously stored incl. VAT have been divided by 1.05.
+         null = price TBD; part will show "— TBD" and is excluded from totals.
+         Heating elements listed in ascending kW order. */
       spareParts: [
-        { label: "Heating Element 1.2 kW",  price: 136.50 },
-        { label: "Heating Element 0.8 kW",  price: 132.00 },
-        { label: "Heating Element 1.5 kW",  price: 206.00 },
-        { label: "Heating Element 2.2 kW",  price: 361.00 },
-        { label: "Heating Element 3 kW",    price: 499.00 },
-        { label: "Blue Handle Thermostat",  price: 80.00  },
-        { label: "Brown Thermostat",        price: 100.00 },
-        { label: '½" Safety Valve',    price: 68.00  }
+        /* ── Heating Elements ── */
+        { label: "Heating Element 0.8 kW",                  partCode: "030990", priceExVAT: 125.71, note: "Horizontal heaters" },
+        { label: "Heating Element 1.2 kW (Horizontal)",     partCode: "029852", priceExVAT: 130.00, note: "Horizontal heaters" },
+        { label: "Heating Element 1.2 kW",                  partCode: "060515", priceExVAT: null,   note: "Horizontal heaters" },
+        { label: "Heating Element 1.5 kW",                  partCode: "060462", priceExVAT: 196.19, note: "Horizontal heaters" },
+        { label: "Heating Element 1.5 kW (Vertical)",       partCode: "XXXXXX", priceExVAT: null,   note: "Vertical heaters" },
+        { label: "Heating Element 2.2 kW (Horizontal)",     partCode: "030238", priceExVAT: null,   note: "Horizontal 150L & 200L" },
+        { label: "Heating Element 2.2 kW (Wall Mount)",     partCode: "060187", priceExVAT: null,   note: "Wall Mount 150L & 200L" },
+        { label: "Heating Element 2.2 kW (Floor Standing)", partCode: "XXXXXX", priceExVAT: 343.81, note: "Floor Standing" },
+        { label: "Heating Element 3 kW",                    partCode: "099007", priceExVAT: 475.24, note: "300L Floor Standing" },
+        { label: "Heating Element 5 kW",                    partCode: "030212", priceExVAT: null,   note: "500L" },
+        /* ── Thermostats ── */
+        { label: "Thermostat – White Body Blue Handle",      partCode: "XXXXXX", priceExVAT: 76.19,  note: "" },
+        { label: "Thermostat – Brown Body Red Handle",       partCode: "XXXXXX", priceExVAT: 95.24,  note: "" },
+        { label: "Thermostat – White Body Green Handle",     partCode: "029577", priceExVAT: null,   note: "" },
+        /* ── Safety Valves ── */
+        { label: '½" Safety Valve',                    partCode: "XXXXXX", priceExVAT: 64.76,  note: "" },
+        { label: '¾" Safety Valve',                    partCode: "029518", priceExVAT: null,   note: "" },
+        /* ── Dielectric Unions ── */
+        { label: '½" Dielectric Union',                partCode: "029019", priceExVAT: null,   note: "" },
+        { label: '¾" Dielectric Union',                partCode: "026051", priceExVAT: null,   note: "" },
+        /* ── Other ── */
+        { label: "Indicator Light",                         partCode: "021088", priceExVAT: null,   note: "" }
       ]
+    }
+  };
+
+  /* =========================================================
+     HEAT PUMP PRICING
+     All prices ex-VAT.
+     ========================================================= */
+  const HEAT_PUMP_PRICING = {
+    ranges: {
+      calypso: {
+        label: "Calypso",
+        spareParts: [
+          { label: "Wire Harness for Digital Controller (HMI)", partCode: "026335", priceExVAT: 300  },
+          { label: "Temperature Sensors (×2)",                  partCode: "026336", priceExVAT: 275  },
+          { label: "Water Temperature Sensor",                   partCode: "026337", priceExVAT: 400  },
+          { label: "Power Cable + Safety Thermostat",            partCode: "026338", priceExVAT: 150  },
+          { label: "Power Cable and ACI Wires",                  partCode: "026340", priceExVAT: 100  },
+          { label: "Wire Harness for Compressor",                partCode: "029686", priceExVAT: 250  },
+          { label: "TX Valve and Filter Assembly",               partCode: "029687", priceExVAT: 900  },
+          { label: "Digital Controller (HMI)",                   partCode: "029689", priceExVAT: 1200 },
+          { label: "Electronic Controller PCB (100L)",           partCode: "029691", priceExVAT: 750  },
+          { label: "Electronic Controller PCB (150L)",           partCode: "029692", priceExVAT: 750  },
+          { label: 'Schrader Valve 922AX4 1/4"',                partCode: "030684", priceExVAT: 40   },
+          { label: "Lip Gasket",                                  partCode: "040158", priceExVAT: 25   }
+        ]
+      },
+      explorer: {
+        label: "Explorer",
+        spareParts: []
+      }
     }
   };
 
   /* ===== Helpers ===== */
   const fmt = (n) => "AED " + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtPrice = (p) => p == null ? "— TBD" : fmt(p);
 
   const el = {
     jobNumber:        document.getElementById("jobNumber"),
     size:             document.getElementById("size"),
     qty:              document.getElementById("qty"),
     location:         document.getElementById("location"),
+    heaterMode:       document.getElementById("heaterMode"),
+    heatPumpMode:     document.getElementById("heatPumpMode"),
     heaterSection:    document.getElementById("heaterSection"),
     unitDetails:      document.getElementById("unitDetails"),
     repairSection:    document.getElementById("repairSection"),
     repairQty:        document.getElementById("repairQty"),
     repairUnitDetails: document.getElementById("repairUnitDetails"),
+    sparePartsSection: document.getElementById("sparePartsSection"),
+    sparePartsList:   document.getElementById("sparePartsList"),
+    hpPartsList:      document.getElementById("hpPartsList"),
     breakdown:        document.getElementById("breakdown"),
     subtotal:         document.getElementById("subtotal"),
+    vatAmount:        document.getElementById("vatAmount"),
     grandTotal:       document.getElementById("grandTotal"),
     confirm:          document.getElementById("confirm"),
     disclaimerModal:  document.getElementById("disclaimerModal"),
@@ -685,8 +785,9 @@
   function getQty()        { const q = parseInt(el.qty.value, 10);       return (isNaN(q) || q < 1) ? 1 : q; }
   function getRepairQty()  { const q = parseInt(el.repairQty.value, 10); return (isNaN(q) || q < 1) ? 1 : q; }
   function isRepair()      { return getPathway() === "repair"; }
+  function isSpareParts()  { return getPathway() === "spareParts"; }
+  function isHeatPump()    { return productType === "heatPump"; }
 
-  /* Size list for the current orientation (installation), or repair list. */
   function currentSizes() { return PRICING.sizesByOrientation[getOrientation()] || PRICING.sizesByOrientation.horizontal; }
   function unitSizeList() { return isRepair() ? PRICING.repairSizes : currentSizes(); }
 
@@ -700,12 +801,23 @@
       sel.appendChild(opt);
     });
   }
-  populateSelect(el.size, currentSizes(), (s) => s.label);
+  populateSelect(el.size, currentSizes(), (s) => s.label + (s.price == null ? " (price TBD)" : ""));
   populateSelect(el.location, PRICING.locations, (l) => l.label);
 
   /* ===== State ===== */
-  let unitStates       = [];   // installation / reinstallation units
-  let repairUnitStates = [];   // repair units
+  let productType       = "heater";  // "heater" | "heatPump"
+  let heatPumpRange     = "calypso"; // "calypso" | "explorer"
+  let unitStates        = [];
+  let repairUnitStates  = [];
+
+  /* sparePartsStates: one entry per PRICING.repair.spareParts index */
+  let sparePartsStates = PRICING.repair.spareParts.map(() => ({ checked: false, qty: 1 }));
+
+  /* heatPumpStates: keyed by range, each is array per part */
+  let heatPumpStates = {
+    calypso:  HEAT_PUMP_PRICING.ranges.calypso.spareParts.map(() => ({ checked: false, qty: 1 })),
+    explorer: []
+  };
 
   function defaultUnitState() {
     return {
@@ -716,8 +828,9 @@
       piping: false, pipeSizeIdx: 0, pipeMeters: 1
     };
   }
+  /* repairUnitStates: selectedParts is Map<partIndex, qty> */
   function defaultRepairUnitState() {
-    return { sizeIdx: 0, selectedParts: new Set() };
+    return { sizeIdx: 0, selectedParts: new Map() };
   }
 
   function syncUnitStates(qty) {
@@ -731,10 +844,19 @@
 
   /* ===== Toggle sections ===== */
   function toggleSections() {
-    const repair = isRepair();
-    el.heaterSection.hidden = repair;
-    el.unitDetails.hidden   = repair;
-    el.repairSection.hidden = !repair;
+    if (productType === "heatPump") {
+      el.heaterMode.hidden   = true;
+      el.heatPumpMode.hidden = false;
+      return;
+    }
+    el.heaterMode.hidden   = false;
+    el.heatPumpMode.hidden = true;
+
+    const p = getPathway();
+    el.heaterSection.hidden    = p === "repair" || p === "spareParts";
+    el.unitDetails.hidden      = p === "repair" || p === "spareParts";
+    el.repairSection.hidden    = p !== "repair";
+    el.sparePartsSection.hidden = p !== "spareParts";
   }
 
   /* ===== Build installation unit cards ===== */
@@ -746,15 +868,14 @@
 
     for (let i = 0; i < qty; i++) {
       const u = unitStates[i];
-      if (u.sizeIdx >= sizes.length) u.sizeIdx = 0;     // clamp to current orientation
+      if (u.sizeIdx >= sizes.length) u.sizeIdx = 0;
       const size = sizes[u.sizeIdx] || sizes[0];
       const valvesOk = size.litres >= PRICING.valvesMinLitres;
       const card = document.createElement("div");
       card.className = "unit-card";
 
-      /* Header — per-unit capacity selector (filtered to orientation) */
       const sizeOpts = sizes.map((s, si) =>
-        `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`
+        `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}${s.price == null ? " (price TBD)" : ""}</option>`
       ).join("");
       const hdr = document.createElement("div");
       hdr.className = "unit-card-header";
@@ -793,7 +914,7 @@
         `<option value="yes"${u.connectors === "yes" ? " selected" : ""}>Yes</option></select>`;
       card.appendChild(connField);
 
-      /* Valves — only when capacity qualifies */
+      /* Valves */
       if (valvesOk) {
         const isolOpts = PRICING.isolationValves.map((v, vi) =>
           `<option value="${vi}"${u.isolValveIdx === vi ? " selected" : ""}>${v.label}</option>`
@@ -849,7 +970,6 @@
       const card = document.createElement("div");
       card.className = "unit-card";
 
-      /* Header — capacity selector */
       const sizeOpts = sizes.map((s, si) =>
         `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`
       ).join("");
@@ -860,16 +980,25 @@
         `<select class="repair-size-sel" data-unit="${i}" aria-label="Capacity for repair unit ${i + 1}">${sizeOpts}</select>`;
       card.appendChild(hdr);
 
-      /* Spare parts */
       const partsHtml = PRICING.repair.spareParts.map((part, pi) => {
-        const checked = u.selectedParts.has(pi) ? " checked" : "";
-        return `<label class="spare-item">` +
-          `<input type="checkbox" class="repair-part-chk" data-unit="${i}" data-part="${pi}"${checked}>` +
-          `<span class="box" aria-hidden="true"></span>` +
-          `<span>${part.label}</span>` +
-          `<span class="spare-price">${fmt(part.price)}<br><small style="font-size:10px">incl. VAT</small></span>` +
-          `</label>`;
+        const state = u.selectedParts.get(pi) || { checked: false, qty: 1 };
+        const checked = state.checked ? " checked" : "";
+        const qtyVal = state.qty || 1;
+        const priceStr = part.priceExVAT != null ? fmt(part.priceExVAT) + " / unit" : "— TBD";
+        const noteHtml = part.note ? `<span class="part-note">${part.note}</span>` : "";
+        return `<div class="spare-item">` +
+          `<input type="checkbox" class="spare-item-checkbox repair-part-chk" id="r-p-${i}-${pi}" data-unit="${i}" data-part="${pi}"${checked}>` +
+          `<label class="box" for="r-p-${i}-${pi}" aria-hidden="true"></label>` +
+          `<label class="spare-item-label" for="r-p-${i}-${pi}">` +
+            `<span>${part.label}</span>` +
+            `<span class="part-code">${part.partCode}</span>` +
+            `${noteHtml}` +
+          `</label>` +
+          `<input type="number" class="spare-qty repair-part-qty" data-unit="${i}" data-part="${pi}" min="1" step="1" value="${qtyVal}"${!state.checked ? " disabled" : ""} aria-label="Qty">` +
+          `<span class="spare-price">${priceStr}</span>` +
+          `</div>`;
       }).join("");
+
       const partsField = document.createElement("div");
       partsField.className = "unit-field";
       partsField.innerHTML =
@@ -882,13 +1011,62 @@
     attachRepairListeners();
   }
 
+  /* ===== Build spare parts catalog ===== */
+  function buildSparePartsList() {
+    const html = PRICING.repair.spareParts.map((part, pi) => {
+      const state = sparePartsStates[pi];
+      const checked = state.checked ? " checked" : "";
+      const priceStr = part.priceExVAT != null ? fmt(part.priceExVAT) + " / unit" : "— TBD";
+      const noteHtml = part.note ? `<span class="part-note">${part.note}</span>` : "";
+      return `<div class="spare-item">` +
+        `<input type="checkbox" class="spare-item-checkbox sp-chk" id="sp-${pi}" data-part="${pi}"${checked}>` +
+        `<label class="box" for="sp-${pi}" aria-hidden="true"></label>` +
+        `<label class="spare-item-label" for="sp-${pi}">` +
+          `<span>${part.label}</span>` +
+          `<span class="part-code">${part.partCode}</span>` +
+          `${noteHtml}` +
+        `</label>` +
+        `<input type="number" class="spare-qty sp-qty" data-part="${pi}" min="1" step="1" value="${state.qty}"${!state.checked ? " disabled" : ""} aria-label="Qty">` +
+        `<span class="spare-price">${priceStr}</span>` +
+        `</div>`;
+    }).join("");
+    el.sparePartsList.innerHTML = html;
+    attachSparePartsListeners();
+  }
+
+  /* ===== Build heat pump parts list ===== */
+  function buildHpPartsList() {
+    const range = HEAT_PUMP_PRICING.ranges[heatPumpRange];
+    if (!range || range.spareParts.length === 0) {
+      el.hpPartsList.innerHTML = `<div class="coming-soon">Parts list for this range is coming soon.<br>Contact CTT for manual pricing.</div>`;
+      return;
+    }
+    const states = heatPumpStates[heatPumpRange] || [];
+    const html = range.spareParts.map((part, pi) => {
+      const state = states[pi] || { checked: false, qty: 1 };
+      const checked = state.checked ? " checked" : "";
+      const priceStr = part.priceExVAT != null ? fmt(part.priceExVAT) + " / unit" : "— TBD";
+      return `<div class="spare-item">` +
+        `<input type="checkbox" class="spare-item-checkbox hp-chk" id="hp-${pi}" data-part="${pi}"${checked}>` +
+        `<label class="box" for="hp-${pi}" aria-hidden="true"></label>` +
+        `<label class="spare-item-label" for="hp-${pi}">` +
+          `<span>${part.label}</span>` +
+          `<span class="part-code">${part.partCode}</span>` +
+        `</label>` +
+        `<input type="number" class="spare-qty hp-qty" data-part="${pi}" min="1" step="1" value="${state.qty}"${!state.checked ? " disabled" : ""} aria-label="Qty">` +
+        `<span class="spare-price">${priceStr}</span>` +
+        `</div>`;
+    }).join("");
+    el.hpPartsList.innerHTML = html;
+    attachHpListeners();
+  }
+
   /* ===== Event listeners — installation cards ===== */
   function attachInstallListeners() {
     el.unitDetails.querySelectorAll(".unit-size-sel").forEach((sel) => {
       sel.addEventListener("change", (e) => {
         unitStates[Number(e.target.dataset.unit)].sizeIdx = Number(e.target.value);
-        buildUnitDetails();
-        recalc();
+        buildUnitDetails(); recalc();
       });
     });
     el.unitDetails.querySelectorAll(".u-ceil-chk").forEach((chk) => {
@@ -900,28 +1078,16 @@
       });
     });
     el.unitDetails.querySelectorAll(".u-ceil-sel").forEach((sel) => {
-      sel.addEventListener("change", (e) => {
-        unitStates[Number(e.target.dataset.unit)].ceilingIdx = Number(e.target.value);
-        recalc();
-      });
+      sel.addEventListener("change", (e) => { unitStates[Number(e.target.dataset.unit)].ceilingIdx = Number(e.target.value); recalc(); });
     });
     el.unitDetails.querySelectorAll(".u-conn-sel").forEach((sel) => {
-      sel.addEventListener("change", (e) => {
-        unitStates[Number(e.target.dataset.unit)].connectors = e.target.value;
-        recalc();
-      });
+      sel.addEventListener("change", (e) => { unitStates[Number(e.target.dataset.unit)].connectors = e.target.value; recalc(); });
     });
     el.unitDetails.querySelectorAll(".u-isol-sel").forEach((sel) => {
-      sel.addEventListener("change", (e) => {
-        unitStates[Number(e.target.dataset.unit)].isolValveIdx = Number(e.target.value);
-        recalc();
-      });
+      sel.addEventListener("change", (e) => { unitStates[Number(e.target.dataset.unit)].isolValveIdx = Number(e.target.value); recalc(); });
     });
     el.unitDetails.querySelectorAll(".u-angle-sel").forEach((sel) => {
-      sel.addEventListener("change", (e) => {
-        unitStates[Number(e.target.dataset.unit)].angleValveIdx = Number(e.target.value);
-        recalc();
-      });
+      sel.addEventListener("change", (e) => { unitStates[Number(e.target.dataset.unit)].angleValveIdx = Number(e.target.value); recalc(); });
     });
     el.unitDetails.querySelectorAll(".u-pipe-chk").forEach((chk) => {
       chk.addEventListener("change", (e) => {
@@ -932,10 +1098,7 @@
       });
     });
     el.unitDetails.querySelectorAll(".u-pipe-size-sel").forEach((sel) => {
-      sel.addEventListener("change", (e) => {
-        unitStates[Number(e.target.dataset.unit)].pipeSizeIdx = Number(e.target.value);
-        recalc();
-      });
+      sel.addEventListener("change", (e) => { unitStates[Number(e.target.dataset.unit)].pipeSizeIdx = Number(e.target.value); recalc(); });
     });
     el.unitDetails.querySelectorAll(".u-pipe-len").forEach((inp) => {
       const update = (e) => {
@@ -962,8 +1125,75 @@
       chk.addEventListener("change", (e) => {
         const ui = Number(e.target.dataset.unit);
         const pi = Number(e.target.dataset.part);
-        const s = repairUnitStates[ui].selectedParts;
-        e.target.checked ? s.add(pi) : s.delete(pi);
+        const u = repairUnitStates[ui];
+        const existing = u.selectedParts.get(pi) || { checked: false, qty: 1 };
+        existing.checked = e.target.checked;
+        u.selectedParts.set(pi, existing);
+        /* Enable/disable the qty input */
+        const card = e.target.closest(".spare-list");
+        const qtyInp = card ? card.querySelector(`.repair-part-qty[data-part="${pi}"]`) : null;
+        if (qtyInp) qtyInp.disabled = !e.target.checked;
+        recalc();
+      });
+    });
+    el.repairUnitDetails.querySelectorAll(".repair-part-qty").forEach((inp) => {
+      inp.addEventListener("change", (e) => {
+        const ui = Number(e.target.dataset.unit);
+        const pi = Number(e.target.dataset.part);
+        const v = Math.max(1, parseInt(e.target.value, 10) || 1);
+        e.target.value = v;
+        const u = repairUnitStates[ui];
+        const existing = u.selectedParts.get(pi) || { checked: true, qty: 1 };
+        existing.qty = v;
+        u.selectedParts.set(pi, existing);
+        recalc();
+      });
+    });
+  }
+
+  /* ===== Event listeners — spare parts catalog ===== */
+  function attachSparePartsListeners() {
+    el.sparePartsList.querySelectorAll(".sp-chk").forEach((chk) => {
+      chk.addEventListener("change", (e) => {
+        const pi = Number(e.target.dataset.part);
+        sparePartsStates[pi].checked = e.target.checked;
+        const qtyInp = el.sparePartsList.querySelector(`.sp-qty[data-part="${pi}"]`);
+        if (qtyInp) qtyInp.disabled = !e.target.checked;
+        recalc();
+      });
+    });
+    el.sparePartsList.querySelectorAll(".sp-qty").forEach((inp) => {
+      inp.addEventListener("change", (e) => {
+        const pi = Number(e.target.dataset.part);
+        const v = Math.max(1, parseInt(e.target.value, 10) || 1);
+        e.target.value = v;
+        sparePartsStates[pi].qty = v;
+        recalc();
+      });
+    });
+  }
+
+  /* ===== Event listeners — heat pump parts ===== */
+  function attachHpListeners() {
+    el.hpPartsList.querySelectorAll(".hp-chk").forEach((chk) => {
+      chk.addEventListener("change", (e) => {
+        const pi = Number(e.target.dataset.part);
+        const states = heatPumpStates[heatPumpRange];
+        if (states && states[pi]) {
+          states[pi].checked = e.target.checked;
+          const qtyInp = el.hpPartsList.querySelector(`.hp-qty[data-part="${pi}"]`);
+          if (qtyInp) qtyInp.disabled = !e.target.checked;
+        }
+        recalc();
+      });
+    });
+    el.hpPartsList.querySelectorAll(".hp-qty").forEach((inp) => {
+      inp.addEventListener("change", (e) => {
+        const pi = Number(e.target.dataset.part);
+        const v = Math.max(1, parseInt(e.target.value, 10) || 1);
+        e.target.value = v;
+        const states = heatPumpStates[heatPumpRange];
+        if (states && states[pi]) states[pi].qty = v;
         recalc();
       });
     });
@@ -978,13 +1208,13 @@
     return material + labor;
   }
 
-  /* ===== Call out fee ===== */
-  function calcCallOutFee() {
+  /* ===== Call out fee (ex-VAT) ===== */
+  function calcCallOutExVAT() {
     const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
     const type = getCallOut();
-    if (type === "standard") return loc.callOutStdExVAT * (1 + VAT);
-    if (type === "flexi")    return (loc.callOutStdExVAT * 0.5) * (1 + VAT);
-    return 160 * (1 + VAT); /* save — flat rate */
+    if (type === "standard") return loc.callOutStdExVAT;
+    if (type === "flexi")    return loc.callOutStdExVAT * 0.5;
+    return 160; /* save — flat rate ex-VAT */
   }
   function callOutLabel() {
     const type = getCallOut();
@@ -1003,15 +1233,33 @@
   function recalc() {
     const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
     let html = "";
-    let total = 0;
+    let exVAT = 0;
 
-    if (isRepair()) {
-      /* Call out */
-      const callOutFee = calcCallOutFee();
+    if (isHeatPump()) {
+      /* Heat pump spare parts + delivery */
+      const range = HEAT_PUMP_PRICING.ranges[heatPumpRange];
+      const states = heatPumpStates[heatPumpRange] || [];
+      let anyPart = false;
+      states.forEach((s, pi) => {
+        if (!s.checked) return;
+        const part = range && range.spareParts[pi];
+        if (!part || part.priceExVAT == null) return;
+        const lineTotal = part.priceExVAT * s.qty;
+        html += lineHTML(`${part.label} × ${s.qty}`, `${part.partCode} · ex-VAT`, lineTotal);
+        exVAT += lineTotal;
+        anyPart = true;
+      });
+      if (anyPart) {
+        html += lineHTML("Delivery", loc.label, loc.deliveryPrice);
+        exVAT += loc.deliveryPrice;
+      }
+
+    } else if (isRepair()) {
+      const callOutExVAT = calcCallOutExVAT();
       const type = getCallOut();
-      const callOutSub = loc.label + (type === "save" ? " · flat rate" : type === "flexi" ? " · 50% of standard" : "") + " · incl. 5% VAT";
-      html += lineHTML(callOutLabel(), callOutSub, callOutFee);
-      total += callOutFee;
+      const callOutSub = loc.label + (type === "save" ? " · flat rate" : type === "flexi" ? " · 50% of standard" : "") + " · ex-VAT";
+      html += lineHTML(callOutLabel(), callOutSub, callOutExVAT);
+      exVAT += callOutExVAT;
 
       const qty = getRepairQty();
       syncRepairUnitStates(qty);
@@ -1019,14 +1267,32 @@
         const u = repairUnitStates[i];
         const size = PRICING.repairSizes[u.sizeIdx] || PRICING.repairSizes[0];
         const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
-        const labor = PRICING.repair.laborExVAT * (1 + VAT);
-        html += lineHTML("Repair Labour" + tag, size.label + " · 350 + 5% VAT", labor);
-        total += labor;
-        u.selectedParts.forEach((pi) => {
+        html += lineHTML("Repair Labour" + tag, size.label + " · AED 350 ex-VAT", PRICING.repair.laborExVAT);
+        exVAT += PRICING.repair.laborExVAT;
+        u.selectedParts.forEach((s, pi) => {
+          if (!s.checked) return;
           const part = PRICING.repair.spareParts[pi];
-          html += lineHTML(part.label + tag, "incl. VAT", part.price);
-          total += part.price;
+          if (!part || part.priceExVAT == null) return;
+          const lineTotal = part.priceExVAT * s.qty;
+          html += lineHTML(`${part.label} × ${s.qty}` + tag, `${part.partCode} · ex-VAT`, lineTotal);
+          exVAT += lineTotal;
         });
+      }
+
+    } else if (isSpareParts()) {
+      let anyPart = false;
+      sparePartsStates.forEach((s, pi) => {
+        if (!s.checked) return;
+        const part = PRICING.repair.spareParts[pi];
+        if (!part || part.priceExVAT == null) return;
+        const lineTotal = part.priceExVAT * s.qty;
+        html += lineHTML(`${part.label} × ${s.qty}`, `${part.partCode} · ex-VAT`, lineTotal);
+        exVAT += lineTotal;
+        anyPart = true;
+      });
+      if (anyPart) {
+        html += lineHTML("Delivery", loc.label, loc.deliveryPrice);
+        exVAT += loc.deliveryPrice;
       }
 
     } else {
@@ -1037,23 +1303,24 @@
       const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
       syncUnitStates(qty);
 
-      /* Heater + install lines — show per-unit if sizes differ */
       const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
       let heaterTotal = 0, installTotal = 0;
       unitStates.slice(0, qty).forEach((u) => {
         const s = sizes[u.sizeIdx] || sizes[0];
-        heaterTotal  += s.price;
+        if (s.price != null) heaterTotal  += s.price;
         installTotal += s.installPerUnit;
       });
 
       if (allSame && qty > 0) {
         const s = sizes[unitStates[0].sizeIdx] || sizes[0];
-        html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}`, heaterTotal);
+        const priceLabel = s.price != null ? "" : " (price TBD — not included)";
+        html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}${priceLabel}`, heaterTotal);
         html += lineHTML("Installation", `${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(s.installPerUnit)}`, installTotal);
       } else {
         for (let i = 0; i < qty; i++) {
           const s = sizes[unitStates[i].sizeIdx] || sizes[0];
-          html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, s.price);
+          const priceLabel = s.price != null ? "" : " (TBD)";
+          html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}${priceLabel}`, s.price || 0);
           html += lineHTML(`Installation (Unit ${i + 1})`, fmt(s.installPerUnit) + " / unit", s.installPerUnit);
         }
       }
@@ -1063,70 +1330,67 @@
         html += lineHTML("Anchoring", `${pathway.label}${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
       }
       html += lineHTML("Delivery", loc.label, loc.deliveryPrice);
-      total = heaterTotal + installTotal + anchoringTotal + loc.deliveryPrice;
+      exVAT = heaterTotal + installTotal + anchoringTotal + loc.deliveryPrice;
 
-      /* Per-unit extras */
       for (let i = 0; i < qty; i++) {
         const u = unitStates[i];
         const size = sizes[u.sizeIdx] || sizes[0];
         const valvesOk = size.litres >= PRICING.valvesMinLitres;
         const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
-
         if (u.ceilingNeeded) {
           const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0];
           html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price);
-          total += c.price;
+          exVAT += c.price;
         }
         if (u.connectors === "yes") {
           html += lineHTML("Flexible Connectors" + tag, "", PRICING.flexibleConnectorsPrice);
-          total += PRICING.flexibleConnectorsPrice;
+          exVAT += PRICING.flexibleConnectorsPrice;
         }
         if (valvesOk) {
           const iv = PRICING.isolationValves[u.isolValveIdx] || PRICING.isolationValves[0];
           const av = PRICING.angleValves[u.angleValveIdx]    || PRICING.angleValves[0];
-          if (iv.price > 0) { html += lineHTML("Isolation Valve" + tag, iv.label, iv.price); total += iv.price; }
-          if (av.price > 0) { html += lineHTML("Angle Valve" + tag, av.label, av.price);      total += av.price; }
+          if (iv.price > 0) { html += lineHTML("Isolation Valve" + tag, iv.label, iv.price); exVAT += iv.price; }
+          if (av.price > 0) { html += lineHTML("Angle Valve" + tag, av.label, av.price);      exVAT += av.price; }
         }
         if (u.piping) {
           const meters = Math.max(1, u.pipeMeters || 1);
           const ps = PRICING.pipeSizes[u.pipeSizeIdx] || PRICING.pipeSizes[0];
           const pipeCost = calcPipingCost(u.pipeSizeIdx, meters);
           html += lineHTML("Piping" + tag, `${ps.label} · ${meters} m`, pipeCost);
-          total += pipeCost;
+          exVAT += pipeCost;
         }
       }
     }
 
-    el.breakdown.innerHTML = html;
-    el.subtotal.textContent   = fmt(total);
-    el.grandTotal.textContent = fmt(total);
+    const vatAmt = exVAT * VAT;
+    const grand  = exVAT + vatAmt;
+
+    el.breakdown.innerHTML    = html;
+    el.subtotal.textContent   = fmt(exVAT);
+    el.vatAmount.textContent  = fmt(vatAmt);
+    el.grandTotal.textContent = fmt(grand);
   }
 
   /* ===== Global change triggers ===== */
-  // Quantity change: rebuild cards (new units default to the global size),
-  // keep any per-unit sizes already chosen.
   function onGlobalInstallChange() { buildUnitDetails(); recalc(); }
-  // Main capacity dropdown is the master: it sets the size for EVERY unit,
-  // so changing it always updates the heater price.
   function onGlobalSizeChange() {
     const idx = Number(el.size.value) || 0;
     unitStates.forEach((u) => { u.sizeIdx = idx; });
-    buildUnitDetails();
-    recalc();
+    buildUnitDetails(); recalc();
   }
-  function onRepairQtyChange()     { buildRepairUnitDetails(); recalc(); }
+  function onRepairQtyChange()  { buildRepairUnitDetails(); recalc(); }
   function onOrientationChange() {
-    /* Different orientation = different capacity list, so repopulate + reset. */
-    populateSelect(el.size, currentSizes(), (s) => s.label);
+    populateSelect(el.size, currentSizes(), (s) => s.label + (s.price == null ? " (price TBD)" : ""));
     el.size.value = "0";
     unitStates.forEach((u) => { u.sizeIdx = 0; });
-    buildUnitDetails();
-    recalc();
+    buildUnitDetails(); recalc();
   }
   function onPathwayChange() {
     toggleSections();
-    if (isRepair()) { buildRepairUnitDetails(); }
-    else            { buildUnitDetails(); }
+    const p = getPathway();
+    if (p === "repair")      { buildRepairUnitDetails(); }
+    else if (p === "spareParts") { buildSparePartsList(); }
+    else                     { buildUnitDetails(); }
     recalc();
   }
 
@@ -1142,6 +1406,29 @@
   document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", onOrientationChange));
   document.querySelectorAll('input[name="pathway"]').forEach((r) => r.addEventListener("change", onPathwayChange));
   document.querySelectorAll('input[name="callOut"]').forEach((r) => r.addEventListener("change", recalc));
+
+  /* ===== Product type tab toggle ===== */
+  document.querySelectorAll(".product-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".product-tab").forEach((b) => b.setAttribute("aria-selected", "false"));
+      btn.setAttribute("aria-selected", "true");
+      productType = btn.dataset.tab;
+      toggleSections();
+      if (productType === "heatPump") buildHpPartsList();
+      recalc();
+    });
+  });
+
+  /* ===== Heat pump range tabs ===== */
+  document.querySelectorAll(".range-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".range-tab").forEach((b) => b.setAttribute("aria-selected", "false"));
+      btn.setAttribute("aria-selected", "true");
+      heatPumpRange = btn.dataset.range;
+      buildHpPartsList();
+      recalc();
+    });
+  });
 
   /* ===== Gallery ===== */
   function setFrame(frameEl, url) {
@@ -1162,7 +1449,7 @@
     setFrame(el.frameCeiling, WORK_PHOTOS.falseCeiling);
     setFrame(el.framePipes,   WORK_PHOTOS.pipes);
     el.capHeater.innerHTML  = `${PRICING.brand} ${size.label}<small>${orientLabel} · Qty ${qty}</small>`;
-    el.capInstall.innerHTML = `Installation<small>${pathway.label}</small>`;
+    el.capInstall.innerHTML = `Installation<small>${pathway ? pathway.label : ""}</small>`;
     el.capCeiling.innerHTML = `False Ceiling<small>${anyCeiling ? "Selected for one or more units" : "Not in this quote"}</small>`;
     el.capPipes.innerHTML   = `Piping<small>${anyPiping ? "Selected for one or more units" : "Not in this quote"}</small>`;
   }
@@ -1188,7 +1475,6 @@
 
   /* ===== Disclaimer modal ===== */
   const DISCLAIMER_MIN_LITRES = 200;
-
   function largestUnitLitres() {
     const list = unitSizeList();
     const states = isRepair() ? repairUnitStates : unitStates;
@@ -1207,7 +1493,6 @@
     });
     return best.label;
   }
-
   function openDisclaimer() {
     el.disclaimerText.textContent =
       "If the " + largestUnitLabel() + " unit needs to be lifted to an upper level, we want to make you aware " +
@@ -1229,22 +1514,23 @@
   el.disclaimerAck.addEventListener("click", closeDisclaimer);
   el.disclaimerModal.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close-disclaimer")) closeDisclaimer(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.disclaimerModal.classList.contains("open")) closeDisclaimer(); });
-
   el.confirm.addEventListener("click", () => {
-    if (largestUnitLitres() >= DISCLAIMER_MIN_LITRES) openDisclaimer();
+    if (!isHeatPump() && !isSpareParts() && largestUnitLitres() >= DISCLAIMER_MIN_LITRES) openDisclaimer();
   });
 
   /* ===== Print / Save as PDF ===== */
   el.btnPrint.addEventListener("click", () => {
     const loc     = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
-    const pathway = PRICING.pathways[getPathway()];
-    const jobNum  = el.jobNumber.value.trim();
-
-    el.pJobNum.textContent  = jobNum || "—";
+    let serviceLabel;
+    if (isHeatPump()) {
+      serviceLabel = "Heat Pump – " + (HEAT_PUMP_PRICING.ranges[heatPumpRange] || {}).label;
+    } else {
+      serviceLabel = (PRICING.pathways[getPathway()] || {}).label || "";
+    }
+    el.pJobNum.textContent  = el.jobNumber.value.trim() || "—";
     el.pDate.textContent    = new Date().toLocaleDateString("en-AE", { year: "numeric", month: "long", day: "numeric" });
     el.pCity.textContent    = loc.label;
-    el.pService.textContent = pathway.label;
-
+    el.pService.textContent = serviceLabel;
     window.print();
   });
 
@@ -1252,6 +1538,8 @@
   toggleSections();
   buildUnitDetails();
   buildRepairUnitDetails();
+  buildSparePartsList();
+  buildHpPartsList();
   recalc();
 </script>
 </body>
