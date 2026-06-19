@@ -265,10 +265,18 @@
       line-height: 1.45;
     }
 
+    /* === BRAND COLOURS ===
+       --brand-red : #CC1015  (Cheqpoint primary red)
+       --brand-blk : #000000  (Cheqpoint black)
+       All backgrounds: #ffffff. All body text: #000000.
+       Red is used only for structural / accent elements.
+    ============================================= */
+
     /* --- Letterhead --- */
     .qp-lh {
       display: flex; justify-content: space-between; align-items: flex-start;
-      margin-bottom: 11pt; padding-bottom: 8pt; border-bottom: 1.5pt solid #000;
+      margin-bottom: 11pt; padding-bottom: 8pt;
+      border-bottom: 2pt solid #CC1015;   /* brand-red rule under logo */
     }
     .qp-lh-logo { display: flex; flex-direction: column; justify-content: center; }
     .qp-lh-logo img { max-height: 52pt; max-width: 160pt; width: auto; height: auto; display: block; }
@@ -279,14 +287,12 @@
     .qp-hdr { width: 100%; border-collapse: collapse; margin-bottom: 11pt; }
     .qp-hdr td { border: 0.5pt solid #000; padding: 3.5pt 7pt; vertical-align: middle; }
     .q-title {
+      /* Black title bar — authority / formality */
       background: #000 !important; color: #fff !important;
       text-align: center; font-size: 14pt; font-weight: 700;
       letter-spacing: 0.14em; padding: 6pt !important;
     }
     .q-lbl { font-weight: 700; background: #f0f0f0 !important; white-space: nowrap; width: 14%; }
-
-    /* --- Intro --- */
-    .qp-intro { font-size: 10pt; margin: 0 0 7pt; }
 
     /* --- Scope table --- */
     .qp-scope { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 7pt 0 9pt; }
@@ -296,31 +302,37 @@
     /* --- VAT note --- */
     .qp-vat-note {
       font-size: 7.5pt; color: #444; font-style: italic;
-      border: 0.5pt solid #bbb; background: #fafafa !important;
+      border-left: 2pt solid #CC1015;     /* red left accent on VAT box */
+      background: #fff9f9 !important;
       padding: 3.5pt 6pt; margin: 9pt 0; line-height: 1.4;
     }
 
-    /* --- Outro / Sig --- */
-    .qp-outro { font-size: 10pt; margin: 9pt 0 11pt; line-height: 1.7; }
-    .qp-sig { font-size: 10pt; line-height: 1.85; }
+    /* --- Sig --- */
+    .qp-sig { font-size: 10pt; line-height: 1.85; margin-top: 10pt; }
     .qp-sig-name { font-weight: 700; font-size: 10.5pt; }
 
-    /* --- Section header --- */
+    /* --- Section headers (EXCLUSIONS / ADDITIONAL TERMS) --- */
     .qp-sec-hdr {
       font-size: 9pt; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.06em; margin: 11pt 0 4pt;
-      border-bottom: 0.75pt solid #000; padding-bottom: 2pt;
+      letter-spacing: 0.08em; margin: 12pt 0 4pt; padding-bottom: 2.5pt;
+      color: #CC1015;                     /* brand-red text */
+      border-bottom: 1.5pt solid #CC1015; /* brand-red underline */
     }
 
     /* --- List tables (exclusions / terms) --- */
     .qp-lst { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 9pt; }
-    .qp-lst td { border: 0.4pt solid #ccc; padding: 2.5pt 6pt; vertical-align: top; }
-    .qp-lst td.qp-n { width: 6%; text-align: center; font-weight: 700; background: #f0f0f0 !important; }
+    .qp-lst td { border: 0.4pt solid #ddd; padding: 2.5pt 6pt; vertical-align: top; color: #000; }
+    .qp-lst td.qp-n {
+      width: 6%; text-align: center; font-weight: 700;
+      color: #CC1015;                     /* red numbering */
+      background: #fff !important;
+      border-right: 0.4pt solid #ddd;
+    }
 
     /* --- Footer --- */
     .qp-foot {
-      margin-top: 12pt; border-top: 0.5pt solid #aaa; padding-top: 4pt;
-      font-size: 7.5pt; color: #555; text-align: center; line-height: 1.5;
+      margin-top: 12pt; border-top: 0.5pt solid #ccc; padding-top: 4pt;
+      font-size: 7.5pt; color: #666; text-align: center; line-height: 1.5;
     }
 
     /* --- Page 2: Annexure --- */
@@ -329,22 +341,31 @@
     .qp-annex-title {
       font-size: 12pt; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.06em; margin-bottom: 9pt;
-      padding-bottom: 5pt; border-bottom: 1.5pt solid #000;
+      padding-bottom: 5pt;
+      border-bottom: 2pt solid #CC1015;   /* brand-red rule under annexure title */
     }
     .qp-annex-ref { font-size: 8pt; color: #555; margin-bottom: 9pt; }
 
     .qp-price-tbl { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
     .qp-price-tbl th {
-      background: #000 !important; color: #fff !important;
-      padding: 4pt 7pt; text-align: left; font-size: 9pt;
+      background: #CC1015 !important;     /* brand-red header row */
+      color: #fff !important;
+      padding: 4pt 7pt; text-align: left; font-size: 9pt; font-weight: 700;
     }
     .qp-price-tbl th:last-child { text-align: right; width: 26%; }
-    .qp-price-tbl td { border: 0.4pt solid #ccc; padding: 4pt 7pt; vertical-align: top; }
+    .qp-price-tbl td { border: 0.4pt solid #ddd; padding: 4pt 7pt; vertical-align: top; color: #000; }
     .qp-price-tbl td.qp-r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .qp-price-tbl tr.qp-sub td { font-weight: 700; background: #f0f0f0 !important; border-top: 0.75pt solid #000; }
-    .qp-price-tbl tr.qp-grand td { font-weight: 700; font-size: 11pt; background: #000 !important; color: #fff !important; }
+    .qp-price-tbl tr.qp-sub td {
+      font-weight: 700; background: #f5f5f5 !important;
+      border-top: 0.75pt solid #000;
+    }
+    .qp-price-tbl tr.qp-grand td {
+      font-weight: 700; font-size: 11pt;
+      background: #CC1015 !important;     /* brand-red grand total row */
+      color: #fff !important;
+    }
 
-    .qp-price-note { font-size: 8.5pt; color: #444; margin-top: 8pt; line-height: 1.5; font-style: italic; }
+    .qp-price-note { font-size: 8.5pt; color: #555; margin-top: 8pt; line-height: 1.5; font-style: italic; }
 
     @page { margin: 14mm 18mm; size: A4 portrait; }
   }
