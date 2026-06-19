@@ -270,13 +270,10 @@
       display: flex; justify-content: space-between; align-items: flex-start;
       margin-bottom: 11pt; padding-bottom: 8pt; border-bottom: 1.5pt solid #000;
     }
-    .qp-logo-mark {
-      font-size: 26pt; font-weight: 900;
-      font-family: "Arial Black", Arial, sans-serif;
-      letter-spacing: -0.02em; line-height: 1;
-    }
-    .qp-logo-sub { font-size: 8pt; color: #444; margin-top: 2pt; }
+    .qp-lh-logo { display: flex; flex-direction: column; justify-content: center; }
+    .qp-lh-logo img { max-height: 52pt; max-width: 160pt; width: auto; height: auto; display: block; }
     .qp-co-info { font-size: 8pt; text-align: right; line-height: 1.6; color: #333; }
+    .qp-sig-img { max-height: 38pt; width: auto; display: block; margin-bottom: 2pt; }
 
     /* --- Header table --- */
     .qp-hdr { width: 100%; border-collapse: collapse; margin-bottom: 11pt; }
@@ -635,9 +632,8 @@
   <div>
     <!-- Letterhead -->
     <div class="qp-lh">
-      <div>
-        <div class="qp-logo-mark">CTT</div>
-        <div class="qp-logo-sub">Cheqpoint Tech Trading LLC</div>
+      <div class="qp-lh-logo">
+        <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
       </div>
       <div class="qp-co-info">
         P.O. Box 25236, Dubai, U.A.E.<br>
@@ -678,8 +674,6 @@
       </tr>
     </table>
 
-    <p class="qp-intro">We are pleased to submit our proposal as given below:</p>
-
     <!-- Scope / terms block -->
     <table class="qp-scope">
       <tr><td>Item / Scope of Works</td><td id="qpScope">&mdash;</td></tr>
@@ -691,13 +685,8 @@
 
     <p class="qp-vat-note"><strong>Note:</strong> All given prices are exclusive and not limited to any VAT / special / corporate / commercial taxes and levies, and this amount needs to be added separately at actual as per UAE law and factored in by the buyer. The above figure should be considered as the net amount after deducting all relevant taxes, levies etc.</p>
 
-    <p class="qp-outro">
-      We trust our offer is in-line with your request and if there are any queries regarding our offer, please contact the undersigned.<br><br>
-      Thank you and regards,<br>
-      for M/s Cheqpoint Tech Trading LLC
-    </p>
-
     <div class="qp-sig">
+      <img id="qpSigImg" class="qp-sig-img" src="" alt="Signature">
       <div class="qp-sig-name" id="qpSigName">J S Deliwala</div>
       <div id="qpSigTitle">Technical &amp; Sales Manager</div>
       <div id="qpSigMob">Mob: +971 50 272 9668</div>
@@ -721,9 +710,8 @@
   <!-- PAGE 2: ANNEXURE #1 -->
   <div class="qp-break">
     <div class="qp-lh">
-      <div>
-        <div class="qp-logo-mark">CTT</div>
-        <div class="qp-logo-sub">Cheqpoint Tech Trading LLC</div>
+      <div class="qp-lh-logo">
+        <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
       </div>
       <div class="qp-co-info">
         P.O. Box 25236, Dubai, U.A.E.<br>
@@ -945,47 +933,39 @@ const REPS = [
 ];
 
 /* =========================================================
-   EXCLUSIONS (per service type)
+   EXCLUSIONS — verbatim from Cheqpoint reference quotation
    ========================================================= */
-const EXCLUSIONS = {
-  installation: [
-    "Water, electrical supply and termination",
-    "Government, non-government, authority, third-party testing and/or approval",
-    "Any penalty, retention and/or bank guarantees",
-    "Strainers, valves and accessories unless specifically mentioned in this quotation",
-    "Piping, unions, fittings, insulation and cladding unless specifically mentioned in this quotation",
-    "Civil works of any nature unless specifically mentioned",
-    "Any and all maintenance/AMC",
-    "Pipeline/equipment tagging and special nameplates",
-    "Water quality at site",
-    "Any consumables",
-    "Extension of warranty beyond standard manufacturer terms",
-    "Restoration of surfaces or finishes disturbed during installation, unless specifically mentioned",
-    "Thermostatic or digital thermal mixing valves",
-    "Interconnecting piping, valves and bypass circuits unless specifically mentioned",
-    "Works related to cold water tank, booster pump, recirculation pump or associated equipment"
-  ],
-  repair: [
-    "Parts found to be serviceable and not defective after inspection — only confirmed defective parts replaced",
-    "Government, non-government, authority, third-party testing and/or approval",
-    "Any penalty, retention and/or bank guarantees",
-    "Damage attributable to misuse, improper original installation, external plumbing issues beyond the heater outlet, or act of God",
-    "Civil works of any nature",
-    "Extension of warranty beyond standard manufacturer terms",
-    "Any consumables",
-    "Water quality at site",
-    "Recurring faults caused by external plumbing or site conditions outside CTT's scope of supply"
-  ],
-  spareParts: [
-    "Installation or commissioning labour unless specifically mentioned in this quotation",
-    "Government, non-government, authority, third-party testing and/or approval",
-    "Any penalty, retention and/or bank guarantees",
-    "Civil or plumbing works of any nature",
-    "Consumables",
-    "Extension of warranty beyond standard manufacturer terms",
-    "Any works or services not specifically mentioned in this quotation"
-  ]
-};
+const EXCLUSIONS_MASTER = [
+  "Water, electrical supply and termination.",
+  "Government, non-government, authority, third party testing and/or approval.",
+  "Any penalty, retention and/or bank guarantees.",
+  "Strainers, valves and accessories unless specifically mentioned.",
+  "Piping, unions, fittings, insulation and cladding.",
+  "Sensors and gauges unless specifically mentioned.",
+  "Any and all civil works unless specifically mentioned.",
+  "Thermostats, sensors and/or special BMS points.",
+  "Works related to cold water tank and booster pump.",
+  "Cabling and wiring.",
+  "Any maintenance/AMC.",
+  "Pipeline/equipment tagging and special nameplates.",
+  "Any controls and/or associated wiring.",
+  "Interconnecting piping, valves and bypass circuits.",
+  "Any spare parts.",
+  "Thermostatic/digital thermal mixing valve.",
+  "Any works related to transfer, booster, circulation, recirculation pumps and etc\u2026",
+  "Water quality at site.",
+  "Any consumables.",
+  "Extension of warranty.",
+  "Any special documentation and/or testing.",
+  "Any welding / repair works.",
+  "Restoration of storage tank condition."
+];
+
+/* =========================================================
+   SIGNATURE IMAGE — paste the URL or base64 data-URI of Jay's
+   signature image here. Leave empty to show name text only.
+   ========================================================= */
+const SIG_IMG_SRC = "";
 
 const ADDITIONAL_TERMS = [
   "Any item or commercial scope not mentioned specifically in this quotation should be excluded and should be reconfirmed with Cheqpoint Tech Trading LLC if it is intentionally missing from this document.",
@@ -1547,13 +1527,9 @@ function getScopeText() {
   return "Water heater works as detailed in Annexure\u00a0#1.";
 }
 
-/* Select the right exclusions list */
+/* Single master exclusion list — verbatim from Cheqpoint reference quotation */
 function getExclusionsList() {
-  if (isHeatPump()) return EXCLUSIONS.spareParts;
-  const p = getPathway();
-  if (p === "repair")     return EXCLUSIONS.repair;
-  if (p === "spareParts") return EXCLUSIONS.spareParts;
-  return EXCLUSIONS.installation;
+  return EXCLUSIONS_MASTER;
 }
 
 /* Build price table rows from live DOM breakdown */
@@ -1612,6 +1588,14 @@ el.btnPrint.addEventListener("click", () => {
   document.getElementById("qpValidity").textContent = el.quoteValidity.value;
 
   /* --- Signature block --- */
+  const sigImg = document.getElementById("qpSigImg");
+  if (SIG_IMG_SRC) {
+    sigImg.src = SIG_IMG_SRC;
+    sigImg.style.display = "block";
+  } else {
+    sigImg.src = "";
+    sigImg.style.display = "none";
+  }
   document.getElementById("qpSigName").textContent  = rep.name;
   document.getElementById("qpSigTitle").textContent = rep.title;
   document.getElementById("qpSigMob").textContent   = rep.mob   ? "Mob: " + rep.mob   : "";
