@@ -564,53 +564,6 @@
 
     /* callOutStdExVAT used only for the repair call-out fee (no delivery charge) */
     locations: [
-
-      change the pricing to this please:
-
-PRICING = {
-    brand: "Atlantic",
-
-    pathways: {
-      reinstallation:  { label: "Reinstallation",   anchoring: 0 },
-      newInstallation: { label: "New Installation",  anchoring: 100 },
-      repair:          { label: "Repair" },
-      spareParts:      { label: "Spare Parts" }
-    },
-
-    sizesByOrientation: {
-      horizontal: [
-        { label: "50 L",  litres: 50,  price: 420,  installPerUnit: 300 },
-        { label: "80 L",  litres: 80,  price: 460,  installPerUnit: 300 },
-        { label: "100 L", litres: 100, price: 550,  installPerUnit: 300 },
-        { label: "200 L", litres: 200, price: 2300, installPerUnit: 600 }
-      ],
-      vertical: [
-        { label: "30 L",             litres: 30,  price: 355,  installPerUnit: 300  },
-        { label: "50 L",             litres: 50,  price: 380,  installPerUnit: 300  },
-        { label: "80 L",             litres: 80,  price: 415,  installPerUnit: 300  },
-        { label: "100 L",            litres: 100, price: 515,  installPerUnit: 300  },
-        { label: "150 L",            litres: 150, price: 1500, installPerUnit: 300  },
-        { label: "150 L Wall Mount", litres: 150, price: 1600, installPerUnit: 300  },
-        { label: "200 L Wall Mount", litres: 200, price: 2200, installPerUnit: 600  },
-        { label: "200 L Stab Floor", litres: 200, price: 2350, installPerUnit: 600  },
-        { label: "300 L",            litres: 300, price: 3300, installPerUnit: 1000 },
-        { label: "500 L",            litres: 500, price: 6000, installPerUnit: 1500 }
-      ]
-    },
-
-    repairSizes: [
-      { label: "30 L",  litres: 30  },
-      { label: "50 L",  litres: 50  },
-      { label: "80 L",  litres: 80  },
-      { label: "100 L", litres: 100 },
-      { label: "150 L", litres: 150 },
-      { label: "200 L", litres: 200 },
-      { label: "300 L", litres: 300 },
-      { label: "500 L", litres: 500 }
-    ],
-
-    locations: [
-      
       { label: "Dubai",          callOutStdExVAT: 700  },
       { label: "Sharjah",        callOutStdExVAT: 650  },
       { label: "Ajman",          callOutStdExVAT: 675  },
@@ -620,44 +573,6 @@ PRICING = {
       { label: "Fujairah",       callOutStdExVAT: 1250 },
       { label: "Al Ain",         callOutStdExVAT: 1400 },
       { label: "Liwa / Ruwais",  callOutStdExVAT: 3500 }
-      
-    ],
-
-    falseCeiling: [
-      { label: "40 × 40",   price: 600  },
-      { label: "80 × 80",   price: 1200 },
-      { label: "120 × 120", price: 1800 },
-      { label: "160 × 160", price: 2400 },
-      { label: "200 × 200", price: 3000 }
-    ],
-
-    flexibleConnectorsPrice: 85,
-
-    pipeSizes: [
-      { label: '1/2"', pricePerMeter: 6.3   },
-      { label: '3/4"', pricePerMeter: 10.14 }
-    ],
-    piping: { laborFreeMeters: 1, laborPer2Meters: 240 },
-
-    isolationValves: [
-      { label: "None", price: 0    },
-      { label: '1/2"', price: 23.5 },
-      { label: '3/4"', price: 31   }
-    ],
-    angleValves: [
-      { label: "None", price: 0  },
-      { label: '1/2"', price: 22 }
-    ],
-    valvesMinLitres: 150,
-
-    repair: {
-      laborExVAT: 350,
-
-      /* spareParts — all priceExVAT values (ex-VAT).
-         Prices that were previously stored incl. VAT have been divided by 1.05.
-         null = price TBD; part will show "— TBD" and is excluded from totals.
-         Heating elements listed in ascending kW order. */
-      
     ],
 
     falseCeiling: [
