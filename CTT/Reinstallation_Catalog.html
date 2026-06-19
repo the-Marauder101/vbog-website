@@ -554,7 +554,7 @@
         { label: "80 L",             litres: 80,  price: 415,  installPerUnit: 300  },
         { label: "100 L",            litres: 100, price: 515,  installPerUnit: 300  },
         { label: "150 L",            litres: 150, price: 1500, installPerUnit: 300  },
-        { label: "150 L Wall Mount", litres: 150, price: 1800, installPerUnit: 300  },
+        { label: "150 L Wall Mount", litres: 150, price: null, installPerUnit: 300  },
         { label: "200 L Wall Mount", litres: 200, price: 2200, installPerUnit: 600  },
         { label: "200 L Stab Floor", litres: 200, price: 2350, installPerUnit: 600  },
         { label: "300 L",            litres: 300, price: 3300, installPerUnit: 1000 },
@@ -634,8 +634,41 @@
       },
       explorer: {
         label: "Explorer",
-        /* TODO: awaiting Explorer parts list (codes + prices, ex VAT). */
-        parts: []
+        /* Explorer (HP200EX 200L / HP270EX 270L). Codes are shared across both
+           models except Pos 16 and Pos 22, which are listed per model.
+           Prices left null (placeholder) — fill in ex VAT once price list is received. */
+        parts: [
+          { code: "023591", label: "Superior Panel + Air Outlets",                    price: null },
+          { code: "023597", label: "Connection for Air Outlet D160 (x1)",             price: null },
+          { code: "023589", label: "Rear Cover with Insulation",                       price: null },
+          { code: "023590", label: "Front Cover with Insulation",                      price: null },
+          { code: "023588", label: "Cover for Screw (x4)",                             price: null },
+          { code: "026524", label: "Motor-Fan CV5 + Wiring",                           price: null },
+          { code: "023593", label: "Stainless Steel Disc CV5",                         price: null },
+          { code: "023592", label: "Gasket 76x2.5 (x3)",                               price: null },
+          { code: "026574", label: "Condensator 15MF",                                 price: null },
+          { code: "026572", label: "Solenoid FQ-A0522G-002355 + Wiring",              price: null },
+          { code: "023496", label: "Fixing Bracket",                                   price: null },
+          { code: "023581", label: "Front Cover ALU (HP200EX / 200L)",                price: null },
+          { code: "023582", label: "Front Cover ALU (HP270EX / 240-270L)",            price: null },
+          { code: "023596", label: "Condensate (Water) Draining Pipe",                price: null },
+          { code: "026343", label: "PV Connector",                                     price: null },
+          { code: "030558", label: "Kit Heating Element Inox ACI 1200W + Gasket",     price: null },
+          { code: "099060", label: "Lip Gasket",                                       price: null },
+          { code: "030568", label: "Digital Control HM009 Black",                      price: null },
+          { code: "030574", label: "Electronic Card CV5 (HP200EX / 200L)",            price: null },
+          { code: "030575", label: "Electronic Card CV5 (HP270EX / 270L)",            price: null },
+          { code: "030563", label: "Safety Thermostat + Wiring",                       price: null },
+          { code: "026545", label: "Power Cable CV5 Without Plug",                     price: null },
+          { code: "026573", label: "Electrical Harness for Heat Pump CV5",            price: null },
+          { code: "026571", label: "Temperature Sensor CTN (x5)",                      price: null },
+          { code: "026547", label: "Wiring for Digital Command",                       price: null },
+          { code: "026543", label: "Water Temperature Sensor L800",                    price: null },
+          { code: "026251", label: "ACI Wire Harness",                                 price: null },
+          { code: "026060", label: "Bimetal Dielectric Union 20x27",                   price: null },
+          { code: "023772", label: "Insulation PSE Kit CV5 FS",                        price: null },
+          { code: "023599", label: "Accessories Box CV5",                              price: null }
+        ]
       }
     }
   };
