@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Atlantic Water Heaters: Complaint Handling SOP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+
+body {
+font-family: 'Inter', sans-serif;
+background: #ffffff;
+color: #111111;
+min-height: 100vh;
+padding-bottom: 80px;
+font-size: 14px;
+line-height: 1.6;
+}
+
+
+/* HEADER */
+header {
+background: #111111;
+padding: 20px 36px;
+display: flex;
+align-items: center;
+gap: 16px;
+}
+.logo-mark {
+width: 44px; height: 44px;
+background: #ffffff;
+border-radius: 6px;
+display: flex; align-items: center; justify-content: center;
+font-weight: 700; font-size: 16px; color: #111111;
+flex-shrink: 0;
+}
+.header-text h1 { font-size: 18px; font-weight: 700; color: #ffffff; }
+.header-text p {
+font-size: 12px; color: #aaaaaa; margin-top: 2px;
+font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;
+}
+
+
+/* MAIN */
+main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 0; }
+
+
+/* LEGEND */
+.legend {
+border: 1px solid #dddddd; border-radius: 6px;
+padding: 14px 20px; display: flex; align-items: center;
+gap: 28px; margin-bottom: 32px; background: #fafafa;
+}
+.legend-label {
+font-size: 11px; font-weight: 700; text-transform: uppercase;
+letter-spacing: 0.8px; color: #777777; flex-shrink: 0;
+}
+.legend-items { display: flex; flex-wrap: wrap; gap: 20px; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #333333; }
+
+
+/* SECTION TITLE */
+.section-title {
+font-size: 15px; font-weight: 700; color: #111111;
+margin-bottom: 16px; padding-bottom: 8px;
+border-bottom: 2px solid #111111;
+}
+
+
+/* CHANNEL GRID */
+.channels-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.flow-col { display: flex; flex-direction: column; align-items: center; }
+
+
+/* CHANNEL CARD */
+.channel-card {
+background: #ffffff; border: 2px solid #111111;
+border-radius: 6px; padding: 18px 14px; text-align: center; width: 100%;
+}
+.channel-card .ch-icon { font-size: 26px; margin-bottom: 8px; }
+.channel-card .ch-label { font-size: 14px; font-weight: 700; color: #111111; }
+.channel-card .ch-note { font-size: 12px; color: #666666; margin-top: 4px; }
+
+
+/* ARROW DOWN */
+.arrow-down { display: flex; flex-direction: column; align-items: center; margin: 6px 0; }
+.arrow-down .aline { width: 1px; height: 20px; background: #999999; }
+.arrow-down .ahead {
+width: 0; height: 0;
+border-left: 6px solid transparent; border-right: 6px solid transparent;
+border-top: 8px solid #999999;
+}
+
+
+/* ACTION CARD */
+.action-card {
+background: #ffffff; border: 1px solid #dddddd;
+border-radius: 6px; padding: 16px 14px; width: 100%;
+}
+.action-card .ac-title { font-size: 13px; font-weight: 700; color: #111111; margin-bottom: 8px; }
+.action-card .ac-note { font-size: 12px; color: #666666; margin-bottom: 10px; }
+
+
+/* CHECKLIST */
+.checklist { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.checklist li {
+display: flex; align-items: flex-start; gap: 7px;
+font-size: 12px; color: #333333; line-height: 1.5;
+}
+.checklist li .ck-icon { flex-shrink: 0; margin-top: 1px; }
+
+
+/* BRANCH DIVIDER */
+.branch-label {
+font-size: 11px; font-weight: 700; text-transform: uppercase;
+letter-spacing: 0.5px; color: #888888;
+border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0;
+text-align: center; padding: 5px 0; margin: 10px 0 8px;
+}
+
+
+/* SUB-BRANCH */
+.sub-branch { background: #f7f7f7; border: 1px solid #dddddd; border-radius: 6px; padding: 12px; width: 100%; }
+.sub-branch .sb-title { font-size: 12px; font-weight: 700; color: #111111; margin-bottom: 7px; }
+
+
+/* COPY BUTTON */
+.copy-btn {
+display: flex; align-items: center; justify-content: center;
+gap: 6px; background: #111111; color: #ffffff; border: none;
+border-radius: 5px; padding: 9px 14px; font-size: 12px;
+font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer;
+width: 100%; margin-top: 6px; transition: opacity 0.15s;
+}
+.copy-btn:hover { opacity: 0.82; }
+.copy-btn.copied { background: #333333; }
+.copy-btn + .copy-btn { margin-top: 6px; }
+
+
+/* CONVERGE BAND */
+.converge-band { margin: 24px 0 28px; display: flex; flex-direction: column; align-items: center; }
+.converge-lines {
+display: flex; width: 100%; max-width: 700px;
+justify-content: space-between; padding: 0 18%; position: relative;
+}
+.converge-lines::before {
+content: ''; position: absolute; top: 0; left: 50%;
+transform: translateX(-50%); width: 1px; height: 22px; background: #aaaaaa;
+}
+.c-line { width: 1px; height: 16px; background: #aaaaaa; flex-shrink: 0; }
+.converge-pill {
+background: #111111; color: #ffffff; border-radius: 20px;
+padding: 6px 18px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px;
+}
+.converge-bottom-line { width: 1px; height: 20px; background: #aaaaaa; }
+
+
+/* CENTER ARROW */
+.center-arrow { display: flex; flex-direction: column; align-items: center; margin: 18px 0 24px; }
+.center-arrow .ca-line { width: 1px; height: 28px; background: #aaaaaa; }
+.center-arrow .ca-head {
+width: 0; height: 0;
+border-left: 7px solid transparent; border-right: 7px solid transparent;
+border-top: 9px solid #aaaaaa;
+}
+
+
+/* SCENARIO GRID (Step 2 and Step 5) */
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.scenario-card {
+background: #ffffff; border: 1px solid #dddddd;
+border-radius: 6px; padding: 18px 16px; display: flex; flex-direction: column;
+}
+.scenario-card .sc-icon { font-size: 22px; margin-bottom: 8px; }
+.scenario-card .sc-title { font-size: 13px; font-weight: 700; color: #111111; margin-bottom: 6px; }
+.scenario-card .sc-note { font-size: 12px; color: #555555; line-height: 1.6; margin-bottom: 12px; flex: 1; }
+
+
+/* FULL-WIDTH STEP CARD (Step 3) */
+.full-step-card { background: #ffffff; border: 1px solid #dddddd; border-radius: 6px; padding: 22px 24px; }
+.fsc-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; }
+.fsc-icon-wrap { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+.fsc-text .fsc-title { font-size: 14px; font-weight: 700; color: #111111; margin-bottom: 4px; }
+.fsc-text .fsc-note { font-size: 12.5px; color: #555555; }
+.fsc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fsc-action-item { background: #f7f7f7; border: 1px solid #dddddd; border-radius: 6px; padding: 14px 16px; }
+.fsc-action-item .fai-label {
+font-size: 11px; font-weight: 700; text-transform: uppercase;
+letter-spacing: 0.6px; color: #888888; margin-bottom: 5px;
+}
+.fsc-action-item .fai-text { font-size: 12px; color: #444444; line-height: 1.55; margin-bottom: 10px; }
+
+
+/* OUTCOME GRID: Primary outcomes (Step 4 main) */
+.outcome-grid-primary { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; }
+
+
+/* EDGE CASES SUB-HEADING */
+.edge-heading {
+font-size: 11px; font-weight: 700; text-transform: uppercase;
+letter-spacing: 0.6px; color: #888888;
+border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0;
+text-align: center; padding: 6px 0; margin: 8px 0 12px;
+}
+
+
+/* OUTCOME GRID: Edge cases (3 col) */
+.outcome-grid-edge { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+
+/* OUTCOME CARD */
+.outcome-card {
+border-radius: 6px; padding: 18px 16px;
+display: flex; flex-direction: column;
+border: 1px solid #dddddd; background: #ffffff;
+}
+.outcome-card.approved { border-left: 4px solid #111111; }
+.outcome-card.not-covered { background: #f7f7f7; border-left: 4px solid #888888; }
+.outcome-card.edge { background: #fafafa; }
+.outcome-card.emergency { background: #f0f0f0; border: 1px solid #aaaaaa; border-left: 4px solid #111111; }
+
+
+.outcome-card .oc-badge {
+font-size: 11px; font-weight: 700; text-transform: uppercase;
+letter-spacing: 0.5px; color: #111111; margin-bottom: 8px;
+}
+.outcome-card.not-covered .oc-badge { color: #555555; }
+.outcome-card.edge .oc-badge { color: #777777; }
+.outcome-card.emergency .oc-badge { color: #111111; }
+
+
+.outcome-card .oc-title { font-size: 13px; font-weight: 700; color: #111111; margin-bottom: 6px; }
+.outcome-card .oc-note { font-size: 12px; color: #555555; line-height: 1.6; margin-bottom: 10px; flex: 1; }
+
+
+/* FEE CALLOUT BOX */
+.fee-box {
+background: #111111; color: #ffffff; border-radius: 5px;
+padding: 8px 12px; font-size: 12px; font-weight: 600;
+text-align: center; margin-bottom: 10px;
+}
+
+
+/* EMERGENCY PROTOCOL BOX */
+.emergency-protocol {
+background: #ffffff; border: 1px solid #cccccc;
+border-radius: 5px; padding: 10px 12px; margin-bottom: 10px;
+}
+.emergency-protocol .ep-step {
+font-size: 12px; color: #111111; line-height: 1.6;
+display: flex; gap: 8px; align-items: flex-start;
+margin-bottom: 4px;
+}
+.emergency-protocol .ep-step:last-child { margin-bottom: 0; }
+.ep-num {
+background: #111111; color: #ffffff; border-radius: 50%;
+width: 18px; height: 18px; font-size: 11px; font-weight: 700;
+display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+
+
+/* CONDITIONAL STEP LABEL */
+.conditional-label {
+display: flex; align-items: center; gap: 10px;
+font-size: 12px; color: #777777; margin: 18px 0 24px;
+}
+.conditional-label::before, .conditional-label::after {
+content: ''; flex: 1; height: 1px; background: #dddddd;
+}
+
+
+/* MODAL OVERLAY */
+.modal-overlay {
+display: none; position: fixed; inset: 0;
+background: rgba(0,0,0,0.5); z-index: 1000;
+align-items: center; justify-content: center; padding: 24px;
+}
+.modal-overlay.open { display: flex; }
+
+
+/* MODAL */
+.modal {
+background: #ffffff; border-radius: 8px; border: 1px solid #cccccc;
+width: 100%; max-width: 620px; max-height: 85vh;
+display: flex; flex-direction: column; overflow: hidden;
+}
+.modal-header {
+background: #111111; padding: 16px 22px;
+display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.modal-header h2 { font-size: 14px; font-weight: 700; color: #ffffff; }
+.modal-close {
+background: rgba(255,255,255,0.15); border: none; color: #ffffff;
+border-radius: 4px; width: 28px; height: 28px; font-size: 15px;
+cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.modal-close:hover { background: rgba(255,255,255,0.28); }
+.modal-body { overflow-y: auto; padding: 20px 22px; flex: 1; }
+.modal-note {
+background: #f5f5f5; border: 1px solid #dddddd; border-radius: 5px;
+padding: 9px 13px; font-size: 12px; color: #444444;
+margin-bottom: 14px; line-height: 1.55;
+}
+
+
+/* MESSAGE TEXT */
+.msg-text {
+font-size: 13px; line-height: 1.75; white-space: pre-wrap;
+color: #111111; font-family: 'Inter', sans-serif;
+}
+.msg-text .ph {
+background: #eeeeee; border: 1px solid #cccccc; border-radius: 3px;
+padding: 1px 5px; font-weight: 700; font-size: 12px; color: #111111;
+}
+
+
+.modal-footer {
+padding: 14px 22px; border-top: 1px solid #eeeeee;
+flex-shrink: 0; background: #fafafa;
+}
+.modal-copy-btn {
+display: flex; align-items: center; justify-content: center;
+gap: 7px; background: #111111; color: #ffffff; border: none;
+border-radius: 6px; padding: 12px 20px; font-size: 13px;
+font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer;
+width: 100%; transition: opacity 0.15s;
+}
+.modal-copy-btn:hover { opacity: 0.82; }
+.modal-copy-btn.copied { background: #333333; }
+
+
+/* CALL SCRIPT */
+.script-section { margin-bottom: 16px; }
+.script-label {
+font-size: 11px; font-weight: 700; text-transform: uppercase;
+letter-spacing: 0.6px; color: #888888; margin-bottom: 4px;
+}
+
+
+/* RESPONSIVE */
+@media (max-width: 860px) {
+.channels-row, .scenario-grid, .outcome-grid-primary,
+.outcome-grid-edge { grid-template-columns: 1fr; }
+.fsc-actions { grid-template-columns: 1fr; }
+header { padding: 16px 18px; }
+main { padding: 20px 14px 0; }
+}
+</style>
+</head>
+<body>
+
+
+<!-- HEADER -->
+<header>
+<div class="logo-mark">AW</div>
+<div class="header-text">
+<h1>Atlantic Water Heaters</h1>
+<p>Front Desk: Complaint Handling SOP</p>
+</div>
+</header>
+
+
+<main>
+
+
+<!-- LEGEND -->
+<div class="legend">
+<span class="legend-label">Channels</span>
+<div class="legend-items">
+<div class="legend-item"><span>📧</span> Email: typically Facility Managers or Contractors</div>
+<div class="legend-item"><span>💬</span> WhatsApp: mixed audience, identify first</div>
+<div class="legend-item"><span>📞</span> Call or Direct Message: mixed audience, identify first</div>
+</div>
+</div>
+
+
+
+
+<!-- STEP 1 -->
+<div class="section-title">Step 1: Identify the Incoming Channel</div>
+
+
+<div class="channels-row">
+
+
+<div class="flow-col">
+<div class="channel-card">
+<div class="ch-icon">📧</div>
+<div class="ch-label">Email</div>
+<div class="ch-note">Likely a Facility Manager or Contractor</div>
+</div>
+<div class="arrow-down"><div class="aline"></div><div class="ahead"></div></div>
+<div class="action-card">
+<div class="ac-title">Request the 5 Warranty Documents</div>
+<div class="ac-note">Reply promptly and ask the customer to send:</div>
+<ul class="checklist">
+<li><span class="ck-icon">📋</span>Completed Warranty Claim Request, Checklist and Declaration Form</li>
+<li><span class="ck-icon">📄</span>Copy of the warranty certificate</li>
+<li><span class="ck-icon">📸</span>Clear photos or videos of the fault, including the model and serial number label</li>
+<li><span class="ck-icon">📍</span>Site location pin (Google Maps) and access instructions</li>
+<li><span class="ck-icon">📞</span>Name and mobile number of the on-site contact person</li>
+</ul>
+<button class="copy-btn" onclick="openModal('email-reply')">📋 Copy Email Reply</button>
+</div>
+</div>
+
+
+<div class="flow-col">
+<div class="channel-card">
+<div class="ch-icon">💬</div>
+<div class="ch-label">WhatsApp</div>
+<div class="ch-note">Contractor, Reseller, End User or FM. Identify first.</div>
+</div>
+<div class="arrow-down"><div class="aline"></div><div class="ahead"></div></div>
+<div class="action-card">
+<div class="ac-title">Step A: Acknowledge and Identify</div>
+<div class="ac-note">Send a warm first message and find out who they are before proceeding.</div>
+<button class="copy-btn" onclick="openModal('wa-first')">📋 Copy First Response</button>
+<div class="branch-label">Then branch by customer type</div>
+<div class="sub-branch" style="margin-bottom:8px;">
+<div class="sb-title">Contractor / FM / Reseller</div>
+<ul class="checklist">
+<li><span class="ck-icon">📋</span>Same 5-document checklist as the email flow above</li>
+</ul>
+<button class="copy-btn" onclick="openModal('wa-docs')">📋 Copy Document Request</button>
+</div>
+<div class="sub-branch">
+<div class="sb-title">End User / Homeowner</div>
+<ul class="checklist">
+<li><span class="ck-icon">👤</span>Full name</li>
+<li><span class="ck-icon">🔢</span>Water heater model (from the unit label)</li>
+<li><span class="ck-icon">📝</span>Brief description of the issue</li>
+<li><span class="ck-icon">📍</span>Location or area in the UAE</li>
+<li><span class="ck-icon">📞</span>Best contact number</li>
+</ul>
+<button class="copy-btn" onclick="openModal('wa-enduser')">📋 Copy End User Message</button>
+</div>
+</div>
+</div>
+
+
+<div class="flow-col">
+<div class="channel-card">
+<div class="ch-icon">📞</div>
+<div class="ch-label">Call or Direct Message</div>
+<div class="ch-note">Contractor, Reseller, End User or FM. Identify first.</div>
+</div>
+<div class="arrow-down"><div class="aline"></div><div class="ahead"></div></div>
+<div class="action-card">
+<div class="ac-title">Step A: Handle the Call</div>
+<div class="ac-note">Use the verbal guide to greet, identify and route. Then send a WhatsApp follow-up message.</div>
+<button class="copy-btn" onclick="openModal('call-script')">📋 Copy Call Script</button>
+<button class="copy-btn" onclick="openModal('call-followup')">📋 Copy Post-Call Follow-Up</button>
+<div class="branch-label">Same routing as WhatsApp</div>
+<div class="sub-branch" style="margin-bottom:8px;">
+<div class="sb-title">Contractor / FM / Reseller</div>
+<ul class="checklist">
+<li><span class="ck-icon">📤</span>Let them know you will WhatsApp the 5-document checklist immediately</li>
+</ul>
+</div>
+<div class="sub-branch">
+<div class="sb-title">End User / Homeowner</div>
+<ul class="checklist">
+<li><span class="ck-icon">📝</span>Collect name, model, issue, location and contact number on the call</li>
+<li><span class="ck-icon">📤</span>Send a WhatsApp follow-up to confirm the details</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+</div>
+
+
+<!-- CONVERGE -->
+<div class="converge-band">
+<div class="converge-lines">
+<div class="c-line"></div>
+<div class="c-line"></div>
+<div class="c-line"></div>
+</div>
+<div class="converge-pill">All channels follow the same process from here</div>
+<div class="converge-bottom-line"></div>
+</div>
+
+
+
+
+<!-- STEP 2 -->
+<div class="section-title">Step 2: Awaiting Response or Documents</div>
+
+
+<div class="scenario-grid">
+<div class="scenario-card">
+<div class="sc-icon">⏰</div>
+<div class="sc-title">The customer has not replied</div>
+<div class="sc-note">If there is no response after 1 to 2 business days, send a gentle and polite follow-up. Keep the tone warm and patient. Do not send more than two follow-up messages before checking with your manager.</div>
+<button class="copy-btn" onclick="openModal('followup')">📋 Copy Follow-Up Message</button>
+</div>
+<div class="scenario-card">
+<div class="sc-icon">📂</div>
+<div class="sc-title">The customer says they do not have the documents</div>
+<div class="sc-note">Do not make the customer feel at fault. Acknowledge the situation, reassure them and ask them to share whatever they are able to. Let them know that even partial information is helpful.</div>
+<button class="copy-btn" onclick="openModal('missing-docs')">📋 Copy Response for Missing Documents</button>
+</div>
+</div>
+
+
+<div class="center-arrow"><div class="ca-line"></div><div class="ca-head"></div></div>
+
+
+
+
+<!-- STEP 3 -->
+<div class="section-title">Step 3: Documents Received, Log and Confirm</div>
+
+
+<div class="full-step-card">
+<div class="fsc-header">
+<div class="fsc-icon-wrap">📥</div>
+<div class="fsc-text">
+<div class="fsc-title">All required documents have been received</div>
+<div class="fsc-note">Complete both actions below. Log the case internally first, then send the customer a confirmation so they know their complaint has been received and is being processed.</div>
+</div>
+</div>
+<div class="fsc-actions">
+<div class="fsc-action-item">
+<div class="fai-label">Internal Action</div>
+<div class="fai-text">Log the complaint in the system, assign a reference number and notify the technical team. Save all documents received.</div>
+<ul class="checklist">
+<li><span class="ck-icon">✅</span>Reference number assigned</li>
+<li><span class="ck-icon">✅</span>Documents saved and filed</li>
+<li><span class="ck-icon">✅</span>Technical team notified</li>
+</ul>
+</div>
+<div class="fsc-action-item">
+<div class="fai-label">Customer Action</div>
+<div class="fai-text">Send the customer a warm confirmation. Include their reference number and let them know when to expect an update.</div>
+<button class="copy-btn" onclick="openModal('docs-received')">📋 Copy Confirmation Message</button>
+</div>
+</div>
+</div>
+
+
+<div class="center-arrow"><div class="ca-line"></div><div class="ca-head"></div></div>
+
+
+
+
+<!-- STEP 4 -->
+<div class="section-title">Step 4: Outcome from Technical Review</div>
+
+
+<!-- Primary outcomes -->
+<div class="outcome-grid-primary">
+
+
+<div class="outcome-card approved">
+<div class="oc-badge">Outcome A: Claim Approved</div>
+<div class="oc-title">The issue is covered under warranty. Proceed with a free site visit.</div>
+<div class="oc-note">The technical team has confirmed the complaint falls within the warranty coverage and the warranty is still active. Communicate the approval and arrange the visit.</div>
+<ul class="checklist">
+<li><span class="ck-icon">📩</span>Inform the customer their claim has been approved</li>
+<li><span class="ck-icon">📅</span>Coordinate a convenient time for the technical site visit</li>
+<li><span class="ck-icon">👤</span>Confirm the on-site contact person is available on the day</li>
+<li><span class="ck-icon">🔑</span>Make sure site access is arranged in advance</li>
+</ul>
+<button class="copy-btn" onclick="openModal('claim-approved')">📋 Copy Approval Message</button>
+</div>
+
+
+<div class="outcome-card not-covered">
+<div class="oc-badge">Outcome B: Not Covered by Warranty</div>
+<div class="oc-title">The issue falls outside warranty scope. A call-out fee of 160 AED applies.</div>
+<div class="oc-note">The warranty does not cover this complaint. This may be due to expiry, misuse, physical damage or another exclusion. A paid site visit is the next option. The customer must agree before any visit is booked.</div>
+<div class="fee-box">Call-Out Fee: 160 AED (payable on the day of the visit)</div>
+<ul class="checklist">
+<li><span class="ck-icon">📩</span>Inform the customer politely and clearly state the reason</li>
+<li><span class="ck-icon">💰</span>Explain the 160 AED call-out fee and what it covers</li>
+<li><span class="ck-icon">✅</span>Wait for the customer to confirm before booking anything</li>
+<li><span class="ck-icon">📋</span>See Step 5 below for how to handle their response</li>
+</ul>
+<button class="copy-btn" onclick="openModal('not-covered')">📋 Copy Not Covered Message</button>
+</div>
+
+
+</div>
+
+
+<!-- Edge case label -->
+<div class="edge-heading">Other Situations That May Come Up</div>
+
+
+<!-- Edge case outcomes -->
+<div class="outcome-grid-edge">
+
+
+<div class="outcome-card edge">
+<div class="oc-badge">Outcome C: More Information Needed</div>
+<div class="oc-title">The technical team cannot assess the case yet.</div>
+<div class="oc-note">This may be because photos are unclear, a document is missing or the issue description is not detailed enough. Go back to the customer with a specific request. Do not send a generic message. Be clear about exactly what is needed.</div>
+<ul class="checklist">
+<li><span class="ck-icon">📋</span>Check with the technical team on what is missing</li>
+<li><span class="ck-icon">📝</span>Note the specific gap before reaching out</li>
+<li><span class="ck-icon">📩</span>Send a polite message requesting only the missing item</li>
+</ul>
+<button class="copy-btn" onclick="openModal('more-info')">📋 Copy More Info Request</button>
+</div>
+
+
+<div class="outcome-card edge">
+<div class="oc-badge">Outcome D: Not an Atlantic Product</div>
+<div class="oc-title">The unit is not an Atlantic Water Heater.</div>
+<div class="oc-note">This can happen when a customer contacts the wrong company or is unsure of their brand. Handle this with full professionalism and patience. Do not dismiss the customer. Acknowledge their situation and redirect them politely.</div>
+<ul class="checklist">
+<li><span class="ck-icon">🔍</span>Confirm the product is not an Atlantic unit before responding</li>
+<li><span class="ck-icon">📩</span>Politely inform the customer and suggest they contact the correct brand</li>
+<li><span class="ck-icon">📋</span>Log the interaction in the system for records</li>
+</ul>
+<button class="copy-btn" onclick="openModal('wrong-product')">📋 Copy Redirect Message</button>
+</div>
+
+
+<div class="outcome-card emergency">
+<div class="oc-badge">Outcome E: Emergency or Safety Concern</div>
+<div class="oc-title">A potential hazard has been reported. Do not follow the standard process.</div>
+<div class="oc-note">If the customer reports flooding, gas smell, electrical sparks, fire, or any other safety concern, this must be treated as an emergency. Reassure the customer immediately and escalate without delay.</div>
+<div class="emergency-protocol">
+<div class="ep-step"><span class="ep-num">1</span>Tell the customer to stay calm and keep a safe distance from the unit</div>
+<div class="ep-step"><span class="ep-num">2</span>If there is a gas smell or fire risk, advise them to leave the area and call emergency services (999)</div>
+<div class="ep-step"><span class="ep-num">3</span>Call your manager or the technical team immediately. Do not handle this alone.</div>
+<div class="ep-step"><span class="ep-num">4</span>Log the incident with a timestamp as soon as possible</div>
+</div>
+<button class="copy-btn" onclick="openModal('emergency-msg')">📋 Copy Emergency Response Message</button>
+</div>
+
+
+</div>
+
+
+<!-- Conditional transition to Step 5 -->
+<div class="conditional-label">The steps below apply only when the outcome is Outcome B (Not Covered, 160 AED call-out)</div>
+
+
+<div class="center-arrow"><div class="ca-line"></div><div class="ca-head"></div></div>
+
+
+
+
+<!-- STEP 5 -->
+<div class="section-title">Step 5: Customer Response to the 160 AED Call-Out Fee</div>
+
+
+<div class="scenario-grid">
+
+
+<div class="scenario-card">
+<div class="sc-icon">✅</div>
+<div class="sc-title">The customer agrees to the 160 AED call-out fee</div>
+<div class="sc-note">Once the customer confirms they are happy to proceed, book the site visit. The 160 AED fee is collected on the day of the visit by the technician. Do not book without explicit confirmation from the customer.</div>
+<ul class="checklist" style="margin-top:4px;">
+<li><span class="ck-icon">📅</span>Coordinate a visit date and time with the technical team</li>
+<li><span class="ck-icon">👤</span>Confirm the on-site contact and access arrangements</li>
+<li><span class="ck-icon">💰</span>Remind the customer the fee is 160 AED, payable on the day</li>
+<li><span class="ck-icon">📋</span>Log the booking in the system with the reference number</li>
+</ul>
+<button class="copy-btn" onclick="openModal('callout-agreed')">📋 Copy Booking Confirmation</button>
+</div>
+
+
+<div class="scenario-card">
+<div class="sc-icon">🔄</div>
+<div class="sc-title">The customer declines or needs more time to decide</div>
+<div class="sc-note">Respect the customer's decision. Do not pressure them. Keep the door open politely and make sure they know they can come back to us at any time. Log the outcome in the system and mark the case as pending the customer's decision.</div>
+<ul class="checklist" style="margin-top:4px;">
+<li><span class="ck-icon">📋</span>Update the case status in the system (pending customer decision)</li>
+<li><span class="ck-icon">📩</span>Send a polite close-out message that leaves the door open</li>
+<li><span class="ck-icon">📅</span>Add a reminder to follow up after 5 to 7 business days if no response</li>
+</ul>
+<button class="copy-btn" onclick="openModal('callout-declined')">📋 Copy Declined Response</button>
+</div>
+
+
+</div>
+
+
+</main>
+
+
+
+
+<!-- MODALS -->
+
+
+<!-- MSG 1: Email Reply -->
+<div class="modal-overlay" id="modal-email-reply" onclick="closeModalOnBg(event,'email-reply')">
+<div class="modal">
+<div class="modal-header">
+<h2>📧 Email Reply: Warranty Complaint</h2>
+<button class="modal-close" onclick="closeModal('email-reply')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Fields shown in <strong>[brackets]</strong> are placeholders. Please fill them in before sending.</div>
+<div class="msg-text" id="msg-email-reply">Subject: Re: Warranty Complaint, <span class="ph">[Unit Model or Reference]</span>
+
+
+Dear Sir / Madam,
+
+
+Thank you for reaching out to Atlantic Water Heaters. We truly appreciate you bringing this to our attention and we sincerely apologize for any inconvenience you may be experiencing.
+
+
+To ensure we handle your complaint as efficiently and effectively as possible, we kindly ask you to provide the following documents at your earliest convenience:
+
+
+1. Completed Warranty Claim Request, Checklist and Declaration Form
+2. Copy of the warranty certificate
+3. Clear photos or videos showing the fault, including the product model and serial number label
+4. Site location pin (Google Maps link) and access instructions
+5. Name and mobile number of the on-site contact person
+
+
+Once we receive the above, our technical team will review your case and will be in touch with you promptly regarding the next steps.
+
+
+Please do not hesitate to reach out if you need any assistance. We are always here to help.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Customer Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-email-reply" onclick="copyModal('email-reply','Copy Message')">📋 Copy Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 2: WhatsApp First Response -->
+<div class="modal-overlay" id="modal-wa-first" onclick="closeModalOnBg(event,'wa-first')">
+<div class="modal">
+<div class="modal-header">
+<h2>💬 WhatsApp: First Response</h2>
+<button class="modal-close" onclick="closeModal('wa-first')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Send this message before you know who the customer is. Replace the <strong>[bracket]</strong> fields before sending.</div>
+<div class="msg-text" id="msg-wa-first">Hello, good <span class="ph">[morning / afternoon]</span>, Sir / Madam! 🌟
+
+
+Thank you for contacting Atlantic Water Heaters. We are sorry to hear you are experiencing an issue and we are here to help you straight away.
+
+
+To make sure we connect you with the right team, could you kindly let us know which of the following best describes you:
+
+
+- End User or Homeowner
+- Contractor or Technician
+- Reseller or Distributor
+- Facility Management Company
+
+
+This will help us assist you in the most effective way possible. Thank you so much for your patience, Sir / Madam.</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-wa-first" onclick="copyModal('wa-first','Copy Message')">📋 Copy Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 3: WhatsApp Docs -->
+<div class="modal-overlay" id="modal-wa-docs" onclick="closeModalOnBg(event,'wa-docs')">
+<div class="modal">
+<div class="modal-header">
+<h2>💬 WhatsApp: Document Request (Contractor, FM or Reseller)</h2>
+<button class="modal-close" onclick="closeModal('wa-docs')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Send this after the customer confirms they are a Contractor, FM or Reseller.</div>
+<div class="msg-text" id="msg-wa-docs">Thank you for confirming, Sir / Madam. We truly appreciate your cooperation.
+
+
+To proceed with your warranty complaint, could you kindly share the following documents with us here on WhatsApp:
+
+
+1. Completed Warranty Claim Request, Checklist and Declaration Form
+2. Copy of the warranty certificate
+3. Clear photos or videos of the fault, including the model and serial number label
+4. Site location pin (Google Maps) and any access instructions
+5. Name and mobile number of the on-site contact person
+
+
+As soon as we receive these, we will get the process started for you right away. Please do not hesitate to let us know if you need any help at all. Thank you, Sir / Madam!</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-wa-docs" onclick="copyModal('wa-docs','Copy Message')">📋 Copy Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 4: WhatsApp End User -->
+<div class="modal-overlay" id="modal-wa-enduser" onclick="closeModalOnBg(event,'wa-enduser')">
+<div class="modal">
+<div class="modal-header">
+<h2>💬 WhatsApp: End User Flow</h2>
+<button class="modal-close" onclick="closeModal('wa-enduser')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Send this after the customer confirms they are an End User or Homeowner.</div>
+<div class="msg-text" id="msg-wa-enduser">Thank you so much for reaching out, Sir / Madam. We are sorry to hear about the trouble and we will do our very best to assist you as quickly as possible.
+
+
+Could you kindly share the following details so we can look into this for you:
+
+
+- Your full name
+- Water heater model (found on the label on the unit)
+- A brief description of the issue you are facing
+- Your location or area in the UAE
+- The best number to reach you on
+
+
+We will review your information and get back to you as soon as possible. Thank you so much for your patience. We really appreciate it!</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-wa-enduser" onclick="copyModal('wa-enduser','Copy Message')">📋 Copy Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 5: Call Script -->
+<div class="modal-overlay" id="modal-call-script" onclick="closeModalOnBg(event,'call-script')">
+<div class="modal">
+<div class="modal-header">
+<h2>📞 Call Script: Verbal Guide</h2>
+<button class="modal-close" onclick="closeModal('call-script')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">This is a read-aloud guide for use during a phone call. Fields in <strong>[brackets]</strong> should be filled in as you speak.</div>
+<div class="script-section">
+<div class="script-label">Opening</div>
+<div class="msg-text">"Good <span class="ph">[morning / afternoon]</span>, thank you for calling Atlantic Water Heaters. My name is <span class="ph">[Your Name]</span>. How may I assist you today, Sir / Madam?"</div>
+</div>
+<div class="script-section">
+<div class="script-label">After Hearing the Complaint</div>
+<div class="msg-text">"I am very sorry to hear that, Sir / Madam. Please do not worry. We will make sure this is taken care of for you."</div>
+</div>
+<div class="script-section">
+<div class="script-label">Identify the Caller</div>
+<div class="msg-text">"May I ask, Sir / Madam, are you the end user, a contractor, a reseller or a facility management company? This will help me direct you to the right team."</div>
+</div>
+<div class="script-section">
+<div class="script-label">If Contractor, FM or Reseller</div>
+<div class="msg-text">"Certainly, Sir / Madam. I will need a few documents from your side to begin the warranty process. I will send you a WhatsApp message right now with the full list so you have everything in writing. Is this the best number to reach you on?"</div>
+</div>
+<div class="script-section">
+<div class="script-label">If End User</div>
+<div class="msg-text">"Of course, Sir / Madam. Could I please take your name, your unit model number if you have it available, and a brief description of the issue? I will log this for you straight away."</div>
+</div>
+<div class="script-section">
+<div class="script-label">Closing</div>
+<div class="msg-text">"Thank you so much for calling, Sir / Madam. We will follow up with you very shortly. Have a wonderful day!"</div>
+</div>
+<div id="msg-call-script" style="display:none;">READ ALOUD: CALL GUIDE
+
+
+OPENING:
+"Good [morning / afternoon], thank you for calling Atlantic Water Heaters. My name is [Your Name]. How may I assist you today, Sir / Madam?"
+
+
+AFTER HEARING THE COMPLAINT:
+"I am very sorry to hear that, Sir / Madam. Please do not worry. We will make sure this is taken care of for you."
+
+
+IDENTIFY THE CALLER:
+"May I ask, Sir / Madam, are you the end user, a contractor, a reseller or a facility management company? This will help me direct you to the right team."
+
+
+IF CONTRACTOR, FM OR RESELLER:
+"Certainly, Sir / Madam. I will need a few documents from your side to begin the warranty process. I will send you a WhatsApp message right now with the full list so you have everything in writing. Is this the best number to reach you on?"
+
+
+IF END USER:
+"Of course, Sir / Madam. Could I please take your name, your unit model number if you have it available, and a brief description of the issue? I will log this for you straight away."
+
+
+CLOSING:
+"Thank you so much for calling, Sir / Madam. We will follow up with you very shortly. Have a wonderful day!"</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-call-script" onclick="copyModal('call-script','Copy Call Script')">📋 Copy Call Script</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 6: Post-Call Follow-Up -->
+<div class="modal-overlay" id="modal-call-followup" onclick="closeModalOnBg(event,'call-followup')">
+<div class="modal">
+<div class="modal-header">
+<h2>📞 Post-Call WhatsApp Follow-Up</h2>
+<button class="modal-close" onclick="closeModal('call-followup')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Fill in all <strong>[bracket]</strong> fields. After the instruction note, paste in either the 5-document checklist (for Contractors or FM) or the 5 basic details list (for End Users).</div>
+<div class="msg-text" id="msg-call-followup">Hello Sir / Madam, this is <span class="ph">[Your Name]</span> from Atlantic Water Heaters. We just spoke on the phone. 😊
+
+
+As discussed, could you kindly share the following details or documents with us here so we can get started on your request straight away:
+
+
+<span class="ph">[FRONT DESK NOTE: Paste the relevant list here. Use the 5-document warranty checklist for Contractors or FM, or the 5 basic details list for End Users.]</span>
+
+
+Thank you so much for your time and patience. We look forward to resolving this for you as quickly as possible. Please feel free to message us if you need anything at all!</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-call-followup" onclick="copyModal('call-followup','Copy Follow-Up Message')">📋 Copy Follow-Up Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 7: Follow-Up No Reply -->
+<div class="modal-overlay" id="modal-followup" onclick="closeModalOnBg(event,'followup')">
+<div class="modal">
+<div class="modal-header">
+<h2>⏰ Follow-Up: No Response Received</h2>
+<button class="modal-close" onclick="closeModal('followup')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Send this after 1 to 2 business days with no reply. Keep the tone warm. Do not send more than two follow-up messages before checking with your manager.</div>
+<div class="msg-text" id="msg-followup">Hello Sir / Madam, we hope you are doing well! 😊
+
+
+We are just following up on our earlier message regarding your complaint with Atlantic Water Heaters.
+
+
+We completely understand how busy things can be and we truly appreciate your patience. Whenever you are ready, please do share the required documents or details with us and we will get started on your case right away.
+
+
+If there is anything you need help with, such as finding a document or filling in the form, please do not hesitate to let us know. We are happy to assist you at every step.
+
+
+We look forward to hearing from you, Sir / Madam. Thank you!</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-followup" onclick="copyModal('followup','Copy Follow-Up Message')">📋 Copy Follow-Up Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 8: Missing Docs -->
+<div class="modal-overlay" id="modal-missing-docs" onclick="closeModalOnBg(event,'missing-docs')">
+<div class="modal">
+<div class="modal-header">
+<h2>📂 Response: Missing Documents</h2>
+<button class="modal-close" onclick="closeModal('missing-docs')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Use this when a customer says they do not have one or more of the required documents. Be reassuring and never make them feel at fault.</div>
+<div class="msg-text" id="msg-missing-docs">Thank you for letting us know, Sir / Madam. We completely understand and we truly appreciate your honesty.
+
+
+Please do not worry at all. We will do our very best to work with whatever you are able to share. Could you kindly try to provide as many of the following as possible:
+
+
+1. Completed Warranty Claim Request, Checklist and Declaration Form
+2. Copy of the warranty certificate
+3. Clear photos or videos of the fault, including the model and serial number label
+4. Site location pin (Google Maps) and access instructions
+5. Name and mobile number of the on-site contact person
+
+
+Even partial information is very helpful to us. If there is a specific document you are having difficulty obtaining, please let us know and we will do our best to advise you on how to proceed.
+
+
+Thank you so much for your cooperation and patience, Sir / Madam. We are here to help!</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-missing-docs" onclick="copyModal('missing-docs','Copy Message')">📋 Copy Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 9: Docs Received -->
+<div class="modal-overlay" id="modal-docs-received" onclick="closeModalOnBg(event,'docs-received')">
+<div class="modal">
+<div class="modal-header">
+<h2>📥 Documents Received: Confirmation</h2>
+<button class="modal-close" onclick="closeModal('docs-received')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Fill in the <strong>[bracket]</strong> fields, especially the ticket reference number and the expected response timeline, before sending.</div>
+<div class="msg-text" id="msg-docs-received">Thank you so much, Sir / Madam! We have received all of the required information and your complaint has now been logged in our system.
+
+
+Your reference number is: <span class="ph">[Ticket or Reference Number]</span>
+
+
+Our technical team will review your case carefully and will be in touch with you within <span class="ph">[X]</span> business days with the next steps.
+
+
+We sincerely appreciate your patience and cooperation throughout this process. Please feel free to reach out at any time if you need an update. We are always here to help.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Customer Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-docs-received" onclick="copyModal('docs-received','Copy Confirmation Message')">📋 Copy Confirmation Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 10: Claim Approved -->
+<div class="modal-overlay" id="modal-claim-approved" onclick="closeModalOnBg(event,'claim-approved')">
+<div class="modal">
+<div class="modal-header">
+<h2>Outcome A: Claim Approved</h2>
+<button class="modal-close" onclick="closeModal('claim-approved')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Fill in all <strong>[bracket]</strong> fields. If possible, confirm visit timing with the technical team before reaching out to the customer.</div>
+<div class="msg-text" id="msg-claim-approved">Dear Sir / Madam,
+
+
+We are pleased to inform you that your warranty claim (Reference: <span class="ph">[Reference Number]</span>) has been reviewed and approved by our technical team.
+
+
+Our team will be in touch with you shortly to arrange a convenient time for a site visit. We kindly ask that the on-site contact person is available on the day and that access to the unit is arranged in advance.
+
+
+If you have any preferred dates or times, please do not hesitate to let us know and we will do our best to accommodate you.
+
+
+Thank you so much for your patience throughout this process. We look forward to resolving this for you as soon as possible.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Technical Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-claim-approved" onclick="copyModal('claim-approved','Copy Approval Message')">📋 Copy Approval Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 11: Not Covered, 160 AED -->
+<div class="modal-overlay" id="modal-not-covered" onclick="closeModalOnBg(event,'not-covered')">
+<div class="modal">
+<div class="modal-header">
+<h2>Outcome B: Not Covered by Warranty</h2>
+<button class="modal-close" onclick="closeModal('not-covered')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Fill in all <strong>[bracket]</strong> fields, including the specific reason the claim is not covered. Always offer the paid service option. Do not book a visit until the customer confirms.</div>
+<div class="msg-text" id="msg-not-covered">Dear Sir / Madam,
+
+
+Thank you very much for your patience while we reviewed your case (Reference: <span class="ph">[Reference Number]</span>).
+
+
+After a thorough assessment by our technical team, we regret to inform you that the reported issue does not fall within the scope of the warranty coverage. The reason for this is as follows:
+
+
+<span class="ph">[Reason, for example: the warranty period has expired / the reported damage is not covered under the warranty terms / evidence of misuse or physical damage was identified]</span>
+
+
+We sincerely apologize for any inconvenience this may cause and we fully appreciate your understanding.
+
+
+However, we are very much here to support you. Our team is able to arrange a paid site visit to assess and resolve the issue. The call-out fee for this service is 160 AED, which is payable on the day of the visit. If any additional repair work is required, our technician will provide you with a separate quotation on site before proceeding.
+
+
+Would you like us to go ahead and arrange the visit for you? Please let us know at your convenience and we will get it booked straight away.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Customer Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-not-covered" onclick="copyModal('not-covered','Copy Not Covered Message')">📋 Copy Not Covered Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 12: More Info Needed -->
+<div class="modal-overlay" id="modal-more-info" onclick="closeModalOnBg(event,'more-info')">
+<div class="modal">
+<div class="modal-header">
+<h2>Outcome C: More Information Needed</h2>
+<button class="modal-close" onclick="closeModal('more-info')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Check with the technical team first to understand exactly what is missing. Then fill in the <strong>[bracket]</strong> field with only the specific item needed. Do not send a full checklist again if documents were already received.</div>
+<div class="msg-text" id="msg-more-info">Dear Sir / Madam,
+
+
+Thank you for your patience while our team has been reviewing your case (Reference: <span class="ph">[Reference Number]</span>).
+
+
+In order to complete the assessment of your complaint, our technical team requires the following additional information:
+
+
+<span class="ph">[Specify exactly what is needed, for example: clearer photos of the serial number label / a photo showing the full unit from a wider angle / confirmation of the installation date / the specific error or symptom in more detail]</span>
+
+
+We apologize for the need to come back to you with this request. Kindly share the above with us at your earliest convenience so we can continue processing your case without any further delay.
+
+
+Please do not hesitate to reach out if you need any guidance on how to provide the above. We are happy to help.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Customer Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-more-info" onclick="copyModal('more-info','Copy More Info Request')">📋 Copy More Info Request</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 13: Wrong Product -->
+<div class="modal-overlay" id="modal-wrong-product" onclick="closeModalOnBg(event,'wrong-product')">
+<div class="modal">
+<div class="modal-header">
+<h2>Outcome D: Not an Atlantic Product</h2>
+<button class="modal-close" onclick="closeModal('wrong-product')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Confirm this with the technical team before sending. Be kind and professional. The customer may simply be confused about their brand.</div>
+<div class="msg-text" id="msg-wrong-product">Dear Sir / Madam,
+
+
+Thank you so much for reaching out to Atlantic Water Heaters and for your patience while we looked into your case.
+
+
+After reviewing the details and photographs you have shared, we believe that the unit in question may not be an Atlantic Water Heater product. Atlantic units can be identified by the Atlantic brand name and logo displayed on the front of the unit, along with the model and serial number label.
+
+
+We would kindly recommend reaching out to the manufacturer or supplier of your unit directly, as they will be best placed to assist you with your complaint.
+
+
+We are sorry we are not able to assist further on this occasion. If you do have any Atlantic Water Heater products and would like our support, please do not hesitate to contact us at any time. We are always happy to help.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Customer Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-wrong-product" onclick="copyModal('wrong-product','Copy Redirect Message')">📋 Copy Redirect Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 14: Emergency Response -->
+<div class="modal-overlay" id="modal-emergency-msg" onclick="closeModalOnBg(event,'emergency-msg')">
+<div class="modal">
+<div class="modal-header">
+<h2>Outcome E: Emergency Response Message</h2>
+<button class="modal-close" onclick="closeModal('emergency-msg')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Send this immediately to acknowledge the customer while you escalate internally. Do not delay. Call your manager at the same time. If there is a fire or gas risk, tell the customer to call 999 first.</div>
+<div class="msg-text" id="msg-emergency-msg">Dear Sir / Madam,
+
+
+Thank you for contacting us and please know that we are taking your message very seriously.
+
+
+We understand that you are reporting an urgent safety concern with your water heater unit and we want to make sure you and everyone around you are safe first.
+
+
+If you believe there is any immediate risk to safety, such as a gas smell, flooding or electrical fault, please keep a safe distance from the unit and contact emergency services immediately by calling 999.
+
+
+We have escalated your case to our technical team as a priority and someone will be in touch with you as soon as possible. Please do not attempt to operate or repair the unit yourself.
+
+
+We sincerely apologize for the distress this has caused and we are doing everything we can to assist you right away.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Customer Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-emergency-msg" onclick="copyModal('emergency-msg','Copy Emergency Message')">📋 Copy Emergency Message</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 15: Call-Out Agreed -->
+<div class="modal-overlay" id="modal-callout-agreed" onclick="closeModalOnBg(event,'callout-agreed')">
+<div class="modal">
+<div class="modal-header">
+<h2>Step 5: Customer Agrees to 160 AED Call-Out</h2>
+<button class="modal-close" onclick="closeModal('callout-agreed')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Only send this after confirming the visit date and time with the technical team. Fill in all <strong>[bracket]</strong> fields including the confirmed visit date.</div>
+<div class="msg-text" id="msg-callout-agreed">Dear Sir / Madam,
+
+
+Thank you for confirming. We truly appreciate your trust in Atlantic Water Heaters and we will do our very best to get this resolved for you promptly.
+
+
+We are pleased to confirm that a site visit has been arranged for your unit. Below are the details:
+
+
+Visit Date: <span class="ph">[Confirmed Date]</span>
+Visit Time: <span class="ph">[Confirmed Time or Time Window]</span>
+On-Site Contact: <span class="ph">[Contact Name and Number]</span>
+
+
+Please note that the call-out fee of 160 AED is payable on the day of the visit to the attending technician. Should any additional repair work be required, the technician will provide you with a full quotation on site before any work is carried out.
+
+
+Kindly ensure the contact person is available and that access to the unit is arranged in advance. If you need to reschedule for any reason, please let us know as soon as possible.
+
+
+We look forward to assisting you and we thank you for your continued patience.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Technical Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-callout-agreed" onclick="copyModal('callout-agreed','Copy Booking Confirmation')">📋 Copy Booking Confirmation</button>
+</div>
+</div>
+</div>
+
+
+<!-- MSG 16: Call-Out Declined -->
+<div class="modal-overlay" id="modal-callout-declined" onclick="closeModalOnBg(event,'callout-declined')">
+<div class="modal">
+<div class="modal-header">
+<h2>Step 5: Customer Declines or Needs More Time</h2>
+<button class="modal-close" onclick="closeModal('callout-declined')">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-note">Keep the tone warm and leave the door fully open. Mark the case as pending in the system and set a reminder to follow up after 5 to 7 business days.</div>
+<div class="msg-text" id="msg-callout-declined">Dear Sir / Madam,
+
+
+Thank you for letting us know. We completely respect your decision and there is absolutely no pressure from our side.
+
+
+Your case (Reference: <span class="ph">[Reference Number]</span>) will remain on our records and should you decide at any point that you would like to go ahead with the service visit, please do not hesitate to reach out to us. We will be happy to arrange this for you at your convenience.
+
+
+We hope the situation improves for you and we remain available if there is anything else we can assist with.
+
+
+Warm regards,
+<span class="ph">[Your Name]</span>
+Atlantic Water Heaters, Customer Support Team</div>
+</div>
+<div class="modal-footer">
+<button class="modal-copy-btn" id="mcopy-callout-declined" onclick="copyModal('callout-declined','Copy Declined Response')">📋 Copy Declined Response</button>
+</div>
+</div>
+</div>
+
+
+
+
+<!-- JAVASCRIPT -->
+<script>
+function openModal(id) {
+document.getElementById('modal-' + id).classList.add('open');
+document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+document.getElementById('modal-' + id).classList.remove('open');
+document.body.style.overflow = '';
+}
+function closeModalOnBg(e, id) {
+if (e.target === document.getElementById('modal-' + id)) closeModal(id);
+}
+document.addEventListener('keydown', function(e) {
+if (e.key === 'Escape') {
+document.querySelectorAll('.modal-overlay.open').forEach(function(el) {
+el.classList.remove('open');
+});
+document.body.style.overflow = '';
+}
+});
+function getPlainText(id) {
+var el = document.getElementById('msg-' + id);
+var clone = el.cloneNode(true);
+clone.querySelectorAll('.ph').forEach(function(ph) { ph.replaceWith(ph.textContent); });
+var html = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+var tmp = document.createElement('div');
+tmp.innerHTML = html;
+return (tmp.textContent || tmp.innerText || '').trim();
+}
+function copyModal(id, label) {
+var text = getPlainText(id);
+navigator.clipboard.writeText(text).then(function() {
+var btn = document.getElementById('mcopy-' + id);
+btn.textContent = 'Copied!';
+btn.classList.add('copied');
+setTimeout(function() {
+btn.textContent = '📋 ' + label;
+btn.classList.remove('copied');
+}, 2000);
+});
+}
+</script>
+</body>
+</html>
+
+
+
+
