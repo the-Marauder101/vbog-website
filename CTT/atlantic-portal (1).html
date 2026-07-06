@@ -1,0 +1,3440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Internal Portal | Atlantic After-Sales UAE</title>
+<style>
+  :root {
+    --red: #e2001a;
+    --navy: #0d2c54;
+    --navy-2: #143c72;
+    --text: #1f2937;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* ===== Hero / main menu ===== */
+  #hero {
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, #1a4a8a 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  #hero .inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 20px;
+  }
+  .logo-badge {
+    background: var(--red);
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    margin-bottom: 22px;
+  }
+  #hero h1 { font-size: 30px; font-weight: 700; letter-spacing: -.01em; }
+  #hero .sub { margin-top: 10px; font-size: 15px; opacity: .8; max-width: 480px; line-height: 1.6; }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(240px, 320px));
+    gap: 22px;
+    margin-top: 44px;
+    width: 100%;
+    max-width: 720px;
+    justify-content: center;
+  }
+  .tool-card {
+    background: #fff;
+    color: var(--text);
+    border-radius: 18px;
+    padding: 30px 26px;
+    text-align: left;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    transition: transform .14s, box-shadow .14s;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tool-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.32); }
+  .tool-card .icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; margin-bottom: 6px;
+  }
+  .tool-card.guide .icon { background: #e8f0fc; }
+  .tool-card.calc .icon { background: #fdeaec; }
+  .tool-card h2 { font-size: 19px; color: var(--navy); }
+  .tool-card p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+  .tool-card .go { margin-top: auto; padding-top: 10px; font-size: 13.5px; font-weight: 700; color: var(--red); }
+  #hero footer { text-align: center; font-size: 12px; opacity: .55; padding: 18px; }
+  @media (max-width: 620px) {
+    .cards { grid-template-columns: 1fr; max-width: 360px; }
+    #hero h1 { font-size: 24px; }
+    #hero .inner { padding: 36px 18px; }
+  }
+
+  /* ===== Tool frame ===== */
+  #toolWrap { position: fixed; inset: 0; background: #fff; }
+  #toolWrap[hidden] { display: none; }
+  #toolFrame { width: 100%; height: 100%; border: none; display: block; }
+</style>
+</head>
+<body>
+
+<div id="hero">
+  <div class="inner">
+    <div class="logo-badge">ATLANTIC</div>
+    <h1>After-Sales Internal Portal</h1>
+    <p class="sub">Official After-Sales | Water Heaters &amp; Heat Pumps, UAE.<br>Pick a tool to get started.</p>
+    <div class="cards">
+      <button type="button" class="tool-card guide" onclick="openTool('guide')">
+        <span class="icon">&#128203;</span>
+        <h2>Front Desk Guide</h2>
+        <p>Click-and-follow SOP cards for every customer situation, with prices to quote and ready-to-send messages with one-click copy.</p>
+        <span class="go">Open guide &rarr;</span>
+      </button>
+      <button type="button" class="tool-card calc" onclick="openTool('calc')">
+        <span class="icon">&#129518;</span>
+        <h2>Quote Calculator</h2>
+        <p>Build an instant estimate for installations, repairs and spare parts, then print a formal quotation as a PDF.</p>
+        <span class="go">Open calculator &rarr;</span>
+      </button>
+    </div>
+  </div>
+  <footer>Internal use only &middot; Atlantic After-Sales UAE</footer>
+</div>
+
+<div id="toolWrap" hidden>
+  <iframe id="toolFrame" title="Tool"></iframe>
+</div>
+
+<!-- ============ EMBEDDED TOOL: FRONT DESK GUIDE ============ -->
+<template id="tpl-guide">
+<style>
+  :root {
+    --red: #e2001a;
+    --navy: #0d2c54;
+    --navy-light: #1a4a8a;
+    --bg: #f4f6fa;
+    --card-bg: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --green: #0e9f6e;
+    --amber: #b45309;
+    --amber-bg: #fef3c7;
+    --border: #e5e7eb;
+    --radius: 14px;
+    --shadow: 0 1px 3px rgba(13,44,84,.08), 0 4px 14px rgba(13,44,84,.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .logo-badge {
+    background: var(--red);
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: .5px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  header h1 { font-size: 16px; font-weight: 600; line-height: 1.3; }
+  header .sub { font-size: 12px; opacity: .75; font-weight: 400; }
+
+  .container { max-width: 760px; margin: 0 auto; padding: 18px 16px 80px; }
+
+  /* Search */
+  .search-wrap { position: relative; margin-bottom: 14px; }
+  #search {
+    width: 100%;
+    padding: 13px 16px 13px 42px;
+    font-size: 15px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card-bg) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') 14px center no-repeat;
+    outline: none;
+  }
+  #search:focus { border-color: var(--navy-light); }
+  #search-results {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    z-index: 30; overflow: hidden; display: none;
+  }
+  #search-results.open { display: block; }
+  .search-item {
+    display: block; width: 100%; text-align: left;
+    padding: 12px 16px; border: none; background: none;
+    font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border);
+  }
+  .search-item:last-child { border-bottom: none; }
+  .search-item:hover { background: #eef2f9; }
+  .search-item .path { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Breadcrumbs */
+  .crumbs {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    font-size: 13px; color: var(--muted); margin-bottom: 12px; min-height: 20px;
+  }
+  .crumbs button {
+    background: none; border: none; color: var(--navy-light);
+    font-size: 13px; cursor: pointer; padding: 2px 4px; border-radius: 4px;
+  }
+  .crumbs button:hover { text-decoration: underline; }
+  .crumbs .sep { color: #c3cad6; }
+  .crumbs .current { color: var(--text); font-weight: 600; padding: 2px 4px; }
+
+  /* Card */
+  .card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 22px 20px;
+  }
+  .card h2 { font-size: 19px; color: var(--navy); margin-bottom: 6px; }
+  .card .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+
+  .options { display: grid; gap: 10px; margin-top: 14px; }
+  .opt {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; text-align: left;
+    padding: 15px 16px; font-size: 15px; font-weight: 500;
+    background: #f8fafc; color: var(--text);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    cursor: pointer; transition: border-color .12s, background .12s, transform .06s;
+  }
+  .opt:hover { border-color: var(--navy-light); background: #eef2f9; }
+  .opt:active { transform: scale(.99); }
+  .opt .icon { font-size: 20px; flex-shrink: 0; }
+  .opt .arrow { margin-left: auto; color: #b6bfcd; font-size: 16px; flex-shrink: 0; }
+
+  /* Steps */
+  .steps { margin: 14px 0; padding: 0; list-style: none; counter-reset: step; }
+  .steps li {
+    counter-increment: step;
+    position: relative; padding: 8px 0 8px 40px; font-size: 15px; line-height: 1.5;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 7px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--navy); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Price block */
+  .price-block {
+    background: #f0f6ff; border: 1.5px solid #c9ddf7;
+    border-radius: 12px; padding: 14px 16px; margin: 14px 0;
+  }
+  .price-block .label {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--navy-light); margin-bottom: 8px;
+  }
+  .price-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 6px 0; font-size: 15px; border-bottom: 1px dashed #c9ddf7;
+  }
+  .price-row:last-child { border-bottom: none; }
+  .price-row .amount { font-weight: 700; color: var(--navy); white-space: nowrap; }
+
+  /* Message block */
+  .msg-block {
+    background: #f9fafb; border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; margin: 14px 0;
+  }
+  .msg-block .msg-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; margin-bottom: 10px;
+  }
+  .msg-block .label {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--muted);
+  }
+  .msg-text { font-size: 14.5px; line-height: 1.65; white-space: pre-wrap; color: #374151; }
+  .msg-text .ph { background: #fef3c7; color: var(--amber); border-radius: 4px; padding: 0 3px; font-weight: 600; }
+  .copy-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--navy); color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 14px; font-size: 13px; font-weight: 600;
+    cursor: pointer; flex-shrink: 0; transition: background .12s;
+  }
+  .copy-btn:hover { background: var(--navy-light); }
+  .copy-btn.copied { background: var(--green); }
+
+  /* Escalate / note */
+  .escalate-box {
+    background: var(--amber-bg); border: 1.5px solid #fcd34d;
+    border-radius: 12px; padding: 14px 16px; margin: 14px 0;
+    font-size: 14.5px; line-height: 1.55; color: #78350f;
+  }
+  .escalate-box strong { color: #92400e; }
+  .note {
+    font-size: 13.5px; color: var(--muted); margin-top: 12px;
+    padding-left: 10px; border-left: 3px solid var(--border); line-height: 1.5;
+  }
+
+  /* Nav buttons */
+  .nav-row { display: flex; gap: 10px; margin-top: 18px; }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 11px 18px; font-size: 14px; font-weight: 600;
+    border-radius: 10px; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--card-bg); color: var(--text);
+    transition: border-color .12s, background .12s;
+  }
+  .nav-btn:hover { border-color: var(--navy-light); background: #eef2f9; }
+  .nav-btn.home { margin-left: auto; }
+
+  footer {
+    text-align: center; font-size: 12px; color: #9aa3b2;
+    padding: 24px 16px; line-height: 1.6;
+  }
+
+  @media (max-width: 480px) {
+    header h1 { font-size: 14px; }
+    .card { padding: 18px 15px; }
+    .card h2 { font-size: 17px; }
+  }
+</style>
+
+
+<header>
+  <div class="logo-badge">ATLANTIC</div>
+  <div>
+    <h1>Front Desk Guide</h1>
+    <div class="sub">Official After-Sales — Water Heaters &amp; Heat Pumps, UAE</div>
+  </div>
+  <a href="#" onclick="parent.showHome();return false;" style="margin-left:auto;color:#fff;opacity:.85;font-size:13px;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:7px 12px;white-space:nowrap;">← Home</a>
+</header>
+
+<div class="container">
+  <div class="search-wrap">
+    <input id="search" type="text" placeholder="Search… e.g. warranty, repair price, installation" autocomplete="off">
+    <div id="search-results"></div>
+  </div>
+  <nav class="crumbs" id="crumbs"></nav>
+  <main id="card"></main>
+</div>
+
+<footer>Internal use only · To update prices or messages, edit the CONFIG section at the top of this file.<br>When in doubt — check with the manager.</footer>
+
+<script>
+/* ============================================================
+   ============  EDIT HERE — CONFIG (prices & names)  =========
+   ============================================================
+   This is the ONLY section you normally need to touch.
+   - Change any price by editing the text in quotes.
+   - "AED ___" means the real price still needs to be filled in.
+   - Placeholders like [Customer Name] stay in the messages;
+     the front desk replaces them before sending.
+============================================================ */
+
+const CONFIG = {
+  companyName: "Atlantic After-Sales UAE",
+  managerName: "Sahil",                 // who to escalate to
+  managerContact: "[Manager Phone / Ext]",
+
+  prices: {
+    // --- Water heater unit prices (supply only, from Quote Calculator) ---
+    wh_30L:  "AED ___",
+    wh_50L:  "AED ___",
+    wh_80L:  "AED ___",
+    wh_100L: "AED ___",
+
+    // --- Services ---
+    installation_wh:   "AED ___",
+    inspection_visit:  "AED ___",
+    callout_fee:       "AED ___",
+    waiting_fee:       "AED ___",
+    amc_basic:         "AED ___",
+    amc_premium:       "AED ___",
+  },
+
+  warranty: {
+    parts_years: "2",   // warranty on parts (years)
+    tank_years:  "5",   // warranty on inner tank (years)
+  },
+
+  // --- Airtable intake — every contact gets a row. ---
+  // EDIT this list so it matches the actual columns in the Airtable base.
+  intakeColumns: [
+    "Date & time of contact",
+    "Channel (Call / WhatsApp / Email / Walk-in)",
+    "Customer name",
+    "Phone number",
+    "Emirate + area",
+    "Category (Enquiry / Repair / Warranty / Installation / AMC / Spares / Complaint)",
+    "Unit model & capacity",
+    "Serial number",
+    "Purchase date + invoice received? (Yes / No)",
+    "Issue description (short, in the customer's words)",
+    "Photos / videos received? (Yes / No)",
+    "Status (New / Waiting on customer / With technical team / Pending authorization / Scheduled / Closed)",
+    "Next action + follow-up date",
+  ],
+};
+
+/* ============================================================
+   ==================  CARDS (the flow)  ======================
+   ============================================================
+   Each card is either:
+   - a MENU card:  { title, subtitle, options: [{icon, label, goto}] }
+   - an ACTION card: { title, steps: [...], prices: [...], message: "...", note, escalate }
+   Prices inside messages/prices use {{price:key}} which pulls
+   from CONFIG.prices above — so you only edit prices in one place.
+   Messages support [Placeholders] which the front desk fills in.
+============================================================ */
+
+const CARDS = {
+
+  home: {
+    title: "What does the customer need?",
+    subtitle: "Click the option that matches the call / walk-in / message.",
+    crumb: "Home",
+    note: "Escalation rule: nothing counts as escalated until the manager has acknowledged it. Forwarding a message is not an escalation — get a reply, and log the escalation time in Airtable.",
+    options: [
+      { icon: "📞", label: "Customer is on the phone right now", goto: "phone_first" },
+      { icon: "💧", label: "New enquiry — price quote",        goto: "enquiry" },
+      { icon: "🔧", label: "Repair request (unit has a problem)", goto: "repair" },
+      { icon: "🛡️", label: "Warranty claim",                   goto: "warranty" },
+      { icon: "🔁", label: "Replacement authorization",        goto: "replacement" },
+      { icon: "🚿", label: "Installation request",             goto: "installation" },
+      { icon: "🗓️", label: "Annual maintenance (AMC)",         goto: "amc" },
+      { icon: "⚙️", label: "Spare parts",                      goto: "spares" },
+      { icon: "📋", label: "Log a case in Airtable (intake)",  goto: "intake" },
+      { icon: "😟", label: "Complaint / unhappy customer",     goto: "complaint" },
+      { icon: "❓", label: "Not sure / anything else",         goto: "escalate_general" },
+    ],
+  },
+
+  /* ---------------- PHONE-FIRST TRIAGE ---------------- */
+
+  phone_first: {
+    title: "Customer is on the phone — resolve it live",
+    subtitle: "Never default to \"I'll text you the details.\" Work through it while they're on the line.",
+    crumb: "On the Phone",
+    keywords: "phone call live triage resolve on call desk resolvable speak talk now",
+    steps: [
+      "Stay on the call and open the matching card in this guide — follow it in real time while talking.",
+      "First check if it's desk-resolvable: prices, warranty periods, visit fees, and booking a visit can all be answered on the spot from the cards.",
+      "If the case needs documents (e.g. a warranty claim), tell the customer exactly what to send while still on the call — then send the follow-up message so they also have it in writing.",
+      "Before hanging up, confirm: their name, phone number, and what happens next (and by when).",
+      "After the call, log the case in Airtable straight away.",
+    ],
+    note: "A detailed on-call troubleshooting checklist (exact questions to resolve issues over the phone) is being prepared by Depesh & Jay and will be added here.",
+    options: [
+      { icon: "💧", label: "It's a new enquiry",              goto: "enquiry" },
+      { icon: "🔧", label: "It's a repair request",           goto: "repair" },
+      { icon: "🛡️", label: "It's a warranty claim (by call)", goto: "wc1_call" },
+      { icon: "📋", label: "Call done — log it in Airtable",  goto: "intake" },
+    ],
+  },
+
+  /* ---------------- AIRTABLE INTAKE ---------------- */
+
+  intake: {
+    title: "Log the case in Airtable",
+    subtitle: "Every contact gets a row — even quick questions. Fill in these columns:",
+    crumb: "Airtable Intake",
+    keywords: "airtable intake log record case columns crm entry row register",
+    steps: CONFIG.intakeColumns.slice(),
+    note: "If a column doesn't apply, write N/A — never leave it blank. Update Status and Next action every time the case moves. To change this column list, edit intakeColumns in the CONFIG section at the top of the file.",
+  },
+
+  /* ---------------- REPLACEMENT AUTHORIZATION ---------------- */
+
+  replacement: {
+    title: "Replacement — authorization required",
+    subtitle: "A replacement unit is never promised at the front desk. It must be authorized first.",
+    crumb: "Replacement",
+    keywords: "replacement replace new unit swap exchange authorization approve authorise tank leak",
+    escalate: "Only the manager ({{managerName}}, {{managerContact}}) can authorize a replacement, based on the technical team's assessment. <strong>Never confirm a replacement to the customer yourself.</strong>",
+    options: [
+      { icon: "🔬", label: "Technical team recommended a replacement", goto: "replacement_request" },
+      { icon: "🗣️", label: "Customer is demanding a replacement",      goto: "replacement_demand" },
+      { icon: "📄", label: "Replacement authorized — raise the PO",   goto: "replacement_po" },
+    ],
+  },
+
+  replacement_request: {
+    title: "Replacement recommended — get authorization",
+    crumb: "Get Authorization",
+    keywords: "replacement approval authorize manager process case file",
+    steps: [
+      "Collect the full case file: claim reference, invoice, serial number, technician's report / photos, and the reason replacement is recommended.",
+      "Send the holding message below so the customer knows it's under review — do not confirm the replacement yet.",
+      "Submit the case file to the manager for authorization and confirm they have seen it — get an acknowledgment, don't assume. Set the Airtable status to \"Pending authorization\" with the escalation time.",
+      "Wait for the manager's written authorization (message or email — not verbal), then pick the outcome below.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for your patience so far. Following the technical assessment of your unit, your case has now been submitted for replacement review, which is the final stage of the process.
+
+As soon as that review is complete, I will confirm the outcome and the next steps with you — within [Timeframe].
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "✅", label: "Authorized — inform the customer",    goto: "replacement_approved" },
+      { icon: "❌", label: "Not authorized — repair offered instead", goto: "replacement_denied" },
+    ],
+  },
+
+  replacement_approved: {
+    title: "Replacement authorized — arrange collection",
+    crumb: "Authorized",
+    keywords: "replacement approved authorized collect pickup warehouse shop dealer",
+    steps: [
+      "Get the collection details from the manager — either our warehouse or a specific shop/dealer in the UAE.",
+      "Send the message below with the collection point filled in.",
+      "If the customer asks about installation, explain it is a separate paid service and offer to quote it (route to the installation card).",
+      "Update Airtable: status \"Replacement issued\", with the manager's authorization and collection location noted on the case.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Following the review of your case, your replacement has been approved — the warranty covers the replacement unit itself at no charge.
+
+To collect the new unit, please visit [Collection Location — Warehouse Address / Shop Name + Address] and mention your claim reference [Claim Reference]. They will hand over the unit on the spot.
+
+Please note that the warranty covers the unit only; installation is a separate paid service. If you would like us to arrange installation as well, just let me know and I will prepare a quote based on your location.
+
+Thank you for your patience while the review was completed.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "We do not deliver replacement units. The customer either collects from our warehouse or from the shop/dealer the manager specifies. Installation is always paid — never free, even on a warranty replacement.",
+    options: [
+      { icon: "🔧", label: "Customer wants paid installation — quote it", goto: "installation" },
+      { icon: "📄", label: "Raise a Purchase Order for the replacement",  goto: "replacement_po" },
+    ],
+  },
+
+  replacement_po: {
+    title: "Replacement Released — Raise Purchase Order",
+    subtitle: "A replacement has been authorized. Now raise the PO so the unit can be released from stock.",
+    crumb: "Raise PO",
+    keywords: "purchase order PO replacement released direct email send stock warehouse authorize",
+    steps: [
+      "Prepare the Purchase Order with: customer name, claim reference, serial number of the old unit, model and capacity of the replacement unit, and the collection location confirmed by the manager.",
+      "Email the PO to [PO Recipient Name / Department] at [PO Recipient Email Address] — cc the manager so they have visibility.",
+      "In the email subject line, include the claim reference and \"Replacement PO\" so it can be tracked.",
+      "Wait for written confirmation that the PO has been received and the unit is ready for collection before telling the customer.",
+      "Once confirmed, inform the customer with the collection details (use the 'Replacement authorized' message if not already sent).",
+      "Update Airtable: status \"Replacement released\", with the PO reference, date sent, and who it was sent to.",
+    ],
+    message:
+`Dear [PO Recipient Name],
+
+Please find below the Purchase Order for a direct replacement unit, authorized by [Manager Name]:
+
+— Claim Reference: [Claim Reference]
+— Customer Name: [Customer Name]
+— Old Unit Serial Number: [Serial Number]
+— Replacement Unit: [Model / Capacity]
+— Collection Location: [Warehouse / Dealer Address]
+
+Kindly confirm once the replacement unit is ready for collection so we can advise the customer accordingly.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "Do not tell the customer the unit is ready until you have written confirmation from the warehouse or dealer. The PO must always be emailed — verbal requests are not accepted.",
+    options: [
+      { icon: "✅", label: "Unit ready — inform the customer", goto: "replacement_approved" },
+      { icon: "📋", label: "Done — log in Airtable",          goto: "intake" },
+    ],
+  },
+
+  replacement_denied: {
+    title: "Replacement not authorized — offer the alternative",
+    crumb: "Not Authorized",
+    keywords: "replacement denied rejected not authorized repair instead reason",
+    steps: [
+      "Get the exact reason and the offered alternative (usually a repair) from the manager, so you can state it clearly.",
+      "Send the message below — state the reason plainly and move straight to the solution.",
+      "If the customer accepts, continue with the normal repair booking. If they push back, escalate to the manager — do not re-argue the decision yourself.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for your patience while our team completed the review of your case.
+
+After full assessment, the recommended solution for your unit is [Repair / Alternative] rather than a replacement, because [Reason from technical team].
+
+Based on that recommendation, we can schedule the work for you right away — just share a preferred day and we will arrange the visit.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "🔧", label: "Customer accepts — book the repair", goto: "repair" },
+      { icon: "😟", label: "Customer unhappy — complaint flow",  goto: "complaint" },
+    ],
+  },
+
+  replacement_demand: {
+    title: "Customer is demanding a replacement",
+    crumb: "Customer Demands",
+    keywords: "customer demands replacement wants new unit insists angry refuse repair",
+    steps: [
+      "Stay calm and never say yes OR no to a replacement on the spot — both cause problems later.",
+      "Explain the process: replacement decisions are made by the technical team after assessing the unit, and it moves quickly once we have the documents.",
+      "If no claim is registered yet, register one now (warranty claim Step 1) — that starts the assessment.",
+      "If the unit was already assessed and the customer disagrees with the outcome, escalate to the manager the same day and get an acknowledgment — make sure the manager is actually in the loop before telling the customer it's escalated.",
+      "Send the message below and log the case in Airtable with status \"With technical team\".",
+    ],
+    message:
+`Dear [Customer Name],
+
+I understand your concern, and we want the right solution for you as quickly as possible.
+
+To get there, replacement decisions are made by our technical team after assessing the unit — so I have registered your request and escalated it for their review. Once that review is done, you will hear from us within [Timeframe] with the outcome.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "🛡️", label: "No claim yet — register a warranty claim", goto: "warranty" },
+      { icon: "❓", label: "Already assessed — escalate to manager",   goto: "escalate_general" },
+    ],
+  },
+
+  /* ---------------- NEW ENQUIRY ---------------- */
+
+  enquiry: {
+    title: "New enquiry — which product?",
+    crumb: "New Enquiry",
+    keywords: "quote quotation price cost buy new unit",
+    options: [
+      { icon: "🚿", label: "Water heater",            goto: "enquiry_wh" },
+      { icon: "♨️", label: "Heat pump",               goto: "enquiry_hp" },
+      { icon: "❓", label: "Customer isn't sure what they need", goto: "enquiry_unsure" },
+    ],
+  },
+
+  enquiry_wh: {
+    title: "Water heater — price quote",
+    crumb: "Water Heater Quote",
+    keywords: "water heater price 30 50 80 100 litre liter capacity quote",
+    steps: [
+      "Ask the customer which capacity they need (30L / 50L / 80L / 100L). If they don't know: 1–2 people → 30–50L, family of 3–4 → 80L, larger → 100L.",
+      "Quote the matching price from the table below.",
+      "Copy the message, fill in the [placeholders], and send it.",
+    ],
+    prices: [
+      { label: "30L water heater",  value: "{{price:wh_30L}}" },
+      { label: "50L water heater",  value: "{{price:wh_50L}}" },
+      { label: "80L water heater",  value: "{{price:wh_80L}}" },
+      { label: "100L water heater", value: "{{price:wh_100L}}" },
+      { label: "150L – 500L", value: "Use the Quote Calculator" },
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for contacting Atlantic After-Sales UAE regarding the [Capacity] water heater.
+
+The unit is priced at [Price] on a supply-only basis, and should you need installation as well, that is available at {{price:installation_wh}}.
+
+Once you confirm how you would like to proceed, I will arrange everything for you.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "Ask if they want it horizontal or vertical — prices differ. For 150L–500L units, larger installations, or a formal PDF quotation, open the Quote Calculator from the Home page. If still unsure, check with the manager before quoting.",
+  },
+
+  enquiry_hp: {
+    title: "Heat pump — enquiry",
+    crumb: "Heat Pump Quote",
+    keywords: "heat pump quote price villa pool",
+    escalate: "Heat pump quotes are custom — <strong>do not quote a price yourself.</strong> Collect the details below and pass them to the manager.",
+    steps: [
+      "Ask: is it for a villa, apartment, or swimming pool?",
+      "Ask the approximate hot water usage (number of bathrooms / people, or pool size).",
+      "Ask for their name, phone number, and location (emirate + area).",
+      "Send the holding message below, then forward all details to the manager and get an acknowledgment — it is not escalated until the manager confirms receipt.",
+      "Log the case in Airtable with the escalation time and a follow-up date.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for your enquiry about Atlantic heat pumps.
+
+Because heat pump systems are sized to each property, our technical team prepares every quote individually rather than from a fixed price list. I have therefore shared your details with them, and you can expect to hear from us within [Timeframe] with a quote specific to your requirement.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  enquiry_unsure: {
+    title: "Customer isn't sure what they need",
+    crumb: "Unsure Customer",
+    keywords: "not sure recommend which product advice",
+    steps: [
+      "Ask what they want the hot water for: bathroom/kitchen → water heater; whole villa or pool → heat pump.",
+      "If it's a simple water heater need, go back and use the Water Heater quote card.",
+      "If it sounds like a bigger system or you're unsure, send the message below and pass details to the manager.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for contacting Atlantic After-Sales UAE.
+
+To make sure we recommend the right product rather than guessing, our team would like to first understand your requirement over a short call. Once you share a convenient time to reach you, we will arrange the call and take it from there.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  /* ---------------- REPAIR ---------------- */
+
+  repair: {
+    title: "Repair request — is the unit under warranty?",
+    subtitle: "Warranty: " + "{{w:parts_years}} years on parts, {{w:tank_years}} years on the inner tank, from purchase date.",
+    crumb: "Repair",
+    keywords: "repair broken not working leaking no hot water fix problem fault",
+    options: [
+      { icon: "✅", label: "Yes — under warranty",      goto: "repair_warranty" },
+      { icon: "❌", label: "No — out of warranty",      goto: "repair_paid" },
+      { icon: "🤔", label: "Not sure — need to check",  goto: "repair_check" },
+    ],
+  },
+
+  repair_check: {
+    title: "How to check warranty status",
+    crumb: "Check Warranty",
+    keywords: "check warranty status invoice purchase date serial number",
+    steps: [
+      "Ask the customer for their purchase invoice (photo is fine) or the purchase date.",
+      "Ask for the serial number — it's on the sticker on the unit (photo is fine).",
+      "Parts warranty = {{w:parts_years}} years from purchase date. Inner tank = {{w:tank_years}} years.",
+      "If today is within those periods → treat as UNDER warranty. Otherwise → out of warranty.",
+    ],
+    message:
+`Dear [Customer Name],
+
+I am sorry to hear about the issue with your unit. The first step is to check your warranty status, as that decides how we proceed.
+
+For that, please send:
+1. A photo of your purchase invoice (or the purchase date)
+2. A photo of the sticker on the unit (with the serial number)
+
+As soon as I receive these, I will confirm whether the unit is covered and what happens next.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "Once you know the status, use the Back button and pick 'under warranty' or 'out of warranty'. If the documents are unclear or the dates are borderline, check with the manager.",
+    options: [
+      { icon: "✅", label: "Checked — it IS under warranty",  goto: "repair_warranty" },
+      { icon: "❌", label: "Checked — it's OUT of warranty",  goto: "repair_paid" },
+    ],
+  },
+
+  repair_warranty: {
+    title: "Warranty repair — what is the issue?",
+    subtitle: "The process depends on what's wrong. Pick the category that matches.",
+    crumb: "Warranty Repair",
+    keywords: "warranty repair free technician visit booking leak element thermostat valve",
+    options: [
+      { icon: "💧", label: "Body leakage (water leaking from the tank body)", goto: "wr_body_leak" },
+      { icon: "🔥", label: "Heating element / thermostat / safety valve",     goto: "wr_parts" },
+      { icon: "❓", label: "Other issue (not heating, tripping, noise, etc.)", goto: "wr_other" },
+    ],
+  },
+
+  /* --- WARRANTY REPAIR: BODY LEAKAGE --- */
+
+  wr_body_leak: {
+    title: "Body leakage — remote verification first",
+    subtitle: "Body (inner tank) leakage is covered under the {{w:tank_years}}-year tank warranty from purchase date. We try to verify remotely before sending a technician.",
+    crumb: "Body Leakage",
+    keywords: "body leakage tank leak dripping water warranty 5 year replace remote verify video photo",
+    steps: [
+      "Confirm the purchase date is within {{w:tank_years}} years (tank warranty). If not, this is a paid repair — go back and choose 'out of warranty'.",
+      "Ask the customer to send a clear video showing where the water is leaking from, plus a photo of the unit sticker (serial number).",
+      "Forward the video and photos to the technical team / manager and ask them to verify whether it is confirmed body leakage.",
+      "Wait for the technical team's verdict before telling the customer anything — do not promise a replacement yet.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for reaching out regarding the leak on your unit. Body leakage is covered under the {{w:tank_years}}-year tank warranty, so if confirmed, we will arrange a resolution at no charge.
+
+To verify remotely and save you a site visit, could you please send:
+1. A clear video showing exactly where the water is leaking from
+2. A photo of the sticker on the unit (serial number)
+
+Once our technical team reviews the footage, I will confirm the next steps with you right away.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "✅", label: "Technical team confirmed body leakage", goto: "wr_body_leak_confirmed" },
+      { icon: "❌", label: "Not body leakage — needs a site visit",  goto: "wr_other" },
+    ],
+  },
+
+  wr_body_leak_confirmed: {
+    title: "Body leakage confirmed — replacement authorized",
+    subtitle: "Warranty covers the replacement unit only. Installation is always a paid service — offer it as an option.",
+    crumb: "Replacement",
+    keywords: "body leakage confirmed replacement collect pickup install paid end user",
+    steps: [
+      "Get the replacement collection details from the manager (which location / dealer to collect from).",
+      "Before sending the message, check: is this an end user or a contractor/dealer?",
+      "If end user → offer paid installation as well (see the next option). This is not free — warranty covers the unit, not the labour.",
+      "If not an end user (contractor/dealer), just send the replacement collection message below — they handle their own installation.",
+      "Log the replacement in Airtable with the authorization, serial number of old unit, and where the replacement is being collected from.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Our technical team has reviewed the footage and confirmed that the issue is a body leakage, which is covered under your {{w:tank_years}}-year tank warranty. You are therefore entitled to a replacement unit at no charge.
+
+For the replacement, please collect the new unit from [Collection Location / Dealer Name + Address] — when you arrive, mention your claim reference [Claim Reference] and they will hand over the unit.
+
+Please note that the warranty covers the replacement unit itself; installation is a separate paid service. If you would like us to handle the installation as well, just let me know and I will prepare a quote based on your location.
+
+If you have any questions or need directions, do not hesitate to reach out.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "🔧", label: "End user wants paid installation — quote it", goto: "wr_body_leak_install" },
+      { icon: "📋", label: "Done — log in Airtable",                      goto: "intake" },
+    ],
+  },
+
+  wr_body_leak_install: {
+    title: "Paid installation for replacement unit — end users only",
+    subtitle: "Installation is always chargeable, even on a warranty replacement. Pricing depends on location, and extras like false ceiling are quoted separately.",
+    crumb: "Paid Install",
+    keywords: "installation paid end user replacement body leak location false ceiling extra charge quote",
+    steps: [
+      "Confirm the customer's emirate / city — installation pricing depends on location (use the Quote Calculator for exact rates outside Dubai).",
+      "Ask if false ceiling cutting is needed — if yes, get dimensions and use the Quote Calculator for a false ceiling quote. Do not estimate it yourself.",
+      "Ask if any other extras are needed (piping, connectors, old unit removal). Anything beyond the standard installation scope is charged separately.",
+      "Once you have all the details, build the quote using the Quote Calculator, then send the message below with the filled-in prices.",
+    ],
+    prices: [
+      { label: "Standard installation (up to 100L, Dubai)", value: "{{price:installation_wh}}" },
+      { label: "Other locations / larger units / extras",   value: "Use the Quote Calculator" },
+    ],
+    message:
+`Dear [Customer Name],
+
+Further to your replacement, here is the installation quote based on your location:
+
+— Installation: [Installation Price]
+[— False ceiling modification: [False Ceiling Price]]
+[— Any other extras: [Extras and Price]]
+
+This covers removal of the old unit, installation and testing of the new one, and any extras listed above. The total is payable at the time of the visit.
+
+If you would like to go ahead, just confirm a preferred day and I will schedule the technician visit for you.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "Installation is never free, even on a warranty replacement. Make sure the customer understands the replacement unit is covered but the installation labour is not.",
+  },
+
+  /* --- WARRANTY REPAIR: HEATING ELEMENT / THERMOSTAT / SAFETY VALVE --- */
+
+  wr_parts: {
+    title: "Heating element / thermostat / safety valve — warranty enquiry",
+    subtitle: "Parts warranty is {{w:parts_years}} years from purchase date. These parts are handled differently from body leakage.",
+    crumb: "Parts Issue",
+    keywords: "heating element thermostat safety valve part warranty replace 2 year inquiry enquiry",
+    steps: [
+      "Confirm the purchase date is within {{w:parts_years}} years (parts warranty). If not, this becomes a paid spare parts enquiry — use the 'Spare parts' card from the home menu.",
+      "Ask which part is affected: heating element, thermostat, or safety valve.",
+      "Ask for a photo of the unit sticker (serial number) and a description of the symptoms (not heating, tripping, leaking from valve, etc.).",
+      "Forward the details to the technical team / manager to confirm the part and whether it is a warranty issue.",
+      "Wait for confirmation before telling the customer — the technician may need to visit to verify.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for contacting us about the issue with your unit. Parts such as heating elements, thermostats, and safety valves are covered under the {{w:parts_years}}-year parts warranty from the date of purchase, so if yours is within that period, the replacement would be at no charge.
+
+To proceed, could you please send:
+1. A photo of the unit sticker (serial number)
+2. A brief description of the issue (e.g. not heating, circuit tripping, water dripping from the valve)
+
+Once our technical team reviews the details, I will confirm whether a warranty replacement or a technician visit is needed, and we will take it from there.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "If the parts warranty has expired but the tank warranty ({{w:tank_years}} years) is still valid, only the tank is covered — the part itself would be chargeable. Make sure the customer understands which warranty applies.",
+    options: [
+      { icon: "✅", label: "Confirmed warranty — part will be replaced",     goto: "wr_parts_approved" },
+      { icon: "🔧", label: "Needs a site visit to verify",                  goto: "wr_other" },
+      { icon: "❌", label: "Not covered — paid spare parts",                goto: "spares" },
+    ],
+  },
+
+  wr_parts_approved: {
+    title: "Warranty part replacement — arrange the visit",
+    crumb: "Part Replacement",
+    keywords: "warranty part approved replacement visit heating element thermostat safety valve schedule",
+    steps: [
+      "Confirm with the technical team which part is being replaced and that it is in stock.",
+      "Ask the customer for their full address and preferred visit day.",
+      "Before sending the confirmation, make sure the customer is aware of the visit checklist (see prices below) — these apply even on warranty visits.",
+      "Send the confirmation message and log the visit in Airtable.",
+    ],
+    prices: [
+      { label: "If issue found NOT covered by warranty", value: "{{price:callout_fee}} payable on the spot" },
+      { label: "Waiting time (per 30 minutes)",          value: "{{price:waiting_fee}}" },
+    ],
+    message:
+`Dear [Customer Name],
+
+The replacement [Part Name] for your unit has been confirmed under warranty, and a technician visit has been scheduled for [Date / Time Window] at [Address].
+
+Before the visit, please note:
+— If upon inspection the issue is found to fall outside warranty coverage, a fee of {{price:callout_fee}} applies and is payable on the spot.
+— A waiting-time charge of {{price:waiting_fee}} per 30 minutes applies if the technician is kept waiting on site beyond the standard service window.
+
+The technician will explain everything before beginning any work. If the timing does not suit you, let me know and I will rearrange it.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  /* --- WARRANTY REPAIR: OTHER ISSUES (SITE VISIT REQUIRED) --- */
+
+  wr_other: {
+    title: "Warranty repair — book a technician visit",
+    subtitle: "Standard warranty visit. The customer must acknowledge the fee conditions before we book.",
+    crumb: "Book Visit",
+    keywords: "warranty repair visit technician booking checklist fees 160 waiting not covered",
+    steps: [
+      "Confirm you have: invoice/purchase date, serial number, and a short description of the problem.",
+      "Ask for the full address (emirate, area, building/villa) and preferred visit day.",
+      "Before booking, clearly explain the two fee conditions (see the checklist below) and make sure the customer acknowledges them.",
+      "Send the confirmation message, which includes the conditions in writing.",
+      "Log the booking in Airtable and inform the service team / manager so a technician is assigned.",
+    ],
+    prices: [
+      { label: "If issue found NOT covered by warranty", value: "{{price:callout_fee}} payable on the spot" },
+      { label: "Waiting time (per 30 minutes)",          value: "{{price:waiting_fee}}" },
+    ],
+    message:
+`Dear [Customer Name],
+
+I have checked your details, and your unit is within the warranty period — which means the repair visit is free of charge for manufacturing faults.
+
+A technician visit has been booked for [Date / Time Window] at [Address]. Before the visit, please be aware of the following conditions:
+— If upon inspection the issue is found to fall outside warranty coverage (e.g. misuse, incorrect installation, or water quality damage), a fee of {{price:callout_fee}} applies and is payable to the technician on the spot.
+— A waiting-time charge of {{price:waiting_fee}} per 30 minutes applies if the technician is kept waiting on site beyond the standard service window.
+
+The technician will confirm coverage and explain everything before beginning any work. If the timing does not suit you, just let me know and I will reschedule it.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "If the damage looks caused by misuse, wrong installation, or water quality (not a manufacturing fault), do not promise a free repair — tell the customer the technician will confirm coverage on-site, and flag it to the manager.",
+  },
+
+  repair_paid: {
+    title: "Paid repair — out of warranty",
+    crumb: "Paid Repair",
+    keywords: "paid repair out of warranty inspection fee call out charge",
+    steps: [
+      "Explain there is an inspection / call-out fee, and repair costs are quoted after diagnosis.",
+      "Ask which city the customer is in. The fee below is for Dubai (standard, 1–2 days). For any other city, or flexi/save visit options, get the exact fee from the Quote Calculator → Repair.",
+      "If they agree, take their address and preferred visit day, then send the message.",
+    ],
+    prices: [
+      { label: "Inspection / call-out fee (Dubai, standard)", value: "{{price:inspection_visit}}" },
+      { label: "Other cities / flexi / save options", value: "Use the Quote Calculator" },
+    ],
+    message:
+`Dear [Customer Name],
+
+I am sorry to hear about the issue with your unit.
+
+Since the unit is outside the warranty period, the visit is chargeable at an inspection fee of [Inspection Fee]. This covers the technician's visit and diagnosis, after which he will confirm the exact repair cost with you before any work begins — so there are no surprises on the day.
+
+If you would like to go ahead, simply share your address and a preferred day, and I will book the visit for you.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "Never estimate the final repair cost yourself — only the technician quotes that after diagnosis.",
+  },
+
+  /* ---------------- WARRANTY CLAIM (5-step process) ---------------- */
+
+  warranty: {
+    title: "Warranty claim — Step 1: How did the customer contact us?",
+    subtitle: "Pick the channel. Each one has its own message asking for the documents we need.",
+    crumb: "Claim Step 1",
+    keywords: "warranty claim replacement defect invoice serial channel email whatsapp call",
+    options: [
+      { icon: "📧", label: "Email",       goto: "wc1_email" },
+      { icon: "💬", label: "WhatsApp",    goto: "wc1_whatsapp" },
+      { icon: "📞", label: "Phone call",  goto: "wc1_call" },
+    ],
+  },
+
+  wc1_email: {
+    title: "Step 1: Claim received by email",
+    crumb: "Via Email",
+    keywords: "warranty claim email request documents",
+    steps: [
+      "Note the customer's name, email, and a short description of the issue.",
+      "Reply with the message below asking for the three documents.",
+      "Move to Step 2 while waiting, or Step 3 once everything arrives.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for reaching out to Atlantic After-Sales UAE. We are sorry to hear about the issue with your unit, and we will do our best to resolve it quickly.
+
+To get started, we need to register a warranty claim for you, and for that could you please reply with:
+1. A copy of your purchase invoice
+2. A photo of the sticker on the unit showing the serial number
+3. Photos or a short video of the issue
+
+Once these come in, our technical team will take up the review and get back to you within [Timeframe] with the outcome.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "⏳", label: "Waiting / customer replied with a problem", goto: "wc2" },
+      { icon: "📄", label: "All documents received",                    goto: "wc3" },
+    ],
+  },
+
+  wc1_whatsapp: {
+    title: "Step 1: Claim received on WhatsApp",
+    crumb: "Via WhatsApp",
+    keywords: "warranty claim whatsapp request documents",
+    steps: [
+      "Save the customer's name and number.",
+      "Send the message below asking for the three documents.",
+      "Move to Step 2 while waiting, or Step 3 once everything arrives.",
+    ],
+    message:
+`Hello [Customer Name], thank you for contacting Atlantic After-Sales UAE. We are sorry about the trouble with your unit.
+
+The first step is to register a warranty claim for you, and for that please send us:
+1. A photo of your purchase invoice
+2. A photo of the sticker on the unit (serial number)
+3. Photos or a short video of the issue
+
+As soon as these come in, our technical team will review everything and update you within [Timeframe]. Thank you.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "⏳", label: "Waiting / customer replied with a problem", goto: "wc2" },
+      { icon: "📄", label: "All documents received",                    goto: "wc3" },
+    ],
+  },
+
+  wc1_call: {
+    title: "Step 1: Claim received by phone call",
+    crumb: "Via Call",
+    keywords: "warranty claim phone call script request documents",
+    steps: [
+      "Don't just say \"I'll text you the details\" — first check if it's desk-resolvable while they're on the line (see the 'Customer is on the phone' card), and register the claim live.",
+      "On the call, say: \"I'm sorry to hear that. We will register a warranty claim for you right away. I'll send you a message now listing three things we need: your invoice, a photo of the unit's serial number sticker, and photos or a video of the issue.\"",
+      "Take their name, number, and a short description of the issue.",
+      "After the call, send the follow-up message below on WhatsApp or email.",
+    ],
+    message:
+`Hello [Customer Name], thank you for your call just now. As discussed, please send us the following so we can register your warranty claim:
+
+1. A photo of your purchase invoice
+2. A photo of the sticker on the unit (serial number)
+3. Photos or a short video of the issue
+
+You can reply directly to this message, and once everything is in, our technical team will review your case and update you within [Timeframe].
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "⏳", label: "Waiting / customer replied with a problem", goto: "wc2" },
+      { icon: "📄", label: "All documents received",                    goto: "wc3" },
+    ],
+  },
+
+  wc2: {
+    title: "Step 2: Awaiting response — what happened?",
+    crumb: "Claim Step 2",
+    keywords: "warranty claim waiting no reply reminder no documents lost invoice",
+    options: [
+      { icon: "🔕", label: "No reply after 2 to 3 days",          goto: "wc2_noreply" },
+      { icon: "🚫", label: "Customer doesn't have the documents", goto: "wc2_nodocs" },
+    ],
+  },
+
+  wc2_noreply: {
+    title: "Step 2: No reply from the customer",
+    crumb: "No Reply",
+    keywords: "warranty claim reminder follow up no response",
+    steps: [
+      "Wait 2 to 3 days after the first request before sending this reminder.",
+      "Send the reminder below on the same channel they used.",
+      "If there is still no reply after another 3 days, mark the case inactive in Airtable and tell the manager — the manager decides whether to close it.",
+    ],
+    message:
+`Hello [Customer Name], this is a gentle reminder from Atlantic After-Sales UAE regarding your warranty claim. To move it forward, we are still waiting for:
+
+1. Your purchase invoice
+2. A photo of the unit sticker (serial number)
+3. Photos or a short video of the issue
+
+Your claim is on hold only until these come in — once we receive them, we can move ahead right away. And if you need any help finding them, just let us know.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "📄", label: "Documents received", goto: "wc3" },
+    ],
+  },
+
+  wc2_nodocs: {
+    title: "Step 2: Customer doesn't have the documents",
+    crumb: "No Documents",
+    keywords: "lost invoice no serial missing documents",
+    steps: [
+      "The serial number is on the sticker on the unit itself, so a clear photo of the unit usually solves that part.",
+      "For the invoice, the shop or installer they purchased from can usually reissue a copy.",
+      "Send the message below to guide them.",
+    ],
+    message:
+`No problem, [Customer Name] — these documents are usually easier to recover than they seem, so let us work through it together.
+
+1. The serial number is printed on the sticker on the unit itself, which means a clear photo of the unit usually covers that part
+2. As for the invoice, the shop or installer you purchased from can usually share a copy on request
+
+If neither works out, please share whatever details you do have (purchase date, seller name, unit model), and we will check what can be done from our side.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    escalate: "If the customer cannot provide any proof of purchase or serial number, <strong>do not promise warranty coverage.</strong> Pass the case to the manager to decide.",
+    options: [
+      { icon: "📄", label: "Documents received", goto: "wc3" },
+    ],
+  },
+
+  wc3: {
+    title: "Step 3: Documents received — log and confirm",
+    crumb: "Claim Step 3",
+    keywords: "warranty claim documents received register log checklist confirm",
+    steps: [
+      "Log in Airtable: customer name, phone, serial number, purchase date, unit model, issue description, and all photos/videos.",
+      "Check the purchase date is within warranty ({{w:parts_years}} yrs parts / {{w:tank_years}} yrs tank) and note it in the log.",
+      "Send the confirmation message below so the customer knows the claim is registered.",
+      "Forward the full case to the technical team / manager for review.",
+    ],
+    message:
+`Thank you, [Customer Name] — we have received all your documents, and with that your warranty claim is now registered under reference [Claim Reference].
+
+Our technical team has taken over the case from here, and once their review is complete, we will update you within [Timeframe] with the outcome and the next steps.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "🔬", label: "Technical team has responded → Step 4", goto: "wc4" },
+    ],
+  },
+
+  wc4: {
+    title: "Step 4: What did the technical team decide?",
+    subtitle: "Pick the outcome exactly as the technical team gave it. When in doubt, ask the manager before replying to the customer.",
+    crumb: "Claim Step 4",
+    keywords: "warranty claim outcome technical review approved rejected not covered more info emergency",
+    options: [
+      { icon: "✅", label: "A: Claim approved",               goto: "wc4a" },
+      { icon: "💰", label: "B: Not covered, paid service offered", goto: "wc4b" },
+      { icon: "📎", label: "C: More information needed",      goto: "wc4c" },
+      { icon: "🏷️", label: "D: Not an Atlantic product",      goto: "wc4d" },
+      { icon: "🚨", label: "E: Emergency or safety concern",  goto: "wc4e" },
+    ],
+  },
+
+  wc4a: {
+    title: "Outcome A: Claim approved — book the free visit",
+    crumb: "A: Approved",
+    keywords: "warranty claim approved free visit schedule technician",
+    steps: [
+      "Confirm the full address (emirate, area, building/villa) and the customer's preferred day.",
+      "Coordinate the slot with the service team, then send the confirmation below.",
+      "Log the booking in Airtable against the claim reference.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Following the technical review, your warranty claim has been approved — and since the unit is covered under warranty, the repair visit is free of charge.
+
+Accordingly, a technician visit has been scheduled for [Date / Time Window] at [Address]. If the timing does not work for you, just let us know and we will rearrange it.
+
+Thank you for your patience throughout the process.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  wc4b: {
+    title: "Outcome B: Not covered — offer paid service",
+    crumb: "B: Not Covered",
+    keywords: "warranty claim rejected not covered paid call out fee 160",
+    steps: [
+      "Get the exact reason from the technical team (e.g. outside warranty period, not a manufacturing fault) so you can state it clearly.",
+      "Send the message below. It explains the reason and the call-out fee before asking the customer to confirm.",
+      "Do NOT book a visit until the customer agrees to the fee. Then continue to Step 5 with their answer.",
+    ],
+    prices: [
+      { label: "Call-out fee (paid service)", value: "{{price:callout_fee}}" },
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for your patience while our technical team reviewed your case.
+
+After careful review, the issue was found to be [Reason, e.g. outside the warranty period / not a manufacturing fault], which means it is not covered under the warranty.
+
+That said, we would still be glad to help: we can send a technician to inspect and repair the unit for a call-out fee of {{price:callout_fee}}, and he will share the exact repair cost with you after diagnosis, before any work begins.
+
+If that works for you, just confirm and we will arrange the visit.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "👍", label: "Step 5: Customer agrees to the fee",        goto: "wc5_agree" },
+      { icon: "👎", label: "Step 5: Customer declines or needs time",   goto: "wc5_decline" },
+    ],
+  },
+
+  wc4c: {
+    title: "Outcome C: More information needed",
+    crumb: "C: More Info",
+    keywords: "warranty claim more information clearer photo video needed",
+    steps: [
+      "Ask the technical team exactly what is missing or unclear. Never send a vague \"we need more info\" message.",
+      "Fill the specific request into the message below and send it.",
+      "When the customer replies, forward it to the technical team and return to Step 4 for the new outcome.",
+    ],
+    message:
+`Hello [Customer Name], thank you for your patience.
+
+Your warranty claim is almost through review — our technical team just needs one more thing from you to complete it:
+
+[Specific Information Needed, e.g. a clearer photo of the serial number sticker / a short video showing the issue while the unit is running]
+
+As soon as we receive this, the review will continue right away. Thank you.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    options: [
+      { icon: "🔬", label: "New info sent to technical team → back to Step 4", goto: "wc4" },
+    ],
+  },
+
+  wc4d: {
+    title: "Outcome D: Not an Atlantic product",
+    crumb: "D: Wrong Brand",
+    keywords: "not atlantic wrong brand other manufacturer redirect",
+    steps: [
+      "Double-check with the technical team that the unit is confirmed as another brand before sending this.",
+      "Send the polite redirect below. Stay warm, never dismissive.",
+      "Close the case in the log with the reason \"non-Atlantic product\".",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for sharing the details of your unit. After checking them, we found that your unit is a [Brand] product, which unfortunately falls outside our scope, as we are the official after-sales service for Atlantic water heaters and heat pumps only.
+
+For that reason, we would recommend contacting [Brand]'s authorised service centre — being the brand's own network, they will be best placed to help you with genuine parts and warranty support.
+
+We are sorry we could not assist on this occasion, but please do keep us in mind for anything Atlantic in the future.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  wc4e: {
+    title: "Outcome E: Emergency or safety concern",
+    crumb: "E: Emergency",
+    keywords: "emergency safety hazard sparks smoke leak electric shock urgent danger",
+    escalate: "This does NOT follow the standard process. <strong>Act immediately, in this order</strong> and inform the manager ({{managerName}}, {{managerContact}}) right away.",
+    steps: [
+      "Stay calm and keep the customer calm. Tell them to switch the unit off at the main electrical breaker and keep everyone away from it.",
+      "If there is any immediate danger (fire, smoke, electric shock), tell them to call 999 first.",
+      "Call the manager immediately. Do not wait for a message reply.",
+      "Send the urgent message below so the customer has the instructions in writing.",
+      "Log the case in Airtable as URGENT with the time you escalated it.",
+    ],
+    message:
+`[Customer Name], thank you for alerting us — your safety comes first, so please act on the below right away.
+
+First, switch off the unit from the main electrical breaker and keep everyone away from it; do not touch the unit or attempt any fix yourself. If you feel there is any immediate danger, please call 999 before anything else.
+
+Meanwhile, I have escalated this to our manager as an urgent case, so you will receive a call from us very shortly.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  /* ---------------- STEP 5: 160 AED CALL-OUT RESPONSE ---------------- */
+
+  wc5_agree: {
+    title: "Step 5: Customer agrees to the call-out fee",
+    crumb: "5: Agreed",
+    keywords: "call out fee agreed booking confirmation paid visit",
+    steps: [
+      "Confirm the full address and preferred day, and coordinate the slot with the service team.",
+      "Send the booking confirmation below. It repeats the fee so there are no surprises on the day.",
+      "Log the booking in Airtable against the claim reference, marked as a paid visit.",
+    ],
+    prices: [
+      { label: "Call-out fee (collected on visit)", value: "{{price:callout_fee}}" },
+    ],
+    message:
+`Thank you for confirming, [Customer Name].
+
+Your visit is now booked for [Date / Time Window] at [Address], and the technician will call you when he arrives.
+
+Just as a reminder before the visit: the call-out fee is {{price:callout_fee}}, while the repair cost itself will be confirmed with you after diagnosis, before any work begins.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  wc5_decline: {
+    title: "Step 5: Customer declines or needs time",
+    crumb: "5: Declined",
+    keywords: "call out fee declined needs time close out follow up reminder",
+    steps: [
+      "Never pressure the customer. Send the warm close-out below.",
+      "Keep the case in Airtable with all documents and the claim reference, status \"declined, follow up\".",
+      "Set a reminder to follow up in 5 to 7 days, unless the customer clearly said no for good.",
+    ],
+    message:
+`That is completely understood, [Customer Name] — no problem at all.
+
+In the meantime, we have kept your case and all your documents on file, so if you decide to go ahead later, a single message is enough for us to arrange the visit without starting over.
+
+Thank you for contacting Atlantic After-Sales UAE.
+
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "Set a reminder to follow up in 5 to 7 days. If they still decline then, close the case and inform the manager.",
+  },
+
+  /* ---------------- INSTALLATION ---------------- */
+
+  installation: {
+    title: "Installation request — which product?",
+    crumb: "Installation",
+    keywords: "install installation fitting fix new unit plumber",
+    options: [
+      { icon: "🚿", label: "Water heater installation", goto: "installation_wh" },
+      { icon: "♨️", label: "Heat pump installation",    goto: "installation_hp" },
+    ],
+  },
+
+  installation_wh: {
+    title: "Water heater installation",
+    crumb: "WH Install",
+    keywords: "water heater installation price book",
+    steps: [
+      "Quote the standard installation charge below.",
+      "Ask for address, preferred day, and whether an old unit needs removal.",
+      "Send the confirmation message.",
+    ],
+    prices: [
+      { label: "Standard installation (up to 100L)", value: "{{price:installation_wh}}" },
+      { label: "Larger units (150L – 500L)", value: "Use the Quote Calculator" },
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for choosing Atlantic for your installation. The standard charge is {{price:installation_wh}}, which covers the complete installation as well as testing of the unit before the technician leaves.
+
+On that basis, your visit is noted for [Date / Time Window] at [Address] — if anything changes on your side, just let me know and I will adjust the booking.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    note: "The standard rate covers units up to 100L — bigger units (200L–500L) cost more to install; get the exact figure from the Quote Calculator. If the site needs extra work (new piping, false ceiling, difficult access), the technician confirms any additional cost on-site — mention it to the manager.",
+  },
+
+  installation_hp: {
+    title: "Heat pump installation",
+    crumb: "HP Install",
+    keywords: "heat pump installation site visit",
+    escalate: "Heat pump installations always need a site assessment — <strong>do not quote a price.</strong> Collect the details and pass them to the manager.",
+    steps: [
+      "Ask for the property type, location, and contact details.",
+      "Send the holding message below, forward everything to the manager, and get an acknowledgment — it is not escalated until the manager confirms receipt.",
+      "Log the case in Airtable with the escalation time and a follow-up date.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for choosing Atlantic.
+
+Heat pump installations are always planned after a site assessment, as this is what ensures the system is set up correctly the first time. Our technical team will therefore contact you within [Timeframe] to arrange the assessment, and everything else will follow from there.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  /* ---------------- AMC ---------------- */
+
+  amc: {
+    title: "Annual Maintenance Contract (AMC)",
+    crumb: "AMC",
+    keywords: "amc annual maintenance contract service package cleaning descaling",
+    steps: [
+      "Quote the packages below and ask which one they'd prefer.",
+      "Take their unit details (model / capacity) and address.",
+      "Send the message and log the AMC signup for the manager.",
+    ],
+    prices: [
+      { label: "Basic — 1 maintenance visit / year",   value: "{{price:amc_basic}}" },
+      { label: "Premium — 2 maintenance visits / year", value: "{{price:amc_premium}}" },
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for your interest in our annual maintenance contracts. We offer two packages:
+
+• Basic — 1 visit per year: {{price:amc_basic}}
+• Premium — 2 visits per year: {{price:amc_premium}}
+
+In both cases, each visit includes a full inspection, cleaning/descaling, and a safety check — regular maintenance like this is what keeps the unit efficient and extends its life.
+
+Once you let me know which package suits you better, I will set it up right away.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+
+  /* ---------------- SPARE PARTS ---------------- */
+
+  spares: {
+    title: "Spare parts enquiry",
+    crumb: "Spare Parts",
+    keywords: "spare parts element thermostat valve part price availability",
+    steps: [
+      "Ask which part they need, plus the unit model and serial number (photo of the sticker is easiest).",
+      "If they don't know the part name, ask for a photo of the part or the problem.",
+      "Send the message below, then check availability and price with the manager / stock list before quoting anything.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for contacting Atlantic After-Sales UAE.
+
+Spare parts differ from model to model, so to identify the correct part for your unit, please send:
+1. A photo of the sticker on the unit (model & serial number)
+2. A photo of the part you need, if possible
+
+With those in hand, I will check our stock and confirm availability and price within [Timeframe].
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    escalate: "Never quote a spare part price from memory — <strong>always confirm price and stock with the manager first.</strong>",
+  },
+
+  /* ---------------- COMPLAINT ---------------- */
+
+  complaint: {
+    title: "Complaint / unhappy customer",
+    crumb: "Complaint",
+    keywords: "complaint angry unhappy escalate frustrated refund bad service",
+    steps: [
+      "Stay calm and polite — do not argue, and do not admit fault or promise compensation.",
+      "Listen and note down: name, phone, what happened, and any reference (invoice / previous visit).",
+      "Send the acknowledgement message below.",
+      "Log the complaint in Airtable, then immediately inform the manager with all the details — every complaint goes to the manager, the same day.",
+      "Get the manager's acknowledgment and note the escalation time in Airtable — a forwarded message alone is not an escalation.",
+    ],
+    message:
+`Dear [Customer Name],
+
+I am truly sorry for the inconvenience you have experienced, and thank you for bringing it to our attention.
+
+So that it is handled at the right level, I have personally escalated your case to our manager, and you will receive a call from us within [Timeframe] to resolve it.
+
+Until then, we appreciate your patience and your trust in Atlantic.
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+    escalate: "All complaints go to the manager (" + "{{managerName}}, {{managerContact}}) the same day. Never offer refunds or compensation yourself.",
+  },
+
+  /* ---------------- GENERAL ESCALATION ---------------- */
+
+  escalate_general: {
+    title: "Not sure what to do?",
+    crumb: "Ask Manager",
+    keywords: "help confused other question unknown manager escalate",
+    escalate: "When a situation doesn't fit any card, or you're not confident — <strong>that's exactly when to ask the manager ({{managerName}}, {{managerContact}}).</strong> It's always better to check than to guess.",
+    steps: [
+      "Take the customer's name, phone number, and a short note of what they need.",
+      "Send the holding message below so the customer isn't left waiting.",
+      "Share the details with the manager and get an acknowledgment — it is not escalated until the manager confirms receipt.",
+      "Log the case in Airtable with the escalation time and a follow-up date, so it can't fall through the cracks.",
+    ],
+    message:
+`Dear [Customer Name],
+
+Thank you for contacting Atlantic After-Sales UAE.
+
+Your request needs input from the right member of our team, so I have passed it on along with all your details. You can expect to hear back from us within [Timeframe].
+
+Best regards,
+[Your Name]
+Atlantic After-Sales UAE`,
+  },
+};
+
+/* ============================================================
+   =============  APP LOGIC (no need to edit below)  ==========
+============================================================ */
+
+const $card = document.getElementById("card");
+const $crumbs = document.getElementById("crumbs");
+const $search = document.getElementById("search");
+const $results = document.getElementById("search-results");
+
+let history = ["home"];
+
+function fill(text) {
+  if (!text) return text;
+  return text
+    .replace(/\{\{price:(\w+)\}\}/g, (_, k) => CONFIG.prices[k] ?? "AED ___")
+    .replace(/\{\{w:(\w+)\}\}/g, (_, k) => CONFIG.warranty[k] ?? "___")
+    .replace(/\{\{managerName\}\}/g, CONFIG.managerName)
+    .replace(/\{\{managerContact\}\}/g, CONFIG.managerContact);
+}
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Highlight [placeholders] in displayed messages
+function renderMsgHTML(text) {
+  return esc(text).replace(/\[([^\]\n]+)\]/g, '<span class="ph">[$1]</span>');
+}
+
+function crumbLabel(id) {
+  const c = CARDS[id];
+  return c.crumb || c.title;
+}
+
+function render(id) {
+  const c = CARDS[id];
+  if (!c) return;
+
+  // breadcrumbs
+  $crumbs.innerHTML = "";
+  history.forEach((hid, i) => {
+    if (i < history.length - 1) {
+      const b = document.createElement("button");
+      b.textContent = crumbLabel(hid);
+      b.onclick = () => { history = history.slice(0, i + 1); render(hid); };
+      $crumbs.appendChild(b);
+      const sep = document.createElement("span");
+      sep.className = "sep";
+      sep.textContent = "›";
+      $crumbs.appendChild(sep);
+    } else {
+      const cur = document.createElement("span");
+      cur.className = "current";
+      cur.textContent = crumbLabel(hid);
+      $crumbs.appendChild(cur);
+    }
+  });
+
+  let html = `<div class="card"><h2>${esc(fill(c.title))}</h2>`;
+  if (c.subtitle) html += `<p class="subtitle">${esc(fill(c.subtitle))}</p>`;
+
+  if (c.escalate) {
+    html += `<div class="escalate-box">⚠️ ${fill(c.escalate)}</div>`;
+  }
+
+  if (c.steps) {
+    html += `<ol class="steps">` + c.steps.map(s => `<li>${esc(fill(s))}</li>`).join("") + `</ol>`;
+  }
+
+  if (c.prices) {
+    html += `<div class="price-block"><div class="label">💰 Price to quote</div>`;
+    html += c.prices.map(p =>
+      `<div class="price-row"><span>${esc(fill(p.label))}</span><span class="amount">${esc(fill(p.value))}</span></div>`
+    ).join("");
+    html += `</div>`;
+  }
+
+  if (c.message) {
+    const filled = fill(c.message);
+    html += `<div class="msg-block">
+      <div class="msg-head">
+        <span class="label">✉️ Message to send — replace the <span style="background:#fef3c7;color:#b45309;border-radius:4px;padding:0 3px;">[highlighted]</span> parts</span>
+        <button class="copy-btn" data-copy>📋 Copy message</button>
+      </div>
+      <div class="msg-text">${renderMsgHTML(filled)}</div>
+    </div>`;
+  }
+
+  if (c.options) {
+    html += `<div class="options">` + c.options.map((o, i) =>
+      `<button class="opt" data-goto="${o.goto}"><span class="icon">${o.icon || "▪️"}</span>${esc(o.label)}<span class="arrow">›</span></button>`
+    ).join("") + `</div>`;
+  }
+
+  if (c.note) html += `<p class="note">💡 ${esc(fill(c.note))}</p>`;
+
+  // nav buttons (hidden on home)
+  if (id !== "home") {
+    html += `<div class="nav-row">
+      <button class="nav-btn" data-back>← Back</button>
+      <button class="nav-btn home" data-home>🏠 Start over</button>
+    </div>`;
+  }
+
+  html += `</div>`;
+  $card.innerHTML = html;
+  window.scrollTo({ top: 0 });
+
+  // wire up
+  $card.querySelectorAll("[data-goto]").forEach(btn => {
+    btn.onclick = () => { history.push(btn.dataset.goto); render(btn.dataset.goto); };
+  });
+  const back = $card.querySelector("[data-back]");
+  if (back) back.onclick = () => {
+    if (history.length > 1) { history.pop(); render(history[history.length - 1]); }
+  };
+  const home = $card.querySelector("[data-home]");
+  if (home) home.onclick = () => { history = ["home"]; render("home"); };
+
+  const copyBtn = $card.querySelector("[data-copy]");
+  if (copyBtn) copyBtn.onclick = async () => {
+    const text = fill(c.message);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    copyBtn.textContent = "✅ Copied!";
+    copyBtn.classList.add("copied");
+    setTimeout(() => {
+      copyBtn.innerHTML = "📋 Copy message";
+      copyBtn.classList.remove("copied");
+    }, 1800);
+  };
+}
+
+/* ---------- Search ---------- */
+
+// Build a path from home to each card for search context
+function pathTo(target) {
+  const visited = new Set();
+  function dfs(id, trail) {
+    if (visited.has(id)) return null;
+    visited.add(id);
+    const t = [...trail, id];
+    if (id === target) return t;
+    const c = CARDS[id];
+    if (c && c.options) {
+      for (const o of c.options) {
+        const r = dfs(o.goto, t);
+        if (r) return r;
+      }
+    }
+    return null;
+  }
+  return dfs("home", []) || [target];
+}
+
+const SEARCH_INDEX = Object.entries(CARDS).filter(([id]) => id !== "home").map(([id, c]) => ({
+  id,
+  title: fill(c.title),
+  haystack: [
+    c.title, c.crumb, c.keywords, c.subtitle,
+    (c.options || []).map(o => o.label).join(" "),
+    c.message, (c.steps || []).join(" "),
+  ].filter(Boolean).join(" ").toLowerCase(),
+}));
+
+$search.addEventListener("input", () => {
+  const q = $search.value.trim().toLowerCase();
+  if (q.length < 2) { $results.classList.remove("open"); return; }
+  const terms = q.split(/\s+/);
+  const hits = SEARCH_INDEX.filter(e => terms.every(t => e.haystack.includes(t))).slice(0, 7);
+  if (!hits.length) {
+    $results.innerHTML = `<div class="search-item" style="cursor:default;color:var(--muted)">No match — try another word, or ask the manager.</div>`;
+    $results.classList.add("open");
+    return;
+  }
+  $results.innerHTML = hits.map(h => {
+    const path = pathTo(h.id).map(crumbLabel).join(" › ");
+    return `<button class="search-item" data-id="${h.id}">${esc(h.title)}<span class="path">${esc(path)}</span></button>`;
+  }).join("");
+  $results.classList.add("open");
+  $results.querySelectorAll("[data-id]").forEach(btn => {
+    btn.onclick = () => {
+      history = pathTo(btn.dataset.id);
+      render(btn.dataset.id);
+      $search.value = "";
+      $results.classList.remove("open");
+    };
+  });
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".search-wrap")) $results.classList.remove("open");
+});
+
+render("home");
+</script>
+
+</template>
+
+<!-- ============ EMBEDDED TOOL: QUOTE CALCULATOR ============ -->
+<template id="tpl-calc">
+<style>
+  :root {
+    --black: #000;
+    --white: #fff;
+    --line: #000;
+    --muted: #767676;
+    --hairline: #e0e0e0;
+    --soft: #f5f5f5;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--white);
+    color: var(--black);
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  header { border-bottom: 1px solid var(--line); padding: 32px 24px; }
+  .header-inner { max-width: 1040px; margin: 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  header p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+  .home-link {
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--black); text-decoration: none; border: 1px solid var(--line);
+    padding: 9px 14px; white-space: nowrap; margin-top: 2px;
+  }
+  .home-link:hover { background: var(--black); color: var(--white); }
+
+  main {
+    max-width: 1040px; margin: 0 auto; padding: 40px 24px 64px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;
+  }
+
+  .global-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .global-row .g-field { display: flex; flex-direction: column; }
+  .global-row .g-field label { margin-bottom: 10px; }
+
+  .field { margin-bottom: 28px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block; font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
+  }
+  .hint {
+    font-size: 12px; font-weight: 400; text-transform: none; letter-spacing: normal;
+    color: var(--muted); margin: -4px 0 12px;
+  }
+
+  select, input[type="number"], input[type="text"] {
+    width: 100%; padding: 12px 14px; font-size: 16px; font-family: inherit;
+    color: var(--black); background: var(--white);
+    border: 1px solid var(--line); border-radius: 0; appearance: none; -webkit-appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='black' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; cursor: pointer;
+  }
+  select:focus, input[type="number"]:focus, input[type="text"]:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  input[type="number"]:disabled, select:disabled {
+    border-color: var(--hairline); color: var(--muted); background-color: var(--soft); cursor: not-allowed;
+  }
+
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tiles-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .tile {
+    position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 16px 12px; border: 1px solid var(--line); cursor: pointer;
+    text-transform: none; letter-spacing: normal; font-weight: 400; margin: 0;
+  }
+  .tile input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .tile-pic { height: 88px; display: flex; align-items: center; justify-content: center; }
+  .tile-pic svg { height: 100%; width: auto; color: var(--black); }
+  .tile-label { font-size: 14px; }
+  .tile:has(input:checked) { border-width: 2px; padding: 15px 11px; background: #f8f8f8; }
+  .tile:has(input:focus-visible) { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .path { align-items: flex-start; text-align: left; gap: 4px; justify-content: center; min-height: 78px; }
+  .path-title { font-size: 15px; font-weight: 700; }
+  .path-desc { font-size: 12px; color: var(--muted); }
+
+  .checks { display: flex; flex-direction: column; gap: 14px; }
+  .check {
+    display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 15px;
+    font-weight: 400; text-transform: none; letter-spacing: normal; margin: 0;
+  }
+  .check input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .box {
+    flex: 0 0 auto; width: 20px; height: 20px; border: 1px solid var(--line);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .check input:checked + .box::after { content: ""; width: 12px; height: 12px; background: var(--black); }
+  .check input:focus-visible + .box { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .subblock { margin-top: 16px; padding-left: 32px; }
+  .subblock[hidden] { display: none !important; }
+  .info { margin-top: 10px; }
+  .info summary {
+    font-size: 12px; color: var(--muted); cursor: pointer; list-style: none;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .info summary::-webkit-details-marker { display: none; }
+  .info p { font-size: 12px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
+  .disclaimer { font-size: 11px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+
+  .unit-card { border: 1px solid var(--line); padding: 20px; margin-bottom: 16px; }
+  .unit-card:last-child { margin-bottom: 0; }
+  .unit-card-header {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--hairline);
+  }
+  .unit-card-num { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  .unit-size-sel {
+    flex: 1; min-width: 110px; padding: 7px 30px 7px 10px; font-size: 13px; font-family: inherit;
+    color: var(--black); background: var(--white);
+    border: 1px solid var(--hairline); border-radius: 0; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat; background-position: right 10px center; cursor: pointer;
+    font-weight: 400; text-transform: none; letter-spacing: normal;
+  }
+  .unit-size-sel:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  .unit-field { margin-bottom: 20px; }
+  .unit-field:last-child { margin-bottom: 0; }
+  .unit-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .unit-sublabel { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: none; letter-spacing: normal; margin: 10px 0 6px; }
+  .unit-sublabel:first-child { margin-top: 0; }
+
+  .segmented { display: flex; border: 1px solid var(--line); }
+  .seg {
+    flex: 1 1 0; margin: 0; min-width: 0; min-height: 44px;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 10px 6px; font-size: 13px; font-weight: 500; line-height: 1.2;
+    text-transform: none; letter-spacing: normal; cursor: pointer;
+    border-right: 1px solid var(--line);
+  }
+  .seg:last-child { border-right: none; }
+  .seg input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .seg:has(input:checked) { background: var(--black); color: var(--white); }
+  .seg:has(input:focus-visible) { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .spare-group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 4px; }
+  .spare-group-title:first-child { margin-top: 4px; }
+  .spare-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--hairline); transition: background .12s; }
+  .spare-row.selected { background: #f8f8f8; box-shadow: inset 2px 0 0 var(--black); }
+  .spare-info { flex: 1 1 auto; min-width: 0; }
+  .spare-name { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .spare-sub { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .spare-sub .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; background: var(--white); border: 1px solid var(--hairline); padding: 1px 6px; color: var(--black); }
+  .spare-sub .code.muted { color: var(--muted); }
+  .spare-sub .dot { color: var(--hairline); }
+  .spare-sub .price { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .spare-line { font-size: 12px; font-weight: 700; margin-top: 5px; font-variant-numeric: tabular-nums; }
+  .spare-line:empty { display: none; }
+
+  .stepper { flex: 0 0 auto; display: inline-flex; align-items: stretch; border: 1px solid var(--line); height: 40px; }
+  .stepper .step { width: 38px; border: none; background: var(--white); font-size: 18px; line-height: 1; cursor: pointer; color: var(--black); display: flex; align-items: center; justify-content: center; padding: 0; font-family: inherit; }
+  .stepper .step:hover { background: var(--black); color: var(--white); }
+  .stepper .step:focus-visible { outline: 2px solid var(--black); outline-offset: -2px; }
+  .stepper .spare-qty { width: 46px; border: none; border-left: 1px solid var(--line); border-right: 1px solid var(--line); text-align: center; font-size: 15px; padding: 0; border-radius: 0; -moz-appearance: textfield; }
+  .stepper .spare-qty:focus { outline: 2px solid var(--black); outline-offset: -2px; }
+  .spare-qty::-webkit-outer-spin-button, .spare-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .summary { border: 1px solid var(--line); padding: 28px; position: sticky; top: 24px; }
+  .summary h2 { margin: 0 0 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .line { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--hairline); font-size: 15px; }
+  .line .desc { color: var(--black); }
+  .line .desc small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .line .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .line.subtotal { border-bottom: 1px solid var(--line); font-weight: 600; }
+  .empty-note { color: var(--muted); font-size: 14px; padding: 8px 0 4px; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 22px; }
+  .total .label { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .total .amt { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .note { margin-top: 18px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .btn {
+    display: block; margin-top: 14px; width: 100%; padding: 13px 16px; font-family: inherit; font-size: 13px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; border-radius: 0; cursor: pointer; border: 1px solid var(--line);
+  }
+  .btn-outline { color: var(--black); background: var(--white); }
+  .btn-outline:hover { background: var(--black); color: var(--white); }
+  .btn-fill { color: var(--white); background: var(--black); }
+  .btn-fill:hover { opacity: 0.75; }
+  .btn:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .link-btn {
+    margin-top: 18px; display: inline-flex; align-items: center; gap: 8px; background: none; border: none;
+    padding: 0; font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--black); cursor: pointer;
+  }
+  .link-btn .txt { text-decoration: underline; text-underline-offset: 3px; }
+  .link-btn:hover { opacity: 0.65; }
+  .link-btn:focus-visible { outline: 2px solid var(--black); outline-offset: 3px; }
+
+  .modal { display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 24px; }
+  .modal.open { display: flex; }
+  .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+  .modal-box { position: relative; background: var(--white); border: 1px solid var(--line); width: 100%; max-width: 880px; max-height: 90vh; overflow: auto; padding: 28px; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .modal-head h2 { margin: 0; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .modal-close { background: var(--white); border: 1px solid var(--line); width: 38px; height: 38px; font-size: 22px; line-height: 1; color: var(--black); cursor: pointer; border-radius: 0; }
+  .modal-close:hover { background: var(--black); color: var(--white); }
+  .modal-close:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
+  .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .gallery-item { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .gallery-item figcaption { font-size: 14px; font-weight: 600; text-align: center; color: var(--black); }
+  .gallery-item figcaption small { display: block; font-weight: 400; color: var(--muted); margin-top: 4px; }
+  .photo-frame { position: relative; width: 100%; aspect-ratio: 4 / 3; border: 1px dashed var(--line); display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--white); }
+  .photo-frame.filled { border-style: solid; }
+  .photo-frame img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .photo-frame.filled img { display: block; }
+  .photo-frame .placeholder { font-size: 12px; color: var(--muted); text-align: center; padding: 16px; line-height: 1.5; }
+  .photo-frame .placeholder small { display: block; margin-top: 6px; font-size: 11px; }
+  .photo-frame.filled .placeholder { display: none; }
+
+  .disclaimer-modal { display: none; position: fixed; inset: 0; z-index: 60; align-items: center; justify-content: center; padding: 24px; }
+  .disclaimer-modal.open { display: flex; }
+  .disclaimer-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+  .disclaimer-box { position: relative; background: #fffbeb; border: 1px solid #d97706; width: 100%; max-width: 540px; padding: 32px; }
+  .disclaimer-icon { font-size: 26px; margin-bottom: 12px; line-height: 1; }
+  .disclaimer-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #92400e; margin: 0 0 14px; }
+  .disclaimer-text { font-size: 14px; line-height: 1.7; color: #1c1c1c; margin: 0 0 26px; }
+  .disclaimer-ack { width: 100%; padding: 13px 16px; font-family: inherit; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #fff; background: #92400e; border: none; border-radius: 0; cursor: pointer; }
+  .disclaimer-ack:hover { background: #78350f; }
+
+  /* =====================================================
+     QUOTE DETAILS SECTION (SCREEN ONLY)
+  ===================================================== */
+  .qd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .qd-field { display: flex; flex-direction: column; }
+  .qd-field label {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 8px; display: block;
+  }
+  .qd-field .qd-opt { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); font-size: 11px; }
+  .qd-field.full { grid-column: 1 / -1; }
+  .qd-sep {
+    grid-column: 1 / -1;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted);
+    padding: 4px 0 8px; border-bottom: 1px solid var(--hairline);
+    margin-bottom: 2px;
+  }
+
+  /* =====================================================
+     PRINT — QUOTATION DOCUMENT
+  ===================================================== */
+  #quotationPrint { display: none; }
+
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    header, main, .modal, .disclaimer-modal { display: none !important; }
+
+    #quotationPrint {
+      display: block !important;
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 10pt;
+      color: #000;
+      line-height: 1.45;
+    }
+
+    /* === BRAND COLOURS ===
+       --brand-red : #CC1015  (Cheqpoint primary red)
+       --brand-blk : #000000  (Cheqpoint black)
+       All backgrounds: #ffffff. All body text: #000000.
+       Red is used only for structural / accent elements.
+    ============================================= */
+
+    /* --- Letterhead --- */
+    .qp-lh {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 11pt; padding-bottom: 8pt;
+      border-bottom: 2pt solid #CC1015;   /* brand-red rule under logo */
+    }
+    .qp-lh-logo { display: flex; flex-direction: column; justify-content: center; }
+    .qp-lh-logo img { max-height: 52pt; max-width: 160pt; width: auto; height: auto; display: block; }
+    .qp-co-info { font-size: 8pt; text-align: right; line-height: 1.6; color: #333; }
+    .qp-sig-img { max-height: 38pt; width: auto; display: block; margin-bottom: 2pt; }
+
+    /* --- Header table --- */
+    .qp-hdr { width: 100%; border-collapse: collapse; margin-bottom: 11pt; }
+    .qp-hdr td { border: 0.5pt solid #000; padding: 3.5pt 7pt; vertical-align: middle; }
+    .q-title {
+      /* Black title bar — authority / formality */
+      background: #000 !important; color: #fff !important;
+      text-align: center; font-size: 14pt; font-weight: 700;
+      letter-spacing: 0.14em; padding: 6pt !important;
+    }
+    .q-lbl { font-weight: 700; background: #f0f0f0 !important; white-space: nowrap; width: 14%; }
+
+    /* --- Scope table --- */
+    .qp-scope { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 7pt 0 9pt; }
+    .qp-scope td { border: 0.5pt solid #000; padding: 4pt 7pt; vertical-align: top; }
+    .qp-scope td:first-child { font-weight: 700; background: #f0f0f0 !important; width: 30%; white-space: nowrap; }
+
+    /* --- VAT note --- */
+    .qp-vat-note {
+      font-size: 7.5pt; color: #444; font-style: italic;
+      border-left: 2pt solid #CC1015;     /* red left accent on VAT box */
+      background: #fff9f9 !important;
+      padding: 3.5pt 6pt; margin: 9pt 0; line-height: 1.4;
+    }
+
+    /* --- Sig --- */
+    .qp-sig { font-size: 10pt; line-height: 1.85; margin-top: 10pt; }
+    .qp-sig-name { font-weight: 700; font-size: 10.5pt; }
+
+    /* --- Section headers (EXCLUSIONS / ADDITIONAL TERMS) --- */
+    .qp-sec-hdr {
+      font-size: 9pt; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; margin: 12pt 0 4pt; padding-bottom: 2.5pt;
+      color: #CC1015;                     /* brand-red text */
+      border-bottom: 1.5pt solid #CC1015; /* brand-red underline */
+    }
+
+    /* --- List tables (exclusions / terms) --- */
+    .qp-lst { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 9pt; }
+    .qp-lst td { border: 0.4pt solid #ddd; padding: 2.5pt 6pt; vertical-align: top; color: #000; }
+    .qp-lst td.qp-n {
+      width: 6%; text-align: center; font-weight: 700;
+      color: #CC1015;                     /* red numbering */
+      background: #fff !important;
+      border-right: 0.4pt solid #ddd;
+    }
+
+    /* --- Footer --- */
+    .qp-foot {
+      margin-top: 12pt; border-top: 0.5pt solid #ccc; padding-top: 4pt;
+      font-size: 7.5pt; color: #666; text-align: center; line-height: 1.5;
+    }
+
+    /* --- Page 2: Annexure --- */
+    .qp-break { page-break-before: always; }
+
+    .qp-annex-title {
+      font-size: 12pt; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; margin-bottom: 9pt;
+      padding-bottom: 5pt;
+      border-bottom: 2pt solid #CC1015;   /* brand-red rule under annexure title */
+    }
+    .qp-annex-ref { font-size: 8pt; color: #555; margin-bottom: 9pt; }
+
+    .qp-price-tbl { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+    .qp-price-tbl th {
+      background: #CC1015 !important;     /* brand-red header row */
+      color: #fff !important;
+      padding: 4pt 7pt; text-align: left; font-size: 9pt; font-weight: 700;
+    }
+    .qp-price-tbl th:last-child { text-align: right; width: 26%; }
+    .qp-price-tbl td { border: 0.4pt solid #ddd; padding: 4pt 7pt; vertical-align: top; color: #000; }
+    .qp-price-tbl td.qp-r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .qp-price-tbl tr.qp-sub td {
+      font-weight: 700; background: #f5f5f5 !important;
+      border-top: 0.75pt solid #000;
+    }
+    .qp-price-tbl tr.qp-grand td {
+      font-weight: 700; font-size: 11pt;
+      background: #CC1015 !important;     /* brand-red grand total row */
+      color: #fff !important;
+    }
+
+    .qp-price-note { font-size: 8.5pt; color: #555; margin-top: 8pt; line-height: 1.5; font-style: italic; }
+
+    @page { margin: 14mm 18mm; size: A4 portrait; }
+  }
+
+  @media (max-width: 720px) {
+    main { grid-template-columns: 1fr; gap: 40px; padding: 32px 20px 56px; }
+    .summary { position: static; }
+    header { padding: 24px 20px; }
+    header h1 { font-size: 22px; }
+    .total .amt { font-size: 28px; }
+    .gallery-grid { grid-template-columns: 1fr; }
+    .modal-box { padding: 20px; }
+    .global-row, .tiles-3, .qd-grid { grid-template-columns: 1fr; }
+    .qd-field.full { grid-column: 1; }
+  }
+</style>
+
+
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>CTT — Water Heater Quote Calculator</h1>
+      <p>Internal use only. Configure the quote below for an instant estimate.</p>
+    </div>
+    <a class="home-link" href="#" onclick="parent.showHome();return false;">&larr; Home</a>
+  </div>
+</header>
+
+<main>
+  <section class="calculator" aria-label="Calculator">
+
+    <!-- ===== QUOTE DETAILS (NEW) ===== -->
+    <div class="field">
+      <label>Quote Details</label>
+      <p class="hint">Fill in before printing — these populate the formal quotation document.</p>
+      <div class="qd-grid">
+
+        <div class="qd-sep">Client</div>
+
+        <div class="qd-field full">
+          <label for="clientName">Client / Company Name</label>
+          <input type="text" id="clientName" placeholder="e.g. M/s IFM Facilities Management LLC" autocomplete="off">
+        </div>
+        <div class="qd-field full">
+          <label for="attnName">Attention <span class="qd-opt">— optional</span></label>
+          <input type="text" id="attnName" placeholder="Contact person at client" autocomplete="off">
+        </div>
+
+        <div class="qd-sep">Quote Metadata</div>
+
+        <div class="qd-field">
+          <label for="fromRep">From (Rep)</label>
+          <select id="fromRep">
+            <option value="0">J S Deliwala</option>
+            <option value="1">Masood Ahmed</option>
+            <option value="2">J S Deliwala / Masood</option>
+          </select>
+        </div>
+        <div class="qd-field">
+          <label for="projectName">Project Name</label>
+          <input type="text" id="projectName" placeholder="e.g. Al Wafra Tower" autocomplete="off">
+        </div>
+        <div class="qd-field">
+          <label for="consultant">Consultant</label>
+          <input type="text" id="consultant" placeholder="N/A if none" autocomplete="off" value="N/A">
+        </div>
+        <div class="qd-field">
+          <label for="termsOfPayment">Terms of Payment</label>
+          <select id="termsOfPayment">
+            <option value="Immediate by CDC / Online Transfer">Immediate by CDC / Online Transfer</option>
+            <option value="30 days from invoice date">30 days from invoice date</option>
+            <option value="50% advance, 50% on completion">50% advance, 50% on completion</option>
+            <option value="On delivery">On delivery</option>
+          </select>
+        </div>
+        <div class="qd-field">
+          <label for="quoteValidity">Quote Validity</label>
+          <select id="quoteValidity">
+            <option value="30 days">30 days</option>
+            <option value="14 days">14 days</option>
+            <option value="60 days">60 days</option>
+            <option value="90 days">90 days</option>
+          </select>
+        </div>
+        <div class="qd-field full">
+          <label for="quoteSubject">Subject <span class="qd-opt">— leave blank to auto-fill from service type</span></label>
+          <input type="text" id="quoteSubject" placeholder="Auto-generated if left blank" autocomplete="off">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== GLOBAL FIELDS ===== -->
+    <div class="global-row">
+      <div class="g-field">
+        <label for="jobNumber">Reference / Job No.</label>
+        <input type="text" id="jobNumber" placeholder="e.g. CQJ-14130-HP-MISC" autocomplete="off">
+      </div>
+      <div class="g-field">
+        <label for="location">City</label>
+        <select id="location"></select>
+      </div>
+    </div>
+
+    <!-- ===== PRODUCT ===== -->
+    <div class="field">
+      <label>Product</label>
+      <div class="tiles" role="radiogroup" aria-label="Product">
+        <label class="tile path">
+          <input type="radio" name="product" value="heater" checked>
+          <span class="path-title">Heater</span>
+          <span class="path-desc">Install, reinstall, spares &amp; repair</span>
+        </label>
+        <label class="tile path">
+          <input type="radio" name="product" value="heatpump">
+          <span class="path-title">Heat Pump</span>
+          <span class="path-desc">Calypso spare parts</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ===== SERVICE TYPE (heater only) ===== -->
+    <div class="field" id="serviceTypeField">
+      <label>Service Type</label>
+      <div class="tiles" role="radiogroup" aria-label="Service type">
+        <label class="tile path">
+          <input type="radio" name="pathway" value="reinstallation" checked>
+          <span class="path-title">Reinstallation</span>
+          <span class="path-desc">Replacing an existing heater</span>
+        </label>
+        <label class="tile path">
+          <input type="radio" name="pathway" value="newInstallation">
+          <span class="path-title">New Installation</span>
+          <span class="path-desc">First-time heater, new site</span>
+        </label>
+        <label class="tile path">
+          <input type="radio" name="pathway" value="spareParts">
+          <span class="path-title">Spare Parts</span>
+          <span class="path-desc">Parts-only quote</span>
+        </label>
+        <label class="tile path">
+          <input type="radio" name="pathway" value="repair">
+          <span class="path-title">Repair</span>
+          <span class="path-desc">Call out, labour &amp; parts</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ===== HEATER SECTION ===== -->
+    <div id="heaterSection">
+      <div class="field">
+        <label>Water Heater — Atlantic</label>
+        <p class="hint">Atlantic brand only. Choose orientation first — the capacities shown are the ones available in that orientation.</p>
+        <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
+          <label class="tile">
+            <input type="radio" name="orientation" value="horizontal" checked>
+            <span class="tile-pic" aria-hidden="true">
+              <svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="14" width="104" height="38" rx="19"/>
+                <line x1="90" y1="16" x2="90" y2="50"/>
+                <circle cx="28" cy="33" r="7"/>
+                <line x1="28" y1="33" x2="28" y2="28"/>
+                <line x1="58" y1="52" x2="58" y2="64"/>
+                <line x1="70" y1="52" x2="70" y2="64"/>
+              </svg>
+            </span>
+            <span class="tile-label">Horizontal</span>
+          </label>
+          <label class="tile">
+            <input type="radio" name="orientation" value="vertical">
+            <span class="tile-pic" aria-hidden="true">
+              <svg viewBox="0 0 70 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="14" y="6" width="42" height="104" rx="21"/>
+                <line x1="14" y1="88" x2="56" y2="88"/>
+                <circle cx="35" cy="98" r="7"/>
+                <line x1="27" y1="110" x2="27" y2="118"/>
+                <line x1="43" y1="110" x2="43" y2="118"/>
+              </svg>
+            </span>
+            <span class="tile-label">Vertical</span>
+          </label>
+        </div>
+        <select id="size" style="margin-top:14px"></select>
+      </div>
+      <div class="field">
+        <label for="qty">Quantity</label>
+        <input type="number" id="qty" min="1" step="1" value="1">
+      </div>
+    </div>
+
+    <div id="unitDetails"></div>
+
+    <!-- ===== REPAIR SECTION ===== -->
+    <div id="repairSection" hidden>
+      <div class="field">
+        <label for="repairQty">Number of Units to Repair</label>
+        <input type="number" id="repairQty" min="1" step="1" value="1">
+      </div>
+      <div class="field">
+        <label>Call Out Type</label>
+        <div class="tiles tiles-3" role="radiogroup" aria-label="Call out type">
+          <label class="tile path">
+            <input type="radio" name="callOut" value="standard" checked>
+            <span class="path-title">Standard</span>
+            <span class="path-desc">Attend in 1&ndash;2 days</span>
+          </label>
+          <label class="tile path">
+            <input type="radio" name="callOut" value="flexi">
+            <span class="path-title">Flexi</span>
+            <span class="path-desc">Attend in 3&ndash;5 days</span>
+          </label>
+          <label class="tile path">
+            <input type="radio" name="callOut" value="save">
+            <span class="path-title">Save</span>
+            <span class="path-desc">Attend in 5&ndash;7 days</span>
+          </label>
+        </div>
+      </div>
+      <div id="repairUnitDetails"></div>
+    </div>
+
+    <!-- ===== HEATER SPARE PARTS SECTION ===== -->
+    <div id="spareSection" hidden>
+      <div class="field">
+        <label>Mount Type</label>
+        <p class="hint">Sets which heating elements are compatible.</p>
+        <div class="segmented" role="radiogroup" aria-label="Mount type">
+          <label class="seg"><input type="radio" name="spareMount" value="horizontal" checked><span>Horizontal</span></label>
+          <label class="seg"><input type="radio" name="spareMount" value="wallmount"><span>Wall-mounted</span></label>
+          <label class="seg"><input type="radio" name="spareMount" value="floor"><span>Floor-standing</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Spare Parts</label>
+        <p class="hint">Use &minus;&thinsp;/&thinsp;+ to set quantities. Only parts you add appear in the quote.</p>
+        <div id="spareList" class="spare-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== HEAT PUMP SPARE PARTS SECTION ===== -->
+    <div id="heatPumpSection" hidden>
+      <div class="field">
+        <label>Range</label>
+        <div class="segmented" role="radiogroup" aria-label="Heat pump range">
+          <label class="seg"><input type="radio" name="hpRange" value="calypso" checked><span>Calypso</span></label>
+          <label class="seg"><input type="radio" name="hpRange" value="explorer"><span>Explorer</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Heat Pump Spare Parts</label>
+        <p class="hint">Use &minus;&thinsp;/&thinsp;+ to set quantities. Prices are ex VAT.</p>
+        <div id="heatPumpList" class="spare-list"></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ===== SUMMARY ===== -->
+  <section class="summary" aria-label="Estimate summary" aria-live="polite">
+    <h2>Estimate</h2>
+    <div id="breakdown"></div>
+    <div id="totalsBlock"></div>
+
+    <div class="total">
+      <span class="label">Grand Total</span>
+      <span class="amt" id="grandTotal">AED 0.00</span>
+    </div>
+
+    <button type="button" class="link-btn" id="galleryOpen">
+      <span class="txt">View photos of our works</span>
+      <span aria-hidden="true">&rarr;</span>
+    </button>
+
+    <p class="note">This is an estimate. Final quote may vary based on site conditions.</p>
+
+    <button type="button" class="btn btn-outline" id="confirm">Confirm</button>
+    <button type="button" class="btn btn-fill" id="btnPrint">&#128438;&ensp;Print / Save as PDF</button>
+  </section>
+</main>
+
+<!-- ===================================================
+     QUOTATION PRINT OUTPUT (hidden on screen)
+==================================================== -->
+<div id="quotationPrint">
+
+  <!-- PAGE 1: QUOTATION -->
+  <div>
+    <!-- Letterhead -->
+    <div class="qp-lh">
+      <div class="qp-lh-logo">
+        <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+      </div>
+      <div class="qp-co-info">
+        P.O. Box 25236, Dubai, U.A.E.<br>
+        Tel: +971 4 3209310 &nbsp;&bull;&nbsp; Fax: +971 4 3925582<br>
+        Email: info@cheqpoint.com &nbsp;&bull;&nbsp; www.cheqpoint.com<br>
+        TRN: 100058760800003
+      </div>
+    </div>
+
+    <!-- Header table -->
+    <table class="qp-hdr">
+      <tr><td colspan="4" class="q-title">QUOTATION</td></tr>
+      <tr>
+        <td class="q-lbl">To:</td>
+        <td colspan="3" id="qpTo">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">From:</td>
+        <td id="qpFrom">&mdash;</td>
+        <td class="q-lbl" style="width:11%">Ref:</td>
+        <td id="qpRef">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">Project:</td>
+        <td id="qpProject">&mdash;</td>
+        <td class="q-lbl" style="width:11%">Consultant:</td>
+        <td id="qpConsultant">N/A</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">Subject:</td>
+        <td colspan="3" id="qpSubject">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">Date:</td>
+        <td id="qpDate">&mdash;</td>
+        <td class="q-lbl" style="width:11%">Pages:</td>
+        <td>02</td>
+      </tr>
+    </table>
+
+    <!-- Scope / terms block -->
+    <table class="qp-scope">
+      <tr><td>Item / Scope of Works</td><td id="qpScope">&mdash;</td></tr>
+      <tr><td>Total Price &amp; Quantity</td><td>Please refer to Annexure&nbsp;#1.</td></tr>
+      <tr><td>Terms of Payment</td><td id="qpTerms">Immediate by CDC / Online Transfer</td></tr>
+      <tr><td>Quote Validity</td><td id="qpValidity">30 days</td></tr>
+      <tr><td>Exclusions</td><td>Please refer below.</td></tr>
+    </table>
+
+    <p class="qp-vat-note"><strong>Note:</strong> All given prices are exclusive and not limited to any VAT / special / corporate / commercial taxes and levies, and this amount needs to be added separately at actual as per UAE law and factored in by the buyer. The above figure should be considered as the net amount after deducting all relevant taxes, levies etc.</p>
+
+    <div class="qp-sig">
+      <img id="qpSigImg" class="qp-sig-img" src="" alt="Signature">
+      <div class="qp-sig-name" id="qpSigName">J S Deliwala</div>
+      <div id="qpSigTitle">Technical &amp; Sales Manager</div>
+      <div id="qpSigMob">Mob: +971 50 272 9668</div>
+      <div id="qpSigEmail">Email: jay@cheqpoint.com</div>
+    </div>
+
+    <!-- Exclusions -->
+    <div class="qp-sec-hdr">Exclusions</div>
+    <table class="qp-lst" id="qpExclTable"></table>
+
+    <!-- Additional Terms -->
+    <div class="qp-sec-hdr">Additional Terms</div>
+    <table class="qp-lst" id="qpTermsTable"></table>
+
+    <div class="qp-foot">
+      Note: We also provide after-sales services such as maintenance, testing and commissioning for all supplied equipment.<br>
+      Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com &nbsp;&bull;&nbsp; TRN: 100058760800003
+    </div>
+  </div>
+
+  <!-- PAGE 2: ANNEXURE #1 -->
+  <div class="qp-break">
+    <div class="qp-lh">
+      <div class="qp-lh-logo">
+        <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+      </div>
+      <div class="qp-co-info">
+        P.O. Box 25236, Dubai, U.A.E.<br>
+        TRN: 100058760800003
+      </div>
+    </div>
+
+    <div class="qp-annex-title">Annexure #1 &mdash; Price Breakdown</div>
+    <div class="qp-annex-ref" id="qpAnnexRef"></div>
+
+    <table class="qp-price-tbl">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody id="qpPriceBody"></tbody>
+    </table>
+
+    <p class="qp-price-note" id="qpPriceNote"></p>
+
+    <div class="qp-foot" style="margin-top:18pt">
+      Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com
+    </div>
+  </div>
+
+</div><!-- /#quotationPrint -->
+
+<!-- ===== Gallery modal ===== -->
+<div class="modal" id="gallery" aria-hidden="true">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="galleryTitle">
+    <div class="modal-head">
+      <h2 id="galleryTitle">Photos of Our Works</h2>
+      <button type="button" class="modal-close" id="galleryClose" aria-label="Close gallery">&times;</button>
+    </div>
+    <div class="gallery-grid">
+      <figure class="gallery-item">
+        <div class="photo-frame" id="frameHeater"><img alt="Water heater"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.heater</small></span></div>
+        <figcaption id="capHeater">Water Heater</figcaption>
+      </figure>
+      <figure class="gallery-item">
+        <div class="photo-frame" id="frameInstall"><img alt="Installation work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.install</small></span></div>
+        <figcaption id="capInstall">Installation</figcaption>
+      </figure>
+      <figure class="gallery-item">
+        <div class="photo-frame" id="frameCeiling"><img alt="False ceiling work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.falseCeiling</small></span></div>
+        <figcaption id="capCeiling">False Ceiling Modification</figcaption>
+      </figure>
+      <figure class="gallery-item">
+        <div class="photo-frame" id="framePipes"><img alt="Piping work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.pipes</small></span></div>
+        <figcaption id="capPipes">Piping</figcaption>
+      </figure>
+    </div>
+    <p class="note">Photos are illustrative &mdash; final result varies by site.</p>
+  </div>
+</div>
+
+<!-- ===== Disclaimer modal ===== -->
+<div class="disclaimer-modal" id="disclaimerModal" aria-hidden="true">
+  <div class="disclaimer-backdrop" data-close-disclaimer></div>
+  <div class="disclaimer-box" role="dialog" aria-modal="true" aria-labelledby="disclaimerTitle">
+    <div class="disclaimer-icon" aria-hidden="true">&#9888;</div>
+    <h2 class="disclaimer-title" id="disclaimerTitle">Important Notice</h2>
+    <p class="disclaimer-text" id="disclaimerText"></p>
+    <button type="button" class="disclaimer-ack" id="disclaimerAck">I Acknowledge &amp; Confirm</button>
+  </div>
+</div>
+
+<script>
+/* ========================================================= */
+const WORK_PHOTOS = { heater: "", install: "", falseCeiling: "", pipes: "" };
+const VAT = 0.05;
+
+/* =========================================================
+   PRICING DATA
+   ========================================================= */
+const PRICING = {
+  brand: "Atlantic",
+
+  pathways: {
+    reinstallation:  { label: "Reinstallation",   anchoring: 0 },
+    newInstallation: { label: "New Installation",  anchoring: 100 },
+    spareParts:      { label: "Spare Parts" },
+    repair:          { label: "Repair" }
+  },
+
+  sizesByOrientation: {
+    horizontal: [
+      { label: "50 L",  litres: 50,  price: 420,  installPerUnit: 300 },
+      { label: "80 L",  litres: 80,  price: 460,  installPerUnit: 300 },
+      { label: "100 L", litres: 100, price: 550,  installPerUnit: 300 },
+      { label: "200 L", litres: 200, price: 2300, installPerUnit: 600 }
+    ],
+    vertical: [
+      { label: "30 L",             litres: 30,  price: 355,  installPerUnit: 300  },
+      { label: "50 L",             litres: 50,  price: 380,  installPerUnit: 300  },
+      { label: "80 L",             litres: 80,  price: 415,  installPerUnit: 300  },
+      { label: "100 L",            litres: 100, price: 515,  installPerUnit: 300  },
+      { label: "150 L",            litres: 150, price: 1500, installPerUnit: 300  },
+      { label: "150 L Wall Mount", litres: 150, price: null, installPerUnit: 300  },
+      { label: "200 L Wall Mount", litres: 200, price: 2200, installPerUnit: 600  },
+      { label: "200 L Stab Floor", litres: 200, price: 2350, installPerUnit: 600  },
+      { label: "300 L",            litres: 300, price: 3300, installPerUnit: 1000 },
+      { label: "500 L",            litres: 500, price: 6000, installPerUnit: 1500 }
+    ]
+  },
+
+  locations: [
+    { label: "Dubai",          callOutStdExVAT: 700  },
+    { label: "Sharjah",        callOutStdExVAT: 650  },
+    { label: "Ajman",          callOutStdExVAT: 675  },
+    { label: "Umm Al Quwain",  callOutStdExVAT: 850  },
+    { label: "Abu Dhabi",      callOutStdExVAT: 1550 },
+    { label: "Ras Al Khaimah", callOutStdExVAT: 1000 },
+    { label: "Fujairah",       callOutStdExVAT: 1250 },
+    { label: "Al Ain",         callOutStdExVAT: 1400 },
+    { label: "Liwa / Ruwais",  callOutStdExVAT: 3500 }
+  ],
+
+  falseCeiling: [
+    { label: "40 × 40",   price: 600  },
+    { label: "80 × 80",   price: 1200 },
+    { label: "120 × 120", price: 1800 },
+    { label: "160 × 160", price: 2400 },
+    { label: "200 × 200", price: 3000 }
+  ],
+
+  flexibleConnectorsPrice: 85,
+  pipeSizes: [ { label: '1/2"', pricePerMeter: 6.3 }, { label: '3/4"', pricePerMeter: 10.14 } ],
+  piping: { laborFreeMeters: 1, laborPer2Meters: 240 },
+  isolationValves: [ { label: "None", price: 0 }, { label: '1/2"', price: 23.5 }, { label: '3/4"', price: 31 } ],
+  angleValves: [ { label: "None", price: 0 }, { label: '1/2"', price: 22 } ],
+  valvesMinLitres: 150,
+
+  repair: { laborExVAT: 350 },
+
+  heaterSpareParts: [
+    { group: "Heating Elements", code: "",       label: "Heating Element 0.8 kW",                price: 132.00, mounts: ["horizontal"] },
+    { group: "Heating Elements", code: "",       label: "Heating Element 1.2 kW",                price: 136.50, mounts: ["horizontal"] },
+    { group: "Heating Elements", code: "",       label: "Heating Element 1.5 kW",                price: 206.00, mounts: ["horizontal","wallmount","floor"] },
+    { group: "Heating Elements", code: "030238", label: "Heating Element 2.2 kW (Horizontal)",   price: 361.00, mounts: ["horizontal"] },
+    { group: "Heating Elements", code: "060187", label: "Heating Element 2.2 kW (Wall-mounted)", price: 361.00, mounts: ["wallmount"] },
+    { group: "Heating Elements", code: "099007", label: "Heating Element 3 kW (Floor-standing)", price: 499.00, mounts: ["floor"] },
+    { group: "Thermostats", code: "",       label: "Thermostat — White Body, Blue Handle",  price: 80.00,  mounts: ["all"] },
+    { group: "Thermostats", code: "",       label: "Thermostat — Brown Body, Red Handle",   price: 100.00, mounts: ["all"] },
+    { group: "Thermostats", code: "029577", label: "Thermostat — White Body, Green Handle", price: null,   mounts: ["all"] },
+    { group: "Valves & Unions", code: "",       label: '1/2" Safety Valve',      price: 68.00, mounts: ["all"] },
+    { group: "Valves & Unions", code: "029518", label: '3/4" Safety Valve',      price: null,  mounts: ["all"] },
+    { group: "Valves & Unions", code: "029019", label: '1/2" Dielectric Union',  price: null,  mounts: ["all"] },
+    { group: "Valves & Unions", code: "026051", label: '3/4" Dielectric Union',  price: null,  mounts: ["all"] },
+    { group: "Other", code: "021088", label: "Indicator Light", price: null, mounts: ["all"] }
+  ],
+
+  heatPumpRanges: {
+    calypso: {
+      label: "Calypso",
+      parts: [
+        { code: "026335", label: "Wire Harness for Digital Controller (HMI)", price: 300 },
+        { code: "026336", label: "Temperature Sensors (x2)",                  price: 275 },
+        { code: "026337", label: "Water Temperature Sensor",                  price: 400 },
+        { code: "026338", label: "Power Cable + Safety Thermostat",           price: 150 },
+        { code: "026340", label: "Power Cable and ACI Wires",                 price: 100 },
+        { code: "029686", label: "Wire Harness for Compressor",               price: 250 },
+        { code: "029687", label: "TX Valve and Filter Assy",                  price: 900 },
+        { code: "029689", label: "Digital Controller (HMI)",                  price: 1200 },
+        { code: "029691", label: "Electronic Controller PCB (100L)",          price: 750 },
+        { code: "029692", label: "Electronic Controller PCB (150L)",          price: 750 },
+        { code: "030684", label: "Schrader Valve 922AX4 1/4",                 price: 40 },
+        { code: "040158", label: "Lip Gasket",                                price: 25 }
+      ]
+    },
+    explorer: {
+      label: "Explorer",
+      parts: [
+        { code: "023591", label: "Superior Panel + Air Outlets",                price: null },
+        { code: "023597", label: "Connection for Air Outlet D160 (x1)",         price: null },
+        { code: "023589", label: "Rear Cover with Insulation",                   price: null },
+        { code: "023590", label: "Front Cover with Insulation",                  price: null },
+        { code: "023588", label: "Cover for Screw (x4)",                         price: null },
+        { code: "026524", label: "Motor-Fan CV5 + Wiring",                       price: null },
+        { code: "023593", label: "Stainless Steel Disc CV5",                     price: null },
+        { code: "023592", label: "Gasket 76x2.5 (x3)",                           price: null },
+        { code: "026574", label: "Condensator 15MF",                             price: null },
+        { code: "026572", label: "Solenoid FQ-A0522G-002355 + Wiring",          price: null },
+        { code: "023496", label: "Fixing Bracket",                               price: null },
+        { code: "023581", label: "Front Cover ALU (HP200EX / 200L)",            price: null },
+        { code: "023582", label: "Front Cover ALU (HP270EX / 240-270L)",        price: null },
+        { code: "023596", label: "Condensate (Water) Draining Pipe",            price: null },
+        { code: "026343", label: "PV Connector",                                 price: null },
+        { code: "030558", label: "Kit Heating Element Inox ACI 1200W + Gasket", price: null },
+        { code: "099060", label: "Lip Gasket",                                   price: null },
+        { code: "030568", label: "Digital Control HM009 Black",                  price: null },
+        { code: "030574", label: "Electronic Card CV5 (HP200EX / 200L)",        price: null },
+        { code: "030575", label: "Electronic Card CV5 (HP270EX / 270L)",        price: null },
+        { code: "030563", label: "Safety Thermostat + Wiring",                   price: null },
+        { code: "026545", label: "Power Cable CV5 Without Plug",                 price: null },
+        { code: "026573", label: "Electrical Harness for Heat Pump CV5",        price: null },
+        { code: "026571", label: "Temperature Sensor CTN (x5)",                  price: null },
+        { code: "026547", label: "Wiring for Digital Command",                   price: null },
+        { code: "026543", label: "Water Temperature Sensor L800",                price: null },
+        { code: "026251", label: "ACI Wire Harness",                             price: null },
+        { code: "026060", label: "Bimetal Dielectric Union 20x27",               price: null },
+        { code: "023772", label: "Insulation PSE Kit CV5 FS",                    price: null },
+        { code: "023599", label: "Accessories Box CV5",                          price: null }
+      ]
+    }
+  }
+};
+
+/* =========================================================
+   REP DIRECTORY
+   ========================================================= */
+const REPS = [
+  { name: "J S Deliwala",          title: "Technical & Sales Manager", mob: "+971 50 272 9668", email: "jay@cheqpoint.com" },
+  { name: "Masood Ahmed",           title: "Sales Engineer",            mob: "",                  email: "" },
+  { name: "J S Deliwala / Masood", title: "Technical & Sales",          mob: "+971 50 272 9668", email: "jay@cheqpoint.com" }
+];
+
+/* =========================================================
+   EXCLUSIONS — verbatim from Cheqpoint reference quotation
+   ========================================================= */
+const EXCLUSIONS_MASTER = [
+  "Water, electrical supply and termination.",
+  "Government, non-government, authority, third party testing and/or approval.",
+  "Any penalty, retention and/or bank guarantees.",
+  "Strainers, valves and accessories unless specifically mentioned.",
+  "Piping, unions, fittings, insulation and cladding.",
+  "Sensors and gauges unless specifically mentioned.",
+  "Any and all civil works unless specifically mentioned.",
+  "Thermostats, sensors and/or special BMS points.",
+  "Works related to cold water tank and booster pump.",
+  "Cabling and wiring.",
+  "Any maintenance/AMC.",
+  "Pipeline/equipment tagging and special nameplates.",
+  "Any controls and/or associated wiring.",
+  "Interconnecting piping, valves and bypass circuits.",
+  "Any spare parts.",
+  "Thermostatic/digital thermal mixing valve.",
+  "Any works related to transfer, booster, circulation, recirculation pumps and etc…",
+  "Water quality at site.",
+  "Any consumables.",
+  "Extension of warranty.",
+  "Any special documentation and/or testing.",
+  "Any welding / repair works.",
+  "Restoration of storage tank condition."
+];
+
+/* =========================================================
+   SIGNATURE IMAGE — paste the URL or base64 data-URI of Jay's
+   signature image here. Leave empty to show name text only.
+   ========================================================= */
+const SIG_IMG_SRC = "";
+
+const ADDITIONAL_TERMS = [
+  "Any item or commercial scope not mentioned specifically in this quotation should be excluded and should be reconfirmed with Cheqpoint Tech Trading LLC if it is intentionally missing from this document.",
+  "The above price is based on the given quantities. Should there be a change in quantity, please request a revised quotation from Cheqpoint Tech Trading LLC, as this quotation is valid on a single purchase order basis.",
+  "In the event of a purchase order, the client agrees under the terms and conditions of this quotation that the order shall be classified as non-cancellable and non-returnable. In the event of any purchase order cancellation, the client is fully liable to bear the responsibility of the complete purchase price of the ordered goods.",
+  "Prices are valid for the duration of the quote validity period stated above. Cheqpoint Tech Trading LLC reserves the right to revise pricing after the expiry of the validity period."
+];
+
+/* ===== Helpers ===== */
+const fmt = (n) => "AED " + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const el = {
+  jobNumber:        document.getElementById("jobNumber"),
+  size:             document.getElementById("size"),
+  qty:              document.getElementById("qty"),
+  location:         document.getElementById("location"),
+  serviceTypeField: document.getElementById("serviceTypeField"),
+  heaterSection:    document.getElementById("heaterSection"),
+  unitDetails:      document.getElementById("unitDetails"),
+  repairSection:    document.getElementById("repairSection"),
+  repairQty:        document.getElementById("repairQty"),
+  repairUnitDetails:document.getElementById("repairUnitDetails"),
+  spareSection:     document.getElementById("spareSection"),
+  spareList:        document.getElementById("spareList"),
+  heatPumpSection:  document.getElementById("heatPumpSection"),
+  heatPumpList:     document.getElementById("heatPumpList"),
+  breakdown:        document.getElementById("breakdown"),
+  totalsBlock:      document.getElementById("totalsBlock"),
+  grandTotal:       document.getElementById("grandTotal"),
+  confirm:          document.getElementById("confirm"),
+  disclaimerModal:  document.getElementById("disclaimerModal"),
+  disclaimerText:   document.getElementById("disclaimerText"),
+  disclaimerAck:    document.getElementById("disclaimerAck"),
+  gallery:          document.getElementById("gallery"),
+  galleryOpen:      document.getElementById("galleryOpen"),
+  galleryClose:     document.getElementById("galleryClose"),
+  frameHeater:      document.getElementById("frameHeater"),
+  frameInstall:     document.getElementById("frameInstall"),
+  frameCeiling:     document.getElementById("frameCeiling"),
+  framePipes:       document.getElementById("framePipes"),
+  capHeater:        document.getElementById("capHeater"),
+  capInstall:       document.getElementById("capInstall"),
+  capCeiling:       document.getElementById("capCeiling"),
+  capPipes:         document.getElementById("capPipes"),
+  btnPrint:         document.getElementById("btnPrint"),
+  /* Quote detail fields */
+  clientName:       document.getElementById("clientName"),
+  attnName:         document.getElementById("attnName"),
+  fromRep:          document.getElementById("fromRep"),
+  projectName:      document.getElementById("projectName"),
+  consultant:       document.getElementById("consultant"),
+  termsOfPayment:   document.getElementById("termsOfPayment"),
+  quoteValidity:    document.getElementById("quoteValidity"),
+  quoteSubject:     document.getElementById("quoteSubject")
+};
+
+/* ===== Read helpers ===== */
+function getProduct()       { const r = document.querySelector('input[name="product"]:checked');     return r ? r.value : "heater"; }
+function getPathway()       { const r = document.querySelector('input[name="pathway"]:checked');     return r ? r.value : "reinstallation"; }
+function getCallOut()       { const r = document.querySelector('input[name="callOut"]:checked');     return r ? r.value : "standard"; }
+function getOrientation()   { const r = document.querySelector('input[name="orientation"]:checked'); return r ? r.value : "horizontal"; }
+function getSpareMount()    { const r = document.querySelector('input[name="spareMount"]:checked');  return r ? r.value : "horizontal"; }
+function getHeatPumpRange() { const r = document.querySelector('input[name="hpRange"]:checked');    return r ? r.value : "calypso"; }
+function getQty()           { const q = parseInt(el.qty.value, 10);       return (isNaN(q) || q < 1) ? 1 : q; }
+function getRepairQty()     { const q = parseInt(el.repairQty.value, 10); return (isNaN(q) || q < 1) ? 1 : q; }
+function isHeatPump()       { return getProduct() === "heatpump"; }
+function currentSizes()     { return PRICING.sizesByOrientation[getOrientation()] || PRICING.sizesByOrientation.horizontal; }
+
+function fitsMount(part, mount) {
+  return !part.mounts || part.mounts.includes("all") || part.mounts.includes(mount);
+}
+
+/* ===== Populate global dropdowns ===== */
+function populateSelect(sel, items, textFn) {
+  sel.innerHTML = "";
+  items.forEach((item, i) => {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = textFn(item);
+    sel.appendChild(opt);
+  });
+}
+populateSelect(el.size, currentSizes(), (s) => s.label);
+populateSelect(el.location, PRICING.locations, (l) => l.label);
+
+/* ===== State ===== */
+let unitStates = [];
+let repairUnitStates = [];
+let heaterSpareQty = {};
+let heatPumpSpareQty = { calypso: {}, explorer: {} };
+
+function defaultUnitState() {
+  return { sizeIdx: Number(el.size.value) || 0, ceilingNeeded: false, ceilingIdx: 0, connectors: "no", isolValveIdx: 0, angleValveIdx: 0, piping: false, pipeSizeIdx: 0, pipeMeters: 1 };
+}
+function defaultRepairUnitState() { return { mount: "horizontal", partQty: {} }; }
+function syncUnitStates(qty)       { while (unitStates.length < qty) unitStates.push(defaultUnitState()); unitStates.length = qty; }
+function syncRepairUnitStates(qty) { while (repairUnitStates.length < qty) repairUnitStates.push(defaultRepairUnitState()); repairUnitStates.length = qty; }
+
+/* ===== Section visibility ===== */
+function applyVisibility() {
+  const hp = isHeatPump();
+  const pathway = getPathway();
+  el.serviceTypeField.hidden = hp;
+  const isInstall = !hp && (pathway === "reinstallation" || pathway === "newInstallation");
+  el.heaterSection.hidden = !isInstall;
+  el.unitDetails.hidden = !isInstall;
+  el.repairSection.hidden = hp || pathway !== "repair";
+  el.spareSection.hidden = hp || pathway !== "spareParts";
+  el.heatPumpSection.hidden = !hp;
+}
+
+/* ===== Spare-part row rendering ===== */
+function renderSpareRows(container, parts, qtyMap, mount) {
+  container.innerHTML = "";
+  let lastGroup = null;
+  parts.forEach((p, i) => {
+    if (mount && !fitsMount(p, mount)) return;
+    if (p.group && p.group !== lastGroup) {
+      const h = document.createElement("div");
+      h.className = "spare-group-title";
+      h.textContent = p.group;
+      container.appendChild(h);
+      lastGroup = p.group;
+    }
+    const qty = qtyMap[i] || 0;
+    const priceTxt = (p.price == null) ? "Price on request" : fmt(p.price) + " ex VAT";
+    const codeHtml = p.code ? `<span class="code">${p.code}</span>` : `<span class="code muted">no code</span>`;
+    const lineTxt = (qty > 0 && p.price != null) ? "× " + qty + " = " + fmt(p.price * qty) : "";
+
+    const row = document.createElement("div");
+    row.className = "spare-row" + (qty > 0 ? " selected" : "");
+    row.innerHTML =
+      `<div class="spare-info">` +
+        `<div class="spare-name">${p.label}</div>` +
+        `<div class="spare-sub">${codeHtml}<span class="dot">·</span><span class="price">${priceTxt}</span></div>` +
+        `<div class="spare-line" data-line>${lineTxt}</div>` +
+      `</div>` +
+      `<div class="stepper">` +
+        `<button type="button" class="step dec" aria-label="Decrease ${p.label}">&minus;</button>` +
+        `<input type="number" class="spare-qty" min="0" step="1" value="${qty}" inputmode="numeric" aria-label="Quantity for ${p.label}">` +
+        `<button type="button" class="step inc" aria-label="Increase ${p.label}">+</button>` +
+      `</div>`;
+    container.appendChild(row);
+
+    const input = row.querySelector(".spare-qty");
+    const lineEl = row.querySelector("[data-line]");
+    const apply = (v) => {
+      v = Math.max(0, v | 0);
+      qtyMap[i] = v;
+      if (String(v) !== input.value) input.value = v;
+      row.classList.toggle("selected", v > 0);
+      lineEl.textContent = (v > 0 && p.price != null) ? "× " + v + " = " + fmt(p.price * v) : "";
+      recalc();
+    };
+    row.querySelector(".dec").addEventListener("click", () => apply((qtyMap[i] || 0) - 1));
+    row.querySelector(".inc").addEventListener("click", () => apply((qtyMap[i] || 0) + 1));
+    input.addEventListener("input", () => apply(parseInt(input.value, 10) || 0));
+  });
+}
+function buildSpareList()    { renderSpareRows(el.spareList, PRICING.heaterSpareParts, heaterSpareQty, getSpareMount()); }
+function buildHeatPumpList() {
+  const key = getHeatPumpRange();
+  const range = PRICING.heatPumpRanges[key];
+  if (!range.parts.length) { el.heatPumpList.innerHTML = `<div class="empty-note">${range.label} parts list coming soon.</div>`; return; }
+  renderSpareRows(el.heatPumpList, range.parts, heatPumpSpareQty[key], null);
+}
+
+/* ===== Build install unit cards ===== */
+function buildUnitDetails() {
+  const sizes = currentSizes();
+  const qty = getQty();
+  syncUnitStates(qty);
+  el.unitDetails.innerHTML = "";
+
+  for (let i = 0; i < qty; i++) {
+    const u = unitStates[i];
+    if (u.sizeIdx >= sizes.length) u.sizeIdx = 0;
+    const size = sizes[u.sizeIdx] || sizes[0];
+    const valvesOk = size.litres >= PRICING.valvesMinLitres;
+    const card = document.createElement("div");
+    card.className = "unit-card";
+
+    const sizeOpts = sizes.map((s, si) => `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`).join("");
+    const hdr = document.createElement("div");
+    hdr.className = "unit-card-header";
+    hdr.innerHTML = `<span class="unit-card-num">Unit ${i + 1}</span><select class="unit-size-sel" data-unit="${i}" aria-label="Capacity for unit ${i + 1}">${sizeOpts}</select>`;
+    card.appendChild(hdr);
+
+    const ceilOpts = PRICING.falseCeiling.map((c, ci) => `<option value="${ci}"${u.ceilingIdx === ci ? " selected" : ""}>${c.label} cm</option>`).join("");
+    const ceilField = document.createElement("div");
+    ceilField.className = "unit-field";
+    ceilField.innerHTML =
+      `<label class="unit-label">False Ceiling Modification</label>` +
+      `<div class="checks"><label class="check"><input type="checkbox" class="u-ceil-chk" data-unit="${i}"${u.ceilingNeeded ? " checked" : ""}>` +
+      `<span class="box" aria-hidden="true"></span><span>False ceiling modification needed?</span></label></div>` +
+      `<details class="info"><summary>What's included</summary><p>Cutting the false ceiling, fixing it back, applying putty, applying paint, and providing an access panel where necessary.</p></details>` +
+      `<p class="disclaimer">If false-ceiling work is found necessary on site and not selected here, it will be charged separately.</p>` +
+      `<div class="subblock u-ceil-block"${u.ceilingNeeded ? "" : " hidden"}><span class="unit-sublabel">Panel size</span><select class="u-ceil-sel" data-unit="${i}">${ceilOpts}</select></div>`;
+    card.appendChild(ceilField);
+
+    const connField = document.createElement("div");
+    connField.className = "unit-field";
+    connField.innerHTML =
+      `<label class="unit-label" for="u-conn-${i}">Flexible Connectors</label>` +
+      `<select id="u-conn-${i}" class="u-conn-sel" data-unit="${i}"><option value="no"${u.connectors === "no" ? " selected" : ""}>No</option><option value="yes"${u.connectors === "yes" ? " selected" : ""}>Yes</option></select>`;
+    card.appendChild(connField);
+
+    if (valvesOk) {
+      const isolOpts = PRICING.isolationValves.map((v, vi) => `<option value="${vi}"${u.isolValveIdx === vi ? " selected" : ""}>${v.label}</option>`).join("");
+      const angleOpts = PRICING.angleValves.map((v, vi) => `<option value="${vi}"${u.angleValveIdx === vi ? " selected" : ""}>${v.label}</option>`).join("");
+      const valveField = document.createElement("div");
+      valveField.className = "unit-field";
+      valveField.innerHTML = `<label class="unit-label">Valves</label><span class="unit-sublabel">Isolation Valve</span><select class="u-isol-sel" data-unit="${i}">${isolOpts}</select><span class="unit-sublabel">Angle Valve</span><select class="u-angle-sel" data-unit="${i}">${angleOpts}</select>`;
+      card.appendChild(valveField);
+    }
+
+    const pipeSizeOpts = PRICING.pipeSizes.map((p, pi) => `<option value="${pi}"${u.pipeSizeIdx === pi ? " selected" : ""}>${p.label}</option>`).join("");
+    const pipeField = document.createElement("div");
+    pipeField.className = "unit-field";
+    pipeField.innerHTML =
+      `<label class="unit-label">Piping</label>` +
+      `<div class="checks"><label class="check"><input type="checkbox" class="u-pipe-chk" data-unit="${i}"${u.piping ? " checked" : ""}>` +
+      `<span class="box" aria-hidden="true"></span><span>Add piping</span></label></div>` +
+      `<div class="subblock u-pipe-block"${u.piping ? "" : " hidden"}><span class="unit-sublabel">Pipe size</span><select class="u-pipe-size-sel" data-unit="${i}">${pipeSizeOpts}</select>` +
+      `<span class="unit-sublabel">Length (meters)</span><input type="number" class="u-pipe-len" data-unit="${i}" min="1" step="1" value="${u.pipeMeters}"></div>`;
+    card.appendChild(pipeField);
+
+    el.unitDetails.appendChild(card);
+  }
+  attachInstallListeners();
+}
+
+/* ===== Build repair unit cards ===== */
+function buildRepairUnitDetails() {
+  const qty = getRepairQty();
+  syncRepairUnitStates(qty);
+  el.repairUnitDetails.innerHTML = "";
+  const mounts = [ { v: "horizontal", l: "Horizontal" }, { v: "wallmount", l: "Wall-mounted" }, { v: "floor", l: "Floor-standing" } ];
+
+  for (let i = 0; i < qty; i++) {
+    const u = repairUnitStates[i];
+    const card = document.createElement("div");
+    card.className = "unit-card";
+    const mountOpts = mounts.map((m) => `<option value="${m.v}"${u.mount === m.v ? " selected" : ""}>${m.l}</option>`).join("");
+    const hdr = document.createElement("div");
+    hdr.className = "unit-card-header";
+    hdr.innerHTML = `<span class="unit-card-num">Unit ${i + 1}</span><select class="repair-mount-sel unit-size-sel" data-unit="${i}" aria-label="Mount type for repair unit ${i + 1}">${mountOpts}</select>`;
+    card.appendChild(hdr);
+    const partsField = document.createElement("div");
+    partsField.className = "unit-field";
+    partsField.innerHTML = `<label class="unit-label">Spare Parts</label>`;
+    const listDiv = document.createElement("div");
+    listDiv.className = "repair-parts";
+    partsField.appendChild(listDiv);
+    card.appendChild(partsField);
+    el.repairUnitDetails.appendChild(card);
+    renderSpareRows(listDiv, PRICING.heaterSpareParts, u.partQty, u.mount);
+  }
+  attachRepairListeners();
+}
+
+/* ===== Listeners — install cards ===== */
+function attachInstallListeners() {
+  const q = (sel) => el.unitDetails.querySelectorAll(sel);
+  q(".unit-size-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].sizeIdx = +e.target.value; buildUnitDetails(); recalc(); }));
+  q(".u-ceil-chk").forEach((c) => c.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].ceilingNeeded = e.target.checked; e.target.closest(".unit-card").querySelector(".u-ceil-block").hidden = !e.target.checked; recalc(); }));
+  q(".u-ceil-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].ceilingIdx = +e.target.value; recalc(); }));
+  q(".u-conn-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].connectors = e.target.value; recalc(); }));
+  q(".u-isol-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].isolValveIdx = +e.target.value; recalc(); }));
+  q(".u-angle-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].angleValveIdx = +e.target.value; recalc(); }));
+  q(".u-pipe-chk").forEach((c) => c.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].piping = e.target.checked; e.target.closest(".unit-card").querySelector(".u-pipe-block").hidden = !e.target.checked; recalc(); }));
+  q(".u-pipe-size-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].pipeSizeIdx = +e.target.value; recalc(); }));
+  q(".u-pipe-len").forEach((inp) => {
+    const update = (e) => { const i = +e.target.dataset.unit; const v = Math.max(1, parseInt(e.target.value, 10) || 1); unitStates[i].pipeMeters = v; if (e.type === "blur") e.target.value = v; recalc(); };
+    inp.addEventListener("input", update); inp.addEventListener("blur", update);
+  });
+}
+
+/* ===== Listeners — repair cards ===== */
+function attachRepairListeners() {
+  el.repairUnitDetails.querySelectorAll(".repair-mount-sel").forEach((s) => {
+    s.addEventListener("change", (e) => {
+      const i = +e.target.dataset.unit;
+      repairUnitStates[i].mount = e.target.value;
+      const listDiv = e.target.closest(".unit-card").querySelector(".repair-parts");
+      renderSpareRows(listDiv, PRICING.heaterSpareParts, repairUnitStates[i].partQty, repairUnitStates[i].mount);
+      recalc();
+    });
+  });
+}
+
+/* ===== Pricing helpers ===== */
+function calcPipingCost(pipeSizeIdx, meters) {
+  const ps = PRICING.pipeSizes[pipeSizeIdx] || PRICING.pipeSizes[0];
+  const extraMeters = Math.max(0, meters - PRICING.piping.laborFreeMeters);
+  return meters * ps.pricePerMeter + Math.ceil(extraMeters / 2) * PRICING.piping.laborPer2Meters;
+}
+function calcCallOutExVat() {
+  const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+  const type = getCallOut();
+  if (type === "standard") return loc.callOutStdExVAT;
+  if (type === "flexi")    return loc.callOutStdExVAT * 0.5;
+  return 160;
+}
+function callOutLabel() {
+  const type = getCallOut();
+  if (type === "standard") return "Standard Call Out (1–2 days)";
+  if (type === "flexi")    return "Flexi Call Out (3–5 days)";
+  return "Save Call Out (5–7 days)";
+}
+function lineHTML(desc, sub, amount) {
+  const small = sub ? `<small>${sub}</small>` : "";
+  return `<div class="line"><span class="desc">${desc}${small}</span><span class="amt">${fmt(amount)}</span></div>`;
+}
+function spareLines(parts, qtyMap, mount, tag) {
+  tag = tag || "";
+  let html = "", subtotal = 0;
+  parts.forEach((p, i) => {
+    const qty = qtyMap[i] || 0;
+    if (qty <= 0) return;
+    if (mount && !fitsMount(p, mount)) return;
+    const price = p.price || 0;
+    const amount = price * qty;
+    subtotal += amount;
+    const codeTxt = (p.code ? "Code " + p.code : "") + (p.price == null ? (p.code ? " · price TBD" : "price TBD") : "");
+    html += lineHTML(p.label + " × " + qty + tag, codeTxt, amount);
+  });
+  return { html, subtotal };
+}
+
+/* ===== Core recalc ===== */
+function recalc() {
+  let html = "", subtotal = 0, withVat = false;
+
+  if (isHeatPump()) {
+    withVat = true;
+    const key = getHeatPumpRange();
+    const r = spareLines(PRICING.heatPumpRanges[key].parts, heatPumpSpareQty[key], null, "");
+    html = r.html; subtotal = r.subtotal;
+
+  } else {
+    const pathway = getPathway();
+
+    if (pathway === "spareParts") {
+      withVat = true;
+      const r = spareLines(PRICING.heaterSpareParts, heaterSpareQty, getSpareMount(), "");
+      html = r.html; subtotal = r.subtotal;
+
+    } else if (pathway === "repair") {
+      withVat = true;
+      const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+      const callOut = calcCallOutExVat();
+      const type = getCallOut();
+      const sub = loc.label + (type === "save" ? " · flat rate" : type === "flexi" ? " · 50% of standard" : "");
+      html += lineHTML(callOutLabel(), sub, callOut);
+      subtotal += callOut;
+      const qty = getRepairQty();
+      syncRepairUnitStates(qty);
+      for (let i = 0; i < qty; i++) {
+        const u = repairUnitStates[i];
+        const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
+        html += lineHTML("Repair Labour" + tag, "ex VAT", PRICING.repair.laborExVAT);
+        subtotal += PRICING.repair.laborExVAT;
+        const r = spareLines(PRICING.heaterSpareParts, u.partQty, u.mount, tag);
+        html += r.html; subtotal += r.subtotal;
+      }
+
+    } else {
+      withVat = false;
+      const sizes = currentSizes();
+      const qty = getQty();
+      const pathwayObj = PRICING.pathways[pathway];
+      const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
+      syncUnitStates(qty);
+
+      const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
+      let heaterTotal = 0, installTotal = 0;
+      unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; heaterTotal += (s.price || 0); installTotal += s.installPerUnit; });
+
+      if (allSame && qty > 0) {
+        const s = sizes[unitStates[0].sizeIdx] || sizes[0];
+        const tbd = (s.price == null) ? " · price TBD" : "";
+        html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}${tbd}`, heaterTotal);
+        html += lineHTML("Installation", `${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(s.installPerUnit)}`, installTotal);
+      } else {
+        for (let i = 0; i < qty; i++) {
+          const s = sizes[unitStates[i].sizeIdx] || sizes[0];
+          const tbd = (s.price == null) ? " · price TBD" : "";
+          html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}${tbd}`, (s.price || 0));
+          html += lineHTML(`Installation (Unit ${i + 1})`, fmt(s.installPerUnit) + " / unit", s.installPerUnit);
+        }
+      }
+
+      const anchoringTotal = pathwayObj.anchoring * qty;
+      if (anchoringTotal > 0) html += lineHTML("Anchoring", `${pathwayObj.label}${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
+      subtotal = heaterTotal + installTotal + anchoringTotal;
+
+      for (let i = 0; i < qty; i++) {
+        const u = unitStates[i];
+        const size = sizes[u.sizeIdx] || sizes[0];
+        const valvesOk = size.litres >= PRICING.valvesMinLitres;
+        const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
+        if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; }
+        if (u.connectors === "yes") { html += lineHTML("Flexible Connectors" + tag, "", PRICING.flexibleConnectorsPrice); subtotal += PRICING.flexibleConnectorsPrice; }
+        if (valvesOk) {
+          const iv = PRICING.isolationValves[u.isolValveIdx] || PRICING.isolationValves[0];
+          const av = PRICING.angleValves[u.angleValveIdx] || PRICING.angleValves[0];
+          if (iv.price > 0) { html += lineHTML("Isolation Valve" + tag, iv.label, iv.price); subtotal += iv.price; }
+          if (av.price > 0) { html += lineHTML("Angle Valve" + tag, av.label, av.price); subtotal += av.price; }
+        }
+        if (u.piping) { const meters = Math.max(1, u.pipeMeters || 1); const ps = PRICING.pipeSizes[u.pipeSizeIdx] || PRICING.pipeSizes[0]; const cost = calcPipingCost(u.pipeSizeIdx, meters); html += lineHTML("Piping" + tag, `${ps.label} · ${meters} m`, cost); subtotal += cost; }
+      }
+    }
+  }
+
+  if (!html) html = `<div class="empty-note">No items selected yet.</div>`;
+  el.breakdown.innerHTML = html;
+
+  let grand;
+  if (withVat) {
+    const vat = subtotal * VAT;
+    el.totalsBlock.innerHTML =
+      `<div class="line"><span class="desc">Subtotal (ex VAT)</span><span class="amt">${fmt(subtotal)}</span></div>` +
+      `<div class="line subtotal"><span class="desc">VAT (5%)</span><span class="amt">${fmt(vat)}</span></div>`;
+    grand = subtotal + vat;
+  } else {
+    el.totalsBlock.innerHTML = `<div class="line subtotal"><span class="desc">Subtotal</span><span class="amt">${fmt(subtotal)}</span></div>`;
+    grand = subtotal;
+  }
+  el.grandTotal.textContent = fmt(grand);
+}
+
+/* ===== Global change triggers ===== */
+function onGlobalInstallChange() { buildUnitDetails(); recalc(); }
+function onGlobalSizeChange() { const idx = Number(el.size.value) || 0; unitStates.forEach((u) => { u.sizeIdx = idx; }); buildUnitDetails(); recalc(); }
+function onRepairQtyChange() { buildRepairUnitDetails(); recalc(); }
+function onOrientationChange() { populateSelect(el.size, currentSizes(), (s) => s.label); el.size.value = "0"; unitStates.forEach((u) => { u.sizeIdx = 0; }); buildUnitDetails(); recalc(); }
+
+function rebuildActiveSection() {
+  applyVisibility();
+  if (isHeatPump()) { buildHeatPumpList(); }
+  else {
+    const p = getPathway();
+    if (p === "repair") buildRepairUnitDetails();
+    else if (p === "spareParts") buildSpareList();
+    else buildUnitDetails();
+  }
+  recalc();
+}
+function onProductChange()     { rebuildActiveSection(); }
+function onPathwayChange()     { rebuildActiveSection(); }
+function onSpareMountChange()  { buildSpareList(); recalc(); }
+
+["change", "input"].forEach((evt) => {
+  el.size.addEventListener(evt, onGlobalSizeChange);
+  el.qty.addEventListener(evt, onGlobalInstallChange);
+  el.location.addEventListener(evt, recalc);
+  el.repairQty.addEventListener(evt, onRepairQtyChange);
+});
+el.qty.addEventListener("blur", () => { el.qty.value = getQty(); onGlobalInstallChange(); });
+el.repairQty.addEventListener("blur", () => { el.repairQty.value = getRepairQty(); onRepairQtyChange(); });
+
+document.querySelectorAll('input[name="product"]').forEach((r) => r.addEventListener("change", onProductChange));
+document.querySelectorAll('input[name="pathway"]').forEach((r) => r.addEventListener("change", onPathwayChange));
+document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", onOrientationChange));
+document.querySelectorAll('input[name="callOut"]').forEach((r) => r.addEventListener("change", recalc));
+document.querySelectorAll('input[name="spareMount"]').forEach((r) => r.addEventListener("change", onSpareMountChange));
+document.querySelectorAll('input[name="hpRange"]').forEach((r) => r.addEventListener("change", () => { buildHeatPumpList(); recalc(); }));
+
+/* ===== Gallery ===== */
+function setFrame(frameEl, url) { const img = frameEl.querySelector("img"); if (url) { img.src = url; frameEl.classList.add("filled"); } else { img.removeAttribute("src"); frameEl.classList.remove("filled"); } }
+function refreshGallery() {
+  const sizes = currentSizes();
+  const qty = getQty();
+  const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
+  const anyCeiling = unitStates.some((u) => u.ceilingNeeded);
+  const anyPiping = unitStates.some((u) => u.piping);
+  const size = sizes[(unitStates[0] || { sizeIdx: 0 }).sizeIdx] || sizes[0];
+  setFrame(el.frameHeater, WORK_PHOTOS.heater);
+  setFrame(el.frameInstall, WORK_PHOTOS.install);
+  setFrame(el.frameCeiling, WORK_PHOTOS.falseCeiling);
+  setFrame(el.framePipes, WORK_PHOTOS.pipes);
+  el.capHeater.innerHTML = `${PRICING.brand} ${size.label}<small>${orientLabel} · Qty ${qty}</small>`;
+  el.capInstall.innerHTML = `Installation<small>${(PRICING.pathways[getPathway()] || {}).label || "—"}</small>`;
+  el.capCeiling.innerHTML = `False Ceiling<small>${anyCeiling ? "Selected" : "Not in this quote"}</small>`;
+  el.capPipes.innerHTML = `Piping<small>${anyPiping ? "Selected" : "Not in this quote"}</small>`;
+}
+let lastFocused = null;
+function openGallery()  { lastFocused = document.activeElement; refreshGallery(); el.gallery.classList.add("open"); el.gallery.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; el.galleryClose.focus(); }
+function closeGallery() { el.gallery.classList.remove("open"); el.gallery.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; if (lastFocused && lastFocused.focus) lastFocused.focus(); }
+el.galleryOpen.addEventListener("click", openGallery);
+el.galleryClose.addEventListener("click", closeGallery);
+el.gallery.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close")) closeGallery(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.gallery.classList.contains("open")) closeGallery(); });
+
+/* ===== Disclaimer ===== */
+const DISCLAIMER_MIN_LITRES = 200;
+function largestUnitLitres() { const sizes = currentSizes(); return unitStates.reduce((m, u) => Math.max(m, (sizes[u.sizeIdx] || sizes[0]).litres), 0); }
+function largestUnitLabel()  { const sizes = currentSizes(); let best = sizes[0]; unitStates.forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; if (s.litres > best.litres) best = s; }); return best.label; }
+function openDisclaimer() {
+  el.disclaimerText.textContent = "If the " + largestUnitLabel() + " unit needs to be lifted to an upper level, we want to make you aware that this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, by confirming this message, you acknowledge that CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and that any replacement unit, if required, will be chargeable separately.";
+  el.disclaimerModal.classList.add("open"); el.disclaimerModal.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; el.disclaimerAck.focus();
+}
+function closeDisclaimer() { el.disclaimerModal.classList.remove("open"); el.disclaimerModal.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; el.confirm.focus(); }
+el.disclaimerAck.addEventListener("click", closeDisclaimer);
+el.disclaimerModal.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close-disclaimer")) closeDisclaimer(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.disclaimerModal.classList.contains("open")) closeDisclaimer(); });
+el.confirm.addEventListener("click", () => {
+  const p = getPathway();
+  if (!isHeatPump() && (p === "reinstallation" || p === "newInstallation") && largestUnitLitres() >= DISCLAIMER_MIN_LITRES) openDisclaimer();
+});
+
+/* =========================================================
+   PRINT HELPERS
+   ========================================================= */
+
+/* Flatten a .desc element: "Main Text — Sub Text" */
+function getLineDescText(descEl) {
+  if (!descEl) return "";
+  const clone = descEl.cloneNode(true);
+  const small = clone.querySelector("small");
+  if (small) {
+    const subText = small.textContent.trim();
+    small.remove();
+    const mainText = clone.textContent.trim();
+    return subText ? mainText + " — " + subText : mainText;
+  }
+  return clone.textContent.trim();
+}
+
+/* Auto-generate subject from current state */
+function getAutoSubject() {
+  const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+  if (isHeatPump()) {
+    const range = PRICING.heatPumpRanges[getHeatPumpRange()];
+    return "Air to Water Heat Pump (" + range.label + ") — Spare Parts Supply";
+  }
+  const p = getPathway();
+  const city = loc.label;
+  if (p === "reinstallation")  return "Atlantic Water Heater Reinstallation Works — " + city;
+  if (p === "newInstallation") return "Atlantic Water Heater New Installation Works — " + city;
+  if (p === "repair")          return "Water Heater Repair & Call-Out Service — " + city;
+  if (p === "spareParts")      return "Atlantic Water Heater Spare Parts Supply";
+  return "Water Heater Works";
+}
+
+/* Auto-generate scope text */
+function getScopeText() {
+  const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+  if (isHeatPump()) {
+    const range = PRICING.heatPumpRanges[getHeatPumpRange()];
+    return "Supply of genuine Atlantic spare parts for " + range.label + " range Air to Water Heat Pump units as per Annexure  #1.";
+  }
+  const p = getPathway();
+  if (p === "reinstallation")  return "Removal of existing water heater(s) and supply & installation of new Atlantic brand water heater(s) at " + loc.label + ". Unit details and quantities as per Annexure #1.";
+  if (p === "newInstallation") return "Supply & installation of new Atlantic brand water heater(s) at new site — " + loc.label + ". Unit details and quantities as per Annexure #1.";
+  if (p === "repair")          return "Call-out, inspection, diagnosis, repair labour and supply of spare parts for water heater unit(s) at " + loc.label + ". Details as per Annexure #1.";
+  if (p === "spareParts")      return "Supply of genuine Atlantic brand spare parts for water heater units. Items and quantities as per Annexure #1.";
+  return "Water heater works as detailed in Annexure #1.";
+}
+
+/* Single master exclusion list — verbatim from Cheqpoint reference quotation */
+function getExclusionsList() {
+  return EXCLUSIONS_MASTER;
+}
+
+/* Build price table rows from live DOM breakdown */
+function buildAnnexureRows() {
+  const breakdownLines = document.querySelectorAll("#breakdown .line");
+  const totalLines     = document.querySelectorAll("#totalsBlock .line");
+  const withVat = isHeatPump() || getPathway() === "repair" || getPathway() === "spareParts";
+
+  let rows = "";
+
+  breakdownLines.forEach((line) => {
+    const descText = getLineDescText(line.querySelector(".desc"));
+    const amtText  = (line.querySelector(".amt") || {}).textContent || "";
+    const isSub    = line.classList.contains("subtotal");
+    rows += `<tr${isSub ? ' class="qp-sub"' : ""}><td>${descText}</td><td class="qp-r">${amtText}</td></tr>`;
+  });
+
+  totalLines.forEach((line) => {
+    const descText = getLineDescText(line.querySelector(".desc"));
+    const amtText  = (line.querySelector(".amt") || {}).textContent || "";
+    const isSub    = line.classList.contains("subtotal");
+    rows += `<tr${isSub ? ' class="qp-sub"' : ""}><td>${descText}</td><td class="qp-r">${amtText}</td></tr>`;
+  });
+
+  const grand = el.grandTotal.textContent;
+  rows += `<tr class="qp-grand"><td>GRAND TOTAL${withVat ? " (incl. VAT 5%)" : " (excl. VAT)"}</td><td class="qp-r">${grand}</td></tr>`;
+
+  const note = withVat
+    ? "VAT at 5% is included in the Grand Total above. A tax invoice will be issued upon confirmation of order."
+    : "Prices shown are exclusive of VAT. VAT at 5% will be applied on the tax invoice as per UAE law.";
+
+  return { rows, note };
+}
+
+/* =========================================================
+   PRINT BUTTON HANDLER
+   ========================================================= */
+el.btnPrint.addEventListener("click", () => {
+  const rep     = REPS[Number(el.fromRep.value)] || REPS[0];
+  const loc     = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+  const subject = el.quoteSubject.value.trim() || getAutoSubject();
+  const dateStr = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
+
+  /* --- Page 1 fields --- */
+  const clientStr = el.clientName.value.trim();
+  const attnStr   = el.attnName.value.trim();
+  document.getElementById("qpTo").textContent      = clientStr ? (attnStr ? clientStr + " (Attn: " + attnStr + ")" : clientStr) : "—";
+  document.getElementById("qpFrom").textContent    = rep.name;
+  document.getElementById("qpRef").textContent     = el.jobNumber.value.trim() || "—";
+  document.getElementById("qpProject").textContent = el.projectName.value.trim() || "—";
+  document.getElementById("qpConsultant").textContent = el.consultant.value.trim() || "N/A";
+  document.getElementById("qpSubject").textContent = subject;
+  document.getElementById("qpDate").textContent    = dateStr;
+  document.getElementById("qpScope").textContent   = getScopeText();
+  document.getElementById("qpTerms").textContent   = el.termsOfPayment.value;
+  document.getElementById("qpValidity").textContent = el.quoteValidity.value;
+
+  /* --- Signature block --- */
+  const sigImg = document.getElementById("qpSigImg");
+  if (SIG_IMG_SRC) {
+    sigImg.src = SIG_IMG_SRC;
+    sigImg.style.display = "block";
+  } else {
+    sigImg.src = "";
+    sigImg.style.display = "none";
+  }
+  document.getElementById("qpSigName").textContent  = rep.name;
+  document.getElementById("qpSigTitle").textContent = rep.title;
+  document.getElementById("qpSigMob").textContent   = rep.mob   ? "Mob: " + rep.mob   : "";
+  document.getElementById("qpSigEmail").textContent = rep.email ? "Email: " + rep.email : "";
+
+  /* --- Exclusions --- */
+  document.getElementById("qpExclTable").innerHTML = getExclusionsList()
+    .map((e, i) => `<tr><td class="qp-n">${i + 1}.</td><td>${e}</td></tr>`)
+    .join("");
+
+  /* --- Additional Terms --- */
+  document.getElementById("qpTermsTable").innerHTML = ADDITIONAL_TERMS
+    .map((t, i) => `<tr><td class="qp-n">${i + 1}.</td><td>${t}</td></tr>`)
+    .join("");
+
+  /* --- Annexure header ref line --- */
+  const annexRef = [
+    el.jobNumber.value.trim() ? "Ref: " + el.jobNumber.value.trim() : null,
+    loc.label,
+    dateStr
+  ].filter(Boolean).join("  •  ");
+  document.getElementById("qpAnnexRef").textContent = annexRef;
+
+  /* --- Price breakdown table --- */
+  const { rows, note } = buildAnnexureRows();
+  document.getElementById("qpPriceBody").innerHTML   = rows;
+  document.getElementById("qpPriceNote").textContent = note;
+
+  window.print();
+});
+
+/* ===== Init ===== */
+rebuildActiveSection();
+</script>
+
+</template>
+
+<script>
+function openTool(name) {
+  var tpl = document.getElementById('tpl-' + name);
+  var frame = document.getElementById('toolFrame');
+  document.getElementById('hero').style.display = 'none';
+  document.getElementById('toolWrap').hidden = false;
+  var doc = frame.contentDocument;
+  doc.open();
+  doc.write('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+    + '<title>' + (name === 'guide' ? 'Front Desk Guide' : 'Quote Calculator') + '</title>'
+    + '</head><body>' + tpl.innerHTML + '</body></html>');
+  doc.close();
+}
+function showHome() {
+  document.getElementById('toolWrap').hidden = true;
+  document.getElementById('hero').style.display = '';
+  var frame = document.getElementById('toolFrame');
+  frame.contentDocument.open();
+  frame.contentDocument.write('');
+  frame.contentDocument.close();
+}
+</script>
+</body>
+</html>
