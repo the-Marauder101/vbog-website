@@ -3,7 +3,7 @@
 
 (() => {
   const content = document.getElementById("tasks-content");
-  const filters = { project: "", assignee: "", due: "all", q: "" };
+  const filters = { project: "", assignee: "", due: "all", q: "", from: "", to: "" };
   let tasks = []; // rows with embedded `projects` object
   let members = [];
 
@@ -39,22 +39,34 @@
       .map(([v, label]) => `<option value="${v}">${label}</option>`)
       .join("");
 
+    for (const id of ["filter-project", "filter-assignee", "filter-due"]) {
+      UI.enhanceSelect(document.getElementById(id));
+    }
+
     const bind = (id, key) =>
       document.getElementById(id).addEventListener(id === "filter-search" ? "input" : "change", (e) => {
         filters[key] = e.target.value;
+        if (key === "due") document.getElementById("range-inputs").hidden = filters.due !== "custom";
         render();
       });
     bind("filter-project", "project");
     bind("filter-assignee", "assignee");
     bind("filter-due", "due");
     bind("filter-search", "q");
+    bind("filter-from", "from");
+    bind("filter-to", "to");
 
     document.getElementById("filter-clear").addEventListener("click", () => {
-      Object.assign(filters, { project: "", assignee: "", due: "all", q: "" });
-      document.getElementById("filter-project").value = "";
-      document.getElementById("filter-assignee").value = "";
-      document.getElementById("filter-due").value = "all";
+      Object.assign(filters, { project: "", assignee: "", due: "all", q: "", from: "", to: "" });
+      for (const [id, v] of [["filter-project", ""], ["filter-assignee", ""], ["filter-due", "all"]]) {
+        const el = document.getElementById(id);
+        el.value = v;
+        UI.syncSelect(el);
+      }
       document.getElementById("filter-search").value = "";
+      document.getElementById("filter-from").value = "";
+      document.getElementById("filter-to").value = "";
+      document.getElementById("range-inputs").hidden = true;
       render();
     });
   }
@@ -69,7 +81,7 @@
       if (filters.project && t.projects.id !== filters.project) return false;
       if (filters.assignee === "none" && t.assignee_id) return false;
       if (filters.assignee && filters.assignee !== "none" && t.assignee_id !== filters.assignee) return false;
-      if (!UI.matchesDateFilter(t.due_date, filters.due)) return false;
+      if (!UI.matchesDateFilter(t.due_date, filters.due, { from: filters.from, to: filters.to })) return false;
       if (q && !t.title.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -77,9 +89,15 @@
 
   function render() {
     const shown = visibleTasks();
-    document.getElementById("filter-project").classList.toggle("on", filters.project !== "");
-    document.getElementById("filter-assignee").classList.toggle("on", filters.assignee !== "");
-    document.getElementById("filter-due").classList.toggle("on", filters.due !== "all");
+    for (const [id, active] of [
+      ["filter-project", filters.project !== ""],
+      ["filter-assignee", filters.assignee !== ""],
+      ["filter-due", filters.due !== "all"],
+    ]) {
+      const el = document.getElementById(id);
+      el.classList.toggle("on", active);
+      UI.syncSelect(el);
+    }
     document.getElementById("filter-clear").hidden = !filtersActive();
     document.getElementById("filter-count").textContent = filtersActive()
       ? `Showing ${shown.length} of ${tasks.length} tasks`

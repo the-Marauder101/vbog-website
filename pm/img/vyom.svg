@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Vyom: a world with an orbit — the first star in VBOG's universe of tools -->
+  <g transform="rotate(-20 16 16)">
+    <path d="M 2.5 16 A 13.5 5.2 0 0 1 29.5 16" fill="none" stroke="#00B4D8" stroke-width="2.2" stroke-linecap="round"/>
+  </g>
+  <circle cx="16" cy="16" r="7.2" fill="#0F3460"/>
+  <path d="M 12.2 13.1 a 5.2 5.2 0 0 1 6.4 -0.6" fill="none" stroke="#00B4D8" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+  <g transform="rotate(-20 16 16)">
+    <path d="M 2.5 16 A 13.5 5.2 0 0 0 29.5 16" fill="none" stroke="#00B4D8" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="27.1" cy="12.6" r="2.4" fill="#00B4D8"/>
+  </g>
+</svg>

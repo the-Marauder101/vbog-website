@@ -115,6 +115,8 @@
       .join("");
     document.getElementById("w-project").innerHTML = `<option value="">All projects</option>` + opts;
     document.getElementById("snippet-project").innerHTML = `<option value="">Choose a project…</option>` + opts;
+    UI.enhanceSelect(document.getElementById("w-project"));
+    UI.enhanceSelect(document.getElementById("snippet-project"));
     renderWebhooks();
   }
 
