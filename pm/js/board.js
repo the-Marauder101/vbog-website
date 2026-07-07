@@ -112,6 +112,8 @@
     clearBtn.hidden = !filtersActive();
     countEl.hidden = !filtersActive();
     countEl.textContent = filtersActive() ? `Showing ${shown.length} of ${tasks.length} tasks` : "";
+    document.getElementById("filter-assignee").classList.toggle("on", filters.assignee !== "");
+    document.getElementById("filter-due").classList.toggle("on", filters.due !== "all");
   }
 
   function renderColumn(status, isRemoved, shown) {
@@ -161,11 +163,14 @@
       ? assignee.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()
       : "?";
     const overdue = UI.isOverdue(task.due_date);
+    const notesInd = task.notes
+      ? '<span class="notes-ind" title="Has notes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>'
+      : "";
     el.innerHTML = `
-      <div class="task-title">${task.source === "zapier" ? '<span class="zapier-dot" title="Created via Zapier / Google Sheets"></span>' : ""}${UI.esc(task.title)}</div>
+      <div class="task-title">${task.source === "zapier" ? '<span class="zapier-dot" title="Created via Zapier / Google Sheets"></span>' : ""}${UI.esc(task.title)}${notesInd}</div>
       <div class="task-meta">
         <span class="assignee">
-          <span class="avatar ${assignee ? "" : "unassigned"}">${UI.esc(initials)}</span>
+          <span class="avatar ${assignee ? "" : "unassigned"}"${assignee ? ` style="background:${UI.avatarColor(assignee)}"` : ""}>${UI.esc(initials)}</span>
           <span class="name">${UI.esc(assignee || "Unassigned")}</span>
         </span>
         ${task.due_date ? `<span class="due ${overdue ? "overdue" : ""}">${UI.fmtDate(task.due_date)}</span>` : ""}

@@ -77,6 +77,9 @@
 
   function render() {
     const shown = visibleTasks();
+    document.getElementById("filter-project").classList.toggle("on", filters.project !== "");
+    document.getElementById("filter-assignee").classList.toggle("on", filters.assignee !== "");
+    document.getElementById("filter-due").classList.toggle("on", filters.due !== "all");
     document.getElementById("filter-clear").hidden = !filtersActive();
     document.getElementById("filter-count").textContent = filtersActive()
       ? `Showing ${shown.length} of ${tasks.length} tasks`
@@ -106,7 +109,11 @@
                     ${UI.esc(t.projects.name)}
                   </td>
                   <td>${t.source === "zapier" ? '<span class="zapier-dot" title="Created via Zapier"></span>' : ""}${UI.esc(t.title)}</td>
-                  <td>${assignee ? UI.esc(assignee) : '<span style="color:var(--muted)">Unassigned</span>'}</td>
+                  <td>${
+                    assignee
+                      ? `<span class="avatar" style="background:${UI.avatarColor(assignee)};margin-right:7px;">${UI.esc(assignee.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase())}</span>${UI.esc(assignee)}`
+                      : '<span style="color:var(--muted)">Unassigned</span>'
+                  }</td>
                   <td><span class="status-chip">${UI.esc(t.status)}</span></td>
                   <td class="${overdue ? "due overdue" : "due"}">${t.due_date ? UI.fmtDate(t.due_date) : "—"}</td>
                 </tr>`;

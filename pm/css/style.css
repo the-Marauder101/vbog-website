@@ -138,8 +138,15 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   overflow: hidden;
   min-height: 20px;
 }
-.project-card .meta { display: flex; gap: 14px; font-size: 13px; color: var(--muted); }
-.project-card .meta .overdue-count { color: var(--danger); font-weight: 600; }
+.project-card .meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.project-card .meta .overdue-count {
+  color: var(--danger);
+  font-weight: 600;
+  background: rgba(220, 38, 38, 0.08);
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 12.5px;
+}
 .project-card .edit-btn {
   position: absolute;
   top: 16px;
@@ -165,6 +172,21 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   margin-left: 6px;
   vertical-align: 2px;
 }
+
+.ghost-card {
+  border: 2px dashed #D3DAE3;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.ghost-card:hover { border-color: var(--accent); color: var(--accent); }
 
 .empty-state {
   text-align: center;
@@ -266,6 +288,20 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 .avatar.unassigned { background: #C3CAD5; }
 .due { white-space: nowrap; }
 .due.overdue { color: var(--danger); font-weight: 600; }
+/* On kanban cards the due date reads as a soft pill */
+.task-card .due {
+  background: #F3F4F6;
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 12px;
+}
+.task-card .due.overdue { background: rgba(220, 38, 38, 0.09); }
+.notes-ind {
+  display: inline-flex;
+  vertical-align: -1px;
+  margin-left: 6px;
+  color: #A8B0BC;
+}
 .zapier-dot {
   width: 8px;
   height: 8px;
@@ -325,6 +361,15 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   color: var(--text);
 }
 .form-group textarea { min-height: 90px; resize: vertical; }
+.form-group select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
 .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
   outline: none;
   border-color: var(--accent);
@@ -408,6 +453,11 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   z-index: 100;
 }
 .modal-overlay.open { display: flex; }
+.modal-overlay.open .modal { animation: modal-in 0.16s ease; }
+@keyframes modal-in {
+  from { transform: translateY(10px) scale(0.98); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
 .modal {
   background: var(--surface);
   border-radius: 12px;
@@ -525,26 +575,46 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 .filter-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   margin: 4px 0 20px;
 }
-.filter-bar label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.filter-bar .filter-icon {
+  display: inline-flex;
+  align-items: center;
   color: var(--muted);
+  margin-right: 2px;
 }
 .filter-select, .filter-search {
+  appearance: none;
+  -webkit-appearance: none;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: 999px;
+  height: 36px;
+  padding: 0 14px;
   background: #fff;
   color: var(--text);
   font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: border-color 0.12s ease;
 }
-.filter-search { min-width: 220px; }
+.filter-select {
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+/* A filter that's actively narrowing gets the accent treatment */
+.filter-select.on {
+  border-color: var(--accent);
+  background-color: rgba(0, 180, 216, 0.06);
+  color: var(--primary);
+  font-weight: 600;
+}
+.filter-search { min-width: 230px; cursor: text; font-weight: 400; }
+.filter-select:hover, .filter-search:hover { border-color: #B9C2CE; }
 .filter-select:focus, .filter-search:focus {
   outline: none;
   border-color: var(--accent);
@@ -556,7 +626,8 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   color: var(--accent);
   font-weight: 600;
   font-size: 13.5px;
-  padding: 6px 4px;
+  padding: 6px 6px;
+  border-radius: 6px;
 }
 .btn-link:hover { text-decoration: underline; }
-.filter-count { color: var(--muted); font-size: 13px; margin-left: auto; }
+.filter-count { color: var(--muted); font-size: 13px; margin-left: auto; white-space: nowrap; }
