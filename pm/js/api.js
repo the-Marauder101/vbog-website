@@ -24,11 +24,11 @@ const API = {
   getTaskSummaries() {
     return sbFetch("tasks?select=project_id,due_date");
   },
-  getTasksForMember(memberId) {
+  // Every task across all active projects, with project info embedded (All Tasks view)
+  getAllTasks() {
     return sbFetch(
-      `tasks?assignee_id=eq.${memberId}` +
-        `&select=*,projects!inner(id,name,color,archived)&projects.archived=eq.false` +
-        `&order=due_date.asc.nullslast,created_at.asc`
+      "tasks?select=*,projects!inner(id,name,color,archived)&projects.archived=eq.false" +
+        "&order=due_date.asc.nullslast,created_at.asc"
     );
   },
   createTask(fields) {

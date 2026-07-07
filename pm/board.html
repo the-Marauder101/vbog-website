@@ -18,7 +18,7 @@
     <a class="brand" href="index.html">VBOG<span>&nbsp;PM</span></a>
     <div class="nav-links">
       <a href="index.html">Dashboard</a>
-      <a href="team.html">Team View</a>
+      <a href="team.html">All Tasks</a>
     </div>
     <div class="nav-right">
       <a href="settings.html">Settings</a>
@@ -35,6 +35,13 @@
         <div class="header-actions">
           <a href="index.html" class="btn btn-secondary">&larr; All projects</a>
         </div>
+      </div>
+      <div class="filter-bar" style="margin-top: 18px;">
+        <label for="filter-assignee">Filter</label>
+        <select id="filter-assignee" class="filter-select"></select>
+        <select id="filter-due" class="filter-select"></select>
+        <button id="filter-clear" class="btn-link" hidden>Clear filters</button>
+        <span class="filter-count" id="filter-count" hidden></span>
       </div>
     </div>
     <div class="board-wrap">

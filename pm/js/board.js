@@ -10,6 +10,7 @@
   let members = [];
   let editingTask = null; // null = creating
   let deleteArmed = false;
+  const filters = { assignee: "", due: "all" };
 
   if (!projectId) {
     window.location.replace("index.html");
@@ -31,6 +32,7 @@
       document.title = `${project.name} — VBOG PM`;
       document.getElementById("board-title").textContent = project.name;
       document.getElementById("board-desc").textContent = project.description || "";
+      initFilters();
       renderBoard();
     } catch (e) {
       UI.toast(e.message);
@@ -52,7 +54,49 @@
     });
   }
 
+  // ---- Filters (assignee + due date) ----
+  function initFilters() {
+    const assigneeSel = document.getElementById("filter-assignee");
+    // Active members plus anyone (now inactive) still assigned to a task here
+    const assignedIds = new Set(tasks.map((t) => t.assignee_id).filter(Boolean));
+    const options = members.filter((m) => m.active || assignedIds.has(m.id));
+    assigneeSel.innerHTML =
+      `<option value="">Everyone</option><option value="none">Unassigned</option>` +
+      options.map((m) => `<option value="${m.id}">${UI.esc(m.name)}${m.active ? "" : " (inactive)"}</option>`).join("");
+
+    document.getElementById("filter-due").innerHTML = UI.dateFilterOptions
+      .map(([v, label]) => `<option value="${v}">${label}</option>`)
+      .join("");
+
+    assigneeSel.addEventListener("change", () => { filters.assignee = assigneeSel.value; renderBoard(); });
+    document.getElementById("filter-due").addEventListener("change", (e) => {
+      filters.due = e.target.value;
+      renderBoard();
+    });
+    document.getElementById("filter-clear").addEventListener("click", () => {
+      filters.assignee = "";
+      filters.due = "all";
+      assigneeSel.value = "";
+      document.getElementById("filter-due").value = "all";
+      renderBoard();
+    });
+  }
+
+  function filtersActive() {
+    return filters.assignee !== "" || filters.due !== "all";
+  }
+
+  function visibleTasks() {
+    return tasks.filter((t) => {
+      if (filters.assignee === "none" && t.assignee_id) return false;
+      if (filters.assignee && filters.assignee !== "none" && t.assignee_id !== filters.assignee) return false;
+      return UI.matchesDateFilter(t.due_date, filters.due);
+    });
+  }
+
   function renderBoard() {
+    const shown = visibleTasks();
+
     // Statuses no longer in the project's list but still on tasks get their
     // own dimmed column so no task ever silently disappears.
     const orphanStatuses = [...new Set(tasks.map((t) => t.status))].filter(
@@ -60,12 +104,18 @@
     );
 
     boardEl.innerHTML = "";
-    for (const status of project.statuses) renderColumn(status, false);
-    for (const status of orphanStatuses) renderColumn(status, true);
+    for (const status of project.statuses) renderColumn(status, false, shown);
+    for (const status of orphanStatuses) renderColumn(status, true, shown);
+
+    const clearBtn = document.getElementById("filter-clear");
+    const countEl = document.getElementById("filter-count");
+    clearBtn.hidden = !filtersActive();
+    countEl.hidden = !filtersActive();
+    countEl.textContent = filtersActive() ? `Showing ${shown.length} of ${tasks.length} tasks` : "";
   }
 
-  function renderColumn(status, isRemoved) {
-    const colTasks = sortTasks(tasks.filter((t) => t.status === status));
+  function renderColumn(status, isRemoved, shown) {
+    const colTasks = sortTasks(shown.filter((t) => t.status === status));
     const col = document.createElement("div");
     col.className = "kanban-col" + (isRemoved ? " removed-status" : "");
     col.dataset.status = status;
