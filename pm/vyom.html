@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -60,6 +60,13 @@
           <textarea id="p-desc" placeholder="What is this project about? (optional)"></textarea>
         </div>
         <div class="form-group">
+          <label>Project type</label>
+          <div class="type-toggle">
+            <label class="type-opt"><input type="radio" name="p-type" value="internal" checked> Internal</label>
+            <label class="type-opt"><input type="radio" name="p-type" value="client"> Client Facing</label>
+          </div>
+        </div>
+        <div class="form-group">
           <label>Status columns *</label>
           <div class="tag-editor" id="status-tags">
             <input type="text" id="status-input" placeholder="Type a status, press Enter">
@@ -82,10 +89,10 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=5"></script>
-  <script src="js/supabase.js?v=5"></script>
-  <script src="js/api.js?v=5"></script>
-  <script src="js/ui.js?v=5"></script>
-  <script src="js/dashboard.js?v=5"></script>
+  <script src="js/config.js?v=6"></script>
+  <script src="js/supabase.js?v=6"></script>
+  <script src="js/api.js?v=6"></script>
+  <script src="js/ui.js?v=6"></script>
+  <script src="js/dashboard.js?v=6"></script>
 </body>
 </html>

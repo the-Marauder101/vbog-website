@@ -48,7 +48,7 @@
           <div class="accent-bar" style="background:${UI.esc(p.color || "#C3CAD5")}"></div>
           <button class="edit-btn" data-edit="${p.id}" title="Edit project" aria-label="Edit project">&#9998;</button>
           <div class="card-body">
-            <h3>${UI.esc(p.name)}${p.archived ? '<span class="archived-tag">Archived</span>' : ""}</h3>
+            <h3>${UI.esc(p.name)}${p.archived ? '<span class="archived-tag">Archived</span>' : ""}<span class="project-type-tag ${p.type === 'client' ? 'client' : 'internal'}">${p.type === 'client' ? 'Client' : 'Internal'}</span></h3>
             <div class="desc">${UI.esc(p.description || "")}</div>
             <div class="meta">
               <span>${tasks.length} task${tasks.length === 1 ? "" : "s"}</span>
@@ -139,6 +139,8 @@
     document.getElementById("project-save").textContent = project ? "Save Changes" : "Create Project";
     document.getElementById("p-name").value = project ? project.name : "";
     document.getElementById("p-desc").value = project ? project.description || "" : "";
+    const typeVal = project?.type || "internal";
+    document.querySelectorAll('input[name="p-type"]').forEach((r) => { r.checked = r.value === typeVal; });
     statusTags = project ? [...project.statuses] : [...DEFAULT_STATUSES];
     selectedColor = project?.color || SWATCH_COLORS[0];
     document.getElementById("status-input").value = "";
@@ -181,6 +183,7 @@
       description: document.getElementById("p-desc").value.trim() || null,
       statuses: statusTags,
       color: selectedColor,
+      type: document.querySelector('input[name="p-type"]:checked')?.value || "internal",
     };
 
     try {

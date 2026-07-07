@@ -53,7 +53,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   letter-spacing: -0.02em;
 }
 .topnav .brand .dot { color: var(--accent); }
-.brand-mark { width: 26px; height: 26px; flex: none; }
+.brand-mark { width: 34px; height: 34px; flex: none; }
 .topnav .brand-by {
   font-size: 11px;
   font-weight: 600;
@@ -184,6 +184,21 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   margin-left: 6px;
   vertical-align: 2px;
 }
+.project-type-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  vertical-align: middle;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.project-type-tag.internal { background: #F3F4F6; color: #6B7280; }
+.project-type-tag.client   { background: rgba(0, 180, 216, 0.12); color: #0891B2; }
+.type-toggle { display: flex; gap: 12px; }
+.type-opt { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
 
 .ghost-card {
   border: 2px dashed #D3DAE3;
