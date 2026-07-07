@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTT — Water Heater Installation Code</title>
+<style>
+  :root {
+    --black: #000;
+    --white: #fff;
+    --line: #000;
+    --muted: #767676;
+    --hairline: #e0e0e0;
+    --soft: #f5f5f5;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--white);
+    color: var(--black);
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  header { border-bottom: 1px solid var(--line); padding: 32px 24px; }
+  .header-inner { max-width: 1040px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  header p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+
+  main {
+    max-width: 1040px; margin: 0 auto; padding: 40px 24px 64px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;
+  }
+
+  .global-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .global-row .g-field { display: flex; flex-direction: column; }
+  .global-row .g-field label { margin-bottom: 10px; }
+
+  .field { margin-bottom: 28px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block; font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
+  }
+  .hint {
+    font-size: 12px; font-weight: 400; text-transform: none; letter-spacing: normal;
+    color: var(--muted); margin: -4px 0 12px;
+  }
+
+  select, input[type="number"], input[type="text"] {
+    width: 100%; padding: 12px 14px; font-size: 16px; font-family: inherit;
+    color: var(--black); background: var(--white);
+    border: 1px solid var(--line); border-radius: 0; appearance: none; -webkit-appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='black' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; cursor: pointer;
+  }
+  select:focus, input[type="number"]:focus, input[type="text"]:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  input[type="number"]:disabled, select:disabled {
+    border-color: var(--hairline); color: var(--muted); background-color: var(--soft); cursor: not-allowed;
+  }
+
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tiles-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .tile {
+    position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 16px 12px; border: 1px solid var(--line); cursor: pointer;
+    text-transform: none; letter-spacing: normal; font-weight: 400; margin: 0;
+  }
+  .tile input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .tile-pic { height: 88px; display: flex; align-items: center; justify-content: center; }
+  .tile-pic svg { height: 100%; width: auto; color: var(--black); }
+  .tile-label { font-size: 14px; }
+  .tile:has(input:checked) { border-width: 2px; padding: 15px 11px; background: #f8f8f8; }
+  .tile:has(input:focus-visible) { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .path { align-items: flex-start; text-align: left; gap: 4px; justify-content: center; min-height: 78px; }
+  .path-title { font-size: 15px; font-weight: 700; }
+  .path-desc { font-size: 12px; color: var(--muted); }
+
+  .checks { display: flex; flex-direction: column; gap: 14px; }
+  .check {
+    display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 15px;
+    font-weight: 400; text-transform: none; letter-spacing: normal; margin: 0;
+  }
+  .check input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .box {
+    flex: 0 0 auto; width: 20px; height: 20px; border: 1px solid var(--line);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .check input:checked + .box::after { content: ""; width: 12px; height: 12px; background: var(--black); }
+  .check input:focus-visible + .box { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .subblock { margin-top: 16px; padding-left: 32px; }
+  .subblock[hidden] { display: none !important; }
+  .info { margin-top: 10px; }
+  .info summary {
+    font-size: 12px; color: var(--muted); cursor: pointer; list-style: none;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .info summary::-webkit-details-marker { display: none; }
+  .info p { font-size: 12px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
+  .disclaimer { font-size: 11px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+
+  .unit-card { border: 1px solid var(--line); padding: 20px; margin-bottom: 16px; }
+  .unit-card:last-child { margin-bottom: 0; }
+  .unit-card-header {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--hairline);
+  }
+  .unit-card-num { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  .unit-size-sel {
+    flex: 1; min-width: 110px; padding: 7px 30px 7px 10px; font-size: 13px; font-family: inherit;
+    color: var(--black); background: var(--white);
+    border: 1px solid var(--hairline); border-radius: 0; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat; background-position: right 10px center; cursor: pointer;
+    font-weight: 400; text-transform: none; letter-spacing: normal;
+  }
+  .unit-size-sel:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  .unit-field { margin-bottom: 20px; }
+  .unit-field:last-child { margin-bottom: 0; }
+  .unit-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .unit-sublabel { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: none; letter-spacing: normal; margin: 10px 0 6px; }
+  .unit-sublabel:first-child { margin-top: 0; }
+
+  .segmented { display: flex; border: 1px solid var(--line); }
+  .seg {
+    flex: 1 1 0; margin: 0; min-width: 0; min-height: 44px;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 10px 6px; font-size: 13px; font-weight: 500; line-height: 1.2;
+    text-transform: none; letter-spacing: normal; cursor: pointer;
+    border-right: 1px solid var(--line);
+  }
+  .seg:last-child { border-right: none; }
+  .seg input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .seg:has(input:checked) { background: var(--black); color: var(--white); }
+  .seg:has(input:focus-visible) { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .summary { border: 1px solid var(--line); padding: 28px; position: sticky; top: 24px; }
+  .summary h2 { margin: 0 0 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .line { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--hairline); font-size: 15px; }
+  .line .desc { color: var(--black); }
+  .line .desc small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .line .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .line.subtotal { border-bottom: 1px solid var(--line); font-weight: 600; }
+  .empty-note { color: var(--muted); font-size: 14px; padding: 8px 0 4px; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 22px; }
+  .total .label { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .total .amt { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .note { margin-top: 18px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .btn {
+    display: block; margin-top: 14px; width: 100%; padding: 13px 16px; font-family: inherit; font-size: 13px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; border-radius: 0; cursor: pointer; border: 1px solid var(--line);
+  }
+  .btn-outline { color: var(--black); background: var(--white); }
+  .btn-outline:hover { background: var(--black); color: var(--white); }
+  .btn-fill { color: var(--white); background: var(--black); }
+  .btn-fill:hover { opacity: 0.75; }
+  .btn:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .link-btn {
+    margin-top: 18px; display: inline-flex; align-items: center; gap: 8px; background: none; border: none;
+    padding: 0; font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--black); cursor: pointer;
+  }
+  .link-btn .txt { text-decoration: underline; text-underline-offset: 3px; }
+  .link-btn:hover { opacity: 0.65; }
+  .link-btn:focus-visible { outline: 2px solid var(--black); outline-offset: 3px; }
+
+  .modal { display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 24px; }
+  .modal.open { display: flex; }
+  .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+  .modal-box { position: relative; background: var(--white); border: 1px solid var(--line); width: 100%; max-width: 880px; max-height: 90vh; overflow: auto; padding: 28px; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .modal-head h2 { margin: 0; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .modal-close { background: var(--white); border: 1px solid var(--line); width: 38px; height: 38px; font-size: 22px; line-height: 1; color: var(--black); cursor: pointer; border-radius: 0; }
+  .modal-close:hover { background: var(--black); color: var(--white); }
+  .modal-close:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
+  .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .gallery-item { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .gallery-item figcaption { font-size: 14px; font-weight: 600; text-align: center; color: var(--black); }
+  .gallery-item figcaption small { display: block; font-weight: 400; color: var(--muted); margin-top: 4px; }
+  .photo-frame { position: relative; width: 100%; aspect-ratio: 4 / 3; border: 1px dashed var(--line); display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--white); }
+  .photo-frame.filled { border-style: solid; }
+  .photo-frame img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .photo-frame.filled img { display: block; }
+  .photo-frame .placeholder { font-size: 12px; color: var(--muted); text-align: center; padding: 16px; line-height: 1.5; }
+  .photo-frame .placeholder small { display: block; margin-top: 6px; font-size: 11px; }
+  .photo-frame.filled .placeholder { display: none; }
+
+  .disclaimer-modal { display: none; position: fixed; inset: 0; z-index: 60; align-items: center; justify-content: center; padding: 24px; }
+  .disclaimer-modal.open { display: flex; }
+  .disclaimer-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+  .disclaimer-box { position: relative; background: #fffbeb; border: 1px solid #d97706; width: 100%; max-width: 540px; padding: 32px; }
+  .disclaimer-icon { font-size: 26px; margin-bottom: 12px; line-height: 1; }
+  .disclaimer-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #92400e; margin: 0 0 14px; }
+  .disclaimer-text { font-size: 14px; line-height: 1.7; color: #1c1c1c; margin: 0 0 26px; }
+  .disclaimer-ack { width: 100%; padding: 13px 16px; font-family: inherit; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #fff; background: #92400e; border: none; border-radius: 0; cursor: pointer; }
+  .disclaimer-ack:hover { background: #78350f; }
+
+  /* =====================================================
+     QUOTE DETAILS SECTION (SCREEN ONLY)
+  ===================================================== */
+  .qd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .qd-field { display: flex; flex-direction: column; }
+  .qd-field label {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 8px; display: block;
+  }
+  .qd-field .qd-opt { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); font-size: 11px; }
+  .qd-field.full { grid-column: 1 / -1; }
+  .qd-sep {
+    grid-column: 1 / -1;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted);
+    padding: 4px 0 8px; border-bottom: 1px solid var(--hairline);
+    margin-bottom: 2px;
+  }
+
+  .validity-static {
+    padding: 12px 14px; font-size: 16px; font-family: inherit;
+    color: var(--muted); background: var(--soft);
+    border: 1px solid var(--hairline);
+  }
+
+  /* =====================================================
+     PRINT — QUOTATION DOCUMENT
+  ===================================================== */
+  #quotationPrint { display: none; }
+
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    header, main, .modal, .disclaimer-modal { display: none !important; }
+
+    #quotationPrint {
+      display: block !important;
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 10pt;
+      color: #000;
+      line-height: 1.45;
+    }
+
+    .qp-lh {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 11pt; padding-bottom: 8pt;
+      border-bottom: 2pt solid #CC1015;
+    }
+    .qp-lh-logo { display: flex; flex-direction: column; justify-content: center; }
+    .qp-lh-logo img { max-height: 52pt; max-width: 160pt; width: auto; height: auto; display: block; }
+    .qp-co-info { font-size: 8pt; text-align: right; line-height: 1.6; color: #333; }
+    .qp-sig-img { max-height: 38pt; width: auto; display: block; margin-bottom: 2pt; }
+
+    .qp-hdr { width: 100%; border-collapse: collapse; margin-bottom: 11pt; }
+    .qp-hdr td { border: 0.5pt solid #000; padding: 3.5pt 7pt; vertical-align: middle; }
+    .q-title {
+      background: #000 !important; color: #fff !important;
+      text-align: center; font-size: 14pt; font-weight: 700;
+      letter-spacing: 0.14em; padding: 6pt !important;
+    }
+    .q-lbl { font-weight: 700; background: #f0f0f0 !important; white-space: nowrap; width: 14%; }
+
+    .qp-scope { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 7pt 0 9pt; }
+    .qp-scope td { border: 0.5pt solid #000; padding: 4pt 7pt; vertical-align: top; }
+    .qp-scope td:first-child { font-weight: 700; background: #f0f0f0 !important; width: 30%; white-space: nowrap; }
+
+    .qp-vat-note {
+      font-size: 7.5pt; color: #444; font-style: italic;
+      border-left: 2pt solid #CC1015;
+      background: #fff9f9 !important;
+      padding: 3.5pt 6pt; margin: 9pt 0; line-height: 1.4;
+    }
+
+    .qp-sig { font-size: 10pt; line-height: 1.85; margin-top: 10pt; }
+    .qp-sig-name { font-weight: 700; font-size: 10.5pt; }
+
+    .qp-sec-hdr {
+      font-size: 9pt; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; margin: 12pt 0 4pt; padding-bottom: 2.5pt;
+      color: #CC1015;
+      border-bottom: 1.5pt solid #CC1015;
+    }
+
+    .qp-lst { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 9pt; }
+    .qp-lst td { border: 0.4pt solid #ddd; padding: 2.5pt 6pt; vertical-align: top; color: #000; }
+    .qp-lst td.qp-n {
+      width: 6%; text-align: center; font-weight: 700;
+      color: #CC1015;
+      background: #fff !important;
+      border-right: 0.4pt solid #ddd;
+    }
+
+    .qp-foot {
+      margin-top: 12pt; border-top: 0.5pt solid #ccc; padding-top: 4pt;
+      font-size: 7.5pt; color: #666; text-align: center; line-height: 1.5;
+    }
+
+    .qp-break { page-break-before: always; }
+
+    .qp-annex-title {
+      font-size: 12pt; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; margin-bottom: 9pt;
+      padding-bottom: 5pt;
+      border-bottom: 2pt solid #CC1015;
+    }
+    .qp-annex-ref { font-size: 8pt; color: #555; margin-bottom: 9pt; }
+
+    .qp-price-tbl { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+    .qp-price-tbl th {
+      background: #CC1015 !important;
+      color: #fff !important;
+      padding: 4pt 7pt; text-align: left; font-size: 9pt; font-weight: 700;
+    }
+    .qp-price-tbl th:last-child { text-align: right; width: 26%; }
+    .qp-price-tbl td { border: 0.4pt solid #ddd; padding: 4pt 7pt; vertical-align: top; color: #000; }
+    .qp-price-tbl td.qp-r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .qp-price-tbl tr.qp-sub td {
+      font-weight: 700; background: #f5f5f5 !important;
+      border-top: 0.75pt solid #000;
+    }
+    .qp-price-tbl tr.qp-grand td {
+      font-weight: 700; font-size: 11pt;
+      background: #CC1015 !important;
+      color: #fff !important;
+    }
+
+    .qp-price-note { font-size: 8.5pt; color: #555; margin-top: 8pt; line-height: 1.5; font-style: italic; }
+
+    @page { margin: 14mm 18mm; size: A4 portrait; }
+  }
+
+  @media (max-width: 720px) {
+    main { grid-template-columns: 1fr; gap: 40px; padding: 32px 20px 56px; }
+    .summary { position: static; }
+    header { padding: 24px 20px; }
+    header h1 { font-size: 22px; }
+    .total .amt { font-size: 28px; }
+    .gallery-grid { grid-template-columns: 1fr; }
+    .modal-box { padding: 20px; }
+    .global-row, .tiles-3, .qd-grid { grid-template-columns: 1fr; }
+    .qd-field.full { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>CTT Water Heater Installation Code</h1>
+    <p>Internal use only. Configure the quote below for an instant estimate.</p>
+  </div>
+</header>
+
+<main>
+  <section class="calculator" aria-label="Calculator">
+
+    <!-- ===== QUOTE DETAILS ===== -->
+    <div class="field">
+      <label>Quote Details</label>
+      <p class="hint">Fill in before printing — these populate the formal quotation document.</p>
+      <div class="qd-grid">
+
+        <div class="qd-sep">Client</div>
+
+        <div class="qd-field full">
+          <label for="clientName">Client / Company Name</label>
+          <input type="text" id="clientName" placeholder="e.g. M/s IFM Facilities Management LLC" autocomplete="off">
+        </div>
+        <div class="qd-field full">
+          <label for="attnName">Attention <span class="qd-opt">— optional</span></label>
+          <input type="text" id="attnName" placeholder="Contact person at client" autocomplete="off">
+        </div>
+        <div class="qd-field full">
+          <label for="trnNumber">TRN Number <span class="qd-opt">— optional</span></label>
+          <input type="text" id="trnNumber" placeholder="e.g. 100058760800003" autocomplete="off">
+        </div>
+        <div class="qd-field full">
+          <label for="clientAddress">Address</label>
+          <input type="text" id="clientAddress" placeholder="e.g. Building name, Street, Area" autocomplete="off">
+        </div>
+
+        <div class="qd-sep">Quote Metadata</div>
+
+        <div class="qd-field">
+          <label for="fromRep">From (Rep)</label>
+          <select id="fromRep">
+            <option value="0">J S Deliwala</option>
+            <option value="1">Masood Ahmed</option>
+            <option value="2">J S Deliwala / Masood</option>
+          </select>
+        </div>
+        <div class="qd-field">
+          <label for="termsOfPayment">Terms of Payment</label>
+          <select id="termsOfPayment">
+            <option value="Immediate by CDC / Online Transfer">Immediate by CDC / Online Transfer</option>
+            <option value="30 days from invoice date">30 days from invoice date</option>
+            <option value="50% advance, 50% on completion">50% advance, 50% on completion</option>
+            <option value="On delivery">On delivery</option>
+          </select>
+        </div>
+        <div class="qd-field">
+          <label>Code Validity</label>
+          <div class="validity-static">30 days</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== GLOBAL FIELDS ===== -->
+    <div class="global-row">
+      <div class="g-field">
+        <label for="jobNumber">Reference / Job No.</label>
+        <input type="text" id="jobNumber" placeholder="e.g. CQJ-14130-HP-MISC" autocomplete="off">
+      </div>
+      <div class="g-field">
+        <label for="location">City</label>
+        <select id="location"></select>
+      </div>
+    </div>
+
+    <!-- ===== PRODUCT ===== -->
+    <div class="field">
+      <label>Product</label>
+      <div class="tiles" role="radiogroup" aria-label="Product">
+        <label class="tile path">
+          <input type="radio" name="product" value="heater" checked>
+          <span class="path-title">Heater</span>
+          <span class="path-desc">New installation</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ===== SERVICE TYPE (heater only — fixed to New Installation) ===== -->
+    <div class="field" id="serviceTypeField">
+      <label>Service Type</label>
+      <div class="tiles" role="radiogroup" aria-label="Service type">
+        <label class="tile path">
+          <input type="radio" name="pathway" value="newInstallation" checked>
+          <span class="path-title">New Installation</span>
+          <span class="path-desc">First-time heater, new site</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ===== HEATER SECTION ===== -->
+    <div id="heaterSection">
+      <div class="field">
+        <label>Water Heater — Atlantic</label>
+        <p class="hint">Atlantic brand only. Choose orientation first — the capacities shown are the ones available in that orientation.</p>
+        <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
+          <label class="tile">
+            <input type="radio" name="orientation" value="horizontal" checked>
+            <span class="tile-pic" aria-hidden="true">
+              <svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="14" width="104" height="38" rx="19"/>
+                <line x1="90" y1="16" x2="90" y2="50"/>
+                <circle cx="28" cy="33" r="7"/>
+                <line x1="28" y1="33" x2="28" y2="28"/>
+                <line x1="58" y1="52" x2="58" y2="64"/>
+                <line x1="70" y1="52" x2="70" y2="64"/>
+              </svg>
+            </span>
+            <span class="tile-label">Horizontal</span>
+          </label>
+          <label class="tile">
+            <input type="radio" name="orientation" value="vertical">
+            <span class="tile-pic" aria-hidden="true">
+              <svg viewBox="0 0 70 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="14" y="6" width="42" height="104" rx="21"/>
+                <line x1="14" y1="88" x2="56" y2="88"/>
+                <circle cx="35" cy="98" r="7"/>
+                <line x1="27" y1="110" x2="27" y2="118"/>
+                <line x1="43" y1="110" x2="43" y2="118"/>
+              </svg>
+            </span>
+            <span class="tile-label">Vertical</span>
+          </label>
+        </div>
+        <select id="size" style="margin-top:14px"></select>
+      </div>
+      <div class="field">
+        <label for="qty">Quantity</label>
+        <input type="number" id="qty" min="1" step="1" value="1">
+      </div>
+    </div>
+
+    <div id="unitDetails"></div>
+
+  </section>
+
+  <!-- ===== SUMMARY ===== -->
+  <section class="summary" aria-label="Estimate summary" aria-live="polite">
+    <h2>Estimate</h2>
+    <div id="breakdown"></div>
+    <div id="totalsBlock"></div>
+
+    <div class="total">
+      <span class="label">Grand Total</span>
+      <span class="amt" id="grandTotal">AED 0.00</span>
+    </div>
+
+    <button type="button" class="link-btn" id="galleryOpen">
+      <span class="txt">View photos of our works</span>
+      <span aria-hidden="true">&rarr;</span>
+    </button>
+
+    <p class="note">This is an estimate. Final quote may vary based on site conditions.</p>
+
+    <button type="button" class="btn btn-outline" id="confirm">Confirm</button>
+    <button type="button" class="btn btn-fill" id="btnPrint">&#128438;&ensp;Print / Save as PDF</button>
+  </section>
+</main>
+
+<!-- ===================================================
+     QUOTATION PRINT OUTPUT (hidden on screen)
+==================================================== -->
+<div id="quotationPrint">
+
+  <!-- PAGE 1: QUOTATION -->
+  <div>
+    <!-- Letterhead -->
+    <div class="qp-lh">
+      <div class="qp-lh-logo">
+        <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+      </div>
+      <div class="qp-co-info">
+        P.O. Box 25236, Dubai, U.A.E.<br>
+        Tel: +971 4 3209310 &nbsp;&bull;&nbsp; Fax: +971 4 3925582<br>
+        Email: info@cheqpoint.com &nbsp;&bull;&nbsp; www.cheqpoint.com<br>
+        TRN: 100058760800003
+      </div>
+    </div>
+
+    <!-- Header table -->
+    <table class="qp-hdr">
+      <tr><td colspan="4" class="q-title">QUOTATION</td></tr>
+      <tr>
+        <td class="q-lbl">To:</td>
+        <td colspan="3" id="qpTo">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">Address:</td>
+        <td colspan="3" id="qpAddress">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">TRN:</td>
+        <td id="qpClientTRN">&mdash;</td>
+        <td class="q-lbl" style="width:11%">Ref:</td>
+        <td id="qpRef">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">From:</td>
+        <td id="qpFrom">&mdash;</td>
+        <td class="q-lbl" style="width:11%">Job No:</td>
+        <td id="qpJobNo">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">Date:</td>
+        <td id="qpDate">&mdash;</td>
+        <td class="q-lbl" style="width:11%">Pages:</td>
+        <td>02</td>
+      </tr>
+    </table>
+
+    <!-- Scope / terms block -->
+    <table class="qp-scope">
+      <tr><td>Item / Scope of Works</td><td id="qpScope">&mdash;</td></tr>
+      <tr><td>Total Price &amp; Quantity</td><td>Please refer to Annexure&nbsp;#1.</td></tr>
+      <tr><td>Terms of Payment</td><td id="qpTerms">Immediate by CDC / Online Transfer</td></tr>
+      <tr><td>Code Validity</td><td>30 days</td></tr>
+      <tr><td>Exclusions</td><td>Please refer below.</td></tr>
+    </table>
+
+    <p class="qp-vat-note"><strong>Note:</strong> All given prices are exclusive and not limited to any VAT / special / corporate / commercial taxes and levies, and this amount needs to be added separately at actual as per UAE law and factored in by the buyer. The above figure should be considered as the net amount after deducting all relevant taxes, levies etc.</p>
+
+    <div class="qp-sig">
+      <img id="qpSigImg" class="qp-sig-img" src="" alt="Signature">
+      <div class="qp-sig-name" id="qpSigName">J S Deliwala</div>
+      <div id="qpSigTitle">Technical &amp; Sales Manager</div>
+      <div id="qpSigMob">Mob: +971 50 272 9668</div>
+      <div id="qpSigEmail">Email: jay@cheqpoint.com</div>
+    </div>
+
+    <!-- Exclusions -->
+    <div class="qp-sec-hdr">Exclusions</div>
+    <table class="qp-lst" id="qpExclTable"></table>
+
+    <!-- Additional Terms -->
+    <div class="qp-sec-hdr">Additional Terms</div>
+    <table class="qp-lst" id="qpTermsTable"></table>
+
+    <div class="qp-foot">
+      Note: We also provide after-sales services such as maintenance, testing and commissioning for all supplied equipment.<br>
+      Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com &nbsp;&bull;&nbsp; TRN: 100058760800003
+    </div>
+  </div>
+
+  <!-- PAGE 2: ANNEXURE #1 -->
+  <div class="qp-break">
+    <div class="qp-lh">
+      <div class="qp-lh-logo">
+        <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+      </div>
+      <div class="qp-co-info">
+        P.O. Box 25236, Dubai, U.A.E.<br>
+        TRN: 100058760800003
+      </div>
+    </div>
+
+    <div class="qp-annex-title">Annexure #1 &mdash; Price Breakdown</div>
+    <div class="qp-annex-ref" id="qpAnnexRef"></div>
+
+    <table class="qp-price-tbl">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody id="qpPriceBody"></tbody>
+    </table>
+
+    <p class="qp-price-note" id="qpPriceNote"></p>
+
+    <div class="qp-foot" style="margin-top:18pt">
+      Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com
+    </div>
+  </div>
+
+</div><!-- /#quotationPrint -->
+
+<!-- ===== Gallery modal ===== -->
+<div class="modal" id="gallery" aria-hidden="true">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="galleryTitle">
+    <div class="modal-head">
+      <h2 id="galleryTitle">Photos of Our Works</h2>
+      <button type="button" class="modal-close" id="galleryClose" aria-label="Close gallery">&times;</button>
+    </div>
+    <div class="gallery-grid">
+      <figure class="gallery-item">
+        <div class="photo-frame" id="frameHeater"><img alt="Water heater"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.heater</small></span></div>
+        <figcaption id="capHeater">Water Heater</figcaption>
+      </figure>
+      <figure class="gallery-item">
+        <div class="photo-frame" id="frameInstall"><img alt="Installation work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.install</small></span></div>
+        <figcaption id="capInstall">Installation</figcaption>
+      </figure>
+      <figure class="gallery-item">
+        <div class="photo-frame" id="frameCeiling"><img alt="False ceiling work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.falseCeiling</small></span></div>
+        <figcaption id="capCeiling">False Ceiling Modification</figcaption>
+      </figure>
+      <figure class="gallery-item">
+        <div class="photo-frame" id="framePipes"><img alt="Piping work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.pipes</small></span></div>
+        <figcaption id="capPipes">Piping</figcaption>
+      </figure>
+    </div>
+    <p class="note">Photos are illustrative &mdash; final result varies by site.</p>
+  </div>
+</div>
+
+<!-- ===== Disclaimer modal ===== -->
+<div class="disclaimer-modal" id="disclaimerModal" aria-hidden="true">
+  <div class="disclaimer-backdrop" data-close-disclaimer></div>
+  <div class="disclaimer-box" role="dialog" aria-modal="true" aria-labelledby="disclaimerTitle">
+    <div class="disclaimer-icon" aria-hidden="true">&#9888;</div>
+    <h2 class="disclaimer-title" id="disclaimerTitle">Important Notice</h2>
+    <p class="disclaimer-text" id="disclaimerText"></p>
+    <button type="button" class="disclaimer-ack" id="disclaimerAck">I Acknowledge &amp; Confirm</button>
+  </div>
+</div>
+
+<script>
+/* ========================================================= */
+const WORK_PHOTOS = { heater: "", install: "", falseCeiling: "", pipes: "" };
+const VAT = 0.05;
+
+/* =========================================================
+   PRICING DATA
+   ========================================================= */
+const PRICING = {
+  brand: "Atlantic",
+
+  pathways: {
+    newInstallation: { label: "New Installation", anchoring: 100 }
+  },
+
+  sizesByOrientation: {
+    horizontal: [
+      { label: "50 L",  litres: 50,  price: 420,  installPerUnit: 300 },
+      { label: "80 L",  litres: 80,  price: 460,  installPerUnit: 300 },
+      { label: "100 L", litres: 100, price: 550,  installPerUnit: 300 },
+      { label: "200 L", litres: 200, price: 2300, installPerUnit: 600 }
+    ],
+    vertical: [
+      { label: "30 L",             litres: 30,  price: 355,  installPerUnit: 300  },
+      { label: "50 L",             litres: 50,  price: 380,  installPerUnit: 300  },
+      { label: "80 L",             litres: 80,  price: 415,  installPerUnit: 300  },
+      { label: "100 L",            litres: 100, price: 515,  installPerUnit: 300  },
+      { label: "150 L",            litres: 150, price: 1500, installPerUnit: 300  },
+      { label: "150 L Wall Mount", litres: 150, price: null, installPerUnit: 300  },
+      { label: "200 L Wall Mount", litres: 200, price: 2200, installPerUnit: 600  },
+      { label: "200 L Stab Floor", litres: 200, price: 2350, installPerUnit: 600  },
+      { label: "300 L",            litres: 300, price: 3300, installPerUnit: 1000 },
+      { label: "500 L",            litres: 500, price: 6000, installPerUnit: 1500 }
+    ]
+  },
+
+  locations: [
+    { label: "Dubai"          },
+    { label: "Sharjah"        },
+    { label: "Ajman"          },
+    { label: "Umm Al Quwain"  },
+    { label: "Abu Dhabi"      },
+    { label: "Ras Al Khaimah" },
+    { label: "Fujairah"       },
+    { label: "Al Ain"         },
+    { label: "Liwa / Ruwais"  }
+  ],
+
+  falseCeiling: [
+    { label: "40 × 40",   price: 600  },
+    { label: "60 × 60",   price: 800  },
+    { label: "80 × 80",   price: 1200 },
+    { label: "120 × 120", price: 1800 },
+    { label: "160 × 160", price: 2400 },
+    { label: "200 × 200", price: 3000 }
+  ]
+};
+
+/* =========================================================
+   REP DIRECTORY
+   ========================================================= */
+const REPS = [
+  { name: "J S Deliwala",          title: "Technical & Sales Manager", mob: "+971 50 272 9668", email: "jay@cheqpoint.com" },
+  { name: "Masood Ahmed",           title: "Sales Engineer",            mob: "",                  email: "" },
+  { name: "J S Deliwala / Masood", title: "Technical & Sales",          mob: "+971 50 272 9668", email: "jay@cheqpoint.com" }
+];
+
+/* =========================================================
+   EXCLUSIONS
+   ========================================================= */
+const EXCLUSIONS_MASTER = [
+  "Water, electrical supply and termination.",
+  "Government, non-government, authority, third party testing and/or approval.",
+  "Any penalty, retention and/or bank guarantees.",
+  "Strainers, valves and accessories unless specifically mentioned.",
+  "Piping, unions, fittings, insulation and cladding.",
+  "Sensors and gauges unless specifically mentioned.",
+  "Any and all civil works unless specifically mentioned.",
+  "Thermostats, sensors and/or special BMS points.",
+  "Works related to cold water tank and booster pump.",
+  "Cabling and wiring.",
+  "Any maintenance/AMC.",
+  "Pipeline/equipment tagging and special nameplates.",
+  "Any controls and/or associated wiring.",
+  "Interconnecting piping, valves and bypass circuits.",
+  "Any spare parts.",
+  "Thermostatic/digital thermal mixing valve.",
+  "Any works related to transfer, booster, circulation, recirculation pumps and etc…",
+  "Water quality at site.",
+  "Any consumables.",
+  "Extension of warranty.",
+  "Any special documentation and/or testing.",
+  "Any welding / repair works.",
+  "Restoration of storage tank condition."
+];
+
+const SIG_IMG_SRC = "";
+
+const ADDITIONAL_TERMS = [
+  "Any item or commercial scope not mentioned specifically in this quotation should be excluded and should be reconfirmed with Cheqpoint Tech Trading LLC if it is intentionally missing from this document.",
+  "The above price is based on the given quantities. Should there be a change in quantity, please request a revised quotation from Cheqpoint Tech Trading LLC, as this quotation is valid on a single purchase order basis.",
+  "In the event of a purchase order, the client agrees under the terms and conditions of this quotation that the order shall be classified as non-cancellable and non-returnable. In the event of any purchase order cancellation, the client is fully liable to bear the responsibility of the complete purchase price of the ordered goods.",
+  "Prices are valid for the duration of the quote validity period stated above. Cheqpoint Tech Trading LLC reserves the right to revise pricing after the expiry of the validity period."
+];
+
+/* ===== Helpers ===== */
+const fmt = (n) => "AED " + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const el = {
+  jobNumber:        document.getElementById("jobNumber"),
+  size:             document.getElementById("size"),
+  qty:              document.getElementById("qty"),
+  location:         document.getElementById("location"),
+  serviceTypeField: document.getElementById("serviceTypeField"),
+  heaterSection:    document.getElementById("heaterSection"),
+  unitDetails:      document.getElementById("unitDetails"),
+  breakdown:        document.getElementById("breakdown"),
+  totalsBlock:      document.getElementById("totalsBlock"),
+  grandTotal:       document.getElementById("grandTotal"),
+  confirm:          document.getElementById("confirm"),
+  disclaimerModal:  document.getElementById("disclaimerModal"),
+  disclaimerText:   document.getElementById("disclaimerText"),
+  disclaimerAck:    document.getElementById("disclaimerAck"),
+  gallery:          document.getElementById("gallery"),
+  galleryOpen:      document.getElementById("galleryOpen"),
+  galleryClose:     document.getElementById("galleryClose"),
+  frameHeater:      document.getElementById("frameHeater"),
+  frameInstall:     document.getElementById("frameInstall"),
+  frameCeiling:     document.getElementById("frameCeiling"),
+  framePipes:       document.getElementById("framePipes"),
+  capHeater:        document.getElementById("capHeater"),
+  capInstall:       document.getElementById("capInstall"),
+  capCeiling:       document.getElementById("capCeiling"),
+  capPipes:         document.getElementById("capPipes"),
+  btnPrint:         document.getElementById("btnPrint"),
+  clientName:       document.getElementById("clientName"),
+  attnName:         document.getElementById("attnName"),
+  trnNumber:        document.getElementById("trnNumber"),
+  clientAddress:    document.getElementById("clientAddress"),
+  fromRep:          document.getElementById("fromRep"),
+  termsOfPayment:   document.getElementById("termsOfPayment")
+};
+
+/* ===== Read helpers ===== */
+function getOrientation()   { const r = document.querySelector('input[name="orientation"]:checked'); return r ? r.value : "horizontal"; }
+function getQty()           { const q = parseInt(el.qty.value, 10);       return (isNaN(q) || q < 1) ? 1 : q; }
+function currentSizes()     { return PRICING.sizesByOrientation[getOrientation()] || PRICING.sizesByOrientation.horizontal; }
+
+/* ===== Populate global dropdowns ===== */
+function populateSelect(sel, items, textFn) {
+  sel.innerHTML = "";
+  items.forEach((item, i) => {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = textFn(item);
+    sel.appendChild(opt);
+  });
+}
+populateSelect(el.size, currentSizes(), (s) => s.label);
+populateSelect(el.location, PRICING.locations, (l) => l.label);
+
+/* ===== State ===== */
+let unitStates = [];
+
+function defaultUnitState() {
+  return { sizeIdx: Number(el.size.value) || 0, ceilingNeeded: false, ceilingIdx: 0 };
+}
+function syncUnitStates(qty) { while (unitStates.length < qty) unitStates.push(defaultUnitState()); unitStates.length = qty; }
+
+/* ===== Build install unit cards ===== */
+function buildUnitDetails() {
+  const sizes = currentSizes();
+  const qty = getQty();
+  syncUnitStates(qty);
+  el.unitDetails.innerHTML = "";
+
+  for (let i = 0; i < qty; i++) {
+    const u = unitStates[i];
+    if (u.sizeIdx >= sizes.length) u.sizeIdx = 0;
+    const card = document.createElement("div");
+    card.className = "unit-card";
+
+    const sizeOpts = sizes.map((s, si) => `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`).join("");
+    const hdr = document.createElement("div");
+    hdr.className = "unit-card-header";
+    hdr.innerHTML = `<span class="unit-card-num">Unit ${i + 1}</span><select class="unit-size-sel" data-unit="${i}" aria-label="Capacity for unit ${i + 1}">${sizeOpts}</select>`;
+    card.appendChild(hdr);
+
+    const ceilOpts = PRICING.falseCeiling.map((c, ci) => `<option value="${ci}"${u.ceilingIdx === ci ? " selected" : ""}>${c.label} cm — ${fmt(c.price)}</option>`).join("");
+    const ceilField = document.createElement("div");
+    ceilField.className = "unit-field";
+    ceilField.innerHTML =
+      `<label class="unit-label">False Ceiling Modification</label>` +
+      `<div class="checks"><label class="check"><input type="checkbox" class="u-ceil-chk" data-unit="${i}"${u.ceilingNeeded ? " checked" : ""}>` +
+      `<span class="box" aria-hidden="true"></span><span>False ceiling modification needed?</span></label></div>` +
+      `<details class="info"><summary>What's included</summary><p>Cutting the false ceiling, fixing it back, applying putty, applying paint, and providing an access panel where necessary.</p></details>` +
+      `<p class="disclaimer">If false-ceiling work is found necessary on site and not selected here, it will be charged separately.</p>` +
+      `<div class="subblock u-ceil-block"${u.ceilingNeeded ? "" : " hidden"}><span class="unit-sublabel">Panel size</span><select class="u-ceil-sel" data-unit="${i}">${ceilOpts}</select></div>`;
+    card.appendChild(ceilField);
+
+    el.unitDetails.appendChild(card);
+  }
+  attachInstallListeners();
+}
+
+/* ===== Listeners — install cards ===== */
+function attachInstallListeners() {
+  const q = (sel) => el.unitDetails.querySelectorAll(sel);
+  q(".unit-size-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].sizeIdx = +e.target.value; buildUnitDetails(); recalc(); }));
+  q(".u-ceil-chk").forEach((c) => c.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].ceilingNeeded = e.target.checked; e.target.closest(".unit-card").querySelector(".u-ceil-block").hidden = !e.target.checked; recalc(); }));
+  q(".u-ceil-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].ceilingIdx = +e.target.value; recalc(); }));
+}
+
+/* ===== Pricing helpers ===== */
+function lineHTML(desc, sub, amount) {
+  const small = sub ? `<small>${sub}</small>` : "";
+  return `<div class="line"><span class="desc">${desc}${small}</span><span class="amt">${fmt(amount)}</span></div>`;
+}
+
+/* ===== Core recalc ===== */
+function recalc() {
+  let html = "", subtotal = 0;
+
+  const sizes = currentSizes();
+  const qty = getQty();
+  const pathwayObj = PRICING.pathways.newInstallation;
+  const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
+  syncUnitStates(qty);
+
+  const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
+  let heaterTotal = 0, installTotal = 0;
+  unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; heaterTotal += (s.price || 0); installTotal += s.installPerUnit; });
+
+  if (allSame && qty > 0) {
+    const s = sizes[unitStates[0].sizeIdx] || sizes[0];
+    const tbd = (s.price == null) ? " · price TBD" : "";
+    html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}${tbd}`, heaterTotal);
+    html += lineHTML("Installation", `${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(s.installPerUnit)}`, installTotal);
+  } else {
+    for (let i = 0; i < qty; i++) {
+      const s = sizes[unitStates[i].sizeIdx] || sizes[0];
+      const tbd = (s.price == null) ? " · price TBD" : "";
+      html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}${tbd}`, (s.price || 0));
+      html += lineHTML(`Installation (Unit ${i + 1})`, fmt(s.installPerUnit) + " / unit", s.installPerUnit);
+    }
+  }
+
+  const anchoringTotal = pathwayObj.anchoring * qty;
+  if (anchoringTotal > 0) html += lineHTML("Anchoring", `New Installation${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
+  subtotal = heaterTotal + installTotal + anchoringTotal;
+
+  for (let i = 0; i < qty; i++) {
+    const u = unitStates[i];
+    const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
+    if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; }
+  }
+
+  if (!html) html = `<div class="empty-note">No items selected yet.</div>`;
+  el.breakdown.innerHTML = html;
+
+  el.totalsBlock.innerHTML = `<div class="line subtotal"><span class="desc">Subtotal</span><span class="amt">${fmt(subtotal)}</span></div>`;
+  el.grandTotal.textContent = fmt(subtotal);
+}
+
+/* ===== Global change triggers ===== */
+function onGlobalInstallChange() { buildUnitDetails(); recalc(); }
+function onGlobalSizeChange() { const idx = Number(el.size.value) || 0; unitStates.forEach((u) => { u.sizeIdx = idx; }); buildUnitDetails(); recalc(); }
+function onOrientationChange() { populateSelect(el.size, currentSizes(), (s) => s.label); el.size.value = "0"; unitStates.forEach((u) => { u.sizeIdx = 0; }); buildUnitDetails(); recalc(); }
+
+["change", "input"].forEach((evt) => {
+  el.size.addEventListener(evt, onGlobalSizeChange);
+  el.qty.addEventListener(evt, onGlobalInstallChange);
+  el.location.addEventListener(evt, recalc);
+});
+el.qty.addEventListener("blur", () => { el.qty.value = getQty(); onGlobalInstallChange(); });
+
+document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", onOrientationChange));
+
+/* ===== Gallery ===== */
+function setFrame(frameEl, url) { const img = frameEl.querySelector("img"); if (url) { img.src = url; frameEl.classList.add("filled"); } else { img.removeAttribute("src"); frameEl.classList.remove("filled"); } }
+function refreshGallery() {
+  const sizes = currentSizes();
+  const qty = getQty();
+  const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
+  const anyCeiling = unitStates.some((u) => u.ceilingNeeded);
+  const size = sizes[(unitStates[0] || { sizeIdx: 0 }).sizeIdx] || sizes[0];
+  setFrame(el.frameHeater, WORK_PHOTOS.heater);
+  setFrame(el.frameInstall, WORK_PHOTOS.install);
+  setFrame(el.frameCeiling, WORK_PHOTOS.falseCeiling);
+  setFrame(el.framePipes, WORK_PHOTOS.pipes);
+  el.capHeater.innerHTML = `${PRICING.brand} ${size.label}<small>${orientLabel} · Qty ${qty}</small>`;
+  el.capInstall.innerHTML = `Installation<small>New Installation</small>`;
+  el.capCeiling.innerHTML = `False Ceiling<small>${anyCeiling ? "Selected" : "Not in this quote"}</small>`;
+  el.capPipes.innerHTML = `Piping<small>Not in this quote</small>`;
+}
+let lastFocused = null;
+function openGallery()  { lastFocused = document.activeElement; refreshGallery(); el.gallery.classList.add("open"); el.gallery.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; el.galleryClose.focus(); }
+function closeGallery() { el.gallery.classList.remove("open"); el.gallery.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; if (lastFocused && lastFocused.focus) lastFocused.focus(); }
+el.galleryOpen.addEventListener("click", openGallery);
+el.galleryClose.addEventListener("click", closeGallery);
+el.gallery.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close")) closeGallery(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.gallery.classList.contains("open")) closeGallery(); });
+
+/* ===== Disclaimer ===== */
+const DISCLAIMER_MIN_LITRES = 200;
+function largestUnitLitres() { const sizes = currentSizes(); return unitStates.reduce((m, u) => Math.max(m, (sizes[u.sizeIdx] || sizes[0]).litres), 0); }
+function largestUnitLabel()  { const sizes = currentSizes(); let best = sizes[0]; unitStates.forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; if (s.litres > best.litres) best = s; }); return best.label; }
+function openDisclaimer() {
+  el.disclaimerText.textContent = "If the " + largestUnitLabel() + " unit needs to be lifted to an upper level, we want to make you aware that this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, by confirming this message, you acknowledge that CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and that any replacement unit, if required, will be chargeable separately.";
+  el.disclaimerModal.classList.add("open"); el.disclaimerModal.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; el.disclaimerAck.focus();
+}
+function closeDisclaimer() { el.disclaimerModal.classList.remove("open"); el.disclaimerModal.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; el.confirm.focus(); }
+el.disclaimerAck.addEventListener("click", closeDisclaimer);
+el.disclaimerModal.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close-disclaimer")) closeDisclaimer(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.disclaimerModal.classList.contains("open")) closeDisclaimer(); });
+el.confirm.addEventListener("click", () => {
+  if (largestUnitLitres() >= DISCLAIMER_MIN_LITRES) openDisclaimer();
+});
+
+/* =========================================================
+   PRINT HELPERS
+   ========================================================= */
+
+function getLineDescText(descEl) {
+  if (!descEl) return "";
+  const clone = descEl.cloneNode(true);
+  const small = clone.querySelector("small");
+  if (small) {
+    const subText = small.textContent.trim();
+    small.remove();
+    const mainText = clone.textContent.trim();
+    return subText ? mainText + " — " + subText : mainText;
+  }
+  return clone.textContent.trim();
+}
+
+function getAutoSubject() {
+  const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+  return "Atlantic Water Heater New Installation Works — " + loc.label;
+}
+
+function getScopeText() {
+  const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+  return "Supply & installation of new Atlantic brand water heater(s) at new site — " + loc.label + ". Unit details and quantities as per Annexure #1.";
+}
+
+function getExclusionsList() {
+  return EXCLUSIONS_MASTER;
+}
+
+function buildAnnexureRows() {
+  const breakdownLines = document.querySelectorAll("#breakdown .line");
+  const totalLines     = document.querySelectorAll("#totalsBlock .line");
+
+  let rows = "";
+
+  breakdownLines.forEach((line) => {
+    const descText = getLineDescText(line.querySelector(".desc"));
+    const amtText  = (line.querySelector(".amt") || {}).textContent || "";
+    const isSub    = line.classList.contains("subtotal");
+    rows += `<tr${isSub ? ' class="qp-sub"' : ""}><td>${descText}</td><td class="qp-r">${amtText}</td></tr>`;
+  });
+
+  totalLines.forEach((line) => {
+    const descText = getLineDescText(line.querySelector(".desc"));
+    const amtText  = (line.querySelector(".amt") || {}).textContent || "";
+    const isSub    = line.classList.contains("subtotal");
+    rows += `<tr${isSub ? ' class="qp-sub"' : ""}><td>${descText}</td><td class="qp-r">${amtText}</td></tr>`;
+  });
+
+  const grand = el.grandTotal.textContent;
+  rows += `<tr class="qp-grand"><td>GRAND TOTAL (excl. VAT)</td><td class="qp-r">${grand}</td></tr>`;
+
+  const note = "Prices shown are exclusive of VAT. VAT at 5% will be applied on the tax invoice as per UAE law.";
+
+  return { rows, note };
+}
+
+/* =========================================================
+   PRINT BUTTON HANDLER
+   ========================================================= */
+el.btnPrint.addEventListener("click", () => {
+  const rep     = REPS[Number(el.fromRep.value)] || REPS[0];
+  const loc     = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+  const subject = getAutoSubject();
+  const dateStr = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
+
+  const clientStr = el.clientName.value.trim();
+  const attnStr   = el.attnName.value.trim();
+  document.getElementById("qpTo").textContent      = clientStr ? (attnStr ? clientStr + " (Attn: " + attnStr + ")" : clientStr) : "—";
+  document.getElementById("qpAddress").textContent  = el.clientAddress.value.trim() || "—";
+  document.getElementById("qpClientTRN").textContent = el.trnNumber.value.trim() || "—";
+  document.getElementById("qpFrom").textContent    = rep.name;
+  document.getElementById("qpRef").textContent     = el.jobNumber.value.trim() || "—";
+  document.getElementById("qpJobNo").textContent   = el.jobNumber.value.trim() || "—";
+  document.getElementById("qpDate").textContent    = dateStr;
+  document.getElementById("qpScope").textContent   = getScopeText();
+  document.getElementById("qpTerms").textContent   = el.termsOfPayment.value;
+
+  const sigImg = document.getElementById("qpSigImg");
+  if (SIG_IMG_SRC) {
+    sigImg.src = SIG_IMG_SRC;
+    sigImg.style.display = "block";
+  } else {
+    sigImg.src = "";
+    sigImg.style.display = "none";
+  }
+  document.getElementById("qpSigName").textContent  = rep.name;
+  document.getElementById("qpSigTitle").textContent = rep.title;
+  document.getElementById("qpSigMob").textContent   = rep.mob   ? "Mob: " + rep.mob   : "";
+  document.getElementById("qpSigEmail").textContent = rep.email ? "Email: " + rep.email : "";
+
+  document.getElementById("qpExclTable").innerHTML = getExclusionsList()
+    .map((e, i) => `<tr><td class="qp-n">${i + 1}.</td><td>${e}</td></tr>`)
+    .join("");
+
+  document.getElementById("qpTermsTable").innerHTML = ADDITIONAL_TERMS
+    .map((t, i) => `<tr><td class="qp-n">${i + 1}.</td><td>${t}</td></tr>`)
+    .join("");
+
+  const annexRef = [
+    el.jobNumber.value.trim() ? "Ref: " + el.jobNumber.value.trim() : null,
+    loc.label,
+    dateStr
+  ].filter(Boolean).join("  •  ");
+  document.getElementById("qpAnnexRef").textContent = annexRef;
+
+  const { rows, note } = buildAnnexureRows();
+  document.getElementById("qpPriceBody").innerHTML   = rows;
+  document.getElementById("qpPriceNote").textContent = note;
+
+  window.print();
+});
+
+/* ===== Init ===== */
+buildUnitDetails();
+recalc();
+</script>
+</body>
+</html>
