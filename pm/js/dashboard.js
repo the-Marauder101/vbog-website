@@ -39,6 +39,7 @@
       return;
     }
 
+    const ghost = `<button class="ghost-card" id="ghost-new-project">+ New Project</button>`;
     grid.innerHTML = visible.map((p) => {
       const tasks = taskSummaries.filter((t) => t.project_id === p.id);
       const overdue = tasks.filter((t) => UI.isOverdue(t.due_date)).length;
@@ -55,8 +56,9 @@
             </div>
           </div>
         </div>`;
-    }).join("");
+    }).join("") + ghost;
 
+    document.getElementById("ghost-new-project").addEventListener("click", () => openProjectModal(null));
     grid.querySelectorAll(".project-card").forEach((card) => {
       card.addEventListener("click", () => {
         window.location.href = `board.html?project=${card.dataset.id}`;

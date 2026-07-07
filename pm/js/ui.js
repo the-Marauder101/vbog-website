@@ -38,6 +38,14 @@ const UI = {
     ["none", "No due date"],
   ],
 
+  // Deterministic avatar colour per member name
+  avatarColor(name) {
+    const palette = ["#0F3460", "#7C3AED", "#0E7490", "#15803D", "#B45309", "#BE185D", "#4338CA"];
+    let h = 0;
+    for (const c of String(name)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return palette[h % palette.length];
+  },
+
   matchesDateFilter(due, key) {
     const today = UI.todayIso();
     switch (key) {

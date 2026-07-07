@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -34,10 +34,10 @@
     </div>
 
     <div class="filter-bar">
-      <label for="filter-project">Filter</label>
-      <select id="filter-project" class="filter-select"></select>
-      <select id="filter-assignee" class="filter-select"></select>
-      <select id="filter-due" class="filter-select"></select>
+      <span class="filter-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg></span>
+      <select id="filter-project" class="filter-select" aria-label="Filter by project"></select>
+      <select id="filter-assignee" class="filter-select" aria-label="Filter by assignee"></select>
+      <select id="filter-due" class="filter-select" aria-label="Filter by due date"></select>
       <input type="search" id="filter-search" class="filter-search" placeholder="Search task titles…">
       <button id="filter-clear" class="btn-link" hidden>Clear filters</button>
       <span class="filter-count" id="filter-count"></span>
@@ -46,10 +46,10 @@
     <div id="tasks-content"><div class="loading">Loading tasks…</div></div>
   </main>
 
-  <script src="js/config.js"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/team.js"></script>
+  <script src="js/config.js?v=3"></script>
+  <script src="js/supabase.js?v=3"></script>
+  <script src="js/api.js?v=3"></script>
+  <script src="js/ui.js?v=3"></script>
+  <script src="js/team.js?v=3"></script>
 </body>
 </html>
