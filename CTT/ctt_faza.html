@@ -31,6 +31,7 @@
   .header-text { flex: 1; }
   header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
   header p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+  .header-logo { display: flex; align-items: center; gap: 20px; }
   .header-logo img { height: 40px; width: auto; display: block; }
 
   main {
@@ -54,7 +55,7 @@
     color: var(--muted); margin: -4px 0 12px;
   }
 
-  select, input[type="number"], input[type="text"] {
+  select, input[type="number"], input[type="text"], input[type="tel"] {
     width: 100%; padding: 12px 14px; font-size: 16px; font-family: inherit;
     color: var(--black); background: var(--white);
     border: 1px solid var(--line); border-radius: 0; appearance: none; -webkit-appearance: none;
@@ -63,7 +64,7 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='black' stroke-width='1.5'/></svg>");
     background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; cursor: pointer;
   }
-  select:focus, input[type="number"]:focus, input[type="text"]:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  select:focus, input[type="number"]:focus, input[type="text"]:focus, input[type="tel"]:focus { outline: 2px solid var(--black); outline-offset: -1px; }
   input[type="number"]:disabled, select:disabled {
     border-color: var(--hairline); color: var(--muted); background-color: var(--soft); cursor: not-allowed;
   }
@@ -349,6 +350,7 @@
       <p>Internal use only. Configure the quote below for an instant estimate.</p>
     </div>
     <div class="header-logo">
+      <img src="cheqpoint-logo.svg" alt="Cheqpoint Tech Trading LLC">
       <img src="faza-logo.svg" alt="Faza Home">
     </div>
   </div>
