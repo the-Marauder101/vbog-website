@@ -507,12 +507,12 @@
       <div class="qp-lh-logo">
         <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
       </div>
-      <div class="qp-co-info">
-        P.O. Box 25236, Dubai, U.A.E.<br>
-        Tel: +971 4 3209310 &nbsp;&bull;&nbsp; Fax: +971 4 3925582<br>
-        Email: info@cheqpoint.com &nbsp;&bull;&nbsp; www.cheqpoint.com<br>
-        TRN: 100058760800003
+      <div class="qp-lh-logo" style="text-align:right">
+        <img src="https://www.fazahome.ae/cdn/shop/files/logo_b8d89087-cd71-4c12-824b-a25d0b13cab2.png?v=1718283019" alt="Faza Home" style="max-height:42pt">
       </div>
+    </div>
+    <div class="qp-co-info" style="text-align:center; margin-bottom:8pt; font-size:7.5pt; color:#555; line-height:1.5;">
+      Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; Email: info@cheqpoint.com &nbsp;&bull;&nbsp; TRN: 100058760800003
     </div>
 
     <!-- Header table -->
@@ -533,16 +533,14 @@
         <td id="qpRef">&mdash;</td>
       </tr>
       <tr>
-        <td class="q-lbl">From:</td>
-        <td id="qpFrom">&mdash;</td>
-        <td class="q-lbl" style="width:11%">Job No:</td>
+        <td class="q-lbl">Job No:</td>
         <td id="qpJobNo">&mdash;</td>
+        <td class="q-lbl" style="width:11%">Date:</td>
+        <td id="qpDate">&mdash;</td>
       </tr>
       <tr>
-        <td class="q-lbl">Date:</td>
-        <td id="qpDate">&mdash;</td>
-        <td class="q-lbl" style="width:11%">Pages:</td>
-        <td>02</td>
+        <td class="q-lbl">Pages:</td>
+        <td colspan="3">02</td>
       </tr>
     </table>
 
@@ -585,9 +583,8 @@
       <div class="qp-lh-logo">
         <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
       </div>
-      <div class="qp-co-info">
-        P.O. Box 25236, Dubai, U.A.E.<br>
-        TRN: 100058760800003
+      <div class="qp-lh-logo" style="text-align:right">
+        <img src="https://www.fazahome.ae/cdn/shop/files/logo_b8d89087-cd71-4c12-824b-a25d0b13cab2.png?v=1718283019" alt="Faza Home" style="max-height:42pt">
       </div>
     </div>
 
@@ -605,7 +602,6 @@
     </table>
 
     <p class="qp-price-note" id="qpPriceNote"></p>
-    <p class="qp-price-note" id="qpLiftDisclaimer" style="display:none"></p>
 
     <div class="qp-foot" style="margin-top:18pt">
       Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com
@@ -778,7 +774,7 @@ populateSelect(el.location, PRICING.locations, (l) => l.label);
 let unitStates = [];
 
 function defaultUnitState() {
-  return { sizeIdx: Number(el.size.value) || 0, ceilingNeeded: false, ceilingIdx: 0 };
+  return { sizeIdx: Number(el.size.value) || 0, ceilingNeeded: false, ceilingIdx: 0, craneRequired: false };
 }
 function syncUnitStates(qty) { while (unitStates.length < qty) unitStates.push(defaultUnitState()); unitStates.length = qty; }
 
@@ -813,6 +809,19 @@ function buildUnitDetails() {
       `<div class="subblock u-ceil-block"${u.ceilingNeeded ? "" : " hidden"}><span class="unit-sublabel">Panel size</span><select class="u-ceil-sel" data-unit="${i}">${ceilOpts}</select></div>`;
     card.appendChild(ceilField);
 
+    const size = sizes[u.sizeIdx] || sizes[0];
+    const showCrane = size.litres >= 200;
+    if (showCrane) u.craneRequired = true;
+    else u.craneRequired = false;
+    const craneField = document.createElement("div");
+    craneField.className = "unit-field";
+    craneField.innerHTML =
+      `<label class="unit-label">Crane Required?</label>` +
+      `<div class="checks"><label class="check"><input type="checkbox" class="u-crane-chk" data-unit="${i}"${u.craneRequired ? " checked" : ""}${showCrane ? "" : " disabled"}>` +
+      `<span class="box" aria-hidden="true"></span><span>${showCrane ? "Crane required — Price upon request" : "Not applicable (under 200 L)"}</span></label></div>`;
+    craneField.hidden = !showCrane;
+    card.appendChild(craneField);
+
     el.unitDetails.appendChild(card);
   }
   attachInstallListeners();
@@ -824,6 +833,7 @@ function attachInstallListeners() {
   q(".unit-size-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].sizeIdx = +e.target.value; buildUnitDetails(); recalc(); }));
   q(".u-ceil-chk").forEach((c) => c.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].ceilingNeeded = e.target.checked; e.target.closest(".unit-card").querySelector(".u-ceil-block").hidden = !e.target.checked; recalc(); }));
   q(".u-ceil-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].ceilingIdx = +e.target.value; recalc(); }));
+  q(".u-crane-chk").forEach((c) => c.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].craneRequired = e.target.checked; recalc(); }));
 }
 
 /* ===== Pricing helpers ===== */
@@ -861,12 +871,18 @@ function recalc() {
   subtotal = installTotal + anchoringTotal;
 
   let maxLitres = 0;
+  let anyCrane = false;
   for (let i = 0; i < qty; i++) {
     const u = unitStates[i];
     const size = sizes[u.sizeIdx] || sizes[0];
     if (size.litres > maxLitres) maxLitres = size.litres;
+    if (u.craneRequired) anyCrane = true;
     const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
     if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; }
+  }
+
+  if (anyCrane) {
+    html += `<div class="line"><span class="desc">Crane Required<small>Price upon request</small></span><span class="amt">—</span></div>`;
   }
 
   if (!html) html = `<div class="empty-note">No items selected yet.</div>`;
@@ -875,7 +891,16 @@ function recalc() {
   el.totalsBlock.innerHTML = `<div class="line subtotal"><span class="desc">Subtotal</span><span class="amt">${fmt(subtotal)}</span></div>`;
   el.grandTotal.textContent = fmt(subtotal);
 
-  el.liftingNote.hidden = maxLitres < 200;
+  if (maxLitres >= 200) {
+    if (anyCrane) {
+      el.liftingNote.textContent = "Note: In the event of suitable space not being available for the crane to manoeuvre to the site, the team will attempt to manually lift the unit. This carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.";
+    } else {
+      el.liftingNote.textContent = "Note: For units 200 L and above — if the unit needs to be lifted to an upper level, this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.";
+    }
+    el.liftingNote.hidden = false;
+  } else {
+    el.liftingNote.hidden = true;
+  }
 }
 
 /* ===== Global change triggers ===== */
@@ -896,8 +921,13 @@ document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEvent
 const DISCLAIMER_MIN_LITRES = 200;
 function largestUnitLitres() { const sizes = currentSizes(); return unitStates.reduce((m, u) => Math.max(m, (sizes[u.sizeIdx] || sizes[0]).litres), 0); }
 function largestUnitLabel()  { const sizes = currentSizes(); let best = sizes[0]; unitStates.forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; if (s.litres > best.litres) best = s; }); return best.label; }
+function anyCraneRequired() { return unitStates.some((u) => u.craneRequired); }
 function openDisclaimer() {
-  el.disclaimerText.textContent = "If the " + largestUnitLabel() + " unit needs to be lifted to an upper level, we want to make you aware that this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, by confirming this message, you acknowledge that CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and that any replacement unit, if required, will be chargeable separately.";
+  if (anyCraneRequired()) {
+    el.disclaimerText.textContent = "A crane has been requested for this job. In the event of suitable space not being available for the crane to manoeuvre to the site, the team will attempt to manually lift the " + largestUnitLabel() + " unit. This carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, by confirming this message, you acknowledge that CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and that any replacement unit, if required, will be chargeable separately.";
+  } else {
+    el.disclaimerText.textContent = "If the " + largestUnitLabel() + " unit needs to be lifted to an upper level, we want to make you aware that this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, by confirming this message, you acknowledge that CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and that any replacement unit, if required, will be chargeable separately.";
+  }
   el.disclaimerModal.classList.add("open"); el.disclaimerModal.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; el.disclaimerAck.focus();
 }
 function closeDisclaimer() { el.disclaimerModal.classList.remove("open"); el.disclaimerModal.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; el.confirm.focus(); }
@@ -980,7 +1010,6 @@ el.btnPrint.addEventListener("click", () => {
   document.getElementById("qpTo").textContent      = clientStr ? (attnStr ? clientStr + " (Attn: " + attnStr + ")" : clientStr) : "—";
   document.getElementById("qpAddress").textContent  = el.clientAddress.value.trim() || "—";
   document.getElementById("qpClientTRN").textContent = el.trnNumber.value.trim() || "—";
-  document.getElementById("qpFrom").textContent    = rep.name;
   document.getElementById("qpRef").textContent     = el.jobNumber.value.trim() || "—";
   document.getElementById("qpJobNo").textContent   = el.jobNumber.value.trim() || "—";
   document.getElementById("qpDate").textContent    = dateStr;
@@ -1004,7 +1033,15 @@ el.btnPrint.addEventListener("click", () => {
     .map((e, i) => `<tr><td class="qp-n">${i + 1}.</td><td>${e}</td></tr>`)
     .join("");
 
-  document.getElementById("qpTermsTable").innerHTML = ADDITIONAL_TERMS
+  const printTerms = ADDITIONAL_TERMS.slice();
+  if (largestUnitLitres() >= 200) {
+    if (anyCraneRequired()) {
+      printTerms.push("In the event of suitable space not being available for the crane to manoeuvre to the site, the team will attempt to manually lift the unit. This carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.");
+    } else {
+      printTerms.push("For units 200 L and above — if the unit needs to be lifted to an upper level, this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.");
+    }
+  }
+  document.getElementById("qpTermsTable").innerHTML = printTerms
     .map((t, i) => `<tr><td class="qp-n">${i + 1}.</td><td>${t}</td></tr>`)
     .join("");
 
@@ -1018,14 +1055,6 @@ el.btnPrint.addEventListener("click", () => {
   const { rows, note } = buildAnnexureRows();
   document.getElementById("qpPriceBody").innerHTML   = rows;
   document.getElementById("qpPriceNote").textContent = note;
-
-  const liftDisclaimer = document.getElementById("qpLiftDisclaimer");
-  if (largestUnitLitres() >= 200) {
-    liftDisclaimer.textContent = "Note: For units 200 L and above — if the unit needs to be lifted to an upper level, this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.";
-    liftDisclaimer.style.display = "block";
-  } else {
-    liftDisclaimer.style.display = "none";
-  }
 
   window.print();
 });
