@@ -1,6 +1,6 @@
-# VBOG PM Tool
+# Vyom — VBOG's task & project management tool
 
-Internal Kanban task manager for the VBOG team. Replaces Asana for tracking work
+Vyom (Sanskrit: "sky") is the first tool in VBOG's internal universe — a Kanban task manager for the whole team. Replaces Asana for tracking work
 across all client projects. Lives at **https://v-bog.com/pm/**.
 
 - **Frontend**: static HTML/CSS/JS (no framework, no build step) — deploys with the main site via GitHub Pages
@@ -11,7 +11,7 @@ across all client projects. Lives at **https://v-bog.com/pm/**.
 
 | Page | What it does |
 |---|---|
-| `index.html` | Dashboard — all projects as cards (task count, overdue count). Create/edit/archive projects with **custom status columns per project** (e.g. an HR pipeline vs a normal task pipeline). |
+| `vyom.html` (index.html redirects here) | Dashboard — all projects as cards (task count, overdue count). Create/edit/archive projects with **custom status columns per project** (e.g. an HR pipeline vs a normal task pipeline). |
 | `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop between columns, add/edit/delete tasks. Filter by assignee and due date (overdue / today / next 7 or 30 days / no date). |
 | `team.html` | All Tasks — master list of every task across every project (read-only). Filter by project, assignee, due date, or title search; click a row to open its board. |
 | `settings.html` | Team members (add, deactivate, delete) + **Integrations**: self-serve Zapier webhooks and copy-paste setup snippets for Google Sheets. |

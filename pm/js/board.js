@@ -13,7 +13,7 @@
   const filters = { assignee: "", due: "all" };
 
   if (!projectId) {
-    window.location.replace("index.html");
+    window.location.replace("vyom.html");
     return;
   }
 
@@ -29,7 +29,7 @@
         UI.toast("This project does not exist (it may have been deleted).");
         return;
       }
-      document.title = `${project.name} — VBOG PM`;
+      document.title = `${project.name} — Vyom`;
       document.getElementById("board-title").textContent = project.name;
       document.getElementById("board-desc").textContent = project.description || "";
       initFilters();

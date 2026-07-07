@@ -87,7 +87,7 @@ BEGIN
       'event', 'TEST',
       'task', jsonb_build_object(
         'id', '00000000-0000-0000-0000-000000000000',
-        'title', 'Test task from VBOG PM',
+        'title', 'Test task from Vyom',
         'notes', 'This is a test delivery — your webhook is connected.',
         'status', 'To Do',
         'due_date', current_date,
