@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CTT — Water Heater Installation Code</title>
+<title>CTT — Water Heater Installation Coat</title>
 <style>
   :root {
     --black: #000;
@@ -184,18 +184,6 @@
   .modal-close { background: var(--white); border: 1px solid var(--line); width: 38px; height: 38px; font-size: 22px; line-height: 1; color: var(--black); cursor: pointer; border-radius: 0; }
   .modal-close:hover { background: var(--black); color: var(--white); }
   .modal-close:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
-  .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .gallery-item { margin: 0; display: flex; flex-direction: column; gap: 10px; }
-  .gallery-item figcaption { font-size: 14px; font-weight: 600; text-align: center; color: var(--black); }
-  .gallery-item figcaption small { display: block; font-weight: 400; color: var(--muted); margin-top: 4px; }
-  .photo-frame { position: relative; width: 100%; aspect-ratio: 4 / 3; border: 1px dashed var(--line); display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--white); }
-  .photo-frame.filled { border-style: solid; }
-  .photo-frame img { width: 100%; height: 100%; object-fit: cover; display: none; }
-  .photo-frame.filled img { display: block; }
-  .photo-frame .placeholder { font-size: 12px; color: var(--muted); text-align: center; padding: 16px; line-height: 1.5; }
-  .photo-frame .placeholder small { display: block; margin-top: 6px; font-size: 11px; }
-  .photo-frame.filled .placeholder { display: none; }
-
   .disclaimer-modal { display: none; position: fixed; inset: 0; z-index: 60; align-items: center; justify-content: center; padding: 24px; }
   .disclaimer-modal.open { display: flex; }
   .disclaimer-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
@@ -343,7 +331,6 @@
     header { padding: 24px 20px; }
     header h1 { font-size: 22px; }
     .total .amt { font-size: 28px; }
-    .gallery-grid { grid-template-columns: 1fr; }
     .modal-box { padding: 20px; }
     .global-row, .tiles-3, .qd-grid { grid-template-columns: 1fr; }
     .qd-field.full { grid-column: 1; }
@@ -354,7 +341,7 @@
 
 <header>
   <div class="header-inner">
-    <h1>CTT Water Heater Installation Code</h1>
+    <h1>CTT Water Heater Installation Coat</h1>
     <p>Internal use only. Configure the quote below for an instant estimate.</p>
   </div>
 </header>
@@ -389,14 +376,6 @@
 
         <div class="qd-sep">Quote Metadata</div>
 
-        <div class="qd-field">
-          <label for="fromRep">From (Rep)</label>
-          <select id="fromRep">
-            <option value="0">J S Deliwala</option>
-            <option value="1">Masood Ahmed</option>
-            <option value="2">J S Deliwala / Masood</option>
-          </select>
-        </div>
         <div class="qd-field">
           <label for="termsOfPayment">Terms of Payment</label>
           <select id="termsOfPayment">
@@ -507,12 +486,9 @@
       <span class="amt" id="grandTotal">AED 0.00</span>
     </div>
 
-    <button type="button" class="link-btn" id="galleryOpen">
-      <span class="txt">View photos of our works</span>
-      <span aria-hidden="true">&rarr;</span>
-    </button>
-
     <p class="note">This is an estimate. Final quote may vary based on site conditions.</p>
+    <p class="note">False ceiling charges are indicative only. Final charges will be informed after a site visit.</p>
+    <p class="note" id="liftingNote" hidden>For units 200 L and above: if the unit needs to be lifted to an upper level, this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.</p>
 
     <button type="button" class="btn btn-outline" id="confirm">Confirm</button>
     <button type="button" class="btn btn-fill" id="btnPrint">&#128438;&ensp;Print / Save as PDF</button>
@@ -629,6 +605,7 @@
     </table>
 
     <p class="qp-price-note" id="qpPriceNote"></p>
+    <p class="qp-price-note" id="qpLiftDisclaimer" style="display:none"></p>
 
     <div class="qp-foot" style="margin-top:18pt">
       Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com
@@ -636,36 +613,6 @@
   </div>
 
 </div><!-- /#quotationPrint -->
-
-<!-- ===== Gallery modal ===== -->
-<div class="modal" id="gallery" aria-hidden="true">
-  <div class="modal-backdrop" data-close></div>
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="galleryTitle">
-    <div class="modal-head">
-      <h2 id="galleryTitle">Photos of Our Works</h2>
-      <button type="button" class="modal-close" id="galleryClose" aria-label="Close gallery">&times;</button>
-    </div>
-    <div class="gallery-grid">
-      <figure class="gallery-item">
-        <div class="photo-frame" id="frameHeater"><img alt="Water heater"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.heater</small></span></div>
-        <figcaption id="capHeater">Water Heater</figcaption>
-      </figure>
-      <figure class="gallery-item">
-        <div class="photo-frame" id="frameInstall"><img alt="Installation work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.install</small></span></div>
-        <figcaption id="capInstall">Installation</figcaption>
-      </figure>
-      <figure class="gallery-item">
-        <div class="photo-frame" id="frameCeiling"><img alt="False ceiling work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.falseCeiling</small></span></div>
-        <figcaption id="capCeiling">False Ceiling Modification</figcaption>
-      </figure>
-      <figure class="gallery-item">
-        <div class="photo-frame" id="framePipes"><img alt="Piping work"><span class="placeholder">Photo coming soon<small>WORK_PHOTOS.pipes</small></span></div>
-        <figcaption id="capPipes">Piping</figcaption>
-      </figure>
-    </div>
-    <p class="note">Photos are illustrative &mdash; final result varies by site.</p>
-  </div>
-</div>
 
 <!-- ===== Disclaimer modal ===== -->
 <div class="disclaimer-modal" id="disclaimerModal" aria-hidden="true">
@@ -680,7 +627,6 @@
 
 <script>
 /* ========================================================= */
-const WORK_PHOTOS = { heater: "", install: "", falseCeiling: "", pipes: "" };
 const VAT = 0.05;
 
 /* =========================================================
@@ -801,23 +747,12 @@ const el = {
   disclaimerModal:  document.getElementById("disclaimerModal"),
   disclaimerText:   document.getElementById("disclaimerText"),
   disclaimerAck:    document.getElementById("disclaimerAck"),
-  gallery:          document.getElementById("gallery"),
-  galleryOpen:      document.getElementById("galleryOpen"),
-  galleryClose:     document.getElementById("galleryClose"),
-  frameHeater:      document.getElementById("frameHeater"),
-  frameInstall:     document.getElementById("frameInstall"),
-  frameCeiling:     document.getElementById("frameCeiling"),
-  framePipes:       document.getElementById("framePipes"),
-  capHeater:        document.getElementById("capHeater"),
-  capInstall:       document.getElementById("capInstall"),
-  capCeiling:       document.getElementById("capCeiling"),
-  capPipes:         document.getElementById("capPipes"),
+  liftingNote:      document.getElementById("liftingNote"),
   btnPrint:         document.getElementById("btnPrint"),
   clientName:       document.getElementById("clientName"),
   attnName:         document.getElementById("attnName"),
   trnNumber:        document.getElementById("trnNumber"),
   clientAddress:    document.getElementById("clientAddress"),
-  fromRep:          document.getElementById("fromRep"),
   termsOfPayment:   document.getElementById("termsOfPayment")
 };
 
@@ -908,29 +843,28 @@ function recalc() {
   syncUnitStates(qty);
 
   const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
-  let heaterTotal = 0, installTotal = 0;
-  unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; heaterTotal += (s.price || 0); installTotal += s.installPerUnit; });
+  let installTotal = 0;
+  unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; installTotal += s.installPerUnit; });
 
   if (allSame && qty > 0) {
     const s = sizes[unitStates[0].sizeIdx] || sizes[0];
-    const tbd = (s.price == null) ? " · price TBD" : "";
-    html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}${tbd}`, heaterTotal);
-    html += lineHTML("Installation", `${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(s.installPerUnit)}`, installTotal);
+    html += lineHTML("Water Heater Installation", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}`, installTotal);
   } else {
     for (let i = 0; i < qty; i++) {
       const s = sizes[unitStates[i].sizeIdx] || sizes[0];
-      const tbd = (s.price == null) ? " · price TBD" : "";
-      html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}${tbd}`, (s.price || 0));
-      html += lineHTML(`Installation (Unit ${i + 1})`, fmt(s.installPerUnit) + " / unit", s.installPerUnit);
+      html += lineHTML(`Water Heater Installation (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, s.installPerUnit);
     }
   }
 
   const anchoringTotal = pathwayObj.anchoring * qty;
   if (anchoringTotal > 0) html += lineHTML("Anchoring", `New Installation${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
-  subtotal = heaterTotal + installTotal + anchoringTotal;
+  subtotal = installTotal + anchoringTotal;
 
+  let maxLitres = 0;
   for (let i = 0; i < qty; i++) {
     const u = unitStates[i];
+    const size = sizes[u.sizeIdx] || sizes[0];
+    if (size.litres > maxLitres) maxLitres = size.litres;
     const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
     if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; }
   }
@@ -940,6 +874,8 @@ function recalc() {
 
   el.totalsBlock.innerHTML = `<div class="line subtotal"><span class="desc">Subtotal</span><span class="amt">${fmt(subtotal)}</span></div>`;
   el.grandTotal.textContent = fmt(subtotal);
+
+  el.liftingNote.hidden = maxLitres < 200;
 }
 
 /* ===== Global change triggers ===== */
@@ -955,31 +891,6 @@ function onOrientationChange() { populateSelect(el.size, currentSizes(), (s) => 
 el.qty.addEventListener("blur", () => { el.qty.value = getQty(); onGlobalInstallChange(); });
 
 document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", onOrientationChange));
-
-/* ===== Gallery ===== */
-function setFrame(frameEl, url) { const img = frameEl.querySelector("img"); if (url) { img.src = url; frameEl.classList.add("filled"); } else { img.removeAttribute("src"); frameEl.classList.remove("filled"); } }
-function refreshGallery() {
-  const sizes = currentSizes();
-  const qty = getQty();
-  const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
-  const anyCeiling = unitStates.some((u) => u.ceilingNeeded);
-  const size = sizes[(unitStates[0] || { sizeIdx: 0 }).sizeIdx] || sizes[0];
-  setFrame(el.frameHeater, WORK_PHOTOS.heater);
-  setFrame(el.frameInstall, WORK_PHOTOS.install);
-  setFrame(el.frameCeiling, WORK_PHOTOS.falseCeiling);
-  setFrame(el.framePipes, WORK_PHOTOS.pipes);
-  el.capHeater.innerHTML = `${PRICING.brand} ${size.label}<small>${orientLabel} · Qty ${qty}</small>`;
-  el.capInstall.innerHTML = `Installation<small>New Installation</small>`;
-  el.capCeiling.innerHTML = `False Ceiling<small>${anyCeiling ? "Selected" : "Not in this quote"}</small>`;
-  el.capPipes.innerHTML = `Piping<small>Not in this quote</small>`;
-}
-let lastFocused = null;
-function openGallery()  { lastFocused = document.activeElement; refreshGallery(); el.gallery.classList.add("open"); el.gallery.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; el.galleryClose.focus(); }
-function closeGallery() { el.gallery.classList.remove("open"); el.gallery.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; if (lastFocused && lastFocused.focus) lastFocused.focus(); }
-el.galleryOpen.addEventListener("click", openGallery);
-el.galleryClose.addEventListener("click", closeGallery);
-el.gallery.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close")) closeGallery(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.gallery.classList.contains("open")) closeGallery(); });
 
 /* ===== Disclaimer ===== */
 const DISCLAIMER_MIN_LITRES = 200;
@@ -1060,9 +971,8 @@ function buildAnnexureRows() {
    PRINT BUTTON HANDLER
    ========================================================= */
 el.btnPrint.addEventListener("click", () => {
-  const rep     = REPS[Number(el.fromRep.value)] || REPS[0];
+  const rep     = REPS[0];
   const loc     = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
-  const subject = getAutoSubject();
   const dateStr = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
 
   const clientStr = el.clientName.value.trim();
@@ -1108,6 +1018,14 @@ el.btnPrint.addEventListener("click", () => {
   const { rows, note } = buildAnnexureRows();
   document.getElementById("qpPriceBody").innerHTML   = rows;
   document.getElementById("qpPriceNote").textContent = note;
+
+  const liftDisclaimer = document.getElementById("qpLiftDisclaimer");
+  if (largestUnitLitres() >= 200) {
+    liftDisclaimer.textContent = "Note: For units 200 L and above — if the unit needs to be lifted to an upper level, this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.";
+    liftDisclaimer.style.display = "block";
+  } else {
+    liftDisclaimer.style.display = "none";
+  }
 
   window.print();
 });
