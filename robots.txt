@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /pm/
 Sitemap: https://v-bog.com/sitemap.xml
 LLMs: https://v-bog.com/llms.txt

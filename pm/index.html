@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dashboard — VBOG PM</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="offline-banner" hidden>You appear to be offline</div>
+  <div id="setup-needed" class="warn-box" style="margin:16px 32px" hidden>
+    Database not set up yet — run the four files in <code>pm/sql/</code> in the Supabase SQL Editor, then reload.
+  </div>
+
+  <nav class="topnav">
+    <a class="brand" href="index.html">VBOG<span>&nbsp;PM</span></a>
+    <div class="nav-links">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="team.html">Team View</a>
+    </div>
+    <div class="nav-right">
+      <a href="settings.html">Settings</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="page-header">
+      <div>
+        <h1>Projects</h1>
+        <div class="sub">All client and internal projects</div>
+      </div>
+      <div class="header-actions">
+        <label class="toggle-label">
+          <input type="checkbox" id="show-archived"> Show archived
+        </label>
+        <button class="btn btn-primary" id="new-project-btn">+ New Project</button>
+      </div>
+    </div>
+    <div id="project-grid" class="project-grid">
+      <div class="loading">Loading projects…</div>
+    </div>
+  </main>
+
+  <!-- Create / Edit Project modal -->
+  <div class="modal-overlay" id="project-modal">
+    <div class="modal">
+      <h2 id="project-modal-title">New Project</h2>
+      <form id="project-form" novalidate>
+        <div class="form-group">
+          <label for="p-name">Project name *</label>
+          <input type="text" id="p-name" autocomplete="off" placeholder="e.g. Acme Agency">
+        </div>
+        <div class="form-group">
+          <label for="p-desc">Description</label>
+          <textarea id="p-desc" placeholder="What is this project about? (optional)"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Status columns *</label>
+          <div class="tag-editor" id="status-tags">
+            <input type="text" id="status-input" placeholder="Type a status, press Enter">
+          </div>
+          <div class="form-hint">These become the Kanban columns, in this order. E.g. an HR pipeline: New Candidate, Round One, Offer Shown, Hired.</div>
+        </div>
+        <div class="form-group">
+          <label>Accent colour</label>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div class="warn-box" id="status-warning" hidden></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="archive-btn" hidden>Archive project</button>
+          <div class="right">
+            <button type="button" class="btn btn-secondary" id="project-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="project-save">Create Project</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

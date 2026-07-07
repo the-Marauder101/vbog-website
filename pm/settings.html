@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Settings — VBOG PM</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="offline-banner" hidden>You appear to be offline</div>
+
+  <nav class="topnav">
+    <a class="brand" href="index.html">VBOG<span>&nbsp;PM</span></a>
+    <div class="nav-links">
+      <a href="index.html">Dashboard</a>
+      <a href="team.html">Team View</a>
+    </div>
+    <div class="nav-right">
+      <a href="settings.html" class="active">Settings</a>
+    </div>
+  </nav>
+
+  <main class="page" style="max-width: 860px;">
+    <div class="page-header">
+      <div>
+        <h1>Settings</h1>
+        <div class="sub">Manage team members</div>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h2>Add a team member</h2>
+      <form id="add-member-form" class="inline-form" novalidate>
+        <div class="form-group">
+          <input type="text" id="m-name" placeholder="Name *" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <input type="text" id="m-role" placeholder="Role (optional, e.g. Sales)" autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-primary">Add Member</button>
+      </form>
+    </div>
+
+    <div class="settings-card">
+      <h2>Team members</h2>
+      <div id="members-table"><div class="loading">Loading…</div></div>
+      <div class="form-hint" style="margin-top: 12px;">
+        Deactivating a member hides them from the assignee dropdown but keeps their existing task assignments.
+        Members with tasks assigned cannot be deleted — deactivate them instead.
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>
