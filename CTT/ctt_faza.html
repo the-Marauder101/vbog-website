@@ -378,16 +378,16 @@
           <input type="text" id="trnNumber" placeholder="e.g. 100058760800003" autocomplete="off">
         </div>
         <div class="qd-field full">
+          <label for="clientPhone">Phone Number</label>
+          <input type="tel" id="clientPhone" placeholder="e.g. +971 50 123 4567" autocomplete="off">
+        </div>
+        <div class="qd-field full">
           <label for="clientAddress">Address</label>
           <input type="text" id="clientAddress" placeholder="e.g. Building name, Street, Area" autocomplete="off">
         </div>
         <div class="qd-field">
           <label for="location">City</label>
           <select id="location"></select>
-        </div>
-        <div class="qd-field">
-          <label for="clientPhone">Phone Number</label>
-          <input type="tel" id="clientPhone" placeholder="e.g. +971 50 123 4567" autocomplete="off">
         </div>
 
         <div class="qd-sep">Quote Metadata</div>
@@ -534,14 +534,16 @@
         <td colspan="3" id="qpTo">&mdash;</td>
       </tr>
       <tr>
+        <td class="q-lbl">Phone:</td>
+        <td colspan="3" id="qpPhone">&mdash;</td>
+      </tr>
+      <tr>
         <td class="q-lbl">Address:</td>
         <td colspan="3" id="qpAddress">&mdash;</td>
       </tr>
       <tr>
         <td class="q-lbl">City:</td>
-        <td id="qpCity">&mdash;</td>
-        <td class="q-lbl" style="width:11%">Phone:</td>
-        <td id="qpPhone">&mdash;</td>
+        <td colspan="3" id="qpCity">&mdash;</td>
       </tr>
       <tr>
         <td class="q-lbl">TRN:</td>
@@ -567,7 +569,7 @@
       <tr><td>Total Price &amp; Quantity</td><td>Please refer to Annexure&nbsp;#1.</td></tr>
       <tr><td>Terms of Payment</td><td id="qpTerms">Immediate by CDC / Online Transfer</td></tr>
       <tr><td>Quote Validity</td><td>30 days</td></tr>
-      <tr><td>Exclusions</td><td>Please refer below.</td></tr>
+      <tr><td>Exclusions (Quoted on site)</td><td>Please refer below.</td></tr>
     </table>
 
     <p class="qp-vat-note"><strong>Note:</strong> All prices quoted herein are inclusive of 5% VAT as per UAE law.</p>
@@ -581,7 +583,7 @@
     </div>
 
     <!-- Exclusions -->
-    <div class="qp-sec-hdr">Exclusions</div>
+    <div class="qp-sec-hdr">Exclusions (Quoted on site)</div>
     <table class="qp-lst" id="qpExclTable"></table>
 
     <!-- Additional Terms -->
@@ -723,29 +725,10 @@ const REPS = [
    EXCLUSIONS
    ========================================================= */
 const EXCLUSIONS_MASTER = [
-  "Water, electrical supply and termination.",
-  "Government, non-government, authority, third party testing and/or approval.",
-  "Any penalty, retention and/or bank guarantees.",
-  "Strainers, valves and accessories unless specifically mentioned.",
-  "Piping, unions, fittings, insulation and cladding.",
-  "Sensors and gauges unless specifically mentioned.",
-  "Any and all civil works unless specifically mentioned.",
-  "Thermostats, sensors and/or special BMS points.",
-  "Works related to cold water tank and booster pump.",
-  "Cabling and wiring.",
-  "Any maintenance/AMC.",
-  "Pipeline/equipment tagging and special nameplates.",
-  "Any controls and/or associated wiring.",
-  "Interconnecting piping, valves and bypass circuits.",
-  "Any spare parts.",
-  "Thermostatic/digital thermal mixing valve.",
-  "Any works related to transfer, booster, circulation, recirculation pumps and etc…",
-  "Water quality at site.",
-  "Any consumables.",
-  "Extension of warranty.",
-  "Any special documentation and/or testing.",
-  "Any welding / repair works.",
-  "Restoration of storage tank condition."
+  "Civil works, core drilling, major piping rerouting, waterproofing, ceiling reconstruction.",
+  "Electrical DB modifications, new cabling runs, panel upgrades beyond basic reconnection.",
+  "Corroded/broken valves, seized fittings, unsafe installations requiring rework (quoted on site).",
+  "Confined space permits, crane/hoist requirements, special access equipment."
 ];
 
 const SIG_IMG_SRC = "";
