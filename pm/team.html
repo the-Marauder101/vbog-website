@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>Team View — VBOG PM</title>
+  <title>All Tasks — VBOG PM</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
     <a class="brand" href="index.html">VBOG<span>&nbsp;PM</span></a>
     <div class="nav-links">
       <a href="index.html">Dashboard</a>
-      <a href="team.html" class="active">Team View</a>
+      <a href="team.html" class="active">All Tasks</a>
     </div>
     <div class="nav-right">
       <a href="settings.html">Settings</a>
@@ -28,20 +28,22 @@
   <main class="page">
     <div class="page-header">
       <div>
-        <h1>Team View</h1>
-        <div class="sub">All tasks assigned to a team member, across every project</div>
-      </div>
-      <div class="header-actions">
-        <div class="form-group" style="margin: 0; min-width: 220px;">
-          <select id="member-select">
-            <option value="">Select a team member…</option>
-          </select>
-        </div>
+        <h1>All Tasks</h1>
+        <div class="sub">Every task across every project — filter by project, assignee, or due date</div>
       </div>
     </div>
-    <div id="team-content">
-      <div class="empty-state"><p>Pick a team member above to see their tasks.</p></div>
+
+    <div class="filter-bar">
+      <label for="filter-project">Filter</label>
+      <select id="filter-project" class="filter-select"></select>
+      <select id="filter-assignee" class="filter-select"></select>
+      <select id="filter-due" class="filter-select"></select>
+      <input type="search" id="filter-search" class="filter-search" placeholder="Search task titles…">
+      <button id="filter-clear" class="btn-link" hidden>Clear filters</button>
+      <span class="filter-count" id="filter-count"></span>
     </div>
+
+    <div id="tasks-content"><div class="loading">Loading tasks…</div></div>
   </main>
 
   <script src="js/config.js"></script>

@@ -19,11 +19,35 @@ const UI = {
     return `${String(d).padStart(2, "0")} ${months[m - 1]} ${y}`;
   },
 
+  todayIso(offsetDays = 0) {
+    const d = new Date(Date.now() + offsetDays * 86400000);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  },
+
   isOverdue(iso) {
-    if (!iso) return false;
-    const today = new Date();
-    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    return iso < todayIso;
+    return !!iso && iso < UI.todayIso();
+  },
+
+  // Due-date filter presets shared by the board and All Tasks views
+  dateFilterOptions: [
+    ["all", "All dates"],
+    ["overdue", "Overdue"],
+    ["today", "Due today"],
+    ["week", "Next 7 days"],
+    ["month", "Next 30 days"],
+    ["none", "No due date"],
+  ],
+
+  matchesDateFilter(due, key) {
+    const today = UI.todayIso();
+    switch (key) {
+      case "overdue": return !!due && due < today;
+      case "today":   return due === today;
+      case "week":    return !!due && due >= today && due <= UI.todayIso(7);
+      case "month":   return !!due && due >= today && due <= UI.todayIso(30);
+      case "none":    return !due;
+      default:        return true; // "all"
+    }
   },
 
   toast(message, type = "error") {

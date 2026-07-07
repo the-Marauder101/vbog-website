@@ -12,8 +12,8 @@ across all client projects. Lives at **https://v-bog.com/pm/**.
 | Page | What it does |
 |---|---|
 | `index.html` | Dashboard — all projects as cards (task count, overdue count). Create/edit/archive projects with **custom status columns per project** (e.g. an HR pipeline vs a normal task pipeline). |
-| `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop between columns, add/edit/delete tasks. |
-| `team.html` | Team View — pick a member, see all their tasks across every project (read-only). |
+| `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop between columns, add/edit/delete tasks. Filter by assignee and due date (overdue / today / next 7 or 30 days / no date). |
+| `team.html` | All Tasks — master list of every task across every project (read-only). Filter by project, assignee, due date, or title search; click a row to open its board. |
 | `settings.html` | Team members — add, deactivate, delete (blocked while tasks are assigned). |
 
 ## Database setup
