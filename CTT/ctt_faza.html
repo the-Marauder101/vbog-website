@@ -348,7 +348,7 @@
       <p>Internal use only. Configure the quote below for an instant estimate.</p>
     </div>
     <div class="header-logo">
-      <img src="https://www.fazahome.ae/cdn/shop/files/logo_b8d89087-cd71-4c12-824b-a25d0b13cab2.png?v=1718283019" alt="Faza Home">
+      <img src="faza-logo.svg" alt="Faza Home">
     </div>
   </div>
 </header>
@@ -512,7 +512,7 @@
     <!-- Letterhead -->
     <div class="qp-lh">
       <div class="qp-lh-logo">
-        <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+        <img src="cheqpoint-logo.svg" alt="Cheqpoint Tech Trading LLC">
       </div>
       <div class="qp-co-info">
         P.O. Box 25236, Dubai, U.A.E.<br>
@@ -588,7 +588,7 @@
   <div class="qp-break">
     <div class="qp-lh">
       <div class="qp-lh-logo">
-        <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+        <img src="cheqpoint-logo.svg" alt="Cheqpoint Tech Trading LLC">
       </div>
       <div class="qp-co-info">
         P.O. Box 25236, Dubai, U.A.E.<br>
@@ -638,6 +638,7 @@ const VAT = 0.05;
    ========================================================= */
 const PRICING = {
   brand: "Atlantic",
+  anchoring: 100,
 
   sizesByOrientation: {
     horizontal: [
@@ -884,7 +885,9 @@ function recalc() {
       html += lineHTML(`Water Heater Installation (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, getInstallRate(s.tier));
     }
   }
-  subtotal = installTotal;
+  const anchoringTotal = PRICING.anchoring * qty;
+  if (anchoringTotal > 0) html += lineHTML("Anchoring", `New Installation${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
+  subtotal = installTotal + anchoringTotal;
 
   let maxLitres = 0;
   let anyCrane = false;
