@@ -153,6 +153,7 @@
   .line .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
   .line.subtotal { border-bottom: 1px solid var(--line); font-weight: 600; }
   .empty-note { color: var(--muted); font-size: 14px; padding: 8px 0 4px; }
+  .line-note { color: var(--muted); font-size: 12px; font-style: italic; padding: 4px 0 8px; border-bottom: 1px solid var(--hairline); }
   .total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 22px; }
   .total .label { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
   .total .amt { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
@@ -380,6 +381,14 @@
           <label for="clientAddress">Address</label>
           <input type="text" id="clientAddress" placeholder="e.g. Building name, Street, Area" autocomplete="off">
         </div>
+        <div class="qd-field">
+          <label for="location">City</label>
+          <select id="location"></select>
+        </div>
+        <div class="qd-field">
+          <label for="clientPhone">Phone Number</label>
+          <input type="tel" id="clientPhone" placeholder="e.g. +971 50 123 4567" autocomplete="off">
+        </div>
 
         <div class="qd-sep">Quote Metadata</div>
 
@@ -406,10 +415,6 @@
         <label for="jobNumber">Reference / Job No.</label>
         <input type="text" id="jobNumber" placeholder="e.g. CQJ-14130-HP-MISC" autocomplete="off">
       </div>
-      <div class="g-field">
-        <label for="location">City</label>
-        <select id="location"></select>
-      </div>
     </div>
 
     <!-- ===== PRODUCT ===== -->
@@ -418,7 +423,7 @@
       <div class="tiles" role="radiogroup" aria-label="Product">
         <label class="tile path">
           <input type="radio" name="product" value="heater" checked>
-          <span class="path-title">Heater</span>
+          <span class="path-title">Electrical Water Heater</span>
           <span class="path-desc">New installation</span>
         </label>
       </div>
@@ -495,7 +500,6 @@
 
     <p class="note">All prices are inclusive of 5% VAT.</p>
     <p class="note">This is an estimate. Final quote may vary based on site conditions.</p>
-    <p class="note">False ceiling charges are indicative only. Final charges will be informed after a site visit.</p>
     <p class="note" id="liftingNote" hidden>For units 200 L and above: if the unit needs to be lifted to an upper level, this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.</p>
 
     <button type="button" class="btn btn-fill" id="btnPrint">&#128438;&ensp;Confirm &amp; Print PDF</button>
@@ -532,6 +536,12 @@
       <tr>
         <td class="q-lbl">Address:</td>
         <td colspan="3" id="qpAddress">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">City:</td>
+        <td id="qpCity">&mdash;</td>
+        <td class="q-lbl" style="width:11%">Phone:</td>
+        <td id="qpPhone">&mdash;</td>
       </tr>
       <tr>
         <td class="q-lbl">TRN:</td>
@@ -662,15 +672,15 @@ const PRICING = {
   },
 
   locations: [
-    { label: "Dubai",          key: "dubai" },
-    { label: "Sharjah",        key: "sharjah_ajman" },
-    { label: "Ajman",          key: "sharjah_ajman" },
-    { label: "Umm Al Quwain",  key: "uaq" },
-    { label: "Ras Al Khaimah", key: "rak" },
-    { label: "Fujairah",       key: "fujairah" },
-    { label: "Al Ain",         key: "al_ain" },
     { label: "Abu Dhabi",      key: "abu_dhabi" },
-    { label: "Liwa / Ruwais",  key: "liwa_ruwais" }
+    { label: "Ajman",          key: "sharjah_ajman" },
+    { label: "Al Ain",         key: "al_ain" },
+    { label: "Dubai",          key: "dubai" },
+    { label: "Fujairah",       key: "fujairah" },
+    { label: "Liwa / Ruwais",  key: "liwa_ruwais" },
+    { label: "Ras Al Khaimah", key: "rak" },
+    { label: "Sharjah",        key: "sharjah_ajman" },
+    { label: "Umm Al Quwain",  key: "uaq" }
   ],
 
   /* Rates are INCLUSIVE of 5% VAT — from Faza reinstallation rate card */
@@ -770,6 +780,7 @@ const el = {
   attnName:         document.getElementById("attnName"),
   trnNumber:        document.getElementById("trnNumber"),
   clientAddress:    document.getElementById("clientAddress"),
+  clientPhone:      document.getElementById("clientPhone"),
   termsOfPayment:   document.getElementById("termsOfPayment")
 };
 
@@ -891,13 +902,18 @@ function recalc() {
 
   let maxLitres = 0;
   let anyCrane = false;
+  let anyCeiling = false;
   for (let i = 0; i < qty; i++) {
     const u = unitStates[i];
     const size = sizes[u.sizeIdx] || sizes[0];
     if (size.litres > maxLitres) maxLitres = size.litres;
     if (u.craneRequired) anyCrane = true;
     const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
-    if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; }
+    if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; anyCeiling = true; }
+  }
+
+  if (anyCeiling) {
+    html += `<div class="line-note">False ceiling charges are indicative only. Final charges will be informed after a site visit.</div>`;
   }
 
   if (anyCrane) {
@@ -1034,6 +1050,8 @@ function doPrint() {
   const attnStr   = el.attnName.value.trim();
   document.getElementById("qpTo").textContent      = clientStr ? (attnStr ? clientStr + " (Attn: " + attnStr + ")" : clientStr) : "—";
   document.getElementById("qpAddress").textContent  = el.clientAddress.value.trim() || "—";
+  document.getElementById("qpCity").textContent     = loc.label;
+  document.getElementById("qpPhone").textContent    = el.clientPhone.value.trim() || "—";
   document.getElementById("qpClientTRN").textContent = el.trnNumber.value.trim() || "—";
   document.getElementById("qpRef").textContent     = el.jobNumber.value.trim() || "—";
   document.getElementById("qpJobNo").textContent   = el.jobNumber.value.trim() || "—";
