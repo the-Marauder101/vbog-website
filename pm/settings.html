@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -29,7 +29,7 @@
     <div class="page-header">
       <div>
         <h1>Settings</h1>
-        <div class="sub">Manage team members</div>
+        <div class="sub">Team members &amp; Zapier integrations</div>
       </div>
     </div>
 
@@ -54,12 +54,57 @@
         Members with tasks assigned cannot be deleted — deactivate them instead.
       </div>
     </div>
+
+    <div class="settings-card">
+      <h2>Send tasks to Zapier / Google Sheets</h2>
+      <p class="form-hint" style="margin: -6px 0 16px;">
+        Paste a Zapier <strong>Catch Hook</strong> URL and this app will send task events to it automatically —
+        no Supabase access needed. In Zapier: create a Zap, choose trigger “Webhooks by Zapier → Catch Hook”,
+        and copy the URL it gives you.
+      </p>
+      <form id="add-webhook-form" novalidate>
+        <div class="inline-form">
+          <div class="form-group" style="flex: 0.8;">
+            <input type="text" id="w-label" placeholder="Label * (e.g. Acme sheet sync)" autocomplete="off">
+          </div>
+          <div class="form-group" style="flex: 1.4;">
+            <input type="text" id="w-url" placeholder="Zapier webhook URL * (https://hooks.zapier.com/…)" autocomplete="off">
+          </div>
+        </div>
+        <div class="inline-form" style="margin-top: 12px; align-items: center; flex-wrap: wrap;">
+          <div class="form-group" style="flex: 0 0 220px;">
+            <select id="w-project"><option value="">All projects</option></select>
+          </div>
+          <label class="toggle-label"><input type="checkbox" id="w-ev-insert" checked> Task created</label>
+          <label class="toggle-label"><input type="checkbox" id="w-ev-update" checked> Task updated</label>
+          <label class="toggle-label"><input type="checkbox" id="w-ev-delete"> Task deleted</label>
+          <button type="submit" class="btn btn-primary" style="margin-left: auto;">Add Webhook</button>
+        </div>
+      </form>
+      <div id="webhooks-table" style="margin-top: 16px;"></div>
+      <div class="form-hint" style="margin-top: 12px;">
+        Use <strong>Send test</strong> after adding — a sample task appears in your Zap’s trigger test within seconds.
+        Payload: <code>{ event: "INSERT" | "UPDATE" | "DELETE", task: { title, status, project_name, assignee_name, due_date, … } }</code>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h2>Create tasks from Google Sheets</h2>
+      <p class="form-hint" style="margin: -6px 0 16px;">
+        For the other direction (Sheets → this app), your Zap's action is “Webhooks by Zapier → Custom Request”.
+        Pick a project and copy these ready-made settings — real IDs and valid statuses included.
+      </p>
+      <div class="form-group" style="max-width: 320px;">
+        <select id="snippet-project"><option value="">Choose a project…</option></select>
+      </div>
+      <div id="snippet-output" hidden></div>
+    </div>
   </main>
 
-  <script src="js/config.js?v=3"></script>
-  <script src="js/supabase.js?v=3"></script>
-  <script src="js/api.js?v=3"></script>
-  <script src="js/ui.js?v=3"></script>
-  <script src="js/settings.js?v=3"></script>
+  <script src="js/config.js?v=4"></script>
+  <script src="js/supabase.js?v=4"></script>
+  <script src="js/api.js?v=4"></script>
+  <script src="js/ui.js?v=4"></script>
+  <script src="js/settings.js?v=4"></script>
 </body>
 </html>

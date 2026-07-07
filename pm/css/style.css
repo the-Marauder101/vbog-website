@@ -571,6 +571,42 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 
 .loading { color: var(--muted); padding: 40px; text-align: center; }
 
+/* ---------- Integration snippets ---------- */
+.snippet-label {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 16px 0 6px;
+  color: var(--primary);
+}
+.code-block {
+  position: relative;
+  background: #F5F7FA;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+.code-block pre {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre;
+  color: var(--text);
+}
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 4px 10px;
+}
+.copy-btn:hover { color: var(--primary); border-color: var(--muted); }
+
 /* ---------- Filter bar ---------- */
 .filter-bar {
   display: flex;
