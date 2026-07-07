@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Board — VBOG PM</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="offline-banner" hidden>You appear to be offline</div>
+
+  <nav class="topnav">
+    <a class="brand" href="index.html">VBOG<span>&nbsp;PM</span></a>
+    <div class="nav-links">
+      <a href="index.html">Dashboard</a>
+      <a href="team.html">Team View</a>
+    </div>
+    <div class="nav-right">
+      <a href="settings.html">Settings</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page" style="padding-bottom: 16px;">
+      <div class="page-header" style="margin-bottom: 0;">
+        <div>
+          <h1 id="board-title">Loading…</h1>
+          <div class="sub" id="board-desc"></div>
+        </div>
+        <div class="header-actions">
+          <a href="index.html" class="btn btn-secondary">&larr; All projects</a>
+        </div>
+      </div>
+    </div>
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+  </main>
+
+  <!-- Create / Edit Task modal -->
+  <div class="modal-overlay" id="task-modal">
+    <div class="modal">
+      <h2 id="task-modal-title">New Task</h2>
+      <form id="task-form" novalidate>
+        <div class="form-group">
+          <label for="t-title">Title *</label>
+          <input type="text" id="t-title" autocomplete="off" placeholder="What needs to be done?">
+        </div>
+        <div class="form-group">
+          <label for="t-notes">Notes</label>
+          <textarea id="t-notes" placeholder="Details, links, context… (optional)"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="t-status">Status</label>
+          <select id="t-status"></select>
+        </div>
+        <div class="form-group">
+          <label for="t-assignee">Assignee</label>
+          <select id="t-assignee"></select>
+        </div>
+        <div class="form-group">
+          <label for="t-due">Due date</label>
+          <input type="date" id="t-due">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="task-delete" hidden>Delete task</button>
+          <div class="right">
+            <button type="button" class="btn btn-secondary" id="task-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="task-save">Create Task</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/board.js"></script>
+</body>
+</html>

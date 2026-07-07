@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Team View — VBOG PM</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="offline-banner" hidden>You appear to be offline</div>
+
+  <nav class="topnav">
+    <a class="brand" href="index.html">VBOG<span>&nbsp;PM</span></a>
+    <div class="nav-links">
+      <a href="index.html">Dashboard</a>
+      <a href="team.html" class="active">Team View</a>
+    </div>
+    <div class="nav-right">
+      <a href="settings.html">Settings</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="page-header">
+      <div>
+        <h1>Team View</h1>
+        <div class="sub">All tasks assigned to a team member, across every project</div>
+      </div>
+      <div class="header-actions">
+        <div class="form-group" style="margin: 0; min-width: 220px;">
+          <select id="member-select">
+            <option value="">Select a team member…</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="team-content">
+      <div class="empty-state"><p>Pick a team member above to see their tasks.</p></div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/team.js"></script>
+</body>
+</html>
