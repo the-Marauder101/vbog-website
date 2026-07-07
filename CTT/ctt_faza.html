@@ -446,8 +446,8 @@
     <!-- ===== HEATER SECTION ===== -->
     <div id="heaterSection">
       <div class="field">
-        <label>Water Heater — Atlantic</label>
-        <p class="hint">Atlantic brand only. Choose orientation first — the capacities shown are the ones available in that orientation.</p>
+        <label>Water Heater Type — Atlantic</label>
+        <p class="hint">Atlantic brand only. Choose type first — the models shown depend on the selected category.</p>
         <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
           <label class="tile">
             <input type="radio" name="orientation" value="horizontal" checked>
@@ -475,6 +475,24 @@
               </svg>
             </span>
             <span class="tile-label">Vertical</span>
+          </label>
+          <label class="tile">
+            <input type="radio" name="orientation" value="instant">
+            <span class="tile-pic" aria-hidden="true">
+              <svg viewBox="0 0 80 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="12" y="8" width="56" height="72" rx="4"/>
+                <rect x="20" y="16" width="40" height="24" rx="2" stroke-dasharray="3 2"/>
+                <circle cx="30" cy="56" r="5"/>
+                <circle cx="50" cy="56" r="5"/>
+                <line x1="30" y1="61" x2="30" y2="68"/>
+                <line x1="50" y1="61" x2="50" y2="68"/>
+                <line x1="28" y1="80" x2="28" y2="96"/>
+                <line x1="40" y1="80" x2="40" y2="96"/>
+                <line x1="52" y1="80" x2="52" y2="96"/>
+                <polyline points="36,100 40,112 44,100"/>
+              </svg>
+            </span>
+            <span class="tile-label">Instant</span>
           </label>
         </div>
         <select id="size" style="margin-top:14px"></select>
@@ -672,6 +690,10 @@ const PRICING = {
       { label: "200 L Stab Floor", litres: 200, tier: "200" },
       { label: "300 L",            litres: 300, tier: "300plus" },
       { label: "500 L",            litres: 500, tier: "300plus" }
+    ],
+    instant: [
+      { label: "Tempo Lite 3500W", litres: 0, tier: "upto50" },
+      { label: "Tempo Lite 5500W", litres: 0, tier: "upto50" }
     ]
   },
 
@@ -888,20 +910,22 @@ function recalc() {
 
   const sizes = currentSizes();
   const qty = getQty();
-  const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
+  const orient = getOrientation();
+  const orientLabel = orient === "vertical" ? "Vertical" : orient === "instant" ? "Instant" : "Horizontal";
   syncUnitStates(qty);
 
   const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
   let installTotal = 0;
   unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; installTotal += getInstallRate(s.tier); });
 
+  const installLabel = orient === "instant" ? "Instant Water Heater Installation" : "Water Heater Installation";
   if (allSame && qty > 0) {
     const s = sizes[unitStates[0].sizeIdx] || sizes[0];
-    html += lineHTML("Water Heater Installation", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}`, installTotal);
+    html += lineHTML(installLabel, `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}`, installTotal);
   } else {
     for (let i = 0; i < qty; i++) {
       const s = sizes[unitStates[i].sizeIdx] || sizes[0];
-      html += lineHTML(`Water Heater Installation (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, getInstallRate(s.tier));
+      html += lineHTML(`${installLabel} (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, getInstallRate(s.tier));
     }
   }
   const anchoringTotal = PRICING.anchoring * qty;
@@ -998,12 +1022,14 @@ function getLineDescText(descEl) {
 
 function getAutoSubject() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
-  return "Atlantic Water Heater New Installation Works — " + loc.label;
+  const typeStr = getOrientation() === "instant" ? "Instant Water Heater" : "Water Heater";
+  return "Atlantic " + typeStr + " New Installation Works — " + loc.label;
 }
 
 function getScopeText() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
-  return "Supply & installation of new Atlantic brand water heater(s) at new site — " + loc.label + ". Unit details and quantities as per Annexure #1.";
+  const typeStr = getOrientation() === "instant" ? "instant water heater(s)" : "water heater(s)";
+  return "Supply & installation of new Atlantic brand " + typeStr + " at new site — " + loc.label + ". Unit details and quantities as per Annexure #1.";
 }
 
 function getExclusionsList() {
