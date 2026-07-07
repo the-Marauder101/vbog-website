@@ -41,14 +41,22 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   top: 0;
   z-index: 50;
 }
+.topnav .brand-wrap { display: flex; align-items: baseline; gap: 7px; }
 .topnav .brand {
   font-weight: 800;
-  font-size: 18px;
+  font-size: 19px;
   color: var(--primary);
   text-decoration: none;
   letter-spacing: -0.02em;
 }
 .topnav .brand span { color: var(--accent); }
+.topnav .brand-by {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 .nav-links { display: flex; gap: 8px; }
 .nav-links a, .nav-right a {
   color: var(--muted);
@@ -570,6 +578,42 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 .switch input:checked + .slider::before { transform: translateX(16px); }
 
 .loading { color: var(--muted); padding: 40px; text-align: center; }
+
+/* ---------- Integration snippets ---------- */
+.snippet-label {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 16px 0 6px;
+  color: var(--primary);
+}
+.code-block {
+  position: relative;
+  background: #F5F7FA;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+.code-block pre {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre;
+  color: var(--text);
+}
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 4px 10px;
+}
+.copy-btn:hover { color: var(--primary); border-color: var(--muted); }
 
 /* ---------- Filter bar ---------- */
 .filter-bar {

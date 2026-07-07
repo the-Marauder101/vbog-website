@@ -44,6 +44,23 @@ const API = {
     return sbFetch(`tasks?assignee_id=eq.${memberId}&select=id&limit=1`).then((r) => r.length > 0);
   },
 
+  // ---- webhooks (outgoing Zapier integrations) ----
+  getWebhooks() {
+    return sbFetch("webhooks?select=*&order=created_at.asc");
+  },
+  createWebhook(fields) {
+    return sbFetch("webhooks", { method: "POST", body: fields }).then((r) => r[0]);
+  },
+  updateWebhook(id, fields) {
+    return sbFetch(`webhooks?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
+  },
+  deleteWebhook(id) {
+    return sbFetch(`webhooks?id=eq.${id}`, { method: "DELETE" });
+  },
+  sendTestWebhook(id) {
+    return sbFetch("rpc/send_test_webhook", { method: "POST", body: { webhook_id: id } });
+  },
+
   // ---- team members ----
   getMembers() {
     return sbFetch("team_members?select=*&order=name.asc");
