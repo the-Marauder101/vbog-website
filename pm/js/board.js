@@ -10,7 +10,7 @@
   let members = [];
   let editingTask = null; // null = creating
   let deleteArmed = false;
-  const filters = { assignee: "", due: "all" };
+  const filters = { assignee: "", due: "all", from: "", to: "" };
 
   if (!projectId) {
     window.location.replace("vyom.html");
@@ -68,16 +68,31 @@
       .map(([v, label]) => `<option value="${v}">${label}</option>`)
       .join("");
 
+    UI.enhanceSelect(assigneeSel);
+    UI.enhanceSelect(document.getElementById("filter-due"));
+
     assigneeSel.addEventListener("change", () => { filters.assignee = assigneeSel.value; renderBoard(); });
     document.getElementById("filter-due").addEventListener("change", (e) => {
       filters.due = e.target.value;
+      document.getElementById("range-inputs").hidden = filters.due !== "custom";
       renderBoard();
     });
+    for (const id of ["filter-from", "filter-to"]) {
+      document.getElementById(id).addEventListener("change", (e) => {
+        filters[id === "filter-from" ? "from" : "to"] = e.target.value;
+        renderBoard();
+      });
+    }
     document.getElementById("filter-clear").addEventListener("click", () => {
-      filters.assignee = "";
-      filters.due = "all";
+      Object.assign(filters, { assignee: "", due: "all", from: "", to: "" });
       assigneeSel.value = "";
-      document.getElementById("filter-due").value = "all";
+      const dueSel = document.getElementById("filter-due");
+      dueSel.value = "all";
+      UI.syncSelect(assigneeSel);
+      UI.syncSelect(dueSel);
+      document.getElementById("filter-from").value = "";
+      document.getElementById("filter-to").value = "";
+      document.getElementById("range-inputs").hidden = true;
       renderBoard();
     });
   }
@@ -90,7 +105,7 @@
     return tasks.filter((t) => {
       if (filters.assignee === "none" && t.assignee_id) return false;
       if (filters.assignee && filters.assignee !== "none" && t.assignee_id !== filters.assignee) return false;
-      return UI.matchesDateFilter(t.due_date, filters.due);
+      return UI.matchesDateFilter(t.due_date, filters.due, { from: filters.from, to: filters.to });
     });
   }
 
@@ -114,6 +129,8 @@
     countEl.textContent = filtersActive() ? `Showing ${shown.length} of ${tasks.length} tasks` : "";
     document.getElementById("filter-assignee").classList.toggle("on", filters.assignee !== "");
     document.getElementById("filter-due").classList.toggle("on", filters.due !== "all");
+    UI.syncSelect(document.getElementById("filter-assignee"));
+    UI.syncSelect(document.getElementById("filter-due"));
   }
 
   function renderColumn(status, isRemoved, shown) {
@@ -223,6 +240,8 @@
             `<option value="${m.id}" ${m.id === selectedAssignee ? "selected" : ""}>${UI.esc(m.name)}${m.active ? "" : " (inactive)"}</option>`
         )
         .join("");
+    UI.enhanceSelect(document.getElementById("t-status"));
+    UI.enhanceSelect(assigneeSel);
   }
 
   function openTaskModal(task, presetStatus) {
