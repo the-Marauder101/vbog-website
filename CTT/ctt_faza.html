@@ -118,15 +118,15 @@
     margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--hairline);
   }
   .unit-card-num { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
-  .unit-size-sel {
-    flex: 1; min-width: 110px; padding: 7px 30px 7px 10px; font-size: 13px; font-family: inherit;
+  .unit-size-sel, .u-orient-sel, .u-svc-sel {
+    width: 100%; padding: 7px 30px 7px 10px; font-size: 13px; font-family: inherit;
     color: var(--black); background: var(--white);
     border: 1px solid var(--hairline); border-radius: 0; appearance: none; -webkit-appearance: none;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5'/></svg>");
     background-repeat: no-repeat; background-position: right 10px center; cursor: pointer;
     font-weight: 400; text-transform: none; letter-spacing: normal;
   }
-  .unit-size-sel:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  .unit-size-sel:focus, .u-orient-sel:focus, .u-svc-sel:focus { outline: 2px solid var(--black); outline-offset: -1px; }
   .unit-field { margin-bottom: 20px; }
   .unit-field:last-child { margin-bottom: 0; }
   .unit-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
@@ -145,6 +145,10 @@
   .seg input { position: absolute; opacity: 0; width: 0; height: 0; }
   .seg:has(input:checked) { background: var(--black); color: var(--white); }
   .seg:has(input:focus-visible) { outline: 2px solid var(--black); outline-offset: 2px; }
+
+  .unit-config { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .unit-config-group { flex: 1; min-width: 140px; }
+  .unit-config-group .unit-sublabel { margin: 0 0 6px; }
 
   .summary { border: 1px solid var(--line); padding: 28px; position: sticky; top: 24px; }
   .summary h2 { margin: 0 0 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -431,79 +435,11 @@
       </div>
     </div>
 
-    <!-- ===== SERVICE TYPE ===== -->
-    <div class="field" id="serviceTypeField">
-      <label>Service Type</label>
-      <div class="tiles" role="radiogroup" aria-label="Service type">
-        <label class="tile path">
-          <input type="radio" name="pathway" value="newInstallation" checked>
-          <span class="path-title">New Installation</span>
-          <span class="path-desc">First-time heater, new site</span>
-        </label>
-        <label class="tile path">
-          <input type="radio" name="pathway" value="reinstallation">
-          <span class="path-title">Reinstallation</span>
-          <span class="path-desc">Replacement of existing heater</span>
-        </label>
-      </div>
-    </div>
-
     <!-- ===== HEATER SECTION ===== -->
     <div id="heaterSection">
       <div class="field">
-        <label>Water Heater Type — Atlantic</label>
-        <p class="hint">Atlantic brand only. Choose type first — the models shown depend on the selected category.</p>
-        <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
-          <label class="tile">
-            <input type="radio" name="orientation" value="horizontal" checked>
-            <span class="tile-pic" aria-hidden="true">
-              <svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="6" y="14" width="104" height="38" rx="19"/>
-                <line x1="90" y1="16" x2="90" y2="50"/>
-                <circle cx="28" cy="33" r="7"/>
-                <line x1="28" y1="33" x2="28" y2="28"/>
-                <line x1="58" y1="52" x2="58" y2="64"/>
-                <line x1="70" y1="52" x2="70" y2="64"/>
-              </svg>
-            </span>
-            <span class="tile-label">Horizontal</span>
-          </label>
-          <label class="tile">
-            <input type="radio" name="orientation" value="vertical">
-            <span class="tile-pic" aria-hidden="true">
-              <svg viewBox="0 0 70 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="14" y="6" width="42" height="104" rx="21"/>
-                <line x1="14" y1="88" x2="56" y2="88"/>
-                <circle cx="35" cy="98" r="7"/>
-                <line x1="27" y1="110" x2="27" y2="118"/>
-                <line x1="43" y1="110" x2="43" y2="118"/>
-              </svg>
-            </span>
-            <span class="tile-label">Vertical</span>
-          </label>
-          <label class="tile">
-            <input type="radio" name="orientation" value="instant">
-            <span class="tile-pic" aria-hidden="true">
-              <svg viewBox="0 0 80 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="12" y="8" width="56" height="72" rx="4"/>
-                <rect x="20" y="16" width="40" height="24" rx="2" stroke-dasharray="3 2"/>
-                <circle cx="30" cy="56" r="5"/>
-                <circle cx="50" cy="56" r="5"/>
-                <line x1="30" y1="61" x2="30" y2="68"/>
-                <line x1="50" y1="61" x2="50" y2="68"/>
-                <line x1="28" y1="80" x2="28" y2="96"/>
-                <line x1="40" y1="80" x2="40" y2="96"/>
-                <line x1="52" y1="80" x2="52" y2="96"/>
-                <polyline points="36,100 40,112 44,100"/>
-              </svg>
-            </span>
-            <span class="tile-label">Instant</span>
-          </label>
-        </div>
-        <select id="size" style="margin-top:14px"></select>
-      </div>
-      <div class="field">
-        <label for="qty">Quantity</label>
+        <label for="qty">Number of Units</label>
+        <p class="hint">Each unit can be configured independently — orientation, capacity, and service type.</p>
         <input type="number" id="qty" min="1" step="1" value="1">
       </div>
     </div>
@@ -797,10 +733,8 @@ const fmt = (n) => "AED " + Number(n).toLocaleString("en-US", { minimumFractionD
 
 const el = {
   jobNumber:        document.getElementById("jobNumber"),
-  size:             document.getElementById("size"),
   qty:              document.getElementById("qty"),
   location:         document.getElementById("location"),
-  serviceTypeField: document.getElementById("serviceTypeField"),
   heaterSection:    document.getElementById("heaterSection"),
   unitDetails:      document.getElementById("unitDetails"),
   breakdown:        document.getElementById("breakdown"),
@@ -820,12 +754,10 @@ const el = {
 };
 
 /* ===== Read helpers ===== */
-function getOrientation()   { const r = document.querySelector('input[name="orientation"]:checked'); return r ? r.value : "horizontal"; }
-function getServiceType()   { const r = document.querySelector('input[name="pathway"]:checked'); return r ? r.value : "newInstallation"; }
-function getQty()           { const q = parseInt(el.qty.value, 10);       return (isNaN(q) || q < 1) ? 1 : q; }
-function currentSizes()     { return PRICING.sizesByOrientation[getOrientation()] || PRICING.sizesByOrientation.horizontal; }
+function getQty() { const q = parseInt(el.qty.value, 10); return (isNaN(q) || q < 1) ? 1 : q; }
+function sizesForOrientation(orient) { return PRICING.sizesByOrientation[orient] || PRICING.sizesByOrientation.horizontal; }
 
-/* ===== Populate global dropdowns ===== */
+/* ===== Populate helpers ===== */
 function populateSelect(sel, items, textFn) {
   sel.innerHTML = "";
   items.forEach((item, i) => {
@@ -835,35 +767,54 @@ function populateSelect(sel, items, textFn) {
     sel.appendChild(opt);
   });
 }
-populateSelect(el.size, currentSizes(), (s) => s.label);
 populateSelect(el.location, PRICING.locations, (l) => l.label);
 
 /* ===== State ===== */
 let unitStates = [];
 
 function defaultUnitState() {
-  return { sizeIdx: Number(el.size.value) || 0, ceilingNeeded: false, ceilingIdx: 0, craneRequired: false };
+  return { orientation: "horizontal", serviceType: "newInstallation", sizeIdx: 0, ceilingNeeded: false, ceilingIdx: 0, craneRequired: false };
 }
 function syncUnitStates(qty) { while (unitStates.length < qty) unitStates.push(defaultUnitState()); unitStates.length = qty; }
 
 /* ===== Build install unit cards ===== */
 function buildUnitDetails() {
-  const sizes = currentSizes();
   const qty = getQty();
   syncUnitStates(qty);
   el.unitDetails.innerHTML = "";
 
   for (let i = 0; i < qty; i++) {
     const u = unitStates[i];
+    const sizes = sizesForOrientation(u.orientation);
     if (u.sizeIdx >= sizes.length) u.sizeIdx = 0;
     const card = document.createElement("div");
     card.className = "unit-card";
 
-    const sizeOpts = sizes.map((s, si) => `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`).join("");
     const hdr = document.createElement("div");
     hdr.className = "unit-card-header";
-    hdr.innerHTML = `<span class="unit-card-num">Unit ${i + 1}</span><select class="unit-size-sel" data-unit="${i}" aria-label="Capacity for unit ${i + 1}">${sizeOpts}</select>`;
+    hdr.innerHTML = `<span class="unit-card-num">Unit ${i + 1}</span>`;
     card.appendChild(hdr);
+
+    const configRow = document.createElement("div");
+    configRow.className = "unit-config";
+
+    const orientSel = `<select class="u-orient-sel" data-unit="${i}" aria-label="Type for unit ${i + 1}">` +
+      `<option value="horizontal"${u.orientation === "horizontal" ? " selected" : ""}>Horizontal</option>` +
+      `<option value="vertical"${u.orientation === "vertical" ? " selected" : ""}>Vertical</option>` +
+      `<option value="instant"${u.orientation === "instant" ? " selected" : ""}>Instant</option></select>`;
+
+    const svcSel = `<select class="u-svc-sel" data-unit="${i}" aria-label="Service type for unit ${i + 1}">` +
+      `<option value="newInstallation"${u.serviceType === "newInstallation" ? " selected" : ""}>New Installation</option>` +
+      `<option value="reinstallation"${u.serviceType === "reinstallation" ? " selected" : ""}>Reinstallation</option></select>`;
+
+    const sizeOpts = sizes.map((s, si) => `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`).join("");
+    const sizeSel = `<select class="unit-size-sel" data-unit="${i}" aria-label="Capacity for unit ${i + 1}">${sizeOpts}</select>`;
+
+    configRow.innerHTML =
+      `<div class="unit-config-group"><span class="unit-sublabel">Type</span>${orientSel}</div>` +
+      `<div class="unit-config-group"><span class="unit-sublabel">Service</span>${svcSel}</div>` +
+      `<div class="unit-config-group"><span class="unit-sublabel">Capacity</span>${sizeSel}</div>`;
+    card.appendChild(configRow);
 
     const ceilOpts = PRICING.falseCeiling.map((c, ci) => `<option value="${ci}"${u.ceilingIdx === ci ? " selected" : ""}>${c.label} cm — ${fmt(c.price)}</option>`).join("");
     const ceilField = document.createElement("div");
@@ -898,6 +849,8 @@ function buildUnitDetails() {
 /* ===== Listeners — install cards ===== */
 function attachInstallListeners() {
   const q = (sel) => el.unitDetails.querySelectorAll(sel);
+  q(".u-orient-sel").forEach((s) => s.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].orientation = e.target.value; unitStates[i].sizeIdx = 0; buildUnitDetails(); recalc(); }));
+  q(".u-svc-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].serviceType = e.target.value; recalc(); }));
   q(".unit-size-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].sizeIdx = +e.target.value; buildUnitDetails(); recalc(); }));
   q(".u-ceil-chk").forEach((c) => c.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].ceilingNeeded = e.target.checked; e.target.closest(".unit-card").querySelector(".u-ceil-block").hidden = !e.target.checked; recalc(); }));
   q(".u-ceil-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].ceilingIdx = +e.target.value; recalc(); }));
@@ -913,31 +866,30 @@ function lineHTML(desc, sub, amount) {
 /* ===== Core recalc ===== */
 function recalc() {
   let html = "", subtotal = 0;
-
-  const sizes = currentSizes();
   const qty = getQty();
-  const orient = getOrientation();
-  const orientLabel = orient === "vertical" ? "Vertical" : orient === "instant" ? "Instant" : "Horizontal";
   syncUnitStates(qty);
 
-  const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
   let installTotal = 0;
-  unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; installTotal += getInstallRate(s.tier); });
-
-  const svcType = getServiceType();
-  const installLabel = (orient === "instant" ? "Instant Water Heater" : "Water Heater") + (svcType === "reinstallation" ? " Reinstallation" : " Installation");
-  if (allSame && qty > 0) {
-    const s = sizes[unitStates[0].sizeIdx] || sizes[0];
-    html += lineHTML(installLabel, `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}`, installTotal);
-  } else {
-    for (let i = 0; i < qty; i++) {
-      const s = sizes[unitStates[i].sizeIdx] || sizes[0];
-      html += lineHTML(`${installLabel} (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, getInstallRate(s.tier));
+  let anchoringTotal = 0;
+  for (let i = 0; i < qty; i++) {
+    const u = unitStates[i];
+    const sizes = sizesForOrientation(u.orientation);
+    const s = sizes[u.sizeIdx] || sizes[0];
+    const orientLabel = u.orientation === "vertical" ? "Vertical" : u.orientation === "instant" ? "Instant" : "Horizontal";
+    const typeLabel = u.orientation === "instant" ? "Instant Water Heater" : "Water Heater";
+    const svcLabel = u.serviceType === "reinstallation" ? "Reinstallation" : "Installation";
+    const rate = getInstallRate(s.tier);
+    installTotal += rate;
+    html += lineHTML(`${typeLabel} ${svcLabel} (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, rate);
+    if (u.serviceType === "newInstallation") {
+      anchoringTotal += PRICING.anchoring;
     }
   }
-  const isNewInstall = getServiceType() === "newInstallation";
-  const anchoringTotal = isNewInstall ? PRICING.anchoring * qty : 0;
-  if (anchoringTotal > 0) html += lineHTML("Anchoring", `New Installation${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
+
+  if (anchoringTotal > 0) {
+    const newCount = unitStates.slice(0, qty).filter((u) => u.serviceType === "newInstallation").length;
+    html += lineHTML("Anchoring", `New Installation${newCount > 1 ? " × " + newCount : ""}`, anchoringTotal);
+  }
   subtotal = installTotal + anchoringTotal;
 
   let maxLitres = 0;
@@ -945,6 +897,7 @@ function recalc() {
   let anyCeiling = false;
   for (let i = 0; i < qty; i++) {
     const u = unitStates[i];
+    const sizes = sizesForOrientation(u.orientation);
     const size = sizes[u.sizeIdx] || sizes[0];
     if (size.litres > maxLitres) maxLitres = size.litres;
     if (u.craneRequired) anyCrane = true;
@@ -979,24 +932,18 @@ function recalc() {
 }
 
 /* ===== Global change triggers ===== */
-function onGlobalInstallChange() { buildUnitDetails(); recalc(); }
-function onGlobalSizeChange() { const idx = Number(el.size.value) || 0; unitStates.forEach((u) => { u.sizeIdx = idx; }); buildUnitDetails(); recalc(); }
-function onOrientationChange() { populateSelect(el.size, currentSizes(), (s) => s.label); el.size.value = "0"; unitStates.forEach((u) => { u.sizeIdx = 0; }); buildUnitDetails(); recalc(); }
+function onQtyChange() { buildUnitDetails(); recalc(); }
 
 ["change", "input"].forEach((evt) => {
-  el.size.addEventListener(evt, onGlobalSizeChange);
-  el.qty.addEventListener(evt, onGlobalInstallChange);
+  el.qty.addEventListener(evt, onQtyChange);
   el.location.addEventListener(evt, recalc);
 });
-el.qty.addEventListener("blur", () => { el.qty.value = getQty(); onGlobalInstallChange(); });
-
-document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", onOrientationChange));
-document.querySelectorAll('input[name="pathway"]').forEach((r) => r.addEventListener("change", recalc));
+el.qty.addEventListener("blur", () => { el.qty.value = getQty(); onQtyChange(); });
 
 /* ===== Disclaimer ===== */
 const DISCLAIMER_MIN_LITRES = 200;
-function largestUnitLitres() { const sizes = currentSizes(); return unitStates.reduce((m, u) => Math.max(m, (sizes[u.sizeIdx] || sizes[0]).litres), 0); }
-function largestUnitLabel()  { const sizes = currentSizes(); let best = sizes[0]; unitStates.forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; if (s.litres > best.litres) best = s; }); return best.label; }
+function largestUnitLitres() { return unitStates.reduce((m, u) => { const sizes = sizesForOrientation(u.orientation); return Math.max(m, (sizes[u.sizeIdx] || sizes[0]).litres); }, 0); }
+function largestUnitLabel() { let best = { litres: -1, label: "" }; unitStates.forEach((u) => { const sizes = sizesForOrientation(u.orientation); const s = sizes[u.sizeIdx] || sizes[0]; if (s.litres > best.litres) best = s; }); return best.label || "unit"; }
 function anyCraneRequired() { return unitStates.some((u) => u.craneRequired); }
 function openDisclaimer() {
   if (anyCraneRequired()) {
@@ -1031,17 +978,29 @@ function getLineDescText(descEl) {
 
 function getAutoSubject() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
-  const typeStr = getOrientation() === "instant" ? "Instant Water Heater" : "Water Heater";
-  const workType = getServiceType() === "reinstallation" ? "Reinstallation" : "New Installation";
+  const qty = getQty();
+  const orientations = new Set(unitStates.slice(0, qty).map((u) => u.orientation));
+  const services = new Set(unitStates.slice(0, qty).map((u) => u.serviceType));
+  const typeStr = orientations.size === 1 && orientations.has("instant") ? "Instant Water Heater" : "Water Heater";
+  const workType = services.size === 1 ? (services.has("reinstallation") ? "Reinstallation" : "New Installation") : "Installation & Reinstallation";
   return "Atlantic " + typeStr + " " + workType + " Works — " + loc.label;
 }
 
 function getScopeText() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
-  const typeStr = getOrientation() === "instant" ? "instant water heater(s)" : "water heater(s)";
-  const svcStr = getServiceType() === "reinstallation" ? "Reinstallation" : "Supply & installation";
-  const siteStr = getServiceType() === "reinstallation" ? "at existing site" : "at new site";
-  return svcStr + " of Atlantic brand " + typeStr + " " + siteStr + " — " + loc.label + ". Unit details and quantities as per Annexure #1.";
+  const qty = getQty();
+  const orientations = new Set(unitStates.slice(0, qty).map((u) => u.orientation));
+  const services = new Set(unitStates.slice(0, qty).map((u) => u.serviceType));
+  const typeStr = orientations.size === 1 && orientations.has("instant") ? "instant water heater(s)" : "water heater(s)";
+  let svcStr, siteStr;
+  if (services.size === 1) {
+    svcStr = services.has("reinstallation") ? "Reinstallation" : "Supply & installation";
+    siteStr = services.has("reinstallation") ? "at existing site" : "at new site";
+  } else {
+    svcStr = "Supply, installation & reinstallation";
+    siteStr = "at designated site(s)";
+  }
+  return svcStr + " of Atlantic brand " + typeStr + " " + siteStr + " — " + loc.label + ". Unit details and quantities as per Annexure #1.";
 }
 
 function getExclusionsList() {
