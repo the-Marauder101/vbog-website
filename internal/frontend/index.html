@@ -22,7 +22,7 @@
         <div class="onboarding-inner">
             <h2>How this works</h2>
             <ol>
-                <li><strong>Add keywords</strong> in Settings &mdash; terms your ideal customers use on Reddit (e.g. "outsource bookkeeping", "virtual CFO").</li>
+                <li><strong>Add keywords</strong> in Settings &mdash; terms your ideal customers use on Reddit (e.g. "fractional coo", "founder burnout", "can't scale"). VBOG-tuned defaults are preloaded.</li>
                 <li><strong>Click Scan Now</strong> &mdash; the bot searches all of Reddit (no API key needed) and flags posts where someone is actively looking for help.</li>
                 <li><strong>Review &amp; engage</strong> &mdash; your team reads flagged posts, then replies on Reddit to book calls.</li>
             </ol>
@@ -45,7 +45,7 @@
                 Keywords <span class="required">*required</span>
                 <span class="hint">Comma-separated. Each keyword triggers a separate Reddit search across all subreddits.</span>
             </label>
-            <textarea id="cfg-keywords" rows="3" placeholder="bookkeeping, accounting, virtual cfo, outsource accounting"></textarea>
+            <textarea id="cfg-keywords" rows="3" placeholder="fractional coo, operations manager, founder burnout, can't scale"></textarea>
             <button onclick="saveConfig('keywords', 'cfg-keywords')">Save Keywords</button>
         </div>
 
@@ -62,9 +62,9 @@
             <div class="setting-group">
                 <label>
                     Subreddits <span class="optional">optional</span>
-                    <span class="hint">Leave empty to search all of Reddit. Or limit to specific subreddits (comma-separated, without r/).</span>
+                    <span class="hint">Clear this to search all of Reddit. Or limit to specific subreddits (comma-separated, without r/). All listed subs are searched in one request.</span>
                 </label>
-                <input type="text" id="cfg-subreddits" placeholder="entrepreneur, smallbusiness, Accounting">
+                <input type="text" id="cfg-subreddits" placeholder="Entrepreneur, smallbusiness, agency, startups">
                 <button onclick="saveConfig('subreddits', 'cfg-subreddits')">Save</button>
             </div>
 

@@ -128,24 +128,33 @@ async def api_scan_stream():
         raise HTTPException(409, "A scan is already running")
 
     async def event_stream():
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
+        queue: asyncio.Queue = asyncio.Queue()
+        sentinel = object()
+
+        def producer():
+            try:
+                for event in scan_reddit_streaming():
+                    loop.call_soon_threadsafe(queue.put_nowait, event)
+            finally:
+                loop.call_soon_threadsafe(queue.put_nowait, sentinel)
+
+        loop.run_in_executor(None, producer)
+
         new_count = 0
         total = 0
 
-        def run_scan_gen():
-            return list(scan_reddit_streaming())
+        while True:
+            event = await queue.get()
+            if event is sentinel:
+                break
 
-        events = await loop.run_in_executor(None, run_scan_gen)
-
-        for event in events:
             if event["type"] == "post_found":
                 total += 1
                 was_new = await insert_post(event["post"])
                 if was_new:
                     new_count += 1
-                    event["is_new"] = True
-                else:
-                    event["is_new"] = False
+                event["is_new"] = was_new
                 event["new_count"] = new_count
 
             yield f"data: {json.dumps(event)}\n\n"
@@ -153,7 +162,11 @@ async def api_scan_stream():
         summary = {"type": "summary", "new_posts": new_count, "total_matched": total, "duplicates": total - new_count}
         yield f"data: {json.dumps(summary)}\n\n"
 
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post("/api/scan")
@@ -184,7 +197,10 @@ async def api_send_reminder(post_id: int):
 
 @app.get("/api/config")
 async def api_get_config():
-    from config import KEYWORDS, HIGH_INTENT_PHRASES, MIN_KEYWORD_MATCHES, REQUIRE_INTENT, MAX_POSTS_PER_POLL
+    from config import (
+        KEYWORDS, HIGH_INTENT_PHRASES, MIN_KEYWORD_MATCHES,
+        REQUIRE_INTENT, MAX_POSTS_PER_POLL, SUBREDDITS, TIME_FILTER,
+    )
 
     overrides = await get_all_config_overrides()
     defaults = {
@@ -194,8 +210,8 @@ async def api_get_config():
         "require_intent": str(REQUIRE_INTENT).lower(),
         "max_posts_per_poll": str(MAX_POSTS_PER_POLL),
         "poll_interval_minutes": str(POLL_INTERVAL_MINUTES),
-        "subreddits": "",
-        "time_filter": "7d",
+        "subreddits": ",".join(SUBREDDITS),
+        "time_filter": TIME_FILTER,
     }
     merged = {**defaults, **overrides}
     return {"config": merged, "overrides": overrides}
