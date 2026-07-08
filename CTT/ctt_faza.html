@@ -431,7 +431,7 @@
       </div>
     </div>
 
-    <!-- ===== SERVICE TYPE (heater only — fixed to New Installation) ===== -->
+    <!-- ===== SERVICE TYPE ===== -->
     <div class="field" id="serviceTypeField">
       <label>Service Type</label>
       <div class="tiles" role="radiogroup" aria-label="Service type">
@@ -439,6 +439,11 @@
           <input type="radio" name="pathway" value="newInstallation" checked>
           <span class="path-title">New Installation</span>
           <span class="path-desc">First-time heater, new site</span>
+        </label>
+        <label class="tile path">
+          <input type="radio" name="pathway" value="reinstallation">
+          <span class="path-title">Reinstallation</span>
+          <span class="path-desc">Replacement of existing heater</span>
         </label>
       </div>
     </div>
@@ -816,6 +821,7 @@ const el = {
 
 /* ===== Read helpers ===== */
 function getOrientation()   { const r = document.querySelector('input[name="orientation"]:checked'); return r ? r.value : "horizontal"; }
+function getServiceType()   { const r = document.querySelector('input[name="pathway"]:checked'); return r ? r.value : "newInstallation"; }
 function getQty()           { const q = parseInt(el.qty.value, 10);       return (isNaN(q) || q < 1) ? 1 : q; }
 function currentSizes()     { return PRICING.sizesByOrientation[getOrientation()] || PRICING.sizesByOrientation.horizontal; }
 
@@ -918,7 +924,8 @@ function recalc() {
   let installTotal = 0;
   unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; installTotal += getInstallRate(s.tier); });
 
-  const installLabel = orient === "instant" ? "Instant Water Heater Installation" : "Water Heater Installation";
+  const svcType = getServiceType();
+  const installLabel = (orient === "instant" ? "Instant Water Heater" : "Water Heater") + (svcType === "reinstallation" ? " Reinstallation" : " Installation");
   if (allSame && qty > 0) {
     const s = sizes[unitStates[0].sizeIdx] || sizes[0];
     html += lineHTML(installLabel, `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}`, installTotal);
@@ -928,7 +935,8 @@ function recalc() {
       html += lineHTML(`${installLabel} (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, getInstallRate(s.tier));
     }
   }
-  const anchoringTotal = PRICING.anchoring * qty;
+  const isNewInstall = getServiceType() === "newInstallation";
+  const anchoringTotal = isNewInstall ? PRICING.anchoring * qty : 0;
   if (anchoringTotal > 0) html += lineHTML("Anchoring", `New Installation${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
   subtotal = installTotal + anchoringTotal;
 
@@ -983,6 +991,7 @@ function onOrientationChange() { populateSelect(el.size, currentSizes(), (s) => 
 el.qty.addEventListener("blur", () => { el.qty.value = getQty(); onGlobalInstallChange(); });
 
 document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", onOrientationChange));
+document.querySelectorAll('input[name="pathway"]').forEach((r) => r.addEventListener("change", recalc));
 
 /* ===== Disclaimer ===== */
 const DISCLAIMER_MIN_LITRES = 200;
@@ -1023,13 +1032,16 @@ function getLineDescText(descEl) {
 function getAutoSubject() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
   const typeStr = getOrientation() === "instant" ? "Instant Water Heater" : "Water Heater";
-  return "Atlantic " + typeStr + " New Installation Works — " + loc.label;
+  const workType = getServiceType() === "reinstallation" ? "Reinstallation" : "New Installation";
+  return "Atlantic " + typeStr + " " + workType + " Works — " + loc.label;
 }
 
 function getScopeText() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
   const typeStr = getOrientation() === "instant" ? "instant water heater(s)" : "water heater(s)";
-  return "Supply & installation of new Atlantic brand " + typeStr + " at new site — " + loc.label + ". Unit details and quantities as per Annexure #1.";
+  const svcStr = getServiceType() === "reinstallation" ? "Reinstallation" : "Supply & installation";
+  const siteStr = getServiceType() === "reinstallation" ? "at existing site" : "at new site";
+  return svcStr + " of Atlantic brand " + typeStr + " " + siteStr — " + loc.label + ". Unit details and quantities as per Annexure #1.";
 }
 
 function getExclusionsList() {
