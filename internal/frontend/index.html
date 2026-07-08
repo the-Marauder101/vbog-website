@@ -70,6 +70,17 @@
 
             <div class="setting-group">
                 <label>
+                    Exclude Subreddits <span class="optional">optional</span>
+                    <span class="hint">Posts from these subs are silently dropped during scans (comma-separated, without r/). Use this to filter out hiring boards, VA subs, etc.</span>
+                </label>
+                <input type="text" id="cfg-excluded-subs" placeholder="VirtualAssistant4Hire, freelance_forhire, VirtualAssistantPhil, ExecutiveAssistants">
+                <button onclick="saveConfig('excluded_subreddits', 'cfg-excluded-subs')">Save</button>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-group">
+                <label>
                     Freshness
                     <span class="hint">Only find posts from this time range.</span>
                 </label>

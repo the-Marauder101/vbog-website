@@ -92,7 +92,7 @@ async function loadPosts() {
     }
 
     container.innerHTML = data.posts.map(p => `
-      <div class="post-card" onclick="openDetail(${p.id})">
+      <div class="post-card" id="post-${p.id}" onclick="openDetail(${p.id})">
         <div class="post-card-top">
           <span class="badge badge-${p.status}">${p.status}</span>
           <span class="post-sub">r/${esc(p.subreddit)}</span>
@@ -100,12 +100,13 @@ async function loadPosts() {
           <span class="relevance ${relClass(p.relevance_score)}">${p.relevance_score.toFixed(0)} rel</span>
           <span class="post-time">${timeAgo(p.flagged_at)}</span>
         </div>
-        <div class="post-card-title"><a href="${esc(p.url)}" target="_blank" onclick="event.stopPropagation()">${esc(p.title)}</a></div>
+        <div class="post-card-title">${esc(p.title)}</div>
         <div class="post-card-tags">
           ${(p.matched_keywords||[]).map(k => `<span class="tag-kw">${esc(k)}</span>`).join("")}
           ${(p.matched_intents||[]).map(i => `<span class="tag-intent">${esc(i)}</span>`).join("")}
         </div>
         <div class="post-card-actions" onclick="event.stopPropagation()">
+          <a href="${esc(p.url)}" target="_blank" class="btn-sm btn-reddit">Open on Reddit &#x2197;</a>
           <button class="btn-sm" onclick="setStatus(${p.id},'reviewing')">Review</button>
           <button class="btn-sm" onclick="setStatus(${p.id},'commented')">Commented</button>
           <button class="btn-sm" onclick="setStatus(${p.id},'dismissed')">Dismiss</button>
@@ -121,8 +122,14 @@ async function loadPosts() {
 async function setStatus(id, status) {
   try {
     await api(`/api/posts/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+    const card = $("post-" + id);
+    if (card) {
+      const badge = card.querySelector(".badge");
+      if (badge) { badge.className = "badge badge-" + status; badge.textContent = status; }
+      card.style.opacity = "0.5";
+      setTimeout(() => card.style.opacity = "", 1200);
+    }
     toast("Marked as " + status, "success");
-    loadPosts();
     loadStats();
   } catch (e) { toast(e.message, "error"); }
 }
@@ -276,6 +283,7 @@ async function loadConfig() {
     $("cfg-keywords").value = c.keywords || "";
     $("cfg-intents").value = c.high_intent_phrases || "";
     $("cfg-subreddits").value = c.subreddits || "";
+    $("cfg-excluded-subs").value = c.excluded_subreddits || "";
     $("cfg-time-filter").value = c.time_filter || "7d";
     $("cfg-require-intent").value = c.require_intent || "true";
     $("cfg-max-posts").value = c.max_posts_per_poll || "25";

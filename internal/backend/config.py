@@ -24,6 +24,10 @@ SUBREDDITS = _csv(
     "Entrepreneur,smallbusiness,agency,startups,EntrepreneurRideAlong,sweatystartup,SaaS",
 )
 TIME_FILTER = os.getenv("TIME_FILTER", "7d")
+EXCLUDED_SUBREDDITS = _csv(
+    "EXCLUDED_SUBREDDITS",
+    "VirtualAssistant4Hire,freelance_forhire,VirtualAssistantPhil,ExecutiveAssistants,forhire,slavelabour",
+)
 MIN_KEYWORD_MATCHES = int(os.getenv("MIN_KEYWORD_MATCHES", "1"))
 REQUIRE_INTENT = os.getenv("REQUIRE_INTENT", "true").lower() == "true"
 POLL_INTERVAL_MINUTES = int(os.getenv("POLL_INTERVAL_MINUTES", "10"))

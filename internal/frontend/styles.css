@@ -129,15 +129,15 @@ button:active { transform: scale(0.97); }
 .post-score { font-size: 0.72rem; color: var(--text3); }
 .post-time { font-size: 0.72rem; color: var(--text3); margin-left: auto; }
 
-.post-card-title { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.4rem; line-height: 1.4; }
-.post-card-title a { color: var(--text); }
-.post-card-title a:hover { color: var(--accent2); }
+.post-card-title { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.4rem; line-height: 1.4; color: var(--text); }
 
 .post-card-tags { display: flex; gap: 0.2rem; flex-wrap: wrap; }
 .tag-kw { display: inline-block; padding: 0.08rem 0.35rem; border-radius: 3px; background: rgba(91,95,247,0.12); color: var(--accent2); font-size: 0.68rem; }
 .tag-intent { display: inline-block; padding: 0.08rem 0.35rem; border-radius: 3px; background: rgba(245,158,11,0.12); color: var(--yellow); font-size: 0.68rem; }
 
 .post-card-actions { display: flex; gap: 0.3rem; margin-top: 0.5rem; }
+.btn-reddit { display: inline-flex; align-items: center; gap: 0.2rem; background: rgba(255,69,0,0.12); border-color: rgba(255,69,0,0.3); color: #ff6b35; text-decoration: none; font-weight: 600; }
+.btn-reddit:hover { background: rgba(255,69,0,0.22); color: #ff8c5a; text-decoration: none; }
 
 /* Relevance indicator */
 .relevance { font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 4px; }
