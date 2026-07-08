@@ -17,10 +17,11 @@ function toast(msg, type = "info") {
   el.className = `toast ${type}`;
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(() => el.remove(), 3500);
 }
 
 function timeAgo(iso) {
+  if (!iso) return "—";
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
   if (diff < 60) return "just now";
   if (diff < 3600) return Math.floor(diff / 60) + "m ago";
@@ -28,42 +29,57 @@ function timeAgo(iso) {
   return Math.floor(diff / 86400) + "d ago";
 }
 
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = s || "";
+  return d.innerHTML;
+}
+
+function togglePanel(id) {
+  const panel = document.getElementById(id);
+  panel.classList.toggle("hidden");
+}
+
 // --- Stats ---
+
 async function loadStats() {
   try {
     const stats = await api("/stats");
     const bar = document.getElementById("stats-bar");
-    const statuses = [
-      { key: "new", label: "New" },
-      { key: "reviewing", label: "Reviewing" },
-      { key: "commented", label: "Commented" },
-      { key: "dismissed", label: "Dismissed" },
+    const items = [
+      { key: "total", label: "Total", value: stats.total },
+      { key: "new", label: "New", value: stats.by_status.new || 0 },
+      { key: "reviewing", label: "Reviewing", value: stats.by_status.reviewing || 0 },
+      { key: "commented", label: "Commented", value: stats.by_status.commented || 0 },
+      { key: "dismissed", label: "Dismissed", value: stats.by_status.dismissed || 0 },
     ];
-    bar.innerHTML =
-      `<div class="stat-card"><span class="label">Total</span><span class="value">${stats.total}</span></div>` +
-      statuses
-        .map(
-          (s) =>
-            `<div class="stat-card ${s.key}"><span class="label">${s.label}</span><span class="value">${stats.by_status[s.key] || 0}</span></div>`
-        )
-        .join("");
+    bar.innerHTML = items
+      .map(
+        (s) =>
+          `<div class="stat-card ${s.key}"><span class="label">${s.label}</span><span class="value">${s.value}</span></div>`
+      )
+      .join("");
 
     const subSelect = document.getElementById("filter-subreddit");
     const current = subSelect.value;
     subSelect.innerHTML = '<option value="">All</option>';
-    Object.keys(stats.by_subreddit || {}).forEach((sub) => {
+    Object.entries(stats.by_subreddit || {}).forEach(([sub, count]) => {
       const opt = document.createElement("option");
       opt.value = sub;
-      opt.textContent = `r/${sub} (${stats.by_subreddit[sub]})`;
+      opt.textContent = `r/${sub} (${count})`;
       subSelect.appendChild(opt);
     });
     subSelect.value = current;
+
+    // Show onboarding if no posts
+    document.getElementById("onboarding").classList.toggle("hidden", stats.total > 0);
   } catch (e) {
-    console.error("Failed to load stats:", e);
+    console.error("Stats load failed:", e);
   }
 }
 
 // --- Posts ---
+
 async function loadPosts() {
   try {
     const status = document.getElementById("filter-status").value;
@@ -78,7 +94,7 @@ async function loadPosts() {
 
     if (!data.posts.length) {
       tbody.innerHTML =
-        '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-dim)">No posts found. Click "Scan Now" or adjust your filters.</td></tr>';
+        '<tr><td colspan="9" class="empty-state">No posts found. Click "Scan Now" to search Reddit, or adjust your filters.</td></tr>';
       return;
     }
 
@@ -87,31 +103,27 @@ async function loadPosts() {
         (p) => `
       <tr>
         <td><span class="status-badge status-${p.status}">${p.status}</span></td>
-        <td>r/${esc(p.subreddit)}</td>
+        <td style="white-space:nowrap">r/${esc(p.subreddit)}</td>
         <td class="title-cell"><a href="${esc(p.url)}" target="_blank" title="${esc(p.title)}">${esc(p.title)}</a></td>
         <td>${p.score}</td>
         <td>${(p.matched_keywords || []).map((k) => `<span class="kw-tag">${esc(k)}</span>`).join("")}</td>
         <td>${(p.matched_intents || []).map((i) => `<span class="intent-tag">${esc(i)}</span>`).join("")}</td>
         <td class="relevance">${p.relevance_score.toFixed(1)}</td>
-        <td>${timeAgo(p.flagged_at)}</td>
-        <td class="actions-cell">
-          <button onclick="openDetail(${p.id})">View</button>
-          <button onclick="quickStatus(${p.id},'reviewing')">Review</button>
-          <button onclick="quickStatus(${p.id},'dismissed')">Dismiss</button>
+        <td style="white-space:nowrap">${timeAgo(p.flagged_at)}</td>
+        <td>
+          <div class="btn-group">
+            <button class="btn-sm" onclick="openDetail(${p.id})">View</button>
+            <button class="btn-sm" onclick="quickStatus(${p.id},'reviewing')">Review</button>
+            <button class="btn-sm" onclick="quickStatus(${p.id},'dismissed')">Dismiss</button>
+          </div>
         </td>
       </tr>`
       )
       .join("");
   } catch (e) {
-    console.error("Failed to load posts:", e);
+    console.error("Posts load failed:", e);
     toast("Failed to load posts", "error");
   }
-}
-
-function esc(s) {
-  const d = document.createElement("div");
-  d.textContent = s || "";
-  return d.innerHTML;
 }
 
 async function quickStatus(id, status) {
@@ -120,7 +132,7 @@ async function quickStatus(id, status) {
       method: "PATCH",
       body: JSON.stringify({ status }),
     });
-    toast(`Post marked as ${status}`, "success");
+    toast(`Marked as ${status}`, "success");
     loadPosts();
     loadStats();
   } catch (e) {
@@ -129,29 +141,31 @@ async function quickStatus(id, status) {
 }
 
 // --- Detail Modal ---
+
 async function openDetail(id) {
   try {
     const p = await api(`/posts/${id}`);
     const modal = document.getElementById("modal");
-    const body = document.getElementById("modal-body");
 
-    body.innerHTML = `
+    document.getElementById("modal-body").innerHTML = `
       <h3>${esc(p.title)}</h3>
-      <div class="detail-row"><span class="label">Subreddit</span><span>r/${esc(p.subreddit)}</span></div>
-      <div class="detail-row"><span class="label">Author</span><span>u/${esc(p.author)}</span></div>
-      <div class="detail-row"><span class="label">Reddit Score</span><span>${p.score} | ${p.num_comments} comments</span></div>
-      <div class="detail-row"><span class="label">Relevance</span><span class="relevance">${p.relevance_score.toFixed(1)}</span></div>
-      <div class="detail-row"><span class="label">Keywords</span><span>${(p.matched_keywords || []).map((k) => `<span class="kw-tag">${esc(k)}</span>`).join(" ")}</span></div>
-      <div class="detail-row"><span class="label">Intent Phrases</span><span>${(p.matched_intents || []).map((i) => `<span class="intent-tag">${esc(i)}</span>`).join(" ")}</span></div>
-      <div class="detail-row"><span class="label">Status</span><span><span class="status-badge status-${p.status}">${p.status}</span></span></div>
-      <div class="detail-row"><span class="label">Assigned To</span><span>${esc(p.assigned_to) || "—"}</span></div>
-      <div class="detail-row"><span class="label">URL</span><span><a href="${esc(p.url)}" target="_blank" style="color:var(--accent)">${esc(p.url)}</a></span></div>
+      <div class="detail-grid">
+        <span class="label">Subreddit</span><span>r/${esc(p.subreddit)}</span>
+        <span class="label">Author</span><span>u/${esc(p.author)}</span>
+        <span class="label">Reddit Score</span><span>${p.score} upvotes, ${p.num_comments} comments</span>
+        <span class="label">Relevance</span><span class="relevance">${p.relevance_score.toFixed(1)}</span>
+        <span class="label">Keywords</span><span>${(p.matched_keywords || []).map((k) => `<span class="kw-tag">${esc(k)}</span>`).join(" ")}</span>
+        <span class="label">Intent</span><span>${(p.matched_intents || []).length ? (p.matched_intents || []).map((i) => `<span class="intent-tag">${esc(i)}</span>`).join(" ") : '<span style="color:var(--text-dim)">None detected</span>'}</span>
+        <span class="label">Status</span><span><span class="status-badge status-${p.status}">${p.status}</span></span>
+        <span class="label">Assigned To</span><span>${esc(p.assigned_to) || '<span style="color:var(--text-dim)">Unassigned</span>'}</span>
+        <span class="label">Link</span><span><a href="${esc(p.url)}" target="_blank">${esc(p.url)}</a></span>
+      </div>
 
       ${p.body ? `<div class="detail-body">${esc(p.body)}</div>` : ""}
 
       <div class="detail-notes">
-        <label style="font-size:0.85rem;color:var(--text-dim)">Team Notes</label>
-        <textarea id="detail-notes">${esc(p.notes)}</textarea>
+        <label>Team Notes</label>
+        <textarea id="detail-notes" placeholder="Add context, draft a reply, note who's handling this...">${esc(p.notes)}</textarea>
       </div>
 
       <div class="detail-actions">
@@ -159,7 +173,7 @@ async function openDetail(id) {
         <button onclick="updateDetail(${p.id},'commented')">Mark Commented</button>
         <button onclick="updateDetail(${p.id},'dismissed')">Dismiss</button>
         <button onclick="saveNotes(${p.id})">Save Notes</button>
-        <button onclick="sendReminder(${p.id})">Send WhatsApp Reminder</button>
+        <button onclick="sendReminder(${p.id})">WhatsApp Reminder</button>
       </div>
     `;
 
@@ -179,11 +193,10 @@ async function updateDetail(id, status) {
 }
 
 async function saveNotes(id) {
-  const notes = document.getElementById("detail-notes").value;
   try {
     await api(`/posts/${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ notes }),
+      body: JSON.stringify({ notes: document.getElementById("detail-notes").value }),
     });
     toast("Notes saved", "success");
   } catch (e) {
@@ -194,47 +207,79 @@ async function saveNotes(id) {
 async function sendReminder(id) {
   try {
     const res = await api(`/remind/${id}`, { method: "POST" });
-    toast(res.sent ? "WhatsApp reminder sent" : "Failed to send reminder", res.sent ? "success" : "error");
+    toast(res.sent ? "WhatsApp reminder sent!" : "Failed to send", res.sent ? "success" : "error");
   } catch (e) {
     toast(e.message, "error");
   }
 }
 
 // --- Scan ---
+
+function renderLog(lines) {
+  const el = document.getElementById("scan-log");
+  el.innerHTML = lines
+    .map((line) => {
+      let cls = "log-line";
+      if (line.includes("Error") || line.includes("error") || line.includes("not configured"))
+        cls += " error";
+      else if (line.includes("complete") || line.includes("new posts saved") || line.includes("Results:"))
+        cls += " highlight";
+      else if (line.includes("Searching") || line.includes("Starting"))
+        cls += " info";
+      return `<div class="${cls}">${esc(line)}</div>`;
+    })
+    .join("");
+  el.scrollTop = el.scrollHeight;
+}
+
 async function triggerScan() {
   const btn = document.getElementById("btn-scan");
-  btn.textContent = "Scanning...";
+  const logPanel = document.getElementById("scan-log-panel");
+
+  btn.innerHTML = '<span class="btn-icon">&#9654;</span> Scanning...';
   btn.disabled = true;
+
+  // Show the scan log panel
+  logPanel.classList.remove("hidden");
+  document.getElementById("scan-log").innerHTML =
+    '<div class="log-line info"><span class="spinner"></span>Scan starting... searching all of Reddit for your keywords</div>';
+
   try {
     const res = await api("/scan", { method: "POST" });
-    toast(`Scan complete: ${res.new_posts} new posts found`, "success");
+
+    renderLog(res.log || []);
+
+    if (res.new_posts > 0) {
+      toast(`Found ${res.new_posts} new high-intent posts!`, "success");
+    } else if (res.total_matched > 0) {
+      toast(`${res.total_matched} posts matched but all were already tracked`, "info");
+    } else {
+      toast("No matching posts found. Try broadening your keywords.", "info");
+    }
+
     loadPosts();
     loadStats();
   } catch (e) {
+    document.getElementById("scan-log").innerHTML = `<div class="log-line error">Scan failed: ${esc(e.message)}</div>`;
     toast("Scan failed: " + e.message, "error");
   } finally {
-    btn.textContent = "Scan Now";
+    btn.innerHTML = '<span class="btn-icon">&#9654;</span> Scan Now';
     btn.disabled = false;
   }
 }
 
 // --- Settings ---
-function toggleSettings() {
-  document.getElementById("settings-panel").classList.toggle("hidden");
-}
 
 async function loadConfig() {
   try {
     const data = await api("/config");
     const cfg = data.config;
-    document.getElementById("cfg-subreddits").value = cfg.subreddits || "";
     document.getElementById("cfg-keywords").value = cfg.keywords || "";
     document.getElementById("cfg-intents").value = cfg.high_intent_phrases || "";
-    document.getElementById("cfg-min-kw").value = cfg.min_keyword_matches || "1";
     document.getElementById("cfg-require-intent").value = cfg.require_intent || "true";
     document.getElementById("cfg-max-posts").value = cfg.max_posts_per_poll || "25";
   } catch (e) {
-    console.error("Failed to load config:", e);
+    console.error("Config load failed:", e);
   }
 }
 
@@ -246,19 +291,19 @@ async function saveConfig(key, elementId) {
       method: "PUT",
       body: JSON.stringify({ key, value }),
     });
-    toast(`${key} updated`, "success");
+    toast(`${key.replace(/_/g, " ")} updated!`, "success");
   } catch (e) {
     toast(e.message, "error");
   }
 }
 
 // --- Init ---
+
 document.addEventListener("DOMContentLoaded", () => {
   loadStats();
   loadPosts();
   loadConfig();
 
-  // Auto-refresh every 2 minutes
   setInterval(() => {
     loadStats();
     loadPosts();

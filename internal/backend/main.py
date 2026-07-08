@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -17,11 +16,10 @@ from database import (
     get_post,
     update_post,
     get_stats,
-    get_config_override,
     set_config_override,
     get_all_config_overrides,
 )
-from reddit_bot import run_scan
+from reddit_bot import run_scan, scan_log
 from notifier import notify_new_posts, send_reminder
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
@@ -32,20 +30,14 @@ scheduler = AsyncIOScheduler()
 
 async def scheduled_scan():
     try:
-        from reddit_bot import scan_subreddits
-        from database import insert_post
-
-        posts = scan_subreddits()
-        new_posts = []
-        for post in posts:
-            was_new = await insert_post(post)
-            if was_new:
-                new_posts.append(post)
-
-        if new_posts:
-            await notify_new_posts(new_posts)
-
-        logger.info(f"Scheduled scan: {len(new_posts)} new posts")
+        result = await run_scan()
+        if result["new_posts"] > 0:
+            posts = await get_posts(status="new", limit=result["new_posts"])
+            for p in posts:
+                p["matched_keywords"] = json.loads(p.get("matched_keywords", "[]"))
+                p["matched_intents"] = json.loads(p.get("matched_intents", "[]"))
+            await notify_new_posts(posts)
+        logger.info(f"Scheduled scan: {result['new_posts']} new posts")
     except Exception as e:
         logger.error(f"Scheduled scan failed: {e}")
 
@@ -85,9 +77,6 @@ app.mount(
 @app.get("/")
 async def serve_dashboard():
     return FileResponse("../frontend/index.html")
-
-
-# --- API Routes ---
 
 
 @app.get("/api/posts")
@@ -138,8 +127,12 @@ async def api_stats():
 
 @app.post("/api/scan")
 async def api_trigger_scan():
-    new_count = await run_scan()
-    return {"new_posts": new_count}
+    return await run_scan()
+
+
+@app.get("/api/scan/log")
+async def api_scan_log():
+    return {"log": list(scan_log)}
 
 
 @app.post("/api/remind/{post_id}")
@@ -153,13 +146,9 @@ async def api_send_reminder(post_id: int):
     return {"sent": ok}
 
 
-# --- Config API ---
-
-
 @app.get("/api/config")
 async def api_get_config():
     from config import (
-        SUBREDDITS,
         KEYWORDS,
         HIGH_INTENT_PHRASES,
         MIN_KEYWORD_MATCHES,
@@ -169,7 +158,6 @@ async def api_get_config():
 
     overrides = await get_all_config_overrides()
     defaults = {
-        "subreddits": ",".join(SUBREDDITS),
         "keywords": ",".join(KEYWORDS),
         "high_intent_phrases": ",".join(HIGH_INTENT_PHRASES),
         "min_keyword_matches": str(MIN_KEYWORD_MATCHES),
@@ -189,7 +177,6 @@ class ConfigUpdate(BaseModel):
 @app.put("/api/config")
 async def api_set_config(body: ConfigUpdate):
     allowed_keys = {
-        "subreddits",
         "keywords",
         "high_intent_phrases",
         "min_keyword_matches",
