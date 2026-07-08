@@ -1,11 +1,12 @@
-import praw
 import re
+import time
 import logging
+import urllib.parse
 from datetime import datetime
 
+import httpx
+
 from config import (
-    REDDIT_CLIENT_ID,
-    REDDIT_CLIENT_SECRET,
     REDDIT_USER_AGENT,
     KEYWORDS,
     HIGH_INTENT_PHRASES,
@@ -19,6 +20,8 @@ logger = logging.getLogger("reddit_bot")
 
 scan_log: list[str] = []
 
+SEARCH_URL = "https://www.reddit.com/search.json"
+
 
 def _log(msg: str):
     ts = datetime.utcnow().strftime("%H:%M:%S")
@@ -27,14 +30,6 @@ def _log(msg: str):
     logger.info(msg)
     if len(scan_log) > 200:
         scan_log.pop(0)
-
-
-def _get_reddit() -> praw.Reddit:
-    return praw.Reddit(
-        client_id=REDDIT_CLIENT_ID,
-        client_secret=REDDIT_CLIENT_SECRET,
-        user_agent=REDDIT_USER_AGENT,
-    )
 
 
 def _load_active_config() -> dict:
@@ -79,67 +74,98 @@ def _score_post(text: str, cfg: dict) -> tuple[list[str], list[str], float]:
     return matched_keywords, matched_intents, score
 
 
-def scan_reddit() -> list[dict]:
-    """Search all of Reddit using keywords. No subreddit config needed."""
-    if not REDDIT_CLIENT_ID or REDDIT_CLIENT_ID == "your_client_id":
-        _log("Reddit credentials not configured. Add REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET to your .env file.")
-        _log("Get free credentials at: https://www.reddit.com/prefs/apps (create a 'script' type app)")
+def _search_reddit(query: str, limit: int) -> list[dict]:
+    """Search Reddit using public JSON endpoint — no API key needed."""
+    params = {
+        "q": query,
+        "sort": "new",
+        "t": "week",
+        "limit": min(limit, 100),
+        "type": "link",
+    }
+    headers = {"User-Agent": REDDIT_USER_AGENT}
+
+    try:
+        with httpx.Client(timeout=30, follow_redirects=True) as client:
+            resp = client.get(SEARCH_URL, params=params, headers=headers)
+
+            if resp.status_code == 429:
+                _log("  Rate limited by Reddit — waiting 10s before retry...")
+                time.sleep(10)
+                resp = client.get(SEARCH_URL, params=params, headers=headers)
+
+            if resp.status_code != 200:
+                _log(f"  Reddit returned HTTP {resp.status_code}")
+                return []
+
+            data = resp.json()
+            children = data.get("data", {}).get("children", [])
+            return [child["data"] for child in children if child.get("kind") == "t3"]
+
+    except Exception as e:
+        _log(f"  HTTP error: {e}")
         return []
 
+
+def scan_reddit() -> list[dict]:
+    """Search all of Reddit using public JSON endpoints. No API credentials needed."""
     cfg = _load_active_config()
-    reddit = _get_reddit()
     flagged = []
     seen_ids = set()
 
     _log(f"Starting scan with {len(cfg['keywords'])} keywords across all of Reddit...")
+    _log(f"Using Reddit public JSON (no API key required)")
     _log(f"Keywords: {', '.join(cfg['keywords'][:10])}{'...' if len(cfg['keywords']) > 10 else ''}")
     _log(f"Intent matching: {'required' if cfg['require_intent'] else 'optional'}")
 
-    for kw in cfg["keywords"]:
-        try:
-            _log(f"Searching Reddit for: \"{kw}\"")
-            results = reddit.subreddit("all").search(
-                kw,
-                sort="new",
-                time_filter="week",
-                limit=cfg["max_posts_per_poll"],
-            )
+    for i, kw in enumerate(cfg["keywords"]):
+        _log(f"[{i+1}/{len(cfg['keywords'])}] Searching for: \"{kw}\"")
 
-            kw_count = 0
-            for submission in results:
-                if submission.id in seen_ids:
-                    continue
-                seen_ids.add(submission.id)
+        results = _search_reddit(kw, cfg["max_posts_per_poll"])
 
-                text = f"{submission.title} {submission.selftext}"
-                matched_kw, matched_intent, score = _score_post(text, cfg)
+        kw_count = 0
+        for post_data in results:
+            post_id = post_data.get("id", "")
+            if post_id in seen_ids:
+                continue
+            seen_ids.add(post_id)
 
-                if len(matched_kw) < cfg["min_keyword_matches"]:
-                    continue
-                if cfg["require_intent"] and not matched_intent:
-                    continue
+            title = post_data.get("title", "")
+            selftext = post_data.get("selftext", "")
+            text = f"{title} {selftext}"
+            matched_kw, matched_intent, score = _score_post(text, cfg)
 
-                post = {
-                    "reddit_id": submission.id,
-                    "subreddit": str(submission.subreddit),
-                    "title": submission.title,
-                    "body": submission.selftext[:2000],
-                    "url": f"https://reddit.com{submission.permalink}",
-                    "author": str(submission.author) if submission.author else "[deleted]",
-                    "score": submission.score,
-                    "num_comments": submission.num_comments,
-                    "matched_keywords": matched_kw,
-                    "matched_intents": matched_intent,
-                    "relevance_score": score,
-                    "created_utc": submission.created_utc,
-                }
-                flagged.append(post)
-                kw_count += 1
+            if len(matched_kw) < cfg["min_keyword_matches"]:
+                continue
+            if cfg["require_intent"] and not matched_intent:
+                continue
 
-            _log(f"  Found {kw_count} matching posts for \"{kw}\"")
+            author = post_data.get("author", "[deleted]")
+            subreddit = post_data.get("subreddit", "unknown")
+            permalink = post_data.get("permalink", "")
 
-        except Exception as e:
-            _log(f"  Error searching for \"{kw}\": {e}")
+            post = {
+                "reddit_id": post_id,
+                "subreddit": subreddit,
+                "title": title,
+                "body": selftext[:2000],
+                "url": f"https://reddit.com{permalink}" if permalink else "",
+                "author": author,
+                "score": post_data.get("score", 0),
+                "num_comments": post_data.get("num_comments", 0),
+                "matched_keywords": matched_kw,
+                "matched_intents": matched_intent,
+                "relevance_score": score,
+                "created_utc": post_data.get("created_utc", 0),
+            }
+            flagged.append(post)
+            kw_count += 1
+
+        _log(f"  Found {kw_count} matching posts for \"{kw}\"")
+
+        # Respect Reddit rate limits — 1 request per 2 seconds for unauthenticated
+        if i < len(cfg["keywords"]) - 1:
+            time.sleep(2)
 
     _log(f"Scan complete: {len(flagged)} total posts matched (deduplicated)")
     return flagged
