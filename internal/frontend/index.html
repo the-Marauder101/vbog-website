@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VBOG Reddit Monitor</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>VBOG Reddit Monitor</h1>
+            <span class="subtitle">High-Intent Conversation Tracker</span>
+        </div>
+        <div class="header-right">
+            <button id="btn-scan" onclick="triggerScan()">Scan Now</button>
+            <button id="btn-settings" onclick="toggleSettings()">Settings</button>
+        </div>
+    </header>
+
+    <div id="stats-bar" class="stats-bar"></div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="settings-panel hidden">
+        <h2>Listening Configuration</h2>
+        <div class="settings-grid">
+            <div class="setting-group">
+                <label for="cfg-subreddits">Subreddits (comma-separated)</label>
+                <textarea id="cfg-subreddits" rows="3" placeholder="entrepreneur,startups,smallbusiness"></textarea>
+                <button onclick="saveConfig('subreddits', 'cfg-subreddits')">Save</button>
+            </div>
+            <div class="setting-group">
+                <label for="cfg-keywords">Keywords (comma-separated)</label>
+                <textarea id="cfg-keywords" rows="3" placeholder="bookkeeping,accounting,virtual cfo"></textarea>
+                <button onclick="saveConfig('keywords', 'cfg-keywords')">Save</button>
+            </div>
+            <div class="setting-group">
+                <label for="cfg-intents">High-Intent Phrases (comma-separated)</label>
+                <textarea id="cfg-intents" rows="3" placeholder="looking for,need help with,recommend"></textarea>
+                <button onclick="saveConfig('high_intent_phrases', 'cfg-intents')">Save</button>
+            </div>
+            <div class="setting-group">
+                <label for="cfg-min-kw">Min Keyword Matches</label>
+                <input type="number" id="cfg-min-kw" min="1" max="10" value="1">
+                <button onclick="saveConfig('min_keyword_matches', 'cfg-min-kw')">Save</button>
+            </div>
+            <div class="setting-group">
+                <label for="cfg-require-intent">Require Intent Phrase</label>
+                <select id="cfg-require-intent">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+                <button onclick="saveConfig('require_intent', 'cfg-require-intent')">Save</button>
+            </div>
+            <div class="setting-group">
+                <label for="cfg-max-posts">Max Posts Per Poll</label>
+                <input type="number" id="cfg-max-posts" min="5" max="100" value="25">
+                <button onclick="saveConfig('max_posts_per_poll', 'cfg-max-posts')">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+        <div class="filter-group">
+            <label>Status:</label>
+            <select id="filter-status" onchange="loadPosts()">
+                <option value="">All</option>
+                <option value="new">New</option>
+                <option value="reviewing">Reviewing</option>
+                <option value="commented">Commented</option>
+                <option value="dismissed">Dismissed</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Subreddit:</label>
+            <select id="filter-subreddit" onchange="loadPosts()">
+                <option value="">All</option>
+            </select>
+        </div>
+        <span id="post-count" class="post-count"></span>
+    </div>
+
+    <!-- Posts Table -->
+    <div class="table-wrap">
+        <table id="posts-table">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Subreddit</th>
+                    <th>Title</th>
+                    <th>Score</th>
+                    <th>Keywords</th>
+                    <th>Intent</th>
+                    <th>Relevance</th>
+                    <th>Flagged</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="posts-body"></tbody>
+        </table>
+    </div>
+
+    <!-- Post Detail Modal -->
+    <div id="modal" class="modal hidden" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
