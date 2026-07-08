@@ -1,11 +1,12 @@
 import json
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -19,8 +20,9 @@ from database import (
     set_config_override,
     get_all_config_overrides,
 )
-from reddit_bot import run_scan, scan_log
+from reddit_bot import run_scan, scan_reddit_streaming, scan_log, scan_running
 from notifier import notify_new_posts, send_reminder
+from database import insert_post
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 logger = logging.getLogger("main")
@@ -46,38 +48,30 @@ async def scheduled_scan():
 async def lifespan(app: FastAPI):
     await init_db()
     scheduler.add_job(
-        scheduled_scan,
-        "interval",
-        minutes=POLL_INTERVAL_MINUTES,
-        id="reddit_scan",
-        replace_existing=True,
+        scheduled_scan, "interval", minutes=POLL_INTERVAL_MINUTES,
+        id="reddit_scan", replace_existing=True,
     )
     scheduler.start()
-    logger.info(f"Scheduler started — polling every {POLL_INTERVAL_MINUTES} minutes")
+    logger.info(f"Scheduler started — polling every {POLL_INTERVAL_MINUTES} min")
     yield
     scheduler.shutdown()
 
 
-app = FastAPI(title="VBOG Reddit Monitor", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="VBOG Reddit Monitor", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
 
-app.mount(
-    "/static",
-    StaticFiles(directory="../frontend"),
-    name="static",
-)
+app.mount("/static", StaticFiles(directory="../frontend"), name="static")
 
 
 @app.get("/")
 async def serve_dashboard():
     return FileResponse("../frontend/index.html")
 
+
+# --- Posts API ---
 
 @app.get("/api/posts")
 async def api_get_posts(
@@ -125,14 +119,54 @@ async def api_stats():
     return await get_stats()
 
 
+# --- Scan API with SSE streaming ---
+
+@app.get("/api/scan/stream")
+async def api_scan_stream():
+    """Server-Sent Events endpoint for real-time scan progress."""
+    if scan_running:
+        raise HTTPException(409, "A scan is already running")
+
+    async def event_stream():
+        loop = asyncio.get_event_loop()
+        new_count = 0
+        total = 0
+
+        def run_scan_gen():
+            return list(scan_reddit_streaming())
+
+        events = await loop.run_in_executor(None, run_scan_gen)
+
+        for event in events:
+            if event["type"] == "post_found":
+                total += 1
+                was_new = await insert_post(event["post"])
+                if was_new:
+                    new_count += 1
+                    event["is_new"] = True
+                else:
+                    event["is_new"] = False
+                event["new_count"] = new_count
+
+            yield f"data: {json.dumps(event)}\n\n"
+
+        summary = {"type": "summary", "new_posts": new_count, "total_matched": total, "duplicates": total - new_count}
+        yield f"data: {json.dumps(summary)}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
 @app.post("/api/scan")
 async def api_trigger_scan():
+    """Non-streaming scan fallback."""
+    if scan_running:
+        raise HTTPException(409, "A scan is already running")
     return await run_scan()
 
 
 @app.get("/api/scan/log")
 async def api_scan_log():
-    return {"log": list(scan_log)}
+    return {"log": list(scan_log), "running": scan_running}
 
 
 @app.post("/api/remind/{post_id}")
@@ -141,29 +175,27 @@ async def api_send_reminder(post_id: int):
     if not post:
         raise HTTPException(404, "Post not found")
     if not WHATSAPP_PHONE:
-        raise HTTPException(400, "WhatsApp not configured")
+        raise HTTPException(400, "WhatsApp not configured — set WHATSAPP_PHONE and WHATSAPP_API_KEY in .env")
     ok = await send_reminder(WHATSAPP_PHONE, WHATSAPP_API_KEY, post)
     return {"sent": ok}
 
 
+# --- Config API ---
+
 @app.get("/api/config")
 async def api_get_config():
-    from config import (
-        KEYWORDS,
-        HIGH_INTENT_PHRASES,
-        MIN_KEYWORD_MATCHES,
-        REQUIRE_INTENT,
-        MAX_POSTS_PER_POLL,
-    )
+    from config import KEYWORDS, HIGH_INTENT_PHRASES, MIN_KEYWORD_MATCHES, REQUIRE_INTENT, MAX_POSTS_PER_POLL
 
     overrides = await get_all_config_overrides()
     defaults = {
         "keywords": ",".join(KEYWORDS),
         "high_intent_phrases": ",".join(HIGH_INTENT_PHRASES),
         "min_keyword_matches": str(MIN_KEYWORD_MATCHES),
-        "require_intent": str(REQUIRE_INTENT),
+        "require_intent": str(REQUIRE_INTENT).lower(),
         "max_posts_per_poll": str(MAX_POSTS_PER_POLL),
         "poll_interval_minutes": str(POLL_INTERVAL_MINUTES),
+        "subreddits": "",
+        "time_filter": "7d",
     }
     merged = {**defaults, **overrides}
     return {"config": merged, "overrides": overrides}
@@ -177,19 +209,15 @@ class ConfigUpdate(BaseModel):
 @app.put("/api/config")
 async def api_set_config(body: ConfigUpdate):
     allowed_keys = {
-        "keywords",
-        "high_intent_phrases",
-        "min_keyword_matches",
-        "require_intent",
-        "max_posts_per_poll",
+        "keywords", "high_intent_phrases", "min_keyword_matches",
+        "require_intent", "max_posts_per_poll", "subreddits", "time_filter",
     }
     if body.key not in allowed_keys:
-        raise HTTPException(400, f"Key must be one of: {allowed_keys}")
+        raise HTTPException(400, f"Key must be one of: {', '.join(sorted(allowed_keys))}")
     await set_config_override(body.key, body.value)
-    return {"ok": True}
+    return {"ok": True, "key": body.key, "value": body.value}
 
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run("main:app", host=HOST, port=PORT, reload=True)

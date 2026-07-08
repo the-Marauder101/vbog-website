@@ -10,126 +10,127 @@
     <header>
         <div class="header-left">
             <h1>VBOG Reddit Monitor</h1>
-            <span class="subtitle">Find high-intent conversations across all of Reddit</span>
         </div>
         <div class="header-right">
-            <button id="btn-scan" class="btn-primary" onclick="triggerScan()">
-                <span class="btn-icon">&#9654;</span> Scan Now
-            </button>
-            <button onclick="togglePanel('settings-panel')" class="btn-secondary">
-                <span class="btn-icon">&#9881;</span> Settings
-            </button>
+            <button id="btn-scan" class="btn-primary" onclick="startScan()">Scan Now</button>
+            <button onclick="togglePanel('settings-panel')" class="btn-ghost">Settings</button>
         </div>
     </header>
 
-    <!-- Getting Started Banner (shown when no posts exist) -->
+    <!-- Onboarding -->
     <div id="onboarding" class="onboarding hidden">
         <div class="onboarding-inner">
-            <h2>Welcome! Here's how to get started</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-num">1</div>
-                    <div>
-                        <strong>Add your keywords</strong>
-                        <p>Open Settings and add the keywords your ideal customers would use. The bot searches <em>all of Reddit</em> automatically — no API key needed.</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-num">2</div>
-                    <div>
-                        <strong>Click "Scan Now"</strong>
-                        <p>The bot searches Reddit's public feed for your keywords and flags posts that match high-intent phrases (like "looking for", "recommend", etc).</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-num">3</div>
-                    <div>
-                        <strong>Review and engage</strong>
-                        <p>Your team evaluates flagged posts, adds notes, and comments on Reddit directly. Use WhatsApp reminders to stay on top of new leads.</p>
-                    </div>
-                </div>
-            </div>
+            <h2>How this works</h2>
+            <ol>
+                <li><strong>Add keywords</strong> in Settings &mdash; terms your ideal customers use on Reddit (e.g. "outsource bookkeeping", "virtual CFO").</li>
+                <li><strong>Click Scan Now</strong> &mdash; the bot searches all of Reddit (no API key needed) and flags posts where someone is actively looking for help.</li>
+                <li><strong>Review &amp; engage</strong> &mdash; your team reads flagged posts, then replies on Reddit to book calls.</li>
+            </ol>
+            <button class="btn-primary" onclick="togglePanel('settings-panel')">Open Settings to Get Started</button>
         </div>
     </div>
 
-    <!-- Stats Bar -->
+    <!-- Stats -->
     <div id="stats-bar" class="stats-bar"></div>
-
-    <!-- Scan Log Panel -->
-    <div id="scan-log-panel" class="panel hidden">
-        <div class="panel-header">
-            <h2>Scan Log</h2>
-            <button onclick="togglePanel('scan-log-panel')" class="btn-close">&times;</button>
-        </div>
-        <div id="scan-log" class="scan-log">
-            <p class="dim">Click "Scan Now" to see live progress here.</p>
-        </div>
-    </div>
 
     <!-- Settings Panel -->
     <div id="settings-panel" class="panel hidden">
         <div class="panel-header">
-            <h2>Listening Settings</h2>
+            <h2>Settings</h2>
             <button onclick="togglePanel('settings-panel')" class="btn-close">&times;</button>
         </div>
-        <p class="panel-desc">Configure what the bot looks for. It searches <strong>all of Reddit</strong> using your keywords — no subreddit setup needed.</p>
-        <div class="settings-grid">
+
+        <div class="setting-group">
+            <label>
+                Keywords <span class="required">*required</span>
+                <span class="hint">Comma-separated. Each keyword triggers a separate Reddit search across all subreddits.</span>
+            </label>
+            <textarea id="cfg-keywords" rows="3" placeholder="bookkeeping, accounting, virtual cfo, outsource accounting"></textarea>
+            <button onclick="saveConfig('keywords', 'cfg-keywords')">Save Keywords</button>
+        </div>
+
+        <div class="setting-group">
+            <label>
+                High-Intent Phrases
+                <span class="hint">Posts must contain at least one of these to be flagged. Phrases like "looking for" or "recommend" signal someone actively seeking a service.</span>
+            </label>
+            <textarea id="cfg-intents" rows="3" placeholder="looking for, need help with, recommend, anyone use"></textarea>
+            <button onclick="saveConfig('high_intent_phrases', 'cfg-intents')">Save Phrases</button>
+        </div>
+
+        <div class="setting-row">
             <div class="setting-group">
-                <label for="cfg-keywords">
-                    Keywords
-                    <span class="tooltip" data-tip="The bot searches Reddit for each keyword separately, then scores the results. Add terms your ideal customers would use.">?</span>
+                <label>
+                    Subreddits <span class="optional">optional</span>
+                    <span class="hint">Leave empty to search all of Reddit. Or limit to specific subreddits (comma-separated, without r/).</span>
                 </label>
-                <textarea id="cfg-keywords" rows="4" placeholder="bookkeeping, accounting, virtual cfo, outsource accounting"></textarea>
-                <span class="setting-hint">Comma-separated. Each keyword triggers a separate Reddit search.</span>
-                <button onclick="saveConfig('keywords', 'cfg-keywords')">Save Keywords</button>
+                <input type="text" id="cfg-subreddits" placeholder="entrepreneur, smallbusiness, Accounting">
+                <button onclick="saveConfig('subreddits', 'cfg-subreddits')">Save</button>
             </div>
+
             <div class="setting-group">
-                <label for="cfg-intents">
-                    High-Intent Phrases
-                    <span class="tooltip" data-tip="Posts must contain at least one of these phrases to be flagged (when intent matching is on). These signal someone actively looking for a service.">?</span>
+                <label>
+                    Freshness
+                    <span class="hint">Only find posts from this time range.</span>
                 </label>
-                <textarea id="cfg-intents" rows="4" placeholder="looking for, need help with, recommend, anyone use"></textarea>
-                <span class="setting-hint">Comma-separated. These phrases indicate someone is actively searching for a solution.</span>
-                <button onclick="saveConfig('high_intent_phrases', 'cfg-intents')">Save Phrases</button>
-            </div>
-            <div class="setting-row">
-                <div class="setting-group small">
-                    <label for="cfg-require-intent">
-                        Require Intent Phrase
-                        <span class="tooltip" data-tip="When ON, a post must match at least one keyword AND one intent phrase. When OFF, keyword matches alone are enough (more results, less precise).">?</span>
-                    </label>
-                    <select id="cfg-require-intent">
-                        <option value="true">Yes — only flag high-intent posts</option>
-                        <option value="false">No — flag all keyword matches</option>
-                    </select>
-                    <button onclick="saveConfig('require_intent', 'cfg-require-intent')">Save</button>
-                </div>
-                <div class="setting-group small">
-                    <label for="cfg-max-posts">
-                        Results per Keyword
-                        <span class="tooltip" data-tip="How many Reddit posts to check per keyword per scan. Higher = more thorough but slower scans.">?</span>
-                    </label>
-                    <input type="number" id="cfg-max-posts" min="5" max="100" value="25">
-                    <button onclick="saveConfig('max_posts_per_poll', 'cfg-max-posts')">Save</button>
-                </div>
+                <select id="cfg-time-filter">
+                    <option value="1h">Past hour</option>
+                    <option value="1d">Past 24 hours</option>
+                    <option value="7d" selected>Past 7 days</option>
+                    <option value="30d">Past 30 days</option>
+                    <option value="all">All time</option>
+                </select>
+                <button onclick="saveConfig('time_filter', 'cfg-time-filter')">Save</button>
             </div>
         </div>
+
+        <div class="setting-row">
+            <div class="setting-group">
+                <label>
+                    Require Intent Phrase
+                    <span class="hint">ON = stricter, only high-intent posts. OFF = all keyword matches (more results).</span>
+                </label>
+                <select id="cfg-require-intent">
+                    <option value="true">Yes &mdash; only flag high-intent</option>
+                    <option value="false">No &mdash; flag all keyword matches</option>
+                </select>
+                <button onclick="saveConfig('require_intent', 'cfg-require-intent')">Save</button>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    Results per Keyword
+                    <span class="hint">How many Reddit posts to check per keyword. Higher = slower but more thorough.</span>
+                </label>
+                <input type="number" id="cfg-max-posts" min="5" max="100" value="25">
+                <button onclick="saveConfig('max_posts_per_poll', 'cfg-max-posts')">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Scan Feed -->
+    <div id="scan-feed" class="scan-feed hidden">
+        <div class="scan-feed-header">
+            <h3 id="scan-title">Scanning...</h3>
+            <span id="scan-counter" class="scan-counter"></span>
+        </div>
+        <div id="scan-log" class="scan-log"></div>
     </div>
 
     <!-- Filters -->
     <div class="filters">
         <div class="filter-group">
-            <label>Status:</label>
+            <label>Status</label>
             <select id="filter-status" onchange="loadPosts()">
                 <option value="">All</option>
-                <option value="new">New</option>
+                <option value="new" selected>New</option>
                 <option value="reviewing">Reviewing</option>
                 <option value="commented">Commented</option>
                 <option value="dismissed">Dismissed</option>
             </select>
         </div>
         <div class="filter-group">
-            <label>Subreddit:</label>
+            <label>Subreddit</label>
             <select id="filter-subreddit" onchange="loadPosts()">
                 <option value="">All</option>
             </select>
@@ -137,47 +138,23 @@
         <span id="post-count" class="post-count"></span>
     </div>
 
-    <!-- Posts Table -->
-    <div class="table-wrap">
-        <table id="posts-table">
-            <thead>
-                <tr>
-                    <th>Status</th>
-                    <th>Subreddit</th>
-                    <th>Title</th>
-                    <th>
-                        Score
-                        <span class="tooltip" data-tip="Reddit upvote score">?</span>
-                    </th>
-                    <th>
-                        Keywords Matched
-                        <span class="tooltip" data-tip="Which of your keywords were found in this post">?</span>
-                    </th>
-                    <th>
-                        Intent Signals
-                        <span class="tooltip" data-tip="Which high-intent phrases were detected">?</span>
-                    </th>
-                    <th>
-                        Relevance
-                        <span class="tooltip" data-tip="Calculated score: 2 pts per keyword + 3 pts per intent phrase. Higher = more relevant.">?</span>
-                    </th>
-                    <th>Found</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="posts-body">
-                <tr><td colspan="9" class="empty-state">Loading...</td></tr>
-            </tbody>
-        </table>
+    <!-- Posts -->
+    <div id="posts-container" class="posts-container">
+        <div id="posts-empty" class="empty-state">
+            <p>No posts yet. Click <strong>Scan Now</strong> to find leads on Reddit.</p>
+        </div>
     </div>
 
-    <!-- Post Detail Modal -->
+    <!-- Detail Modal -->
     <div id="modal" class="modal hidden" onclick="if(event.target===this)closeModal()">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
             <div id="modal-body"></div>
         </div>
     </div>
+
+    <!-- Toast container -->
+    <div id="toasts"></div>
 
     <script src="/static/app.js"></script>
 </body>
