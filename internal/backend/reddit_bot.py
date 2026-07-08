@@ -17,6 +17,7 @@ from config import (
     MAX_POSTS_PER_POLL,
     SUBREDDITS,
     TIME_FILTER,
+    EXCLUDED_SUBREDDITS,
 )
 from database import insert_post, get_all_config_overrides
 
@@ -70,6 +71,7 @@ def _load_active_config() -> dict:
         "require_intent": overrides.get("require_intent", str(REQUIRE_INTENT)).lower() == "true",
         "max_posts_per_poll": int(overrides.get("max_posts_per_poll", MAX_POSTS_PER_POLL)),
         "subreddits": _csv(overrides["subreddits"]) if "subreddits" in overrides else SUBREDDITS,
+        "excluded_subreddits": {s.lower() for s in (_csv(overrides["excluded_subreddits"]) if "excluded_subreddits" in overrides else EXCLUDED_SUBREDDITS)},
         "time_filter": overrides.get("time_filter", TIME_FILTER),
     }
 
@@ -254,6 +256,9 @@ def scan_reddit_streaming() -> Generator[dict, None, None]:
                     if pid in seen_ids:
                         continue
                     seen_ids.add(pid)
+
+                    if item["subreddit"].lower() in cfg["excluded_subreddits"]:
+                        continue
 
                     text = f"{item['title']} {item['body']}"
                     matched_kw, matched_intent, score = _score_post(text, cfg)

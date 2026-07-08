@@ -200,6 +200,7 @@ async def api_get_config():
     from config import (
         KEYWORDS, HIGH_INTENT_PHRASES, MIN_KEYWORD_MATCHES,
         REQUIRE_INTENT, MAX_POSTS_PER_POLL, SUBREDDITS, TIME_FILTER,
+        EXCLUDED_SUBREDDITS,
     )
 
     overrides = await get_all_config_overrides()
@@ -211,6 +212,7 @@ async def api_get_config():
         "max_posts_per_poll": str(MAX_POSTS_PER_POLL),
         "poll_interval_minutes": str(POLL_INTERVAL_MINUTES),
         "subreddits": ",".join(SUBREDDITS),
+        "excluded_subreddits": ",".join(EXCLUDED_SUBREDDITS),
         "time_filter": TIME_FILTER,
     }
     merged = {**defaults, **overrides}
@@ -226,7 +228,7 @@ class ConfigUpdate(BaseModel):
 async def api_set_config(body: ConfigUpdate):
     allowed_keys = {
         "keywords", "high_intent_phrases", "min_keyword_matches",
-        "require_intent", "max_posts_per_poll", "subreddits", "time_filter",
+        "require_intent", "max_posts_per_poll", "subreddits", "excluded_subreddits", "time_filter",
     }
     if body.key not in allowed_keys:
         raise HTTPException(400, f"Key must be one of: {', '.join(sorted(allowed_keys))}")
