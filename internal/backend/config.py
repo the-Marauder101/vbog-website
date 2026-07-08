@@ -9,8 +9,6 @@ def _csv(key: str, default: str = "") -> list[str]:
     return [s.strip() for s in raw.split(",") if s.strip()]
 
 
-REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
-REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET", "")
 REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "VBOG-Monitor/1.0")
 
 KEYWORDS = _csv(
