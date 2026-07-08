@@ -15,6 +15,8 @@ from config import (
     MIN_KEYWORD_MATCHES,
     REQUIRE_INTENT,
     MAX_POSTS_PER_POLL,
+    SUBREDDITS,
+    TIME_FILTER,
 )
 from database import insert_post, get_all_config_overrides
 
@@ -67,8 +69,8 @@ def _load_active_config() -> dict:
         "min_keyword_matches": int(overrides.get("min_keyword_matches", MIN_KEYWORD_MATCHES)),
         "require_intent": overrides.get("require_intent", str(REQUIRE_INTENT)).lower() == "true",
         "max_posts_per_poll": int(overrides.get("max_posts_per_poll", MAX_POSTS_PER_POLL)),
-        "subreddits": _csv(overrides.get("subreddits", "")),
-        "time_filter": overrides.get("time_filter", "7d"),
+        "subreddits": _csv(overrides["subreddits"]) if "subreddits" in overrides else SUBREDDITS,
+        "time_filter": overrides.get("time_filter", TIME_FILTER),
     }
 
 
@@ -228,7 +230,8 @@ def scan_reddit_streaming() -> Generator[dict, None, None]:
 
         yield {"type": "status", "message": f"Scanning {len(cfg['keywords'])} keywords..."}
 
-        search_targets = subreddits if subreddits else [None]
+        # Multireddit syntax (r/a+b+c) searches all listed subs in one request per keyword
+        search_targets = ["+".join(subreddits)] if subreddits else [None]
 
         for kw_idx, kw in enumerate(cfg["keywords"]):
             for target in search_targets:
