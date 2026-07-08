@@ -149,6 +149,9 @@
   .unit-config { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
   .unit-config-group { flex: 1; min-width: 140px; }
   .unit-config-group .unit-sublabel { margin: 0 0 6px; }
+  .unit-wireframe { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; padding: 12px; border: 1px solid var(--hairline); background: var(--soft); }
+  .unit-wireframe svg { width: 60px; height: 60px; flex-shrink: 0; color: var(--black); }
+  .unit-wireframe-label { font-size: 12px; color: var(--muted); line-height: 1.4; }
 
   .summary { border: 1px solid var(--line); padding: 28px; position: sticky; top: 24px; }
   .summary h2 { margin: 0 0 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -777,6 +780,18 @@ function defaultUnitState() {
 }
 function syncUnitStates(qty) { while (unitStates.length < qty) unitStates.push(defaultUnitState()); unitStates.length = qty; }
 
+/* ===== Wireframe SVGs ===== */
+function wireframeSVG(orient) {
+  if (orient === "vertical") return `<svg viewBox="0 0 70 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="6" width="42" height="104" rx="21"/><line x1="14" y1="88" x2="56" y2="88"/><circle cx="35" cy="98" r="7"/><line x1="27" y1="110" x2="27" y2="118"/><line x1="43" y1="110" x2="43" y2="118"/></svg>`;
+  if (orient === "instant") return `<svg viewBox="0 0 80 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="8" width="56" height="72" rx="4"/><rect x="20" y="16" width="40" height="24" rx="2" stroke-dasharray="3 2"/><circle cx="30" cy="56" r="5"/><circle cx="50" cy="56" r="5"/><line x1="30" y1="61" x2="30" y2="68"/><line x1="50" y1="61" x2="50" y2="68"/><line x1="28" y1="80" x2="28" y2="96"/><line x1="40" y1="80" x2="40" y2="96"/><line x1="52" y1="80" x2="52" y2="96"/><polyline points="36,100 40,112 44,100"/></svg>`;
+  return `<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="14" width="104" height="38" rx="19"/><line x1="90" y1="16" x2="90" y2="50"/><circle cx="28" cy="33" r="7"/><line x1="28" y1="33" x2="28" y2="28"/><line x1="58" y1="52" x2="58" y2="64"/><line x1="70" y1="52" x2="70" y2="64"/></svg>`;
+}
+function wireframeDesc(orient) {
+  if (orient === "vertical") return "Vertical wall-mounted storage heater";
+  if (orient === "instant") return "Instant (tankless) water heater";
+  return "Horizontal wall-mounted storage heater";
+}
+
 /* ===== Build install unit cards ===== */
 function buildUnitDetails() {
   const qty = getQty();
@@ -815,6 +830,11 @@ function buildUnitDetails() {
       `<div class="unit-config-group"><span class="unit-sublabel">Service</span>${svcSel}</div>` +
       `<div class="unit-config-group"><span class="unit-sublabel">Capacity</span>${sizeSel}</div>`;
     card.appendChild(configRow);
+
+    const wireframe = document.createElement("div");
+    wireframe.className = "unit-wireframe";
+    wireframe.innerHTML = wireframeSVG(u.orientation) + `<span class="unit-wireframe-label">${wireframeDesc(u.orientation)}</span>`;
+    card.appendChild(wireframe);
 
     const ceilOpts = PRICING.falseCeiling.map((c, ci) => `<option value="${ci}"${u.ceilingIdx === ci ? " selected" : ""}>${c.label} cm — ${fmt(c.price)}</option>`).join("");
     const ceilField = document.createElement("div");
