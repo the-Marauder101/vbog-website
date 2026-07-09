@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Heater Operations Playbook · Atlantic After-Sales</title>
+<style>
+  :root{
+    --paper:#F7F6F3; --card:#FFFFFF; --ink:#17110F; --ink-soft:#4A4340;
+    --slate:#33404A; --slate-soft:#5B6B73;
+    --red:#CC1015; --red-ink:#8E0A0E; --red-tint:#FBEDED;
+    --line:#E5E2DC; --line-strong:#D5D0C7;
+    --amber:#9A5B00; --amber-bg:#FBEFD8; --amber-line:#EAC98A;
+    --tpl:#2E6B8A; --tpl-bg:#EEF4F8; --tpl-line:#C8DEE9;
+    --ok:#1F7A3D; --ok-bg:#E9F5EC;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --nav-w:288px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--red-ink); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ---- Top bar ---- */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    background:rgba(247,246,243,.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line-strong);
+  }
+  .topbar-inner{display:flex; align-items:center; gap:14px; padding:11px 20px; max-width:1400px; margin:0 auto}
+  .brand{display:flex; align-items:center; gap:11px; flex:0 0 auto}
+  .brand .mark{
+    width:30px; height:30px; border-radius:7px; flex:0 0 auto;
+    background:linear-gradient(150deg,var(--red) 0%,var(--red) 45%,var(--slate) 100%);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
+  }
+  .brand .t{line-height:1.05}
+  .brand .t b{font-weight:700; font-size:14.5px; letter-spacing:-.01em; display:block}
+  .brand .t span{font-size:11px; color:var(--slate-soft); letter-spacing:.02em; text-transform:uppercase}
+  .search{position:relative; flex:1 1 auto; max-width:560px; margin-left:auto}
+  .search input{
+    width:100%; font-family:var(--sans); font-size:15px; color:var(--ink);
+    padding:9px 38px 9px 38px; border:1px solid var(--line-strong); border-radius:10px;
+    background:var(--card); outline:none;
+  }
+  .search input:focus{border-color:var(--red); box-shadow:0 0 0 3px var(--red-tint)}
+  .search .ico{position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--slate-soft); font-size:15px}
+  .search .clr{position:absolute; right:8px; top:50%; transform:translateY(-50%); border:0; background:none; cursor:pointer; color:var(--slate-soft); font-size:18px; padding:4px; display:none}
+  .search .clr:hover{color:var(--ink)}
+  .kbd{flex:0 0 auto; font-family:var(--mono); font-size:11px; color:var(--slate-soft); border:1px solid var(--line-strong); border-radius:5px; padding:2px 6px; background:var(--card)}
+  .menu-btn{display:none; flex:0 0 auto; border:1px solid var(--line-strong); background:var(--card); border-radius:9px; padding:8px 11px; font-size:15px; cursor:pointer}
+  .searchmeta{max-width:1400px; margin:0 auto; padding:0 20px}
+  .searchmeta .bar{display:none; padding:7px 12px; margin:8px 0 0; font-size:13px; color:var(--slate-soft); background:var(--tpl-bg); border:1px solid var(--tpl-line); border-radius:8px}
+  .searchmeta .bar b{color:var(--slate)}
+
+  /* ---- Shell ---- */
+  .shell{max-width:1400px; margin:0 auto; display:grid; grid-template-columns:var(--nav-w) 1fr; gap:0; align-items:start}
+  /* ---- Sidebar ---- */
+  .nav{
+    position:sticky; top:60px; align-self:start; height:calc(100vh - 60px); overflow-y:auto;
+    padding:22px 14px 60px 20px; border-right:1px solid var(--line);
+  }
+  .nav h4{font-size:11px; text-transform:uppercase; letter-spacing:.11em; color:var(--slate-soft); margin:20px 6px 8px; font-weight:700}
+  .nav h4:first-child{margin-top:0}
+  .nav a{
+    display:flex; gap:9px; align-items:baseline; color:var(--ink-soft); font-size:13.5px;
+    padding:6px 9px; border-radius:7px; line-height:1.35;
+  }
+  .nav a:hover{background:#efeee9; text-decoration:none; color:var(--ink)}
+  .nav a.active{background:var(--red-tint); color:var(--red-ink); font-weight:600}
+  .nav a .code{font-family:var(--mono); font-size:11px; color:var(--slate-soft); flex:0 0 auto; min-width:42px}
+  .nav a.active .code{color:var(--red-ink)}
+  .nav a.sub{padding-left:20px; font-size:12.5px; color:var(--slate-soft)}
+  .nav .empty{display:none}
+
+  /* ---- Content ---- */
+  .content{padding:34px 44px 120px; min-width:0}
+  .hero{border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:30px}
+  .hero .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.08em; color:var(--red-ink); text-transform:uppercase}
+  .hero h1{font-size:34px; line-height:1.06; letter-spacing:-.02em; margin:8px 0 6px; font-weight:800}
+  .hero .sub{font-size:15px; color:var(--slate-soft); max-width:60ch}
+  .hero .meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px}
+  .hero .meta span{font-size:12px; font-family:var(--mono); color:var(--slate); background:var(--card); border:1px solid var(--line-strong); border-radius:20px; padding:4px 11px}
+
+  .sop{scroll-margin-top:74px; margin:0 0 14px}
+  .sop.empty{display:none}
+  .sop-head{margin:44px 0 6px; padding-top:8px}
+  .sop-head:first-of-type{margin-top:8px}
+  .sop-head .id{font-family:var(--mono); font-size:12.5px; font-weight:700; color:#fff; background:var(--red); padding:3px 9px; border-radius:6px; letter-spacing:.02em}
+  .sop-head h2{font-size:24px; letter-spacing:-.015em; margin:12px 0 0; font-weight:800}
+  .part-rule{margin:56px 0 4px; display:flex; align-items:center; gap:14px}
+  .part-rule .lbl{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--red-ink); font-weight:700; flex:0 0 auto}
+  .part-rule .ln{flex:1 1 auto; height:2px; background:var(--ink)}
+  .part-rule h2{font-size:20px; margin:0; font-weight:800; letter-spacing:-.01em}
+  .part-rule .whole{display:flex; flex-direction:column; gap:2px}
+  .part-rule .whole em{font-style:normal; font-size:12.5px; color:var(--slate-soft)}
+
+  h3.blk{font-size:15px; text-transform:uppercase; letter-spacing:.05em; color:var(--slate); margin:30px 0 12px; font-weight:700; display:flex; align-items:center; gap:9px}
+  h3.blk::before{content:""; width:16px; height:2px; background:var(--red); display:inline-block}
+
+  p{margin:0 0 12px}
+  .lead{color:var(--ink-soft); max-width:74ch}
+
+  /* Step cards */
+  .steps{display:flex; flex-direction:column; gap:10px; margin:6px 0 18px}
+  .step{display:grid; grid-template-columns:38px 1fr; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px}
+  .step-num{font-family:var(--mono); font-weight:700; font-size:13px; color:var(--red-ink); background:var(--red-tint); border-radius:8px; height:30px; display:flex; align-items:center; justify-content:center}
+  .step-title{font-weight:700; font-size:15px; margin-bottom:4px; letter-spacing:-.01em}
+  .step p{margin:0 0 8px; font-size:14.5px; color:var(--ink-soft)}
+  .step p:last-of-type{margin-bottom:0}
+  .owner{display:inline-block; font-size:11px; font-family:var(--mono); color:var(--slate); background:#f0efe9; border:1px solid var(--line-strong); border-radius:20px; padding:2px 10px; margin-top:8px}
+  .status{font-family:var(--mono); font-size:12.5px; background:#f0efe9; border-radius:4px; padding:0 5px; color:var(--slate)}
+
+  /* Template box */
+  .tpl{background:var(--tpl-bg); border:1px solid var(--tpl-line); border-radius:13px; margin:10px 0 20px; overflow:hidden}
+  .tpl-head{display:flex; align-items:center; gap:10px; padding:11px 15px; border-bottom:1px solid var(--tpl-line); background:rgba(255,255,255,.5)}
+  .tpl-head .code{font-family:var(--mono); font-weight:700; font-size:12px; color:#fff; background:var(--tpl); padding:3px 8px; border-radius:5px}
+  .tpl-head .ch{font-size:12px; color:var(--tpl); font-weight:600}
+  .tpl-head .name{font-size:13.5px; font-weight:600; color:var(--slate); flex:1 1 auto; min-width:0}
+  .copy{flex:0 0 auto; border:1px solid var(--tpl-line); background:#fff; color:var(--tpl); font-family:var(--sans); font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px}
+  .copy:hover{background:var(--tpl); color:#fff}
+  .copy.done{background:var(--ok); color:#fff; border-color:var(--ok)}
+  .tpl-body{padding:15px 17px; font-size:14px; line-height:1.6; white-space:pre-wrap; color:var(--ink)}
+  .tpl-body .subj{font-weight:700; color:var(--slate)}
+
+  /* Callouts */
+  .callout{border-radius:12px; padding:13px 16px; margin:14px 0; font-size:14px; line-height:1.55}
+  .callout.amber{background:var(--amber-bg); border:1px solid var(--amber-line); color:#5c3a02}
+  .callout.amber b{color:var(--amber)}
+  .callout.note{background:#f2f1ec; border:1px solid var(--line-strong); color:var(--ink-soft); font-style:italic}
+  .callout.fix{background:var(--red-tint); border:1px solid #eecccd; color:#5c1214}
+  .callout.fix b{color:var(--red-ink)}
+  .callout .tag{display:inline-block; font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; margin-right:8px; vertical-align:1px}
+
+  .golden{background:var(--card); border:1px solid var(--line); border-left:3px solid var(--red); border-radius:10px; padding:14px 18px; margin:16px 0}
+  .golden ul{margin:8px 0 0; padding-left:20px}
+  .golden li{margin:6px 0; font-size:14.5px; color:var(--ink-soft)}
+
+  /* Tables */
+  .tbl{width:100%; border-collapse:collapse; margin:8px 0 20px; font-size:14px; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+  .tbl th{text-align:left; background:#f3f2ec; color:var(--slate); font-size:12px; text-transform:uppercase; letter-spacing:.04em; padding:10px 14px; border-bottom:1px solid var(--line)}
+  .tbl td{padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top; color:var(--ink-soft)}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td b, .tbl td strong{color:var(--ink)}
+  .tbl .k{font-weight:600; color:var(--ink); white-space:nowrap}
+  .menu-emoji{font-size:16px; margin-right:6px}
+  .goesto{font-family:var(--mono); font-size:12.5px; color:var(--red-ink)}
+
+  mark{background:#ffe27a; color:inherit; border-radius:2px; padding:0 1px}
+
+  ul.plain{margin:6px 0 16px; padding-left:20px}
+  ul.plain li{margin:6px 0; color:var(--ink-soft); font-size:14.5px}
+
+  .backtop{position:fixed; right:22px; bottom:22px; z-index:30; width:44px; height:44px; border-radius:50%; border:1px solid var(--line-strong); background:var(--card); color:var(--slate); font-size:18px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.09); display:none; align-items:center; justify-content:center}
+  .backtop:hover{color:var(--red-ink); border-color:var(--red)}
+
+  .noresults{display:none; padding:40px 10px; text-align:center; color:var(--slate-soft)}
+  .noresults b{color:var(--ink)}
+
+  /* Mobile */
+  .scrim{display:none}
+  @media (max-width:940px){
+    .shell{grid-template-columns:1fr}
+    .menu-btn{display:block}
+    .kbd{display:none}
+    .nav{
+      position:fixed; top:0; left:0; height:100vh; width:min(84vw,320px); z-index:60;
+      background:var(--paper); border-right:1px solid var(--line-strong);
+      transform:translateX(-102%); transition:transform .22s ease; padding-top:18px;
+      box-shadow:2px 0 24px rgba(0,0,0,.12);
+    }
+    body.nav-open .nav{transform:translateX(0)}
+    body.nav-open .scrim{display:block; position:fixed; inset:0; z-index:55; background:rgba(0,0,0,.34)}
+    .content{padding:24px 18px 100px}
+    .hero h1{font-size:27px}
+    .step{grid-template-columns:30px 1fr; gap:10px; padding:12px 13px}
+    .search{max-width:none}
+  }
+  /* ---- Edit mode ---- */
+  .editbtn{flex:0 0 auto; border:1px solid var(--line-strong); background:var(--card); color:var(--slate); border-radius:9px; padding:8px 12px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px}
+  .editbtn:hover{border-color:var(--red); color:var(--red-ink)}
+  body.editing .editbtn{background:var(--red); color:#fff; border-color:var(--red)}
+  .editbar{display:none; position:fixed; left:0; right:0; bottom:0; z-index:70; background:#1d1a18; color:#fff; padding:10px 16px; align-items:center; gap:10px; flex-wrap:wrap; box-shadow:0 -4px 20px rgba(0,0,0,.25)}
+  body.editing .editbar{display:flex}
+  .editbar .msg{font-size:13px; color:#f0d9d9; flex:1 1 260px}
+  .editbar .msg b{color:#fff}
+  .editbar button{border:0; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans)}
+  .editbar .primary{background:var(--red); color:#fff}
+  .editbar .primary:hover{background:#e11319}
+  .editbar .ghost{background:#3a3532; color:#fff}
+  .editbar .ghost:hover{background:#4a4340}
+  .editbar .sync{display:flex; gap:6px; align-items:center; font-size:12px; color:#c9c2be}
+  .editbar input{border:1px solid #4a4340; background:#2a2622; color:#fff; border-radius:6px; padding:6px 8px; font-size:12px; width:150px}
+  body.editing #content{background:#fffdf7; outline:2px dashed var(--tpl-line); outline-offset:8px; border-radius:8px}
+  body.editing #content:focus{outline:2px solid var(--red)}
+  body.editing #content p:hover, body.editing #content li:hover, body.editing #content h2:hover, body.editing #content h3:hover, body.editing #content td:hover, body.editing #content .tpl-body:hover, body.editing #content .callout:hover{outline:1px dashed var(--red); outline-offset:3px; border-radius:4px}
+  body.editing .copy{display:none}
+  .savehint{position:fixed; bottom:70px; left:50%; transform:translateX(-50%); z-index:80; background:var(--ok); color:#fff; padding:9px 16px; border-radius:22px; font-size:13px; font-weight:600; opacity:0; transition:opacity .2s; pointer-events:none}
+  .savehint.show{opacity:1}
+
+  @media print{
+    .topbar,.nav,.backtop,.copy,.menu-btn,.scrim,.editbar,.editbtn{display:none!important}
+    .shell{grid-template-columns:1fr}
+    .content{padding:0}
+    .tpl,.step,.golden,.callout{break-inside:avoid}
+    body{font-size:12px}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="menu-btn" id="menuBtn" aria-label="Open section index">☰</button>
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div class="t"><b>Operations Playbook</b><span>Atlantic Water Heaters</span></div>
+    </div>
+    <div class="search">
+      <span class="ico" aria-hidden="true">⌕</span>
+      <input id="q" type="search" placeholder="Search SOPs, templates, messages…  (press /)" autocomplete="off" aria-label="Search the playbook">
+      <button class="clr" id="clr" aria-label="Clear search">×</button>
+    </div>
+    <button class="editbtn" id="editBtn" title="Edit this page">✎ <span class="lbltxt">Edit</span></button>
+    <span class="kbd">/</span>
+  </div>
+  <div class="searchmeta"><div class="bar" id="sbar"></div></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+  <nav class="nav" id="nav">
+    <h4>Start Here</h4>
+    <a href="#how-to-use"><span class="code">§1</span>How to use this document</a>
+    <a href="#corrections"><span class="code">v1.2</span>Corrections log</a>
+
+    <h4>Part 1 · Full SOPs</h4>
+    <a href="#sop-01"><span class="code">SOP-01</span>Complaint Intake</a>
+    <a href="#sop-02"><span class="code">SOP-02</span>Sales Inquiry</a>
+    <a href="#sop-03"><span class="code">SOP-03</span>Spare Parts Inquiry</a>
+    <a href="#sop-04"><span class="code">SOP-04</span>Site Visit — Warranty &amp; Service</a>
+    <a href="#sop-05"><span class="code">SOP-05</span>Intake Triage &amp; Routing</a>
+    <a href="#sec-repl" class="sub"><span class="code">§5</span>Replacement Authorization</a>
+    <a href="#sec-install" class="sub"><span class="code">§6</span>Installation Request</a>
+    <a href="#sec-amc" class="sub"><span class="code">§7</span>Annual Maintenance (AMC)</a>
+    <a href="#sec-log" class="sub"><span class="code">§8</span>Logging a Case</a>
+    <a href="#sec-complaint" class="sub"><span class="code">§9</span>Unhappy Customer</a>
+    <a href="#sec-notsure" class="sub"><span class="code">§10</span>Not Sure / Anything Else</a>
+
+    <h4>Part 2 · Front Desk Quick Ref</h4>
+    <a href="#qr-complaint"><span class="code">😟</span>Water Heater Complaint</a>
+    <a href="#qr-parts"><span class="code">🔧</span>Spare Parts Inquiry</a>
+  </nav>
+
+  <main class="content" id="content">
+    <header class="hero">
+      <div class="eyebrow">Water Heater Business · Operations Playbook</div>
+      <h1>Every customer, handled the same way — every time.</h1>
+      <p class="sub">Part 1 is the full Standard Operating Procedures. Part 2 is the front-desk quick reference with copy-paste Email &amp; WhatsApp texts. Start with <a href="#sop-05">SOP-05 (Intake Triage)</a> — it's the front door that routes every call, walk-in, or message. One After-Sales team runs all of it.</p>
+      <div class="meta">
+        <span>Version 1.3 · Corrected</span>
+        <span>Atlantic After-Sales</span>
+        <span>Tip: press <b>/</b> to search · <b>✎</b> to edit</span>
+      </div>
+    </header>
+
+    <section class="sop" id="how-to-use" data-sec="how-to-use">
+      <div class="sop-head"><span class="id">§ 1</span><h2>Overview &amp; How To Use This Document</h2></div>
+      <p class="lead searchable">This playbook standardizes every customer-facing process for Atlantic Water Heaters so that any team member handles them the same way, every time — regardless of who picks up the inquiry.</p>
+      <div class="searchable">
+        <p class="lead">Three customer types / pathways run through these SOPs:</p>
+        <ul class="plain">
+          <li><b>Retail Individual</b> — an end consumer who bought (or owns) a unit directly.</li>
+          <li><b>Sadara / Contractor / Project Account</b> — handled with a premade, account-level communication rather than the retail intake flow. Warranty here is often governed by a Take Over Certificate (TOC) rather than a reseller bill.</li>
+          <li><b>Prospect</b> — someone who hasn't purchased yet (Sales Inquiry) or needs a part (Spare Parts Inquiry).</li>
+        </ul>
+      </div>
+      <div class="callout note searchable">Each SOP follows the same structure: Purpose → Process Flow → Ready-to-use Templates → Turnaround Targets. Everything in a blue template box is copy-paste ready — just fill in the bracketed [placeholders]. Sections flagged in amber are drafted as a sensible default and should be confirmed or edited by you before the team starts using them.</div>
+      <div class="golden searchable">
+        <b>Golden rules that apply to every SOP</b>
+        <ul>
+          <li><b>Log every enquiry in Airtable</b> — warranty complaint, spare part, sales, anything. Use the single <span class="status">Complaint Status</span> field, and put the details in <span class="status">Intake: Brief Complaint</span>. If it's not logged, it didn't happen.</li>
+          <li>Assign a <b>Job Number</b> internally — but never quote it to the customer. It's our job to know which client maps to which Job Number.</li>
+          <li>Never make a financial decision (replacement, PO, chargeable visit, discount) without the Manager's validation.</li>
+          <li><b>PO costs are strictly confidential</b> — a customer never learns what a replacement or PO cost us.</li>
+          <li>The customer should never have to chase us — proactively update them, and never leave a complaint unattended.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sop" id="corrections" data-sec="corrections">
+      <div class="sop-head"><span class="id">v1.3</span><h2>Corrections Log</h2></div>
+      <p class="lead searchable">This version folds in the operating reality of the After-Sales team. Key changes from v1.1/1.2:</p>
+      <div class="callout fix searchable"><span class="tag">Team</span>One <b>After-Sales team</b>, not separate desks. Three roles: <b>Front Desk Coordinator</b> (customer communication, intake, follow-ups, logging), <b>Manager</b> (validation, initial escalation, discounts, quotations, dispatch coordination, site reports), <b>Technical Sales Manager</b> (final escalations, key accounts, on-site technical coordination, final report approval), plus <b>Technicians</b>.</div>
+      <div class="callout fix searchable"><span class="tag">Airtable</span>Removed the "Case File" concept and the "Case File Complete — Pending Warranty Review" status. One <span class="status">Complaint Status</span> field carries warranty and "Sales Enquiry" alike; details go in <span class="status">Intake: Brief Complaint</span>. Every enquiry is logged.</div>
+      <div class="callout fix searchable"><span class="tag">Replacement</span>Only two paths — (1) hand over from <b>our own stock</b> (Sadara customers) with pickup coordination, or (2) <b>issue a PO to a reseller</b> and tell the customer where to collect. No delivery, no old-unit pickup. PO cost is confidential.</div>
+      <div class="callout fix searchable"><span class="tag">Leakage</span>Leakage complaints skip the checklist — get videos + bill/TOC fast, rule out a Teflon-tape fix (24h confirm → close), else issue a replacement.</div>
+      <div class="callout fix searchable"><span class="tag">Docs</span>Warranty is checked against the <b>reseller bill</b> (dated, lists units — verify the units) or, for projects, the <b>Take Over Certificate (TOC)</b> (its date governs; covers all units in the project; no unit list).</div>
+      <div class="callout fix searchable"><span class="tag">SLA</span>Closure after <b>4 days &amp; a minimum of 4 unanswered follow-ups</b>, with a close-out message first. Dispatch <b>48h</b> for Dubai/Sharjah; Abu Dhabi stretched; RAK/Fujairah stacked as far as possible — but a complaint is never left unattended.</div>
+      <div class="callout fix searchable"><span class="tag">Job No.</span>"Case ID" is now "Job Number", removed from all customer-facing messages.</div>
+    </section>
+
+    <div class="part-rule" id="part-1">
+      <span class="lbl">Part 1</span><div class="ln"></div>
+      <div class="whole"><h2>Full Standard Operating Procedures</h2><em>Intake Triage · Complaint · Sales · Spare Parts · Site Visits</em></div>
+    </div>
+    <!-- ---------- SOP-01 ---------- -->
+    <section class="sop" id="sop-01" data-sec="sop-01">
+      <div class="sop-head"><span class="id">SOP-01</span><h2>Water Heater Complaint Intake</h2></div>
+      <h3 class="blk">Purpose</h3>
+      <p class="lead searchable">To make sure every complaint — from a retail individual or a Sadara/project account — is acknowledged fast, correctly assessed for warranty, resolved at the desk where possible, and only sent to a technician when it genuinely needs one.</p>
+      <h3 class="blk">Scope</h3>
+      <p class="lead searchable">Applies to all inbound complaints about a malfunctioning, damaged, or defective Atlantic water heater, received via phone, email, WhatsApp, website form, or walk-in.</p>
+      <h3 class="blk">Roles (After-Sales team)</h3>
+      <ul class="plain searchable">
+        <li><b>Front Desk Coordinator</b> — first response, all customer communication, collects information, logs and updates Airtable, runs follow-ups.</li>
+        <li><b>Manager</b> — warranty validation, initial escalation, discount/quotation approvals, dispatch coordination, writes site reports.</li>
+        <li><b>Technical Sales Manager</b> — final escalations, key-account complaints (come to him directly, he routes to the front desk), on-site technical coordination, approves the final site report.</li>
+        <li><b>Technician</b> — on-site diagnosis and repair.</li>
+      </ul>
+
+      <div class="callout amber searchable"><span class="tag">Fast path</span><b>If the complaint is a leak, don't start with the checklist.</b> Jump to the <a href="#leak-path">Leakage Fast-Path</a> below — get videos + the bill/TOC, rule out a Teflon-tape fix, and only then treat it as a warranty replacement.</div>
+
+      <h3 class="blk">Process Flow</h3>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Acknowledge</div><p>Log the enquiry in Airtable: date, channel, customer name, contact number, the details in <span class="status">Intake: Brief Complaint</span>, and set <span class="status">Complaint Status</span>. Assign a Job Number for internal tracking (never shared with the customer).</p><p>Acknowledge the customer so they know someone is on it — target within 2 business hours. Keep it to plain communication; no Job Number in the message.</p><p>If the complaint is a leak → go to the Leakage Fast-Path.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Collect Basic Information</div><p>We collect what we need to assess warranty — not a full "case file". Sadara/contractor/project → send the official intake email (Template SD-1) with the Checklist &amp; Declaration form. Retail → request the basics (Template RT-1).</p><p>Ask for: photos/video of the fault, photo of the model + serial number label, and the <b>reseller bill or the project's TOC</b> (see Bill vs TOC below). For Sadara: also the site pin + access + site contact.</p><p>Update Airtable: <span class="status">Complaint Status = 'Awaiting Customer Documents'</span></p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">3</div><div class="step-main"><div class="step-title">Confirm Receipt &amp; Chase Gaps</div><p>Reply to confirm you received whatever came in — even if incomplete. If something's missing, send Template MD-1 listing only the missing items.</p><p>Follow the 4-day closure SLA (Step 7) if the customer goes quiet.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Validate Warranty</div><p>Manager checks warranty against the <b>bill</b> (dated, lists the units — verify the specific unit) or, for a project, the <b>TOC</b> (the TOC date governs and covers all units in the project). Periods: 2 years electrical, 5 years body.</p><p>Update Airtable: <span class="status">Complaint Status = 'Warranty Verified'</span> or <span class="status">'Out of Warranty'</span>, with the reason.</p><span class="owner">Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">5</div><div class="step-main"><div class="step-title">Try to Resolve at the Desk First</div><p>Before dispatching anyone, attempt a remote fix: guidance on settings/heating time, a Teflon-tape re-seal for a minor connection leak, thermostat/usage checks (see SOP-04 Track B pre-checks).</p><p>Resolved remotely → confirm with the customer and close. Update Airtable: <span class="status">Complaint Status = 'Resolved — Remote'</span>.</p><span class="owner">Front Desk Coordinator / Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">6</div><div class="step-main"><div class="step-title">Under Warranty &amp; Can't Desk-Resolve → Dispatch</div><p>Verify the documents are complete, then hand to the Manager to schedule a technician (→ <a href="#sop-04">SOP-04</a>). Over-the-phone troubleshooting can continue in the interim.</p><p>Update Airtable: <span class="status">Complaint Status = 'Under Warranty — Pending Site Visit'</span></p><span class="owner">Manager → Technician</span></div></div>
+        <div class="step searchable"><div class="step-num">7</div><div class="step-main"><div class="step-title">Out of Warranty → Inform Customer</div><p>Send Template OW-1 with the specific reason and the AED 160 chargeable-visit option. If the issue is isolated to a part, offer to hand off to <a href="#sop-03">SOP-03 (Spare Parts)</a> for a quote instead.</p><p>Update Airtable: <span class="status">Complaint Status = 'Out of Warranty — Customer Notified'</span></p><span class="owner">Front Desk Coordinator (Manager validates)</span></div></div>
+        <div class="step searchable"><div class="step-num">8</div><div class="step-main"><div class="step-title">Follow Up &amp; Close (4-day SLA)</div><p>If the customer goes quiet, follow up — a minimum of 4 unanswered follow-ups over 4 days. Before closing, send the close-out message ("Due to no response we're closing this for now — happy to reopen whenever you need support").</p><p>Update Airtable: <span class="status">Complaint Status = 'Closed — No Response'</span>. Any case can be reopened later.</p><span class="owner">Front Desk Coordinator</span></div></div>
+      </div>
+
+      <!-- Leakage fast path -->
+      <div id="leak-path" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">Leakage Fast-Path</h3>
+      <div class="callout note searchable">A leak doesn't need the full checklist to begin. Move fast — a real body leak means a replacement, and a connection leak is a two-minute fix.</div>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">L1</div><div class="step-main"><div class="step-title">Get Video + Proof of Warranty</div><p>Skip the checklist. Ask for a clear video of the leak and the <b>reseller bill</b>, or the <b>TOC</b> if it's a project. This is enough to start.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">L2</div><div class="step-main"><div class="step-title">Leak, or Just Teflon Tape?</div><p>From the video, decide: is it the body/tank leaking, or is it weeping at the inlet/outlet connection? If it's the connection, ask the customer (or their plumber) to re-apply Teflon tape on the threads (Template BL-2).</p><span class="owner">Front Desk Coordinator / Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">L3</div><div class="step-main"><div class="step-title">Teflon Fixed It → Wait 24h, Confirm, Close</div><p>If it was a connection leak and the tape resolved it, wait 24 hours, confirm with the customer that it's dry, and close the ticket. Update Airtable: <span class="status">Complaint Status = 'Resolved — Teflon'</span>.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">L4</div><div class="step-main"><div class="step-title">Real Body Leak &amp; Under Warranty → Replacement</div><p>If it's a genuine body/tank leak and warranty checks out (bill or TOC), issue a replacement via the two-option process in <a href="#sec-repl">SOP-05 Section 5</a> (our stock for Sadara, or a PO to a reseller). Supply-only — installation is not included.</p><span class="owner">Manager</span></div></div>
+      </div>
+
+      <!-- Bill vs TOC -->
+      <h3 class="blk">Bill vs TOC — Which Date Governs Warranty</h3>
+      <table class="tbl searchable">
+        <thead><tr><th>Document</th><th>When it applies</th><th>How we use it</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Reseller Bill</td><td>Retail &amp; most individual purchases</td><td>The dated bill is the true warranty document and <b>lists the units</b> — verify the specific unit against it.</td></tr>
+          <tr><td class="k">Take Over Certificate (TOC)</td><td>Projects / handovers (the bill may be years older, e.g. 2020)</td><td>The <b>TOC date</b> — when the project was handed over and heaters put to use — governs warranty. It covers <b>all units</b> in that project/apartment and does <b>not</b> list individual units.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="blk">Templates</h3>
+      <div class="tpl searchable" id="tpl-sd1">
+        <div class="tpl-head"><span class="code">SD-1</span><span class="name">Sadara / Contractor-Managed Account Intake (actual template in use)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Warranty Confirmation Request for Water Heater — [Brand] — [Unit/Flat No., Building/Site Name]</span>
+
+Dear Team,
+
+Further to your warranty claim request regarding Warranty Confirmation for Water Heater Brand — [Brand] — [Unit/Flat No., Building/Site Name]. Please see the following guidelines for warranty claims:
+
+1. In line with the warranty obligation as defined by [Manufacturer / Group Name], ALL contractor-managed complaints will only be processed after receipt of a fully completed "Warranty Claim Request – Checklist and Declaration" form.
+
+2. This requirement is mandatory to validate warranty eligibility, confirm scope responsibility (product vs installation), and ensure proper site access and coordination.
+
+3. Required submission (attach all items): Please return the attached form fully completed and include the following supporting documents:
+3.1. Warranty proof — the purchase bill, or the project Take Over Certificate (TOC) where applicable.
+3.2. Clear photos / videos showing: the reported fault, and the product model + serial number label.
+3.3. Exact site location pin (Google Maps) + access instructions (parking, gate pass, work permit requirements).
+3.4. Site contact details (name + mobile) who will be present during the visit.
+
+4. Site visit policy
+4.1. Site visit will be confirmed upon receiving the completed form and minimum evidence above are received and validated.
+4.2. Over the phone / remote troubleshooting may be provided in the interim based on the information shared.
+4.3. If a site visit is requested without sufficient documentation, or the issue is out of warranty, installation-related, due to misuse, a third-party product, missing documentation, or not a manufacturing defect, the visit is chargeable at AED 160 (VAT inclusive). This charge covers the inspection visit only — it does not include labor for any subsequent repair or service.
+No charges apply if the issue is covered under product warranty.
+
+5. Incomplete submissions will be closed as insufficient data after our follow-up window, and registered only once the completed form and evidence are received.
+
+Regards,
+[Your Name] | [Company Name]
+
+[Remember to attach: Warranty Claim Request – Checklist and Declaration form]</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-rt1">
+        <div class="tpl-head"><span class="code">RT-1</span><span class="name">Retail Individual Intake Request</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: We've received your complaint — here's what we need next</span>
+
+Hi [Customer Name],
+
+Thanks for reaching out about your Atlantic water heater. To get this moving, could you share the following?
+
+• Full name &amp; contact number
+• Purchase bill (with date &amp; retailer/dealer name) — or the project Take Over Certificate (TOC) if applicable
+• Product model &amp; serial number (on the metal rating plate on the tank)
+• A short description of the issue, plus photos or a short video if possible
+
+Once we have this, we'll check your warranty status and confirm the next steps.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-md1">
+        <div class="tpl-head"><span class="code">MD-1</span><span class="name">Missing Document Request</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Just a couple of things needed before we proceed</span>
+
+Hi [Customer Name / Team],
+
+Thanks for sending those over — we've received them. We're still missing the following before we can validate and proceed:
+
+[ list only the missing items from below ]
+• Completed "Warranty Claim Request – Checklist and Declaration" form (Sadara / contractor-managed complaints only)
+• Serial Number / photo of the model + serial number label
+• Purchase bill or project TOC
+• Photos/Video of the reported fault
+• Exact site location pin (Google Maps) + access instructions (Sadara / contractor-managed complaints only)
+• Site contact name + mobile number (Sadara / contractor-managed complaints only)
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-wc1">
+        <div class="tpl-head"><span class="code">WC-1</span><span class="name">Warranty Service Checklist (Under Warranty)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Good news, you're covered — here's what happens next</span>
+
+Hi [Customer Name],
+
+Your unit ([Serial No.]) is confirmed under warranty. Here's a quick checklist before our technician visits:
+
+☐ Power off the unit at least 30 minutes before the visit
+☐ Keep the area around the unit clear and accessible
+☐ Keep the original bill / warranty document on hand
+☐ Note down any error code shown on the display
+☐ Confirm your preferred visit slot: [Morning / Afternoon] on [proposed dates]
+
+Our technician will call before arrival. We'll confirm the exact date once scheduled.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-ow1">
+        <div class="tpl-head"><span class="code">OW-1</span><span class="name">Out-of-Warranty / Chargeable Visit Notification</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Update on your water heater</span>
+
+Hi [Customer Name / Team],
+
+We've reviewed [Serial No.] and the issue is determined to be [out of warranty / installation-related / due to misuse / a third-party product / missing documentation / not attributable to a manufacturing defect].
+
+As per our warranty policy, a site visit in this case is chargeable at AED 160 (VAT inclusive). This covers the inspection visit only — it does not include labor for any subsequent repair or service intervention, which will be quoted separately after inspection.
+
+Let us know if you'd like to proceed with the chargeable visit, or if you'd prefer we send a standalone spare-parts quote instead (if the issue is isolated to a specific part).
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <h3 class="blk">Turnaround Targets</h3>
+      <table class="tbl searchable">
+        <thead><tr><th>Stage</th><th>Target Turnaround</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Acknowledgment (Step 1)</td><td><b>Within 2 business hours</b></td></tr>
+          <tr><td class="k">Document receipt confirmation (Step 3)</td><td><b>Same business day</b></td></tr>
+          <tr><td class="k">Warranty validation (Step 4)</td><td><b>Within 1 business day of documents</b></td></tr>
+          <tr><td class="k">Dispatch or resolution (Step 6)</td><td><b>48 hours — Dubai/Sharjah (see dispatch SLA for distant cities)</b></td></tr>
+          <tr><td class="k">Follow-ups before close (Step 8)</td><td><b>4 days &amp; min. 4 unanswered follow-ups, then close-out message</b></td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="blk">Escalation</h3>
+      <ul class="plain searchable">
+        <li>Customer disputes the warranty finding → escalate to the Manager for manual review within 1 business day; final call sits with the Technical Sales Manager.</li>
+        <li>Key-account complaint → goes directly to the Technical Sales Manager, who routes it to the front desk.</li>
+        <li>Case sitting unowned for more than 4 hours → escalate to the Manager immediately.</li>
+      </ul>
+    </section>
+    <!-- ---------- SOP-02 ---------- -->
+    <section class="sop" id="sop-02" data-sec="sop-02">
+      <div class="sop-head"><span class="id">SOP-02</span><h2>Water Heater Sales Inquiry</h2></div>
+      <div class="callout amber searchable"><span class="tag">Needs your input</span><b>Draft flow.</b> You didn't specify the exact steps for this one, so the flow below is a sensible default. Review it and tell me what to change.</div>
+      <h3 class="blk">Purpose</h3>
+      <p class="lead searchable">To respond to inbound sales inquiries quickly, recommend the right Atlantic unit for the customer's actual need, and follow up consistently so inquiries don't go cold.</p>
+      <h3 class="blk">Scope</h3>
+      <p class="lead searchable">Applies to all new (pre-purchase) inquiries about buying an Atlantic water heater, received via phone, WhatsApp, website, or walk-in.</p>
+      <h3 class="blk">Process Flow (Draft)</h3>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Acknowledge</div><p>Log in Airtable: date, channel, customer name, contact number, <span class="status">Complaint Status = 'Sales Enquiry'</span>, with the details in <span class="status">Intake: Brief Complaint</span>.</p><p>Respond promptly, confirming you're on it and asking a couple of quick questions to recommend the right unit.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Understand Requirement</div><p>Capture: household/business size or hot water usage pattern, preferred capacity (litres), installation type (horizontal / vertical), power type (electric / gas), space constraints, budget range, and installation timeline.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">3</div><div class="step-main"><div class="step-title">Recommend &amp; Share Quote</div><p>Recommend 1–3 suitable Atlantic models (good / better / best) and send a quotation — price, warranty terms (2 yr electrical / 5 yr body), installation charges if any, and validity period. Quotations are approved by the Manager.</p><span class="owner">Front Desk Coordinator (Manager approves)</span></div></div>
+        <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Follow Up (4-day SLA)</div><p>Follow up across the 4-day window — a minimum of 4 unanswered follow-ups before closing. Answer questions, confirm availability.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">5</div><div class="step-main"><div class="step-title">Incentive on Final Follow-up</div><p>On the final follow-up, a time-bound incentive (discount, Manager-approved) can be offered to prompt a decision.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">6</div><div class="step-main"><div class="step-title">Close</div><p>Won → hand off to order processing (→ <a href="#sec-install">SOP-05 Section 6</a> if installation is needed). No response → send the close-out message, mark closed-lost, add to the nurture list.</p><span class="owner">Front Desk Coordinator</span></div></div>
+      </div>
+    </section>
+
+    <!-- ---------- SOP-03 ---------- -->
+    <section class="sop" id="sop-03" data-sec="sop-03">
+      <div class="sop-head"><span class="id">SOP-03</span><h2>Water Heater Spare Parts Inquiry</h2></div>
+      <h3 class="blk">Purpose</h3>
+      <p class="lead searchable">To quote spare parts accurately and quickly, and to follow up consistently so inquiries convert instead of going quiet.</p>
+      <h3 class="blk">Scope</h3>
+      <p class="lead searchable">Applies to all inquiries for individual spare parts (heating element, thermostat, anode rod, valve, etc.) for Atlantic water heaters, whether from an existing owner or via a technician.</p>
+      <h3 class="blk">Process Flow</h3>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Identify the Unit</div><p>Log in Airtable: date, channel, customer name, contact number, <span class="status">Complaint Status = 'Sales Enquiry'</span>, with the part(s) and details in <span class="status">Intake: Brief Complaint</span>.</p><p>Get the Serial Number if the customer has it — it identifies the exact model and compatible parts. If not, get the Capacity (litres) and whether the unit is Horizontal or Vertical.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Get the Requirement</div><p>Confirm which part(s) are needed, whether it's from visible damage/diagnosis or a technician's recommendation, and how urgent it is. Log the part name(s).</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">3</div><div class="step-main"><div class="step-title">Get Pricing &amp; Check Stock</div><p>Check stock and get the price from the Manager. Do not quote from memory or guess. Note availability and any lead time.</p><span class="owner">Front Desk Coordinator (Manager prices)</span></div></div>
+        <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Share Quote</div><p>Send an itemized quote (Template PQ-1): part(s), price, availability/lead time, and validity period.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">5</div><div class="step-main"><div class="step-title">Follow Up (4-day SLA)</div><p>If no response, follow up — a minimum of 4 unanswered follow-ups over 4 days. Day 1 gentle check-in (PF-1), then confirm stock / answer objections (PF-2).</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">6</div><div class="step-main"><div class="step-title">Final Follow-up — Offer 5% Discount</div><p>On the final follow-up, offer a time-bound 5% discount (Manager-approved) to prompt a decision (Template PF-3).</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">7</div><div class="step-main"><div class="step-title">Close if No Reply</div><p>After the 4-day window with no response, send the close-out message (Template PC-1). Update Airtable: <span class="status">Complaint Status = 'Closed — No Response'</span>. Reopen anytime.</p><span class="owner">Front Desk Coordinator</span></div></div>
+      </div>
+      <div class="callout amber searchable"><span class="tag">Confirm</span>I kept the 5% discount on the final follow-up and stretched the cadence to your 4-day / 4-follow-up SLA. If parts should follow a different discount rule than warranty tickets, tell me.</div>
+
+      <h3 class="blk">Templates</h3>
+      <div class="tpl searchable" id="tpl-pq1">
+        <div class="tpl-head"><span class="code">PQ-1</span><span class="name">Spare Parts Quote</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Your spare parts quote — [Part Name(s)]</span>
+
+Hi [Customer Name],
+
+Based on [Serial No. / Capacity + Orientation], here's the quote for [Part Name(s)]:
+
+• [Part 1] — Qty [X] — [Price] — In stock / [Lead time]
+• [Part 2] — Qty [X] — [Price] — In stock / [Lead time]
+
+This quote is valid for [X] days. Let me know if you'd like to go ahead or have any questions.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-pf1">
+        <div class="tpl-head"><span class="code">PF-1</span><span class="ch">Follow-up 1</span><span class="name">Gentle check-in</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Just checking in — [Part Name(s)]</span>
+
+Hi [Customer Name],
+
+Just checking if you had a chance to look at the quote we sent for [Part Name(s)]. Happy to answer any questions or adjust anything.
+
+Best,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-pf2">
+        <div class="tpl-head"><span class="code">PF-2</span><span class="ch">Follow-up 2</span><span class="name">Confirm stock</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Still holding stock for you — [Part Name(s)]</span>
+
+Hi [Customer Name],
+
+Following up on the quote for [Part Name(s)] — we currently have stock available, but wanted to flag that in case timing matters on your end.
+
+Let me know if you'd like to proceed or need anything clarified.
+
+Best,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-pf3">
+        <div class="tpl-head"><span class="code">PF-3</span><span class="ch">Final · 5% off</span><span class="name">Final Follow-up + Discount</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: A little something to help you decide — [Part Name(s)]</span>
+
+Hi [Customer Name],
+
+Wanted to close the loop on [Part Name(s)]. If you're able to confirm, we can apply a 5% discount on this order — the final price would be [discounted total].
+
+Just reply 'yes' and we'll get it processed right away.
+
+Best,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-pc1">
+        <div class="tpl-head"><span class="code">PC-1</span><span class="name">Closure (No Reply)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Closing this out for now — [Part Name(s)]</span>
+
+Hi [Customer Name],
+
+Due to no response, we're closing this inquiry for now. If you still need [Part Name(s)] down the line, just reply here or reach out anytime and we'll pick it back up — happy to help whenever you need.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+    </section>
+    <!-- ---------- SOP-04 ---------- -->
+    <section class="sop" id="sop-04" data-sec="sop-04">
+      <div class="sop-head"><span class="id">SOP-04</span><h2>Water Heater Site Visit — Verification &amp; Service</h2></div>
+      <h3 class="blk">Purpose</h3>
+      <p class="lead searchable">To make sure site visits are only dispatched when actually needed, that customers know upfront whether a charge could apply, and that technicians document findings clearly so the free-vs-chargeable decision is based on evidence.</p>
+      <h3 class="blk">Scope</h3>
+      <p class="lead searchable">Applies once a complaint can't be resolved at the desk and needs physical verification — covering both Body Leakage (tank) claims and Electrical (thermostat / heating element) claims.</p>
+      <h3 class="blk">Warranty Coverage at a Glance</h3>
+      <table class="tbl searchable">
+        <thead><tr><th>Component</th><th>Warranty Period</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Electrical (thermostat, heating element)</td><td><b>2 years</b></td></tr>
+          <tr><td class="k">Body / Tank (leakage)</td><td><b>5 years</b></td></tr>
+        </tbody>
+      </table>
+      <h3 class="blk">Roles</h3>
+      <ul class="plain searchable">
+        <li><b>Front Desk Coordinator</b> — sends confirmation messages, applies the charge policy, keeps the customer updated.</li>
+        <li><b>Manager</b> — validates warranty, coordinates dispatch, writes the site report.</li>
+        <li><b>Technical Sales Manager</b> — on-site technical coordination for complex/key-account jobs; approves the final site report.</li>
+        <li><b>Technician</b> — on-site diagnosis, documents findings, decides free vs. chargeable outcome with the Manager.</li>
+      </ul>
+      <h3 class="blk">The Charge Policy (applies to both tracks)</h3>
+      <p class="lead searchable">Whenever a site visit is needed to verify a claim, send the Visit Confirmation (Template VC-1) first. Covered under warranty → no charge. Not covered → AED 160 per water heater unit (so a multi-unit site is AED 160 per unit; a single-unit site is a flat AED 160).</p>
+
+      <div class="callout note searchable">Dispatch runs to the SLA in <a href="#dispatch-sla">Dispatch SLA &amp; City Rules</a> below — 48h for nearby cities, stacked for distant ones, but never left unattended.</div>
+
+      <h3 class="blk">Track A — Body Leakage</h3>
+      <p class="lead searchable">This is the on-site continuation of the <a href="#leak-path">Leakage Fast-Path</a> — used when the leak can't be judged from video alone.</p>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">A1</div><div class="step-main"><div class="step-title">Request Evidence</div><p>Ask the customer for clear photos/video of the leak plus the bill/TOC before deciding anything else.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">A2</div><div class="step-main"><div class="step-title">Acknowledge Receipt &amp; Set Expectations</div><p>Confirm you've received the evidence and are reviewing. Give a timeline: "We'll review this and get back to you within [1 business day]."</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">A3</div><div class="step-main"><div class="step-title">Technical Review — Identify the Leak Source</div><p>Determine which outcome applies:</p><p>• Confirmed leak from the body/tank → covered defect. Go to Step A5 (free replacement).</p><p>• Leak at the inlet/outlet connection → fitting issue, not a warranty defect. Go to Step A5 (Teflon fix).</p><p>• Can't determine, or unit not installed → Go to Step A5 (pressure test).</p><p>If unclear, ask for better video before making a call — don't guess on something worth a free replacement.</p><span class="owner">Manager / Technician</span></div></div>
+        <div class="step searchable"><div class="step-num">A4</div><div class="step-main"><div class="step-title">Document the Finding</div><p>Write up the finding before communicating: what was reviewed, observed, and decided. Attach the evidence in Airtable. For a site visit, the Manager writes the site report and the Technical Sales Manager approves it.</p><span class="owner">Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">A5</div><div class="step-main"><div class="step-title">Communicate the Outcome</div><p>Body leak confirmed → offer a free replacement (Template BL-1) and route to <a href="#sec-repl">SOP-05 Section 5 (Replacement)</a>.</p><p>Inlet/outlet leak → suggest re-applying Teflon tape (Template BL-2).</p><p>Needs a pressure test → ask the customer to bring the unit in (Template BL-3).</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">A6</div><div class="step-main"><div class="step-title">Confirm Resolution</div><p>After the replacement is collected or the Teflon fix is applied (wait 24h for a Teflon fix), follow up to confirm it's resolved. Update Airtable: <span class="status">Complaint Status = 'Resolved'</span>. If unresolved, reopen the same ticket — don't start a new one.</p><span class="owner">Front Desk Coordinator</span></div></div>
+      </div>
+      <div class="callout note searchable">Installation is never included with a body-leakage replacement — it's supply-only. Make this clear in every replacement communication.</div>
+
+      <h3 class="blk">Track B — Electrical (Thermostat / Heating Element — Inadequate Heating)</h3>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">B1</div><div class="step-main"><div class="step-title">Send Pre-Check Questions</div><p>Before scheduling, send Template EL-1 asking: (1) Has the heater been switched on continuously for more than 6 hours? (2) Can building maintenance share a photo of the current thermostat setting? These catch the most common false alarms.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">B2</div><div class="step-main"><div class="step-title">Acknowledge Receipt of Pre-Check Info</div><p>Confirm receipt and that you're reviewing. If no response, follow up per the 4-day SLA.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">B3</div><div class="step-main"><div class="step-title">Evaluate Pre-Check Results &amp; Document</div><p>Write up: hours the unit was on, what the thermostat photo shows. If either explains the issue → resolve remotely with guidance. Update Airtable: <span class="status">'Resolved — Remote (user error)'</span>, go to Step B4. If neither explains it → go to Step B5.</p><span class="owner">Front Desk Coordinator / Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">B4</div><div class="step-main"><div class="step-title">Confirm Remote Resolution</div><p>Follow up after 2–3 days. Working → close. Still not working → go to Step B5 (site visit).</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">B5</div><div class="step-main"><div class="step-title">Schedule the Site Visit</div><p>Send Template VC-1 restating the AED 160 charge policy. The customer must acknowledge it before scheduling. Manager coordinates dispatch per the SLA.</p><span class="owner">Front Desk Coordinator → Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">B6</div><div class="step-main"><div class="step-title">Technician Visit — Inspect &amp; Document</div><p>Technician tests the thermostat and heating element on site and documents: what was tested, found, and the action taken (replacement / no fault). This is the basis for the free-vs-chargeable decision.</p><span class="owner">Technician</span></div></div>
+        <div class="step searchable"><div class="step-num">B7</div><div class="step-main"><div class="step-title">Communicate the Outcome</div><p>Part confirmed faulty → replace free under the 2-year electrical warranty (Template EL-2). Both components fine, usage-related → chargeable AED 160 (Template EL-3). Update Airtable: <span class="status">'Resolved — Free Replacement'</span> or <span class="status">'Resolved — Chargeable (AED 160)'</span>.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">B8</div><div class="step-main"><div class="step-title">Post-Visit Satisfaction Check</div><p>Follow up 3–5 days after. If the issue persists, reopen the ticket and escalate to the Technical Sales Manager — don't restart the process.</p><span class="owner">Front Desk Coordinator</span></div></div>
+      </div>
+
+      <!-- Dispatch SLA -->
+      <div id="dispatch-sla" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">Dispatch SLA &amp; City Rules</h3>
+      <p class="lead searchable">Target a 48-hour dispatch-or-resolution SLA. When tickets are thin in a distant city, we stack visits so a technician isn't sent across the country for a single complaint — but a complaint is never left unattended. Worst case: 2–3 days with no new ticket; by day 4 we either give the customer a scheduled date or go the next day.</p>
+      <table class="tbl searchable">
+        <thead><tr><th>City</th><th>Dispatch handling</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Dubai · Sharjah</td><td><b>Close by — resolve within 48 hours.</b></td></tr>
+          <tr><td class="k">Abu Dhabi</td><td>Can be stretched — stack tickets where possible.</td></tr>
+          <tr><td class="k">Ras Al Khaimah (RAK) · Fujairah</td><td>Very distant — stack as much as possible; stretched furthest. Still scheduled, never dropped.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="blk">Templates</h3>
+      <div class="tpl searchable" id="tpl-vc1">
+        <div class="tpl-head"><span class="code">VC-1</span><span class="name">Visit Confirmation &amp; Charge Policy</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Site Visit Confirmation &amp; Charge Policy</span>
+
+Hi [Customer Name / Team],
+
+To verify [reported issue] under warranty, we'll need to send a technician for a site visit.
+
+Please note: if the issue is confirmed to be covered under warranty, there's no charge. If it turns out not to be covered, a charge of AED 160 applies per water heater unit — so if there's more than one unit at the site, each is charged AED 160; for a single unit, it's a flat AED 160.
+
+Please confirm you're OK to proceed on these terms and we'll schedule the visit.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-bl1">
+        <div class="tpl-head"><span class="code">BL-1</span><span class="name">Confirmed Body Leak (Free Replacement)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Confirmed Body Leak — Free Replacement</span>
+
+Hi [Customer Name],
+
+Thank you for the photos/video. We've reviewed them and confirmed this is a body (tank) leak, which is covered under the 5-year body warranty.
+
+We'll arrange a free replacement unit for you. You'll be able to collect it — we'll confirm the pickup point (our office, or the reseller we nominate) shortly.
+
+Please note: installation is not included — you'll need your own plumber/technician to fit the new unit. If you'd like us to install it, we can share a separate paid quote.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-bl2">
+        <div class="tpl-head"><span class="code">BL-2</span><span class="name">Leak at Inlet/Outlet (Teflon Fix)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Leak at the Inlet/Outlet Connection</span>
+
+Hi [Customer Name],
+
+Based on the photos/video, the leak looks like it's coming from the inlet/outlet connection rather than the tank itself. This is usually resolved by re-applying Teflon tape on the fitting threads.
+
+Could you (or your plumber) try this and let us know if the leak continues? We'll check back in a day, and if it's still leaking we'll take another look.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-bl3">
+        <div class="tpl-head"><span class="code">BL-3</span><span class="name">Unit Not Installed — Bring In for Pressure Test</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Please Bring In Your Water Heater for Testing</span>
+
+Hi [Customer Name],
+
+Since the unit isn't currently installed, we're not able to verify the leak remotely. Please bring it to [Location / Service Center] so we can run a pressure test.
+
+If the test confirms a body leak, we'll arrange a free replacement (installation not included). We'll let you know the result the same day.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-el1">
+        <div class="tpl-head"><span class="code">EL-1</span><span class="name">Remote Checks Before Scheduling a Visit</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: A Couple of Quick Checks Before We Schedule a Visit</span>
+
+Hi [Customer Name / Team],
+
+Before we schedule a technician, could you please confirm:
+
+1. Has the water heater been switched on continuously for more than 6 hours? (Shorter periods may not be enough to fully heat the tank.)
+2. Could building maintenance share a photo of the current thermostat setting? This sometimes gets changed and directly affects heating.
+
+This will help us confirm whether a visit is actually needed and save you a potential chargeable visit if the issue is a simple setting.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-el2">
+        <div class="tpl-head"><span class="code">EL-2</span><span class="name">Faulty Part Confirmed (Free Replacement)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Water Heater Repaired Under Warranty</span>
+
+Hi [Customer Name],
+
+Our technician confirmed the [thermostat / heating element] was faulty. As this is covered under your 2-year electrical warranty, it's been replaced free of charge.
+
+We'll follow up in a few days to make sure everything is heating correctly.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-el3">
+        <div class="tpl-head"><span class="code">EL-3</span><span class="name">No Fault Found (Chargeable Visit)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Site Visit Findings</span>
+
+Hi [Customer Name],
+
+Our technician checked the thermostat and heating element and found both working correctly. The issue appears to be related to how the unit is being used rather than a product fault.
+
+As no manufacturing defect was found, this visit is chargeable at AED 160.
+
+[Add usage guidance here if relevant — e.g. recommended thermostat setting, minimum heating time]
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <h3 class="blk">Escalation</h3>
+      <ul class="plain searchable">
+        <li>Customer disputes the on-site finding (free vs. chargeable) → Manager reviews within 1 business day; final call sits with the Technical Sales Manager.</li>
+        <li>Body leak where the pressure test is inconclusive → escalate to the Technical Sales Manager before communicating an outcome.</li>
+        <li>Same issue persisting after resolution → reopen the original ticket and escalate to the Technical Sales Manager, don't start a new intake.</li>
+      </ul>
+    </section>
+    <!-- ---------- SOP-05 ---------- -->
+    <section class="sop" id="sop-05" data-sec="sop-05">
+      <div class="sop-head"><span class="id">SOP-05</span><h2>Intake Triage &amp; Case Routing — "What Does the Customer Need?"</h2></div>
+      <h3 class="blk">Purpose</h3>
+      <p class="lead searchable">To make sure every phone call, walk-in, or message starts in the right place — routed to the correct process immediately — so nothing gets mishandled, duplicated, or lost. This is the front door to every other SOP.</p>
+      <h3 class="blk">Scope</h3>
+      <p class="lead searchable">Applies to all inbound contact — phone, walk-in, WhatsApp, or email — before any other process begins. Every enquiry is logged in Airtable at this stage.</p>
+      <h3 class="blk">Roles</h3>
+      <ul class="plain searchable">
+        <li><b>Front Desk Coordinator</b> — answers every contact, picks the category, starts the right process, owns customer communication.</li>
+        <li><b>Manager</b> — validation, initial escalation, discounts, quotations (incl. re-installation), PO issuance, dispatch coordination, site reports.</li>
+        <li><b>Technical Sales Manager</b> — final escalations, key accounts (their complaints come to him directly), on-site technical coordination, final report approval.</li>
+        <li><b>Technician</b> — site visits, installation, AMC service.</li>
+      </ul>
+
+      <h3 class="blk">The Menu — Where Each Option Goes</h3>
+      <p class="lead searchable">Pick whichever option matches the contact, then follow the "Goes To" column. Every option gets logged in Airtable (<span class="status">Complaint Status</span> + <span class="status">Intake: Brief Complaint</span>).</p>
+      <table class="tbl searchable">
+        <thead><tr><th>Option</th><th>What It's For</th><th>Goes To</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><span class="menu-emoji">📞</span>Customer on the Phone Now</td><td>A live call — figure out what they need on the line.</td><td class="goesto">Pick the matching option below</td></tr>
+          <tr><td class="k"><span class="menu-emoji">💧</span>New Enquiry — Price Quote</td><td>Someone wants to buy a unit.</td><td class="goesto"><a href="#sop-02">SOP-02 — Sales Inquiry</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">🔧</span>Repair Request</td><td>Unit has a problem.</td><td class="goesto"><a href="#sop-01">SOP-01 — Complaint Intake</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">🛡️</span>Warranty Claim</td><td>Customer asking about warranty coverage.</td><td class="goesto"><a href="#sop-01">SOP-01</a> → validation</td></tr>
+          <tr><td class="k"><span class="menu-emoji">🔁</span>Replacement</td><td>Confirmed body leak — replacement to issue.</td><td class="goesto"><a href="#sec-repl">Section 5, below</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">🚿</span>Installation Request</td><td>Unit needs installing — new purchase or post-replacement.</td><td class="goesto"><a href="#sec-install">Section 6, below</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">🗓️</span>Annual Maintenance (AMC)</td><td>Scheduled yearly service.</td><td class="goesto"><a href="#sec-amc">Section 7, below</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">⚙️</span>Spare Parts</td><td>Customer needs a specific part.</td><td class="goesto"><a href="#sop-03">SOP-03 — Spare Parts</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">📋</span>Log a Case</td><td>Something to record — no immediate action.</td><td class="goesto"><a href="#sec-log">Section 8, below</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">😟</span>Complaint / Unhappy Customer</td><td>Upset customer, any issue type.</td><td class="goesto"><a href="#sec-complaint">Section 9, below</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">❓</span>Not Sure / Anything Else</td><td>Doesn't fit any category above.</td><td class="goesto"><a href="#sec-notsure">Section 10, below</a></td></tr>
+        </tbody>
+      </table>
+
+      <!-- Section 5 Replacement -->
+      <div id="sec-repl" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">5 · Replacement (Confirmed Body Leak, Under Warranty)</h3>
+      <p class="lead searchable">Reached only when a body/tank leak is confirmed (video or pressure test) and warranty checks out via bill or TOC. There are exactly two ways we issue a replacement — and in both, the customer collects the unit. We do not deliver or coordinate delivery.</p>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">R1</div><div class="step-main"><div class="step-title">Confirm Eligibility &amp; Specs</div><p>Confirm the leak is a body/tank defect (evidence in Airtable) and the unit is within the 5-year body warranty (bill or TOC). Note the exact model/capacity and orientation to be replaced.</p><span class="owner">Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">R2</div><div class="step-main"><div class="step-title">Manager Validates</div><p>Manager approves the replacement. Nothing is issued without this. Log the approval in Airtable. An inlet/outlet fitting issue is a Teflon fix, not a replacement.</p><span class="owner">Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">R3</div><div class="step-main"><div class="step-title">Pick the Path</div><p><b>Option 1 — Our own stock (Sadara customers):</b> confirm we have the unit in stock. → R4a.</p><p><b>Option 2 — PO to a reseller:</b> we don't stock it (or it's not a Sadara case). → R4b.</p><span class="owner">Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">R4a</div><div class="step-main"><div class="step-title">Option 1 · Hand Over From Our Stock</div><p>Confirm stock availability, coordinate a pickup time with the customer, and hand over the heater at our place. That's the only logistics we run — no delivery. Supply-only; installation not included.</p><span class="owner">Manager / Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">R4b</div><div class="step-main"><div class="step-title">Option 2 · Issue a PO to a Reseller</div><p>Manager prepares the PO (Template PO-1) and emails it to the reseller's POC. Then tell the customer which reseller to collect the new heater from. <b>Our job ends once the PO is issued and the customer knows where to go.</b> No delivery, no pickup coordination.</p><p><b>PO details are strictly confidential</b> — the customer never sees the PO cost or terms.</p><span class="owner">Manager (PO) · Front Desk Coordinator (customer)</span></div></div>
+        <div class="step searchable"><div class="step-num">R5</div><div class="step-main"><div class="step-title">Log &amp; Close</div><p>Log against the ticket in Airtable: replacement model, path (own stock / reseller PO), reseller + PO reference and cost (internal, confidential), and the customer collection instruction given. Link to the original complaint. Update <span class="status">Complaint Status = 'Resolved — Replacement Issued'</span>.</p><span class="owner">Manager</span></div></div>
+      </div>
+      <div class="callout note searchable">No delivery. No old-unit pickup. No seller price comparison workflow. The customer always collects — from us (own stock) or from the nominated reseller (PO).</div>
+
+      <div class="tpl searchable" id="tpl-po1">
+        <div class="tpl-head"><span class="code">PO-1</span><span class="name">Purchase Order to Reseller (Internal · Confidential)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Purchase Order — [Unit Model / Capacity] — [Company Name] — [PO Number]</span>
+
+Hi [Reseller POC Name],
+
+Please confirm availability and process the following order for customer collection:
+
+Model / Capacity: [Model, Litres, Horizontal/Vertical]
+Quantity: [X]
+Agreed Price: [Price]
+Collection: Customer will collect directly from your outlet — [Customer Name / reference].
+Required By: [Date]
+Internal Ref (Job Number, not for customer): [Job Number]
+
+Please confirm stock, price, and readiness for collection at your earliest.
+
+Thank you,
+[Your Name] | [Company Name]
+
+⚠️ INTERNAL — PO price and terms are confidential. Never share PO cost with the customer.</div>
+      </div>
+      <!-- Section 6 Installation -->
+      <div id="sec-install" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">6 · Installation Request</h3>
+      <p class="lead searchable">Two different reasons a customer ends up here — know which one before quoting, because one is free and one is paid. Re-installation quotes are prepared/approved by the Manager.</p>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">I1</div><div class="step-main"><div class="step-title">Log &amp; Confirm Which Case</div><p>Log/update in Airtable, <span class="status">Complaint Status = 'Sales Enquiry'</span>, details in <span class="status">Intake: Brief Complaint</span>.</p><p>(a) A newly purchased unit needs installing. (b) A warranty-replacement unit (installation excluded) the customer wants us to install — this is a paid service. Confirm which before going further.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">I2</div><div class="step-main"><div class="step-title">Confirm the Unit</div><p>Confirm exact model/capacity. If it's a replacement, cross-reference the ticket to confirm it's the same unit.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">I3</div><div class="step-main"><div class="step-title">Get Site Details</div><p>Address, access instructions, and site contact name + mobile.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">I4</div><div class="step-main"><div class="step-title">Pre-Installation Check</div><p>Confirm the site is ready: existing plumbing? electrical connection in place? access restrictions? If not ready, tell the customer what to prepare — avoids a wasted trip.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">I5</div><div class="step-main"><div class="step-title">Quote If Paid</div><p>For case (b), the Manager prepares the installation quote (Template IN-2); wait for the customer to confirm before scheduling. No paid visit without price agreement.</p><span class="owner">Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">I6</div><div class="step-main"><div class="step-title">Schedule &amp; Confirm</div><p>Manager schedules the slot and sends confirmation (Template IN-1).</p><span class="owner">Manager → Technician</span></div></div>
+        <div class="step searchable"><div class="step-num">I7</div><div class="step-main"><div class="step-title">Installation &amp; Quality Check</div><p>Technician installs, then runs a quality check: power on, heating confirmed, no leaks at connections, thermostat set correctly. Don't leave until confirmed working.</p><span class="owner">Technician</span></div></div>
+        <div class="step searchable"><div class="step-num">I8</div><div class="step-main"><div class="step-title">Customer Sign-Off</div><p>Customer confirms the install is complete and working, in writing (signed form, email, or WhatsApp).</p><span class="owner">Technician → Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">I9</div><div class="step-main"><div class="step-title">Log &amp; Close</div><p>Update Airtable: installation date, technician, sign-off received. Link to the original ticket if it was a replacement.</p><span class="owner">Front Desk Coordinator</span></div></div>
+      </div>
+      <div class="tpl searchable" id="tpl-in1">
+        <div class="tpl-head"><span class="code">IN-1</span><span class="name">Installation Confirmation</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Installation Scheduled — [Unit Model / Capacity]</span>
+
+Hi [Customer Name],
+
+Your installation is scheduled for [Date] at [Time window]. Our technician will call before arriving.
+
+Please make sure:
+• The installation area is accessible
+• Plumbing and electrical connections are in place
+• Someone is available on site to let the technician in
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-in2">
+        <div class="tpl-head"><span class="code">IN-2</span><span class="name">Paid Installation Quote</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Installation Charge for Your Replacement Unit</span>
+
+Hi [Customer Name],
+
+As this installation is for a warranty-replacement unit, it's a separately chargeable service. The installation charge is [Price].
+
+Please confirm you'd like to go ahead and we'll get it scheduled.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <!-- Section 7 AMC -->
+      <div id="sec-amc" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">7 · Annual Maintenance (AMC)</h3>
+      <p class="lead searchable">Atlantic's recommended annual service — covering the main wear points that affect performance and lifespan.</p>
+      <table class="tbl searchable">
+        <thead><tr><th>Check</th><th>What Happens</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Anode Rod</td><td><b>Checked and replaced if worn</b></td></tr>
+          <tr><td class="k">Tank Flush</td><td><b>Sediment removed from the tank</b></td></tr>
+          <tr><td class="k">Heating Element &amp; Thermostat</td><td><b>Checked for correct operation</b></td></tr>
+          <tr><td class="k">Pressure Relief / Safety Valve</td><td><b>Checked for correct operation</b></td></tr>
+        </tbody>
+      </table>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">M1</div><div class="step-main"><div class="step-title">Log &amp; Check AMC Status</div><p>Log/update in Airtable (details in <span class="status">Intake: Brief Complaint</span>). Check whether the customer already has an active AMC.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">M2</div><div class="step-main"><div class="step-title">New → Share Packages / Existing → Schedule</div><p>New → share AMC options and pricing (Template AM-1). Existing → schedule the annual visit and confirm (Template AM-2).</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">M3</div><div class="step-main"><div class="step-title">Pre-Visit Reminder</div><p>Send a reminder closer to the date (Template AM-3).</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">M4</div><div class="step-main"><div class="step-title">Service Visit — Technician Documents</div><p>Technician performs the maintenance and documents: anode rod condition (replaced?), sediment level, element/thermostat readings, valve operation. Flag anything needing attention.</p><span class="owner">Technician</span></div></div>
+        <div class="step searchable"><div class="step-num">M5</div><div class="step-main"><div class="step-title">Post-Service Report</div><p>Send a summary and recommendations (Template AM-4). If a part is wearing, mention it now — a natural upsell to SOP-03 and avoids a surprise breakdown.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">M6</div><div class="step-main"><div class="step-title">Schedule Next Visit</div><p>While the customer is engaged, tentatively book next year's visit. Log completion and next-visit date.</p><span class="owner">Front Desk Coordinator</span></div></div>
+      </div>
+      <div class="tpl searchable" id="tpl-am1">
+        <div class="tpl-head"><span class="code">AM-1</span><span class="name">New Customer AMC Offer</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Annual Maintenance Plans for Your Atlantic Water Heater</span>
+
+Hi [Customer Name],
+
+Here are our AMC package options for your unit:
+
+[Package details / pricing]
+
+Each visit covers: anode rod check/replacement, tank flush, heating element &amp; thermostat check, and safety valve check.
+
+Let us know if you'd like to sign up.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-am2">
+        <div class="tpl-head"><span class="code">AM-2</span><span class="name">Existing Customer Visit Confirmation</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Your Annual Maintenance Visit Is Scheduled</span>
+
+Hi [Customer Name],
+
+Your annual maintenance visit is scheduled for [Date] at [Time window]. Our technician will call before arriving.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-am3">
+        <div class="tpl-head"><span class="code">AM-3</span><span class="name">Reminder</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Reminder — Your Maintenance Visit Is Coming Up</span>
+
+Hi [Customer Name],
+
+Just a reminder that your annual maintenance visit is scheduled for [Date] at [Time window].
+
+Let us know if this time no longer works.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-am4">
+        <div class="tpl-head"><span class="code">AM-4</span><span class="name">Post-Service Report</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Your Annual Maintenance Is Complete — Here's What We Found</span>
+
+Hi [Customer Name],
+
+Your annual maintenance visit is complete. Here's a summary of what was done:
+
+• Anode Rod: [Checked / Replaced]
+• Tank Flush: [Completed — sediment level was low/moderate/heavy]
+• Heating Element: [Working correctly / [issue found]]
+• Thermostat: [Working correctly / [issue found]]
+• Safety Valve: [Working correctly / [issue found]]
+
+Recommendations: [None / e.g. 'Anode rod is showing wear — we'd recommend replacing it at the next visit or sooner to extend tank life.']
+
+Your next annual service is tentatively scheduled for [Date — 12 months]. We'll confirm closer to the date.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <!-- Section 8 Logging -->
+      <div id="sec-log" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">8 · Logging Every Enquiry in Airtable</h3>
+      <p class="lead searchable">Every enquiry — complaint, spare part, sales, AMC, anything — is logged here. We use a single status field and one details field; there is no separate "case file".</p>
+      <table class="tbl searchable">
+        <thead><tr><th>Field</th><th>What to Enter</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Job Number</td><td><b>Internal tracking ID — never shared with the customer</b></td></tr>
+          <tr><td class="k">Date</td><td><b>Date of first contact</b></td></tr>
+          <tr><td class="k">Channel</td><td><b>Phone / Walk-in / WhatsApp / Email</b></td></tr>
+          <tr><td class="k">Customer Name</td><td><b>Full name</b></td></tr>
+          <tr><td class="k">Contact Number</td><td><b>Phone number</b></td></tr>
+          <tr><td class="k">Complaint Status</td><td><b>The single status field — carries warranty statuses AND 'Sales Enquiry' for spare parts, sales, and anything else</b></td></tr>
+          <tr><td class="k">Intake: Brief Complaint</td><td><b>The details — spare part needed, sales requirement, issue description, etc.</b></td></tr>
+          <tr><td class="k">Owner</td><td><b>Who's currently handling it</b></td></tr>
+          <tr><td class="k">Linked Job Number</td><td><b>Original ticket, if this relates to one</b></td></tr>
+          <tr><td class="k">Financial (internal)</td><td><b>Costs: PO amount (confidential), chargeable visit collected, replacement value</b></td></tr>
+          <tr><td class="k">Evidence</td><td><b>Photos, videos, bill/TOC attached to the ticket</b></td></tr>
+          <tr><td class="k">Outcome</td><td><b>How it was resolved (free replacement, chargeable visit, remote fix, etc.)</b></td></tr>
+        </tbody>
+      </table>
+      <div class="callout note searchable">Every SOP ends with logging the final status in Airtable. If a ticket doesn't have a closing entry, it's not done.</div>
+
+      <!-- Section 9 Complaint -->
+      <div id="sec-complaint" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">9 · Complaint / Unhappy Customer — Escalated Handling</h3>
+      <p class="lead searchable">Same underlying process as SOP-01, but with more urgency and care. Key-account complaints come straight to the Technical Sales Manager, who routes them to the front desk. An unhappy customer is a risk — the goal is to turn them around, not just close the ticket.</p>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">C1</div><div class="step-main"><div class="step-title">Acknowledge with an Apology — Immediately</div><p>Lead with an apology before process questions: "I'm really sorry about this experience. Let me make sure we get this sorted for you." This costs nothing and de-escalates most situations.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">C2</div><div class="step-main"><div class="step-title">Understand What Went Wrong</div><p>Before running any SOP, understand the root cause: product issue, communication, missed appointment, unresolved prior ticket? Write it down.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">C3</div><div class="step-main"><div class="step-title">Log as Priority &amp; Flag Up</div><p>Log with <span class="status">Complaint Status = 'Complaint — Escalated'</span> and flag to the Manager immediately (or the Technical Sales Manager if it's a key account), with the context from C2 — what's wrong and what the customer expects.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">C4</div><div class="step-main"><div class="step-title">Run the Matching SOP — Prioritized</div><p>Follow whichever SOP matches the issue, but treat every turnaround target as urgent. The Manager checks on it daily until resolved; final escalation sits with the Technical Sales Manager.</p><span class="owner">Front Desk Coordinator → Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">C5</div><div class="step-main"><div class="step-title">Keep the Customer Updated</div><p>Proactively update at least once every 24 hours, even if it's "we're still working on it." Silence makes an unhappy customer assume the worst.</p><span class="owner">Whoever owns the ticket</span></div></div>
+        <div class="step searchable"><div class="step-num">C6</div><div class="step-main"><div class="step-title">Confirm Resolution &amp; Satisfaction</div><p>Once resolved, call (not just email) to confirm satisfaction. If they're not satisfied, escalate again — don't close as resolved if the customer disagrees. Log the final outcome.</p><span class="owner">Manager / Technical Sales Manager</span></div></div>
+      </div>
+
+      <!-- Section 10 Not Sure -->
+      <div id="sec-notsure" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">10 · Not Sure / Anything Else</h3>
+      <p class="lead searchable">For anything that genuinely doesn't fit a category above. The rule: capture everything, decide nothing.</p>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">U1</div><div class="step-main"><div class="step-title">Write It Down — Verbatim</div><p>Record exactly what the customer said, plus name and contact number. Don't paraphrase or guess the category — write their actual words.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">U2</div><div class="step-main"><div class="step-title">Set an Expectation</div><p>Tell the customer: "I want to make sure the right person helps you. Let me check internally and someone will get back to you within [X hours]." Don't leave them without a timeline.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">U3</div><div class="step-main"><div class="step-title">Log It</div><p>Log in Airtable with the details in <span class="status">Intake: Brief Complaint</span> and an appropriate <span class="status">Complaint Status</span> (see Section 8).</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">U4</div><div class="step-main"><div class="step-title">Flag to Manager — Same Day</div><p>Flag to the Manager to route to the right SOP and person the same business day. Nothing sits unrouted overnight.</p><span class="owner">Front Desk Coordinator → Manager</span></div></div>
+      </div>
+
+      <h3 class="blk">11 · Turnaround Targets</h3>
+      <table class="tbl searchable">
+        <thead><tr><th>Stage</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Dispatch — Dubai / Sharjah</td><td><b>Within 48 hours</b></td></tr>
+          <tr><td class="k">Dispatch — Abu Dhabi</td><td><b>Stretched / stacked; scheduled date by day 4</b></td></tr>
+          <tr><td class="k">Dispatch — RAK / Fujairah</td><td><b>Stacked as far as possible; scheduled date by day 4, never dropped</b></td></tr>
+          <tr><td class="k">Replacement validated by Manager (R2)</td><td><b>Same business day</b></td></tr>
+          <tr><td class="k">PO issued / stock handover arranged</td><td><b>Within 1 business day of validation</b></td></tr>
+          <tr><td class="k">Installation scheduled after request (I6)</td><td><b>Within 2 business days</b></td></tr>
+          <tr><td class="k">AMC visit confirmed after request (M2)</td><td><b>Within 2 business days</b></td></tr>
+          <tr><td class="k">Ticket close after no response</td><td><b>4 days &amp; min. 4 unanswered follow-ups, then close-out message</b></td></tr>
+          <tr><td class="k">Escalated complaint — daily check (C4)</td><td><b>Every business day until resolved</b></td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="blk">12 · Escalation</h3>
+      <ul class="plain searchable">
+        <li>Reseller delays a PO collection beyond the agreed date → Manager follows up; escalate to the Technical Sales Manager if unresolved.</li>
+        <li>Customer disputes the excluded-installation policy → Manager reviews before any exception.</li>
+        <li>Key-account complaint → straight to the Technical Sales Manager, who routes to the front desk.</li>
+        <li>Any ticket unowned or stalled for more than 24 hours → escalate to the Manager.</li>
+      </ul>
+    </section>
+    <!-- ===================== PART 2 ===================== -->
+    <div class="part-rule" id="part-2">
+      <span class="lbl">Part 2</span><div class="ln"></div>
+      <div class="whole"><h2>Front Desk Quick Reference</h2><em>Simplified process + ready-to-send Email &amp; WhatsApp texts</em></div>
+    </div>
+    <div class="callout note searchable">Fill in anything inside [brackets] before sending. Never put a Job Number in a customer message. If a step says "Ask Manager," always ask.</div>
+
+    <section class="sop" id="qr-complaint" data-sec="qr-complaint">
+      <div class="sop-head"><span class="id">😟</span><h2>Water Heater Complaint</h2></div>
+      <h3 class="blk">The Process</h3>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Reply right away</div><p>Say sorry and let the customer know you're helping. Log it in Airtable first. Sadara/contractor account → send Message A. Normal customer → send Message B. <b>If it's a leak, don't ask for the checklist</b> — just get a video + the bill/TOC.</p></div></div>
+        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Collect papers &amp; photos</div><p>Sadara/contractor: completed Warranty Claim Request form, bill or TOC, photo/video of the fault, photo of model + serial label, Google Maps pin + access, site contact name + mobile. Normal customers: name &amp; phone, where/when they bought it (bill), model &amp; serial, photo/video of the problem.</p><p>Everything received → Step 3. Something missing → send Message C. If the customer goes quiet, follow the 4-day close-out rule (Step 5).</p></div></div>
+        <div class="step searchable"><div class="step-num">3</div><div class="step-main"><div class="step-title">Ask Manager: is it under warranty?</div><p>Send the papers/photos/serial + bill or TOC to the Manager and ask: "Is this under warranty? Yes or No?" Wait for the answer — don't decide yourself. (Projects: warranty is judged on the TOC date.)</p></div></div>
+        <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Tell the customer</div><p>Manager says YES → try a desk fix first; if a visit is needed, send Message D. Manager says NO → send Message E.</p></div></div>
+        <div class="step searchable"><div class="step-num">5</div><div class="step-main"><div class="step-title">No response? Close after 4 days</div><p>Follow up — minimum 4 unanswered follow-ups over 4 days — then send the close-out message and close as unresponsive. Reopen anytime.</p></div></div>
+      </div>
+
+      <h3 class="blk">The Texts</h3>
+      <p class="lead searchable"><b>Message A — Sadara / Contractor Account — Official Intake Email.</b> Send exactly as written. Only change [Brand], [Unit/Flat No., Building/Site Name], [Manufacturer / Group Name], and your name.</p>
+      <div class="tpl searchable" id="msg-a-email">
+        <div class="tpl-head"><span class="code">A</span><span class="ch">📧 Email</span><span class="name">Sadara / Contractor — Official Intake</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Warranty Confirmation Request for Water Heater — [Brand] — [Unit/Flat No., Building/Site Name]</span>
+
+Dear Team,
+
+Further to your warranty claim request regarding Warranty Confirmation for Water Heater Brand — [Brand] — [Unit/Flat No., Building/Site Name]. Please see the following guidelines for warranty claims:
+
+1. In line with the warranty obligation as defined by [Manufacturer / Group Name], ALL contractor-managed complaints will only be processed after receipt of a fully completed "Warranty Claim Request – Checklist and Declaration" form.
+
+2. This requirement is mandatory to validate warranty eligibility, confirm scope responsibility (product vs installation), and ensure proper site access and coordination.
+
+3. Required submission (attach all items): Please return the attached form fully completed and include the following supporting documents:
+3.1. Warranty proof — the purchase bill, or the project Take Over Certificate (TOC) where applicable.
+3.2. Clear photos / videos showing: the reported fault, and the product model + serial number label.
+3.3. Exact site location pin (Google Maps) + access instructions (parking, gate pass, work permit requirements).
+3.4. Site contact details (name + mobile) who will be present during the visit.
+
+4. Site visit policy
+4.1. Site visit will be confirmed upon receiving the completed form and minimum evidence above are received and validated.
+4.2. Over the phone / remote troubleshooting may be provided in the interim based on the information shared.
+4.3. If a site visit is requested without sufficient documentation, or the issue is out of warranty, installation-related, due to misuse, a third-party product, missing documentation, or not a manufacturing defect, the visit is chargeable at AED 160 (VAT inclusive). This charge covers the inspection visit only — it does not include labor for any subsequent repair or service.
+No charges apply if the issue is covered under product warranty.
+
+5. Incomplete submissions will be closed after our follow-up window, and registered only once the completed form and evidence are received.
+
+Regards,
+[Your Name] | [Company Name]
+
+⚠️ DON'T FORGET: attach the "Warranty Claim Request – Checklist and Declaration" form to this email before sending.</div>
+      </div>
+      <div class="tpl searchable" id="msg-a-wa">
+        <div class="tpl-head"><span class="code">A</span><span class="ch">💬 WhatsApp</span><span class="name">Sadara / Contractor — notify</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Sadara/Contractor Contact], we've just emailed you the Warranty Claim Request form and requirements for [Unit/Flat No., Building/Site Name]. Please check your inbox and send back the completed form + documents (including the bill or TOC) so we can confirm the site visit. Thank you! 🙏</div>
+      </div>
+
+      <p class="lead searchable"><b>Message B — Normal Customer — Please Send These Details</b></p>
+      <div class="tpl searchable" id="msg-b-email">
+        <div class="tpl-head"><span class="code">B</span><span class="ch">📧 Email</span><span class="name">Normal customer — request details</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: We Got Your Message — Water Heater Problem</span>
+
+Hi [Customer Name],
+
+Thank you for telling us about the problem. To help you fast, please send:
+
+1. Your name and phone number
+2. Your purchase bill (or the project TOC, if applicable)
+3. The model and Serial Number (small metal plate on the tank)
+4. A photo or short video of the problem
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-b-wa">
+        <div class="tpl-head"><span class="code">B</span><span class="ch">💬 WhatsApp</span><span class="name">Normal customer — request details</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name] 👋 Sorry to hear about the problem! To help you fast, please send:
+
+1️⃣ Your name &amp; phone number
+2️⃣ Your bill (or project TOC)
+3️⃣ Model &amp; Serial Number (metal plate on the tank)
+4️⃣ Photo/video of the problem
+
+Thank you! 🙏</div>
+      </div>
+
+      <p class="lead searchable"><b>Message C — Something Is Missing</b></p>
+      <div class="tpl searchable" id="msg-c-email">
+        <div class="tpl-head"><span class="code">C</span><span class="ch">📧 Email</span><span class="name">Missing items</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: One More Thing Needed</span>
+
+Hi [Customer Name / Team],
+
+Thank you for the information. We still need: [write only what is missing]
+
+- Completed Warranty Claim Request form (Sadara/contractor only)
+- Serial Number / photo of model + serial number label
+- Purchase bill or project TOC
+- Photo/video of the problem
+- Google Maps site pin + access instructions (Sadara/contractor only)
+- Site contact name + mobile number (Sadara/contractor only)
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-c-wa">
+        <div class="tpl-head"><span class="code">C</span><span class="ch">💬 WhatsApp</span><span class="name">Missing items</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name], thank you! We still need this: [write only what is missing]
+
+📌 Completed Warranty Claim Request form (Sadara/contractor only)
+📌 Serial Number / photo of model + serial number label
+📌 Purchase bill or project TOC
+📌 Photo/video of problem
+📌 Google Maps site pin + access instructions (Sadara/contractor only)
+📌 Site contact name + mobile (Sadara/contractor only)</div>
+      </div>
+
+      <p class="lead searchable"><b>Message D — Good News — Under Warranty</b></p>
+      <div class="tpl searchable" id="msg-d-email">
+        <div class="tpl-head"><span class="code">D</span><span class="ch">📧 Email</span><span class="name">Under warranty</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Good News — Your Water Heater Is Under Warranty</span>
+
+Hi [Customer Name],
+
+Good news! Your water heater is under warranty.
+
+Before our technician visits, please:
+1. Turn off the power to the unit
+2. Keep the area around it clear
+3. Keep your bill / warranty document ready
+4. Tell us your preferred day/time: [option 1] or [option 2]
+
+Our technician will call before arriving.
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-d-wa">
+        <div class="tpl-head"><span class="code">D</span><span class="ch">💬 WhatsApp</span><span class="name">Under warranty</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Good news [Customer Name]! 🎉 Your water heater is under warranty.
+
+Before we visit, please:
+1️⃣ Turn off the power
+2️⃣ Keep space clear around it
+3️⃣ Keep your bill ready
+4️⃣ Tell us: [option 1] or [option 2]?
+
+We'll call before we arrive 📞</div>
+      </div>
+
+      <p class="lead searchable"><b>Message E — Sorry — Not Under Warranty (Chargeable Visit)</b></p>
+      <div class="tpl searchable" id="msg-e-email">
+        <div class="tpl-head"><span class="code">E</span><span class="ch">📧 Email</span><span class="name">Not under warranty</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Update on Your Water Heater</span>
+
+Hi [Customer Name / Team],
+
+We checked and the issue is [out of warranty / installation-related / due to misuse / a third-party product / missing documentation / not a manufacturing defect].
+
+A site visit for this is chargeable at AED 160 (VAT inclusive) — this covers the inspection only, not repair labor.
+
+Would you like us to go ahead with the visit?
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-e-wa">
+        <div class="tpl-head"><span class="code">E</span><span class="ch">💬 WhatsApp</span><span class="name">Not under warranty</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name], we checked and the issue is [out of warranty / installation-related / misuse / not a manufacturing defect].
+
+A site visit costs AED 160 (VAT included) — inspection only, repair cost is separate.
+
+Would you like us to go ahead? 🙏</div>
+      </div>
+    </section>
+
+    <section class="sop" id="qr-parts" data-sec="qr-parts">
+      <div class="sop-head"><span class="id">🔧</span><h2>Spare Parts Inquiry</h2></div>
+      <h3 class="blk">The Process</h3>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Find out which water heater</div><p>Log it in Airtable (Complaint Status = 'Sales Enquiry', details in Intake: Brief Complaint). Ask for the Serial Number (metal plate on the tank). No serial → ask Capacity (litres, e.g. 15L/25L/50L) and Horizontal or Vertical.</p></div></div>
+        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Ask what part they need</div><p>"Which part is broken or needed?" (e.g. heating rod, thermostat, valve). Write down the part name and whether it's urgent.</p></div></div>
+        <div class="step searchable"><div class="step-num">3</div><div class="step-main"><div class="step-title">Get the price &amp; send the quote</div><p>Send the part + unit details to the Manager for the price — don't guess. Then send Message F.</p></div></div>
+        <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Follow up (only if no reply)</div><p>Follow up across the 4-day window — minimum 4 unanswered follow-ups. Message G, then Message H, and Message I (5% off) on the final follow-up.</p></div></div>
+        <div class="step searchable"><div class="step-num">5</div><div class="step-main"><div class="step-title">Still no reply? Close it</div><p>Send Message J and mark it Closed — No Response in Airtable. Reopen anytime.</p></div></div>
+      </div>
+
+      <h3 class="blk">The Texts</h3>
+      <p class="lead searchable"><b>Message F — Here Is Your Price</b></p>
+      <div class="tpl searchable" id="msg-f-email">
+        <div class="tpl-head"><span class="code">F</span><span class="ch">📧 Email</span><span class="name">Here is your price</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Price for [Part Name]</span>
+
+Hi [Customer Name],
+
+Here is the price for [Part Name]:
+
+Price: [price]
+Available: [in stock / lead time]
+
+This price is good for [X] days.
+
+Let us know if you want to order.
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-f-wa">
+        <div class="tpl-head"><span class="code">F</span><span class="ch">💬 WhatsApp</span><span class="name">Here is your price</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name], here's the price for [Part Name]:
+
+💰 [price]
+📦 [in stock / lead time]
+
+Valid for [X] days.
+
+Let us know if you'd like to order! 🙏</div>
+      </div>
+
+      <p class="lead searchable"><b>Message G — Follow-up 1</b></p>
+      <div class="tpl searchable" id="msg-g-email">
+        <div class="tpl-head"><span class="code">G</span><span class="ch">📧 Email</span><span class="name">Follow-up 1</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Checking In — [Part Name]</span>
+
+Hi [Customer Name],
+
+Just checking if you saw our price for [Part Name]. Let us know if you have questions.
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-g-wa">
+        <div class="tpl-head"><span class="code">G</span><span class="ch">💬 WhatsApp</span><span class="name">Follow-up 1</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name], just checking if you saw the price for [Part Name] 🙂 Any questions?</div>
+      </div>
+
+      <p class="lead searchable"><b>Message H — Follow-up 2</b></p>
+      <div class="tpl searchable" id="msg-h-email">
+        <div class="tpl-head"><span class="code">H</span><span class="ch">📧 Email</span><span class="name">Follow-up 2</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: [Part Name] Still Available</span>
+
+Hi [Customer Name],
+
+We still have [Part Name] ready for you. Let us know if you'd like to go ahead.
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-h-wa">
+        <div class="tpl-head"><span class="code">H</span><span class="ch">💬 WhatsApp</span><span class="name">Follow-up 2</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name], [Part Name] is still available for you 😊 Let us know if you'd like to go ahead!</div>
+      </div>
+
+      <p class="lead searchable"><b>Message I — Final Follow-up — 5% Off</b></p>
+      <div class="tpl searchable" id="msg-i-email">
+        <div class="tpl-head"><span class="code">I</span><span class="ch">📧 Email · 5% off</span><span class="name">Final follow-up discount</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: A Little Off Your [Part Name] Order</span>
+
+Hi [Customer Name],
+
+If you confirm, we can give you 5% off [Part Name].
+
+New price: [discounted price]
+
+Just reply "Yes" and we will process it.
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-i-wa">
+        <div class="tpl-head"><span class="code">I</span><span class="ch">💬 WhatsApp · 5% off</span><span class="name">Final follow-up discount</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name], confirm now and get 5% off [Part Name].
+
+New price: [discounted price]
+
+Just reply "Yes" and we'll process it right away! 🎉</div>
+      </div>
+
+      <p class="lead searchable"><b>Message J — Closing the Request</b></p>
+      <div class="tpl searchable" id="msg-j-email">
+        <div class="tpl-head"><span class="code">J</span><span class="ch">📧 Email</span><span class="name">Closing the request</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Closing This Request</span>
+
+Hi [Customer Name],
+
+Due to no response, we are closing this request for now. If you still need [Part Name] later, just message us anytime — happy to help whenever you need.
+
+Thank you,
+[Your Name]</div>
+      </div>
+      <div class="tpl searchable" id="msg-j-wa">
+        <div class="tpl-head"><span class="code">J</span><span class="ch">💬 WhatsApp</span><span class="name">Closing the request</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name], due to no response we're closing this for now. If you still need [Part Name] later, just message us anytime — happy to help! 🙏</div>
+      </div>
+    </section>
+
+    <div class="noresults" id="noResults">No matches for "<b id="nrTerm"></b>". Try a shorter or different term.</div>
+
+  </main>
+</div>
+
+<button class="backtop" id="backtop" aria-label="Back to top">↑</button>
+
+<div class="savehint" id="saveHint">Saved</div>
+<div class="editbar" id="editBar">
+  <span class="msg">&#9998; <b>Edit mode.</b> Click any text to change it. Changes stay in this browser until you download or publish.</span>
+  <div class="sync" id="syncTools">
+    <button class="ghost" id="loadTeam" title="Load the latest team-published version">&#8595; Load team version</button>
+    <button class="ghost" id="pubTeam" title="Publish your edits to the team">&#8593; Publish to team</button>
+  </div>
+  <button class="primary" id="dlBtn">&#8681; Download updated page</button>
+  <button class="ghost" id="exitEdit">Exit edit mode</button>
+</div>
+<script>
+(function(){
+  "use strict";
+  /* ============================================================
+     TEAM SYNC (optional). Leave both blank to keep sync OFF.
+     To enable live team-wide editing, create a free JSONBin.io
+     bin and paste its ID + an Access Key below. Same pattern as
+     your Unified Diagnostic Tool. When blank, edits still work
+     locally via "Download updated page".
+     ============================================================ */
+  var TEAM_BIN_ID     = "";   // e.g. "6a2a513eda38895dfeab6440"
+  var TEAM_ACCESS_KEY = "";   // e.g. "$2a$10$....."
+  var JSONBIN_BASE    = "https://api.jsonbin.io/v3/b";
+
+  var doc = document;
+  var body = doc.body;
+  var q = doc.getElementById('q');
+  var clr = doc.getElementById('clr');
+  var sbar = doc.getElementById('sbar');
+  var nav = doc.getElementById('nav');
+  var content = doc.getElementById('content');
+  var noResults = doc.getElementById('noResults');
+  var nrTerm = doc.getElementById('nrTerm');
+  var navLinks = [].slice.call(nav.querySelectorAll('a[href^="#"]'));
+  var sections = [].slice.call(content.querySelectorAll('section.sop'));
+  var HL = 'searchable';
+
+  /* ---------- Copy buttons ---------- */
+  content.addEventListener('click', function(e){
+    var btn = e.target.closest('.copy');
+    if(!btn) return;
+    if(body.classList.contains('editing')){ e.preventDefault(); return; }
+    var box = btn.closest('.tpl');
+    var bodyEl = box ? box.querySelector('.tpl-body') : null;
+    if(!bodyEl) return;
+    var text = bodyEl.innerText.replace(/\u00a0/g,' ').trim();
+    var done = function(){
+      var old = btn.textContent;
+      btn.textContent = 'Copied \u2713'; btn.classList.add('done');
+      setTimeout(function(){ btn.textContent = old; btn.classList.remove('done'); }, 1400);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text, done); });
+    } else { fallbackCopy(text, done); }
+  });
+  function fallbackCopy(text, cb){
+    var ta = doc.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    body.appendChild(ta); ta.select();
+    try{ doc.execCommand('copy'); }catch(err){}
+    body.removeChild(ta); if(cb) cb();
+  }
+
+  /* ---------- Search / filter ---------- */
+  function clearMarks(root){
+    var marks = root.querySelectorAll('mark');
+    for(var i=0;i<marks.length;i++){
+      var m = marks[i]; var p = m.parentNode;
+      if(!p) continue;
+      p.replaceChild(doc.createTextNode(m.textContent), m); p.normalize();
+    }
+  }
+  function highlight(el, term){
+    var rx = new RegExp('('+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+    var walker = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+    var nodes=[], n;
+    while(n = walker.nextNode()){
+      if(n.parentNode && n.parentNode.nodeName!=='MARK' && n.parentNode.nodeName!=='SCRIPT' && rx.test(n.nodeValue)) nodes.push(n);
+    }
+    nodes.forEach(function(node){
+      var frag = doc.createDocumentFragment();
+      var parts = node.nodeValue.split(rx);
+      parts.forEach(function(part){
+        if(rx.test(part)){ var mk=doc.createElement('mark'); mk.textContent=part; frag.appendChild(mk); rx.lastIndex=0; }
+        else if(part){ frag.appendChild(doc.createTextNode(part)); }
+      });
+      if(node.parentNode) node.parentNode.replaceChild(frag, node);
+    });
+  }
+  function resetSearchView(){
+    var all = content.querySelectorAll('.'+HL);
+    for(var i=0;i<all.length;i++) all[i].style.display='';
+    sections.forEach(function(s){ s.classList.remove('empty'); });
+    navLinks.forEach(function(a){ a.classList.remove('empty'); });
+    nav.querySelectorAll('h4').forEach(function(h){ h.style.display=''; });
+    sbar.style.display='none'; noResults.style.display='none';
+  }
+  var debounce;
+  function runSearch(){
+    var term = q.value.trim().toLowerCase();
+    clearMarks(content);
+    clr.style.display = term ? 'block' : 'none';
+    if(!term){ resetSearchView(); setActiveFromScroll(); return; }
+    var hits = 0, sectionHasHit = {};
+    sections.forEach(function(sec){
+      var items = sec.querySelectorAll('.'+HL);
+      var localHit = 0;
+      for(var j=0;j<items.length;j++){
+        var it = items[j];
+        var txt = (it.textContent||'').toLowerCase();
+        if(txt.indexOf(term)!==-1){ it.style.display=''; highlight(it, term); localHit++; hits++; }
+        else { it.style.display='none'; }
+      }
+      if(localHit>0){ sec.classList.remove('empty'); sectionHasHit[sec.id]=true; }
+      else { sec.classList.add('empty'); }
+    });
+    navLinks.forEach(function(a){
+      var id = a.getAttribute('href').slice(1);
+      var host = doc.getElementById(id);
+      var sec = host ? host.closest('section.sop') : null;
+      var key = sec ? sec.id : id;
+      if(sectionHasHit[key]) a.classList.remove('empty'); else a.classList.add('empty');
+    });
+    nav.querySelectorAll('h4').forEach(function(h){
+      var visible=false, el=h.nextElementSibling;
+      while(el && el.tagName!=='H4'){ if(el.tagName==='A' && !el.classList.contains('empty')){ visible=true; break; } el=el.nextElementSibling; }
+      h.style.display = visible ? '' : 'none';
+    });
+    noResults.style.display = hits===0 ? 'block' : 'none';
+    if(hits===0) nrTerm.textContent = q.value.trim();
+    sbar.style.display='block';
+    sbar.innerHTML = '<b>'+hits+'</b> block'+(hits===1?'':'s')+' match "'+escapeHtml(q.value.trim())+'" \u00b7 showing only matching content';
+  }
+  function escapeHtml(s){ return s.replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  q.addEventListener('input', function(){ clearTimeout(debounce); debounce=setTimeout(runSearch, 120); });
+  clr.addEventListener('click', function(){ q.value=''; runSearch(); q.focus(); });
+  doc.addEventListener('keydown', function(e){
+    if(e.key==='/' && doc.activeElement!==q && !/input|textarea/i.test(doc.activeElement.tagName) && !body.classList.contains('editing')){ e.preventDefault(); q.focus(); }
+    if(e.key==='Escape' && doc.activeElement===q){ q.value=''; runSearch(); q.blur(); }
+  });
+
+  /* ---------- Scrollspy ---------- */
+  var spyTargets = navLinks.map(function(a){
+    var id=a.getAttribute('href').slice(1); return {a:a, el:doc.getElementById(id)};
+  }).filter(function(t){return t.el;});
+  function setActiveFromScroll(){
+    if(q.value.trim()) return;
+    var pos = window.scrollY + 90, current = null;
+    for(var i=0;i<spyTargets.length;i++){ if(spyTargets[i].el.offsetTop <= pos) current = spyTargets[i]; }
+    navLinks.forEach(function(a){ a.classList.remove('active'); });
+    if(current) current.a.classList.add('active');
+  }
+  var spyTick=false;
+  window.addEventListener('scroll', function(){
+    if(spyTick) return; spyTick=true;
+    window.requestAnimationFrame(function(){ setActiveFromScroll(); toggleBackTop(); spyTick=false; });
+  });
+
+  /* ---------- Mobile nav ---------- */
+  var menuBtn=doc.getElementById('menuBtn'), scrim=doc.getElementById('scrim');
+  function closeNav(){ body.classList.remove('nav-open'); }
+  if(menuBtn) menuBtn.addEventListener('click', function(){ body.classList.toggle('nav-open'); });
+  if(scrim) scrim.addEventListener('click', closeNav);
+  nav.addEventListener('click', function(e){ if(e.target.closest('a')) closeNav(); });
+
+  /* ---------- Back to top ---------- */
+  var backtop=doc.getElementById('backtop');
+  function toggleBackTop(){ if(backtop) backtop.style.display = window.scrollY>600 ? 'flex' : 'none'; }
+  if(backtop) backtop.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+
+  /* ============================================================
+     EDIT MODE
+     ============================================================ */
+  var editBtn = doc.getElementById('editBtn');
+  var editBar = doc.getElementById('editBar');
+  var dlBtn = doc.getElementById('dlBtn');
+  var exitEdit = doc.getElementById('exitEdit');
+  var loadTeam = doc.getElementById('loadTeam');
+  var pubTeam = doc.getElementById('pubTeam');
+  var saveHint = doc.getElementById('saveHint');
+  var syncTools = doc.getElementById('syncTools');
+  var syncOn = !!(TEAM_BIN_ID && TEAM_ACCESS_KEY);
+
+  function flash(msg){
+    if(!saveHint) return;
+    saveHint.textContent = msg; saveHint.classList.add('show');
+    setTimeout(function(){ saveHint.classList.remove('show'); }, 1800);
+  }
+  function enterEdit(){
+    if(q.value){ q.value=''; runSearch(); }
+    body.classList.add('editing');
+    content.setAttribute('contenteditable','true');
+    content.setAttribute('spellcheck','false');
+    if(syncTools) syncTools.style.display = syncOn ? '' : 'none';
+    window.scrollTo({top:0,behavior:'smooth'});
+    flash('Edit mode on');
+  }
+  function leaveEdit(){
+    body.classList.remove('editing');
+    content.removeAttribute('contenteditable');
+    content.removeAttribute('spellcheck');
+    flash('Edit mode off');
+  }
+  if(editBtn) editBtn.addEventListener('click', function(){ body.classList.contains('editing') ? leaveEdit() : enterEdit(); });
+  if(exitEdit) exitEdit.addEventListener('click', leaveEdit);
+
+  /* ---- Download a clean standalone copy with edits baked in ---- */
+  function buildCleanHTML(){
+    clearMarks(content); resetSearchView();
+    var clone = doc.documentElement.cloneNode(true);
+    // strip editing state
+    var cb = clone.querySelector('body'); if(cb) cb.classList.remove('editing','nav-open');
+    var cc = clone.querySelector('#content');
+    if(cc){ cc.removeAttribute('contenteditable'); cc.removeAttribute('spellcheck'); }
+    // reset transient UI
+    var cq = clone.querySelector('#q'); if(cq) cq.setAttribute('value','');
+    var cs = clone.querySelector('#sbar'); if(cs){ cs.innerHTML=''; cs.style.display='none'; }
+    var cnr = clone.querySelector('#noResults'); if(cnr) cnr.style.display='none';
+    var cclr = clone.querySelector('#clr'); if(cclr) cclr.style.display='none';
+    clone.querySelectorAll('.active').forEach(function(el){ el.classList.remove('active'); });
+    clone.querySelectorAll('.empty').forEach(function(el){ el.classList.remove('empty'); });
+    clone.querySelectorAll('[style*="display"]').forEach(function(el){
+      if(el.id==='sbar'||el.id==='noResults'||el.id==='clr'||el.id==='backtop') return;
+      el.style.display='';
+    });
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); });
+    return '<!DOCTYPE html>\n<html lang="en">' + clone.innerHTML + '</html>';
+  }
+  if(dlBtn) dlBtn.addEventListener('click', function(){
+    var html = buildCleanHTML();
+    var blob = new Blob([html], {type:'text/html'});
+    var a = doc.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Water_Heater_Playbook.html';
+    doc.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); doc.body.removeChild(a); }, 400);
+    flash('Downloaded');
+  });
+
+  /* ---- Optional team sync via JSONBin ---- */
+  if(loadTeam) loadTeam.addEventListener('click', function(){
+    if(!syncOn){ flash('Team sync not set up'); alert('Team sync is off.\n\nTo turn it on, open this file and paste your JSONBin bin ID and Access Key into TEAM_BIN_ID / TEAM_ACCESS_KEY at the top of the <script> block.'); return; }
+    flash('Loading team version...');
+    fetch(JSONBIN_BASE+'/'+TEAM_BIN_ID+'/latest', { headers:{'X-Access-Key':TEAM_ACCESS_KEY} })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(j){
+        var rec = j && j.record ? j.record : null;
+        if(rec && rec.contentHTML){ content.innerHTML = rec.contentHTML; flash('Loaded team version'); }
+        else { flash('No team version yet'); }
+      })
+      .catch(function(err){ flash('Load failed'); alert('Could not load team version: '+err.message); });
+  });
+  if(pubTeam) pubTeam.addEventListener('click', function(){
+    if(!syncOn){ flash('Team sync not set up'); alert('Team sync is off.\n\nAdd your JSONBin bin ID and Access Key at the top of the <script> block to publish for the whole team.'); return; }
+    if(!confirm('Publish your current edits as the team version? Everyone who clicks "Load team version" will see these.')) return;
+    flash('Publishing...');
+    fetch(JSONBIN_BASE+'/'+TEAM_BIN_ID, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Access-Key':TEAM_ACCESS_KEY},
+      body: JSON.stringify({ contentHTML: content.innerHTML, updated: new Date().toISOString() })
+    })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(){ flash('Published to team'); })
+      .catch(function(err){ flash('Publish failed'); alert('Could not publish: '+err.message); });
+  });
+
+  setActiveFromScroll(); toggleBackTop();
+})();
+</script>
+</body>
+</html>
