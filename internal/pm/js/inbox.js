@@ -42,29 +42,68 @@ const Inbox = (() => {
       .map((n) => {
         const meta = KIND_META[n.kind] || { icon: "&#8226;", label: n.kind };
         return `
-        <button class="inbox-item ${n.read ? "" : "unread"}" data-id="${n.id}"
-                data-link="${n.task_id ? `board.html?project=${n.project_id}&task=${n.task_id}` : n.project_id ? `board.html?project=${n.project_id}` : ""}">
+        <div class="inbox-item ${n.read ? "" : "unread"}" data-id="${n.id}" role="button" tabindex="0"
+             data-link="${n.task_id ? `board.html?project=${n.project_id}&task=${n.task_id}` : n.project_id ? `board.html?project=${n.project_id}` : ""}">
           <span class="inbox-icon inbox-icon-${UI.esc(n.kind)}">${meta.icon}</span>
           <span class="inbox-body">
             <span class="inbox-text"><strong>${UI.esc(n.actor?.name || "Someone")}</strong> ${meta.label}${n.projects?.name ? ` in <strong>${UI.esc(n.projects.name)}</strong>` : ""}</span>
             ${n.message ? `<span class="inbox-msg">${UI.esc(n.message)}</span>` : ""}
             <span class="inbox-time">${relTime(n.created_at)}</span>
           </span>
-        </button>`;
+          <button class="inbox-toggle" title="${n.read ? "Mark as unread" : "Mark as read"}"
+                  aria-label="${n.read ? "Mark as unread" : "Mark as read"}"><span class="dot"></span></button>
+        </div>`;
       })
       .join("");
     host.querySelectorAll(".inbox-item").forEach((el) => {
-      el.addEventListener("click", async () => {
-        const n = notifications.find((x) => x.id === el.dataset.id);
+      const n = notifications.find((x) => x.id === el.dataset.id);
+      // read/unread toggle — lets people keep items "to come back to".
+      // Update the row in place: replacing the whole list mid-click would
+      // destroy the button being clicked (and lose scroll position).
+      el.querySelector(".inbox-toggle").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        n.read = !n.read;
+        applyReadState(el, n.read);
+        try {
+          await API.setRead(n.id, n.read);
+        } catch (_) {
+          n.read = !n.read;
+          applyReadState(el, n.read);
+        }
+        refreshBadge();
+      });
+      el.addEventListener("click", async (e) => {
+        // A click that started on the toggle can surface here as a
+        // common-ancestor click (mousedown on button, mouseup on row, target
+        // = the row) — never treat that as "open the task"
+        if (e.target.closest(".inbox-toggle")) return;
+        const tb = el.querySelector(".inbox-toggle")?.getBoundingClientRect();
+        if (tb && e.clientX >= tb.left && e.clientX <= tb.right && e.clientY >= tb.top && e.clientY <= tb.bottom) return;
         if (n && !n.read) {
           n.read = true;
-          try { await API.markRead(n.id); } catch (_) {}
+          applyReadState(el, true);
+          try { await API.setRead(n.id, true); } catch (_) {}
           refreshBadge();
         }
         if (el.dataset.link) window.location.href = el.dataset.link;
       });
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+      });
     });
   }
+
+  function applyReadState(el, read) {
+    el.classList.toggle("unread", !read);
+    const btn = el.querySelector(".inbox-toggle");
+    btn.title = read ? "Mark as unread" : "Mark as read";
+    btn.setAttribute("aria-label", btn.title);
+  }
+
+  // Groups show up to GROUP_CAP tasks; the rest sit behind a "Show all" expander
+  // so a heavy workload never turns the panel into an endless scroll.
+  const GROUP_CAP = 8;
+  const expandedGroups = new Set();
 
   function renderMyTasks() {
     const host = panel.querySelector("#inbox-tasks");
@@ -80,38 +119,56 @@ const Inbox = (() => {
       ["Upcoming", open.filter((t) => t.due_date && t.due_date > today)],
       ["No due date", open.filter((t) => !t.due_date)],
     ];
+    const taskRow = (t) => `
+      <a class="inbox-task" href="board.html?project=${t.project_id}&task=${t.id}">
+        <span class="inbox-task-dot" style="background:${UI.esc(t.projects?.color || "#C3CAD5")}"></span>
+        <span class="inbox-task-title">${UI.esc(t.title)}</span>
+        <span class="inbox-task-meta">${UI.esc(t.projects?.name || "")}${t.due_date ? ` · ${UI.fmtDate(t.due_date)}` : ""}</span>
+      </a>`;
     host.innerHTML = groups
       .filter(([, list]) => list.length)
-      .map(
-        ([label, list]) => `
+      .map(([label, list]) => {
+        const expanded = expandedGroups.has(label);
+        const shown = expanded ? list : list.slice(0, GROUP_CAP);
+        const hidden = list.length - shown.length;
+        return `
         <div class="inbox-group">
           <div class="inbox-group-label ${label === "Overdue" ? "overdue" : ""}">${label} · ${list.length}</div>
-          ${list
-            .map(
-              (t) => `
-            <a class="inbox-task" href="board.html?project=${t.project_id}&task=${t.id}">
-              <span class="inbox-task-dot" style="background:${UI.esc(t.projects?.color || "#C3CAD5")}"></span>
-              <span class="inbox-task-title">${UI.esc(t.title)}</span>
-              <span class="inbox-task-meta">${UI.esc(t.projects?.name || "")}${t.due_date ? ` · ${UI.fmtDate(t.due_date)}` : ""}</span>
-            </a>`
-            )
-            .join("")}
-        </div>`
-      )
+          ${shown.map(taskRow).join("")}
+          ${hidden > 0 ? `<button class="inbox-more" data-group="${UI.esc(label)}">Show all ${list.length} &darr;</button>` : ""}
+          ${expanded && list.length > GROUP_CAP ? `<button class="inbox-more" data-collapse="${UI.esc(label)}">Show less &uarr;</button>` : ""}
+        </div>`;
+      })
       .join("");
+    host.querySelectorAll(".inbox-more").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.dataset.group) expandedGroups.add(btn.dataset.group);
+        else expandedGroups.delete(btn.dataset.collapse);
+        // re-render after the click finishes dispatching — replacing the list
+        // now would destroy the button mid-click
+        setTimeout(renderMyTasks, 0);
+      });
+    });
   }
 
+  let openEpoch = 0;
+
   async function open() {
+    const epoch = ++openEpoch;
     panel.classList.add("open");
     document.getElementById("inbox-overlay").classList.add("open");
+    // Replace stale rows with a loading state while the refresh is in flight —
+    // otherwise a quick toggle on an old row gets clobbered by the re-render.
+    panel.querySelector("#inbox-notifs").innerHTML = '<div class="loading">Loading…</div>';
+    panel.querySelector("#inbox-tasks").innerHTML = '<div class="loading">Loading…</div>';
     const me = Auth.user();
+    let fresh;
     try {
-      [notifications, myTasks] = await Promise.all([
+      fresh = await Promise.all([
         API.getNotifications(me.id),
         // My open tasks = assigned to me and not in the project's final (done) column
-        API.getAllTasks().then((ts) =>
+        API.getMyTasks(me.id).then((ts) =>
           ts.filter((t) => {
-            if (t.assignee_id !== me.id) return false;
             const statuses = t.projects?.statuses || [];
             return t.status !== statuses[statuses.length - 1];
           })
@@ -121,6 +178,10 @@ const Inbox = (() => {
       UI.toast(e.message);
       return;
     }
+    // A newer open() superseded this fetch — rendering now would overwrite
+    // any read/unread change the user made since the newer render
+    if (epoch !== openEpoch) return;
+    [notifications, myTasks] = fresh;
     renderNotifications();
     renderMyTasks();
     refreshBadge();
@@ -179,14 +240,16 @@ const Inbox = (() => {
       });
     });
     panel.querySelector("#inbox-mark-all").addEventListener("click", async () => {
+      // Optimistic: update rows at click time. Mutating the DOM after the
+      // await would clobber anything the user toggled while the PATCH flew.
+      notifications.forEach((n) => (n.read = true));
+      panel.querySelectorAll("#inbox-notifs .inbox-item").forEach((el) => applyReadState(el, true));
       try {
         await API.markAllRead(me.id);
-        notifications.forEach((n) => (n.read = true));
-        renderNotifications();
-        refreshBadge();
       } catch (e) {
         UI.toast(e.message);
       }
+      refreshBadge();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") close();
