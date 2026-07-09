@@ -1,5 +1,8 @@
-// All Supabase data access for the VBOG PM Tool.
-// Endpoints mirror PRD §7 (PostgREST auto-API).
+// js/api.js — every database query the app makes (full docs: ../ARCHITECTURE.md §2, §3)
+//
+// One small named method per operation, grouped by table. RULE: page code never
+// calls sbFetch directly — add a method here instead, so the whole data surface
+// is scannable in one file. All methods return promises of parsed JSON rows.
 
 const API = {
   // ---- projects ----

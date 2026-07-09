@@ -1,5 +1,12 @@
-// Soft login gate: identifies who is using Vyom (localStorage), gates pages,
-// and scopes what external users can see. Not real authentication — a UX gate.
+// js/auth.js — login state, page guards, roles (full docs: ../ARCHITECTURE.md §4)
+//
+// Session = {id, name, user_role} in localStorage under "vyom_user" (set by
+// login.html, cleared by Logout). Roles: admin | member | external.
+// Every page script starts with Auth.requireLogin() (settings: requireAdmin()),
+// then Auth.initNav() for the user chip + admin-only Settings link.
+// Auth.allowedProjectIds(): null = unrestricted (admin/member); array of
+// project ids for externals — all pages filter their data through it.
+// ⚠ This is browser-enforced access control, not security (see handbook §4).
 
 const Auth = {
   KEY: "vyom_user",

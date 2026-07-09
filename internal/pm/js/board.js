@@ -1,4 +1,12 @@
-// Kanban board: columns from project.statuses, drag-and-drop, task modal.
+// js/board.js — page logic for board.html (full docs: ../ARCHITECTURE.md)
+//
+// Columns render from project.statuses (per-project data, not code); tasks with
+// a status no longer in the list get a dimmed "(removed)" column — never hidden.
+// Drag-drop updates optimistically and reverts on failure. ?task=<id> deep-links
+// (from inbox notifications) open the task modal directly.
+// @MENTIONS: initMentionPicker() = the @ autocomplete in the notes field;
+// notifyForTask() diffs mentions against previous notes and fires inbox
+// notifications (mention + task_assigned) — fire-and-forget, never blocks a save.
 
 (() => {
   if (!Auth.requireLogin()) return;

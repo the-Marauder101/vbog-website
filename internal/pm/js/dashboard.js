@@ -1,4 +1,10 @@
-// Dashboard: project cards + create/edit/archive project modal.
+// js/dashboard.js — page logic for vyom.html (full docs: ../ARCHITECTURE.md)
+//
+// Project cards (task/overdue counts, type badge, tag chips) + the create/edit
+// modal: name, description, Internal/Client type, tags (picked from the central
+// registry — no free text, so names never duplicate), custom status columns
+// (become the Kanban columns), accent color, archive.
+// Externals: projects filtered to Auth.allowedProjectIds(); create/edit hidden.
 
 (() => {
   if (!Auth.requireLogin()) return;

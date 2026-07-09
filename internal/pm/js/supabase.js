@@ -1,5 +1,11 @@
-// Minimal PostgREST client — no SDK, no dependencies.
-// All requests go through sbFetch; errors throw with a readable message.
+// js/supabase.js — the ONE network wrapper (full docs: ../ARCHITECTURE.md §1, §5)
+//
+// sbFetch(path, {method, body}) → fetch against Supabase's auto REST API
+// (PostgREST). Every query in the app goes through here — no SDK, no other
+// fetch calls. Filter syntax lives in the path, e.g.:
+//   sbFetch("tasks?project_id=eq.<uuid>&select=*,projects(name)")
+// Errors always throw with a human-readable message (shown via UI.toast).
+// PGRST205 (missing tables) reveals the "Database not set up" banner.
 
 async function sbFetch(path, { method = "GET", body } = {}) {
   const headers = {

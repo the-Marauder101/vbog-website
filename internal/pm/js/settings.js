@@ -1,4 +1,13 @@
-// Settings (admin only): users & access, project tags, webhooks, Zapier snippets.
+// js/settings.js — page logic for settings.html, ADMIN ONLY (docs: ../ARCHITECTURE.md §4, §7)
+//
+// 1. Users & access: add users (name, job role, login ID, access level),
+//    inline login-ID editing, role dropdown, per-project access popover for
+//    externals (project_members table), activate/deactivate, guarded delete.
+// 2. Project tags: the central registry feeding every tag dropdown — deleting
+//    a tag also strips it from projects that use it.
+// 3. Zapier: outgoing webhooks table + incoming setup-snippet generator.
+// NOTE: the add-form submit buttons start disabled in the HTML and are enabled
+// after load() — a fast submit used to race the initial fetch and get wiped.
 
 (() => {
   if (!Auth.requireAdmin()) return;

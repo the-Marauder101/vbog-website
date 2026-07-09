@@ -1,5 +1,8 @@
-// All Tasks: master list of every task across every active project.
-// Read-only with filters — click a row to open its project board.
+// js/team.js — page logic for team.html, the All Tasks view (docs: ../ARCHITECTURE.md)
+//
+// Master list of every task across active projects (externals: only their
+// granted projects). Filters: project, assignee, due-date presets + custom
+// range, title search. Read-only — click a row to open its board.
 
 (() => {
   if (!Auth.requireLogin()) return;
