@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CTT — Water Heater Installation Coat</title>
+<title>CTT — Water Heater Installation Quote</title>
 <style>
   :root {
     --black: #000;
@@ -27,9 +27,12 @@
   }
 
   header { border-bottom: 1px solid var(--line); padding: 32px 24px; }
-  .header-inner { max-width: 1040px; margin: 0 auto; }
+  .header-inner { max-width: 1040px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .header-text { flex: 1; }
   header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
   header p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+  .header-logo { display: flex; align-items: center; gap: 20px; }
+  .header-logo img { height: 40px; width: auto; display: block; }
 
   main {
     max-width: 1040px; margin: 0 auto; padding: 40px 24px 64px;
@@ -52,7 +55,7 @@
     color: var(--muted); margin: -4px 0 12px;
   }
 
-  select, input[type="number"], input[type="text"] {
+  select, input[type="number"], input[type="text"], input[type="tel"] {
     width: 100%; padding: 12px 14px; font-size: 16px; font-family: inherit;
     color: var(--black); background: var(--white);
     border: 1px solid var(--line); border-radius: 0; appearance: none; -webkit-appearance: none;
@@ -61,7 +64,7 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='black' stroke-width='1.5'/></svg>");
     background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; cursor: pointer;
   }
-  select:focus, input[type="number"]:focus, input[type="text"]:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  select:focus, input[type="number"]:focus, input[type="text"]:focus, input[type="tel"]:focus { outline: 2px solid var(--black); outline-offset: -1px; }
   input[type="number"]:disabled, select:disabled {
     border-color: var(--hairline); color: var(--muted); background-color: var(--soft); cursor: not-allowed;
   }
@@ -115,15 +118,15 @@
     margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--hairline);
   }
   .unit-card-num { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
-  .unit-size-sel {
-    flex: 1; min-width: 110px; padding: 7px 30px 7px 10px; font-size: 13px; font-family: inherit;
+  .unit-size-sel, .u-orient-sel, .u-svc-sel {
+    width: 100%; padding: 7px 30px 7px 10px; font-size: 13px; font-family: inherit;
     color: var(--black); background: var(--white);
     border: 1px solid var(--hairline); border-radius: 0; appearance: none; -webkit-appearance: none;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5'/></svg>");
     background-repeat: no-repeat; background-position: right 10px center; cursor: pointer;
     font-weight: 400; text-transform: none; letter-spacing: normal;
   }
-  .unit-size-sel:focus { outline: 2px solid var(--black); outline-offset: -1px; }
+  .unit-size-sel:focus, .u-orient-sel:focus, .u-svc-sel:focus { outline: 2px solid var(--black); outline-offset: -1px; }
   .unit-field { margin-bottom: 20px; }
   .unit-field:last-child { margin-bottom: 0; }
   .unit-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
@@ -143,6 +146,13 @@
   .seg:has(input:checked) { background: var(--black); color: var(--white); }
   .seg:has(input:focus-visible) { outline: 2px solid var(--black); outline-offset: 2px; }
 
+  .unit-config { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .unit-config-group { flex: 1; min-width: 140px; }
+  .unit-config-group .unit-sublabel { margin: 0 0 6px; }
+  .unit-wireframe { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; padding: 12px; border: 1px solid var(--hairline); background: var(--soft); }
+  .unit-wireframe svg { width: 60px; height: 60px; flex-shrink: 0; color: var(--black); }
+  .unit-wireframe-label { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
   .summary { border: 1px solid var(--line); padding: 28px; position: sticky; top: 24px; }
   .summary h2 { margin: 0 0 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
   .line { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--hairline); font-size: 15px; }
@@ -151,6 +161,7 @@
   .line .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
   .line.subtotal { border-bottom: 1px solid var(--line); font-weight: 600; }
   .empty-note { color: var(--muted); font-size: 14px; padding: 8px 0 4px; }
+  .line-note { color: var(--muted); font-size: 12px; font-style: italic; padding: 4px 0 8px; border-bottom: 1px solid var(--hairline); }
   .total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 22px; }
   .total .label { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
   .total .amt { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
@@ -341,8 +352,14 @@
 
 <header>
   <div class="header-inner">
-    <h1>CTT Water Heater Installation Coat</h1>
-    <p>Internal use only. Configure the quote below for an instant estimate.</p>
+    <div class="header-text">
+      <h1>CTT Water Heater Installation Quote</h1>
+      <p>Internal use only. Configure the quote below for an instant estimate.</p>
+    </div>
+    <div class="header-logo">
+      <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+      <img src="faza-logo.svg" alt="Faza Home">
+    </div>
   </div>
 </header>
 
@@ -370,8 +387,16 @@
           <input type="text" id="trnNumber" placeholder="e.g. 100058760800003" autocomplete="off">
         </div>
         <div class="qd-field full">
+          <label for="clientPhone">Phone Number</label>
+          <input type="tel" id="clientPhone" placeholder="e.g. +971 50 123 4567" autocomplete="off">
+        </div>
+        <div class="qd-field full">
           <label for="clientAddress">Address</label>
           <input type="text" id="clientAddress" placeholder="e.g. Building name, Street, Area" autocomplete="off">
+        </div>
+        <div class="qd-field">
+          <label for="location">City</label>
+          <select id="location"></select>
         </div>
 
         <div class="qd-sep">Quote Metadata</div>
@@ -386,7 +411,7 @@
           </select>
         </div>
         <div class="qd-field">
-          <label>Code Validity</label>
+          <label>Quote Validity</label>
           <div class="validity-static">30 days</div>
         </div>
 
@@ -399,10 +424,6 @@
         <label for="jobNumber">Reference / Job No.</label>
         <input type="text" id="jobNumber" placeholder="e.g. CQJ-14130-HP-MISC" autocomplete="off">
       </div>
-      <div class="g-field">
-        <label for="location">City</label>
-        <select id="location"></select>
-      </div>
     </div>
 
     <!-- ===== PRODUCT ===== -->
@@ -411,20 +432,8 @@
       <div class="tiles" role="radiogroup" aria-label="Product">
         <label class="tile path">
           <input type="radio" name="product" value="heater" checked>
-          <span class="path-title">Heater</span>
-          <span class="path-desc">New installation</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- ===== SERVICE TYPE (heater only — fixed to New Installation) ===== -->
-    <div class="field" id="serviceTypeField">
-      <label>Service Type</label>
-      <div class="tiles" role="radiogroup" aria-label="Service type">
-        <label class="tile path">
-          <input type="radio" name="pathway" value="newInstallation" checked>
-          <span class="path-title">New Installation</span>
-          <span class="path-desc">First-time heater, new site</span>
+          <span class="path-title">Electrical Water Heater</span>
+          <span class="path-desc">New installation/Re-installation</span>
         </label>
       </div>
     </div>
@@ -432,41 +441,8 @@
     <!-- ===== HEATER SECTION ===== -->
     <div id="heaterSection">
       <div class="field">
-        <label>Water Heater — Atlantic</label>
-        <p class="hint">Atlantic brand only. Choose orientation first — the capacities shown are the ones available in that orientation.</p>
-        <div class="tiles" role="radiogroup" aria-label="Mounting orientation">
-          <label class="tile">
-            <input type="radio" name="orientation" value="horizontal" checked>
-            <span class="tile-pic" aria-hidden="true">
-              <svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="6" y="14" width="104" height="38" rx="19"/>
-                <line x1="90" y1="16" x2="90" y2="50"/>
-                <circle cx="28" cy="33" r="7"/>
-                <line x1="28" y1="33" x2="28" y2="28"/>
-                <line x1="58" y1="52" x2="58" y2="64"/>
-                <line x1="70" y1="52" x2="70" y2="64"/>
-              </svg>
-            </span>
-            <span class="tile-label">Horizontal</span>
-          </label>
-          <label class="tile">
-            <input type="radio" name="orientation" value="vertical">
-            <span class="tile-pic" aria-hidden="true">
-              <svg viewBox="0 0 70 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="14" y="6" width="42" height="104" rx="21"/>
-                <line x1="14" y1="88" x2="56" y2="88"/>
-                <circle cx="35" cy="98" r="7"/>
-                <line x1="27" y1="110" x2="27" y2="118"/>
-                <line x1="43" y1="110" x2="43" y2="118"/>
-              </svg>
-            </span>
-            <span class="tile-label">Vertical</span>
-          </label>
-        </div>
-        <select id="size" style="margin-top:14px"></select>
-      </div>
-      <div class="field">
-        <label for="qty">Quantity</label>
+        <label for="qty">Number of Units</label>
+        <p class="hint">Each unit can be configured independently — orientation, capacity, and service type.</p>
         <input type="number" id="qty" min="1" step="1" value="1">
       </div>
     </div>
@@ -486,12 +462,11 @@
       <span class="amt" id="grandTotal">AED 0.00</span>
     </div>
 
+    <p class="note">All prices are inclusive of 5% VAT.</p>
     <p class="note">This is an estimate. Final quote may vary based on site conditions.</p>
-    <p class="note">False ceiling charges are indicative only. Final charges will be informed after a site visit.</p>
     <p class="note" id="liftingNote" hidden>For units 200 L and above: if the unit needs to be lifted to an upper level, this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.</p>
 
-    <button type="button" class="btn btn-outline" id="confirm">Confirm</button>
-    <button type="button" class="btn btn-fill" id="btnPrint">&#128438;&ensp;Print / Save as PDF</button>
+    <button type="button" class="btn btn-fill" id="btnPrint">&#128438;&ensp;Confirm &amp; Print PDF</button>
   </section>
 </main>
 
@@ -507,12 +482,12 @@
       <div class="qp-lh-logo">
         <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
       </div>
-      <div class="qp-lh-logo" style="text-align:right">
-        <img src="https://www.fazahome.ae/cdn/shop/files/logo_b8d89087-cd71-4c12-824b-a25d0b13cab2.png?v=1718283019" alt="Faza Home" style="max-height:42pt">
+      <div class="qp-co-info">
+        P.O. Box 25236, Dubai, U.A.E.<br>
+        Tel: +971 4 3209310<br>
+        Email: info@cheqpoint.com &nbsp;&bull;&nbsp; www.cheqpoint.com<br>
+        TRN: 100058760800003
       </div>
-    </div>
-    <div class="qp-co-info" style="text-align:center; margin-bottom:8pt; font-size:7.5pt; color:#555; line-height:1.5;">
-      Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; Email: info@cheqpoint.com &nbsp;&bull;&nbsp; TRN: 100058760800003
     </div>
 
     <!-- Header table -->
@@ -523,8 +498,16 @@
         <td colspan="3" id="qpTo">&mdash;</td>
       </tr>
       <tr>
+        <td class="q-lbl">Phone:</td>
+        <td colspan="3" id="qpPhone">&mdash;</td>
+      </tr>
+      <tr>
         <td class="q-lbl">Address:</td>
         <td colspan="3" id="qpAddress">&mdash;</td>
+      </tr>
+      <tr>
+        <td class="q-lbl">City:</td>
+        <td colspan="3" id="qpCity">&mdash;</td>
       </tr>
       <tr>
         <td class="q-lbl">TRN:</td>
@@ -549,11 +532,11 @@
       <tr><td>Item / Scope of Works</td><td id="qpScope">&mdash;</td></tr>
       <tr><td>Total Price &amp; Quantity</td><td>Please refer to Annexure&nbsp;#1.</td></tr>
       <tr><td>Terms of Payment</td><td id="qpTerms">Immediate by CDC / Online Transfer</td></tr>
-      <tr><td>Code Validity</td><td>30 days</td></tr>
-      <tr><td>Exclusions</td><td>Please refer below.</td></tr>
+      <tr><td>Quote Validity</td><td>30 days</td></tr>
+      <tr><td>Exclusions (Quoted on site)</td><td>Please refer below.</td></tr>
     </table>
 
-    <p class="qp-vat-note"><strong>Note:</strong> All given prices are exclusive and not limited to any VAT / special / corporate / commercial taxes and levies, and this amount needs to be added separately at actual as per UAE law and factored in by the buyer. The above figure should be considered as the net amount after deducting all relevant taxes, levies etc.</p>
+    <p class="qp-vat-note"><strong>Note:</strong> All prices quoted herein are inclusive of 5% VAT as per UAE law.</p>
 
     <div class="qp-sig">
       <img id="qpSigImg" class="qp-sig-img" src="" alt="Signature">
@@ -564,7 +547,7 @@
     </div>
 
     <!-- Exclusions -->
-    <div class="qp-sec-hdr">Exclusions</div>
+    <div class="qp-sec-hdr">Exclusions (Quoted on site)</div>
     <table class="qp-lst" id="qpExclTable"></table>
 
     <!-- Additional Terms -->
@@ -583,8 +566,9 @@
       <div class="qp-lh-logo">
         <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
       </div>
-      <div class="qp-lh-logo" style="text-align:right">
-        <img src="https://www.fazahome.ae/cdn/shop/files/logo_b8d89087-cd71-4c12-824b-a25d0b13cab2.png?v=1718283019" alt="Faza Home" style="max-height:42pt">
+      <div class="qp-co-info">
+        P.O. Box 25236, Dubai, U.A.E.<br>
+        TRN: 100058760800003
       </div>
     </div>
 
@@ -630,43 +614,54 @@ const VAT = 0.05;
    ========================================================= */
 const PRICING = {
   brand: "Atlantic",
-
-  pathways: {
-    newInstallation: { label: "New Installation", anchoring: 100 }
-  },
+  anchoring: 100,
 
   sizesByOrientation: {
     horizontal: [
-      { label: "50 L",  litres: 50,  price: 420,  installPerUnit: 300 },
-      { label: "80 L",  litres: 80,  price: 460,  installPerUnit: 300 },
-      { label: "100 L", litres: 100, price: 550,  installPerUnit: 300 },
-      { label: "200 L", litres: 200, price: 2300, installPerUnit: 600 }
+      { label: "50 L",  litres: 50,  tier: "upto50" },
+      { label: "80 L",  litres: 80,  tier: "80" },
+      { label: "100 L", litres: 100, tier: "100_150" },
+      { label: "200 L", litres: 200, tier: "200" }
     ],
     vertical: [
-      { label: "30 L",             litres: 30,  price: 355,  installPerUnit: 300  },
-      { label: "50 L",             litres: 50,  price: 380,  installPerUnit: 300  },
-      { label: "80 L",             litres: 80,  price: 415,  installPerUnit: 300  },
-      { label: "100 L",            litres: 100, price: 515,  installPerUnit: 300  },
-      { label: "150 L",            litres: 150, price: 1500, installPerUnit: 300  },
-      { label: "150 L Wall Mount", litres: 150, price: null, installPerUnit: 300  },
-      { label: "200 L Wall Mount", litres: 200, price: 2200, installPerUnit: 600  },
-      { label: "200 L Stab Floor", litres: 200, price: 2350, installPerUnit: 600  },
-      { label: "300 L",            litres: 300, price: 3300, installPerUnit: 1000 },
-      { label: "500 L",            litres: 500, price: 6000, installPerUnit: 1500 }
+      { label: "30 L",             litres: 30,  tier: "upto50" },
+      { label: "50 L",             litres: 50,  tier: "upto50" },
+      { label: "80 L",             litres: 80,  tier: "80" },
+      { label: "100 L",            litres: 100, tier: "100_150" },
+      { label: "150 L",            litres: 150, tier: "100_150" },
+      { label: "150 L Wall Mount", litres: 150, tier: "100_150" },
+      { label: "200 L Wall Mount", litres: 200, tier: "200" },
+      { label: "200 L Stab Floor", litres: 200, tier: "200" },
+      { label: "300 L",            litres: 300, tier: "300plus" },
+      { label: "500 L",            litres: 500, tier: "300plus" }
+    ],
+    instant: [
+      { label: "Tempo Lite 3500W", litres: 0, tier: "upto50" },
+      { label: "Tempo Lite 5500W", litres: 0, tier: "upto50" }
     ]
   },
 
   locations: [
-    { label: "Dubai"          },
-    { label: "Sharjah"        },
-    { label: "Ajman"          },
-    { label: "Umm Al Quwain"  },
-    { label: "Abu Dhabi"      },
-    { label: "Ras Al Khaimah" },
-    { label: "Fujairah"       },
-    { label: "Al Ain"         },
-    { label: "Liwa / Ruwais"  }
+    { label: "Abu Dhabi",      key: "abu_dhabi" },
+    { label: "Ajman",          key: "sharjah_ajman" },
+    { label: "Al Ain",         key: "al_ain" },
+    { label: "Dubai",          key: "dubai" },
+    { label: "Fujairah",       key: "fujairah" },
+    { label: "Liwa / Ruwais",  key: "liwa_ruwais" },
+    { label: "Ras Al Khaimah", key: "rak" },
+    { label: "Sharjah",        key: "sharjah_ajman" },
+    { label: "Umm Al Quwain",  key: "uaq" }
   ],
+
+  /* Rates are INCLUSIVE of 5% VAT — from Faza reinstallation rate card */
+  installRates: {
+    //              Dubai  Sharjah/Ajman  UAQ    RAK    Fujairah  Al Ain  Abu Dhabi  Liwa/Ruwais
+    upto50:   { dubai: 672,  sharjah_ajman: 665,  uaq: 694,  rak: 717,  fujairah: 754,  al_ain: 777,  abu_dhabi: 799,  liwa_ruwais: 1092 },
+    "80":     { dubai: 767,  sharjah_ajman: 759,  uaq: 789,  rak: 812,  fujairah: 849,  al_ain: 872,  abu_dhabi: 894,  liwa_ruwais: 1187 },
+    "100_150":{ dubai: 908,  sharjah_ajman: 901,  uaq: 930,  rak: 953,  fujairah: 990,  al_ain: 1013, abu_dhabi: 1035, liwa_ruwais: 1328 },
+    "200":    { dubai: 1260, sharjah_ajman: 1253, uaq: 1282, rak: 1305, fujairah: 1342, al_ain: 1365, abu_dhabi: 1387, liwa_ruwais: 1680 },
+    "300plus":{ dubai: 1544, sharjah_ajman: 1536, uaq: 1566, rak: 1589, fujairah: 1625, al_ain: 1649, abu_dhabi: 1671, liwa_ruwais: 1964 }
+  },
 
   falseCeiling: [
     { label: "40 × 40",   price: 600  },
@@ -677,6 +672,13 @@ const PRICING = {
     { label: "200 × 200", price: 3000 }
   ]
 };
+
+function getInstallRate(tier) {
+  const locIdx = Number(el.location.value) || 0;
+  const loc = PRICING.locations[locIdx] || PRICING.locations[0];
+  const rates = PRICING.installRates[tier];
+  return rates ? (rates[loc.key] || 0) : 0;
+}
 
 /* =========================================================
    REP DIRECTORY
@@ -713,7 +715,11 @@ const EXCLUSIONS_MASTER = [
   "Extension of warranty.",
   "Any special documentation and/or testing.",
   "Any welding / repair works.",
-  "Restoration of storage tank condition."
+  "Restoration of storage tank condition.",
+  "Civil works, core drilling, major piping rerouting, waterproofing, ceiling reconstruction.",
+  "Electrical DB modifications, new cabling runs, panel upgrades beyond basic reconnection.",
+  "Corroded/broken valves, seized fittings, unsafe installations requiring rework (quoted on site).",
+  "Confined space permits, crane/hoist requirements, special access equipment."
 ];
 
 const SIG_IMG_SRC = "";
@@ -730,16 +736,13 @@ const fmt = (n) => "AED " + Number(n).toLocaleString("en-US", { minimumFractionD
 
 const el = {
   jobNumber:        document.getElementById("jobNumber"),
-  size:             document.getElementById("size"),
   qty:              document.getElementById("qty"),
   location:         document.getElementById("location"),
-  serviceTypeField: document.getElementById("serviceTypeField"),
   heaterSection:    document.getElementById("heaterSection"),
   unitDetails:      document.getElementById("unitDetails"),
   breakdown:        document.getElementById("breakdown"),
   totalsBlock:      document.getElementById("totalsBlock"),
   grandTotal:       document.getElementById("grandTotal"),
-  confirm:          document.getElementById("confirm"),
   disclaimerModal:  document.getElementById("disclaimerModal"),
   disclaimerText:   document.getElementById("disclaimerText"),
   disclaimerAck:    document.getElementById("disclaimerAck"),
@@ -749,15 +752,15 @@ const el = {
   attnName:         document.getElementById("attnName"),
   trnNumber:        document.getElementById("trnNumber"),
   clientAddress:    document.getElementById("clientAddress"),
+  clientPhone:      document.getElementById("clientPhone"),
   termsOfPayment:   document.getElementById("termsOfPayment")
 };
 
 /* ===== Read helpers ===== */
-function getOrientation()   { const r = document.querySelector('input[name="orientation"]:checked'); return r ? r.value : "horizontal"; }
-function getQty()           { const q = parseInt(el.qty.value, 10);       return (isNaN(q) || q < 1) ? 1 : q; }
-function currentSizes()     { return PRICING.sizesByOrientation[getOrientation()] || PRICING.sizesByOrientation.horizontal; }
+function getQty() { const q = parseInt(el.qty.value, 10); return (isNaN(q) || q < 1) ? 1 : q; }
+function sizesForOrientation(orient) { return PRICING.sizesByOrientation[orient] || PRICING.sizesByOrientation.horizontal; }
 
-/* ===== Populate global dropdowns ===== */
+/* ===== Populate helpers ===== */
 function populateSelect(sel, items, textFn) {
   sel.innerHTML = "";
   items.forEach((item, i) => {
@@ -767,35 +770,71 @@ function populateSelect(sel, items, textFn) {
     sel.appendChild(opt);
   });
 }
-populateSelect(el.size, currentSizes(), (s) => s.label);
 populateSelect(el.location, PRICING.locations, (l) => l.label);
 
 /* ===== State ===== */
 let unitStates = [];
 
 function defaultUnitState() {
-  return { sizeIdx: Number(el.size.value) || 0, ceilingNeeded: false, ceilingIdx: 0, craneRequired: false };
+  return { orientation: "horizontal", serviceType: "newInstallation", sizeIdx: 0, ceilingNeeded: false, ceilingIdx: 0, craneRequired: false };
 }
 function syncUnitStates(qty) { while (unitStates.length < qty) unitStates.push(defaultUnitState()); unitStates.length = qty; }
 
+/* ===== Wireframe SVGs ===== */
+function wireframeSVG(orient) {
+  if (orient === "vertical") return `<svg viewBox="0 0 70 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="6" width="42" height="104" rx="21"/><line x1="14" y1="88" x2="56" y2="88"/><circle cx="35" cy="98" r="7"/><line x1="27" y1="110" x2="27" y2="118"/><line x1="43" y1="110" x2="43" y2="118"/></svg>`;
+  if (orient === "instant") return `<svg viewBox="0 0 80 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="8" width="56" height="72" rx="4"/><rect x="20" y="16" width="40" height="24" rx="2" stroke-dasharray="3 2"/><circle cx="30" cy="56" r="5"/><circle cx="50" cy="56" r="5"/><line x1="30" y1="61" x2="30" y2="68"/><line x1="50" y1="61" x2="50" y2="68"/><line x1="28" y1="80" x2="28" y2="96"/><line x1="40" y1="80" x2="40" y2="96"/><line x1="52" y1="80" x2="52" y2="96"/><polyline points="36,100 40,112 44,100"/></svg>`;
+  return `<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="14" width="104" height="38" rx="19"/><line x1="90" y1="16" x2="90" y2="50"/><circle cx="28" cy="33" r="7"/><line x1="28" y1="33" x2="28" y2="28"/><line x1="58" y1="52" x2="58" y2="64"/><line x1="70" y1="52" x2="70" y2="64"/></svg>`;
+}
+function wireframeDesc(orient) {
+  if (orient === "vertical") return "Vertical wall-mounted storage heater";
+  if (orient === "instant") return "Instant (tankless) water heater";
+  return "Horizontal wall-mounted storage heater";
+}
+
 /* ===== Build install unit cards ===== */
 function buildUnitDetails() {
-  const sizes = currentSizes();
   const qty = getQty();
   syncUnitStates(qty);
   el.unitDetails.innerHTML = "";
 
   for (let i = 0; i < qty; i++) {
     const u = unitStates[i];
+    const sizes = sizesForOrientation(u.orientation);
     if (u.sizeIdx >= sizes.length) u.sizeIdx = 0;
     const card = document.createElement("div");
     card.className = "unit-card";
 
-    const sizeOpts = sizes.map((s, si) => `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`).join("");
     const hdr = document.createElement("div");
     hdr.className = "unit-card-header";
-    hdr.innerHTML = `<span class="unit-card-num">Unit ${i + 1}</span><select class="unit-size-sel" data-unit="${i}" aria-label="Capacity for unit ${i + 1}">${sizeOpts}</select>`;
+    hdr.innerHTML = `<span class="unit-card-num">Unit ${i + 1}</span>`;
     card.appendChild(hdr);
+
+    const configRow = document.createElement("div");
+    configRow.className = "unit-config";
+
+    const orientSel = `<select class="u-orient-sel" data-unit="${i}" aria-label="Type for unit ${i + 1}">` +
+      `<option value="horizontal"${u.orientation === "horizontal" ? " selected" : ""}>Horizontal</option>` +
+      `<option value="vertical"${u.orientation === "vertical" ? " selected" : ""}>Vertical</option>` +
+      `<option value="instant"${u.orientation === "instant" ? " selected" : ""}>Instant</option></select>`;
+
+    const svcSel = `<select class="u-svc-sel" data-unit="${i}" aria-label="Service type for unit ${i + 1}">` +
+      `<option value="newInstallation"${u.serviceType === "newInstallation" ? " selected" : ""}>New Installation</option>` +
+      `<option value="reinstallation"${u.serviceType === "reinstallation" ? " selected" : ""}>Reinstallation</option></select>`;
+
+    const sizeOpts = sizes.map((s, si) => `<option value="${si}"${u.sizeIdx === si ? " selected" : ""}>${s.label}</option>`).join("");
+    const sizeSel = `<select class="unit-size-sel" data-unit="${i}" aria-label="Capacity for unit ${i + 1}">${sizeOpts}</select>`;
+
+    configRow.innerHTML =
+      `<div class="unit-config-group"><span class="unit-sublabel">Type</span>${orientSel}</div>` +
+      `<div class="unit-config-group"><span class="unit-sublabel">Service</span>${svcSel}</div>` +
+      `<div class="unit-config-group"><span class="unit-sublabel">Capacity</span>${sizeSel}</div>`;
+    card.appendChild(configRow);
+
+    const wireframe = document.createElement("div");
+    wireframe.className = "unit-wireframe";
+    wireframe.innerHTML = wireframeSVG(u.orientation) + `<span class="unit-wireframe-label">${wireframeDesc(u.orientation)}</span>`;
+    card.appendChild(wireframe);
 
     const ceilOpts = PRICING.falseCeiling.map((c, ci) => `<option value="${ci}"${u.ceilingIdx === ci ? " selected" : ""}>${c.label} cm — ${fmt(c.price)}</option>`).join("");
     const ceilField = document.createElement("div");
@@ -830,6 +869,8 @@ function buildUnitDetails() {
 /* ===== Listeners — install cards ===== */
 function attachInstallListeners() {
   const q = (sel) => el.unitDetails.querySelectorAll(sel);
+  q(".u-orient-sel").forEach((s) => s.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].orientation = e.target.value; unitStates[i].sizeIdx = 0; buildUnitDetails(); recalc(); }));
+  q(".u-svc-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].serviceType = e.target.value; recalc(); }));
   q(".unit-size-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].sizeIdx = +e.target.value; buildUnitDetails(); recalc(); }));
   q(".u-ceil-chk").forEach((c) => c.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].ceilingNeeded = e.target.checked; e.target.closest(".unit-card").querySelector(".u-ceil-block").hidden = !e.target.checked; recalc(); }));
   q(".u-ceil-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].ceilingIdx = +e.target.value; recalc(); }));
@@ -845,40 +886,47 @@ function lineHTML(desc, sub, amount) {
 /* ===== Core recalc ===== */
 function recalc() {
   let html = "", subtotal = 0;
-
-  const sizes = currentSizes();
   const qty = getQty();
-  const pathwayObj = PRICING.pathways.newInstallation;
-  const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
   syncUnitStates(qty);
 
-  const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
   let installTotal = 0;
-  unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; installTotal += s.installPerUnit; });
-
-  if (allSame && qty > 0) {
-    const s = sizes[unitStates[0].sizeIdx] || sizes[0];
-    html += lineHTML("Water Heater Installation", `${PRICING.brand} ${s.label} · ${orientLabel} × ${qty}`, installTotal);
-  } else {
-    for (let i = 0; i < qty; i++) {
-      const s = sizes[unitStates[i].sizeIdx] || sizes[0];
-      html += lineHTML(`Water Heater Installation (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, s.installPerUnit);
+  let anchoringTotal = 0;
+  for (let i = 0; i < qty; i++) {
+    const u = unitStates[i];
+    const sizes = sizesForOrientation(u.orientation);
+    const s = sizes[u.sizeIdx] || sizes[0];
+    const orientLabel = u.orientation === "vertical" ? "Vertical" : u.orientation === "instant" ? "Instant" : "Horizontal";
+    const typeLabel = u.orientation === "instant" ? "Instant Water Heater" : "Water Heater";
+    const svcLabel = u.serviceType === "reinstallation" ? "Reinstallation" : "Installation";
+    const rate = getInstallRate(s.tier);
+    installTotal += rate;
+    html += lineHTML(`${typeLabel} ${svcLabel} (Unit ${i + 1})`, `${PRICING.brand} ${s.label} · ${orientLabel}`, rate);
+    if (u.serviceType === "newInstallation") {
+      anchoringTotal += PRICING.anchoring;
     }
   }
 
-  const anchoringTotal = pathwayObj.anchoring * qty;
-  if (anchoringTotal > 0) html += lineHTML("Anchoring", `New Installation${qty > 1 ? " × " + qty : ""}`, anchoringTotal);
+  if (anchoringTotal > 0) {
+    const newCount = unitStates.slice(0, qty).filter((u) => u.serviceType === "newInstallation").length;
+    html += lineHTML("Anchoring", `New Installation${newCount > 1 ? " × " + newCount : ""}`, anchoringTotal);
+  }
   subtotal = installTotal + anchoringTotal;
 
   let maxLitres = 0;
   let anyCrane = false;
+  let anyCeiling = false;
   for (let i = 0; i < qty; i++) {
     const u = unitStates[i];
+    const sizes = sizesForOrientation(u.orientation);
     const size = sizes[u.sizeIdx] || sizes[0];
     if (size.litres > maxLitres) maxLitres = size.litres;
     if (u.craneRequired) anyCrane = true;
     const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
-    if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; }
+    if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; anyCeiling = true; }
+  }
+
+  if (anyCeiling) {
+    html += `<div class="line-note">False ceiling charges are indicative only. Final charges will be informed after a site visit.</div>`;
   }
 
   if (anyCrane) {
@@ -888,7 +936,7 @@ function recalc() {
   if (!html) html = `<div class="empty-note">No items selected yet.</div>`;
   el.breakdown.innerHTML = html;
 
-  el.totalsBlock.innerHTML = `<div class="line subtotal"><span class="desc">Subtotal</span><span class="amt">${fmt(subtotal)}</span></div>`;
+  el.totalsBlock.innerHTML = `<div class="line subtotal"><span class="desc">Subtotal (incl. VAT)</span><span class="amt">${fmt(subtotal)}</span></div>`;
   el.grandTotal.textContent = fmt(subtotal);
 
   if (maxLitres >= 200) {
@@ -904,23 +952,18 @@ function recalc() {
 }
 
 /* ===== Global change triggers ===== */
-function onGlobalInstallChange() { buildUnitDetails(); recalc(); }
-function onGlobalSizeChange() { const idx = Number(el.size.value) || 0; unitStates.forEach((u) => { u.sizeIdx = idx; }); buildUnitDetails(); recalc(); }
-function onOrientationChange() { populateSelect(el.size, currentSizes(), (s) => s.label); el.size.value = "0"; unitStates.forEach((u) => { u.sizeIdx = 0; }); buildUnitDetails(); recalc(); }
+function onQtyChange() { buildUnitDetails(); recalc(); }
 
 ["change", "input"].forEach((evt) => {
-  el.size.addEventListener(evt, onGlobalSizeChange);
-  el.qty.addEventListener(evt, onGlobalInstallChange);
+  el.qty.addEventListener(evt, onQtyChange);
   el.location.addEventListener(evt, recalc);
 });
-el.qty.addEventListener("blur", () => { el.qty.value = getQty(); onGlobalInstallChange(); });
-
-document.querySelectorAll('input[name="orientation"]').forEach((r) => r.addEventListener("change", onOrientationChange));
+el.qty.addEventListener("blur", () => { el.qty.value = getQty(); onQtyChange(); });
 
 /* ===== Disclaimer ===== */
 const DISCLAIMER_MIN_LITRES = 200;
-function largestUnitLitres() { const sizes = currentSizes(); return unitStates.reduce((m, u) => Math.max(m, (sizes[u.sizeIdx] || sizes[0]).litres), 0); }
-function largestUnitLabel()  { const sizes = currentSizes(); let best = sizes[0]; unitStates.forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; if (s.litres > best.litres) best = s; }); return best.label; }
+function largestUnitLitres() { return unitStates.reduce((m, u) => { const sizes = sizesForOrientation(u.orientation); return Math.max(m, (sizes[u.sizeIdx] || sizes[0]).litres); }, 0); }
+function largestUnitLabel() { let best = { litres: -1, label: "" }; unitStates.forEach((u) => { const sizes = sizesForOrientation(u.orientation); const s = sizes[u.sizeIdx] || sizes[0]; if (s.litres > best.litres) best = s; }); return best.label || "unit"; }
 function anyCraneRequired() { return unitStates.some((u) => u.craneRequired); }
 function openDisclaimer() {
   if (anyCraneRequired()) {
@@ -930,13 +973,11 @@ function openDisclaimer() {
   }
   el.disclaimerModal.classList.add("open"); el.disclaimerModal.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden"; el.disclaimerAck.focus();
 }
-function closeDisclaimer() { el.disclaimerModal.classList.remove("open"); el.disclaimerModal.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; el.confirm.focus(); }
-el.disclaimerAck.addEventListener("click", closeDisclaimer);
+let disclaimerAcknowledged = false;
+function closeDisclaimer() { el.disclaimerModal.classList.remove("open"); el.disclaimerModal.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; el.btnPrint.focus(); }
+el.disclaimerAck.addEventListener("click", () => { disclaimerAcknowledged = true; closeDisclaimer(); doPrint(); });
 el.disclaimerModal.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close-disclaimer")) closeDisclaimer(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.disclaimerModal.classList.contains("open")) closeDisclaimer(); });
-el.confirm.addEventListener("click", () => {
-  if (largestUnitLitres() >= DISCLAIMER_MIN_LITRES) openDisclaimer();
-});
 
 /* =========================================================
    PRINT HELPERS
@@ -957,12 +998,29 @@ function getLineDescText(descEl) {
 
 function getAutoSubject() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
-  return "Atlantic Water Heater New Installation Works — " + loc.label;
+  const qty = getQty();
+  const orientations = new Set(unitStates.slice(0, qty).map((u) => u.orientation));
+  const services = new Set(unitStates.slice(0, qty).map((u) => u.serviceType));
+  const typeStr = orientations.size === 1 && orientations.has("instant") ? "Instant Water Heater" : "Water Heater";
+  const workType = services.size === 1 ? (services.has("reinstallation") ? "Reinstallation" : "New Installation") : "Installation & Reinstallation";
+  return "Atlantic " + typeStr + " " + workType + " Works — " + loc.label;
 }
 
 function getScopeText() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
-  return "Supply & installation of new Atlantic brand water heater(s) at new site — " + loc.label + ". Unit details and quantities as per Annexure #1.";
+  const qty = getQty();
+  const orientations = new Set(unitStates.slice(0, qty).map((u) => u.orientation));
+  const services = new Set(unitStates.slice(0, qty).map((u) => u.serviceType));
+  const typeStr = orientations.size === 1 && orientations.has("instant") ? "instant water heater(s)" : "water heater(s)";
+  let svcStr, siteStr;
+  if (services.size === 1) {
+    svcStr = services.has("reinstallation") ? "Reinstallation" : "Supply & installation";
+    siteStr = services.has("reinstallation") ? "at existing site" : "at new site";
+  } else {
+    svcStr = "Supply, installation & reinstallation";
+    siteStr = "at designated site(s)";
+  }
+  return svcStr + " of Atlantic brand " + typeStr + " " + siteStr + " — " + loc.label + ". Unit details and quantities as per Annexure #1.";
 }
 
 function getExclusionsList() {
@@ -990,9 +1048,9 @@ function buildAnnexureRows() {
   });
 
   const grand = el.grandTotal.textContent;
-  rows += `<tr class="qp-grand"><td>GRAND TOTAL (excl. VAT)</td><td class="qp-r">${grand}</td></tr>`;
+  rows += `<tr class="qp-grand"><td>GRAND TOTAL (incl. 5% VAT)</td><td class="qp-r">${grand}</td></tr>`;
 
-  const note = "Prices shown are exclusive of VAT. VAT at 5% will be applied on the tax invoice as per UAE law.";
+  const note = "All prices shown are inclusive of 5% VAT as per UAE law.";
 
   return { rows, note };
 }
@@ -1001,6 +1059,14 @@ function buildAnnexureRows() {
    PRINT BUTTON HANDLER
    ========================================================= */
 el.btnPrint.addEventListener("click", () => {
+  if (largestUnitLitres() >= DISCLAIMER_MIN_LITRES && !disclaimerAcknowledged) {
+    openDisclaimer();
+    return;
+  }
+  doPrint();
+});
+
+function doPrint() {
   const rep     = REPS[0];
   const loc     = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
   const dateStr = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
@@ -1009,6 +1075,8 @@ el.btnPrint.addEventListener("click", () => {
   const attnStr   = el.attnName.value.trim();
   document.getElementById("qpTo").textContent      = clientStr ? (attnStr ? clientStr + " (Attn: " + attnStr + ")" : clientStr) : "—";
   document.getElementById("qpAddress").textContent  = el.clientAddress.value.trim() || "—";
+  document.getElementById("qpCity").textContent     = loc.label;
+  document.getElementById("qpPhone").textContent    = el.clientPhone.value.trim() || "—";
   document.getElementById("qpClientTRN").textContent = el.trnNumber.value.trim() || "—";
   document.getElementById("qpRef").textContent     = el.jobNumber.value.trim() || "—";
   document.getElementById("qpJobNo").textContent   = el.jobNumber.value.trim() || "—";
@@ -1057,7 +1125,8 @@ el.btnPrint.addEventListener("click", () => {
   document.getElementById("qpPriceNote").textContent = note;
 
   window.print();
-});
+  disclaimerAcknowledged = false;
+}
 
 /* ===== Init ===== */
 buildUnitDetails();

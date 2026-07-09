@@ -8,9 +8,32 @@
   <!-- Google Fonts: Playfair Display (display) + DM Sans (body) -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
-  <!-- EmailJS: sends submission report to naipauls@actaiascend.com -->
+  <!-- EmailJS: sends submission emails to the client and to Naipaul -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>emailjs.init("REPLACE_WITH_YOUR_PUBLIC_KEY");</script>
+  <script>
+    // ================================================================
+    // EMAILJS CONFIGURATION
+    // Fill in your credentials from https://www.emailjs.com
+    //   Public Key  → Account → API Keys
+    //   Service ID  → Email Services (connect Gmail, Outlook, etc.)
+    //   Template IDs → Email Templates (create one for each recipient)
+    //
+    // Template variables available in both templates:
+    //   Naipaul template: client_name, client_email, total_score,
+    //     stage_number, tier_name, domain_scores, json_data, submitted_at
+    //   Client template:  client_name, to_email, stage_number, tier_name,
+    //     tier_description, total_score, domain_scores, booking_link
+    // ================================================================
+    const EMAILJS_CONFIG = {
+      publicKey:         'REPLACE_WITH_YOUR_PUBLIC_KEY',
+      serviceId:         'REPLACE_WITH_SERVICE_ID',
+      templateIdNaipaul: 'REPLACE_WITH_NAIPAUL_TEMPLATE_ID',
+      templateIdClient:  'REPLACE_WITH_CLIENT_TEMPLATE_ID',
+      naipaulEmail:      'naipauls@actaiascend.com',
+      bookingLink:       'https://actascendpartners.com/book',
+    };
+    emailjs.init(EMAILJS_CONFIG.publicKey);
+  </script>
 
   <style>
     /* =============================================
@@ -719,7 +742,7 @@
           <div class="domain-number">1</div>
           <div class="domain-title-wrap">
             <div class="domain-title">Cash Flow &amp; Liquidity</div>
-            <div class="domain-subtitle">How well you track, forecast, and manage cash</div>
+            <div class="domain-subtitle">Cash position, 13-week forecasting, AR/AP management, cash optimisation</div>
           </div>
         </div>
         <div class="score-options">
@@ -761,7 +784,7 @@
           <div class="domain-number">2</div>
           <div class="domain-title-wrap">
             <div class="domain-title">Internal Controls &amp; Governance</div>
-            <div class="domain-subtitle">Policies, documented controls, audit readiness</div>
+            <div class="domain-subtitle">Controls environment, audit readiness, delegation of authority, board governance, PE compliance</div>
           </div>
         </div>
         <div class="score-options">
@@ -779,7 +802,7 @@
           <div class="domain-number">3</div>
           <div class="domain-title-wrap">
             <div class="domain-title">Financial Reporting &amp; KPIs</div>
-            <div class="domain-subtitle">Close quality, reporting package, timeliness</div>
+            <div class="domain-subtitle">Close process, board-ready management reporting, KPI dashboards, forward-looking intelligence</div>
           </div>
         </div>
         <div class="score-options">
@@ -797,7 +820,7 @@
           <div class="domain-number">4</div>
           <div class="domain-title-wrap">
             <div class="domain-title">Working Capital Optimization</div>
-            <div class="domain-subtitle">Credit terms, covenant compliance, treasury management</div>
+            <div class="domain-subtitle">AR, AP and inventory cycle management, cash conversion cycle, working capital efficiency</div>
           </div>
         </div>
         <div class="score-options">
@@ -815,7 +838,7 @@
           <div class="domain-number">5</div>
           <div class="domain-title-wrap">
             <div class="domain-title">ERP &amp; Systems Readiness</div>
-            <div class="domain-subtitle">ERP, integrations, cloud infrastructure, automation</div>
+            <div class="domain-subtitle">Core ERP infrastructure (e.g. NetSuite), data integrity, systems scalability, IT controls</div>
           </div>
         </div>
         <div class="score-options">
@@ -845,7 +868,7 @@
               Owner Dependence Score
               <span class="placeholder-badge">Content TBC</span>
             </div>
-            <div class="domain-subtitle">Finance leadership structure, strategic mandate, governance</div>
+            <div class="domain-subtitle">Owner dependency in finance decisions, delegation, succession, strategic vs. operational balance</div>
           </div>
         </div>
         <div class="score-options">
@@ -875,7 +898,7 @@
               Finance Team Structure
               <span class="placeholder-badge">Content TBC</span>
             </div>
-            <div class="domain-subtitle">Finance org structure, performance management, talent pipeline</div>
+            <div class="domain-subtitle">Finance org design, talent management, succession planning, scalability of the finance function</div>
           </div>
         </div>
         <div class="score-options">
@@ -894,7 +917,7 @@
           <div class="domain-number">8</div>
           <div class="domain-title-wrap">
             <div class="domain-title">Revenue &amp; Margin Analysis</div>
-            <div class="domain-subtitle">Margin visibility, product/customer P&amp;L, pricing strategy</div>
+            <div class="domain-subtitle">Revenue drivers, contribution margin by product/customer/channel, pricing strategy, VPM analysis</div>
           </div>
         </div>
         <div class="score-options">
@@ -912,7 +935,7 @@
           <div class="domain-number">9</div>
           <div class="domain-title-wrap">
             <div class="domain-title">Value Creation Roadmap</div>
-            <div class="domain-subtitle">Forecast horizon, budget discipline, 3-statement modelling</div>
+            <div class="domain-subtitle">12-24 month value-building roadmap, exit-prep planning, integrated 3-statement model, scenario analysis</div>
           </div>
         </div>
         <div class="score-options">
@@ -941,7 +964,7 @@
               EBITDA Quality &amp; Normalization
               <span class="placeholder-badge">Content TBC</span>
             </div>
-            <div class="domain-subtitle">Revenue quality, earnings sustainability, QofE readiness</div>
+            <div class="domain-subtitle">Revenue quality, EBITDA normalization, ITAD-specific add-backs, QofE readiness for exit/fundraise</div>
           </div>
         </div>
         <div class="score-options">
@@ -960,7 +983,7 @@
           <div class="domain-number">11</div>
           <div class="domain-title-wrap">
             <div class="domain-title">Exit &amp; M&amp;A Readiness</div>
-            <div class="domain-subtitle">Auditors, lenders, tax advisors, strategic engagement</div>
+            <div class="domain-subtitle">Buyer readiness, PE/banker relationships, CIM readiness, deal process prep, data room, transaction readiness</div>
           </div>
         </div>
         <div class="score-options">
@@ -989,7 +1012,7 @@
               AI &amp; Digital Transformation
               <span class="placeholder-badge">Content TBC</span>
             </div>
-            <div class="domain-subtitle">Exit preparation, data room, valuation readiness</div>
+            <div class="domain-subtitle">AI-driven automation (e.g. High Radius), finance digital transformation, data strategy, cloud modernisation</div>
           </div>
         </div>
         <div class="score-options">
@@ -1171,7 +1194,7 @@
     // 12 domain names (order matters — index 0 = domain 1)
     const DOMAINS = [
       // UPDATED 2026-03-14: All domain names confirmed by Naipaul per ACT_Ascend_Domain_Mapping doc
-      // ORDER matches piece2 (ascend-diagnostic-piece2-updated.html)
+      // ORDER matches piece2.html (advisor tool) and the ASCEND Combined Reference doc
       { id: 1,  name: 'Cash Flow & Liquidity',          short: 'Cash Flow' },
       { id: 2,  name: 'Internal Controls & Governance', short: 'Controls' },
       { id: 3,  name: 'Financial Reporting & KPIs',     short: 'Reporting & KPIs' },
@@ -1427,8 +1450,8 @@
       document.getElementById('report-screen').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Simulate email send (UI feedback only — real email requires backend)
-      simulateEmailSend();
+      // Send emails to client and Naipaul via EmailJS
+      sendEmails();
     }
 
     // ================================================================
@@ -1610,29 +1633,25 @@
     }
 
     // ================================================================
-    // EMAIL SIMULATION
-    // NOTE: This is a UI-only simulation. To send real emails, a
-    // backend endpoint (e.g. SendGrid, Mailgun, or similar) must be
-    // integrated at this point. The endpoint should:
-    //   - Receive: { name, email, scores, stage, tier, totalScore }
-    //   - Send report email to the client (userEmail)
-    //   - Send notification email to Naipaul (naipaul@actascendpartners.com)
-    // Replace this function with a real fetch() call to that endpoint.
+    // EMAIL SENDING — sends two emails via EmailJS:
+    //   1. Naipaul notification: client details + domain scores + JSON data
+    //   2. Client confirmation: their stage, tier summary, booking CTA
+    //
+    // Emails are only sent when EMAILJS_CONFIG is fully configured.
+    // The UI banner always shows after 1.2s so the client gets feedback.
     // ================================================================
-    function simulateEmailSend() {
-      const domainNames = [
-        'Cash Flow & Liquidity', 'Internal Controls & Governance',
-        'Financial Reporting & KPIs', 'Working Capital Optimization',
-        'ERP & Systems Readiness', 'Owner Dependence Score',
-        'Finance Team Structure', 'Revenue & Margin Analysis',
-        'Value Creation Roadmap', 'EBITDA Quality & Normalization',
-        'Exit & M&A Readiness', 'AI & Digital Transformation'
-      ];
+    function sendEmails() {
       const stageNum      = document.getElementById('report-stage-num').textContent;
       const tierName      = document.getElementById('report-tier-name').textContent;
       const totalScoreVal = scores.reduce((a, b) => a + (b || 0), 0);
+      const tierObj       = STAGE_TIERS.find(t => t.name === tierName.replace(' Tier', ''));
+      const submittedAt   = new Date().toLocaleString();
 
-      // Build JSON payload — identical structure to the downloadable file
+      const domainTable = DOMAINS.map((d, i) =>
+        `${i + 1}. ${d.name}: ${scores[i]}/3`
+      ).join('\n');
+
+      // JSON payload — same structure as the downloadable file
       const exportData = {
         schema: 'ascend-p1-v1',
         exportedAt: new Date().toISOString(),
@@ -1641,36 +1660,51 @@
           totalScore: totalScoreVal,
           stageNumber: parseInt(stageNum),
           tierName: tierName.replace(' Tier', ''),
-          domains: domainNames.map((name, i) => ({
-            index: i + 1, name: name, selfScore: scores[i]
+          domains: DOMAINS.map((d, i) => ({
+            index: i + 1, name: d.name, selfScore: scores[i]
           }))
         }
       };
       const jsonStr = JSON.stringify(exportData, null, 2);
 
-      const domainTable = domainNames.map((n, i) =>
-        (i + 1) + '. ' + n + ': ' + scores[i] + '/3'
-      ).join('\n');
+      const configured = EMAILJS_CONFIG.serviceId !== 'REPLACE_WITH_SERVICE_ID';
 
-      // Send via EmailJS to naipauls@actaiascend.com
-      emailjs.send('REPLACE_WITH_SERVICE_ID', 'REPLACE_WITH_TEMPLATE_ID', {
-        client_name:   userName,
-        client_email:  userEmail,
-        total_score:   totalScoreVal + ' / 36',
-        stage_number:  stageNum + ' of 18',
-        tier_name:     tierName,
-        domain_scores: domainTable,
-        json_data:     jsonStr,
-        submitted_at:  new Date().toLocaleString()
-      }).catch(function(err) {
-        console.error('EmailJS send failed:', err);
-      });
+      if (configured) {
+        // Email 1 → Naipaul
+        emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateIdNaipaul, {
+          to_email:      EMAILJS_CONFIG.naipaulEmail,
+          client_name:   userName,
+          client_email:  userEmail,
+          total_score:   `${totalScoreVal} / 36`,
+          stage_number:  `${stageNum} of 18`,
+          tier_name:     tierName,
+          domain_scores: domainTable,
+          json_data:     jsonStr,
+          submitted_at:  submittedAt,
+        }).catch(function(err) {
+          console.error('Naipaul email failed:', err);
+        });
 
-      // UI feedback (shown immediately — not blocked by email result)
+        // Email 2 → Client
+        emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateIdClient, {
+          to_email:         userEmail,
+          client_name:      userName,
+          stage_number:     `${stageNum} of 18`,
+          tier_name:        tierName,
+          tier_description: tierObj ? tierObj.description : '',
+          total_score:      `${totalScoreVal} / 36`,
+          domain_scores:    domainTable,
+          booking_link:     EMAILJS_CONFIG.bookingLink,
+          submitted_at:     submittedAt,
+        }).catch(function(err) {
+          console.error('Client email failed:', err);
+        });
+      }
+
+      // Show banner after a short delay (independent of email success)
       setTimeout(function() {
-        var banner = document.getElementById('email-banner');
         document.getElementById('banner-email').textContent = userEmail;
-        banner.style.display = 'flex';
+        document.getElementById('email-banner').style.display = 'flex';
       }, 1200);
     }
 
@@ -2566,29 +2600,12 @@
         domainScores.push(checked ? parseInt(checked.value) : null);
       }
 
-      // Gather domain names for readability in the exported file
-      // UPDATED 2026-03-14: Domain names updated per ACT_Ascend_Domain_Mapping doc
-      const domainNames = [
-        'Cash Flow & Liquidity',
-        'Internal Controls &amp; Governance',
-        'Financial Reporting &amp; KPIs',
-        'Working Capital Optimization',
-        'ERP &amp; Systems Readiness',
-        'Owner Dependence Score',
-        'Finance Team Structure',
-        'Revenue &amp; Margin Analysis',
-        'Value Creation Roadmap',
-        'EBITDA Quality &amp; Normalization',
-        'Exit &amp; M&amp;A Readiness',
-        'AI &amp; Digital Transformation'
-      ];
-
       // Get stage + tier from report (already calculated)
       const stageNum = document.getElementById('report-stage-num').textContent;
       const tierName = document.getElementById('report-tier-name').textContent;
       const totalScore = domainScores.reduce((a, b) => a + (b || 0), 0);
 
-      // Build export payload
+      // Build export payload — domain names pulled from DOMAINS array (plain text, no HTML entities)
       const exportData = {
         schema: 'ascend-p1-v1',       // Import contract version for Piece 2
         exportedAt: new Date().toISOString(),
@@ -2600,9 +2617,9 @@
           totalScore: totalScore,
           stageNumber: parseInt(stageNum),
           tierName: tierName.replace(' Tier', ''),
-          domains: domainNames.map((name, i) => ({
-            index: i + 1,
-            name: name,
+          domains: DOMAINS.map((d, i) => ({
+            index: d.id,
+            name: d.name,
             selfScore: domainScores[i]
           }))
         }

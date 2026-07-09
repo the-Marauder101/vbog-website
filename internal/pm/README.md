@@ -1,7 +1,7 @@
 # Vyom — VBOG's task & project management tool
 
 Vyom (Sanskrit: "sky") is the first tool in VBOG's internal universe — a Kanban task manager for the whole team. Replaces Asana for tracking work
-across all client projects. Lives at **https://v-bog.com/pm/**.
+across all client projects. Lives at **https://v-bog.com/internal/pm/**.
 
 - **Frontend**: static HTML/CSS/JS (no framework, no build step) — deploys with the main site via GitHub Pages
 - **Backend**: Supabase (PostgreSQL + auto REST API), project `mejebezwvyfkhufkgkej`
@@ -68,7 +68,7 @@ IDs — each with a copy button. Tasks created this way show a teal dot on their
 ## Deploy
 
 Part of the main `vbog-website` GitHub Pages deploy — push to `main` and it's live at
-`v-bog.com/pm/` in a minute or two. No build step. The page is `noindex` and not linked
+`v-bog.com/internal/pm/` in a minute or two. No build step. The page is `noindex` and not linked
 from the public site.
 
 ## Phase 2 backlog (deliberately not built)

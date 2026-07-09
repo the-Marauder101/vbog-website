@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VBOG Reddit Monitor</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>VBOG Reddit Monitor</h1>
+        </div>
+        <div class="header-right">
+            <button id="btn-scan" class="btn-primary" onclick="startScan()">Scan Now</button>
+            <button onclick="togglePanel('settings-panel')" class="btn-ghost">Settings</button>
+        </div>
+    </header>
+
+    <!-- Onboarding -->
+    <div id="onboarding" class="onboarding hidden">
+        <div class="onboarding-inner">
+            <h2>How this works</h2>
+            <ol>
+                <li><strong>Add keywords</strong> in Settings &mdash; terms your ideal customers use on Reddit (e.g. "fractional coo", "founder burnout", "can't scale"). VBOG-tuned defaults are preloaded.</li>
+                <li><strong>Click Scan Now</strong> &mdash; the bot searches all of Reddit (no API key needed) and flags posts where someone is actively looking for help.</li>
+                <li><strong>Review &amp; engage</strong> &mdash; your team reads flagged posts, then replies on Reddit to book calls.</li>
+            </ol>
+            <button class="btn-primary" onclick="togglePanel('settings-panel')">Open Settings to Get Started</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div id="stats-bar" class="stats-bar"></div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="panel hidden">
+        <div class="panel-header">
+            <h2>Settings</h2>
+            <button onclick="togglePanel('settings-panel')" class="btn-close">&times;</button>
+        </div>
+
+        <div class="setting-group">
+            <label>
+                Keywords <span class="required">*required</span>
+                <span class="hint">Comma-separated. Each keyword triggers a separate Reddit search across all subreddits.</span>
+            </label>
+            <textarea id="cfg-keywords" rows="3" placeholder="fractional coo, operations manager, founder burnout, can't scale"></textarea>
+            <button onclick="saveConfig('keywords', 'cfg-keywords')">Save Keywords</button>
+        </div>
+
+        <div class="setting-group">
+            <label>
+                High-Intent Phrases
+                <span class="hint">Posts must contain at least one of these to be flagged. Phrases like "looking for" or "recommend" signal someone actively seeking a service.</span>
+            </label>
+            <textarea id="cfg-intents" rows="3" placeholder="looking for, need help with, recommend, anyone use"></textarea>
+            <button onclick="saveConfig('high_intent_phrases', 'cfg-intents')">Save Phrases</button>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-group">
+                <label>
+                    Subreddits <span class="optional">optional</span>
+                    <span class="hint">Clear this to search all of Reddit. Or limit to specific subreddits (comma-separated, without r/). All listed subs are searched in one request.</span>
+                </label>
+                <input type="text" id="cfg-subreddits" placeholder="Entrepreneur, smallbusiness, agency, startups">
+                <button onclick="saveConfig('subreddits', 'cfg-subreddits')">Save</button>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    Exclude Subreddits <span class="optional">optional</span>
+                    <span class="hint">Posts from these subs are silently dropped during scans (comma-separated, without r/). Use this to filter out hiring boards, VA subs, etc.</span>
+                </label>
+                <input type="text" id="cfg-excluded-subs" placeholder="VirtualAssistant4Hire, freelance_forhire, VirtualAssistantPhil, ExecutiveAssistants">
+                <button onclick="saveConfig('excluded_subreddits', 'cfg-excluded-subs')">Save</button>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-group">
+                <label>
+                    Freshness
+                    <span class="hint">Only find posts from this time range.</span>
+                </label>
+                <select id="cfg-time-filter">
+                    <option value="1h">Past hour</option>
+                    <option value="1d">Past 24 hours</option>
+                    <option value="7d" selected>Past 7 days</option>
+                    <option value="30d">Past 30 days</option>
+                    <option value="all">All time</option>
+                </select>
+                <button onclick="saveConfig('time_filter', 'cfg-time-filter')">Save</button>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-group">
+                <label>
+                    Require Intent Phrase
+                    <span class="hint">ON = stricter, only high-intent posts. OFF = all keyword matches (more results).</span>
+                </label>
+                <select id="cfg-require-intent">
+                    <option value="true">Yes &mdash; only flag high-intent</option>
+                    <option value="false">No &mdash; flag all keyword matches</option>
+                </select>
+                <button onclick="saveConfig('require_intent', 'cfg-require-intent')">Save</button>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    Results per Keyword
+                    <span class="hint">How many Reddit posts to check per keyword. Higher = slower but more thorough.</span>
+                </label>
+                <input type="number" id="cfg-max-posts" min="5" max="100" value="25">
+                <button onclick="saveConfig('max_posts_per_poll', 'cfg-max-posts')">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Scan Feed -->
+    <div id="scan-feed" class="scan-feed hidden">
+        <div class="scan-feed-header">
+            <h3 id="scan-title">Scanning...</h3>
+            <span id="scan-counter" class="scan-counter"></span>
+        </div>
+        <div id="scan-log" class="scan-log"></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+        <div class="filter-group">
+            <label>Status</label>
+            <select id="filter-status" onchange="loadPosts()">
+                <option value="">All</option>
+                <option value="new" selected>New</option>
+                <option value="reviewing">Reviewing</option>
+                <option value="commented">Commented</option>
+                <option value="dismissed">Dismissed</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Subreddit</label>
+            <select id="filter-subreddit" onchange="loadPosts()">
+                <option value="">All</option>
+            </select>
+        </div>
+        <span id="post-count" class="post-count"></span>
+    </div>
+
+    <!-- Posts -->
+    <div id="posts-container" class="posts-container">
+        <div id="posts-empty" class="empty-state">
+            <p>No posts yet. Click <strong>Scan Now</strong> to find leads on Reddit.</p>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="modal" class="modal hidden" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toasts"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
