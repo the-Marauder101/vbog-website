@@ -1,27 +1,46 @@
-// Settings: team member management (add, activate/deactivate, guarded delete).
+// Settings (admin only): users & access, project tags, webhooks, Zapier snippets.
 
 (() => {
+  if (!Auth.requireAdmin()) return;
+  Auth.initNav();
+  Inbox.init();
+
   const tableHost = document.getElementById("members-table");
   const form = document.getElementById("add-member-form");
   let members = [];
   let projects = [];
   let webhooks = [];
+  let tags = [];
+  let access = []; // [{member_id, project_id}] for external users
   let deleteArmedFor = null;
   let webhookDeleteArmedFor = null;
+  let tagDeleteArmedFor = null;
+
+  const ROLE_LABELS = { admin: "Admin", member: "Member", external: "External" };
 
   async function load() {
     try {
-      [members, projects, webhooks] = await Promise.all([
+      [members, projects, webhooks, tags, access] = await Promise.all([
         API.getMembers(),
         API.getProjects(),
         API.getWebhooks(),
+        API.getTags(),
+        API.getAllProjectAccess(),
       ]);
       render();
+      renderTags();
       initIntegrations();
+      // Data is authoritative now — accept form submits (buttons start disabled
+      // so a fast submit can't race the initial load and get clobbered)
+      document.querySelectorAll('form button[type="submit"]').forEach((b) => (b.disabled = false));
     } catch (e) {
       tableHost.innerHTML = "";
       UI.toast(e.message);
     }
+  }
+
+  function memberAccess(memberId) {
+    return access.filter((a) => a.member_id === memberId).map((a) => a.project_id);
   }
 
   function render() {
@@ -32,31 +51,90 @@
     tableHost.innerHTML = `
       <table class="data-table">
         <thead>
-          <tr><th>Name</th><th>Role</th><th>Active</th><th style="width:130px;"></th></tr>
+          <tr><th>Name</th><th>Job role</th><th>Login ID</th><th>Access</th><th>Projects</th><th>Active</th><th style="width:130px;"></th></tr>
         </thead>
         <tbody>
           ${members
-            .map(
-              (m) => `
+            .map((m) => {
+              const isMe = m.id === Auth.user().id;
+              const projCount = memberAccess(m.id).length;
+              return `
               <tr class="${m.active ? "" : "inactive-row"}" data-id="${m.id}">
-                <td style="font-weight:600;">${UI.esc(m.name)}</td>
+                <td style="font-weight:600;">${UI.esc(m.name)}${isMe ? ' <span class="you-tag">you</span>' : ""}</td>
                 <td>${UI.esc(m.role || "—")}</td>
+                <td><input type="text" class="login-code-input" data-code="${m.id}" value="${UI.esc(m.login_code || "")}" placeholder="none" autocomplete="off"></td>
+                <td>
+                  <select data-role="${m.id}" ${isMe ? "disabled" : ""}>
+                    ${Object.entries(ROLE_LABELS)
+                      .map(([v, l]) => `<option value="${v}" ${m.user_role === v ? "selected" : ""}>${l}</option>`)
+                      .join("")}
+                  </select>
+                </td>
+                <td>
+                  ${
+                    m.user_role === "external"
+                      ? `<button class="btn btn-secondary access-btn" data-access="${m.id}" style="padding:5px 10px;font-size:13px;">${projCount} project${projCount === 1 ? "" : "s"}</button>`
+                      : '<span class="form-hint" style="margin:0;">All projects</span>'
+                  }
+                </td>
                 <td>
                   <label class="switch">
-                    <input type="checkbox" data-toggle="${m.id}" ${m.active ? "checked" : ""}>
+                    <input type="checkbox" data-toggle="${m.id}" ${m.active ? "checked" : ""} ${isMe ? "disabled" : ""}>
                     <span class="slider"></span>
                   </label>
                 </td>
                 <td style="text-align:right;">
-                  <button class="btn btn-danger" data-delete="${m.id}" style="padding:5px 10px;font-size:13px;">
-                    ${deleteArmedFor === m.id ? "Confirm delete" : "Delete"}
-                  </button>
+                  ${isMe ? "" : `<button class="btn btn-danger" data-delete="${m.id}" style="padding:5px 10px;font-size:13px;">${deleteArmedFor === m.id ? "Confirm delete" : "Delete"}</button>`}
                 </td>
-              </tr>`
-            )
+              </tr>`;
+            })
             .join("")}
         </tbody>
       </table>`;
+
+    // Login ID inline edit (saved on blur / Enter)
+    tableHost.querySelectorAll("[data-code]").forEach((input) => {
+      const save = async () => {
+        const id = input.dataset.code;
+        const member = members.find((m) => m.id === id);
+        const code = input.value.trim().toLowerCase() || null;
+        if (code === (member.login_code || null)) return;
+        try {
+          const updated = await API.updateMember(id, { login_code: code });
+          members = members.map((m) => (m.id === id ? updated : m));
+          UI.toast(code ? `Login ID for ${member.name} is now “${code}”.` : `${member.name} can no longer log in (no ID).`, "success");
+        } catch (e) {
+          input.value = member.login_code || "";
+          UI.toast(/duplicate|unique/i.test(e.message) ? "That login ID is already taken." : e.message);
+        }
+      };
+      input.addEventListener("blur", save);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); });
+    });
+
+    // Access level dropdown
+    tableHost.querySelectorAll("select[data-role]").forEach((sel) => {
+      UI.enhanceSelect(sel);
+      sel.addEventListener("change", async () => {
+        const id = sel.dataset.role;
+        try {
+          const updated = await API.updateMember(id, { user_role: sel.value });
+          members = members.map((m) => (m.id === id ? updated : m));
+          UI.toast(`${updated.name} is now ${ROLE_LABELS[updated.user_role]}.`, "success");
+          render();
+        } catch (e) {
+          UI.toast(e.message);
+        }
+      });
+    });
+
+    // Project access popover for externals
+    tableHost.querySelectorAll("[data-access]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openAccessPopover(btn, btn.dataset.access);
+      });
+    });
 
     tableHost.querySelectorAll("[data-toggle]").forEach((input) => {
       input.addEventListener("change", async () => {
@@ -65,7 +143,7 @@
         try {
           const updated = await API.updateMember(id, { active });
           members = members.map((m) => (m.id === id ? updated : m));
-          UI.toast(active ? "Member activated." : "Member deactivated — hidden from assignee dropdowns.", "success");
+          UI.toast(active ? "Member activated." : "Member deactivated — hidden from assignee dropdowns and locked out.", "success");
           render();
         } catch (e) {
           input.checked = !active;
@@ -102,6 +180,134 @@
       });
     });
   }
+
+  // Checklist popover: which projects an external user can see
+  function openAccessPopover(anchor, memberId) {
+    document.getElementById("access-popover")?.remove();
+    const mine = new Set(memberAccess(memberId));
+    const pop = document.createElement("div");
+    pop.id = "access-popover";
+    pop.className = "access-popover";
+    const activeProjects = projects.filter((p) => !p.archived);
+    pop.innerHTML = activeProjects.length
+      ? activeProjects
+          .map(
+            (p) => `
+          <label class="access-row">
+            <input type="checkbox" data-pid="${p.id}" ${mine.has(p.id) ? "checked" : ""}>
+            <span class="access-dot" style="background:${UI.esc(p.color || "#C3CAD5")}"></span>
+            ${UI.esc(p.name)}
+          </label>`
+          )
+          .join("")
+      : '<div class="form-hint" style="margin:8px;">No active projects.</div>';
+    document.body.appendChild(pop);
+    const r = anchor.getBoundingClientRect();
+    pop.style.top = `${r.bottom + window.scrollY + 6}px`;
+    pop.style.left = `${Math.min(r.left + window.scrollX, window.innerWidth - 280)}px`;
+
+    pop.querySelectorAll("input[data-pid]").forEach((cb) => {
+      cb.addEventListener("change", async () => {
+        const pid = cb.dataset.pid;
+        try {
+          if (cb.checked) {
+            await API.addProjectAccess(memberId, pid);
+            access.push({ member_id: memberId, project_id: pid });
+          } else {
+            await API.removeProjectAccess(memberId, pid);
+            access = access.filter((a) => !(a.member_id === memberId && a.project_id === pid));
+          }
+          const n = memberAccess(memberId).length;
+          anchor.textContent = `${n} project${n === 1 ? "" : "s"}`;
+        } catch (e) {
+          cb.checked = !cb.checked;
+          UI.toast(e.message);
+        }
+      });
+    });
+
+    const closeOnOutside = (e) => {
+      if (!pop.contains(e.target)) {
+        pop.remove();
+        document.removeEventListener("click", closeOnOutside);
+      }
+    };
+    setTimeout(() => document.addEventListener("click", closeOnOutside), 0);
+  }
+
+  // ================= Project tags =================
+
+  function renderTags() {
+    const host = document.getElementById("tags-table");
+    if (!host) return;
+    const usage = (name) => projects.filter((p) => (p.tags || []).includes(name)).length;
+    host.innerHTML = tags.length
+      ? `<div class="tags-list">${tags
+          .map((t) => {
+            const n = usage(t.name);
+            return `
+            <span class="tag-chip managed">
+              ${UI.esc(t.name)}
+              <span class="tag-usage">${n}</span>
+              <button type="button" data-tag-delete="${t.id}" title="${tagDeleteArmedFor === t.id ? "Click again to confirm" : "Delete tag"}" class="${tagDeleteArmedFor === t.id ? "confirming" : ""}">&times;</button>
+            </span>`;
+          })
+          .join("")}</div>`
+      : `<div class="form-hint">No tags yet — add your first one above (e.g. Marketing, HR, Ops).</div>`;
+
+    host.querySelectorAll("[data-tag-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.tagDelete;
+        const tag = tags.find((t) => t.id === id);
+        if (tagDeleteArmedFor !== id) {
+          tagDeleteArmedFor = id;
+          renderTags();
+          return;
+        }
+        try {
+          await API.deleteTag(id);
+          // Strip the deleted name from any projects still carrying it
+          const affected = projects.filter((p) => (p.tags || []).includes(tag.name));
+          for (const p of affected) {
+            const next = p.tags.filter((x) => x !== tag.name);
+            await API.updateProject(p.id, { tags: next });
+            p.tags = next;
+          }
+          tags = tags.filter((t) => t.id !== id);
+          tagDeleteArmedFor = null;
+          UI.toast(`Tag “${tag.name}” deleted${affected.length ? ` and removed from ${affected.length} project${affected.length === 1 ? "" : "s"}` : ""}.`, "success");
+          renderTags();
+        } catch (e) {
+          UI.toast(e.message);
+        }
+      });
+    });
+  }
+
+  document.getElementById("add-tag-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("tag-name");
+    UI.clearFieldErrors(e.target);
+    const name = input.value.trim();
+    if (!name) {
+      UI.fieldError(input, "Tag name is required.");
+      return;
+    }
+    if (tags.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
+      UI.fieldError(input, "That tag already exists.");
+      return;
+    }
+    try {
+      const created = await API.createTag(name);
+      tags.push(created);
+      tags.sort((a, b) => a.name.localeCompare(b.name));
+      input.value = "";
+      UI.toast(`Tag “${created.name}” added.`, "success");
+      renderTags();
+    } catch (err) {
+      UI.toast(err.message);
+    }
+  });
 
   // ================= Integrations =================
 
@@ -329,21 +535,37 @@
       UI.fieldError(nameInput, "A member with this name already exists.");
       return;
     }
+    const codeInput = document.getElementById("m-code");
+    const loginCode = codeInput.value.trim().toLowerCase() || null;
+    if (loginCode && members.some((m) => (m.login_code || "").toLowerCase() === loginCode)) {
+      UI.fieldError(codeInput, "That login ID is already taken.");
+      return;
+    }
     try {
       const created = await API.createMember({
         name,
         role: document.getElementById("m-role").value.trim() || null,
+        login_code: loginCode,
+        user_role: document.getElementById("m-access").value,
       });
       members.push(created);
       members.sort((a, b) => a.name.localeCompare(b.name));
       nameInput.value = "";
       document.getElementById("m-role").value = "";
-      UI.toast("Member added.", "success");
+      codeInput.value = "";
+      const accessSel = document.getElementById("m-access");
+      accessSel.value = "member";
+      UI.syncSelect(accessSel);
+      UI.toast(created.user_role === "external"
+        ? "External user added — now pick which projects they can see."
+        : "Member added.", "success");
       render();
     } catch (err) {
       UI.toast(err.message);
     }
   });
+
+  UI.enhanceSelect(document.getElementById("m-access"));
 
   load();
 })();

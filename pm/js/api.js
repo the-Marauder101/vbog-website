@@ -27,7 +27,7 @@ const API = {
   // Every task across all active projects, with project info embedded (All Tasks view)
   getAllTasks() {
     return sbFetch(
-      "tasks?select=*,projects!inner(id,name,color,archived)&projects.archived=eq.false" +
+      "tasks?select=*,projects!inner(id,name,color,archived,statuses)&projects.archived=eq.false" +
         "&order=due_date.asc.nullslast,created_at.asc"
     );
   },
@@ -73,5 +73,62 @@ const API = {
   },
   deleteMember(id) {
     return sbFetch(`team_members?id=eq.${id}`, { method: "DELETE" });
+  },
+
+  // ---- notifications (inbox) ----
+  getNotifications(memberId) {
+    return sbFetch(
+      `notifications?member_id=eq.${memberId}&select=*,actor:actor_id(name),projects(name)` +
+        "&order=created_at.desc&limit=50"
+    );
+  },
+  getUnreadCount(memberId) {
+    return sbFetch(`notifications?member_id=eq.${memberId}&read=eq.false&select=id`).then(
+      (r) => r.length
+    );
+  },
+  markRead(id) {
+    return sbFetch(`notifications?id=eq.${id}`, { method: "PATCH", body: { read: true } });
+  },
+  markAllRead(memberId) {
+    return sbFetch(`notifications?member_id=eq.${memberId}&read=eq.false`, {
+      method: "PATCH",
+      body: { read: true },
+    });
+  },
+  // rows: [{member_id, kind, actor_id, task_id, project_id, message}]
+  notify(rows) {
+    if (!rows.length) return Promise.resolve([]);
+    return sbFetch("notifications", { method: "POST", body: rows });
+  },
+
+  // ---- tags (central registry feeding all tag dropdowns) ----
+  getTags() {
+    return sbFetch("tags?select=*&order=name.asc");
+  },
+  createTag(name) {
+    return sbFetch("tags", { method: "POST", body: { name } }).then((r) => r[0]);
+  },
+  deleteTag(id) {
+    return sbFetch(`tags?id=eq.${id}`, { method: "DELETE" });
+  },
+
+  // ---- project access (external users) ----
+  getProjectAccess(memberId) {
+    return sbFetch(`project_members?member_id=eq.${memberId}&select=project_id`);
+  },
+  getAllProjectAccess() {
+    return sbFetch("project_members?select=member_id,project_id");
+  },
+  addProjectAccess(memberId, projectId) {
+    return sbFetch("project_members", {
+      method: "POST",
+      body: { member_id: memberId, project_id: projectId },
+    });
+  },
+  removeProjectAccess(memberId, projectId) {
+    return sbFetch(`project_members?member_id=eq.${memberId}&project_id=eq.${projectId}`, {
+      method: "DELETE",
+    });
   },
 };
