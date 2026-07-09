@@ -1,5 +1,14 @@
-// Inbox: bell in the top nav + slide-in panel with tabs (Notifications / My Tasks).
-// New notification kinds only need an entry in KIND_META to render.
+// js/inbox.js — bell + slide-in inbox panel (full docs: ../ARCHITECTURE.md §6)
+//
+// Tabs: Notifications (rows from the notifications table, per-row read/unread
+// toggle, mark-all-read) and My Tasks (API.getMyTasks — server-side filtered,
+// grouped by due date, capped at GROUP_CAP behind "Show all" expanders).
+// TO ADD A NOTIFICATION KIND: one entry in KIND_META + insert rows via
+// API.notify() from wherever the action happens. Unknown kinds render with a
+// fallback icon, so old clients never crash.
+// HARD-WON RULES (see handbook §5.6): update rows in place (applyReadState),
+// never mutate the DOM after an await the user could have outrun, and open()
+// is epoch-guarded so stale fetches can't clobber fresh toggles.
 
 const Inbox = (() => {
   const KIND_META = {

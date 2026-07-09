@@ -1,4 +1,13 @@
-// Shared UI helpers: toasts, modals, dates, escaping, offline banner.
+// js/ui.js — shared UI kit used by every page (full docs: ../ARCHITECTURE.md §5)
+//
+// UI.esc()            escape ALL user data before innerHTML (no exceptions)
+// UI.toast()/fieldError()  outcomes vs validation messages
+// UI.enhanceSelect()  turns a native <select> into the styled .dd dropdown;
+//                     the native select stays (hidden) as the source of truth —
+//                     re-call after repopulating options; UI.syncSelect() after
+//                     setting .value programmatically
+// UI.matchesDateFilter()/dateFilterOptions  shared due-date filter logic
+// Also: modal open/close, offline banner, avatar colors, date formatting.
 
 const UI = {
   // HTML-escape untrusted strings before inserting into innerHTML
