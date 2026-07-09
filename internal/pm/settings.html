@@ -9,13 +9,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=6">
+  <link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
 
   <nav class="topnav">
-    <div class="brand-wrap"><a class="brand" href="vyom.html"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><g transform="rotate(-20 16 16)"><path d="M 2.5 16 A 13.5 5.2 0 0 1 29.5 16" fill="none" stroke="#00B4D8" stroke-width="2.2" stroke-linecap="round"/></g><circle cx="16" cy="16" r="7.2" fill="#0F3460"/><path d="M 12.2 13.1 a 5.2 5.2 0 0 1 6.4 -0.6" fill="none" stroke="#00B4D8" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/><g transform="rotate(-20 16 16)"><path d="M 2.5 16 A 13.5 5.2 0 0 0 29.5 16" fill="none" stroke="#00B4D8" stroke-width="2.2" stroke-linecap="round"/><circle cx="27.1" cy="12.6" r="2.4" fill="#00B4D8"/></g></svg><span class="brand-text">Vyom<span class="dot">.</span></span></a><span class="brand-by">by VBOG</span></div>
+    <div class="brand-wrap"><a class="brand" href="vyom.html"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="vgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00B4D8"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><g transform="rotate(-20 16 16)"><ellipse cx="16" cy="16" rx="15" ry="7.5" fill="none" stroke="url(#vgrad)" stroke-width="1" opacity="0.45"/><path d="M 2.5 16 A 13.5 5.2 0 0 1 29.5 16" fill="none" stroke="url(#vgrad)" stroke-width="2.2" stroke-linecap="round"/></g><circle cx="16" cy="16" r="7.2" fill="#0F3460"/><path d="M 12.2 13.1 a 5.2 5.2 0 0 1 6.4 -0.6" fill="none" stroke="#00B4D8" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/><g transform="rotate(-20 16 16)"><path d="M 2.5 16 A 13.5 5.2 0 0 0 29.5 16" fill="none" stroke="url(#vgrad)" stroke-width="2.2" stroke-linecap="round"/><circle cx="27.1" cy="12.6" r="4" fill="#00B4D8" opacity="0.25"/><circle cx="27.1" cy="12.6" r="2.4" fill="#00B4D8"/></g></svg><span class="brand-text">Vyom<span class="dot">.</span></span></a><span class="brand-by">by VBOG</span></div>
     <div class="nav-links">
       <a href="vyom.html">Dashboard</a>
       <a href="team.html">All Tasks</a>
@@ -29,30 +29,60 @@
     <div class="page-header">
       <div>
         <h1>Settings</h1>
-        <div class="sub">Team members &amp; Zapier integrations</div>
+        <div class="sub">Users &amp; access, project tags, Zapier integrations</div>
       </div>
     </div>
 
     <div class="settings-card">
-      <h2>Add a team member</h2>
+      <h2>Add a user</h2>
       <form id="add-member-form" class="inline-form" novalidate>
         <div class="form-group">
           <input type="text" id="m-name" placeholder="Name *" autocomplete="off">
         </div>
-        <div class="form-group">
-          <input type="text" id="m-role" placeholder="Role (optional, e.g. Sales)" autocomplete="off">
+        <div class="form-group" style="flex: 0.7;">
+          <input type="text" id="m-role" placeholder="Job role (e.g. Sales)" autocomplete="off">
         </div>
-        <button type="submit" class="btn btn-primary">Add Member</button>
+        <div class="form-group" style="flex: 0.7;">
+          <input type="text" id="m-code" placeholder="Login ID (e.g. sahil)" autocomplete="off">
+        </div>
+        <div class="form-group" style="flex: 0 0 150px;">
+          <select id="m-access" aria-label="Access level">
+            <option value="member" selected>Member</option>
+            <option value="admin">Admin</option>
+            <option value="external">External</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" disabled>Add User</button>
       </form>
+      <div class="form-hint" style="margin-top: 10px;">
+        <strong>Member</strong> sees all projects. <strong>Admin</strong> also manages this Settings page.
+        <strong>External</strong> (clients) see only the projects you give them — set those from the Projects column below.
+        The Login ID is what they type on the Vyom sign-in screen.
+      </div>
     </div>
 
     <div class="settings-card">
-      <h2>Team members</h2>
+      <h2>Users &amp; access</h2>
       <div id="members-table"><div class="loading">Loading…</div></div>
       <div class="form-hint" style="margin-top: 12px;">
-        Deactivating a member hides them from the assignee dropdown but keeps their existing task assignments.
-        Members with tasks assigned cannot be deleted — deactivate them instead.
+        Deactivating a user hides them from assignee dropdowns and blocks their login, but keeps their task history.
+        Users with tasks assigned cannot be deleted — deactivate them instead.
       </div>
+    </div>
+
+    <div class="settings-card">
+      <h2>Project tags</h2>
+      <p class="form-hint" style="margin: -6px 0 16px;">
+        One central list keeps tag names consistent — projects pick from this list, so “Marketing” never
+        becomes “marketing” and “Mktg” on different cards. The number shows how many projects use each tag.
+      </p>
+      <form id="add-tag-form" class="inline-form" novalidate>
+        <div class="form-group" style="flex: 0 0 260px;">
+          <input type="text" id="tag-name" placeholder="New tag (e.g. Marketing)" autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-primary" disabled>Add Tag</button>
+      </form>
+      <div id="tags-table" style="margin-top: 14px;"></div>
     </div>
 
     <div class="settings-card">
@@ -78,7 +108,7 @@
           <label class="toggle-label"><input type="checkbox" id="w-ev-insert" checked> Task created</label>
           <label class="toggle-label"><input type="checkbox" id="w-ev-update" checked> Task updated</label>
           <label class="toggle-label"><input type="checkbox" id="w-ev-delete"> Task deleted</label>
-          <button type="submit" class="btn btn-primary" style="margin-left: auto;">Add Webhook</button>
+          <button type="submit" class="btn btn-primary" style="margin-left: auto;" disabled>Add Webhook</button>
         </div>
       </form>
       <div id="webhooks-table" style="margin-top: 16px;"></div>
@@ -101,10 +131,12 @@
     </div>
   </main>
 
-  <script src="js/config.js?v=6"></script>
-  <script src="js/supabase.js?v=6"></script>
-  <script src="js/api.js?v=6"></script>
-  <script src="js/ui.js?v=6"></script>
-  <script src="js/settings.js?v=6"></script>
+  <script src="js/config.js?v=7"></script>
+  <script src="js/supabase.js?v=7"></script>
+  <script src="js/api.js?v=7"></script>
+  <script src="js/ui.js?v=7"></script>
+  <script src="js/auth.js?v=7"></script>
+  <script src="js/inbox.js?v=7"></script>
+  <script src="js/settings.js?v=7"></script>
 </body>
 </html>

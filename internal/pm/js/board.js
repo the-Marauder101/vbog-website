@@ -1,7 +1,13 @@
 // Kanban board: columns from project.statuses, drag-and-drop, task modal.
 
 (() => {
-  const projectId = new URLSearchParams(window.location.search).get("project");
+  if (!Auth.requireLogin()) return;
+  Auth.initNav();
+  Inbox.init();
+
+  const params = new URLSearchParams(window.location.search);
+  const projectId = params.get("project");
+  const openTaskId = params.get("task"); // deep link from inbox notifications
   const boardEl = document.getElementById("board");
   const form = document.getElementById("task-form");
 
@@ -19,6 +25,12 @@
 
   async function load() {
     try {
+      const allowed = await Auth.allowedProjectIds();
+      if (!Auth.canSeeProject(projectId, allowed)) {
+        UI.toast("You don't have access to this project.");
+        setTimeout(() => window.location.replace("vyom.html"), 800);
+        return;
+      }
       [project, tasks, members] = await Promise.all([
         API.getProject(projectId),
         API.getTasks(projectId),
@@ -34,6 +46,10 @@
       document.getElementById("board-desc").textContent = project.description || "";
       initFilters();
       renderBoard();
+      if (openTaskId) {
+        const t = tasks.find((x) => x.id === openTaskId);
+        if (t) openTaskModal(t);
+      }
     } catch (e) {
       UI.toast(e.message);
     }
@@ -223,6 +239,122 @@
     }
   }
 
+  // ---- @mention autocomplete in the notes field ----
+  function initMentionPicker() {
+    const ta = document.getElementById("t-notes");
+    let menu = document.getElementById("mention-menu");
+    if (!menu) {
+      menu = document.createElement("div");
+      menu.id = "mention-menu";
+      menu.className = "mention-menu";
+      menu.hidden = true;
+      ta.parentElement.style.position = "relative";
+      ta.parentElement.appendChild(menu);
+    }
+
+    function currentMentionQuery() {
+      const upToCaret = ta.value.slice(0, ta.selectionStart);
+      const m = upToCaret.match(/@([\w ]{0,30})$/);
+      return m ? m[1] : null;
+    }
+
+    function hide() {
+      menu.hidden = true;
+    }
+
+    function show() {
+      const q = currentMentionQuery();
+      if (q === null) return hide();
+      const matches = members.filter(
+        (m) => m.active && m.name.toLowerCase().startsWith(q.toLowerCase())
+      );
+      if (!matches.length) return hide();
+      menu.innerHTML = matches
+        .map(
+          (m) => `
+          <button type="button" class="mention-item" data-name="${UI.esc(m.name)}">
+            <span class="avatar" style="background:${UI.avatarColor(m.name)}">${UI.esc(m.name[0].toUpperCase())}</span>
+            ${UI.esc(m.name)}
+          </button>`
+        )
+        .join("");
+      menu.hidden = false;
+      menu.querySelectorAll(".mention-item").forEach((item) => {
+        item.addEventListener("mousedown", (e) => {
+          e.preventDefault(); // keep textarea focus
+          const upToCaret = ta.value.slice(0, ta.selectionStart);
+          const rest = ta.value.slice(ta.selectionStart);
+          const replaced = upToCaret.replace(/@[\w ]{0,30}$/, `@${item.dataset.name} `);
+          ta.value = replaced + rest;
+          ta.selectionStart = ta.selectionEnd = replaced.length;
+          hide();
+          ta.focus();
+        });
+      });
+    }
+
+    ta.addEventListener("input", show);
+    ta.addEventListener("blur", () => setTimeout(hide, 150));
+    ta.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") hide();
+      if ((e.key === "Enter" || e.key === "Tab") && !menu.hidden) {
+        const first = menu.querySelector(".mention-item");
+        if (first) {
+          e.preventDefault();
+          first.dispatchEvent(new MouseEvent("mousedown"));
+        }
+      }
+    });
+  }
+
+  // Members whose @Name appears in `text` (longest names first so
+  // "Sarika Rao" wins over a hypothetical "Sarika")
+  function mentionedMembers(text) {
+    if (!text) return [];
+    const lower = text.toLowerCase();
+    return members
+      .slice()
+      .sort((a, b) => b.name.length - a.name.length)
+      .filter((m) => lower.includes(`@${m.name.toLowerCase()}`));
+  }
+
+  // Inbox notifications for a saved task: new mentions + new assignee.
+  async function notifyForTask(task, prevNotes, prevAssignee) {
+    const me = Auth.user();
+    const rows = [];
+
+    const before = new Set(mentionedMembers(prevNotes).map((m) => m.id));
+    for (const m of mentionedMembers(task.notes)) {
+      if (!before.has(m.id) && m.id !== me.id) {
+        rows.push({
+          member_id: m.id,
+          kind: "mention",
+          actor_id: me.id,
+          task_id: task.id,
+          project_id: projectId,
+          message: task.title,
+        });
+      }
+    }
+
+    if (task.assignee_id && task.assignee_id !== prevAssignee && task.assignee_id !== me.id) {
+      rows.push({
+        member_id: task.assignee_id,
+        kind: "task_assigned",
+        actor_id: me.id,
+        task_id: task.id,
+        project_id: projectId,
+        message: task.title,
+      });
+    }
+
+    if (rows.length) {
+      try {
+        await API.notify(rows);
+      } catch (_) { /* notifications are best-effort; never block a save */ }
+    }
+  }
+
   // ---- Task modal ----
   function fillSelects(selectedStatus, selectedAssignee) {
     const statusSel = document.getElementById("t-status");
@@ -285,13 +417,17 @@
 
     try {
       if (editingTask) {
+        const prevNotes = editingTask.notes;
+        const prevAssignee = editingTask.assignee_id;
         const updated = await API.updateTask(editingTask.id, fields);
         tasks = tasks.map((t) => (t.id === updated.id ? updated : t));
         UI.toast("Task updated.", "success");
+        notifyForTask(updated, prevNotes, prevAssignee);
       } else {
         const created = await API.createTask({ ...fields, project_id: projectId, source: "manual" });
         tasks.push(created);
         UI.toast("Task created.", "success");
+        notifyForTask(created, null, null);
       }
       UI.closeModal("task-modal");
       renderBoard();
@@ -321,5 +457,6 @@
 
   document.getElementById("task-cancel").addEventListener("click", () => UI.closeModal("task-modal"));
 
+  initMentionPicker();
   load();
 })();

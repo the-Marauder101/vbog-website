@@ -2,6 +2,10 @@
 // Read-only with filters — click a row to open its project board.
 
 (() => {
+  if (!Auth.requireLogin()) return;
+  Auth.initNav();
+  Inbox.init();
+
   const content = document.getElementById("tasks-content");
   const filters = { project: "", assignee: "", due: "all", q: "", from: "", to: "" };
   let tasks = []; // rows with embedded `projects` object
@@ -9,7 +13,9 @@
 
   async function load() {
     try {
+      const allowed = await Auth.allowedProjectIds();
       [tasks, members] = await Promise.all([API.getAllTasks(), API.getMembers()]);
+      if (allowed !== null) tasks = tasks.filter((t) => allowed.includes(t.project_id));
       initFilters();
       render();
     } catch (e) {
