@@ -87,8 +87,8 @@ const API = {
       (r) => r.length
     );
   },
-  markRead(id) {
-    return sbFetch(`notifications?id=eq.${id}`, { method: "PATCH", body: { read: true } });
+  setRead(id, read) {
+    return sbFetch(`notifications?id=eq.${id}`, { method: "PATCH", body: { read } });
   },
   markAllRead(memberId) {
     return sbFetch(`notifications?member_id=eq.${memberId}&read=eq.false`, {
@@ -100,6 +100,15 @@ const API = {
   notify(rows) {
     if (!rows.length) return Promise.resolve([]);
     return sbFetch("notifications", { method: "POST", body: rows });
+  },
+  // Only this member's tasks, filtered server-side — the inbox scales with
+  // the user's workload, not the whole org's task count
+  getMyTasks(memberId) {
+    return sbFetch(
+      `tasks?assignee_id=eq.${memberId}` +
+        "&select=*,projects!inner(id,name,color,archived,statuses)&projects.archived=eq.false" +
+        "&order=due_date.asc.nullslast,created_at.asc&limit=300"
+    );
   },
 
   // ---- tags (central registry feeding all tag dropdowns) ----
