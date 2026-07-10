@@ -79,16 +79,16 @@
       return;
     }
 
-    // Sub-clients render right after their parent (marked, slightly inset).
-    // A sub whose parent isn't visible (archived/filtered) renders top-level.
+    // Sub-clients don't get their own cards — they render as clickable chips
+    // inside the parent's card, so ten sub-clients never crowd the grid.
+    // A sub whose parent isn't visible (archived/filtered out) falls back to
+    // rendering as its own card with a badge, so it can never disappear.
     const visibleIds = new Set(visible.map((p) => p.id));
-    const subsOf = (id) => visible.filter((p) => p.parent_project_id === id);
-    const ordered = [];
-    for (const p of visible) {
-      if (p.parent_project_id && visibleIds.has(p.parent_project_id)) continue;
-      ordered.push(p);
-      for (const s of subsOf(p.id)) ordered.push(s);
-    }
+    const subsOf = (id) =>
+      projects.filter((p) => p.parent_project_id === id && (showArchived || !p.archived));
+    const ordered = visible.filter(
+      (p) => !(p.parent_project_id && visibleIds.has(p.parent_project_id))
+    );
 
     const ghost = isExternal ? "" : `<button class="ghost-card" id="ghost-new-project">+ New Project</button>`;
     grid.innerHTML = ordered.map((p) => {
@@ -98,6 +98,15 @@
         .map((t) => `<span class="tag-chip">${UI.esc(t)}</span>`)
         .join("");
       const parent = p.parent_project_id ? projects.find((x) => x.id === p.parent_project_id) : null;
+      const subs = subsOf(p.id);
+      const subChips = subs
+        .map((s) => {
+          const n = taskSummaries.filter((t) => t.project_id === s.id).length;
+          return `<button type="button" class="sub-link" data-sub="${s.id}" title="Open ${UI.esc(s.name)}">
+            <span class="access-dot" style="background:${UI.esc(s.color || "#C3CAD5")}"></span>${UI.esc(s.name)}<span class="sub-count">${n}</span>${isExternal ? "" : `<span class="sub-edit" data-subedit="${s.id}" title="Edit ${UI.esc(s.name)}">&#9998;</span>`}
+          </button>`;
+        })
+        .join("");
       return `
         <div class="project-card ${p.archived ? "archived" : ""} ${parent ? "sub-project" : ""}" data-id="${p.id}">
           <div class="accent-bar" style="background:${UI.esc(p.color || "#C3CAD5")}"></div>
@@ -110,6 +119,7 @@
               <span>${tasks.length} task${tasks.length === 1 ? "" : "s"}</span>
               ${overdue ? `<span class="overdue-count">${overdue} overdue</span>` : ""}
             </div>
+            ${subChips ? `<div class="sub-list"><span class="sub-list-label">Sub-clients</span>${subChips}</div>` : ""}
           </div>
         </div>`;
     }).join("") + ghost;
@@ -118,6 +128,18 @@
     grid.querySelectorAll(".project-card").forEach((card) => {
       card.addEventListener("click", () => {
         window.location.href = `board.html?project=${card.dataset.id}`;
+      });
+    });
+    grid.querySelectorAll(".sub-link").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.location.href = `board.html?project=${btn.dataset.sub}`;
+      });
+    });
+    grid.querySelectorAll(".sub-edit").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openProjectModal(projects.find((p) => p.id === el.dataset.subedit));
       });
     });
     grid.querySelectorAll(".edit-btn").forEach((btn) => {

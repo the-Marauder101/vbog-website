@@ -1237,7 +1237,52 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   white-space: nowrap;
 }
 h1 .subclient-tag { font-size: 12px; margin-left: 10px; }
-.project-card.sub-project {
-  margin-left: 18px;
-  border-left: 3px solid rgba(124, 58, 237, 0.35);
+a.subclient-tag { text-decoration: none; cursor: pointer; }
+a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
+.project-card.sub-project { border-left: 3px solid rgba(124, 58, 237, 0.35); }
+
+/* Sub-client quick-jump chips (parent card on the dashboard + parent board header) */
+.sub-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #E2E7EE;
 }
+.sub-list-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #7C3AED;
+  margin-right: 2px;
+}
+.sub-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #D3DAE3;
+  background: #fff;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.sub-link:hover { border-color: #00B4D8; color: #0891B2; }
+.sub-count {
+  background: #F3F4F6;
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 11px;
+  color: #6B7280;
+}
+.sub-edit { color: var(--muted, #6B7280); padding-left: 2px; }
+.sub-edit:hover { color: #0891B2; }
+/* On the board header the chips sit alone — no divider needed */
+.page-header .sub-list, .page > .sub-list { border-top: none; padding-top: 0; }

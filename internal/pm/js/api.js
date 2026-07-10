@@ -12,6 +12,9 @@ const API = {
   getProject(id) {
     return sbFetch(`projects?id=eq.${id}&select=*`).then((r) => r[0] || null);
   },
+  getSubProjects(parentId) {
+    return sbFetch(`projects?parent_project_id=eq.${parentId}&archived=eq.false&select=*&order=name.asc`);
+  },
   createProject(fields) {
     return sbFetch("projects", { method: "POST", body: fields }).then((r) => r[0]);
   },
