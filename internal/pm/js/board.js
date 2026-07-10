@@ -56,12 +56,34 @@
         API.getProject(project.parent_project_id)
           .then((parent) => {
             if (!parent) return;
-            const tag = document.createElement("span");
+            const tag = document.createElement("a");
             tag.className = "subclient-tag";
-            tag.textContent = `Sub-client of ${parent.name}`;
+            tag.href = `board.html?project=${parent.id}`;
+            tag.title = `Open ${parent.name}'s board`;
+            tag.textContent = `↰ ${parent.name}`;
             document.getElementById("board-title").appendChild(tag);
           })
           .catch(() => {}); // badge is cosmetic — never block the board
+      } else {
+        // Parent board: quick-jump chips to each sub-client's board
+        API.getSubProjects(project.id)
+          .then((subs) => {
+            if (allowed !== null) subs = subs.filter((s) => allowed.includes(s.id));
+            if (!subs.length) return;
+            const host = document.createElement("div");
+            host.className = "sub-list";
+            host.innerHTML =
+              `<span class="sub-list-label">Sub-clients</span>` +
+              subs
+                .map(
+                  (s) => `<a class="sub-link" href="board.html?project=${s.id}" title="Open ${UI.esc(s.name)}">
+                    <span class="access-dot" style="background:${UI.esc(s.color || "#C3CAD5")}"></span>${UI.esc(s.name)}
+                  </a>`
+                )
+                .join("");
+            document.getElementById("board-desc").after(host);
+          })
+          .catch(() => {});
       }
       if (typeof Automations !== "undefined") Automations.init(project, members);
       initFilters();
