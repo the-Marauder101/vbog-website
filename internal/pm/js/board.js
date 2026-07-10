@@ -427,6 +427,7 @@
     document.getElementById("task-save").textContent = task ? "Save Changes" : "Create Task";
     document.getElementById("t-title").value = task ? task.title : "";
     document.getElementById("t-notes").value = task ? task.notes || "" : "";
+    document.getElementById("t-email").value = task ? task.fields?.email || "" : "";
     document.getElementById("t-due").value = task ? task.due_date || "" : "";
     fillSelects(task ? task.status : presetStatus, task ? task.assignee_id : "");
 
@@ -449,12 +450,25 @@
       return;
     }
 
+    const emailInput = document.getElementById("t-email");
+    const email = emailInput.value.trim();
+    if (email && !/^[\w.+-]+@[\w-]+\.[\w.-]+$/.test(email)) {
+      UI.fieldError(emailInput, "That doesn't look like a valid email address.");
+      return;
+    }
+    // Merge into the task's fields container — future keys (doc URLs etc.)
+    // survive an email edit untouched.
+    const customFields = { ...(editingTask?.fields || {}) };
+    if (email) customFields.email = email;
+    else delete customFields.email;
+
     const fields = {
       title,
       notes: document.getElementById("t-notes").value.trim() || null,
       status: document.getElementById("t-status").value,
       assignee_id: document.getElementById("t-assignee").value || null,
       due_date: document.getElementById("t-due").value || null,
+      fields: customFields,
     };
 
     try {

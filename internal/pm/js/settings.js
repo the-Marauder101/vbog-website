@@ -661,6 +661,7 @@
       p_status: project?.statuses?.[0] || "To Do",
       p_due_date: "REPLACE as YYYY-MM-DD, or delete this line",
       p_external_id: "REPLACE with your row/record ID, or delete this line",
+      p_fields: { email: "REPLACE with contact email for automations, or delete p_fields" },
     };
     const curl = `curl -X POST '${endpoint}' \\
   -H 'apikey: ${SUPABASE_ANON_KEY}' \\
@@ -668,7 +669,7 @@
   -H 'Content-Type: application/json' \\
   -d '{"p_api_key":"${k.key}","p_title":"My first API task"}'`;
     const appsScript = `// Google Apps Script — send one row to Vyom as a task
-function createVyomTask(title, notes, dueDate) {
+function createVyomTask(title, notes, dueDate, contactEmail) {
   const res = UrlFetchApp.fetch("${endpoint}", {
     method: "post",
     contentType: "application/json",
@@ -681,6 +682,7 @@ function createVyomTask(title, notes, dueDate) {
       p_title: title,
       p_notes: notes || null,
       p_due_date: dueDate || null, // "YYYY-MM-DD"
+      p_fields: contactEmail ? { email: contactEmail } : {}, // used by email automations
     }),
   });
   Logger.log(res.getContentText()); // {"ok":true,"task_id":"…"}

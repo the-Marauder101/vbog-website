@@ -61,7 +61,7 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 | Table | Purpose | Key columns |
 |---|---|---|
 | `projects` | One per client/workstream | `statuses jsonb` (the Kanban columns, ordered), `type` (`internal`\|`client`), `tags jsonb` (array of tag *names*), `color`, `archived`, `parent_project_id` FK (sql/08 — set = this is a **sub-client** project, one level deep) |
-| `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`\|`api`), `external_id`, auto `updated_at` trigger |
+| `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`\|`api`), `external_id`, `fields jsonb` (sql/11 — structured per-task data for automations: `email` today, more keys later WITHOUT migrations), auto `updated_at` trigger |
 | `team_members` | Every user (internal and external) | `role` = free-text job title; `user_role` = permission level (`admin`\|`member`\|`external`); `login_code` unique = what they type at the gate; `active` |
 | `project_members` | Which projects an **external** user can see | composite PK (`project_id`,`member_id`), both cascade on delete |
 | `notifications` | Inbox rows | `member_id` recipient, `kind` (see §6), `actor_id`, `task_id`/`project_id` (cascade — deleting a task cleans its notifications), `message`, `read`, `data jsonb` for future payloads |
