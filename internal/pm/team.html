@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -50,6 +50,9 @@
         <input type="date" class="filter-date" id="filter-to" aria-label="To date">
       </span>
       <input type="search" id="filter-search" class="filter-search" placeholder="Search task titles…">
+      <label class="toggle-label" title="Tasks from sub-client projects (your clients' own clients)">
+        <input type="checkbox" id="show-subclients"> Include sub-client tasks
+      </label>
       <button id="filter-clear" class="btn-link" hidden>Clear filters</button>
       <span class="filter-count" id="filter-count"></span>
     </div>
@@ -57,12 +60,12 @@
     <div id="tasks-content"><div class="loading">Loading tasks…</div></div>
   </main>
 
-  <script src="js/config.js?v=8"></script>
-  <script src="js/supabase.js?v=8"></script>
-  <script src="js/api.js?v=8"></script>
-  <script src="js/ui.js?v=8"></script>
-  <script src="js/auth.js?v=8"></script>
-  <script src="js/inbox.js?v=8"></script>
-  <script src="js/team.js?v=8"></script>
+  <script src="js/config.js?v=9"></script>
+  <script src="js/supabase.js?v=9"></script>
+  <script src="js/api.js?v=9"></script>
+  <script src="js/ui.js?v=9"></script>
+  <script src="js/auth.js?v=9"></script>
+  <script src="js/inbox.js?v=9"></script>
+  <script src="js/team.js?v=9"></script>
 </body>
 </html>

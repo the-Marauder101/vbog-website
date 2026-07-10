@@ -79,19 +79,31 @@
       return;
     }
 
+    // Sub-clients render right after their parent (marked, slightly inset).
+    // A sub whose parent isn't visible (archived/filtered) renders top-level.
+    const visibleIds = new Set(visible.map((p) => p.id));
+    const subsOf = (id) => visible.filter((p) => p.parent_project_id === id);
+    const ordered = [];
+    for (const p of visible) {
+      if (p.parent_project_id && visibleIds.has(p.parent_project_id)) continue;
+      ordered.push(p);
+      for (const s of subsOf(p.id)) ordered.push(s);
+    }
+
     const ghost = isExternal ? "" : `<button class="ghost-card" id="ghost-new-project">+ New Project</button>`;
-    grid.innerHTML = visible.map((p) => {
+    grid.innerHTML = ordered.map((p) => {
       const tasks = taskSummaries.filter((t) => t.project_id === p.id);
       const overdue = tasks.filter((t) => UI.isOverdue(t.due_date)).length;
       const tagChips = (p.tags || [])
         .map((t) => `<span class="tag-chip">${UI.esc(t)}</span>`)
         .join("");
+      const parent = p.parent_project_id ? projects.find((x) => x.id === p.parent_project_id) : null;
       return `
-        <div class="project-card ${p.archived ? "archived" : ""}" data-id="${p.id}">
+        <div class="project-card ${p.archived ? "archived" : ""} ${parent ? "sub-project" : ""}" data-id="${p.id}">
           <div class="accent-bar" style="background:${UI.esc(p.color || "#C3CAD5")}"></div>
           ${isExternal ? "" : `<button class="edit-btn" data-edit="${p.id}" title="Edit project" aria-label="Edit project">&#9998;</button>`}
           <div class="card-body">
-            <h3>${UI.esc(p.name)}${p.archived ? '<span class="archived-tag">Archived</span>' : ""}<span class="project-type-tag ${p.type === 'client' ? 'client' : 'internal'}">${p.type === 'client' ? 'Client' : 'Internal'}</span></h3>
+            <h3>${UI.esc(p.name)}${p.archived ? '<span class="archived-tag">Archived</span>' : ""}${parent ? `<span class="subclient-tag" title="Sub-client of ${UI.esc(parent.name)}">&#8627; ${UI.esc(parent.name)}</span>` : `<span class="project-type-tag ${p.type === 'client' ? 'client' : 'internal'}">${p.type === 'client' ? 'Client' : 'Internal'}</span>`}</h3>
             <div class="desc">${UI.esc(p.description || "")}</div>
             ${tagChips ? `<div class="card-tags">${tagChips}</div>` : ""}
             <div class="meta">
@@ -209,6 +221,26 @@
     });
   }
 
+  // ---- Parent project (sub-client) dropdown ----
+  // One level deep only: a project that has children, or is itself a child,
+  // can't be offered as/assigned a parent respectively.
+  function fillParentSelect(project) {
+    const sel = document.getElementById("p-parent");
+    const hasChildren = project && projects.some((p) => p.parent_project_id === project.id);
+    const candidates = hasChildren
+      ? []
+      : projects.filter(
+          (p) => !p.archived && !p.parent_project_id && p.id !== project?.id
+        );
+    sel.innerHTML =
+      `<option value="">None — this is a direct client / internal project</option>` +
+      candidates.map((p) => `<option value="${p.id}">${UI.esc(p.name)}</option>`).join("");
+    sel.value = project?.parent_project_id || "";
+    sel.disabled = hasChildren;
+    UI.enhanceSelect(sel);
+    UI.syncSelect(sel);
+  }
+
   // ---- Modal ----
   function openProjectModal(project) {
     editingProject = project || null;
@@ -228,6 +260,7 @@
     document.getElementById("status-input").value = "";
     renderProjectTags();
     fillTagSelect();
+    fillParentSelect(project);
 
     const archiveBtn = document.getElementById("archive-btn");
     archiveBtn.hidden = !project;
@@ -270,6 +303,15 @@
       type: document.querySelector('input[name="p-type"]:checked')?.value || "internal",
       tags: projectTags,
     };
+    // Only send parent_project_id once the 08 migration has added the column
+    // (a POST with an unknown column would fail the whole save).
+    const parentVal = document.getElementById("p-parent").value || null;
+    if (projects.length === 0 || projects.some((p) => "parent_project_id" in p)) {
+      fields.parent_project_id = parentVal;
+    } else if (parentVal) {
+      UI.toast("Sub-client projects need the 08_subclients.sql migration — run it in Supabase first.");
+      return;
+    }
 
     try {
       if (editingProject) {

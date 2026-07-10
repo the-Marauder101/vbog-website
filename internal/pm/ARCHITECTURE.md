@@ -60,17 +60,27 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `projects` | One per client/workstream | `statuses jsonb` (the Kanban columns, ordered), `type` (`internal`\|`client`), `tags jsonb` (array of tag *names*), `color`, `archived` |
-| `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`), `external_id`, auto `updated_at` trigger |
+| `projects` | One per client/workstream | `statuses jsonb` (the Kanban columns, ordered), `type` (`internal`\|`client`), `tags jsonb` (array of tag *names*), `color`, `archived`, `parent_project_id` FK (sql/08 — set = this is a **sub-client** project, one level deep) |
+| `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`\|`api`), `external_id`, auto `updated_at` trigger |
 | `team_members` | Every user (internal and external) | `role` = free-text job title; `user_role` = permission level (`admin`\|`member`\|`external`); `login_code` unique = what they type at the gate; `active` |
 | `project_members` | Which projects an **external** user can see | composite PK (`project_id`,`member_id`), both cascade on delete |
 | `notifications` | Inbox rows | `member_id` recipient, `kind` (see §6), `actor_id`, `task_id`/`project_id` (cascade — deleting a task cleans its notifications), `message`, `read`, `data jsonb` for future payloads |
 | `tags` | Central tag registry | `name` unique — the *only* place tags are created, which is what prevents duplicates |
 | `webhooks` | Zapier fan-out targets | `url`, `project_id` (NULL = all projects), `events jsonb`, `active` |
+| `automations` | Per-project rules (sql/09) | `project_id` FK (rules NEVER cross projects), `trigger_type`, `conditions jsonb`, `action_type`, `action_config jsonb`, `active` |
+| `api_keys` | Native inbound API keys (sql/10) | `project_id` FK (a key writes to ONE project), `key` unique (`vyom_…`, DB-generated), `label`, `active`, `last_used_at` |
 
 Also: `task_details` **view** (sql/04) joins human-readable names — used by webhook
 payloads. `notify_task_webhooks()` **trigger** (sql/05) fires on task INSERT/UPDATE/DELETE
 and POSTs to every matching webhook via `pg_net` — async, so task writes never block.
+
+Triggers/RPCs added later: `run_task_automations()` (sql/09) fires AFTER INSERT/UPDATE on
+tasks and executes matching `automations` rows — webhook POST via `pg_net`, task moves,
+assignment, or inbox notifications (kind `automation`); every action is exception-wrapped so
+a bad rule never blocks a save, and `pg_trigger_depth() > 2` stops rule chains from looping.
+`send_test_automation()` mirrors `send_test_webhook()`. `ingest_task()` (sql/10, RPC) is the
+native inbound API: validates an `api_keys` row, defaults an unknown status to the project's
+first column, inserts the task with `source: "api"`.
 
 **RLS is enabled but open** (`USING (true)`) on every table — Phase-1 trade-off, see §8.
 
@@ -153,6 +163,26 @@ Self-serve from Settings — teammates never touch Supabase:
 - **Incoming** (Sheets → tasks): plain REST POST to `/rest/v1/tasks` with the
   publishable key. Settings generates copy-paste Zapier setup (real project UUID,
   valid statuses, member IDs). Such tasks carry `source: "zapier"` → teal dot on cards.
+- **Native API (Zapier-free, sql/10)**: Settings → "Vyom API" generates per-project keys;
+  any script POSTs to `/rest/v1/rpc/ingest_task` with the anon key headers plus
+  `{"p_api_key": "vyom_…", "p_title": "…"}`. The API key (not the anon key) picks the
+  project. Settings shows ready curl + Google Apps Script snippets. Tasks carry
+  `source: "api"` → same teal dot.
+
+### Sub-clients & automations (added later)
+
+- **Sub-client projects**: `projects.parent_project_id` (sql/08). Created from the project
+  modal's "Parent project" dropdown (one level deep — enforced in `dashboard.js`
+  `fillParentSelect()`). Dashboard nests them under the parent card; the board shows a
+  "Sub-client of X" badge; **All Tasks excludes their tasks by default** — the
+  "Include sub-client tasks" toggle (persisted as `vyom_show_subclients` in localStorage)
+  brings them back, and all counts follow the toggle (`team.js baseTasks()`).
+- **Automations**: admin-only ⚡ button on each board (`js/automations.js`) manages rules in
+  the `automations` table for THAT project only. Triggers: task created / status changed
+  (optionally into a specific status) / assigned / due date set. Actions: POST to webhook
+  URL (the email path — point it at Zapier or a Google Apps Script that sends Gmail),
+  move task, assign, or inbox-notify. Execution is 100% in Postgres (sql/09), so rules
+  also fire for tasks created via the API or Zapier.
 
 ## 8. Secrets & keys
 

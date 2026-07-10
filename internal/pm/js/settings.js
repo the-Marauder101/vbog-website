@@ -21,9 +21,12 @@
   let webhooks = [];
   let tags = [];
   let access = []; // [{member_id, project_id}] for external users
+  let apiKeys = [];
+  let apiKeysAvailable = true; // false until sql/10_api_ingest.sql has been run
   let deleteArmedFor = null;
   let webhookDeleteArmedFor = null;
   let tagDeleteArmedFor = null;
+  let apiKeyDeleteArmedFor = null;
 
   const ROLE_LABELS = { admin: "Admin", member: "Member", external: "External" };
 
@@ -36,9 +39,17 @@
         API.getTags(),
         API.getAllProjectAccess(),
       ]);
+      // Separate fetch: the api_keys table only exists after sql/10 has run,
+      // and its absence must not take down the rest of the Settings page.
+      try {
+        apiKeys = await API.getApiKeys();
+      } catch (_) {
+        apiKeysAvailable = false;
+      }
       render();
       renderTags();
       initIntegrations();
+      initApiKeys();
       // Data is authoritative now — accept form submits (buttons start disabled
       // so a fast submit can't race the initial load and get clobbered)
       document.querySelectorAll('form button[type="submit"]').forEach((b) => (b.disabled = false));
@@ -529,6 +540,204 @@
         }
       });
     });
+  });
+
+  // ================= Vyom API keys (native inbound API) =================
+
+  function initApiKeys() {
+    const sel = document.getElementById("k-project");
+    if (!sel) return;
+    if (!apiKeysAvailable) {
+      document.getElementById("apikeys-table").innerHTML =
+        `<div class="warn-box">API keys need the <code>10_api_ingest.sql</code> migration — run it in the Supabase SQL Editor, then reload.</div>`;
+      document.getElementById("add-apikey-form").querySelector("button[type=submit]").disabled = true;
+      return;
+    }
+    sel.innerHTML =
+      `<option value="">Choose a project…</option>` +
+      activeProjects().map((p) => `<option value="${p.id}">${UI.esc(p.name)}</option>`).join("");
+    UI.enhanceSelect(sel);
+    renderApiKeys();
+  }
+
+  function renderApiKeys() {
+    const host = document.getElementById("apikeys-table");
+    if (apiKeys.length === 0) {
+      host.innerHTML = `<div class="form-hint">No API keys yet — generate one above to start creating tasks from your own scripts.</div>`;
+      document.getElementById("apikey-snippets").hidden = true;
+      return;
+    }
+    host.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr><th>Label</th><th>Project</th><th>Key</th><th>Last used</th><th>Active</th><th style="width:190px;"></th></tr>
+        </thead>
+        <tbody>
+          ${apiKeys
+            .map(
+              (k) => `
+              <tr class="${k.active ? "" : "inactive-row"}">
+                <td style="font-weight:600;">${UI.esc(k.label)}</td>
+                <td>${UI.esc(projectName(k.project_id))}</td>
+                <td style="font-family:monospace;font-size:12px;" title="Click Copy for the full key">${UI.esc(k.key.slice(0, 12))}…</td>
+                <td style="font-size:13px;color:var(--muted);">${k.last_used_at ? UI.fmtDate(k.last_used_at.slice(0, 10)) : "never"}</td>
+                <td>
+                  <label class="switch">
+                    <input type="checkbox" data-key-toggle="${k.id}" ${k.active ? "checked" : ""}>
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td style="text-align:right;white-space:nowrap;">
+                  <button class="btn btn-secondary" data-key-copy="${k.id}" style="padding:5px 10px;font-size:13px;">Copy</button>
+                  <button class="btn btn-secondary" data-key-snippet="${k.id}" style="padding:5px 10px;font-size:13px;">Setup</button>
+                  <button class="btn btn-danger" data-key-delete="${k.id}" style="padding:5px 10px;font-size:13px;">${apiKeyDeleteArmedFor === k.id ? "Confirm" : "Revoke"}</button>
+                </td>
+              </tr>`
+            )
+            .join("")}
+        </tbody>
+      </table>`;
+
+    host.querySelectorAll("[data-key-toggle]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const id = input.dataset.keyToggle;
+        try {
+          const updated = await API.updateApiKey(id, { active: input.checked });
+          apiKeys = apiKeys.map((k) => (k.id === id ? updated : k));
+          UI.toast(updated.active ? "Key activated." : "Key paused — requests with it will be rejected.", "success");
+          renderApiKeys();
+        } catch (e) {
+          input.checked = !input.checked;
+          UI.toast(e.message);
+        }
+      });
+    });
+
+    host.querySelectorAll("[data-key-copy]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const k = apiKeys.find((x) => x.id === btn.dataset.keyCopy);
+        try {
+          await navigator.clipboard.writeText(k.key);
+          UI.toast("API key copied.", "success");
+        } catch (_) {
+          UI.toast("Could not copy — open Setup and copy from there.");
+        }
+      });
+    });
+
+    host.querySelectorAll("[data-key-snippet]").forEach((btn) => {
+      btn.addEventListener("click", () => showApiSnippets(apiKeys.find((x) => x.id === btn.dataset.keySnippet)));
+    });
+
+    host.querySelectorAll("[data-key-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.keyDelete;
+        if (apiKeyDeleteArmedFor !== id) {
+          apiKeyDeleteArmedFor = id;
+          renderApiKeys();
+          return;
+        }
+        try {
+          await API.deleteApiKey(id);
+          apiKeys = apiKeys.filter((k) => k.id !== id);
+          apiKeyDeleteArmedFor = null;
+          UI.toast("Key revoked — any script using it stops working now.", "success");
+          renderApiKeys();
+        } catch (e) {
+          UI.toast(e.message);
+        }
+      });
+    });
+  }
+
+  function showApiSnippets(k) {
+    const out = document.getElementById("apikey-snippets");
+    const project = projects.find((p) => p.id === k.project_id);
+    const endpoint = `${SUPABASE_URL}/rest/v1/rpc/ingest_task`;
+    const body = {
+      p_api_key: k.key,
+      p_title: "REPLACE with the task name",
+      p_notes: "REPLACE with notes, or delete this line",
+      p_status: project?.statuses?.[0] || "To Do",
+      p_due_date: "REPLACE as YYYY-MM-DD, or delete this line",
+      p_external_id: "REPLACE with your row/record ID, or delete this line",
+    };
+    const curl = `curl -X POST '${endpoint}' \\
+  -H 'apikey: ${SUPABASE_ANON_KEY}' \\
+  -H 'Authorization: Bearer ${SUPABASE_ANON_KEY}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{"p_api_key":"${k.key}","p_title":"My first API task"}'`;
+    const appsScript = `// Google Apps Script — send one row to Vyom as a task
+function createVyomTask(title, notes, dueDate) {
+  const res = UrlFetchApp.fetch("${endpoint}", {
+    method: "post",
+    contentType: "application/json",
+    headers: {
+      apikey: "${SUPABASE_ANON_KEY}",
+      Authorization: "Bearer ${SUPABASE_ANON_KEY}",
+    },
+    payload: JSON.stringify({
+      p_api_key: "${k.key}",
+      p_title: title,
+      p_notes: notes || null,
+      p_due_date: dueDate || null, // "YYYY-MM-DD"
+    }),
+  });
+  Logger.log(res.getContentText()); // {"ok":true,"task_id":"…"}
+}`;
+    const block = (title, content) => `
+      <div class="snippet-label">${UI.esc(title)}</div>
+      <div class="code-block"><button class="copy-btn" type="button">Copy</button><pre>${UI.esc(content)}</pre></div>`;
+
+    out.hidden = false;
+    out.innerHTML =
+      `<div class="snippet-label" style="font-weight:600;">Setup for “${UI.esc(k.label)}” → ${UI.esc(projectName(k.project_id))}</div>` +
+      block("Endpoint", `POST ${endpoint}`) +
+      block("JSON body (only p_api_key and p_title are required)", JSON.stringify(body, null, 2)) +
+      block("curl example", curl) +
+      block("Google Apps Script example", appsScript);
+
+    out.querySelectorAll(".copy-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(btn.nextElementSibling.textContent);
+          btn.textContent = "Copied!";
+          setTimeout(() => (btn.textContent = "Copy"), 1500);
+        } catch (_) {
+          UI.toast("Could not copy — select the text manually.");
+        }
+      });
+    });
+    out.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  document.getElementById("add-apikey-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const kForm = e.currentTarget;
+    UI.clearFieldErrors(kForm);
+    const labelInput = document.getElementById("k-label");
+    const projSel = document.getElementById("k-project");
+    const label = labelInput.value.trim();
+    let valid = true;
+    if (!projSel.value) {
+      UI.toast("Pick which project this key can create tasks in.");
+      valid = false;
+    }
+    if (!label) {
+      UI.fieldError(labelInput, "Label is required (what will use this key?).");
+      valid = false;
+    }
+    if (!valid) return;
+    try {
+      const created = await API.createApiKey({ project_id: projSel.value, label });
+      apiKeys.push(created);
+      labelInput.value = "";
+      UI.toast("Key generated — open Setup for copy-paste snippets.", "success");
+      renderApiKeys();
+      showApiSnippets(created);
+    } catch (err) {
+      UI.toast(err.message);
+    }
   });
 
   form.addEventListener("submit", async (e) => {
