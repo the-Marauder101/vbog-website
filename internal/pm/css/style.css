@@ -1318,3 +1318,20 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
 .project-card .sub-link .overdue-count { margin-right: 8px; }
 .project-card .sub-edit { opacity: 0; transition: opacity 0.12s; }
 .project-card .sub-link:hover .sub-edit { opacity: 1; }
+.sub-more {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  width: calc(100% + 16px);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted, #6B7280);
+  text-align: left;
+  cursor: pointer;
+}
+.sub-more:hover { background: rgba(0, 180, 216, 0.08); color: #0891B2; }
