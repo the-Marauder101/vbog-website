@@ -36,7 +36,7 @@ an access level, and (for externals) a list of granted projects.
 ## Database
 
 Supabase project `mejebezwvyfkhufkgkej` — already set up. To rebuild on a fresh
-project, run the files in `sql/` in numeric order (01→10) in the SQL Editor; all are
+project, run the files in `sql/` in numeric order (01→11) in the SQL Editor; all are
 idempotent. Schema details in ARCHITECTURE.md §3.
 
 If the frontend shows "Database not set up", the migrations haven't been run.
@@ -85,6 +85,11 @@ Actions: POST to a webhook URL (for emails: point it at a Google Apps Script web
 that sends Gmail, or a Zapier hook), move the task, assign someone, or send an inbox
 notification. Rules run inside the database, so they also fire for tasks created via
 the API or Zapier.
+
+For candidate/contact emails, put the address in the task's **Contact email** field
+(task modal) — it travels in webhook payloads as `task.fields.email`, so the receiving
+script never has to fish addresses out of free-text notes. `fields` is a generic
+container: future needs (doc URLs, etc.) become new keys, not new columns.
 
 ## Deploy
 
