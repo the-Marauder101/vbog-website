@@ -36,7 +36,7 @@ an access level, and (for externals) a list of granted projects.
 ## Database
 
 Supabase project `mejebezwvyfkhufkgkej` — already set up. To rebuild on a fresh
-project, run the files in `sql/` in numeric order (01→07) in the SQL Editor; all are
+project, run the files in `sql/` in numeric order (01→10) in the SQL Editor; all are
 idempotent. Schema details in ARCHITECTURE.md §3.
 
 If the frontend shows "Database not set up", the migrations haven't been run.
@@ -58,6 +58,33 @@ Everything is managed from **Settings** in the app.
 Settings → *Create tasks from Google Sheets* generates the exact Zapier "Custom
 Request" setup for any project — endpoint, headers, JSON body with real IDs — each
 block with a copy button. Tasks created this way show a teal dot on their card.
+
+## Vyom API — create tasks without Zapier
+
+Settings → *Vyom API* generates per-project API keys. Any script (Google Apps
+Script, curl, a form backend) creates tasks with one HTTPS POST to
+`…/rest/v1/rpc/ingest_task` — the **Setup** button next to each key shows ready
+copy-paste snippets, including a complete Apps Script function. The key decides
+which project tasks land in; revoke or pause it anytime from the same table.
+Tasks created this way show the same teal dot (`source: "api"`).
+
+## Sub-client projects (clients of clients)
+
+When a client has their own internal clients, give each of those a project with a
+**Parent project** set (project modal). Sub-client projects nest under their parent
+on the dashboard and their tasks are **excluded from All Tasks and its counts by
+default** — flip "Include sub-client tasks" in the All Tasks filter bar to see them
+(the choice is remembered per browser).
+
+## Automations (per-project rules)
+
+Open any board as an admin → **⚡ Automations**. Rules are scoped to that project
+only — a hiring pipeline's rules never touch another client. Triggers: task created,
+status change (optionally into one specific column), task assigned, due date set.
+Actions: POST to a webhook URL (for emails: point it at a Google Apps Script web app
+that sends Gmail, or a Zapier hook), move the task, assign someone, or send an inbox
+notification. Rules run inside the database, so they also fire for tasks created via
+the API or Zapier.
 
 ## Deploy
 

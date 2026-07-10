@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -39,6 +39,7 @@
           <div class="sub" id="board-desc"></div>
         </div>
         <div class="header-actions">
+          <button class="btn btn-secondary" id="automations-btn" hidden>&#9889; Automations</button>
           <a href="vyom.html" class="btn btn-secondary">&larr; All projects</a>
         </div>
       </div>
@@ -96,12 +97,78 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=8"></script>
-  <script src="js/supabase.js?v=8"></script>
-  <script src="js/api.js?v=8"></script>
-  <script src="js/ui.js?v=8"></script>
-  <script src="js/auth.js?v=8"></script>
-  <script src="js/inbox.js?v=8"></script>
-  <script src="js/board.js?v=8"></script>
+  <!-- Automations modal (rules for THIS project only) -->
+  <div class="modal-overlay" id="automations-modal">
+    <div class="modal" style="max-width: 640px;">
+      <h2>&#9889; Automations</h2>
+      <p class="form-hint" style="margin-top:-6px;">
+        Rules for <strong id="auto-project-name"></strong> only — other projects are never affected.
+        When the trigger happens, the action runs automatically (even for tasks created via the API).
+      </p>
+      <div id="automations-list"></div>
+      <form id="automation-form" novalidate style="margin-top:16px;border-top:1px solid var(--border, #e5e9f0);padding-top:16px;">
+        <h3 id="automation-form-title" style="margin:0 0 12px;font-size:15px;">New rule</h3>
+        <div class="form-group">
+          <label for="a-name">Rule name *</label>
+          <input type="text" id="a-name" autocomplete="off" placeholder="e.g. Email candidate when moved to Offer">
+        </div>
+        <div class="form-group">
+          <label for="a-trigger">When…</label>
+          <select id="a-trigger">
+            <option value="task_created">A task is created</option>
+            <option value="status_changed">A task moves to a status</option>
+            <option value="assignee_changed">A task is assigned</option>
+            <option value="due_date_set">A due date is set</option>
+          </select>
+        </div>
+        <div class="form-group" id="a-cond-status-group" hidden>
+          <label for="a-to-status">…into status</label>
+          <select id="a-to-status"></select>
+        </div>
+        <div class="form-group">
+          <label for="a-action">Then…</label>
+          <select id="a-action">
+            <option value="call_webhook">Send to a webhook URL (email via Zapier/Apps Script, Slack, etc.)</option>
+            <option value="set_status">Move the task to a status</option>
+            <option value="set_assignee">Assign the task to someone</option>
+            <option value="notify_user">Notify someone in their Vyom inbox</option>
+          </select>
+        </div>
+        <div class="form-group" id="a-cfg-url-group">
+          <label for="a-url">Webhook URL *</label>
+          <input type="text" id="a-url" autocomplete="off" placeholder="https://script.google.com/… or https://hooks.zapier.com/…">
+          <div class="form-hint">The task is POSTed as JSON. Point this at a Google Apps Script web app to send emails from your own Gmail.</div>
+        </div>
+        <div class="form-group" id="a-cfg-status-group" hidden>
+          <label for="a-set-status">Move to *</label>
+          <select id="a-set-status"></select>
+        </div>
+        <div class="form-group" id="a-cfg-member-group" hidden>
+          <label for="a-member">Team member *</label>
+          <select id="a-member"></select>
+        </div>
+        <div class="form-group" id="a-cfg-message-group" hidden>
+          <label for="a-message">Notification message</label>
+          <input type="text" id="a-message" autocomplete="off" placeholder="Optional — defaults to the rule name + task title">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="automation-form-reset" hidden>Discard changes</button>
+          <div class="right">
+            <button type="button" class="btn btn-secondary" id="automations-close">Close</button>
+            <button type="submit" class="btn btn-primary" id="automation-save">Add Rule</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js?v=9"></script>
+  <script src="js/supabase.js?v=9"></script>
+  <script src="js/api.js?v=9"></script>
+  <script src="js/ui.js?v=9"></script>
+  <script src="js/auth.js?v=9"></script>
+  <script src="js/inbox.js?v=9"></script>
+  <script src="js/automations.js?v=9"></script>
+  <script src="js/board.js?v=9"></script>
 </body>
 </html>

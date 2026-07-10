@@ -52,6 +52,18 @@
       document.title = `${project.name} — Vyom`;
       document.getElementById("board-title").textContent = project.name;
       document.getElementById("board-desc").textContent = project.description || "";
+      if (project.parent_project_id) {
+        API.getProject(project.parent_project_id)
+          .then((parent) => {
+            if (!parent) return;
+            const tag = document.createElement("span");
+            tag.className = "subclient-tag";
+            tag.textContent = `Sub-client of ${parent.name}`;
+            document.getElementById("board-title").appendChild(tag);
+          })
+          .catch(() => {}); // badge is cosmetic — never block the board
+      }
+      if (typeof Automations !== "undefined") Automations.init(project, members);
       initFilters();
       renderBoard();
       if (openTaskId) {
@@ -208,7 +220,7 @@
       ? '<span class="notes-ind" title="Has notes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>'
       : "";
     el.innerHTML = `
-      <div class="task-title">${task.source === "zapier" ? '<span class="zapier-dot" title="Created via Zapier / Google Sheets"></span>' : ""}${UI.esc(task.title)}${notesInd}</div>
+      <div class="task-title">${task.source === "zapier" || task.source === "api" ? `<span class="zapier-dot" title="Created via ${task.source === "api" ? "the Vyom API" : "Zapier / Google Sheets"}"></span>` : ""}${UI.esc(task.title)}${notesInd}</div>
       <div class="task-meta">
         <span class="assignee">
           <span class="avatar ${assignee ? "" : "unassigned"}"${assignee ? ` style="background:${UI.avatarColor(assignee)}"` : ""}>${UI.esc(initials)}</span>

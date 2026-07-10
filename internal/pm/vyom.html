@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -73,6 +73,11 @@
             <label class="type-opt"><input type="radio" name="p-type" value="client"> Client Facing</label>
           </div>
         </div>
+        <div class="form-group" id="p-parent-group">
+          <label for="p-parent">Parent project (sub-client)</label>
+          <select id="p-parent"><option value="">None — this is a direct client / internal project</option></select>
+          <div class="form-hint">Pick a parent when this project is for one of a client's own clients. Sub-client tasks stay out of All Tasks and reports unless you include them.</div>
+        </div>
         <div class="form-group">
           <label>Tags</label>
           <div class="tag-picker">
@@ -104,12 +109,12 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=8"></script>
-  <script src="js/supabase.js?v=8"></script>
-  <script src="js/api.js?v=8"></script>
-  <script src="js/ui.js?v=8"></script>
-  <script src="js/auth.js?v=8"></script>
-  <script src="js/inbox.js?v=8"></script>
-  <script src="js/dashboard.js?v=8"></script>
+  <script src="js/config.js?v=9"></script>
+  <script src="js/supabase.js?v=9"></script>
+  <script src="js/api.js?v=9"></script>
+  <script src="js/ui.js?v=9"></script>
+  <script src="js/auth.js?v=9"></script>
+  <script src="js/inbox.js?v=9"></script>
+  <script src="js/dashboard.js?v=9"></script>
 </body>
 </html>

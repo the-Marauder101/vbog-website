@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -35,7 +35,7 @@
     <div class="page-header">
       <div>
         <h1>Settings</h1>
-        <div class="sub">Users &amp; access, project tags, Zapier integrations</div>
+        <div class="sub">Users &amp; access, project tags, integrations &amp; the Vyom API</div>
       </div>
     </div>
 
@@ -135,14 +135,34 @@
       </div>
       <div id="snippet-output" hidden></div>
     </div>
+
+    <div class="settings-card">
+      <h2>Vyom API — create tasks without Zapier</h2>
+      <p class="form-hint" style="margin: -6px 0 16px;">
+        Generate a key for a project and any script — Google Apps Script, curl, a form backend —
+        can create tasks in it with one HTTPS POST. The key decides which project tasks land in,
+        so a leaked snippet can only ever write to its own project. Revoke anytime below.
+      </p>
+      <form id="add-apikey-form" class="inline-form" novalidate>
+        <div class="form-group" style="flex: 0 0 240px;">
+          <select id="k-project"><option value="">Choose a project…</option></select>
+        </div>
+        <div class="form-group">
+          <input type="text" id="k-label" placeholder="Label * (e.g. Hiring sheet importer)" autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-primary" disabled>Generate Key</button>
+      </form>
+      <div id="apikeys-table" style="margin-top: 16px;"></div>
+      <div id="apikey-snippets" style="margin-top: 16px;" hidden></div>
+    </div>
   </main>
 
-  <script src="js/config.js?v=8"></script>
-  <script src="js/supabase.js?v=8"></script>
-  <script src="js/api.js?v=8"></script>
-  <script src="js/ui.js?v=8"></script>
-  <script src="js/auth.js?v=8"></script>
-  <script src="js/inbox.js?v=8"></script>
-  <script src="js/settings.js?v=8"></script>
+  <script src="js/config.js?v=9"></script>
+  <script src="js/supabase.js?v=9"></script>
+  <script src="js/api.js?v=9"></script>
+  <script src="js/ui.js?v=9"></script>
+  <script src="js/auth.js?v=9"></script>
+  <script src="js/inbox.js?v=9"></script>
+  <script src="js/settings.js?v=9"></script>
 </body>
 </html>

@@ -1220,3 +1220,24 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   border-radius: 8px;
 }
 .inbox-more:hover { background: rgba(0, 180, 216, 0.07); }
+
+/* ============ Sub-client projects (sql/08) ============ */
+.subclient-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  vertical-align: middle;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: rgba(124, 58, 237, 0.10);
+  color: #7C3AED;
+  white-space: nowrap;
+}
+h1 .subclient-tag { font-size: 12px; margin-left: 10px; }
+.project-card.sub-project {
+  margin-left: 18px;
+  border-left: 3px solid rgba(124, 58, 237, 0.35);
+}
