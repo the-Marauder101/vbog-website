@@ -1241,15 +1241,15 @@ a.subclient-tag { text-decoration: none; cursor: pointer; }
 a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
 .project-card.sub-project { border-left: 3px solid rgba(124, 58, 237, 0.35); }
 
-/* Sub-client quick-jump chips (parent card on the dashboard + parent board header) */
+/* Sub-client navigation. Two shapes from one markup:
+   - board header: inline pill chips (base styles)
+   - dashboard project card: stacked full-width rows (.project-card overrides) */
 .sub-list {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed #E2E7EE;
+  margin-top: 10px;
 }
 .sub-list-label {
   font-size: 10px;
@@ -1262,11 +1262,11 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
 .sub-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   border: 1px solid #D3DAE3;
   background: #fff;
   border-radius: 20px;
-  padding: 4px 10px;
+  padding: 4px 11px;
   font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
@@ -1276,13 +1276,45 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
 }
 .sub-link:hover { border-color: #00B4D8; color: #0891B2; }
 .sub-count {
-  background: #F3F4F6;
-  border-radius: 10px;
-  padding: 0 6px;
-  font-size: 11px;
-  color: #6B7280;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted, #6B7280);
+  white-space: nowrap;
 }
-.sub-edit { color: var(--muted, #6B7280); padding-left: 2px; }
+.sub-edit { color: #B4BCC8; padding-left: 2px; line-height: 1; }
 .sub-edit:hover { color: #0891B2; }
-/* On the board header the chips sit alone — no divider needed */
-.page-header .sub-list, .page > .sub-list { border-top: none; padding-top: 0; }
+
+/* Dashboard card variant: a tidy stacked list under a divider */
+.project-card .sub-list {
+  display: block;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed #E2E7EE;
+}
+.project-card .sub-list-label {
+  display: block;
+  margin: 0 0 4px;
+}
+.project-card .sub-link {
+  display: flex;
+  align-items: center;
+  width: calc(100% + 16px);
+  margin: 0 -8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  padding: 7px 8px;
+  font-size: 13px;
+  text-align: left;
+}
+.project-card .sub-link:hover { background: rgba(0, 180, 216, 0.08); color: inherit; }
+.project-card .sub-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.project-card .sub-link .overdue-count { margin-right: 8px; }
+.project-card .sub-edit { opacity: 0; transition: opacity 0.12s; }
+.project-card .sub-link:hover .sub-edit { opacity: 1; }

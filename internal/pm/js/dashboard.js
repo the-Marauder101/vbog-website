@@ -102,8 +102,13 @@
       const subChips = subs
         .map((s) => {
           const n = taskSummaries.filter((t) => t.project_id === s.id).length;
+          const nOverdue = taskSummaries.filter((t) => t.project_id === s.id && UI.isOverdue(t.due_date)).length;
           return `<button type="button" class="sub-link" data-sub="${s.id}" title="Open ${UI.esc(s.name)}">
-            <span class="access-dot" style="background:${UI.esc(s.color || "#C3CAD5")}"></span>${UI.esc(s.name)}<span class="sub-count">${n}</span>${isExternal ? "" : `<span class="sub-edit" data-subedit="${s.id}" title="Edit ${UI.esc(s.name)}">&#9998;</span>`}
+            <span class="access-dot" style="background:${UI.esc(s.color || "#C3CAD5")}"></span>
+            <span class="sub-name">${UI.esc(s.name)}</span>
+            ${nOverdue ? `<span class="overdue-count">${nOverdue} overdue</span>` : ""}
+            <span class="sub-count">${n} task${n === 1 ? "" : "s"}</span>
+            ${isExternal ? "" : `<span class="sub-edit" data-subedit="${s.id}" title="Edit ${UI.esc(s.name)}">&#9998;</span>`}
           </button>`;
         })
         .join("");
