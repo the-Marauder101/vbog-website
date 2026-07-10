@@ -98,20 +98,27 @@
         .map((t) => `<span class="tag-chip">${UI.esc(t)}</span>`)
         .join("");
       const parent = p.parent_project_id ? projects.find((x) => x.id === p.parent_project_id) : null;
+      // Cards stay compact no matter how many sub-clients a client has:
+      // show the first few, fold the rest behind a "+ N more" row.
+      const SUBS_SHOWN = 3;
       const subs = subsOf(p.id);
-      const subChips = subs
-        .map((s) => {
-          const n = taskSummaries.filter((t) => t.project_id === s.id).length;
-          const nOverdue = taskSummaries.filter((t) => t.project_id === s.id && UI.isOverdue(t.due_date)).length;
-          return `<button type="button" class="sub-link" data-sub="${s.id}" title="Open ${UI.esc(s.name)}">
-            <span class="access-dot" style="background:${UI.esc(s.color || "#C3CAD5")}"></span>
-            <span class="sub-name">${UI.esc(s.name)}</span>
-            ${nOverdue ? `<span class="overdue-count">${nOverdue} overdue</span>` : ""}
-            <span class="sub-count">${n} task${n === 1 ? "" : "s"}</span>
-            ${isExternal ? "" : `<span class="sub-edit" data-subedit="${s.id}" title="Edit ${UI.esc(s.name)}">&#9998;</span>`}
-          </button>`;
-        })
-        .join("");
+      const subChips =
+        subs
+          .map((s, i) => {
+            const n = taskSummaries.filter((t) => t.project_id === s.id).length;
+            const nOverdue = taskSummaries.filter((t) => t.project_id === s.id && UI.isOverdue(t.due_date)).length;
+            return `<button type="button" class="sub-link${i >= SUBS_SHOWN ? " sub-extra" : ""}" ${i >= SUBS_SHOWN ? "hidden " : ""}data-sub="${s.id}" title="Open ${UI.esc(s.name)}">
+              <span class="access-dot" style="background:${UI.esc(s.color || "#C3CAD5")}"></span>
+              <span class="sub-name">${UI.esc(s.name)}</span>
+              ${nOverdue ? `<span class="overdue-count">${nOverdue} overdue</span>` : ""}
+              <span class="sub-count">${n} task${n === 1 ? "" : "s"}</span>
+              ${isExternal ? "" : `<span class="sub-edit" data-subedit="${s.id}" title="Edit ${UI.esc(s.name)}">&#9998;</span>`}
+            </button>`;
+          })
+          .join("") +
+        (subs.length > SUBS_SHOWN
+          ? `<button type="button" class="sub-more">+ ${subs.length - SUBS_SHOWN} more</button>`
+          : "");
       return `
         <div class="project-card ${p.archived ? "archived" : ""} ${parent ? "sub-project" : ""}" data-id="${p.id}">
           <div class="accent-bar" style="background:${UI.esc(p.color || "#C3CAD5")}"></div>
@@ -139,6 +146,13 @@
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         window.location.href = `board.html?project=${btn.dataset.sub}`;
+      });
+    });
+    grid.querySelectorAll(".sub-more").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        btn.closest(".sub-list").querySelectorAll(".sub-extra").forEach((el) => (el.hidden = false));
+        btn.remove();
       });
     });
     grid.querySelectorAll(".sub-edit").forEach((el) => {
