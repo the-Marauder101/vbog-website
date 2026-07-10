@@ -77,7 +77,7 @@
               subs
                 .map(
                   (s) => `<a class="sub-link" href="board.html?project=${s.id}" title="Open ${UI.esc(s.name)}">
-                    <span class="access-dot" style="background:${UI.esc(s.color || "#C3CAD5")}"></span>${UI.esc(s.name)}
+                    <span class="access-dot" style="background:${UI.esc(s.color || "#C3CAD5")}"></span><span class="sub-name">${UI.esc(s.name)}</span>
                   </a>`
                 )
                 .join("");
