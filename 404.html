@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!--
+    Dual-purpose page:
+    1. Pretty booking URLs: GitHub Pages serves this file for any path that has
+       no matching file. /book/<slug> (single slug-shaped segment, no dots) is
+       rewritten to the real booking page /book/?c=<slug>. The script runs
+       before anything renders, so booking visitors never see 404 content.
+    2. A branded 404 for every other missing URL on v-bog.com.
+  -->
+  <script>
+    (function () {
+      var parts = location.pathname.split('/').filter(Boolean);
+      // Only /book/<single-segment> where the segment looks like a slug.
+      // Dotted names (/book/x.png) are genuinely missing files — let them 404.
+      if (parts.length === 2 && parts[0] === 'book' && /^[A-Za-z0-9-]+$/.test(parts[1])) {
+        var qs = location.search ? '&' + location.search.slice(1) : '';
+        location.replace('/book/?c=' + encodeURIComponent(parts[1].toLowerCase()) + qs);
+      }
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Page not found — Depesh Vyas</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* Self-contained styles — this page must not depend on other assets. */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #f8f5ee;
+      color: #0a0a0a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header { padding: 20px 24px; }
+    .wordmark {
+      font-family: 'Satoshi', 'Inter', sans-serif;
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: #0a0a0a;
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    .code {
+      font-family: 'Satoshi', sans-serif;
+      font-weight: 800;
+      font-size: 5rem;
+      color: #ff4d00;
+      line-height: 1;
+    }
+    h1 {
+      font-family: 'Satoshi', 'Inter', sans-serif;
+      font-size: 1.4rem;
+      margin: 14px 0 10px;
+    }
+    p { color: #6b6560; line-height: 1.6; max-width: 420px; margin: 0 auto; }
+    .actions { margin-top: 26px; }
+    .btn {
+      display: inline-block;
+      background: #ff4d00;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 12px 28px;
+      border-radius: 999px;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #cc3d00; }
+    .alt {
+      display: block;
+      margin-top: 16px;
+      color: #6b6560;
+      font-size: 0.88rem;
+    }
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.8rem;
+      color: #6b6560;
+    }
+  </style>
+</head>
+<body>
+  <header><a class="wordmark" href="/">Depesh Vyas.</a></header>
+  <main>
+    <div>
+      <div class="code">404</div>
+      <h1>This page doesn&rsquo;t exist.</h1>
+      <p>The link may be outdated or mistyped. If someone sent you a booking link,
+        double-check the address they gave you.</p>
+      <div class="actions">
+        <a class="btn" href="/">Go to homepage</a>
+        <a class="alt" href="/contact">or get in touch</a>
+      </div>
+    </div>
+  </main>
+  <footer>&copy; 2026 VBOG</footer>
+</body>
+</html>
