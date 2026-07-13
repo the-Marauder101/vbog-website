@@ -387,6 +387,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 .form-group input[type="text"], .form-group input[type="date"],
+.form-group input[type="email"],
 .form-group textarea, .form-group select {
   width: 100%;
   border: 1px solid var(--border);

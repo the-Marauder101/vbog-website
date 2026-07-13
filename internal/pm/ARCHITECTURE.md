@@ -5,8 +5,8 @@
 > (so you don't hit them again). The README covers *what Vyom does*; this file
 > covers *how it's built*.
 
-Last updated: v15 (July 2026) — client tags on tasks; plus the v14 status
-reordering, guided transition mapping, and sub-client status inheritance.
+Last updated: v16 (July 2026) — client tags on tasks + form polish; plus the v14
+status reordering, guided transition mapping, and sub-client status inheritance.
 
 ---
 
@@ -117,7 +117,7 @@ an unknown status to its first column, inserts the task with `source: "api"`.
 4. **Cache busting**: every CSS/JS reference carries `?v=N`. **Bump N in all five
    HTML files on every release** — GitHub Pages caches ~10 min and users will
    otherwise run mixed old/new code (this caused "API.x is not a function" bugs).
-   Current version: `v=15`.
+   Current version: `v=16`.
 5. **Escape everything**: any user data inserted via innerHTML goes through
    `UI.esc()`. No exceptions.
 6. **Optimistic, in-place updates in async handlers** — the hard-won rule:
