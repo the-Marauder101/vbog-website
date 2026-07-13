@@ -20,6 +20,9 @@ const Automations = (() => {
     due_date_set: "Due date set",
   };
   const ACTION_LABELS = {
+    // call_webhook POSTs the task_details payload to any URL — used for the Gmail
+    // Apps Script bridge (see ARCHITECTURE.md §7 "Gmail Apps Script bridge").
+    // Recipient = task.fields.email (Contact email box in the task modal).
     call_webhook: "send to webhook",
     set_status: "move task",
     set_assignee: "assign task",
