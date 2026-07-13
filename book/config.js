@@ -6,7 +6,7 @@ window.BOOKING_CONFIG = {
   // Paste your Apps Script Web App URL here (Deploy → Web app → copy URL).
   // It must end in /exec, e.g.
   // 'https://script.google.com/macros/s/AKfycb.../exec'
-  APPS_SCRIPT_URL: 'PASTE_YOUR_WEB_APP_URL_HERE',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzKLLYErG0d1hQBpNUVdTQLqd9bLejvhMcPatO55Xm1dm_hdH1rPHmQHBxXFytXjVUF/exec',
 
   // true = the page fakes all API responses so you can test the booking flow
   // in a browser before the Apps Script backend exists. Use slug "test-client"
