@@ -31,6 +31,10 @@
   .header-text { flex: 1; }
   header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
   header p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+  .header-disclaimer {
+    margin: 10px 0 0; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    color: #fff; background: #CC1015; line-height: 1.5;
+  }
   .header-logo { display: flex; align-items: center; gap: 20px; }
   .header-logo img { height: 40px; width: auto; display: block; }
 
@@ -333,6 +337,33 @@
 
     .qp-price-note { font-size: 8.5pt; color: #555; margin-top: 8pt; line-height: 1.5; font-style: italic; }
 
+    .qp-payment {
+      margin-top: 14pt; padding: 8pt 10pt;
+      border: 0.5pt solid #ccc; background: #fafafa !important;
+      font-size: 8.5pt; line-height: 1.7;
+    }
+    .qp-payment-title {
+      font-size: 9pt; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: #CC1015; margin-bottom: 4pt;
+    }
+    .qp-payment table { border-collapse: collapse; width: 100%; }
+    .qp-payment td { padding: 1pt 6pt; font-size: 8.5pt; vertical-align: top; }
+    .qp-payment td:first-child { font-weight: 700; white-space: nowrap; width: 28%; }
+
+    .qp-contact-note { font-size: 8pt; color: #333; margin-top: 8pt; line-height: 1.5; font-style: italic; }
+
+    .qp-warranty-text {
+      font-size: 8.5pt; color: #000; line-height: 1.6; margin-bottom: 9pt;
+    }
+    .qp-warranty-text ol { margin: 3pt 0 0 16pt; padding: 0; }
+    .qp-warranty-text ol li { margin-bottom: 2pt; }
+
+    .qp-amc-upsell {
+      font-size: 8.5pt; color: #333; line-height: 1.6;
+      padding: 6pt 10pt; border-left: 2pt solid #CC1015;
+      background: #fff9f9 !important; margin-bottom: 9pt;
+    }
+
     @page { margin: 14mm 18mm; size: A4 portrait; }
   }
 
@@ -354,11 +385,12 @@
   <div class="header-inner">
     <div class="header-text">
       <h1>CTT Water Heater Installation Quote</h1>
-      <p>Internal use only. Configure the quote below for an instant estimate.</p>
+      <div class="header-disclaimer">Internal use only. This calculator is for Atlantic water heater quotes only. Not for use with Aristo, Milano, or any other brand.</div>
     </div>
     <div class="header-logo">
       <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
       <img src="faza-logo.svg" alt="Faza Home">
+      <img src="https://www.groupe-atlantic.fr/app/uploads/2026/05/logo-groupe-atlantic-1.png" alt="Groupe Atlantic">
     </div>
   </div>
 </header>
@@ -481,6 +513,7 @@
     <div class="qp-lh">
       <div class="qp-lh-logo">
         <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+        <img src="https://www.groupe-atlantic.fr/app/uploads/2026/05/logo-groupe-atlantic-1.png" alt="Groupe Atlantic" style="margin-left:10pt">
       </div>
       <div class="qp-co-info">
         P.O. Box 25236, Dubai, U.A.E.<br>
@@ -554,6 +587,21 @@
     <div class="qp-sec-hdr">Additional Terms</div>
     <table class="qp-lst" id="qpTermsTable"></table>
 
+    <p class="qp-contact-note">For any queries, concerns, or escalations, please contact Cheqpoint Tech Trading LLC at +971 1234 567.</p>
+
+    <div class="qp-sec-hdr">Workmanship Warranty</div>
+    <div class="qp-warranty-text">
+      Cheqpoint Tech Trading LLC is pleased to provide a one-year workmanship warranty on the installation. This warranty does not cover:
+      <ol>
+        <li>False ceiling works performed by Cheqpoint or any other contractor.</li>
+        <li>Failure of pipes, connectors, valves, or similar components.</li>
+      </ol>
+    </div>
+
+    <div class="qp-amc-upsell">
+      <strong>Annual Maintenance:</strong> To maintain the manufacturer warranty provided by Atlantic, servicing is recommended at least once every two years. Annual Maintenance Contracts start at AED&nbsp;199. Contact +971 1234 567 for details.
+    </div>
+
     <div class="qp-foot">
       Note: We also provide after-sales services such as maintenance, testing and commissioning for all supplied equipment.<br>
       Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com &nbsp;&bull;&nbsp; TRN: 100058760800003
@@ -565,6 +613,7 @@
     <div class="qp-lh">
       <div class="qp-lh-logo">
         <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
+        <img src="https://www.groupe-atlantic.fr/app/uploads/2026/05/logo-groupe-atlantic-1.png" alt="Groupe Atlantic" style="margin-left:10pt">
       </div>
       <div class="qp-co-info">
         P.O. Box 25236, Dubai, U.A.E.<br>
@@ -586,6 +635,18 @@
     </table>
 
     <p class="qp-price-note" id="qpPriceNote"></p>
+
+    <div class="qp-payment">
+      <div class="qp-payment-title">Remittance Information</div>
+      <p style="margin:0 0 4pt; font-size:8pt; color:#555;">Please remit payment to the following account:</p>
+      <table>
+        <tr><td>Company Name:</td><td>CHEQPOINT TECH TRADING LLC</td></tr>
+        <tr><td>Bank:</td><td>NATIONAL BANK OF RAS AL KHAIMAH (RAKBANK)</td></tr>
+        <tr><td>Account / IBAN:</td><td>AE970400000003292688001</td></tr>
+        <tr><td>SWIFT Code:</td><td>NRAKAEAK</td></tr>
+        <tr><td>Branch:</td><td>MAKTOUM ST, DUBAI</td></tr>
+      </table>
+    </div>
 
     <div class="qp-foot" style="margin-top:18pt">
       Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com
@@ -670,7 +731,9 @@ const PRICING = {
     { label: "120 × 120", price: 1800 },
     { label: "160 × 160", price: 2400 },
     { label: "200 × 200", price: 3000 }
-  ]
+  ],
+
+  amcRates: { upTo100: 199, above100: 299 }
 };
 
 function getInstallRate(tier) {
@@ -678,6 +741,10 @@ function getInstallRate(tier) {
   const loc = PRICING.locations[locIdx] || PRICING.locations[0];
   const rates = PRICING.installRates[tier];
   return rates ? (rates[loc.key] || 0) : 0;
+}
+
+function getAmcPrice(litres) {
+  return litres <= 100 ? PRICING.amcRates.upTo100 : PRICING.amcRates.above100;
 }
 
 /* =========================================================
@@ -776,7 +843,7 @@ populateSelect(el.location, PRICING.locations, (l) => l.label);
 let unitStates = [];
 
 function defaultUnitState() {
-  return { orientation: "horizontal", serviceType: "newInstallation", sizeIdx: 0, ceilingNeeded: false, ceilingIdx: 0, craneRequired: false };
+  return { orientation: "horizontal", serviceType: "newInstallation", sizeIdx: 0, ceilingNeeded: false, ceilingIdx: 0, craneRequired: false, amcNeeded: true };
 }
 function syncUnitStates(qty) { while (unitStates.length < qty) unitStates.push(defaultUnitState()); unitStates.length = qty; }
 
@@ -844,9 +911,20 @@ function buildUnitDetails() {
       `<div class="checks"><label class="check"><input type="checkbox" class="u-ceil-chk" data-unit="${i}"${u.ceilingNeeded ? " checked" : ""}>` +
       `<span class="box" aria-hidden="true"></span><span>False ceiling modification needed?</span></label></div>` +
       `<details class="info"><summary>What's included</summary><p>Cutting the false ceiling, fixing it back, applying putty, applying paint, and providing an access panel where necessary.</p></details>` +
-      `<p class="disclaimer">If false-ceiling work is found necessary on site and not selected here, it will be charged separately.</p>` +
+      `<p class="disclaimer">If false-ceiling work is found necessary on site and not selected here, it will be charged separately. Final charges will be informed after a site visit.</p>` +
       `<div class="subblock u-ceil-block"${u.ceilingNeeded ? "" : " hidden"}><span class="unit-sublabel">Panel size</span><select class="u-ceil-sel" data-unit="${i}">${ceilOpts}</select></div>`;
     card.appendChild(ceilField);
+
+    const amcSize = sizes[u.sizeIdx] || sizes[0];
+    const amcPrice = getAmcPrice(amcSize.litres);
+    const amcField = document.createElement("div");
+    amcField.className = "unit-field";
+    amcField.innerHTML =
+      `<label class="unit-label">Annual Maintenance Contract (AMC)</label>` +
+      `<div class="checks"><label class="check"><input type="checkbox" class="u-amc-chk" data-unit="${i}"${u.amcNeeded ? " checked" : ""}>` +
+      `<span class="box" aria-hidden="true"></span><span>Include AMC — ${fmt(amcPrice)} per unit (incl. VAT)</span></label></div>` +
+      `<details class="info"><summary>What's covered</summary><p>Cleaning, draining, and servicing of the water heater. Anode replacement (if depleted) is a consumable item charged separately. Does not include spare parts — damaged or worn parts will be charged separately.</p></details>`;
+    card.appendChild(amcField);
 
     const size = sizes[u.sizeIdx] || sizes[0];
     const showCrane = size.litres >= 200;
@@ -875,6 +953,7 @@ function attachInstallListeners() {
   q(".u-ceil-chk").forEach((c) => c.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].ceilingNeeded = e.target.checked; e.target.closest(".unit-card").querySelector(".u-ceil-block").hidden = !e.target.checked; recalc(); }));
   q(".u-ceil-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].ceilingIdx = +e.target.value; recalc(); }));
   q(".u-crane-chk").forEach((c) => c.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].craneRequired = e.target.checked; recalc(); }));
+  q(".u-amc-chk").forEach((c) => c.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].amcNeeded = e.target.checked; recalc(); }));
 }
 
 /* ===== Pricing helpers ===== */
@@ -927,6 +1006,18 @@ function recalc() {
 
   if (anyCeiling) {
     html += `<div class="line-note">False ceiling charges are indicative only. Final charges will be informed after a site visit.</div>`;
+  }
+
+  for (let i = 0; i < qty; i++) {
+    const u = unitStates[i];
+    if (u.amcNeeded) {
+      const sizes = sizesForOrientation(u.orientation);
+      const size = sizes[u.sizeIdx] || sizes[0];
+      const amcPrice = getAmcPrice(size.litres);
+      const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
+      html += lineHTML("Annual Maintenance Contract" + tag, size.label + " — per unit", amcPrice);
+      subtotal += amcPrice;
+    }
   }
 
   if (anyCrane) {
