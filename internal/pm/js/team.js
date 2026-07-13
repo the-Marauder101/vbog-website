@@ -10,7 +10,7 @@
   Inbox.init();
 
   const content = document.getElementById("tasks-content");
-  const filters = { project: "", assignee: "", due: "all", q: "", from: "", to: "" };
+  const filters = { project: "", assignee: "", client: "", due: "all", q: "", from: "", to: "" };
   let tasks = []; // rows with embedded `projects` object
   let members = [];
   // Sub-client tasks (projects with a parent) are OUT of this view and its
@@ -58,13 +58,23 @@
       `<option value="">Everyone</option><option value="none">Unassigned</option>` +
       options.map((m) => `<option value="${m.id}">${UI.esc(m.name)}${m.active ? "" : " (inactive)"}</option>`).join("");
 
+    // Client tags (tasks.fields.client) — dropdown hides when nothing uses them
+    const clientSel = document.getElementById("filter-client");
+    const clientNames = [...new Set(tasks.map((t) => t.fields?.client).filter(Boolean))].sort(
+      (a, b) => a.localeCompare(b)
+    );
+    clientSel.innerHTML =
+      `<option value="">All clients</option><option value="none">No client</option>` +
+      clientNames.map((n) => `<option value="${UI.esc(n)}">${UI.esc(n)}</option>`).join("");
+
     document.getElementById("filter-due").innerHTML = UI.dateFilterOptions
       .map(([v, label]) => `<option value="${v}">${label}</option>`)
       .join("");
 
-    for (const id of ["filter-project", "filter-assignee", "filter-due"]) {
+    for (const id of ["filter-project", "filter-assignee", "filter-client", "filter-due"]) {
       UI.enhanceSelect(document.getElementById(id));
     }
+    clientSel.closest(".dd").hidden = clientNames.length === 0;
 
     const bind = (id, key) =>
       document.getElementById(id).addEventListener(id === "filter-search" ? "input" : "change", (e) => {
@@ -74,14 +84,15 @@
       });
     bind("filter-project", "project");
     bind("filter-assignee", "assignee");
+    bind("filter-client", "client");
     bind("filter-due", "due");
     bind("filter-search", "q");
     bind("filter-from", "from");
     bind("filter-to", "to");
 
     document.getElementById("filter-clear").addEventListener("click", () => {
-      Object.assign(filters, { project: "", assignee: "", due: "all", q: "", from: "", to: "" });
-      for (const [id, v] of [["filter-project", ""], ["filter-assignee", ""], ["filter-due", "all"]]) {
+      Object.assign(filters, { project: "", assignee: "", client: "", due: "all", q: "", from: "", to: "" });
+      for (const [id, v] of [["filter-project", ""], ["filter-assignee", ""], ["filter-client", ""], ["filter-due", "all"]]) {
         const el = document.getElementById(id);
         el.value = v;
         UI.syncSelect(el);
@@ -95,7 +106,13 @@
   }
 
   function filtersActive() {
-    return filters.project !== "" || filters.assignee !== "" || filters.due !== "all" || filters.q !== "";
+    return (
+      filters.project !== "" ||
+      filters.assignee !== "" ||
+      filters.client !== "" ||
+      filters.due !== "all" ||
+      filters.q !== ""
+    );
   }
 
   // The working set: everything, minus sub-client tasks unless included.
@@ -111,6 +128,8 @@
       if (filters.project && t.projects.id !== filters.project) return false;
       if (filters.assignee === "none" && t.assignee_id) return false;
       if (filters.assignee && filters.assignee !== "none" && t.assignee_id !== filters.assignee) return false;
+      if (filters.client === "none" && t.fields?.client) return false;
+      if (filters.client && filters.client !== "none" && t.fields?.client !== filters.client) return false;
       if (!UI.matchesDateFilter(t.due_date, filters.due, { from: filters.from, to: filters.to })) return false;
       if (q && !t.title.toLowerCase().includes(q)) return false;
       return true;
@@ -123,6 +142,7 @@
     for (const [id, active] of [
       ["filter-project", filters.project !== ""],
       ["filter-assignee", filters.assignee !== ""],
+      ["filter-client", filters.client !== ""],
       ["filter-due", filters.due !== "all"],
     ]) {
       const el = document.getElementById(id);
@@ -157,7 +177,7 @@
                     <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${UI.esc(t.projects.color || "#C3CAD5")};margin-right:8px;"></span>
                     ${UI.esc(t.projects.name)}${t.projects.parent_project_id ? ' <span class="subclient-tag">sub-client</span>' : ""}
                   </td>
-                  <td>${t.source === "zapier" || t.source === "api" ? `<span class="zapier-dot" title="Created via ${t.source === "api" ? "the Vyom API" : "Zapier"}"></span>` : ""}${UI.esc(t.title)}</td>
+                  <td>${t.source === "zapier" || t.source === "api" ? `<span class="zapier-dot" title="Created via ${t.source === "api" ? "the Vyom API" : "Zapier"}"></span>` : ""}${UI.esc(t.title)}${t.fields?.client ? ` <span class="client-chip" title="Client">${UI.esc(t.fields.client)}</span>` : ""}</td>
                   <td>${
                     assignee
                       ? `<span class="avatar" style="background:${UI.avatarColor(assignee)};margin-right:7px;">${UI.esc(assignee.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase())}</span>${UI.esc(assignee)}`

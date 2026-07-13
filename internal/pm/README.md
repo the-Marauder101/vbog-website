@@ -20,8 +20,8 @@ manager for the whole team, replacing Asana. Lives at **https://v-bog.com/intern
 |---|---|
 | `login.html` | Sign-in gate — enter your Login ID. Stays signed in per device; Logout in the nav. |
 | `vyom.html` (index.html redirects here) | Dashboard — project cards with task/overdue counts, type badge (Internal/Client), tag chips, and a tag filter. Create/edit/archive projects with **custom status columns per project** — drag the chips to reorder columns; removing a column that still has tasks walks you through moving them (no task is ever stranded). |
-| `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop, task modal with **@mentions** in notes. Filters: assignee, due date (presets + custom range). |
-| `team.html` | All Tasks — master list across every project. Filter by project, assignee, due date, or title search. |
+| `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop, task modal with **@mentions** in notes and a **Client** tag (label a task with the end client it's for — lighter than a sub-client project). Filters: assignee, client, due date (presets + custom range). |
+| `team.html` | All Tasks — master list across every project. Filter by project, assignee, client, due date, or title search. |
 | `settings.html` | **Admin only.** Users & access (add users, roles, login IDs, per-project access for externals), the central **tag registry**, and Zapier integrations. |
 
 Every page also has the **Inbox** (bell icon): notifications (task assignments,
@@ -75,6 +75,12 @@ When a client has their own internal clients, give each of those a project with 
 on the dashboard and their tasks are **excluded from All Tasks and its counts by
 default** — flip "Include sub-client tasks" in the All Tasks filter bar to see them
 (the choice is remembered per browser).
+
+**Don't need a whole child project?** Use the task-level **Client** tag instead:
+open any task and fill the Client field (it suggests names already used in that
+project). The board and All Tasks each get a Client filter, and tagged tasks show
+a teal client chip. Sub-client projects remain the right tool when a client needs
+their own board, statuses, or external access.
 
 Sub-clients can either **inherit the parent's status columns** (the default — the
 child's board always mirrors the parent's columns, live) or define **custom**

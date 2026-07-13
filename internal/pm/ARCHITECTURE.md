@@ -5,8 +5,8 @@
 > (so you don't hit them again). The README covers *what Vyom does*; this file
 > covers *how it's built*.
 
-Last updated: v14 (July 2026) — status reordering, guided transition mapping,
-sub-client status inheritance release.
+Last updated: v15 (July 2026) — client tags on tasks; plus the v14 status
+reordering, guided transition mapping, and sub-client status inheritance.
 
 ---
 
@@ -62,7 +62,7 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 | Table | Purpose | Key columns |
 |---|---|---|
 | `projects` | One per client/workstream | `statuses jsonb` (the Kanban columns, ordered), `type` (`internal`\|`client`), `tags jsonb` (array of tag *names*), `color`, `archived`, `parent_project_id` FK (sql/08 — set = this is a **sub-client** project, one level deep), `inherit_statuses` (sql/12 — sub-client live-inherits the parent's columns, see §7) |
-| `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`\|`api`), `external_id`, `fields jsonb` (sql/11 — structured per-task data for automations: `email` today, more keys later WITHOUT migrations), auto `updated_at` trigger |
+| `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`\|`api`), `external_id`, `fields jsonb` (sql/11 — structured per-task data, more keys later WITHOUT migrations: `email` feeds automations, `client` is the task-level client tag — see §7), auto `updated_at` trigger |
 | `team_members` | Every user (internal and external) | `role` = free-text job title; `user_role` = permission level (`admin`\|`member`\|`external`); `login_code` unique = what they type at the gate; `active` |
 | `project_members` | Which projects an **external** user can see | composite PK (`project_id`,`member_id`), both cascade on delete |
 | `notifications` | Inbox rows | `member_id` recipient, `kind` (see §6), `actor_id`, `task_id`/`project_id` (cascade — deleting a task cleans its notifications), `message`, `read`, `data jsonb` for future payloads |
@@ -117,7 +117,7 @@ an unknown status to its first column, inserts the task with `source: "api"`.
 4. **Cache busting**: every CSS/JS reference carries `?v=N`. **Bump N in all five
    HTML files on every release** — GitHub Pages caches ~10 min and users will
    otherwise run mixed old/new code (this caused "API.x is not a function" bugs).
-   Current version: `v=14`.
+   Current version: `v=15`.
 5. **Escape everything**: any user data inserted via innerHTML goes through
    `UI.esc()`. No exceptions.
 6. **Optimistic, in-place updates in async handlers** — the hard-won rule:
@@ -195,6 +195,14 @@ Self-serve from Settings — teammates never touch Supabase:
   URL (the email path — point it at Zapier or a Google Apps Script that sends Gmail),
   move task, assign, or inbox-notify. Execution is 100% in Postgres (sql/09), so rules
   also fire for tasks created via the API or Zapier.
+- **Client tags (`tasks.fields.client`)**: the lightweight alternative to a sub-client
+  project — tag individual tasks with an end-client name instead of spinning up a whole
+  child project. Free text with a datalist of names already used in that project (task
+  modal, `board.js`). Filterable on the board and All Tasks ("Client" dropdown, which
+  hides itself when no tasks carry a client); rows/cards show a teal `client-chip`.
+  Stored in the `fields` jsonb container, so it needed **no migration** and flows into
+  webhook/automation payloads and `ingest_task`'s `p_fields` automatically. "Clear
+  filters" resets it like any other filter.
 - **Status inheritance (sql/12)**: a sub-client can **live-inherit** the parent's status
   columns (`projects.inherit_statuses`). Resolution happens at read time —
   `UI.effectiveStatuses()` in the frontend, the same lookup inside `ingest_task()` — so

@@ -24,7 +24,7 @@
   let members = [];
   let editingTask = null; // null = creating
   let deleteArmed = false;
-  const filters = { assignee: "", due: "all", from: "", to: "" };
+  const filters = { assignee: "", client: "", due: "all", from: "", to: "" };
 
   if (!projectId) {
     window.location.replace("vyom.html");
@@ -118,8 +118,36 @@
     });
   }
 
-  // ---- Filters (assignee + due date) ----
+  // ---- Client tags (stored in tasks.fields.client — no extra table) ----
+  // Distinct client names used in this project, for the filter + datalist
+  function clientNames() {
+    return [...new Set(tasks.map((t) => t.fields?.client).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }
+
+  // (Re)build the client filter's options. Called at load and after every
+  // task save/delete, since those can introduce or retire a client name.
+  // The whole dropdown hides when the project doesn't use client tags.
+  function refreshClientFilter() {
+    const sel = document.getElementById("filter-client");
+    const names = clientNames();
+    sel.innerHTML =
+      `<option value="">All clients</option><option value="none">No client</option>` +
+      names.map((n) => `<option value="${UI.esc(n)}">${UI.esc(n)}</option>`).join("");
+    sel.value = names.includes(filters.client) || filters.client === "none" ? filters.client : "";
+    filters.client = sel.value;
+    UI.enhanceSelect(sel);
+    sel.closest(".dd").hidden = names.length === 0;
+  }
+
+  // ---- Filters (assignee + client + due date) ----
   function initFilters() {
+    refreshClientFilter();
+    document.getElementById("filter-client").addEventListener("change", (e) => {
+      filters.client = e.target.value;
+      renderBoard();
+    });
     const assigneeSel = document.getElementById("filter-assignee");
     // Active members plus anyone (now inactive) still assigned to a task here
     const assignedIds = new Set(tasks.map((t) => t.assignee_id).filter(Boolean));
@@ -148,11 +176,14 @@
       });
     }
     document.getElementById("filter-clear").addEventListener("click", () => {
-      Object.assign(filters, { assignee: "", due: "all", from: "", to: "" });
+      Object.assign(filters, { assignee: "", client: "", due: "all", from: "", to: "" });
       assigneeSel.value = "";
+      const clientSel = document.getElementById("filter-client");
+      clientSel.value = "";
       const dueSel = document.getElementById("filter-due");
       dueSel.value = "all";
       UI.syncSelect(assigneeSel);
+      UI.syncSelect(clientSel);
       UI.syncSelect(dueSel);
       document.getElementById("filter-from").value = "";
       document.getElementById("filter-to").value = "";
@@ -162,13 +193,15 @@
   }
 
   function filtersActive() {
-    return filters.assignee !== "" || filters.due !== "all";
+    return filters.assignee !== "" || filters.client !== "" || filters.due !== "all";
   }
 
   function visibleTasks() {
     return tasks.filter((t) => {
       if (filters.assignee === "none" && t.assignee_id) return false;
       if (filters.assignee && filters.assignee !== "none" && t.assignee_id !== filters.assignee) return false;
+      if (filters.client === "none" && t.fields?.client) return false;
+      if (filters.client && filters.client !== "none" && t.fields?.client !== filters.client) return false;
       return UI.matchesDateFilter(t.due_date, filters.due, { from: filters.from, to: filters.to });
     });
   }
@@ -192,8 +225,10 @@
     countEl.hidden = !filtersActive();
     countEl.textContent = filtersActive() ? `Showing ${shown.length} of ${tasks.length} tasks` : "";
     document.getElementById("filter-assignee").classList.toggle("on", filters.assignee !== "");
+    document.getElementById("filter-client").classList.toggle("on", filters.client !== "");
     document.getElementById("filter-due").classList.toggle("on", filters.due !== "all");
     UI.syncSelect(document.getElementById("filter-assignee"));
+    UI.syncSelect(document.getElementById("filter-client"));
     UI.syncSelect(document.getElementById("filter-due"));
   }
 
@@ -249,6 +284,7 @@
       : "";
     el.innerHTML = `
       <div class="task-title">${task.source === "zapier" || task.source === "api" ? `<span class="zapier-dot" title="Created via ${task.source === "api" ? "the Vyom API" : "Zapier / Google Sheets"}"></span>` : ""}${UI.esc(task.title)}${notesInd}</div>
+      ${task.fields?.client ? `<div class="task-client"><span class="client-chip" title="Client">${UI.esc(task.fields.client)}</span></div>` : ""}
       <div class="task-meta">
         <span class="assignee">
           <span class="avatar ${assignee ? "" : "unassigned"}"${assignee ? ` style="background:${UI.avatarColor(assignee)}"` : ""}>${UI.esc(initials)}</span>
@@ -433,6 +469,11 @@
     document.getElementById("task-save").textContent = task ? "Save Changes" : "Create Task";
     document.getElementById("t-title").value = task ? task.title : "";
     document.getElementById("t-notes").value = task ? task.notes || "" : "";
+    document.getElementById("t-client").value = task ? task.fields?.client || "" : "";
+    // Suggest client names already used in this project (free text still allowed)
+    document.getElementById("t-client-list").innerHTML = clientNames()
+      .map((n) => `<option value="${UI.esc(n)}"></option>`)
+      .join("");
     document.getElementById("t-email").value = task ? task.fields?.email || "" : "";
     document.getElementById("t-due").value = task ? task.due_date || "" : "";
     fillSelects(task ? task.status : presetStatus, task ? task.assignee_id : "");
@@ -467,6 +508,9 @@
     const customFields = { ...(editingTask?.fields || {}) };
     if (email) customFields.email = email;
     else delete customFields.email;
+    const client = document.getElementById("t-client").value.trim();
+    if (client) customFields.client = client;
+    else delete customFields.client;
 
     const fields = {
       title,
@@ -492,6 +536,7 @@
         notifyForTask(created, null, null);
       }
       UI.closeModal("task-modal");
+      refreshClientFilter(); // a save can add/retire a client name
       renderBoard();
     } catch (err) {
       UI.toast(err.message);
@@ -511,6 +556,7 @@
       tasks = tasks.filter((t) => t.id !== editingTask.id);
       UI.closeModal("task-modal");
       UI.toast("Task deleted.", "success");
+      refreshClientFilter();
       renderBoard();
     } catch (err) {
       UI.toast(err.message);

@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=14">
+  <link rel="stylesheet" href="css/style.css?v=15">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -46,6 +46,7 @@
       <div class="filter-bar" style="margin-top: 18px;">
         <span class="filter-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg></span>
         <select id="filter-assignee" class="filter-select" aria-label="Filter by assignee"></select>
+        <select id="filter-client" class="filter-select" aria-label="Filter by client"></select>
         <select id="filter-due" class="filter-select" aria-label="Filter by due date"></select>
         <span class="range-inputs" id="range-inputs" hidden>
           <input type="date" class="filter-date" id="filter-from" aria-label="From date">
@@ -73,6 +74,12 @@
         <div class="form-group">
           <label for="t-notes">Notes</label>
           <textarea id="t-notes" placeholder="Details, links, context… (optional)"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="t-client">Client</label>
+          <input type="text" id="t-client" list="t-client-list" autocomplete="off" placeholder="e.g. Acme Corp (optional)">
+          <datalist id="t-client-list"></datalist>
+          <div class="form-hint">Tag the end client this task is for — lighter than a full sub-client project. Filterable on this board and in All Tasks.</div>
         </div>
         <div class="form-group">
           <label for="t-email">Contact email</label>
@@ -167,13 +174,13 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=14"></script>
-  <script src="js/supabase.js?v=14"></script>
-  <script src="js/api.js?v=14"></script>
-  <script src="js/ui.js?v=14"></script>
-  <script src="js/auth.js?v=14"></script>
-  <script src="js/inbox.js?v=14"></script>
-  <script src="js/automations.js?v=14"></script>
-  <script src="js/board.js?v=14"></script>
+  <script src="js/config.js?v=15"></script>
+  <script src="js/supabase.js?v=15"></script>
+  <script src="js/api.js?v=15"></script>
+  <script src="js/ui.js?v=15"></script>
+  <script src="js/auth.js?v=15"></script>
+  <script src="js/inbox.js?v=15"></script>
+  <script src="js/automations.js?v=15"></script>
+  <script src="js/board.js?v=15"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 56 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
-// @mentions, roles/external scoping, tags, webhooks, status reorder +
+// 58 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// @mentions, roles/external scoping, tags, webhooks, client tags, status reorder +
 // transition mapping, sub-client status inheritance, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
 // the end; count assertions are scoped to the test project so live data is
@@ -364,6 +364,47 @@ async function expectToast(substr) {
     await page.click("#filter-clear");
     if (!(await range.isHidden())) throw new Error("range inputs not hidden after clear");
     if ((await page.locator(".task-card").count()) !== 3) throw new Error("clear failed");
+  });
+
+  // ---------- client tags (tasks.fields.client) ----------
+  await step("Client tag: set on a task; chip shows; board filter narrows", async () => {
+    // The client filter starts hidden — no task in this project has a client yet
+    if (!(await page.locator('.dd:has(#filter-client)').first().isHidden()))
+      throw new Error("client filter visible with no client tags");
+    await page.locator(".task-card", { hasText: "Future e2e task" }).click();
+    await page.fill("#t-client", "E2E Acme Corp");
+    await page.click("#task-save");
+    await expectToast("Task updated");
+    const card = page.locator(".task-card", { hasText: "Future e2e task" });
+    await card.locator(".client-chip", { hasText: "E2E Acme Corp" }).waitFor({ timeout: 5000 });
+    const rows = await rest(`tasks?project_id=eq.${projectId}&fields->>client=eq.E2E%20Acme%20Corp&select=id`);
+    if (rows.length !== 1) throw new Error("fields.client not saved in DB");
+    // filter appears now and narrows the board
+    await choose("filter-client", { label: "E2E Acme Corp" });
+    if ((await page.locator(".task-card").count()) !== 1) throw new Error("client filter count wrong");
+    await choose("filter-client", { label: "No client" });
+    if ((await page.locator(".task-card").count()) !== 2) throw new Error("'No client' filter count wrong");
+    await page.click("#filter-clear");
+    if ((await page.locator(".task-card").count()) !== 3) throw new Error("clear did not reset client filter");
+    // datalist suggests the existing name in the task modal
+    await page.locator(".add-task-btn").first().click();
+    const suggestions = await page.evaluate(() =>
+      [...document.querySelectorAll("#t-client-list option")].map((o) => o.value)
+    );
+    if (!suggestions.includes("E2E Acme Corp")) throw new Error("datalist suggestion missing");
+    await page.click("#task-cancel");
+  });
+
+  await step("Client tag: All Tasks filter + chip", async () => {
+    await page.goto(`${BASE}/team.html`);
+    await page.locator("tr.clickable").first().waitFor({ timeout: 8000 });
+    await choose("filter-client", { label: "E2E Acme Corp" });
+    await page.waitForTimeout(200);
+    const rows = page.locator("tr.clickable");
+    if ((await rows.count()) !== 1) throw new Error("All Tasks client filter wrong");
+    if (!(await rows.first().locator(".client-chip", { hasText: "E2E Acme Corp" }).count()))
+      throw new Error("client chip missing in All Tasks row");
+    await page.click("#filter-clear");
   });
 
   // ---------- AC-07: All Tasks master view ----------
