@@ -453,6 +453,18 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   padding: 4px;
   font-size: 13px;
 }
+/* Chips reorder by drag; the read-only variant shows inherited columns */
+.tag-editor .tag[draggable="true"] { cursor: grab; }
+.tag-editor .tag.dragging { opacity: 0.5; }
+.tag-editor.readonly { background: var(--bg); border-style: dashed; }
+
+/* Transition mapping rows (project modal): "N tasks in X → [destination]" */
+#status-remap #remap-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.remap-row { display: flex; align-items: center; gap: 10px; }
+.remap-row .remap-label { font-size: 13px; }
+.remap-row .remap-note { color: var(--muted); font-size: 12px; }
+.remap-row .remap-arrow { color: var(--muted); }
+.remap-row .remap-select { max-width: 220px; flex: 1; }
 
 /* Colour swatches */
 .swatches { display: flex; gap: 8px; }

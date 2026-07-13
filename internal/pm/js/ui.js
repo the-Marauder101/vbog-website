@@ -37,6 +37,16 @@ const UI = {
     return !!iso && iso < UI.todayIso();
   },
 
+  // Effective Kanban statuses: the parent's list when a sub-client
+  // live-inherits (projects.inherit_statuses, sql/12), the project's own
+  // otherwise. Falls back to the project's own snapshot if the parent is
+  // missing or has an empty list — mirrors ingest_task() server-side.
+  effectiveStatuses(project, parent) {
+    return project?.inherit_statuses && parent?.statuses?.length
+      ? parent.statuses
+      : (project?.statuses || []);
+  },
+
   // Due-date filter presets shared by the board and All Tasks views
   dateFilterOptions: [
     ["all", "All dates"],

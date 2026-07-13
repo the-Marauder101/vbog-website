@@ -2,7 +2,8 @@
 
 `e2e.js` drives the real UI (Playwright + Chromium) against the **live Supabase
 backend**. It creates namespaced test data ("E2E Test Project", "E2E Temp",
-"E2E External", "E2E Tag"), pre-cleans leftovers from crashed runs, and deletes
+"E2E External", "E2E Tag", "E2E Sub Client"), pre-cleans leftovers from crashed
+runs, and deletes
 everything at the end — your real projects and tasks are never touched.
 
 ## Run it
@@ -23,8 +24,12 @@ SUPA_MGMT_TOKEN=<your-supabase-personal-access-token> node internal/pm/test/e2e.
   Management API); everything else still runs. **Never commit this token.**
 - `VYOM_BASE` overrides the app URL (default `http://127.0.0.1:8787/internal/pm`).
 - `VYOM_SHOTS` overrides where failure screenshots are written (default: this folder).
+- `VYOM_CHROMIUM` points at a pre-installed Chromium binary if the
+  playwright-managed download isn't available (e.g. sandboxed environments).
 
-Expected output ends with `==== 48/48 passed ====` and exit code 0.
+Expected output ends with `==== 56/56 passed ====` and exit code 0.
+(The sub-client status-inheritance steps need `sql/12_status_inheritance.sql`
+applied to the live database first.)
 
 ## Conventions when adding tests
 

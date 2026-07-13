@@ -175,10 +175,12 @@ const Inbox = (() => {
     try {
       fresh = await Promise.all([
         API.getNotifications(me.id),
-        // My open tasks = assigned to me and not in the project's final (done) column
+        // My open tasks = assigned to me and not in the project's final (done)
+        // column — the parent's final column for inheriting sub-clients
+        // (parent embed comes from API.getMyTasks).
         API.getMyTasks(me.id).then((ts) =>
           ts.filter((t) => {
-            const statuses = t.projects?.statuses || [];
+            const statuses = UI.effectiveStatuses(t.projects, t.projects?.parent);
             return t.status !== statuses[statuses.length - 1];
           })
         ),

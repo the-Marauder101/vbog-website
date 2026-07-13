@@ -335,6 +335,12 @@
     return projects.filter((p) => !p.archived);
   }
 
+  // Effective Kanban statuses for snippet generators — inheriting sub-clients
+  // use the parent's columns (parent lookup is in-memory; `projects` has all rows)
+  function effStatuses(p) {
+    return UI.effectiveStatuses(p, projects.find((x) => x.id === p.parent_project_id));
+  }
+
   function initIntegrations() {
     const opts = activeProjects()
       .map((p) => `<option value="${p.id}">${UI.esc(p.name)}</option>`)
@@ -502,7 +508,7 @@
       project_id: project.id,
       title: "REPLACE with the task name from your sheet",
       notes: "REPLACE with notes, or delete this line",
-      status: project.statuses[0],
+      status: effStatuses(project)[0],
       assignee_id: "REPLACE with a member ID from the list below, or delete this line",
       due_date: "REPLACE with date as YYYY-MM-DD, or delete this line",
       source: "zapier",
@@ -522,7 +528,7 @@
       block("3 — Data (JSON body)", JSON.stringify(bodyTemplate, null, 2), "map your sheet columns into the REPLACE values") +
       block(
         "Reference — valid statuses for this project",
-        project.statuses.join("\n")
+        effStatuses(project).join("\n")
       ) +
       block(
         "Reference — member IDs for assignee_id",
@@ -658,7 +664,7 @@
       p_api_key: k.key,
       p_title: "REPLACE with the task name",
       p_notes: "REPLACE with notes, or delete this line",
-      p_status: project?.statuses?.[0] || "To Do",
+      p_status: (project && effStatuses(project)[0]) || "To Do",
       p_due_date: "REPLACE as YYYY-MM-DD, or delete this line",
       p_external_id: "REPLACE with your row/record ID, or delete this line",
       p_fields: { email: "REPLACE with contact email for automations, or delete p_fields" },
