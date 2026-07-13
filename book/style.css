@@ -25,18 +25,33 @@ body {
   flex-direction: column;
 }
 
-h1, h2, .wordmark { font-family: 'Satoshi', 'Inter', sans-serif; }
+h1, h2 { font-family: 'Satoshi', 'Inter', sans-serif; }
 
 /* ── Page chrome ─────────────────────────────────────────────────────────── */
 
 .site-head { padding: 20px 24px; }
 
-.wordmark {
-  font-weight: 800;
-  font-size: 1.15rem;
-  color: var(--ink);
+.logo-box {
+  background: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
   text-decoration: none;
-  letter-spacing: -0.02em;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.logo-box:hover { opacity: 0.88; }
+
+.logo-box span {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  color: #0a0a0a;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  white-space: nowrap;
 }
 
 main {
