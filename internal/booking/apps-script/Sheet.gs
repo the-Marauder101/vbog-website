@@ -49,6 +49,16 @@ function truthy_(v) {
 }
 
 /**
+ * True only when the cell explicitly says no (FALSE/0/no). A BLANK cell is
+ * NOT explicitly false — used for extra window rows, where leaving `active`
+ * empty should mean "on" (only writing FALSE switches a window off).
+ */
+function explicitlyFalse_(v) {
+  var s = String(v).trim().toLowerCase();
+  return s !== '' && !truthy_(v);
+}
+
+/**
  * Accepts a time cell that is either text ('9:00' / '09:00') or a Date (Sheets
  * auto-converted it) and returns canonical 'HH:MM', or null if unusable.
  * For Date cells we format in the SPREADSHEET's timezone, which is how the
@@ -69,72 +79,110 @@ function normalizeTime_(v) {
 
 var CANONICAL_DAYS_ = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-/**
- * Turns a raw clients row into a clean, validated client object:
- *   { slug, client_name, contact_email, allowed_days:['Mon',..],
- *     start_time:'HH:MM', end_time:'HH:MM', durations:[30,60],
- *     active:bool, timezone, notes_for_client }
- * Bad fragments are dropped (and logged) rather than crashing the request.
- */
-function normalizeClient_(row) {
-  var client = {
-    slug: String(row.slug || '').trim().toLowerCase(),
-    client_name: String(row.client_name || '').trim(),
-    contact_email: String(row.contact_email || '').trim(),
-    active: truthy_(row.active),
-    notes_for_client: String(row.notes_for_client || '').trim()
-  };
-
-  // allowed_days: 'Mon, tue ,WED' → ['Mon','Tue','Wed']; unknown tokens dropped.
-  client.allowed_days = String(row.allowed_days || '').split(',')
+/** 'Mon, tue ,WED' → ['Mon','Tue','Wed']; unknown tokens dropped with a log. */
+function parseDays_(raw, rowNum) {
+  return String(raw || '').split(',')
     .map(function (d) {
       var t = d.trim().toLowerCase();
       for (var i = 0; i < CANONICAL_DAYS_.length; i++) {
         if (CANONICAL_DAYS_[i].toLowerCase() === t) return CANONICAL_DAYS_[i];
       }
-      if (t) console.warn('clients row ' + row.__row + ': unknown day "' + d + '" ignored');
+      if (t) console.warn('clients row ' + rowNum + ': unknown day "' + d + '" ignored');
       return null;
     })
     .filter(function (d) { return d; });
+}
+
+/**
+ * Turns one clients row into an availability window
+ * { days:['Mon',..], start_time:'HH:MM', end_time:'HH:MM' } or null when the
+ * window is switched off (active explicitly FALSE) or its times are unusable.
+ * Blank allowed_days inherit the given fallback (the master row's days).
+ */
+function rowWindow_(row, inheritDays) {
+  if (explicitlyFalse_(row.active)) return null; // window switched off
+
+  var days = String(row.allowed_days || '').trim()
+    ? parseDays_(row.allowed_days, row.__row)
+    : (inheritDays || []);
+
+  var start = normalizeTime_(row.start_time);
+  var end = normalizeTime_(row.end_time);
+  if (!start || !end || hmToMinutes(start) >= hmToMinutes(end) || !days.length) {
+    console.warn('clients row ' + row.__row + ': window skipped (check start_time/end_time/allowed_days)');
+    return null;
+  }
+  return { days: days, start_time: start, end_time: end };
+}
+
+/**
+ * Builds a client object from ALL rows sharing one slug. The FIRST row is the
+ * master: it supplies identity fields (name, durations, timezone, notes,
+ * active) and window #1. Every following row only adds another availability
+ * window — its other columns are ignored (auditConfig flags conflicts).
+ *
+ * Returns:
+ *   { slug, client_name, contact_email, durations:[30,60], active:bool,
+ *     timezone, notes_for_client,
+ *     windows: [{days, start_time, end_time}, ...],
+ *     allowed_days: [...] }   // union across windows, canonical order
+ */
+function buildClientFromRows_(rows) {
+  var master = rows[0];
+  var client = {
+    slug: String(master.slug || '').trim().toLowerCase(),
+    client_name: String(master.client_name || '').trim(),
+    contact_email: String(master.contact_email || '').trim(),
+    active: truthy_(master.active),
+    notes_for_client: String(master.notes_for_client || '').trim()
+  };
 
   // durations: '30, 60' → [30, 60]; non-positive/non-numeric dropped.
-  client.durations = String(row.durations || '').split(',')
+  client.durations = String(master.durations || '').split(',')
     .map(function (n) { return parseInt(n.trim(), 10); })
-    .filter(function (n) {
-      if (n > 0 && n <= 24 * 60) return true;
-      return false;
-    });
-
-  client.start_time = normalizeTime_(row.start_time);
-  client.end_time = normalizeTime_(row.end_time);
+    .filter(function (n) { return n > 0 && n <= 24 * 60; });
 
   // Timezone: fall back to the default rather than failing the whole client.
-  var tz = String(row.timezone || '').trim();
+  var tz = String(master.timezone || '').trim();
   if (!isValidTimezone(tz)) {
-    if (tz) console.warn('clients row ' + row.__row + ': invalid timezone "' + tz + '", using ' + DEFAULT_TIMEZONE);
+    if (tz) console.warn('clients row ' + master.__row + ': invalid timezone "' + tz + '", using ' + DEFAULT_TIMEZONE);
     tz = DEFAULT_TIMEZONE;
   }
   client.timezone = tz;
+
+  // Windows: the master's own days are the inheritance fallback for extra
+  // rows that leave allowed_days blank.
+  var masterDays = parseDays_(master.allowed_days, master.__row);
+  client.windows = [];
+  for (var i = 0; i < rows.length; i++) {
+    var w = rowWindow_(rows[i], masterDays);
+    if (w) client.windows.push(w);
+  }
+
+  // allowed_days = union across windows, in canonical Mon..Sun order. Drives
+  // the frontend date picker and the DAY_NOT_AVAILABLE check.
+  client.allowed_days = CANONICAL_DAYS_.filter(function (d) {
+    return client.windows.some(function (w) { return w.days.indexOf(d) !== -1; });
+  });
 
   return client;
 }
 
 /**
- * Finds an ACTIVE client by slug (case-insensitive, trimmed).
- * First matching row wins if there are duplicates (auditConfig flags those).
- * Returns the normalized client object, or null if not found / inactive —
- * callers treat both identically (CLIENT_NOT_FOUND) so booking links never
- * reveal whether a slug exists.
+ * Finds an ACTIVE client by slug (case-insensitive, trimmed). ALL rows with
+ * that slug are collected: the first is the master, each additional row adds
+ * an availability window (see buildClientFromRows_).
+ * Returns null if not found OR the master row is inactive — callers treat
+ * both identically (CLIENT_NOT_FOUND) so booking links never reveal whether
+ * a slug exists.
  */
 function getClientBySlug(slug) {
-  var rows = readTab_(TAB_CLIENTS);
-  for (var i = 0; i < rows.length; i++) {
-    if (String(rows[i].slug || '').trim().toLowerCase() === slug) {
-      var client = normalizeClient_(rows[i]);
-      return client.active ? client : null;
-    }
-  }
-  return null;
+  var rows = readTab_(TAB_CLIENTS).filter(function (r) {
+    return String(r.slug || '').trim().toLowerCase() === slug;
+  });
+  if (!rows.length) return null;
+  if (!truthy_(rows[0].active)) return null; // master switched off = link dead
+  return buildClientFromRows_(rows);
 }
 
 /**

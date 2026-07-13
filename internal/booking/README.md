@@ -44,11 +44,14 @@ interface is a Google Sheet. Runs entirely on free infrastructure.
 ## The Google Sheet is the admin panel
 
 - **Add a client** → add a row in `clients`. Live immediately.
-- **Kill a link** → set `active=FALSE`. Dead immediately (shows a polite screen).
+- **Multiple daily windows** (e.g. mornings + afternoons) → add extra rows
+  with the same slug, one per window (see `docs/ADDING-CLIENT.md`).
+- **Kill a link** → set `active=FALSE` on the client's first row. Dead
+  immediately (shows a polite screen).
 - **Add a calendar account** → share it with Account 1 + one row in `accounts`.
 - **See all bookings** → the `bookings` tab (append-only, machine-written).
 - After hand-editing config, run `auditConfig` in the Apps Script editor —
-  it flags duplicate slugs, bad time formats, unreadable calendars, etc.
+  it flags bad time formats, overlapping windows, unreadable calendars, etc.
 
 ## Design decisions worth knowing
 

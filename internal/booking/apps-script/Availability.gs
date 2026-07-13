@@ -30,24 +30,41 @@ function validateDateParam_(client, dateStr) {
  * already sorted. Throws the tagged errors from validateDateParam_ plus
  * CALENDAR_ERROR if any calendar is unreadable.
  *
+ * A client can have SEVERAL availability windows (one per Sheet row sharing
+ * the slug — e.g. 10:00–12:00 every weekday plus 15:00–17:00 on Mon/Wed).
+ *
  * Steps:
- *  1. validate the date (range + allowed weekday)
- *  2. sanity-check the daily window (start < end) — misconfigured rows just
- *     return no slots instead of crashing
+ *  1. validate the date (range + weekday must match at least one window)
+ *  2. generate candidates from every window that covers this weekday:
+ *     start_time stepping by duration while the whole slot fits before that
+ *     window's end_time (remainders naturally dropped); dedupe across windows
  *  3. fetch busy intervals across ALL authorized calendars for the whole day
  *     (client-tz midnight to next midnight, so odd-length DST days are covered)
- *  4. generate candidates from start_time stepping by duration while the whole
- *     slot still fits before end_time (remainders are naturally dropped)
- *  5. drop candidates that are in the past (or inside MIN_NOTICE_MINS),
+ *  4. drop candidates that are in the past (or inside MIN_NOTICE_MINS),
  *     nonexistent due to DST, or overlapping any busy interval
  */
 function computeSlots(client, dateStr, duration) {
   validateDateParam_(client, dateStr);
 
-  if (!client.start_time || !client.end_time) return [];
-  var startMin = hmToMinutes(client.start_time);
-  var endMin = hmToMinutes(client.end_time);
-  if (startMin >= endMin) return [];
+  var weekday = weekdayOfDateStr(dateStr);
+  var windows = client.windows.filter(function (w) {
+    return w.days.indexOf(weekday) !== -1;
+  });
+  if (!windows.length) return []; // defensive; validateDateParam_ already gates this
+
+  // Candidate start times from every applicable window, deduped and sorted
+  // ('HH:MM' strings are zero-padded, so plain string sort is chronological).
+  var seen = {};
+  var candidates = [];
+  windows.forEach(function (w) {
+    var endMin = hmToMinutes(w.end_time);
+    for (var m = hmToMinutes(w.start_time); m + duration <= endMin; m += duration) {
+      var hm = minutesToHm(m);
+      if (!seen[hm]) { seen[hm] = true; candidates.push(hm); }
+    }
+  });
+  candidates.sort();
+  if (!candidates.length) return [];
 
   var tz = client.timezone;
   var dayStart = wallTimeToDate(dateStr, '00:00', tz);
@@ -58,24 +75,20 @@ function computeSlots(client, dateStr, duration) {
   var busy = getBusyIntervals(getAuthorizedCalendarIds(), dayStart, dayEnd);
   var earliestAllowed = Date.now() + MIN_NOTICE_MINS * 60000;
 
-  var open = [];
-  for (var m = startMin; m + duration <= endMin; m += duration) {
-    var hm = minutesToHm(m);
+  return candidates.filter(function (hm) {
     var slotStart = wallTimeToDate(dateStr, hm, tz);
-    if (!slotStart) continue; // wall time skipped by DST spring-forward
+    if (!slotStart) return false; // wall time skipped by DST spring-forward
     var startMs = slotStart.getTime();
     var endMs = startMs + duration * 60000;
 
-    if (startMs <= earliestAllowed) continue; // already past / too little notice
+    if (startMs <= earliestAllowed) return false; // already past / too little notice
 
     // Strict overlap test: a meeting ending exactly at slot start (or starting
     // exactly at slot end) does NOT block — back-to-back bookings are allowed.
-    var blocked = busy.some(function (b) {
+    return !busy.some(function (b) {
       return startMs < b.end && endMs > b.start;
     });
-    if (!blocked) open.push(hm);
-  }
-  return open;
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

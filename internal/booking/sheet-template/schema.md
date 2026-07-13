@@ -10,7 +10,7 @@ header text must match exactly.
 
 ---
 
-## Tab 1: `clients` — one row per booking link
+## Tab 1: `clients` — one row per availability window (rows sharing a slug = one booking link)
 
 Header row (copy-paste-able):
 
@@ -31,8 +31,15 @@ slug	client_name	contact_email	allowed_days	start_time	end_time	durations	active
 | `timezone` | text | IANA name; the daily window is interpreted in this timezone and slots are displayed in it | `Asia/Kolkata` |
 | `notes_for_client` | text | Optional message on confirmation screen + email | `Please be on time.` |
 
-Rules: new row = live immediately; `active=FALSE` kills the link instantly;
-duplicate slugs → topmost row wins (run `auditConfig` to catch them).
+Rules: new row = live immediately; `active=FALSE` on the first row kills the
+link instantly.
+
+**Multiple windows per client:** several rows may share one slug. The FIRST
+row is the client (identity fields + window #1); each following row adds
+another daily window and only its `allowed_days` / `start_time` / `end_time`
+/ `active` are read (blank `allowed_days` inherits the first row's days;
+blank `active` means on, `FALSE` switches that window off). Full guide:
+`docs/ADDING-CLIENT.md`.
 
 ---
 

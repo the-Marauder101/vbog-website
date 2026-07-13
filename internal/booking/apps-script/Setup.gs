@@ -9,7 +9,7 @@
  *                     and never wipes existing data.
  *
  *   auditConfig()   — run any time after editing the Sheet. Logs every
- *                     problem it can find (duplicate slugs, bad times,
+ *                     problem it can find (bad times, overlapping windows,
  *                     unreadable calendars, …). Silence = all good.
  */
 
@@ -107,27 +107,76 @@ function auditConfig() {
   var warn = function (msg) { console.warn('⚠ ' + msg); issues++; };
 
   // ── clients tab ───────────────────────────────────────────────────────────
+  // Several rows may share one slug: the first row is the client (master),
+  // each following row adds another availability window. Group, then check.
   var clients = readTab_(TAB_CLIENTS);
-  var seenSlugs = {};
+  var groups = {};
+  var order = [];
   clients.forEach(function (row) {
-    var where = 'clients row ' + row.__row;
     var slug = sanitizeSlug(String(row.slug || ''));
-    if (!slug) { warn(where + ': slug "' + row.slug + '" is not valid (lowercase letters/digits/hyphens only)'); return; }
-    if (seenSlugs[slug]) warn(where + ': duplicate slug "' + slug + '" — row ' + seenSlugs[slug] + ' will always win');
-    else seenSlugs[slug] = row.__row;
+    if (!slug) {
+      warn('clients row ' + row.__row + ': slug "' + row.slug + '" is not valid (lowercase letters/digits/hyphens only)');
+      return;
+    }
+    if (!groups[slug]) { groups[slug] = []; order.push(slug); }
+    groups[slug].push(row);
+  });
 
-    var c = normalizeClient_(row);
+  order.forEach(function (slug) {
+    var rows = groups[slug];
+    var master = rows[0];
+    var where = 'clients "' + slug + '" (row ' + master.__row + ')';
+
+    // Master identity checks.
+    var c = buildClientFromRows_(rows);
     if (!c.client_name) warn(where + ': client_name is empty');
-    if (!c.allowed_days.length) warn(where + ': no valid allowed_days (use Mon,Tue,Wed,Thu,Fri,Sat,Sun)');
     if (!c.durations.length) warn(where + ': no valid durations (e.g. "30,60")');
-    if (!c.start_time) warn(where + ': start_time unreadable (use HH:MM, e.g. 10:00)');
-    if (!c.end_time) warn(where + ': end_time unreadable (use HH:MM, e.g. 17:00)');
-    if (c.start_time && c.end_time && hmToMinutes(c.start_time) >= hmToMinutes(c.end_time)) {
-      warn(where + ': start_time is not before end_time — this client will show no slots');
+    if (String(master.timezone || '').trim() && !isValidTimezone(String(master.timezone).trim())) {
+      warn(where + ': timezone "' + master.timezone + '" invalid, falling back to ' + DEFAULT_TIMEZONE);
     }
-    if (String(row.timezone || '').trim() && !isValidTimezone(String(row.timezone).trim())) {
-      warn(where + ': timezone "' + row.timezone + '" invalid, falling back to ' + DEFAULT_TIMEZONE);
+    if (c.active && !c.windows.length) {
+      warn(where + ': active but has no usable availability window — the link will show no dates');
     }
+
+    // Per-row window checks (skipped windows are silent at runtime; explain here).
+    rows.forEach(function (row, i) {
+      var rw = 'clients row ' + row.__row + ' (window ' + (i + 1) + ' of "' + slug + '")';
+      if (i > 0 && explicitlyFalse_(row.active)) return; // deliberately off
+      var start = normalizeTime_(row.start_time);
+      var end = normalizeTime_(row.end_time);
+      if (!start) warn(rw + ': start_time unreadable (use HH:MM, e.g. 10:00)');
+      if (!end) warn(rw + ': end_time unreadable (use HH:MM, e.g. 17:00)');
+      if (start && end && hmToMinutes(start) >= hmToMinutes(end)) {
+        warn(rw + ': start_time is not before end_time — this window is ignored');
+      }
+      if (i === 0 && !parseDays_(row.allowed_days, row.__row).length) {
+        warn(rw + ': no valid allowed_days (use Mon,Tue,Wed,Thu,Fri,Sat,Sun)');
+      }
+      // Extra rows: identity columns are ignored — flag values that differ
+      // from the master so nobody thinks they take effect.
+      if (i > 0) {
+        ['client_name', 'contact_email', 'durations', 'timezone', 'notes_for_client'].forEach(function (col) {
+          var v = String(row[col] || '').trim();
+          if (v && v !== String(master[col] || '').trim()) {
+            warn(rw + ': ' + col + ' is ignored on extra window rows (the first "' + slug + '" row wins)');
+          }
+        });
+      }
+    });
+
+    // Overlapping windows on the same weekday produce overlapping slot options
+    // (safe — booking one blocks the other — but confusing to offer).
+    CANONICAL_DAYS_.forEach(function (day) {
+      var todays = c.windows.filter(function (w) { return w.days.indexOf(day) !== -1; })
+        .map(function (w) { return { s: hmToMinutes(w.start_time), e: hmToMinutes(w.end_time) }; })
+        .sort(function (a, b) { return a.s - b.s; });
+      for (var i = 1; i < todays.length; i++) {
+        if (todays[i].s < todays[i - 1].e) {
+          warn(where + ': windows overlap on ' + day + ' — slot options may overlap each other');
+          break;
+        }
+      }
+    });
   });
 
   // ── accounts tab ──────────────────────────────────────────────────────────
