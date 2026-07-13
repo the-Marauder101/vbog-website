@@ -6,7 +6,8 @@
 > covers *how it's built*.
 
 Last updated: v16 (July 2026) — client tags on tasks + form polish; plus the v14
-status reordering, guided transition mapping, and sub-client status inheritance.
+status reordering, guided transition mapping, and sub-client status inheritance;
+Gmail automation bridge documented in §7.
 
 ---
 
@@ -192,9 +193,9 @@ Self-serve from Settings — teammates never touch Supabase:
 - **Automations**: admin-only ⚡ button on each board (`js/automations.js`) manages rules in
   the `automations` table for THAT project only. Triggers: task created / status changed
   (optionally into a specific status) / assigned / due date set. Actions: POST to webhook
-  URL (the email path — point it at Zapier or a Google Apps Script that sends Gmail),
-  move task, assign, or inbox-notify. Execution is 100% in Postgres (sql/09), so rules
-  also fire for tasks created via the API or Zapier.
+  URL (the email path — point it at a Google Apps Script or Zapier to send Gmail; see
+  **Gmail Apps Script bridge** below), move task, assign, or inbox-notify. Execution is
+  100% in Postgres (sql/09), so rules also fire for tasks created via the API or Zapier.
 - **Client tags (`tasks.fields.client`)**: the lightweight alternative to a sub-client
   project — tag individual tasks with an end-client name instead of spinning up a whole
   child project. Free text with a datalist of names already used in that project (task
@@ -216,6 +217,33 @@ Self-serve from Settings — teammates never touch Supabase:
   parent edit can never orphan a child task. Note: each task moved by the mapping fires
   the webhook + `status_changed` automation triggers once — the tasks really did change
   status.
+
+### Gmail Apps Script bridge
+
+The `call_webhook` automation action POSTs a JSON payload to any URL. The live bridge for
+email notifications is a **Google Apps Script Web App** deployed at script.google.com
+(Execute as: Me | Access: Anyone). Its `/exec` URL is stored in the automation rule's
+`action_config.url`. Key facts:
+
+- **Recipient**: `task.fields.email` — the "Contact email" field on the task modal in
+  `board.html`. Stored as `tasks.fields` jsonb key `email` (sql/11). If blank the script
+  logs a warning and returns `"skipped — no contact email on task"`.
+- **Payload shape** (sent by `run_task_automations()`, sql/09): top-level keys are `event`
+  (the trigger name, e.g. `"status_changed"`), `automation` (id + name), `previous`
+  (old status/assignee/due_date on UPDATE), and `task` (a full `task_details` row).
+- **Available template placeholders** in the Apps Script's `TEMPLATES` map:
+  `{title}` · `{status}` · `{project}` (= `task.project_name`) · `{due}` (= `task.due_date`)
+  · `{notes}` (= `task.notes`). Template is chosen by matching `task.status` against the
+  `TEMPLATES` object keys (exact match on Vyom column name); unmatched statuses fall through
+  to `DEFAULT_TEMPLATE`.
+- **Test sends**: the ⚡ Automations editor's **Test** button calls `send_test_automation()`
+  (sql/09 RPC), which POSTs `event: "TEST"`. The Apps Script handles this with an early
+  return (`"ok — Vyom is connected"`) before the email check runs — so test sends confirm
+  the URL is reachable without needing a real task with a contact email.
+- **`fields.client`** (added v16): also present in `task.fields` inside the payload.
+  Ignored by the current script; safe to use in future template expansions.
+- **No changes needed to the script** when adding new Vyom status columns — just add a
+  matching key to `TEMPLATES` in the Apps Script, or leave it for `DEFAULT_TEMPLATE`.
 
 ## 8. Secrets & keys
 
