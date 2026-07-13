@@ -513,6 +513,7 @@
       due_date: "REPLACE with date as YYYY-MM-DD, or delete this line",
       source: "zapier",
       external_id: "REPLACE with the sheet row ID",
+      fields: { client: "REPLACE with the end-client name for the Client filter, or delete this line" },
     };
     const block = (title, content, hint) => `
       <div class="snippet-label">${UI.esc(title)}${hint ? ` <span class="form-hint" style="display:inline">${UI.esc(hint)}</span>` : ""}</div>
@@ -667,7 +668,10 @@
       p_status: (project && effStatuses(project)[0]) || "To Do",
       p_due_date: "REPLACE as YYYY-MM-DD, or delete this line",
       p_external_id: "REPLACE with your row/record ID, or delete this line",
-      p_fields: { email: "REPLACE with contact email for automations, or delete p_fields" },
+      p_fields: {
+        email: "REPLACE with contact email for automations, or delete this key",
+        client: "REPLACE with the end-client name for the Client filter, or delete this key",
+      },
     };
     const curl = `curl -X POST '${endpoint}' \\
   -H 'apikey: ${SUPABASE_ANON_KEY}' \\

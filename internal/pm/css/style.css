@@ -387,6 +387,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 .form-group input[type="text"], .form-group input[type="date"],
+.form-group input[type="email"],
 .form-group textarea, .form-group select {
   width: 100%;
   border: 1px solid var(--border);
@@ -1132,6 +1133,25 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 }
 .tag-chip.picked button:hover, .tag-chip.managed button:hover { color: var(--danger); }
 .tag-chip.managed button.confirming { color: #fff; background: var(--danger); border-radius: 50%; width: 16px; height: 16px; }
+
+/* ---------- Client tags (tasks.fields.client) ---------- */
+.client-chip {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 180, 216, 0.1);
+  color: #0E7490;
+  border: 1px solid rgba(0, 180, 216, 0.25);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 20px;
+  line-height: 1.6;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-card .task-client { margin: -4px 0 8px; }
 .tags-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag-chip.managed { font-size: 12.5px; padding: 4px 11px; }
 .tag-usage {
