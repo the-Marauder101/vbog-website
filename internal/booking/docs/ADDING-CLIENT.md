@@ -29,11 +29,35 @@ The link is live **immediately**:
 https://v-bog.com/book/<slug>        e.g.  https://v-bog.com/book/acme
 ```
 
+## Multiple time windows (e.g. mornings + afternoons)
+
+One row = one daily window. To offer more than one window, **add another row
+with the same slug** directly below — each extra row adds a window:
+
+| slug | client_name | contact_email | allowed_days | start_time | end_time | durations | active | timezone | notes_for_client |
+|---|---|---|---|---|---|---|---|---|---|
+| `acme` | `Acme Corp` | `ops@acme.com` | `Mon,Tue,Wed,Thu,Fri` | `10:00` | `12:00` | `30,60` | `TRUE` | `Asia/Kolkata` | |
+| `acme` | | | | `15:00` | `17:00` | | | | |
+| `acme` | | | `Sat` | `11:00` | `13:00` | | | | |
+
+That gives Acme: 10–12 every weekday, **plus** 15–17 every weekday, **plus**
+11–13 on Saturdays.
+
+How extra rows work:
+
+- Only **`allowed_days`, `start_time`, `end_time`, `active`** are read on
+  extra rows. Name, email, durations, timezone, and notes always come from
+  the **first** row — leave them blank on extra rows.
+- `allowed_days` left blank → the window uses the first row's days.
+- `active` left blank → the window is on. Write `FALSE` to switch just that
+  window off (the first row's `active=FALSE` kills the whole link).
+- The first row must stay first — it's the one that defines the client.
+
 ## Sanity-check (recommended)
 
 Open the Apps Script project → run **`auditConfig`** → the Execution log
 lists anything wrong with the row (bad time format, unknown day name,
-duplicate slug, …). No warnings = good to send.
+overlapping windows, …). No warnings = good to send.
 
 ## Rules & gotchas
 
@@ -43,8 +67,8 @@ duplicate slug, …). No warnings = good to send.
   is simply dropped: 10:00–18:30 with 60-min slots offers 10:00 … 17:00
   (ending 18:00), never a slot that spills past `end_time`.
 - **Don't reuse a slug** for a different client later — old confirmation
-  emails and bookmarks still reference it. Make a new slug instead.
-- **Duplicate slugs**: the first (topmost) row wins; `auditConfig` warns you.
+  emails and bookmarks still reference it. Make a new slug instead. (Extra
+  rows with the same slug are fine — that's how you add windows, see above.)
 - **Deactivating**: set `active=FALSE` — the link instantly shows a polite
   "not available" screen. Existing bookings and reminders are unaffected.
 - The booking page shows times **in the client's configured timezone** (an
