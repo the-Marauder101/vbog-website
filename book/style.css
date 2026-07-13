@@ -29,37 +29,18 @@ h1, h2 { font-family: 'Satoshi', 'Inter', sans-serif; }
 
 /* ── Page chrome ─────────────────────────────────────────────────────────── */
 
-.site-head {
-  background: var(--ink);
-  border-bottom: 2px solid var(--accent);
-  padding: 0 24px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-}
+.site-head { padding: 24px 24px 20px; }
 
-.logo-box {
-  background: white;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 22px;
-  text-decoration: none;
-  transition: opacity 0.2s;
-  flex-shrink: 0;
-}
-
-.logo-box:hover { opacity: 0.88; }
-
-.logo-box span {
+.wordmark {
   font-family: 'Satoshi', sans-serif;
   font-weight: 900;
-  font-size: 17px;
-  color: #0a0a0a;
+  font-size: 1.35rem;
+  color: var(--ink);
+  text-decoration: none;
   letter-spacing: -0.03em;
-  line-height: 1.05;
-  white-space: nowrap;
 }
+
+.wordmark:hover { opacity: 0.7; }
 
 main {
   flex: 1;
