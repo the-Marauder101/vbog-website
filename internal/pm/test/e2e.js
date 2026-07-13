@@ -1,7 +1,7 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 55 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// 56 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
 // @mentions, roles/external scoping, tags, webhooks, status reorder +
 // transition mapping, sub-client status inheritance, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
