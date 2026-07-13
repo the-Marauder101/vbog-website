@@ -15,12 +15,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
   <div id="setup-needed" class="warn-box" style="margin:16px 32px" hidden>
-    Database not set up yet — run the four files in <code>pm/sql/</code> in the Supabase SQL Editor, then reload.
+    Database not set up yet — run the numbered files in <code>pm/sql/</code> (01→12, in order) in the Supabase SQL Editor, then reload.
   </div>
 
   <nav class="topnav">
@@ -78,6 +78,13 @@
           <select id="p-parent"><option value="">None — this is a direct client / internal project</option></select>
           <div class="form-hint">Pick a parent when this project is for one of a client's own clients. Sub-client tasks stay out of All Tasks and reports unless you include them.</div>
         </div>
+        <div class="form-group" id="p-statuses-src-group" hidden>
+          <label>Status columns source</label>
+          <div class="type-toggle">
+            <label class="type-opt"><input type="radio" name="p-statuses-src" value="inherit" checked> Inherit from parent</label>
+            <label class="type-opt"><input type="radio" name="p-statuses-src" value="custom"> Custom</label>
+          </div>
+        </div>
         <div class="form-group">
           <label>Tags</label>
           <div class="tag-picker">
@@ -86,18 +93,28 @@
           </div>
           <div class="form-hint">Tags come from the central list in Settings, so everyone uses the same names.</div>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="p-statuses-group">
           <label>Status columns *</label>
           <div class="tag-editor" id="status-tags">
             <input type="text" id="status-input" placeholder="Type a status, press Enter">
           </div>
-          <div class="form-hint">These become the Kanban columns, in this order. E.g. an HR pipeline: New Candidate, Round One, Offer Shown, Hired.</div>
+          <div class="form-hint">These become the Kanban columns, in this order — drag chips to reorder. The last column counts as “done” (My Tasks hides tasks in it).</div>
+        </div>
+        <div class="form-group" id="p-inherited-group" hidden>
+          <label>Status columns (inherited)</label>
+          <div class="tag-editor readonly" id="inherited-statuses"></div>
+          <div class="form-hint">Columns follow the parent live — edit them on the parent project. The last column counts as “done”.</div>
         </div>
         <div class="form-group">
           <label>Accent colour</label>
           <div class="swatches" id="swatches"></div>
         </div>
         <div class="warn-box" id="status-warning" hidden></div>
+        <div class="warn-box" id="status-remap" hidden>
+          <div id="remap-intro"></div>
+          <div id="remap-rows"></div>
+          <div class="form-hint">Moving tasks runs each project’s status-change automations and webhooks, once per task.</div>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-danger" id="archive-btn" hidden>Archive project</button>
           <div class="right">
@@ -109,12 +126,12 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=13"></script>
-  <script src="js/supabase.js?v=13"></script>
-  <script src="js/api.js?v=13"></script>
-  <script src="js/ui.js?v=13"></script>
-  <script src="js/auth.js?v=13"></script>
-  <script src="js/inbox.js?v=13"></script>
-  <script src="js/dashboard.js?v=13"></script>
+  <script src="js/config.js?v=14"></script>
+  <script src="js/supabase.js?v=14"></script>
+  <script src="js/api.js?v=14"></script>
+  <script src="js/ui.js?v=14"></script>
+  <script src="js/auth.js?v=14"></script>
+  <script src="js/inbox.js?v=14"></script>
+  <script src="js/dashboard.js?v=14"></script>
 </body>
 </html>

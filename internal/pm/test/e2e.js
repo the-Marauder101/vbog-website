@@ -1,8 +1,9 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 48 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
-// @mentions, roles/external scoping, tags, webhooks, cleanup.
+// 55 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// @mentions, roles/external scoping, tags, webhooks, status reorder +
+// transition mapping, sub-client status inheritance, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
 // the end; count assertions are scoped to the test project so live data is
 // never touched or asserted against.
@@ -60,6 +61,25 @@ async function dragCardToColumn(taskId, status) {
   );
 }
 
+// Drag one status chip onto another in the project modal (reorder)
+async function dragChip(fromLabel, toLabel) {
+  await page.evaluate(
+    ([a, b]) => {
+      const chips = [...document.querySelectorAll("#status-tags .tag")];
+      const byLabel = (l) => chips.find((c) => c.textContent.replace("×", "").trim() === l);
+      const src = byLabel(a);
+      const tgt = byLabel(b);
+      if (!src || !tgt) throw new Error("dragChip: chip not found");
+      const dt = new DataTransfer();
+      src.dispatchEvent(new DragEvent("dragstart", { dataTransfer: dt, bubbles: true }));
+      tgt.dispatchEvent(new DragEvent("dragover", { dataTransfer: dt, bubbles: true, cancelable: true }));
+      tgt.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+      src.dispatchEvent(new DragEvent("dragend", { bubbles: true }));
+    },
+    [fromLabel, toLabel]
+  );
+}
+
 // Drive the custom styled dropdowns (native selects are hidden)
 async function choose(selectId, opt) {
   const wrap = page.locator(`.dd:has(#${selectId})`);
@@ -76,7 +96,11 @@ async function expectToast(substr) {
 }
 
 (async () => {
-  browser = await chromium.launch();
+  // VYOM_CHROMIUM: use a system/pre-installed Chromium instead of the
+  // playwright-managed download (sandboxes often pre-install one).
+  browser = await chromium.launch(
+    process.env.VYOM_CHROMIUM ? { executablePath: process.env.VYOM_CHROMIUM } : {}
+  );
   context = await browser.newContext({
     viewport: { width: 1366, height: 850 },
     permissions: ["clipboard-read", "clipboard-write"],
@@ -155,7 +179,7 @@ async function expectToast(substr) {
 
   // ---------- Pre-clean any leftovers from previous runs ----------
   await page.waitForLoadState("networkidle");
-  const leftovers = await rest(`projects?name=in.("${PROJECT_NAME}","E2E Scope Other")&select=id`);
+  const leftovers = await rest(`projects?name=in.("${PROJECT_NAME}","E2E Scope Other","E2E Sub Client")&select=id`);
   for (const p of leftovers) await rest(`projects?id=eq.${p.id}`, { method: "DELETE" });
   const leftoverMembers = await rest(`team_members?name=in.("E2E Temp","E2E External")&select=id`);
   for (const m of leftoverMembers) await rest(`team_members?id=eq.${m.id}`, { method: "DELETE" });
@@ -789,8 +813,35 @@ async function expectToast(substr) {
     await page.locator(".copy-btn", { hasText: "Copied!" }).first().waitFor({ timeout: 3000 });
   });
 
-  // ---------- F-02: status removal warning + removed column ----------
-  await step("Removing an in-use status warns, then tasks land in a (removed) column", async () => {
+  // ---------- status reordering ----------
+  await step("Statuses: drag-reorder chips reorders board columns", async () => {
+    await page.goto(`${BASE}/vyom.html`);
+    const card = page.locator(".project-card", { hasText: PROJECT_NAME });
+    await card.waitFor();
+    await card.locator(".edit-btn").click();
+    await dragChip("Doing", "Backlog"); // move Doing to the front
+    await page.click("#project-save");
+    await expectToast("Project updated");
+    await page.waitForTimeout(300);
+    const p = await rest(`projects?id=eq.${projectId}&select=statuses`);
+    if (JSON.stringify(p[0].statuses) !== JSON.stringify(["Doing", "Backlog", "Review", "Done"]))
+      throw new Error(`statuses in DB = ${JSON.stringify(p[0].statuses)}`);
+    await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    const titles = await page.locator(".col-title").evaluateAll((els) => els.map((e) => e.textContent.trim()));
+    if (JSON.stringify(titles) !== JSON.stringify(["Doing", "Backlog", "Review", "Done"]))
+      throw new Error(`columns = ${JSON.stringify(titles)}`);
+    // restore the original order for the steps that follow
+    await page.goto(`${BASE}/vyom.html`);
+    await card.waitFor();
+    await card.locator(".edit-btn").click();
+    await dragChip("Backlog", "Doing");
+    await page.click("#project-save");
+    await expectToast("Project updated");
+  });
+
+  // ---------- F-02: transition mapping on status removal ----------
+  await step("F-02: removing an in-use status blocks save until tasks are mapped", async () => {
     await page.goto(`${BASE}/vyom.html`);
     const card = page.locator(".project-card", { hasText: PROJECT_NAME });
     await card.waitFor();
@@ -798,19 +849,38 @@ async function expectToast(substr) {
     // remove "Review" (holds the zapier task)
     await page.locator(".tag-editor .tag", { hasText: "Review" }).locator("button").click();
     await page.click("#project-save");
-    await page.locator("#status-warning", { hasText: "Click Save again" }).waitFor({ timeout: 5000 });
+    const remap = page.locator("#status-remap");
+    await remap.waitFor({ state: "visible", timeout: 5000 });
+    const txt = await remap.innerText();
+    if (!txt.includes("1 task in “Review”")) throw new Error(`remap text = ${txt}`);
+    if ((await page.locator("#project-save").innerText()) !== "Move tasks & save")
+      throw new Error("save button label not updated");
+    await choose("remap-sel-0", { label: "Doing" });
     await page.click("#project-save");
-    await expectToast("Project updated");
+    await expectToast("Moved 1 task");
+    await page.waitForTimeout(400);
+    const t = await rest(`tasks?id=eq.${zapTaskId}&select=status`);
+    if (t[0].status !== "Doing") throw new Error(`task status in DB = ${t[0].status}`);
     await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    if (await page.locator(".kanban-col.removed-status").count())
+      throw new Error("removed column should not exist after mapping");
+  });
+
+  await step("Out-of-app orphaned status still renders as a (removed) column", async () => {
+    // statuses changed outside the app can't go through the mapping — the
+    // board must still show them (never hide tasks), and drag-out must work
+    await rest(`tasks?id=eq.${zapTaskId}`, { method: "PATCH", body: { status: "Ghost" } });
+    await page.reload();
     const removedCol = page.locator(".kanban-col.removed-status");
     await removedCol.waitFor({ timeout: 8000 });
     if (!(await removedCol.locator(".task-card", { hasText: "Task from Google Sheets" }).count()))
       throw new Error("task not in removed column");
-    // dragging out of the removed column into a real one works
     await dragCardToColumn(zapTaskId, "Done");
     await page
       .locator('.kanban-col[data-status="Done"] .task-card', { hasText: "Task from Google Sheets" })
       .waitFor({ timeout: 5000 });
+    await page.waitForTimeout(400); // let the PATCH land
   });
 
   // ---------- dashboard counts + archive ----------
@@ -860,6 +930,123 @@ async function expectToast(substr) {
     if ((await rest("tags?name=eq.E2E%20Tag&select=id")).length) throw new Error("tag row remains");
     const p = await rest(`projects?id=eq.${projectId}&select=tags`);
     if ((p[0].tags || []).includes("E2E Tag")) throw new Error("tag not stripped from project");
+  });
+
+  // ---------- sub-client status inheritance (requires sql/12) ----------
+  let subId, subTaskId;
+  await step("Sub-client: inherit toggle defaults on; parent columns shown read-only", async () => {
+    await page.goto(`${BASE}/vyom.html`);
+    await page.locator("#new-project-btn").waitFor({ timeout: 8000 });
+    await page.waitForLoadState("networkidle");
+    await page.click("#new-project-btn");
+    await page.fill("#p-name", "E2E Sub Client");
+    await choose("p-parent", { label: PROJECT_NAME });
+    await page.locator("#p-statuses-src-group").waitFor({ state: "visible", timeout: 3000 });
+    if (!(await page.locator('input[name="p-statuses-src"][value="inherit"]').isChecked()))
+      throw new Error("inherit not preselected for a new sub-client");
+    if (!(await page.locator("#p-statuses-group").isHidden()))
+      throw new Error("status editor still visible while inheriting");
+    const chips = await page
+      .locator("#inherited-statuses .tag")
+      .evaluateAll((els) => els.map((e) => e.textContent.trim()));
+    const parent = await rest(`projects?id=eq.${projectId}&select=statuses`);
+    if (JSON.stringify(chips) !== JSON.stringify(parent[0].statuses))
+      throw new Error(`inherited chips = ${JSON.stringify(chips)}`);
+    await page.click("#project-save");
+    await expectToast("Project created");
+    const sub = (await rest("projects?name=eq.E2E%20Sub%20Client&select=id,inherit_statuses"))[0];
+    if (!sub.inherit_statuses) throw new Error("inherit_statuses not saved");
+    subId = sub.id;
+  });
+
+  await step("Sub-client board mirrors the parent's columns live", async () => {
+    // add a NEW parent column out-of-band; the child board must pick it up
+    // (proves live link — the child's stored snapshot doesn't have it)
+    const parent = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0];
+    await rest(`projects?id=eq.${projectId}`, {
+      method: "PATCH",
+      body: { statuses: [...parent.statuses, "Extra"] },
+    });
+    await page.goto(`${BASE}/board.html?project=${subId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    const titles = await page.locator(".col-title").evaluateAll((els) => els.map((e) => e.textContent.trim()));
+    if (!titles.includes("Extra")) throw new Error(`child columns = ${JSON.stringify(titles)} (live link broken)`);
+    if (!(await page.locator(".subclient-tag", { hasText: "columns inherited" }).count()))
+      throw new Error("inherited badge missing");
+  });
+
+  await step("ingest_task resolves inherited statuses (parent column accepted)", async () => {
+    const key = (await rest("api_keys", { method: "POST", body: { project_id: subId, label: "E2E Key" } }))[0];
+    const res = await rest("rpc/ingest_task", {
+      method: "POST",
+      body: { p_api_key: key.key, p_title: "e2e-ingest-sub", p_status: "Extra" },
+    });
+    if (res.status !== "Extra")
+      throw new Error(`ingested status = ${res.status} (fell back — parent list not resolved)`);
+    subTaskId = res.task_id;
+  });
+
+  await step("Parent status edit includes inheriting child's tasks in the mapping", async () => {
+    await page.goto(`${BASE}/vyom.html`);
+    const card = page.locator(".project-card", { hasText: PROJECT_NAME }).first();
+    await card.waitFor();
+    await card.locator(".edit-btn").click();
+    await page.locator(".tag-editor .tag", { hasText: "Extra" }).locator("button").click();
+    await page.click("#project-save");
+    const remap = page.locator("#status-remap");
+    await remap.waitFor({ state: "visible", timeout: 5000 });
+    const txt = await remap.innerText();
+    if (!txt.includes("1 task in “Extra”")) throw new Error(`remap text = ${txt}`);
+    if (!txt.includes("sub-client")) throw new Error("mapping does not mention inheriting sub-clients");
+    await choose("remap-sel-0", { label: "Done" });
+    await page.click("#project-save");
+    await expectToast("project updated");
+    await page.waitForTimeout(400);
+    const t = await rest(`tasks?id=eq.${subTaskId}&select=status`);
+    if (t[0].status !== "Done") throw new Error(`child task status = ${t[0].status}`);
+  });
+
+  await step("Sub-client: switch to custom copies parent columns; back to inherit remaps", async () => {
+    await page.goto(`${BASE}/vyom.html`);
+    const card = page.locator(".project-card", { hasText: PROJECT_NAME }).first();
+    await card.waitFor();
+    await card.locator(".sub-edit[data-subedit]").click();
+    await page.locator("#project-modal.open").waitFor({ timeout: 5000 });
+    await page.locator('.type-opt:has(input[name="p-statuses-src"][value="custom"])').click();
+    const parent = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0];
+    const chips = await page
+      .locator("#status-tags .tag")
+      .evaluateAll((els) => els.map((e) => e.textContent.replace("×", "").trim()));
+    if (JSON.stringify(chips) !== JSON.stringify(parent.statuses))
+      throw new Error(`custom pre-fill = ${JSON.stringify(chips)}`);
+    await page.fill("#status-input", "Child Only");
+    await page.press("#status-input", "Enter");
+    await page.click("#project-save");
+    await expectToast("Project updated");
+    // park the child's task in the custom-only column, then switch back
+    await rest(`tasks?id=eq.${subTaskId}`, { method: "PATCH", body: { status: "Child Only" } });
+    await card.locator(".sub-edit[data-subedit]").click();
+    await page.locator("#project-modal.open").waitFor({ timeout: 5000 });
+    await page.locator('.type-opt:has(input[name="p-statuses-src"][value="inherit"])').click();
+    await page.click("#project-save");
+    const remap = page.locator("#status-remap");
+    await remap.waitFor({ state: "visible", timeout: 5000 });
+    if (!(await remap.innerText()).includes("1 task in “Child Only”"))
+      throw new Error(`remap text = ${await remap.innerText()}`);
+    await choose("remap-sel-0", { label: "Done" });
+    await page.click("#project-save");
+    await expectToast("project updated");
+    await page.waitForTimeout(400);
+    const rows = await rest(`tasks?id=eq.${subTaskId}&select=status`);
+    if (rows[0].status !== "Done") throw new Error(`status = ${rows[0].status}`);
+    const sub = (await rest(`projects?id=eq.${subId}&select=inherit_statuses`))[0];
+    if (!sub.inherit_statuses) throw new Error("inherit flag not restored");
+  });
+
+  await step("Cleanup: delete sub-client project (cascades tasks + api keys)", async () => {
+    await rest(`projects?id=eq.${subId}`, { method: "DELETE" });
+    if ((await rest("api_keys?label=eq.E2E%20Key&select=id")).length)
+      throw new Error("api key did not cascade");
   });
 
   // ---------- cleanup ----------

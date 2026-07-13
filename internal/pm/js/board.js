@@ -53,17 +53,23 @@
       document.getElementById("board-title").textContent = project.name;
       document.getElementById("board-desc").textContent = project.description || "";
       if (project.parent_project_id) {
-        API.getProject(project.parent_project_id)
-          .then((parent) => {
-            if (!parent) return;
-            const tag = document.createElement("a");
-            tag.className = "subclient-tag";
-            tag.href = `board.html?project=${parent.id}`;
-            tag.title = `Open ${parent.name}'s board`;
-            tag.textContent = `↰ ${parent.name}`;
-            document.getElementById("board-title").appendChild(tag);
-          })
-          .catch(() => {}); // badge is cosmetic — never block the board
+        // Awaited (unlike the purely cosmetic badge it used to be): an
+        // inheriting sub-client's columns ARE the parent's statuses, so the
+        // board can't render before the parent is known.
+        const parent = await API.getProject(project.parent_project_id).catch(() => null);
+        if (project.inherit_statuses) {
+          // Local resolution only — board.js never PATCHes the project, so
+          // this can't leak the parent's list into the child's stored row.
+          project.statuses = UI.effectiveStatuses(project, parent);
+        }
+        if (parent) {
+          const tag = document.createElement("a");
+          tag.className = "subclient-tag";
+          tag.href = `board.html?project=${parent.id}`;
+          tag.title = `Open ${parent.name}'s board`;
+          tag.textContent = `↰ ${parent.name}${project.inherit_statuses ? " · columns inherited" : ""}`;
+          document.getElementById("board-title").appendChild(tag);
+        }
       } else {
         // Parent board: quick-jump chips to each sub-client's board
         API.getSubProjects(project.id)

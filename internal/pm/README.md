@@ -19,7 +19,7 @@ manager for the whole team, replacing Asana. Lives at **https://v-bog.com/intern
 | Page | What it does |
 |---|---|
 | `login.html` | Sign-in gate — enter your Login ID. Stays signed in per device; Logout in the nav. |
-| `vyom.html` (index.html redirects here) | Dashboard — project cards with task/overdue counts, type badge (Internal/Client), tag chips, and a tag filter. Create/edit/archive projects with **custom status columns per project**. |
+| `vyom.html` (index.html redirects here) | Dashboard — project cards with task/overdue counts, type badge (Internal/Client), tag chips, and a tag filter. Create/edit/archive projects with **custom status columns per project** — drag the chips to reorder columns; removing a column that still has tasks walks you through moving them (no task is ever stranded). |
 | `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop, task modal with **@mentions** in notes. Filters: assignee, due date (presets + custom range). |
 | `team.html` | All Tasks — master list across every project. Filter by project, assignee, due date, or title search. |
 | `settings.html` | **Admin only.** Users & access (add users, roles, login IDs, per-project access for externals), the central **tag registry**, and Zapier integrations. |
@@ -36,7 +36,7 @@ an access level, and (for externals) a list of granted projects.
 ## Database
 
 Supabase project `mejebezwvyfkhufkgkej` — already set up. To rebuild on a fresh
-project, run the files in `sql/` in numeric order (01→11) in the SQL Editor; all are
+project, run the files in `sql/` in numeric order (01→12) in the SQL Editor; all are
 idempotent. Schema details in ARCHITECTURE.md §3.
 
 If the frontend shows "Database not set up", the migrations haven't been run.
@@ -75,6 +75,12 @@ When a client has their own internal clients, give each of those a project with 
 on the dashboard and their tasks are **excluded from All Tasks and its counts by
 default** — flip "Include sub-client tasks" in the All Tasks filter bar to see them
 (the choice is remembered per browser).
+
+Sub-clients can either **inherit the parent's status columns** (the default — the
+child's board always mirrors the parent's columns, live) or define **custom**
+columns of their own; pick in the project modal's "Status columns source" toggle.
+Switching to custom starts from a copy of the parent's columns. Editing a parent's
+columns includes inheriting sub-clients' tasks in the guided move step.
 
 ## Automations (per-project rules)
 

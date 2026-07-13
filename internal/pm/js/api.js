@@ -21,6 +21,14 @@ const API = {
   updateProject(id, fields) {
     return sbFetch(`projects?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
   },
+  // Live-inheriting children of a parent (incl. archived ones — their tasks
+  // must never be orphaned by a parent status edit). Requires sql/12;
+  // callers guard on the inherit_statuses column existing.
+  getInheritingChildren(parentId) {
+    return sbFetch(
+      `projects?parent_project_id=eq.${parentId}&inherit_statuses=eq.true&select=id,name,statuses`
+    );
+  },
 
   // ---- tasks ----
   getTasks(projectId) {
@@ -47,6 +55,20 @@ const API = {
   },
   deleteTask(id) {
     return sbFetch(`tasks?id=eq.${id}`, { method: "DELETE" });
+  },
+  // Task id/status/project across a set of projects — feeds the transition
+  // mapping step when status columns change.
+  getTasksByProjects(projectIds) {
+    return sbFetch(`tasks?project_id=in.(${projectIds.join(",")})&select=id,project_id,status`);
+  },
+  // Bulk transition-mapping move. Each updated task fires the webhook and
+  // status_changed automation triggers once (server-side) — that's correct:
+  // the tasks really did change status.
+  moveTasksByStatus(projectIds, fromStatus, toStatus) {
+    return sbFetch(
+      `tasks?project_id=in.(${projectIds.join(",")})&status=eq.${encodeURIComponent(fromStatus)}`,
+      { method: "PATCH", body: { status: toStatus } }
+    );
   },
   memberHasTasks(memberId) {
     return sbFetch(`tasks?assignee_id=eq.${memberId}&select=id&limit=1`).then((r) => r.length > 0);
@@ -146,7 +168,9 @@ const API = {
   getMyTasks(memberId) {
     return sbFetch(
       `tasks?assignee_id=eq.${memberId}` +
-        "&select=*,projects!inner(id,name,color,archived,statuses)&projects.archived=eq.false" +
+        // projects(*) so inherit_statuses flows through pre/post-migration;
+        // the parent embed feeds UI.effectiveStatuses for inheriting subs.
+        "&select=*,projects!inner(*,parent:parent_project_id(statuses))&projects.archived=eq.false" +
         "&order=due_date.asc.nullslast,created_at.asc&limit=300"
     );
   },

@@ -22,7 +22,10 @@
   let statusTags = [];
   let projectTags = []; // tags selected in the modal
   let selectedColor = SWATCH_COLORS[0];
-  let statusWarningShown = false;
+  let remapPlan = null; // rows shown in #status-remap; null = no pending mapping
+  let statusSource = "custom"; // "inherit" | "custom" (mirrors the p-statuses-src radios)
+  let statusTagsDirty = false; // user touched chips this modal session
+  let lastParentVal = ""; // previous #p-parent value, for unlink pre-fill
 
   const grid = document.getElementById("project-grid");
   const form = document.getElementById("project-form");
@@ -170,6 +173,13 @@
   }
 
   // ---- Status tag editor ----
+  // Any change to the chip list invalidates a pending transition mapping —
+  // the mapping's counts and destination options were built for the old list.
+  function statusTagsChanged() {
+    statusTagsDirty = true;
+    resetRemap();
+  }
+
   function renderTags() {
     const editor = document.getElementById("status-tags");
     editor.querySelectorAll(".tag").forEach((t) => t.remove());
@@ -177,9 +187,29 @@
     statusTags.forEach((tag, i) => {
       const el = document.createElement("span");
       el.className = "tag";
+      el.draggable = true;
       el.innerHTML = `${UI.esc(tag)}<button type="button" data-i="${i}" aria-label="Remove ${UI.esc(tag)}">&times;</button>`;
       el.querySelector("button").addEventListener("click", () => {
         statusTags.splice(i, 1);
+        statusTagsChanged();
+        renderTags();
+      });
+      // Drag a chip onto another to reorder — same HTML5 DnD the board uses.
+      el.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", String(i));
+        e.dataTransfer.effectAllowed = "move";
+        el.classList.add("dragging");
+      });
+      el.addEventListener("dragend", () => el.classList.remove("dragging"));
+      el.addEventListener("dragover", (e) => e.preventDefault());
+      el.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const from = Number(e.dataTransfer.getData("text/plain"));
+        if (!Number.isInteger(from) || from === i) return;
+        const [moved] = statusTags.splice(from, 1);
+        statusTags.splice(i, 0, moved);
+        statusTagsChanged();
         renderTags();
       });
       editor.insertBefore(el, input);
@@ -190,10 +220,15 @@
     const input = document.getElementById("status-input");
     // Support comma-separated paste: "To Do, Doing, Done"
     const parts = input.value.split(",").map((s) => s.trim()).filter(Boolean);
+    let added = false;
     for (const p of parts) {
-      if (!statusTags.some((t) => t.toLowerCase() === p.toLowerCase())) statusTags.push(p);
+      if (!statusTags.some((t) => t.toLowerCase() === p.toLowerCase())) {
+        statusTags.push(p);
+        added = true;
+      }
     }
     input.value = "";
+    if (added) statusTagsChanged();
     renderTags();
   }
 
@@ -203,6 +238,7 @@
       addTagFromInput();
     } else if (e.key === "Backspace" && e.target.value === "" && statusTags.length) {
       statusTags.pop();
+      statusTagsChanged();
       renderTags();
     }
   });
@@ -282,10 +318,118 @@
     UI.syncSelect(sel);
   }
 
+  // ---- Status source (inherit from parent vs custom) ----
+  const parentOf = (id) => projects.find((p) => p.id === id) || null;
+  // inherit_statuses ships in sql/12 — the whole toggle stays hidden until the
+  // column exists, same graceful degradation as the parent_project_id guard.
+  const inheritColExists = () => projects.some((p) => "inherit_statuses" in p);
+
+  function resetRemap() {
+    remapPlan = null;
+    document.getElementById("status-remap").hidden = true;
+    document.getElementById("project-save").textContent = editingProject
+      ? "Save Changes"
+      : "Create Project";
+  }
+
+  // Show/hide the source toggle + swap the editable chip editor for the
+  // read-only inherited view. Called on open and whenever parent/source change.
+  function syncStatusSource() {
+    const parentVal = document.getElementById("p-parent").value;
+    const showToggle = !!parentVal && inheritColExists();
+    document.getElementById("p-statuses-src-group").hidden = !showToggle;
+    document.querySelectorAll('input[name="p-statuses-src"]').forEach((r) => {
+      r.checked = r.value === statusSource;
+    });
+    const inherit = showToggle && statusSource === "inherit";
+    document.getElementById("p-statuses-group").hidden = inherit;
+    document.getElementById("p-inherited-group").hidden = !inherit;
+    if (inherit) {
+      const parent = parentOf(parentVal);
+      document.getElementById("inherited-statuses").innerHTML = (parent?.statuses || [])
+        .map((s) => `<span class="tag">${UI.esc(s)}</span>`)
+        .join("");
+    }
+  }
+
+  // One row per removed-but-in-use status: "N tasks in 'X' → [destination]".
+  // Rows for statuses that were ALREADY orphaned (a "(removed)" column) get a
+  // note — saving cleans those up too. remapPlan holds the rows until save.
+  function buildRemapUI(needed, targets, includesChildren) {
+    document.getElementById("remap-intro").textContent =
+      "These columns are being removed but still have tasks" +
+      (includesChildren ? " (including inheriting sub-clients)" : "") +
+      " — pick where each should move:";
+    const host = document.getElementById("remap-rows");
+    host.innerHTML = "";
+    needed.forEach((r, idx) => {
+      const row = document.createElement("div");
+      row.className = "remap-row";
+      row.innerHTML =
+        `<span class="remap-label">${r.count} task${r.count === 1 ? "" : "s"} in “${UI.esc(r.status)}”` +
+        (r.preexisting ? ' <span class="remap-note">(already removed)</span>' : "") +
+        `</span><span class="remap-arrow">→</span>`;
+      const sel = document.createElement("select");
+      sel.id = `remap-sel-${idx}`;
+      sel.setAttribute("aria-label", `Move tasks from ${r.status} to`);
+      sel.innerHTML = targets
+        .map((t) => `<option value="${UI.esc(t)}">${UI.esc(t)}</option>`)
+        .join("");
+      const wrap = document.createElement("div");
+      wrap.className = "remap-select";
+      wrap.appendChild(sel);
+      row.appendChild(wrap);
+      host.appendChild(row);
+      UI.enhanceSelect(sel);
+      r.selId = sel.id;
+    });
+    document.getElementById("status-remap").hidden = false;
+    document.getElementById("project-save").textContent = "Move tasks & save";
+    remapPlan = needed;
+  }
+
+  document.querySelectorAll('input[name="p-statuses-src"]').forEach((r) =>
+    r.addEventListener("change", () => {
+      if (!r.checked) return;
+      statusSource = r.value;
+      if (statusSource === "custom" && !statusTagsDirty) {
+        // Going custom starts from a copy of the parent's current columns
+        const parent = parentOf(document.getElementById("p-parent").value);
+        if (parent?.statuses?.length) {
+          statusTags = [...parent.statuses];
+          renderTags();
+        }
+      }
+      resetRemap();
+      syncStatusSource();
+    })
+  );
+
+  document.getElementById("p-parent").addEventListener("change", () => {
+    const val = document.getElementById("p-parent").value;
+    if (!val && statusSource === "inherit") {
+      // Parent unlinked while inheriting: keep working with the columns we
+      // were showing (a copy of the old parent's list) and go custom.
+      statusSource = "custom";
+      const oldParent = parentOf(lastParentVal);
+      if (!statusTagsDirty && oldParent?.statuses?.length) {
+        statusTags = [...oldParent.statuses];
+        renderTags();
+      }
+    }
+    lastParentVal = val;
+    resetRemap();
+    syncStatusSource();
+  });
+
   // ---- Modal ----
   function openProjectModal(project) {
     editingProject = project || null;
-    statusWarningShown = false;
+    statusTagsDirty = false;
+    lastParentVal = project?.parent_project_id || "";
+    // New sub-clients default to inheriting the moment a parent is picked;
+    // existing projects reflect their stored choice.
+    statusSource = project ? (project.inherit_statuses ? "inherit" : "custom") : "inherit";
     document.getElementById("status-warning").hidden = true;
     UI.clearFieldErrors(form);
 
@@ -302,6 +446,8 @@
     renderProjectTags();
     fillTagSelect();
     fillParentSelect(project);
+    resetRemap();
+    syncStatusSource();
 
     const archiveBtn = document.getElementById("archive-btn");
     archiveBtn.hidden = !project;
@@ -330,8 +476,18 @@
       UI.fieldError(nameInput, "A project with this name already exists.");
       valid = false;
     }
-    if (statusTags.length === 0) {
+    const parentVal = document.getElementById("p-parent").value || null;
+    const inheritOn = !!parentVal && statusSource === "inherit" && inheritColExists();
+    const parent = inheritOn ? parentOf(parentVal) : null;
+    // The list the project's tasks must live in after this save
+    const newEffective = inheritOn ? parent?.statuses || [] : statusTags;
+
+    if (!inheritOn && statusTags.length === 0) {
       UI.fieldError(document.getElementById("status-input"), "Add at least one status column.");
+      valid = false;
+    }
+    if (inheritOn && newEffective.length === 0) {
+      UI.toast("The parent project has no status columns to inherit.");
       valid = false;
     }
     if (!valid) return;
@@ -339,46 +495,64 @@
     const fields = {
       name,
       description: document.getElementById("p-desc").value.trim() || null,
-      statuses: statusTags,
+      // While inheriting, the stored array is a snapshot/fallback only: kept
+      // as-is on edits, seeded from the parent on create (see ARCHITECTURE.md)
+      statuses: inheritOn ? (editingProject ? editingProject.statuses : [...newEffective]) : statusTags,
       color: selectedColor,
       type: document.querySelector('input[name="p-type"]:checked')?.value || "internal",
       tags: projectTags,
     };
     // Only send parent_project_id once the 08 migration has added the column
     // (a POST with an unknown column would fail the whole save).
-    const parentVal = document.getElementById("p-parent").value || null;
     if (projects.length === 0 || projects.some((p) => "parent_project_id" in p)) {
       fields.parent_project_id = parentVal;
     } else if (parentVal) {
       UI.toast("Sub-client projects need the 08_subclients.sql migration — run it in Supabase first.");
       return;
     }
+    // Same guard for inherit_statuses (12_status_inheritance.sql)
+    if (inheritColExists()) fields.inherit_statuses = inheritOn;
 
     try {
       if (editingProject) {
-        // Warn if removing statuses that are still in use (PRD F-02)
-        const removed = editingProject.statuses.filter(
-          (s) => !statusTags.some((t) => t.toLowerCase() === s.toLowerCase())
-        );
-        if (removed.length && !statusWarningShown) {
-          const tasks = await API.getTasks(editingProject.id);
-          const inUse = removed
-            .map((s) => ({ s, n: tasks.filter((t) => t.status === s).length }))
-            .filter((x) => x.n > 0);
-          if (inUse.length) {
-            const warn = document.getElementById("status-warning");
-            warn.hidden = false;
-            warn.textContent =
-              "Heads up: " +
-              inUse.map((x) => `${x.n} task${x.n === 1 ? "" : "s"} in “${x.s}”`).join(", ") +
-              ". These tasks keep their status and appear in a “removed” column until you move them. Click Save again to confirm.";
-            statusWarningShown = true;
-            return;
+        // Transition mapping (PRD F-02, v14): any task — here or in a
+        // live-inheriting sub-client — whose status is missing from the new
+        // effective list must be mapped to a destination before saving.
+        // Covers removals, case-changing renames, inherit/custom switches,
+        // and opportunistically cleans up pre-existing "(removed)" orphans.
+        let scopeIds = [editingProject.id];
+        let children = [];
+        if (inheritColExists()) {
+          children = await API.getInheritingChildren(editingProject.id);
+          scopeIds = scopeIds.concat(children.map((c) => c.id));
+        }
+        const rows = await API.getTasksByProjects(scopeIds);
+        const needed = [...new Set(rows.map((r) => r.status))]
+          .filter((s) => !newEffective.includes(s))
+          .map((s) => ({
+            status: s,
+            count: rows.filter((r) => r.status === s).length,
+            preexisting: !editingProject.statuses.includes(s),
+          }));
+        if (needed.length && !remapPlan) {
+          buildRemapUI(needed, newEffective, children.length > 0);
+          return; // save blocked until every removed status has a destination
+        }
+        let movedCount = 0;
+        if (remapPlan) {
+          for (const r of remapPlan) {
+            await API.moveTasksByStatus(scopeIds, r.status, document.getElementById(r.selId).value);
+            movedCount += r.count;
           }
         }
         const updated = await API.updateProject(editingProject.id, fields);
         projects = projects.map((p) => (p.id === updated.id ? updated : p));
-        UI.toast("Project updated.", "success");
+        UI.toast(
+          movedCount
+            ? `Moved ${movedCount} task${movedCount === 1 ? "" : "s"} · project updated.`
+            : "Project updated.",
+          "success"
+        );
       } else {
         const created = await API.createProject(fields);
         projects.push(created);

@@ -5,7 +5,8 @@
 > (so you don't hit them again). The README covers *what Vyom does*; this file
 > covers *how it's built*.
 
-Last updated: v8 (July 2026) — login gate, inboxes, @mentions, roles, tags release.
+Last updated: v14 (July 2026) — status reordering, guided transition mapping,
+sub-client status inheritance release.
 
 ---
 
@@ -47,7 +48,7 @@ Browser ── sbFetch() ──> https://<project>.supabase.co/rest/v1/<table>?<
 | `js/team.js` | Page logic for `team.html` |
 | `js/settings.js` | Page logic for `settings.html` |
 | `css/style.css` | All styles, one file, sectioned with `/* ---------- */` headers |
-| `sql/01…07_*.sql` | Migrations, numbered, idempotent — the full schema history |
+| `sql/01…12_*.sql` | Migrations, numbered, idempotent — the full schema history |
 | `img/vyom.svg` | The logo (also the favicon). Same SVG is inlined in each page's nav |
 
 **Script load order matters** (each page loads, in order):
@@ -60,7 +61,7 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `projects` | One per client/workstream | `statuses jsonb` (the Kanban columns, ordered), `type` (`internal`\|`client`), `tags jsonb` (array of tag *names*), `color`, `archived`, `parent_project_id` FK (sql/08 — set = this is a **sub-client** project, one level deep) |
+| `projects` | One per client/workstream | `statuses jsonb` (the Kanban columns, ordered), `type` (`internal`\|`client`), `tags jsonb` (array of tag *names*), `color`, `archived`, `parent_project_id` FK (sql/08 — set = this is a **sub-client** project, one level deep), `inherit_statuses` (sql/12 — sub-client live-inherits the parent's columns, see §7) |
 | `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`\|`api`), `external_id`, `fields jsonb` (sql/11 — structured per-task data for automations: `email` today, more keys later WITHOUT migrations), auto `updated_at` trigger |
 | `team_members` | Every user (internal and external) | `role` = free-text job title; `user_role` = permission level (`admin`\|`member`\|`external`); `login_code` unique = what they type at the gate; `active` |
 | `project_members` | Which projects an **external** user can see | composite PK (`project_id`,`member_id`), both cascade on delete |
@@ -78,9 +79,10 @@ Triggers/RPCs added later: `run_task_automations()` (sql/09) fires AFTER INSERT/
 tasks and executes matching `automations` rows — webhook POST via `pg_net`, task moves,
 assignment, or inbox notifications (kind `automation`); every action is exception-wrapped so
 a bad rule never blocks a save, and `pg_trigger_depth() > 2` stops rule chains from looping.
-`send_test_automation()` mirrors `send_test_webhook()`. `ingest_task()` (sql/10, RPC) is the
-native inbound API: validates an `api_keys` row, defaults an unknown status to the project's
-first column, inserts the task with `source: "api"`.
+`send_test_automation()` mirrors `send_test_webhook()`. `ingest_task()` (sql/10, RPC,
+recreated in sql/11 and sql/12) is the native inbound API: validates an `api_keys` row,
+resolves the **effective** status list (the parent's for inheriting sub-clients), defaults
+an unknown status to its first column, inserts the task with `source: "api"`.
 
 **RLS is enabled but open** (`USING (true)`) on every table — Phase-1 trade-off, see §8.
 
@@ -115,7 +117,7 @@ first column, inserts the task with `source: "api"`.
 4. **Cache busting**: every CSS/JS reference carries `?v=N`. **Bump N in all five
    HTML files on every release** — GitHub Pages caches ~10 min and users will
    otherwise run mixed old/new code (this caused "API.x is not a function" bugs).
-   Current version: `v=8`.
+   Current version: `v=14`.
 5. **Escape everything**: any user data inserted via innerHTML goes through
    `UI.esc()`. No exceptions.
 6. **Optimistic, in-place updates in async handlers** — the hard-won rule:
@@ -130,8 +132,18 @@ first column, inserts the task with `source: "api"`.
 7. **Toasts for outcomes, field errors for validation** — `UI.toast(msg, "success")`
    / `UI.fieldError(input, msg)`. Errors from `sbFetch` are already human-readable.
 8. **Status columns are per-project data**, not code. Board columns render from
-   `project.statuses`; a task whose status was removed from the project shows in a
-   dimmed "(removed)" column — never silently hidden.
+   `project.statuses` (chips in the project modal — drag to reorder; the **last**
+   column is what My Tasks treats as "done"). Editing a project's columns runs a
+   **transition mapping** step: any task — in that project or a live-inheriting
+   sub-client — whose status is missing from the new list must be mapped to a
+   destination before the save goes through (`dashboard.js buildRemapUI()` +
+   `API.moveTasksByStatus()`). A task can still end up orphaned by out-of-app
+   writes; it then shows in a dimmed "(removed)" column — never silently hidden —
+   and the next project edit offers to clean it up.
+9. **Effective statuses**: never read `project.statuses` raw when the project may
+   be an inheriting sub-client — resolve through `UI.effectiveStatuses(project,
+   parent)` (board.js does this once at load, so everything downstream —
+   automations editor included — sees the resolved list).
 
 ## 6. The inbox — how to extend it
 
@@ -183,6 +195,19 @@ Self-serve from Settings — teammates never touch Supabase:
   URL (the email path — point it at Zapier or a Google Apps Script that sends Gmail),
   move task, assign, or inbox-notify. Execution is 100% in Postgres (sql/09), so rules
   also fire for tasks created via the API or Zapier.
+- **Status inheritance (sql/12)**: a sub-client can **live-inherit** the parent's status
+  columns (`projects.inherit_statuses`). Resolution happens at read time —
+  `UI.effectiveStatuses()` in the frontend, the same lookup inside `ingest_task()` — so
+  editing the parent's columns instantly changes every inheriting child's board. The
+  child's own `statuses` array is kept as a **stale snapshot**: written at creation (or
+  when switching to custom, which pre-fills a copy of the parent's list), used only as a
+  fallback if the parent is deleted (`parent_project_id` goes NULL via `ON DELETE SET
+  NULL`) or has an empty list. Consequence: raw REST readers of `projects.statuses` see
+  the snapshot, not the live list. Editing a **parent's** columns includes all inheriting
+  children's tasks in the transition-mapping step (`API.getInheritingChildren()`), so a
+  parent edit can never orphan a child task. Note: each task moved by the mapping fires
+  the webhook + `status_changed` automation triggers once — the tasks really did change
+  status.
 
 ## 8. Secrets & keys
 
@@ -204,7 +229,8 @@ adding tests.** Highlights:
   scope all counts to the test project.
 - Drive the custom dropdowns via their `.dd-btn`/`.dd-item` elements (native selects
   are hidden). Assert outcomes in the DB via `sbFetch` inside the page.
-- The suite last ran 48/48 green ×3. Keep it green: every new feature ships with tests.
+- Keep the suite green: every new feature ships with tests (see `test/README.md`
+  for the current expected pass count).
 
 ## 10. Roadmap notes for the next builder
 
