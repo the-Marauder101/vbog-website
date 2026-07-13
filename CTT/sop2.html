@@ -330,14 +330,14 @@
 
       <h3 class="blk">Process Flow</h3>
       <div class="steps">
-        <div class="step searchable" id="sop01-step1"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Acknowledge</div><p>Log the enquiry in Airtable: date, channel, customer name, contact number, the details in <span class="status">Intake: Brief Complaint</span>, and set <span class="status">Complaint Status</span>. Assign a Job Number for internal tracking (never shared with the customer).</p><p>Acknowledge the customer so they know someone is on it — target within 2 business hours. Keep it to plain communication; no Job Number in the message.</p><p>If the complaint is a leak → go to the <a href="#leak-path">Leakage Fast-Path</a>.</p><span class="owner">Front Desk Coordinator</span></div></div>
-        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Collect Basic Information</div><p>We collect what we need to assess warranty — not a full "case file". Sadara/contractor/project → send the official intake email (<a href="#tpl-sd1">Template SD-1</a>) with the Checklist &amp; Declaration form. Retail → request the basics (<a href="#tpl-rt1">Template RT-1</a>).</p><p>Ask for: photos/video of the fault, photo of the model + serial number label, and the <b>reseller bill or the project's TOC</b> (see <a href="#bill-vs-toc">Bill vs TOC</a> below). For Sadara: also the site pin + access + site contact.</p><p>Update Airtable: <span class="status">Complaint Status = 'Awaiting Customer Documents'</span></p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable" id="sop01-step1"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Acknowledge</div><p>Log the enquiry in Airtable: date, channel, customer name, contact number, the details in <span class="status">Intake: Brief Complaint</span>, and set <span class="status">Complaint Status</span>. Assign a Job Number for internal tracking (never shared with the customer).</p><p>Acknowledge the customer so they know someone is on it — target within 2 business hours. Keep it to plain communication; no Job Number in the message. For retail customers, the acknowledgement + basic intake request goes out via <a href="#tpl-rt1">Template RT-1</a> — use the Email, WhatsApp, or phone-script version to match the channel they contacted us on.</p><p>If the complaint is a leak → go to the <a href="#leak-path">Leakage Fast-Path</a>.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Collect Basic Information</div><p>We collect what we need to assess warranty — not a full "case file". Sadara/contractor/project → send the official intake email (<a href="#tpl-sd1">Template SD-1</a>) with the Checklist &amp; Declaration form. Retail → request the basics (<a href="#tpl-rt1">Template RT-1</a>).</p><p>Ask for: photos/video of the fault, photo of the model + serial number label, the <b>full address where the unit is installed</b>, and the <b>reseller bill or the project's TOC</b> (see <a href="#bill-vs-toc">Bill vs TOC</a> below). Getting the address upfront avoids back-and-forth and means we have everything before making a decision. For Sadara: also the site pin + access + site contact.</p><p>Update Airtable: <span class="status">Complaint Status = 'Awaiting Customer Documents'</span></p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable" id="sop01-step3"><div class="step-num">3</div><div class="step-main"><div class="step-title">Confirm Receipt &amp; Chase Gaps</div><p>Reply to confirm you received whatever came in — even if incomplete. If something's missing, send <a href="#tpl-md1">Template MD-1</a> listing only the missing items.</p><p>Follow the 4-day closure SLA (<a href="#sop01-step8">Step 8</a>) if the customer goes quiet.</p><span class="owner">Front Desk Coordinator</span></div></div>
-        <div class="step searchable" id="sop01-step4"><div class="step-num">4</div><div class="step-main"><div class="step-title">Validate Warranty</div><p>Manager checks warranty against the <b>bill</b> (dated, lists the units — verify the specific unit) or, for a project, the <b>TOC</b> (the TOC date governs and covers all units in the project). Periods: 2 years electrical, 5 years body.</p><p>Update Airtable: <span class="status">Complaint Status = 'Warranty Verified'</span> or <span class="status">'Out of Warranty'</span>, with the reason.</p><span class="owner">Manager</span></div></div>
+        <div class="step searchable" id="sop01-step4"><div class="step-num">4</div><div class="step-main"><div class="step-title">Validate Warranty</div><p>Manager checks warranty against the <b>bill</b> (dated, lists the units — verify the specific unit) or, for a project, the <b>TOC</b> (the TOC date governs and covers all units in the project). For Sadara projects <b>not yet handed over</b> (no TOC exists), assess warranty on the <b>Submittal + delivery notes</b> instead. Periods: 2 years electrical, 5 years body.</p><p>Update Airtable: <span class="status">Complaint Status = 'Warranty Verified'</span> or <span class="status">'Out of Warranty'</span>, with the reason.</p><span class="owner">Manager</span></div></div>
         <div class="step searchable"><div class="step-num">5</div><div class="step-main"><div class="step-title">Try to Resolve at the Desk First</div><p>Before dispatching anyone, attempt a remote fix: guidance on settings/heating time, a Teflon-tape re-seal for a minor connection leak, thermostat/usage checks (see <a href="#track-b">SOP-04 Track B pre-checks</a>).</p><p>Resolved remotely → confirm with the customer and close. Update Airtable: <span class="status">Complaint Status = 'Resolved — Remote'</span>.</p><span class="owner">Front Desk Coordinator / Manager</span></div></div>
         <div class="step searchable" id="sop01-step6"><div class="step-num">6</div><div class="step-main"><div class="step-title">Under Warranty &amp; Can't Desk-Resolve → Dispatch</div><p>Verify the documents are complete, then hand to the Manager to schedule a technician (→ <a href="#sop-04">SOP-04</a>). Over-the-phone troubleshooting can continue in the interim.</p><p>Update Airtable: <span class="status">Complaint Status = 'Under Warranty — Pending Site Visit'</span></p><span class="owner">Manager → Technician</span></div></div>
         <div class="step searchable"><div class="step-num">7</div><div class="step-main"><div class="step-title">Out of Warranty → Inform Customer</div><p>Send <a href="#tpl-ow1">Template OW-1</a> with the specific reason and the AED 160 chargeable-visit option. If the issue is isolated to a part, offer to hand off to <a href="#sop-03">SOP-03 (Spare Parts)</a> for a quote instead.</p><p>Update Airtable: <span class="status">Complaint Status = 'Out of Warranty — Customer Notified'</span></p><span class="owner">Front Desk Coordinator (Manager validates)</span></div></div>
-        <div class="step searchable" id="sop01-step8"><div class="step-num">8</div><div class="step-main"><div class="step-title">Follow Up &amp; Close (4-day SLA)</div><p>If the customer goes quiet, follow up — a minimum of 4 unanswered follow-ups over 4 days. Before closing, send the close-out message ("Due to no response we're closing this for now — happy to reopen whenever you need support").</p><p>Update Airtable: <span class="status">Complaint Status = 'Closed — No Response'</span>. Any case can be reopened later.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable" id="sop01-step8"><div class="step-num">8</div><div class="step-main"><div class="step-title">Follow Up &amp; Close (4-day SLA)</div><p>If the customer goes quiet, follow up — a minimum of 4 unanswered follow-ups over 4 days, using <a href="#tpl-cf1">Template CF-1</a>. This happens a lot after we send the checklist and customers see the requirements — the follow-up reassures them and offers help. Before closing, send the final closure message (<a href="#tpl-cc1">Template CC-1</a>).</p><p>Update Airtable: <span class="status">Complaint Status = 'Closed — No Response'</span>. Any case can be reopened later.</p><span class="owner">Front Desk Coordinator</span></div></div>
       </div>
 
       <!-- Leakage fast path -->
@@ -358,6 +358,7 @@
         <tbody>
           <tr><td class="k">Reseller Bill</td><td>Retail &amp; most individual purchases</td><td>The dated bill is the true warranty document and <b>lists the units</b> — verify the specific unit against it.</td></tr>
           <tr><td class="k">Take Over Certificate (TOC)</td><td>Projects / handovers (the bill may be years older, e.g. 2020)</td><td>The <b>TOC date</b> — when the project was handed over and heaters put to use — governs warranty. It covers <b>all units</b> in that project/apartment and does <b>not</b> list individual units.</td></tr>
+          <tr><td class="k">Submittal + Delivery Notes</td><td>Sadara projects <b>not yet handed over</b> — no TOC exists yet</td><td>For not-handed-over projects, warranty is assessed on the <b>Submittal and the delivery notes</b> — these confirm the units supplied and the delivery date. Always consider this path for Sadara clients before rejecting a claim for a missing TOC.</td></tr>
         </tbody>
       </table>
 
@@ -371,14 +372,17 @@ Dear Team,
 Further to your warranty claim request regarding Warranty Confirmation for Water Heater Brand — [Brand] — [Unit/Flat No., Building/Site Name]. Please see the following guidelines for warranty claims:
 
 1. In line with the warranty obligation as defined by [Manufacturer / Group Name], ALL contractor-managed complaints will only be processed after receipt of a fully completed "Warranty Claim Request – Checklist and Declaration" form.
+⚠️ IMPORTANT: Section 2 of the form MUST be fully completed before any site visit can be dispatched. Checklists returned with Section 2 blank or incomplete will be sent back for completion, which delays the visit.
 
 2. This requirement is mandatory to validate warranty eligibility, confirm scope responsibility (product vs installation), and ensure proper site access and coordination.
 
 3. Required submission (attach all items): Please return the attached form fully completed and include the following supporting documents:
-3.1. Warranty proof — the purchase bill, or the project Take Over Certificate (TOC) where applicable.
+3.1. Warranty proof — the purchase bill, or the project Take Over Certificate (TOC) where applicable. For projects not yet handed over (no TOC issued), the project Submittal and delivery notes.
 3.2. Clear photos / videos showing: the reported fault, and the product model + serial number label.
 3.3. Exact site location pin (Google Maps) + access instructions (parking, gate pass, work permit requirements).
 3.4. Site contact details (name + mobile) who will be present during the visit.
+3.5. For heating issues: a photo of the current thermostat setting, confirmation that the heater has completed a heating cycle of more than 6 hours before use, or a temperature test result.
+3.6. For leaking issues: only the warranty proof above and clear videos showing exactly where the leak is coming from are required.
 
 4. Site visit policy
 4.1. Site visit will be confirmed upon receiving the completed form and minimum evidence above are received and validated.
@@ -395,7 +399,7 @@ Regards,
       </div>
 
       <div class="tpl searchable" id="tpl-rt1">
-        <div class="tpl-head"><span class="code">RT-1</span><span class="name">Retail Individual Intake Request</span><button class="copy">Copy</button></div>
+        <div class="tpl-head"><span class="code">RT-1</span><span class="ch">📧 Email</span><span class="name">Retail Individual Intake Request</span><button class="copy">Copy</button></div>
         <div class="tpl-body"><span class="subj">Subject: We've received your complaint — here's what we need next</span>
 
 Hi [Customer Name],
@@ -403,6 +407,7 @@ Hi [Customer Name],
 Thanks for reaching out about your Atlantic water heater. To get this moving, could you share the following?
 
 • Full name &amp; contact number
+• Full address / location where the unit is installed
 • Purchase bill (with date &amp; retailer/dealer name) — or the project Take Over Certificate (TOC) if applicable
 • Product model &amp; serial number (on the metal rating plate on the tank)
 • A short description of the issue, plus photos or a short video if possible
@@ -411,6 +416,32 @@ Once we have this, we'll check your warranty status and confirm the next steps.
 
 Best,
 [Your Name] | [Company Name]</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-rt1-wa">
+        <div class="tpl-head"><span class="code">RT-1</span><span class="ch">💬 WhatsApp</span><span class="name">Retail Individual Intake Request</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name] 👋 Thanks for reaching out about your Atlantic water heater — we've received your complaint and we're on it. To get this moving, please send:
+
+1️⃣ Your full name &amp; contact number
+2️⃣ Full address / location where the unit is installed
+3️⃣ Purchase bill (or the project TOC, if applicable)
+4️⃣ Model &amp; Serial Number (metal plate on the tank)
+5️⃣ A short description of the issue + photos or a short video
+
+Once we have this, we'll check your warranty status and confirm next steps. Thank you! 🙏</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-rt1-ph">
+        <div class="tpl-head"><span class="code">RT-1</span><span class="ch">📞 Phone script</span><span class="name">Retail Individual Intake — Ask on the Call</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">"Thank you for calling — I'm sorry to hear about the trouble with your water heater. I've logged your complaint and we'll take care of it. So we have everything before deciding next steps, may I take down:
+
+1. Your full name and contact number
+2. The full address where the unit is installed
+3. Where and when you bought it — we'll need the purchase bill (or the project TOC)
+4. The model and serial number — it's on the metal plate on the tank
+5. A quick description of the problem
+
+Could you WhatsApp or email us the bill, the serial number photo, and a photo or short video of the issue? Once we have those, we'll confirm your warranty status and the next steps."</div>
       </div>
 
       <div class="tpl searchable" id="tpl-md1">
@@ -423,31 +454,9 @@ Thanks for sending those over — we've received them. We're still missing the f
 
 [ list only the missing items from below ]
 • Completed "Warranty Claim Request – Checklist and Declaration" form (Sadara / contractor-managed complaints only)
-• Serial Number / photo of the model + serial number label
+• Photo of the serial number sticker
 • Purchase bill or project TOC
-• Photos/Video of the reported fault
-• Exact site location pin (Google Maps) + access instructions (Sadara / contractor-managed complaints only)
-• Site contact name + mobile number (Sadara / contractor-managed complaints only)
-
-Best,
-[Your Name] | [Company Name]</div>
-      </div>
-
-      <div class="tpl searchable" id="tpl-wc1">
-        <div class="tpl-head"><span class="code">WC-1</span><span class="name">Warranty Service Checklist (Under Warranty)</span><button class="copy">Copy</button></div>
-        <div class="tpl-body"><span class="subj">Subject: Good news, you're covered — here's what happens next</span>
-
-Hi [Customer Name],
-
-Your unit ([Serial No.]) is confirmed under warranty. Here's a quick checklist before our technician visits:
-
-☐ Power off the unit at least 30 minutes before the visit
-☐ Keep the area around the unit clear and accessible
-☐ Keep the original bill / warranty document on hand
-☐ Note down any error code shown on the display
-☐ Confirm your preferred visit slot: [Morning / Afternoon] on [proposed dates]
-
-Our technician will call before arrival. We'll confirm the exact date once scheduled.
+• Photos/Videos of the reported fault
 
 Best,
 [Your Name] | [Company Name]</div>
@@ -464,6 +473,32 @@ We've reviewed [Serial No.] and the issue is determined to be [out of warranty /
 As per our warranty policy, a site visit in this case is chargeable at AED 160 (VAT inclusive). This covers the inspection visit only — it does not include labor for any subsequent repair or service intervention, which will be quoted separately after inspection.
 
 Let us know if you'd like to proceed with the chargeable visit, or if you'd prefer we send a standalone spare-parts quote instead (if the issue is isolated to a specific part).
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-cf1">
+        <div class="tpl-head"><span class="code">CF-1</span><span class="ch">Follow-up</span><span class="name">Complaint Follow-up (Customer Gone Quiet)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Following up on your water heater complaint</span>
+
+Hi [Customer Name / Team],
+
+Just following up on your water heater complaint — we're still waiting on [the completed checklist / the remaining documents / your confirmation] so we can move ahead.
+
+We know the list can look like a lot, but we only need it to validate the warranty and get this resolved for you as fast as possible. If anything is unclear or hard to arrange, just reply here and we'll help you through it.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-cc1">
+        <div class="tpl-head"><span class="code">CC-1</span><span class="ch">Final closure</span><span class="name">Complaint Closure (No Response)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: Closing your complaint for now</span>
+
+Hi [Customer Name / Team],
+
+Due to no response, we're closing this complaint for now. Nothing is lost — everything you've already sent stays on file, and we're happy to reopen it whenever you're ready to continue. Just reply to this message or reach out anytime and we'll pick it back up from where we left off.
 
 Best,
 [Your Name] | [Company Name]</div>
@@ -684,6 +719,8 @@ We'll arrange a free replacement unit for you. You'll be able to collect it — 
 
 Please note: installation is not included — you'll need your own plumber/technician to fit the new unit. If you'd like us to install it, we can share a separate paid quote.
 
+Also important: the replacement unit is covered under the remaining warranty period of your original unit. The replacement does not reset or extend the warranty — it stays subject to the original unit's warranty terms and expiry date.
+
 Best,
 [Your Name] | [Company Name]</div>
       </div>
@@ -707,6 +744,8 @@ Best,
 Hi [Customer Name],
 
 Since the unit isn't currently installed, we're not able to verify the leak remotely. Please bring it to [Location / Service Center] so we can run a pressure test.
+
+Important: please message or call us before you come, so we can make sure someone is at the warehouse to receive you at that time.
 
 If the test confirms a body leak, we'll arrange a free replacement (installation not included). We'll let you know the result the same day.
 
@@ -807,7 +846,7 @@ Best,
         <div class="step searchable"><div class="step-num">R1</div><div class="step-main"><div class="step-title">Confirm Eligibility &amp; Specs</div><p>Confirm the leak is a body/tank defect (evidence in Airtable) and the unit is within the 5-year body warranty (bill or TOC). Note the exact model/capacity and orientation to be replaced.</p><span class="owner">Manager</span></div></div>
         <div class="step searchable" id="step-r2"><div class="step-num">R2</div><div class="step-main"><div class="step-title">Manager Validates</div><p>Manager approves the replacement. Nothing is issued without this. Log the approval in Airtable. An inlet/outlet fitting issue is a Teflon fix, not a replacement.</p><span class="owner">Manager</span></div></div>
         <div class="step searchable"><div class="step-num">R3</div><div class="step-main"><div class="step-title">Pick the Path</div><p><b>Option 1 — Our own stock (Sadara customers):</b> confirm we have the unit in stock. → R4a.</p><p><b>Option 2 — PO to a reseller:</b> we don't stock it (or it's not a Sadara case). → R4b.</p><span class="owner">Manager</span></div></div>
-        <div class="step searchable"><div class="step-num">R4a</div><div class="step-main"><div class="step-title">Option 1 · Hand Over From Our Stock</div><p>Confirm stock availability, coordinate a pickup time with the customer, and hand over the heater at our place. That's the only logistics we run — no delivery. Supply-only; installation not included.</p><span class="owner">Manager / Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">R4a</div><div class="step-main"><div class="step-title">Option 1 · Hand Over From Our Stock</div><p>Confirm stock availability, coordinate a pickup time with the customer, and hand over the heater at our place. That's the only logistics we run — no delivery. Supply-only; installation not included.</p><p>Make sure the customer clearly understands: <b>the replacement unit follows the remaining warranty period of the original unit</b> — it does not reset or extend the warranty. It remains subject to the original unit's warranty terms and expiration date. Communicate this explicitly at handover.</p><span class="owner">Manager / Front Desk Coordinator</span></div></div>
         <div class="step searchable"><div class="step-num">R4b</div><div class="step-main"><div class="step-title">Option 2 · Issue a PO to a Reseller</div><p>Manager prepares the PO (<a href="#tpl-po1">Template PO-1</a>) and emails it to the reseller's POC. Then tell the customer which reseller to collect the new heater from. <b>Our job ends once the PO is issued and the customer knows where to go.</b> No delivery, no pickup coordination.</p><p><b>PO details are strictly confidential</b> — the customer never sees the PO cost or terms.</p><span class="owner">Manager (PO) · Front Desk Coordinator (customer)</span></div></div>
         <div class="step searchable"><div class="step-num">R5</div><div class="step-main"><div class="step-title">Log &amp; Close</div><p>Log against the ticket in Airtable: replacement model, path (own stock / reseller PO), reseller + PO reference and cost (internal, confidential), and the customer collection instruction given. Link to the original complaint. Update <span class="status">Complaint Status = 'Resolved — Replacement Issued'</span>.</p><span class="owner">Manager</span></div></div>
       </div>
@@ -842,8 +881,8 @@ Thank you,
       <div class="steps">
         <div class="step searchable"><div class="step-num">I1</div><div class="step-main"><div class="step-title">Log &amp; Confirm Which Case</div><p>Log/update in Airtable, <span class="status">Complaint Status = 'Sales Enquiry'</span>, details in <span class="status">Intake: Brief Complaint</span>.</p><p>(a) A newly purchased unit needs installing. (b) A warranty-replacement unit (installation excluded) the customer wants us to install — this is a paid service. Confirm which before going further.</p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable"><div class="step-num">I2</div><div class="step-main"><div class="step-title">Confirm the Unit</div><p>Confirm exact model/capacity. If it's a replacement, cross-reference the ticket to confirm it's the same unit.</p><span class="owner">Front Desk Coordinator</span></div></div>
-        <div class="step searchable"><div class="step-num">I3</div><div class="step-main"><div class="step-title">Get Site Details</div><p>Address, access instructions, and site contact name + mobile.</p><span class="owner">Front Desk Coordinator</span></div></div>
-        <div class="step searchable"><div class="step-num">I4</div><div class="step-main"><div class="step-title">Pre-Installation Check</div><p>Confirm the site is ready: existing plumbing? electrical connection in place? access restrictions? If not ready, tell the customer what to prepare — avoids a wasted trip.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">I3</div><div class="step-main"><div class="step-title">Get Site Details</div><p>Address, access instructions, and site contact name + mobile. Also ask — nicely — for a <b>photo of the installation/access area</b> (including the ceiling access panel, if the unit sits above a false ceiling) before scheduling. It lets us quote correctly and avoids a wasted trip.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">I4</div><div class="step-main"><div class="step-title">Pre-Installation Check</div><p>Confirm the site is ready: existing plumbing? electrical connection in place? access restrictions? Review the access photo from I3 — if the unit is above a false ceiling with no access panel, <b>ceiling cutting is chargeable extra</b> and must be included in the quote (I5). If not ready, tell the customer what to prepare — avoids a wasted trip.</p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable"><div class="step-num">I5</div><div class="step-main"><div class="step-title">Quote If Paid</div><p>For case (b), the Manager prepares the installation quote (<a href="#tpl-in2">Template IN-2</a>); wait for the customer to confirm before scheduling. No paid visit without price agreement.</p><span class="owner">Manager</span></div></div>
         <div class="step searchable" id="step-i6"><div class="step-num">I6</div><div class="step-main"><div class="step-title">Schedule &amp; Confirm</div><p>Manager schedules the slot and sends confirmation (<a href="#tpl-in1">Template IN-1</a>).</p><span class="owner">Manager → Technician</span></div></div>
         <div class="step searchable"><div class="step-num">I7</div><div class="step-main"><div class="step-title">Installation &amp; Quality Check</div><p>Technician installs, then runs a quality check: power on, heating confirmed, no leaks at connections, thermostat set correctly. Don't leave until confirmed working.</p><span class="owner">Technician</span></div></div>
@@ -863,6 +902,10 @@ Please make sure:
 • Plumbing and electrical connections are in place
 • Someone is available on site to let the technician in
 
+A quick note on charges: the confirmed installation charge is [Price]. If any additional work turns out to be needed on site (for example, ceiling cutting to reach the unit, or plumbing/electrical adjustments), it's charged separately — we'll always confirm the cost with you before doing anything.
+
+If you haven't already, we'd really appreciate a quick photo of the installation area (and the ceiling access, if the unit is above a false ceiling) — it helps our technician arrive fully prepared.
+
 Best,
 [Your Name] | [Company Name]</div>
       </div>
@@ -872,7 +915,13 @@ Best,
 
 Hi [Customer Name],
 
-As this installation is for a warranty-replacement unit, it's a separately chargeable service. The installation charge is [Price].
+As this installation is for a warranty-replacement unit, it's a separately chargeable service. Here's the breakdown so there are no surprises:
+
+• Standard installation: [Price]
+• Ceiling cutting / opening access (only if the unit sits above a false ceiling with no access panel): [Price]
+• Any additional plumbing or electrical adjustments: quoted separately after review
+
+So we can confirm the exact charge before scheduling, could you kindly send us a photo of the installation area — and of the ceiling access, if the unit is above a false ceiling? It only takes a minute and helps us give you an accurate price and a smooth visit.
 
 Please confirm you'd like to go ahead and we'll get it scheduled.
 
@@ -1047,10 +1096,10 @@ Best,
       <h3 class="blk">The Process</h3>
       <div class="steps">
         <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Reply right away</div><p>Say sorry and let the customer know you're helping. Log it in Airtable first. Sadara/contractor account → send <a href="#msg-a-email">Message A</a>. Normal customer → send <a href="#msg-b-email">Message B</a>. <b>If it's a leak, don't ask for the checklist</b> — just get a video + the bill/TOC.</p></div></div>
-        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Collect papers &amp; photos</div><p>Sadara/contractor: completed Warranty Claim Request form, bill or TOC, photo/video of the fault, photo of model + serial label, Google Maps pin + access, site contact name + mobile. Normal customers: name &amp; phone, where/when they bought it (bill), model &amp; serial, photo/video of the problem.</p><p>Everything received → <a href="#qr-step3">Step 3</a>. Something missing → send <a href="#msg-c-email">Message C</a>. If the customer goes quiet, follow the 4-day close-out rule (<a href="#qr-step5">Step 5</a>).</p></div></div>
+        <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Collect papers &amp; photos</div><p>Sadara/contractor: completed Warranty Claim Request form, bill or TOC, photo/video of the fault, photo of model + serial label, Google Maps pin + access, site contact name + mobile. Normal customers: name &amp; phone, full address (where the unit is installed), where/when they bought it (bill), model &amp; serial, photo/video of the problem.</p><p>Everything received → <a href="#qr-step3">Step 3</a>. Something missing → send <a href="#msg-c-email">Message C</a>. If the customer goes quiet, follow the 4-day close-out rule (<a href="#qr-step5">Step 5</a>).</p></div></div>
         <div class="step searchable" id="qr-step3"><div class="step-num">3</div><div class="step-main"><div class="step-title">Ask Manager: is it under warranty?</div><p>Send the papers/photos/serial + bill or TOC to the Manager and ask: "Is this under warranty? Yes or No?" Wait for the answer — don't decide yourself. (Projects: warranty is judged on the TOC date.)</p></div></div>
         <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Tell the customer</div><p>Manager says YES → try a desk fix first; if a visit is needed, send <a href="#msg-d-email">Message D</a>. Manager says NO → send <a href="#msg-e-email">Message E</a>.</p></div></div>
-        <div class="step searchable" id="qr-step5"><div class="step-num">5</div><div class="step-main"><div class="step-title">No response? Close after 4 days</div><p>Follow up — minimum 4 unanswered follow-ups over 4 days — then send the close-out message and close as unresponsive. Reopen anytime.</p></div></div>
+        <div class="step searchable" id="qr-step5"><div class="step-num">5</div><div class="step-main"><div class="step-title">No response? Close after 4 days</div><p>Follow up — minimum 4 unanswered follow-ups over 4 days, using <a href="#tpl-cf1">Template CF-1</a> — then send the final closure message (<a href="#tpl-cc1">Template CC-1</a>) and close as unresponsive. Reopen anytime.</p></div></div>
       </div>
 
       <h3 class="blk">The Texts</h3>
@@ -1064,14 +1113,17 @@ Dear Team,
 Further to your warranty claim request regarding Warranty Confirmation for Water Heater Brand — [Brand] — [Unit/Flat No., Building/Site Name]. Please see the following guidelines for warranty claims:
 
 1. In line with the warranty obligation as defined by [Manufacturer / Group Name], ALL contractor-managed complaints will only be processed after receipt of a fully completed "Warranty Claim Request – Checklist and Declaration" form.
+⚠️ IMPORTANT: Section 2 of the form MUST be fully completed before any site visit can be dispatched. Checklists returned with Section 2 blank or incomplete will be sent back for completion, which delays the visit.
 
 2. This requirement is mandatory to validate warranty eligibility, confirm scope responsibility (product vs installation), and ensure proper site access and coordination.
 
 3. Required submission (attach all items): Please return the attached form fully completed and include the following supporting documents:
-3.1. Warranty proof — the purchase bill, or the project Take Over Certificate (TOC) where applicable.
+3.1. Warranty proof — the purchase bill, or the project Take Over Certificate (TOC) where applicable. For projects not yet handed over (no TOC issued), the project Submittal and delivery notes.
 3.2. Clear photos / videos showing: the reported fault, and the product model + serial number label.
 3.3. Exact site location pin (Google Maps) + access instructions (parking, gate pass, work permit requirements).
 3.4. Site contact details (name + mobile) who will be present during the visit.
+3.5. For heating issues: a photo of the current thermostat setting, confirmation that the heater has completed a heating cycle of more than 6 hours before use, or a temperature test result.
+3.6. For leaking issues: only the warranty proof above and clear videos showing exactly where the leak is coming from are required.
 
 4. Site visit policy
 4.1. Site visit will be confirmed upon receiving the completed form and minimum evidence above are received and validated.
@@ -1101,9 +1153,10 @@ Hi [Customer Name],
 Thank you for telling us about the problem. To help you fast, please send:
 
 1. Your name and phone number
-2. Your purchase bill (or the project TOC, if applicable)
-3. The model and Serial Number (small metal plate on the tank)
-4. A photo or short video of the problem
+2. Your full address (where the unit is installed)
+3. Your purchase bill (or the project TOC, if applicable)
+4. The model and Serial Number (small metal plate on the tank)
+5. A photo or short video of the problem
 
 Thank you,
 [Your Name]</div>
@@ -1113,9 +1166,10 @@ Thank you,
         <div class="tpl-body">Hi [Customer Name] 👋 Sorry to hear about the problem! To help you fast, please send:
 
 1️⃣ Your name &amp; phone number
-2️⃣ Your bill (or project TOC)
-3️⃣ Model &amp; Serial Number (metal plate on the tank)
-4️⃣ Photo/video of the problem
+2️⃣ Your full address (where the unit is installed)
+3️⃣ Your bill (or project TOC)
+4️⃣ Model &amp; Serial Number (metal plate on the tank)
+5️⃣ Photo/video of the problem
 
 Thank you! 🙏</div>
       </div>
@@ -1130,11 +1184,9 @@ Hi [Customer Name / Team],
 Thank you for the information. We still need: [write only what is missing]
 
 - Completed Warranty Claim Request form (Sadara/contractor only)
-- Serial Number / photo of model + serial number label
+- Photo of the serial number sticker
 - Purchase bill or project TOC
-- Photo/video of the problem
-- Google Maps site pin + access instructions (Sadara/contractor only)
-- Site contact name + mobile number (Sadara/contractor only)
+- Photos/videos of the problem
 
 Thank you,
 [Your Name]</div>
@@ -1144,11 +1196,9 @@ Thank you,
         <div class="tpl-body">Hi [Customer Name], thank you! We still need this: [write only what is missing]
 
 📌 Completed Warranty Claim Request form (Sadara/contractor only)
-📌 Serial Number / photo of model + serial number label
+📌 Photo of the serial number sticker
 📌 Purchase bill or project TOC
-📌 Photo/video of problem
-📌 Google Maps site pin + access instructions (Sadara/contractor only)
-📌 Site contact name + mobile (Sadara/contractor only)</div>
+📌 Photos/videos of the problem</div>
       </div>
 
       <p class="lead searchable"><b>Message D — Good News — Under Warranty</b></p>
