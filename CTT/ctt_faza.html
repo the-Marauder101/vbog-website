@@ -35,6 +35,10 @@
     margin: 10px 0 0; padding: 8px 14px; font-size: 13px; font-weight: 600;
     color: #fff; background: #CC1015; line-height: 1.5;
   }
+  .highlight-brand {
+    background: #fff; color: #CC1015; padding: 1px 6px; font-weight: 800;
+    font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
   .header-logo { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
   .header-logo img { height: 40px; width: auto; display: block; }
 
@@ -155,6 +159,7 @@
   .unit-config-group .unit-sublabel { margin: 0 0 6px; }
   .unit-wireframe { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; padding: 12px; border: 1px solid var(--hairline); background: var(--soft); }
   .unit-wireframe svg { width: 60px; height: 60px; flex-shrink: 0; color: var(--black); }
+  .unit-wireframe-logo { height: 28px; width: auto; flex-shrink: 0; }
   .unit-wireframe-label { font-size: 12px; color: var(--muted); line-height: 1.4; }
 
   .summary { border: 1px solid var(--line); padding: 28px; position: sticky; top: 24px; }
@@ -385,7 +390,7 @@
   <div class="header-inner">
     <div class="header-text">
       <h1>CTT Water Heater Installation Quote</h1>
-      <div class="header-disclaimer">Internal use only. This calculator is for Atlantic water heater quotes only. Not for use with Aristo, Milano, or any other brand.</div>
+      <div class="header-disclaimer">Internal use only. This calculator is for <span class="highlight-brand">Atlantic</span> water heater quotes only. Not for use with Aristo, Milano, or any other brand.</div>
     </div>
     <div class="header-logo">
       <img src="https://www.cheqpoint.com/images/logo.png" alt="Cheqpoint Tech Trading LLC">
@@ -900,7 +905,7 @@ function buildUnitDetails() {
 
     const wireframe = document.createElement("div");
     wireframe.className = "unit-wireframe";
-    wireframe.innerHTML = wireframeSVG(u.orientation) + `<span class="unit-wireframe-label">${wireframeDesc(u.orientation)}</span>`;
+    wireframe.innerHTML = wireframeSVG(u.orientation) + `<img class="unit-wireframe-logo" src="https://www.groupe-atlantic.fr/app/uploads/2026/05/Group.png" alt="Atlantic">` + `<span class="unit-wireframe-label">${wireframeDesc(u.orientation)}</span>`;
     card.appendChild(wireframe);
 
     const ceilOpts = PRICING.falseCeiling.map((c, ci) => `<option value="${ci}"${u.ceilingIdx === ci ? " selected" : ""}>${c.label} cm — ${fmt(c.price)}</option>`).join("");
