@@ -823,35 +823,47 @@ const PRICING = {
 
   sizesByOrientation: {
     horizontal: [
-      { label: "50 L",  litres: 50,  price: 420,  installPerUnit: 300 },
-      { label: "80 L",  litres: 80,  price: 460,  installPerUnit: 300 },
-      { label: "100 L", litres: 100, price: 550,  installPerUnit: 300 },
-      { label: "200 L", litres: 200, price: 2300, installPerUnit: 600 }
+      { label: "50 L",  litres: 50,  price: 420  },
+      { label: "80 L",  litres: 80,  price: 460  },
+      { label: "100 L", litres: 100, price: 550  },
+      { label: "200 L", litres: 200, price: 2300 }
     ],
     vertical: [
-      { label: "30 L",             litres: 30,  price: 355,  installPerUnit: 300  },
-      { label: "50 L",             litres: 50,  price: 380,  installPerUnit: 300  },
-      { label: "80 L",             litres: 80,  price: 415,  installPerUnit: 300  },
-      { label: "100 L",            litres: 100, price: 515,  installPerUnit: 300  },
-      { label: "150 L",            litres: 150, price: 1500, installPerUnit: 300  },
-      { label: "150 L Wall Mount", litres: 150, price: null, installPerUnit: 300  },
-      { label: "200 L Wall Mount", litres: 200, price: 2200, installPerUnit: 600  },
-      { label: "200 L Stab Floor", litres: 200, price: 2350, installPerUnit: 600  },
-      { label: "300 L",            litres: 300, price: 3300, installPerUnit: 1000 },
-      { label: "500 L",            litres: 500, price: 6000, installPerUnit: 1500 }
+      { label: "30 L",             litres: 30,  price: 355  },
+      { label: "50 L",             litres: 50,  price: 380  },
+      { label: "80 L",             litres: 80,  price: 415  },
+      { label: "100 L",            litres: 100, price: 515  },
+      { label: "150 L",            litres: 150, price: 1500 },
+      { label: "150 L Wall Mount", litres: 150, price: null },
+      { label: "200 L Wall Mount", litres: 200, price: 2200 },
+      { label: "200 L Stab Floor", litres: 200, price: 2350 },
+      { label: "300 L",            litres: 300, price: 3300 },
+      { label: "500 L",            litres: 500, price: 6000 }
     ]
   },
 
+  /* Heater installation rate (ex VAT) by unit-size bucket x city.
+     Applies to both Reinstallation and New Installation pathways.
+     Anchoring is added separately (New Installation only). */
+  installMatrix: {
+    //           Dubai  Shj/Ajm  UAQ    RAK    Fujairah  AlAin  AbuDhabi  Liwa/Ruwais
+    upTo50:   { dubai: 640,  shjAjm: 633,  uaq: 661,  rak: 683,  fujairah: 718,  alAin: 740,  abuDhabi: 761,  liwa: 1040 },
+    s80:      { dubai: 730,  shjAjm: 723,  uaq: 751,  rak: 773,  fujairah: 809,  alAin: 830,  abuDhabi: 851,  liwa: 1130 },
+    s100_150: { dubai: 865,  shjAjm: 858,  uaq: 886,  rak: 908,  fujairah: 943,  alAin: 965,  abuDhabi: 986,  liwa: 1265 },
+    s200:     { dubai: 1200, shjAjm: 1193, uaq: 1221, rak: 1243, fujairah: 1278, alAin: 1300, abuDhabi: 1321, liwa: 1600 },
+    s300plus: { dubai: 1470, shjAjm: 1463, uaq: 1491, rak: 1513, fujairah: 1548, alAin: 1570, abuDhabi: 1591, liwa: 1870 }
+  },
+
   locations: [
-    { label: "Dubai",          callOutStdExVAT: 700  },
-    { label: "Sharjah",        callOutStdExVAT: 650  },
-    { label: "Ajman",          callOutStdExVAT: 675  },
-    { label: "Umm Al Quwain",  callOutStdExVAT: 850  },
-    { label: "Abu Dhabi",      callOutStdExVAT: 1550 },
-    { label: "Ras Al Khaimah", callOutStdExVAT: 1000 },
-    { label: "Fujairah",       callOutStdExVAT: 1250 },
-    { label: "Al Ain",         callOutStdExVAT: 1400 },
-    { label: "Liwa / Ruwais",  callOutStdExVAT: 3500 }
+    { label: "Dubai",          installCol: "dubai",    callOutStdExVAT: 700  },
+    { label: "Sharjah",        installCol: "shjAjm",   callOutStdExVAT: 650  },
+    { label: "Ajman",          installCol: "shjAjm",   callOutStdExVAT: 675  },
+    { label: "Umm Al Quwain",  installCol: "uaq",      callOutStdExVAT: 850  },
+    { label: "Abu Dhabi",      installCol: "abuDhabi", callOutStdExVAT: 1550 },
+    { label: "Ras Al Khaimah", installCol: "rak",      callOutStdExVAT: 1000 },
+    { label: "Fujairah",       installCol: "fujairah", callOutStdExVAT: 1250 },
+    { label: "Al Ain",         installCol: "alAin",    callOutStdExVAT: 1400 },
+    { label: "Liwa / Ruwais",  installCol: "liwa",     callOutStdExVAT: 3500 }
   ],
 
   falseCeiling: [
@@ -1284,6 +1296,18 @@ function calcPipingCost(pipeSizeIdx, meters) {
   const extraMeters = Math.max(0, meters - PRICING.piping.laborFreeMeters);
   return meters * ps.pricePerMeter + Math.ceil(extraMeters / 2) * PRICING.piping.laborPer2Meters;
 }
+function installBucketKey(litres) {
+  if (litres <= 50)  return "upTo50";
+  if (litres <= 80)  return "s80";
+  if (litres <= 150) return "s100_150";
+  if (litres <= 200) return "s200";
+  return "s300plus";
+}
+function installUnitPrice(size) {
+  const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
+  const row = PRICING.installMatrix[installBucketKey(size.litres)];
+  return row[loc.installCol];
+}
 function calcCallOutExVat() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
   const type = getCallOut();
@@ -1364,19 +1388,20 @@ function recalc() {
 
       const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
       let heaterTotal = 0, installTotal = 0;
-      unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; heaterTotal += (s.price || 0); installTotal += s.installPerUnit; });
+      unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; heaterTotal += (s.price || 0); installTotal += installUnitPrice(s); });
 
+      const locLabel = (PRICING.locations[Number(el.location.value)] || PRICING.locations[0]).label;
       if (allSame && qty > 0) {
         const s = sizes[unitStates[0].sizeIdx] || sizes[0];
         const tbd = (s.price == null) ? " \u00b7 price TBD" : "";
         html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} \u00b7 ${orientLabel} \u00d7 ${qty}${tbd}`, heaterTotal);
-        html += lineHTML("Installation", `${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(s.installPerUnit)}`, installTotal);
+        html += lineHTML("Installation", `${locLabel} \u00b7 ${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(installUnitPrice(s))}`, installTotal);
       } else {
         for (let i = 0; i < qty; i++) {
           const s = sizes[unitStates[i].sizeIdx] || sizes[0];
           const tbd = (s.price == null) ? " \u00b7 price TBD" : "";
           html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} \u00b7 ${orientLabel}${tbd}`, (s.price || 0));
-          html += lineHTML(`Installation (Unit ${i + 1})`, fmt(s.installPerUnit) + " / unit", s.installPerUnit);
+          html += lineHTML(`Installation (Unit ${i + 1})`, `${locLabel} \u00b7 ${fmt(installUnitPrice(s))} / unit`, installUnitPrice(s));
         }
       }
 
