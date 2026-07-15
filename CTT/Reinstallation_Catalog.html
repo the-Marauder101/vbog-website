@@ -367,6 +367,31 @@
 
     .qp-price-note { font-size: 8.5pt; color: #555; margin-top: 8pt; line-height: 1.5; font-style: italic; }
 
+    .qp-contact-note { font-size: 8pt; color: #333; margin-top: 8pt; line-height: 1.5; font-style: italic; }
+
+    .qp-warranty-text { font-size: 8.5pt; color: #000; line-height: 1.6; margin-bottom: 9pt; }
+    .qp-warranty-text ol { margin: 3pt 0 0 16pt; padding: 0; }
+    .qp-warranty-text ol li { margin-bottom: 2pt; }
+
+    .qp-amc-upsell {
+      font-size: 8.5pt; color: #333; line-height: 1.6;
+      padding: 6pt 10pt; border-left: 2pt solid #CC1015;
+      background: #fff9f9 !important; margin-bottom: 9pt;
+    }
+
+    .qp-payment {
+      margin-top: 14pt; padding: 8pt 10pt;
+      border: 0.5pt solid #ccc; background: #fafafa !important;
+      font-size: 8.5pt; line-height: 1.7;
+    }
+    .qp-payment-title {
+      font-size: 9pt; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: #CC1015; margin-bottom: 4pt;
+    }
+    .qp-payment table { border-collapse: collapse; width: 100%; }
+    .qp-payment td { padding: 1pt 6pt; font-size: 8.5pt; vertical-align: top; }
+    .qp-payment td:first-child { font-weight: 700; white-space: nowrap; width: 28%; }
+
     @page { margin: 14mm 18mm; size: A4 portrait; }
   }
 
@@ -614,7 +639,7 @@
       </div>
       <div class="field">
         <label>Heat Pump Spare Parts</label>
-        <p class="hint">Use &minus;&thinsp;/&thinsp;+ to set quantities. Prices are ex VAT.</p>
+        <p class="hint">Use &minus;&thinsp;/&thinsp;+ to set quantities. Line items are shown ex VAT; 5% VAT is added at the total.</p>
         <div id="heatPumpList" class="spare-list"></div>
       </div>
     </div>
@@ -637,7 +662,8 @@
       <span aria-hidden="true">&rarr;</span>
     </button>
 
-    <p class="note">This is an estimate. Final quote may vary based on site conditions.</p>
+    <p class="note">Grand Total is inclusive of 5% VAT.</p>
+    <p class="note">This is an estimate. Prices are indicative; final pricing will be confirmed after a site visit.</p>
 
     <button type="button" class="btn btn-outline" id="confirm">Confirm</button>
     <button type="button" class="btn btn-fill" id="btnPrint">&#128438;&ensp;Print / Save as PDF</button>
@@ -704,7 +730,7 @@
       <tr><td>Exclusions</td><td>Please refer below.</td></tr>
     </table>
 
-    <p class="qp-vat-note"><strong>Note:</strong> All given prices are exclusive and not limited to any VAT / special / corporate / commercial taxes and levies, and this amount needs to be added separately at actual as per UAE law and factored in by the buyer. The above figure should be considered as the net amount after deducting all relevant taxes, levies etc.</p>
+    <p class="qp-vat-note"><strong>Note:</strong> All prices quoted herein are inclusive of 5% VAT as per UAE law. Prices are indicative; final pricing will be confirmed after a site visit.</p>
 
     <div class="qp-sig">
       <img id="qpSigImg" class="qp-sig-img" src="" alt="Signature">
@@ -721,6 +747,21 @@
     <!-- Additional Terms -->
     <div class="qp-sec-hdr">Additional Terms</div>
     <table class="qp-lst" id="qpTermsTable"></table>
+
+    <p class="qp-contact-note">For any queries, concerns, or escalations, please contact Cheqpoint Tech Trading LLC at +971 4 3209310.</p>
+
+    <div class="qp-sec-hdr">Workmanship Warranty</div>
+    <div class="qp-warranty-text">
+      Cheqpoint Tech Trading LLC is pleased to provide a one-year workmanship warranty on the installation. This warranty does not cover:
+      <ol>
+        <li>False ceiling works performed by Cheqpoint or any other contractor.</li>
+        <li>Failure of pipes, connectors, valves, or similar components.</li>
+      </ol>
+    </div>
+
+    <div class="qp-amc-upsell">
+      <strong>Annual Maintenance:</strong> To maintain the manufacturer warranty provided by Atlantic, servicing is recommended at least once every two years. Annual Maintenance Contracts start at AED&nbsp;199. Contact +971 4 3209310 for details.
+    </div>
 
     <div class="qp-foot">
       Note: We also provide after-sales services such as maintenance, testing and commissioning for all supplied equipment.<br>
@@ -754,6 +795,18 @@
     </table>
 
     <p class="qp-price-note" id="qpPriceNote"></p>
+
+    <div class="qp-payment">
+      <div class="qp-payment-title">Remittance Information</div>
+      <p style="margin:0 0 4pt; font-size:8pt; color:#555;">Please remit payment to the following account:</p>
+      <table>
+        <tr><td>Company Name:</td><td>CHEQPOINT TECH TRADING LLC</td></tr>
+        <tr><td>Bank:</td><td>NATIONAL BANK OF RAS AL KHAIMAH (RAKBANK)</td></tr>
+        <tr><td>Account / IBAN:</td><td>AE970400000003292688001</td></tr>
+        <tr><td>SWIFT Code:</td><td>NRAKAEAK</td></tr>
+        <tr><td>Branch:</td><td>MAKTOUM ST, DUBAI</td></tr>
+      </table>
+    </div>
 
     <div class="qp-foot" style="margin-top:18pt">
       Cheqpoint Tech Trading LLC &nbsp;&bull;&nbsp; P.O. Box 25236, Dubai, U.A.E. &nbsp;&bull;&nbsp; Tel: +971 4 3209310 &nbsp;&bull;&nbsp; www.cheqpoint.com
@@ -868,11 +921,15 @@ const PRICING = {
 
   falseCeiling: [
     { label: "40 \u00d7 40",   price: 600  },
+    { label: "60 \u00d7 60",   price: 800  },
     { label: "80 \u00d7 80",   price: 1200 },
     { label: "120 \u00d7 120", price: 1800 },
     { label: "160 \u00d7 160", price: 2400 },
-    { label: "200 \u00d7 200", price: 3000 }
+    { label: "200 \u00d7 200", price: 3000 },
+    { label: "Custom",         price: 0, custom: true }
   ],
+
+  amcRates: { upTo100: 189.52, above100: 284.76 }, /* ex VAT; incl-VAT = 199 / 299 */
 
   flexibleConnectorsPrice: 85,
   pipeSizes: [ { label: '1/2"', pricePerMeter: 6.3 }, { label: '3/4"', pricePerMeter: 10.14 } ],
@@ -883,20 +940,21 @@ const PRICING = {
 
   repair: { laborExVAT: 350 },
 
+  /* Prices are ex VAT (stored = incl-VAT / 1.05); 5% VAT is added at the total. */
   heaterSpareParts: [
-    { group: "Heating Elements", code: "",       label: "Heating Element 0.8 kW",                price: 132.00, mounts: ["horizontal"] },
-    { group: "Heating Elements", code: "",       label: "Heating Element 1.2 kW",                price: 136.50, mounts: ["horizontal"] },
-    { group: "Heating Elements", code: "",       label: "Heating Element 1.5 kW",                price: 206.00, mounts: ["horizontal","wallmount","floor"] },
-    { group: "Heating Elements", code: "030238", label: "Heating Element 2.2 kW (Horizontal)",   price: 361.00, mounts: ["horizontal"] },
-    { group: "Heating Elements", code: "060187", label: "Heating Element 2.2 kW (Wall-mounted)", price: 361.00, mounts: ["wallmount"] },
-    { group: "Heating Elements", code: "099007", label: "Heating Element 3 kW (Floor-standing)", price: 499.00, mounts: ["floor"] },
-    { group: "Thermostats", code: "",       label: "Thermostat \u2014 White Body, Blue Handle",  price: 80.00,  mounts: ["all"] },
-    { group: "Thermostats", code: "",       label: "Thermostat \u2014 Brown Body, Red Handle",   price: 100.00, mounts: ["all"] },
+    { group: "Heating Elements", code: "",       label: "Heating Element 0.8 kW",                price: 125.71, mounts: ["horizontal"] },
+    { group: "Heating Elements", code: "",       label: "Heating Element 1.2 kW",                price: 130.00, mounts: ["horizontal"] },
+    { group: "Heating Elements", code: "",       label: "Heating Element 1.5 kW",                price: 124.76, mounts: ["horizontal","wallmount","floor"] },
+    { group: "Heating Elements", code: "030238", label: "Heating Element 2.2 kW (Horizontal)",   price: 274.29, mounts: ["horizontal"] },
+    { group: "Heating Elements", code: "060187", label: "Heating Element 2.2 kW (Wall-mounted)", price: 274.29, mounts: ["wallmount"] },
+    { group: "Heating Elements", code: "099007", label: "Heating Element 3 kW (Floor-standing)", price: 475.24, mounts: ["floor"] },
+    { group: "Thermostats", code: "70070",  label: "Thermostat \u2014 White Body, Blue Handle",  price: 76.19,  mounts: ["all"] },
+    { group: "Thermostats", code: "",       label: "Thermostat \u2014 Brown Body, Red Handle",   price: 95.24,  mounts: ["all"] },
     { group: "Thermostats", code: "029577", label: "Thermostat \u2014 White Body, Green Handle", price: null,   mounts: ["all"] },
-    { group: "Valves & Unions", code: "",       label: '1/2" Safety Valve',      price: 68.00, mounts: ["all"] },
-    { group: "Valves & Unions", code: "029518", label: '3/4" Safety Valve',      price: null,  mounts: ["all"] },
-    { group: "Valves & Unions", code: "029019", label: '1/2" Dielectric Union',  price: null,  mounts: ["all"] },
-    { group: "Valves & Unions", code: "026051", label: '3/4" Dielectric Union',  price: null,  mounts: ["all"] },
+    { group: "Valves & Unions", code: "",       label: '1/2" Safety Valve',              price: 66.67, mounts: ["all"] },
+    { group: "Valves & Unions", code: "029518", label: '3/4" Safety Valve',              price: null,  mounts: ["all"] },
+    { group: "Valves & Unions", code: "029019", label: '1/2" Dielectric Union (Plastic)', price: 7.62, mounts: ["all"] },
+    { group: "Valves & Unions", code: "026051", label: '3/4" Dielectric Union',          price: null,  mounts: ["all"] },
     { group: "Other", code: "021088", label: "Indicator Light", price: null, mounts: ["all"] }
   ],
 
@@ -991,7 +1049,11 @@ const EXCLUSIONS_MASTER = [
   "Extension of warranty.",
   "Any special documentation and/or testing.",
   "Any welding / repair works.",
-  "Restoration of storage tank condition."
+  "Restoration of storage tank condition.",
+  "Civil works, core drilling, major piping rerouting, waterproofing, ceiling reconstruction.",
+  "Electrical DB modifications, new cabling runs, panel upgrades beyond basic reconnection.",
+  "Corroded/broken valves, seized fittings, unsafe installations requiring rework (quoted on site).",
+  "Confined space permits, crane/hoist requirements, special access equipment."
 ];
 
 /* =========================================================
@@ -1091,7 +1153,7 @@ let heaterSpareQty = {};
 let heatPumpSpareQty = { calypso: {}, explorer: {} };
 
 function defaultUnitState() {
-  return { sizeIdx: Number(el.size.value) || 0, ceilingNeeded: false, ceilingIdx: 0, connectors: "no", isolValveIdx: 0, angleValveIdx: 0, piping: false, pipeSizeIdx: 0, pipeMeters: 1 };
+  return { sizeIdx: Number(el.size.value) || 0, ceilingNeeded: false, ceilingIdx: 0, customCeilingLabel: "", customCeilingPrice: null, customHeaterPrice: null, connectors: "no", isolValveIdx: 0, angleValveIdx: 0, piping: false, pipeSizeIdx: 0, pipeMeters: 1, amcNeeded: false, craneRequired: false };
 }
 function defaultRepairUnitState() { return { mount: "horizontal", partQty: {} }; }
 function syncUnitStates(qty)       { while (unitStates.length < qty) unitStates.push(defaultUnitState()); unitStates.length = qty; }
@@ -1187,7 +1249,16 @@ function buildUnitDetails() {
     hdr.innerHTML = `<span class="unit-card-num">Unit ${i + 1}</span><select class="unit-size-sel" data-unit="${i}" aria-label="Capacity for unit ${i + 1}">${sizeOpts}</select>`;
     card.appendChild(hdr);
 
-    const ceilOpts = PRICING.falseCeiling.map((c, ci) => `<option value="${ci}"${u.ceilingIdx === ci ? " selected" : ""}>${c.label} cm</option>`).join("");
+    const heaterPriceField = document.createElement("div");
+    heaterPriceField.className = "unit-field";
+    heaterPriceField.innerHTML =
+      `<label class="unit-label" for="u-heater-price-${i}">Water Heater Price <span class="unit-sublabel" style="display:inline; margin:0; text-transform:none; letter-spacing:normal;">— override (ex VAT)</span></label>` +
+      `<input type="number" id="u-heater-price-${i}" class="u-heater-price" data-unit="${i}" min="0" step="0.01" placeholder="Default: ${size.price == null ? "price on request" : fmt(size.price)}" value="${u.customHeaterPrice == null ? "" : u.customHeaterPrice}">` +
+      `<p class="disclaimer">Leave blank to use the catalogue price. Enter an amount to override the heater price for this unit.</p>`;
+    card.appendChild(heaterPriceField);
+
+    const ceilIsCustom = !!(PRICING.falseCeiling[u.ceilingIdx] || {}).custom;
+    const ceilOpts = PRICING.falseCeiling.map((c, ci) => `<option value="${ci}"${u.ceilingIdx === ci ? " selected" : ""}>${c.custom ? c.label + "…" : c.label + " cm"}</option>`).join("");
     const ceilField = document.createElement("div");
     ceilField.className = "unit-field";
     ceilField.innerHTML =
@@ -1195,8 +1266,10 @@ function buildUnitDetails() {
       `<div class="checks"><label class="check"><input type="checkbox" class="u-ceil-chk" data-unit="${i}"${u.ceilingNeeded ? " checked" : ""}>` +
       `<span class="box" aria-hidden="true"></span><span>False ceiling modification needed?</span></label></div>` +
       `<details class="info"><summary>What's included</summary><p>Cutting the false ceiling, fixing it back, applying putty, applying paint, and providing an access panel where necessary.</p></details>` +
-      `<p class="disclaimer">If false-ceiling work is found necessary on site and not selected here, it will be charged separately.</p>` +
-      `<div class="subblock u-ceil-block"${u.ceilingNeeded ? "" : " hidden"}><span class="unit-sublabel">Panel size</span><select class="u-ceil-sel" data-unit="${i}">${ceilOpts}</select></div>`;
+      `<p class="disclaimer">False ceiling charges are indicative only. If false-ceiling work is found necessary on site and not selected here, it will be charged separately. Final charges will be informed after a site visit.</p>` +
+      `<div class="subblock u-ceil-block"${u.ceilingNeeded ? "" : " hidden"}><span class="unit-sublabel">Panel size</span><select class="u-ceil-sel" data-unit="${i}">${ceilOpts}</select>` +
+      `<div class="u-ceil-custom"${ceilIsCustom ? "" : " hidden"}><span class="unit-sublabel">Custom size</span><input type="text" class="u-ceil-clabel" data-unit="${i}" placeholder="e.g. 100 × 60" value="${u.customCeilingLabel || ""}">` +
+      `<span class="unit-sublabel">Custom price (ex VAT)</span><input type="number" class="u-ceil-cprice" data-unit="${i}" min="0" step="0.01" placeholder="0.00" value="${u.customCeilingPrice == null ? "" : u.customCeilingPrice}"></div></div>`;
     card.appendChild(ceilField);
 
     const connField = document.createElement("div");
@@ -1225,6 +1298,27 @@ function buildUnitDetails() {
       `<div class="subblock u-pipe-block"${u.piping ? "" : " hidden"}><span class="unit-sublabel">Pipe size</span><select class="u-pipe-size-sel" data-unit="${i}">${pipeSizeOpts}</select>` +
       `<span class="unit-sublabel">Length (meters)</span><input type="number" class="u-pipe-len" data-unit="${i}" min="1" step="1" value="${u.pipeMeters}"></div>`;
     card.appendChild(pipeField);
+
+    const amcPrice = getAmcPrice(size.litres);
+    const amcField = document.createElement("div");
+    amcField.className = "unit-field";
+    amcField.innerHTML =
+      `<label class="unit-label">Annual Maintenance Contract (AMC)</label>` +
+      `<div class="checks"><label class="check"><input type="checkbox" class="u-amc-chk" data-unit="${i}"${u.amcNeeded ? " checked" : ""}>` +
+      `<span class="box" aria-hidden="true"></span><span>Include AMC — ${fmt(amcPrice * (1 + VAT))} per unit (incl. VAT)</span></label></div>` +
+      `<details class="info"><summary>What's covered</summary><p>Cleaning, draining, and servicing of the water heater. Anode replacement (if depleted) is a consumable item charged separately. Does not include spare parts — damaged or worn parts will be charged separately.</p></details>`;
+    card.appendChild(amcField);
+
+    const showCrane = size.litres >= 200;
+    u.craneRequired = showCrane ? u.craneRequired : false;
+    const craneField = document.createElement("div");
+    craneField.className = "unit-field";
+    craneField.hidden = !showCrane;
+    craneField.innerHTML =
+      `<label class="unit-label">Crane Required?</label>` +
+      `<div class="checks"><label class="check"><input type="checkbox" class="u-crane-chk" data-unit="${i}"${u.craneRequired ? " checked" : ""}${showCrane ? "" : " disabled"}>` +
+      `<span class="box" aria-hidden="true"></span><span>${showCrane ? "Crane required — price on request" : "Not applicable (under 200 L)"}</span></label></div>`;
+    card.appendChild(craneField);
 
     el.unitDetails.appendChild(card);
   }
@@ -1265,7 +1359,12 @@ function attachInstallListeners() {
   const q = (sel) => el.unitDetails.querySelectorAll(sel);
   q(".unit-size-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].sizeIdx = +e.target.value; buildUnitDetails(); recalc(); }));
   q(".u-ceil-chk").forEach((c) => c.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].ceilingNeeded = e.target.checked; e.target.closest(".unit-card").querySelector(".u-ceil-block").hidden = !e.target.checked; recalc(); }));
-  q(".u-ceil-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].ceilingIdx = +e.target.value; recalc(); }));
+  q(".u-ceil-sel").forEach((s) => s.addEventListener("change", (e) => { const i = +e.target.dataset.unit; unitStates[i].ceilingIdx = +e.target.value; const custom = !!(PRICING.falseCeiling[unitStates[i].ceilingIdx] || {}).custom; e.target.closest(".u-ceil-block").querySelector(".u-ceil-custom").hidden = !custom; recalc(); }));
+  q(".u-ceil-clabel").forEach((inp) => inp.addEventListener("input", (e) => { unitStates[+e.target.dataset.unit].customCeilingLabel = e.target.value; recalc(); }));
+  q(".u-ceil-cprice").forEach((inp) => inp.addEventListener("input", (e) => { unitStates[+e.target.dataset.unit].customCeilingPrice = e.target.value === "" ? null : Number(e.target.value); recalc(); }));
+  q(".u-heater-price").forEach((inp) => inp.addEventListener("input", (e) => { unitStates[+e.target.dataset.unit].customHeaterPrice = e.target.value === "" ? null : Number(e.target.value); recalc(); }));
+  q(".u-amc-chk").forEach((c) => c.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].amcNeeded = e.target.checked; recalc(); }));
+  q(".u-crane-chk").forEach((c) => c.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].craneRequired = e.target.checked; recalc(); }));
   q(".u-conn-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].connectors = e.target.value; recalc(); }));
   q(".u-isol-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].isolValveIdx = +e.target.value; recalc(); }));
   q(".u-angle-sel").forEach((s) => s.addEventListener("change", (e) => { unitStates[+e.target.dataset.unit].angleValveIdx = +e.target.value; recalc(); }));
@@ -1307,6 +1406,21 @@ function installUnitPrice(size) {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
   const row = PRICING.installMatrix[installBucketKey(size.litres)];
   return row[loc.installCol];
+}
+/* AMC rate (ex VAT) by capacity. */
+function getAmcPrice(litres) {
+  return litres <= 100 ? PRICING.amcRates.upTo100 : PRICING.amcRates.above100;
+}
+/* Effective ceiling {label, price} for a unit, honouring the Custom option. */
+function ceilingChoice(u) {
+  const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0];
+  if (c.custom) return { label: (u.customCeilingLabel || "Custom").trim(), price: Number(u.customCeilingPrice) || 0 };
+  return { label: c.label + " cm", price: c.price };
+}
+/* Effective water-heater price for a unit (custom override wins). */
+function heaterUnitPrice(u, size) {
+  if (u.customHeaterPrice != null && u.customHeaterPrice !== "" && !isNaN(u.customHeaterPrice)) return Number(u.customHeaterPrice);
+  return size.price || 0;
 }
 function calcCallOutExVat() {
   const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
@@ -1379,28 +1493,33 @@ function recalc() {
       }
 
     } else {
-      withVat = false;
+      withVat = true;
       const sizes = currentSizes();
       const qty = getQty();
       const pathwayObj = PRICING.pathways[pathway];
       const orientLabel = getOrientation() === "vertical" ? "Vertical" : "Horizontal";
       syncUnitStates(qty);
 
-      const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => u.sizeIdx === unitStates[0].sizeIdx);
+      const sameKey = (u) => u.sizeIdx + "|" + (u.customHeaterPrice == null ? "" : u.customHeaterPrice);
+      const allSame = qty === 0 || unitStates.slice(0, qty).every((u) => sameKey(u) === sameKey(unitStates[0]));
       let heaterTotal = 0, installTotal = 0;
-      unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; heaterTotal += (s.price || 0); installTotal += installUnitPrice(s); });
+      unitStates.slice(0, qty).forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; heaterTotal += heaterUnitPrice(u, s); installTotal += installUnitPrice(s); });
 
       const locLabel = (PRICING.locations[Number(el.location.value)] || PRICING.locations[0]).label;
       if (allSame && qty > 0) {
-        const s = sizes[unitStates[0].sizeIdx] || sizes[0];
-        const tbd = (s.price == null) ? " \u00b7 price TBD" : "";
+        const u0 = unitStates[0];
+        const s = sizes[u0.sizeIdx] || sizes[0];
+        const custom = (u0.customHeaterPrice != null && u0.customHeaterPrice !== "");
+        const tbd = (!custom && s.price == null) ? " \u00b7 price TBD" : (custom ? " \u00b7 custom price" : "");
         html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} \u00b7 ${orientLabel} \u00d7 ${qty}${tbd}`, heaterTotal);
         html += lineHTML("Installation", `${locLabel} \u00b7 ${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(installUnitPrice(s))}`, installTotal);
       } else {
         for (let i = 0; i < qty; i++) {
-          const s = sizes[unitStates[i].sizeIdx] || sizes[0];
-          const tbd = (s.price == null) ? " \u00b7 price TBD" : "";
-          html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} \u00b7 ${orientLabel}${tbd}`, (s.price || 0));
+          const u = unitStates[i];
+          const s = sizes[u.sizeIdx] || sizes[0];
+          const custom = (u.customHeaterPrice != null && u.customHeaterPrice !== "");
+          const tbd = (!custom && s.price == null) ? " \u00b7 price TBD" : (custom ? " \u00b7 custom price" : "");
+          html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} \u00b7 ${orientLabel}${tbd}`, heaterUnitPrice(u, s));
           html += lineHTML(`Installation (Unit ${i + 1})`, `${locLabel} \u00b7 ${fmt(installUnitPrice(s))} / unit`, installUnitPrice(s));
         }
       }
@@ -1409,12 +1528,13 @@ function recalc() {
       if (anchoringTotal > 0) html += lineHTML("Anchoring", `${pathwayObj.label}${qty > 1 ? " \u00d7 " + qty : ""}`, anchoringTotal);
       subtotal = heaterTotal + installTotal + anchoringTotal;
 
+      let anyCeiling = false, anyCrane = false;
       for (let i = 0; i < qty; i++) {
         const u = unitStates[i];
         const size = sizes[u.sizeIdx] || sizes[0];
         const valvesOk = size.litres >= PRICING.valvesMinLitres;
         const tag = qty > 1 ? ` (Unit ${i + 1})` : "";
-        if (u.ceilingNeeded) { const c = PRICING.falseCeiling[u.ceilingIdx] || PRICING.falseCeiling[0]; html += lineHTML("False Ceiling" + tag, c.label + " cm", c.price); subtotal += c.price; }
+        if (u.ceilingNeeded) { const c = ceilingChoice(u); html += lineHTML("False Ceiling" + tag, c.label, c.price); subtotal += c.price; anyCeiling = true; }
         if (u.connectors === "yes") { html += lineHTML("Flexible Connectors" + tag, "", PRICING.flexibleConnectorsPrice); subtotal += PRICING.flexibleConnectorsPrice; }
         if (valvesOk) {
           const iv = PRICING.isolationValves[u.isolValveIdx] || PRICING.isolationValves[0];
@@ -1423,7 +1543,11 @@ function recalc() {
           if (av.price > 0) { html += lineHTML("Angle Valve" + tag, av.label, av.price); subtotal += av.price; }
         }
         if (u.piping) { const meters = Math.max(1, u.pipeMeters || 1); const ps = PRICING.pipeSizes[u.pipeSizeIdx] || PRICING.pipeSizes[0]; const cost = calcPipingCost(u.pipeSizeIdx, meters); html += lineHTML("Piping" + tag, `${ps.label} \u00b7 ${meters} m`, cost); subtotal += cost; }
+        if (u.amcNeeded) { const amc = getAmcPrice(size.litres); html += lineHTML("Annual Maintenance Contract" + tag, `${size.label} \u00b7 per unit`, amc); subtotal += amc; }
+        if (u.craneRequired && size.litres >= 200) anyCrane = true;
       }
+      if (anyCeiling) html += `<div class="line-note">False ceiling charges are indicative only. Final charges will be informed after a site visit.</div>`;
+      if (anyCrane) html += `<div class="line"><span class="desc">Crane Required<small>Price on request</small></span><span class="amt">\u2014</span></div>`;
     }
   }
 
@@ -1510,6 +1634,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.galle
 /* ===== Disclaimer ===== */
 const DISCLAIMER_MIN_LITRES = 200;
 function largestUnitLitres() { const sizes = currentSizes(); return unitStates.reduce((m, u) => Math.max(m, (sizes[u.sizeIdx] || sizes[0]).litres), 0); }
+function anyCraneRequired() { const sizes = currentSizes(); return unitStates.some((u) => u.craneRequired && (sizes[u.sizeIdx] || sizes[0]).litres >= 200); }
 function largestUnitLabel()  { const sizes = currentSizes(); let best = sizes[0]; unitStates.forEach((u) => { const s = sizes[u.sizeIdx] || sizes[0]; if (s.litres > best.litres) best = s; }); return best.label; }
 function openDisclaimer() {
   el.disclaimerText.textContent = "If the " + largestUnitLabel() + " unit needs to be lifted to an upper level, we want to make you aware that this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, by confirming this message, you acknowledge that CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and that any replacement unit, if required, will be chargeable separately.";
@@ -1582,7 +1707,7 @@ function getExclusionsList() {
 function buildAnnexureRows() {
   const breakdownLines = document.querySelectorAll("#breakdown .line");
   const totalLines     = document.querySelectorAll("#totalsBlock .line");
-  const withVat = isHeatPump() || getPathway() === "repair" || getPathway() === "spareParts";
+  const withVat = true; /* every pathway is quoted inclusive of 5% VAT */
 
   let rows = "";
 
@@ -1601,11 +1726,9 @@ function buildAnnexureRows() {
   });
 
   const grand = el.grandTotal.textContent;
-  rows += `<tr class="qp-grand"><td>GRAND TOTAL${withVat ? " (incl. VAT 5%)" : " (excl. VAT)"}</td><td class="qp-r">${grand}</td></tr>`;
+  rows += `<tr class="qp-grand"><td>GRAND TOTAL (incl. VAT 5%)</td><td class="qp-r">${grand}</td></tr>`;
 
-  const note = withVat
-    ? "VAT at 5% is included in the Grand Total above. A tax invoice will be issued upon confirmation of order."
-    : "Prices shown are exclusive of VAT. VAT at 5% will be applied on the tax invoice as per UAE law.";
+  const note = "All prices shown are inclusive of 5% VAT as per UAE law. Prices are indicative; final pricing will be confirmed after a site visit. A tax invoice will be issued upon confirmation of order.";
 
   return { rows, note };
 }
@@ -1652,8 +1775,15 @@ el.btnPrint.addEventListener("click", () => {
     .map((e, i) => `<tr><td class="qp-n">${i + 1}.</td><td>${e}</td></tr>`)
     .join("");
 
-  /* --- Additional Terms --- */
-  document.getElementById("qpTermsTable").innerHTML = ADDITIONAL_TERMS
+  /* --- Additional Terms (+ lifting/crane note for 200 L and above) --- */
+  const printTerms = ADDITIONAL_TERMS.slice();
+  const isInstallPathway = !isHeatPump() && (getPathway() === "reinstallation" || getPathway() === "newInstallation");
+  if (isInstallPathway && largestUnitLitres() >= 200) {
+    printTerms.push(anyCraneRequired()
+      ? "In the event of suitable space not being available for the crane to manoeuvre to the site, the team will attempt to manually lift the unit. This carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately."
+      : "For units 200 L and above — if the unit needs to be lifted to an upper level, this carries some physical risk during the lifting process. Our team will take all reasonable precautions. However, CTT shall not be held liable for any accidental damage to the unit or surrounding property during the lifting operation, and any replacement unit, if required, will be chargeable separately.");
+  }
+  document.getElementById("qpTermsTable").innerHTML = printTerms
     .map((t, i) => `<tr><td class="qp-n">${i + 1}.</td><td>${t}</td></tr>`)
     .join("");
 
