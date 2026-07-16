@@ -26,6 +26,8 @@
   let statusSource = "custom"; // "inherit" | "custom" (mirrors the p-statuses-src radios)
   let statusTagsDirty = false; // user touched chips this modal session
   let lastParentVal = ""; // previous #p-parent value, for unlink pre-fill
+  let opsStatusTags = []; // ops board columns (HR projects)
+  const DEFAULT_OPS_STATUSES = ["To Do", "In Progress", "Done"];
 
   const grid = document.getElementById("project-grid");
   const form = document.getElementById("project-form");
@@ -127,7 +129,7 @@
           <div class="accent-bar" style="background:${UI.esc(p.color || "#C3CAD5")}"></div>
           ${isExternal ? "" : `<button class="edit-btn" data-edit="${p.id}" title="Edit project" aria-label="Edit project">&#9998;</button>`}
           <div class="card-body">
-            <h3>${UI.esc(p.name)}${p.archived ? '<span class="archived-tag">Archived</span>' : ""}${parent ? `<span class="subclient-tag" title="Sub-client of ${UI.esc(parent.name)}">&#8627; ${UI.esc(parent.name)}</span>` : `<span class="project-type-tag ${p.type === 'client' ? 'client' : 'internal'}">${p.type === 'client' ? 'Client' : 'Internal'}</span>`}</h3>
+            <h3>${UI.esc(p.name)}${p.archived ? '<span class="archived-tag">Archived</span>' : ""}${parent ? `<span class="subclient-tag" title="Sub-client of ${UI.esc(parent.name)}">&#8627; ${UI.esc(parent.name)}</span>` : `<span class="project-type-tag ${(p.visibility || p.type) === 'client' ? 'client' : 'internal'}">${(p.visibility || p.type) === 'client' ? 'Client' : 'Internal'}</span>`}${p.type === 'hr' ? '<span class="project-type-tag hr">HR</span>' : ""}</h3>
             <div class="desc">${UI.esc(p.description || "")}</div>
             ${tagChips ? `<div class="card-tags">${tagChips}</div>` : ""}
             <div class="meta">
@@ -437,8 +439,22 @@
     document.getElementById("project-save").textContent = project ? "Save Changes" : "Create Project";
     document.getElementById("p-name").value = project ? project.name : "";
     document.getElementById("p-desc").value = project ? project.description || "" : "";
-    const typeVal = project?.type || "internal";
-    document.querySelectorAll('input[name="p-type"]').forEach((r) => { r.checked = r.value === typeVal; });
+    const visVal = project?.visibility || project?.type || "internal";
+    document.querySelectorAll('input[name="p-visibility"]').forEach((r) => { r.checked = r.value === visVal; });
+    const kindVal = project?.type === "hr" ? "hr" : "normal";
+    document.querySelectorAll('input[name="p-kind"]').forEach((r) => { r.checked = r.value === kindVal; });
+    // Feature toggles: HR defaults all ON, normal defaults all OFF
+    const feat = project?.features || {};
+    const isHr = kindVal === "hr";
+    document.getElementById("f-board-tabs").checked = feat.board_tabs ?? isHr;
+    document.getElementById("f-roles-card").checked = feat.roles_card ?? isHr;
+    document.getElementById("f-sla").checked = feat.sla ?? isHr;
+    document.getElementById("f-auto-date").checked = feat.auto_date ?? isHr;
+    document.getElementById("p-features-group").hidden = false;
+    // Ops statuses
+    opsStatusTags = project?.ops_statuses?.length ? [...project.ops_statuses] : [...DEFAULT_OPS_STATUSES];
+    renderOpsStatusTags();
+    syncKindVisibility();
     statusTags = project ? [...project.statuses] : [...DEFAULT_STATUSES];
     projectTags = project ? [...(project.tags || [])] : [];
     selectedColor = project?.color || SWATCH_COLORS[0];
@@ -499,8 +515,15 @@
       // as-is on edits, seeded from the parent on create (see ARCHITECTURE.md)
       statuses: inheritOn ? (editingProject ? editingProject.statuses : [...newEffective]) : statusTags,
       color: selectedColor,
-      type: document.querySelector('input[name="p-type"]:checked')?.value || "internal",
+      visibility: document.querySelector('input[name="p-visibility"]:checked')?.value || "internal",
+      type: document.querySelector('input[name="p-kind"]:checked')?.value || "normal",
       tags: projectTags,
+      features: {
+        board_tabs: document.getElementById("f-board-tabs").checked,
+        roles_card: document.getElementById("f-roles-card").checked,
+        sla: document.getElementById("f-sla").checked,
+        auto_date: document.getElementById("f-auto-date").checked,
+      },
     };
     // Only send parent_project_id once the 08 migration has added the column
     // (a POST with an unknown column would fail the whole save).
@@ -512,6 +535,8 @@
     }
     // Same guard for inherit_statuses (12_status_inheritance.sql)
     if (inheritColExists()) fields.inherit_statuses = inheritOn;
+    // Ops statuses for HR / board_tabs projects
+    if (fields.features.board_tabs) fields.ops_statuses = opsStatusTags;
 
     try {
       if (editingProject) {
@@ -578,6 +603,81 @@
       UI.toast(err.message);
     }
   });
+
+  // ---- Ops status tag editor (mirrors the main tag editor) ----
+  function renderOpsStatusTags() {
+    const editor = document.getElementById("ops-status-tags");
+    editor.querySelectorAll(".tag").forEach((t) => t.remove());
+    const input = document.getElementById("ops-status-input");
+    opsStatusTags.forEach((tag, i) => {
+      const el = document.createElement("span");
+      el.className = "tag";
+      el.draggable = true;
+      el.innerHTML = `${UI.esc(tag)}<button type="button" data-i="${i}" aria-label="Remove ${UI.esc(tag)}">&times;</button>`;
+      el.querySelector("button").addEventListener("click", () => {
+        opsStatusTags.splice(i, 1);
+        renderOpsStatusTags();
+      });
+      el.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", String(i));
+        e.dataTransfer.effectAllowed = "move";
+        el.classList.add("dragging");
+      });
+      el.addEventListener("dragend", () => el.classList.remove("dragging"));
+      el.addEventListener("dragover", (e) => e.preventDefault());
+      el.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const from = Number(e.dataTransfer.getData("text/plain"));
+        if (!Number.isInteger(from) || from === i) return;
+        const [moved] = opsStatusTags.splice(from, 1);
+        opsStatusTags.splice(i, 0, moved);
+        renderOpsStatusTags();
+      });
+      editor.insertBefore(el, input);
+    });
+  }
+
+  document.getElementById("ops-status-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const input = document.getElementById("ops-status-input");
+      const parts = input.value.split(",").map((s) => s.trim()).filter(Boolean);
+      for (const p of parts) {
+        if (!opsStatusTags.some((t) => t.toLowerCase() === p.toLowerCase())) {
+          opsStatusTags.push(p);
+        }
+      }
+      input.value = "";
+      renderOpsStatusTags();
+    } else if (e.key === "Backspace" && e.target.value === "" && opsStatusTags.length) {
+      opsStatusTags.pop();
+      renderOpsStatusTags();
+    }
+  });
+
+  // ---- Project kind (normal/hr) visibility sync ----
+  function syncKindVisibility() {
+    const kind = document.querySelector('input[name="p-kind"]:checked')?.value || "normal";
+    const isHr = kind === "hr";
+    document.getElementById("p-ops-statuses-group").hidden = !document.getElementById("f-board-tabs").checked;
+    // Relabel main statuses editor for HR projects
+    const statusLabel = document.querySelector("#p-statuses-group > label");
+    if (statusLabel) statusLabel.textContent = isHr ? "Hiring stages *" : "Status columns *";
+  }
+
+  document.querySelectorAll('input[name="p-kind"]').forEach((r) =>
+    r.addEventListener("change", () => {
+      const isHr = r.value === "hr" && r.checked;
+      document.getElementById("f-board-tabs").checked = isHr;
+      document.getElementById("f-roles-card").checked = isHr;
+      document.getElementById("f-sla").checked = isHr;
+      document.getElementById("f-auto-date").checked = isHr;
+      syncKindVisibility();
+    })
+  );
+
+  document.getElementById("f-board-tabs").addEventListener("change", syncKindVisibility);
 
   document.getElementById("new-project-btn").addEventListener("click", () => openProjectModal(null));
   document.getElementById("project-cancel").addEventListener("click", () => UI.closeModal("project-modal"));

@@ -39,6 +39,7 @@
           <div class="sub" id="board-desc"></div>
         </div>
         <div class="header-actions">
+          <button class="btn btn-secondary" id="sla-btn" hidden>&#9201; SLA Rules</button>
           <button class="btn btn-secondary" id="automations-btn" hidden>&#9889; Automations</button>
           <a href="vyom.html" class="btn btn-secondary">&larr; All projects</a>
         </div>
@@ -57,6 +58,24 @@
         <span class="filter-count" id="filter-count" hidden></span>
       </div>
     </div>
+    <!-- Board tabs (HR projects only) -->
+    <div id="board-tabs" class="board-tabs" hidden>
+      <button class="board-tab active" data-tab="hiring">Hiring</button>
+      <button class="board-tab" data-tab="ops">Ops</button>
+    </div>
+
+    <!-- Roles summary card (HR projects with roles_card feature) -->
+    <div id="hr-roles-card" class="hr-roles-card" hidden>
+      <div class="hr-roles-header">
+        <h3>Roles Summary</h3>
+        <div class="hr-roles-actions">
+          <button class="btn btn-secondary" id="hr-roles-add-col" style="padding:5px 10px;font-size:12px;">+ Column</button>
+          <button class="btn btn-primary" id="hr-roles-add-row" style="padding:5px 10px;font-size:12px;">+ Add Role</button>
+        </div>
+      </div>
+      <div class="hr-roles-body" id="hr-roles-table-wrap"></div>
+    </div>
+
     <div class="board-wrap">
       <div class="board" id="board"></div>
     </div>
@@ -174,13 +193,44 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=16"></script>
-  <script src="js/supabase.js?v=16"></script>
-  <script src="js/api.js?v=16"></script>
-  <script src="js/ui.js?v=16"></script>
-  <script src="js/auth.js?v=16"></script>
-  <script src="js/inbox.js?v=16"></script>
-  <script src="js/automations.js?v=16"></script>
-  <script src="js/board.js?v=16"></script>
+  <!-- SLA Rules modal (HR projects only) -->
+  <div class="modal-overlay" id="sla-modal">
+    <div class="modal" style="max-width: 560px;">
+      <h2>&#9201; SLA Rules</h2>
+      <p class="form-hint" style="margin-top:-6px;">
+        Rules for <strong id="sla-project-name"></strong> — when a candidate card stays in a status too long, it gets flagged.
+      </p>
+      <div id="sla-list"></div>
+      <form id="sla-form" novalidate style="margin-top:16px;border-top:1px solid var(--border, #e5e9f0);padding-top:16px;">
+        <h3 id="sla-form-title" style="margin:0 0 12px;font-size:15px;">New rule</h3>
+        <div class="form-group">
+          <label for="sla-status">When a card is in status…</label>
+          <select id="sla-status"></select>
+        </div>
+        <div class="form-group">
+          <label for="sla-days">…for more than (days)</label>
+          <input type="number" id="sla-days" min="1" value="2" style="width:100px;">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="sla-form-reset" hidden>Discard changes</button>
+          <div class="right">
+            <button type="button" class="btn btn-secondary" id="sla-close">Close</button>
+            <button type="submit" class="btn btn-primary" id="sla-save">Add Rule</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js?v=17"></script>
+  <script src="js/supabase.js?v=17"></script>
+  <script src="js/api.js?v=17"></script>
+  <script src="js/ui.js?v=17"></script>
+  <script src="js/auth.js?v=17"></script>
+  <script src="js/inbox.js?v=17"></script>
+  <script src="js/automations.js?v=17"></script>
+  <script src="js/hr-roles.js?v=17"></script>
+  <script src="js/hr-sla.js?v=17"></script>
+  <script src="js/board.js?v=17"></script>
 </body>
 </html>
