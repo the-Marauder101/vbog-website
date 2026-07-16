@@ -205,6 +205,7 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
 }
 .project-type-tag.internal { background: #F3F4F6; color: #6B7280; }
 .project-type-tag.client   { background: rgba(0, 180, 216, 0.12); color: #0891B2; }
+.project-type-tag.hr       { background: rgba(124, 58, 237, 0.12); color: #7C3AED; }
 .type-toggle { display: flex; gap: 12px; }
 .type-opt { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
 
@@ -1367,3 +1368,108 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
   cursor: pointer;
 }
 .sub-more:hover { background: rgba(0, 180, 216, 0.08); color: #0891B2; }
+
+/* ---------- Board tabs (HR projects) ---------- */
+.board-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 32px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.board-tab {
+  padding: 6px 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.board-tab:hover { background: var(--bg); color: var(--text); }
+.board-tab.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* ---------- HR Roles summary card ---------- */
+.hr-roles-card {
+  margin: 0 32px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+}
+.hr-roles-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.hr-roles-header h3 { font-size: 15px; font-weight: 700; }
+.hr-roles-actions { display: flex; gap: 6px; }
+.hr-roles-table-scroll { overflow-x: auto; }
+.hr-roles-table { width: 100%; }
+.hr-roles-table th {
+  position: relative;
+  white-space: nowrap;
+}
+.hr-roles-table th .col-remove-btn {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--muted);
+  opacity: 0;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: opacity 0.12s;
+}
+.hr-roles-table th:hover .col-remove-btn { opacity: 1; }
+.hr-roles-table th .col-remove-btn:hover { color: var(--danger); }
+.editable-cell {
+  cursor: text;
+  min-width: 80px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background 0.12s;
+}
+.editable-cell:hover { background: rgba(0, 180, 216, 0.06); }
+.editable-cell.editing { padding: 2px; }
+.cell-edit-input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1.5px solid var(--accent);
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+  background: var(--surface);
+}
+.row-actions { white-space: nowrap; }
+
+/* ---------- SLA indicators on task cards ---------- */
+.task-card.sla-warning {
+  border-left: 3px solid #F59E0B;
+}
+.task-card.sla-breach {
+  border-left: 3px solid var(--danger);
+  background: rgba(220, 38, 38, 0.04);
+}
+
+/* ---------- Feature toggles (project modal) ---------- */
+.feature-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+.feature-toggles .toggle-label {
+  font-size: 13.5px;
+}

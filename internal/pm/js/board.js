@@ -25,6 +25,7 @@
   let editingTask = null; // null = creating
   let deleteArmed = false;
   const filters = { assignee: "", client: "", due: "all", from: "", to: "" };
+  let activeTab = "hiring"; // "hiring" | "ops" (only matters for HR projects with board_tabs)
 
   if (!projectId) {
     window.location.replace("vyom.html");
@@ -92,6 +93,10 @@
           .catch(() => {});
       }
       if (typeof Automations !== "undefined") Automations.init(project, members);
+      // HR features
+      if (hasFeature("board_tabs")) initBoardTabs();
+      if (hasFeature("roles_card") && typeof HrRoles !== "undefined") HrRoles.init(project);
+      if (hasFeature("sla") && typeof HrSla !== "undefined") HrSla.init(project, members);
       initFilters();
       renderBoard();
       if (openTaskId) {
@@ -101,6 +106,48 @@
     } catch (e) {
       UI.toast(e.message);
     }
+  }
+
+  // ---- HR feature helpers ----
+  function hasFeature(key) {
+    if (!project) return false;
+    const feat = project.features;
+    if (feat && typeof feat === "object" && key in feat) return !!feat[key];
+    return project.type === "hr";
+  }
+
+  function activeStatuses() {
+    if (hasFeature("board_tabs") && activeTab === "ops") {
+      return project.ops_statuses?.length ? project.ops_statuses : ["To Do", "In Progress", "Done"];
+    }
+    return project.statuses;
+  }
+
+  function isHiringTab() { return !hasFeature("board_tabs") || activeTab === "hiring"; }
+
+  function taskMatchesTab(task) {
+    if (!hasFeature("board_tabs")) return true;
+    const cat = task.fields?.hr_category;
+    if (activeTab === "ops") return cat === "ops";
+    return cat !== "ops";
+  }
+
+  function initBoardTabs() {
+    const tabBar = document.getElementById("board-tabs");
+    if (!tabBar) return;
+    tabBar.hidden = false;
+    tabBar.querySelectorAll(".board-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeTab = btn.dataset.tab;
+        tabBar.querySelectorAll(".board-tab").forEach((b) => b.classList.toggle("active", b === btn));
+        // Show/hide roles card on tab switch
+        if (typeof HrRoles !== "undefined") {
+          if (activeTab === "hiring" && hasFeature("roles_card")) HrRoles.show();
+          else HrRoles.hide();
+        }
+        renderBoard();
+      });
+    });
   }
 
   function memberName(id) {
@@ -207,23 +254,31 @@
   }
 
   function renderBoard() {
-    const shown = visibleTasks();
+    const tabTasks = tasks.filter(taskMatchesTab);
+    const shown = tabTasks.filter((t) => {
+      if (filters.assignee === "none" && t.assignee_id) return false;
+      if (filters.assignee && filters.assignee !== "none" && t.assignee_id !== filters.assignee) return false;
+      if (filters.client === "none" && t.fields?.client) return false;
+      if (filters.client && filters.client !== "none" && t.fields?.client !== filters.client) return false;
+      return UI.matchesDateFilter(t.due_date, filters.due, { from: filters.from, to: filters.to });
+    });
 
-    // Statuses no longer in the project's list but still on tasks get their
+    const statuses = activeStatuses();
+    // Statuses no longer in the active list but still on tasks get their
     // own dimmed column so no task ever silently disappears.
-    const orphanStatuses = [...new Set(tasks.map((t) => t.status))].filter(
-      (s) => !project.statuses.includes(s)
+    const orphanStatuses = [...new Set(tabTasks.map((t) => t.status))].filter(
+      (s) => !statuses.includes(s)
     );
 
     boardEl.innerHTML = "";
-    for (const status of project.statuses) renderColumn(status, false, shown);
+    for (const status of statuses) renderColumn(status, false, shown);
     for (const status of orphanStatuses) renderColumn(status, true, shown);
 
     const clearBtn = document.getElementById("filter-clear");
     const countEl = document.getElementById("filter-count");
     clearBtn.hidden = !filtersActive();
     countEl.hidden = !filtersActive();
-    countEl.textContent = filtersActive() ? `Showing ${shown.length} of ${tasks.length} tasks` : "";
+    countEl.textContent = filtersActive() ? `Showing ${shown.length} of ${tabTasks.length} tasks` : "";
     document.getElementById("filter-assignee").classList.toggle("on", filters.assignee !== "");
     document.getElementById("filter-client").classList.toggle("on", filters.client !== "");
     document.getElementById("filter-due").classList.toggle("on", filters.due !== "all");
@@ -293,6 +348,12 @@
         ${task.due_date ? `<span class="due ${overdue ? "overdue" : ""}">${UI.fmtDate(task.due_date)}</span>` : ""}
       </div>`;
 
+    if (hasFeature("sla") && isHiringTab() && typeof HrSla !== "undefined") {
+      const sla = HrSla.slaState(task);
+      if (sla?.level === "warning") el.classList.add("sla-warning");
+      if (sla?.level === "breach") el.classList.add("sla-breach");
+    }
+
     el.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", task.id);
       e.dataTransfer.effectAllowed = "move";
@@ -307,7 +368,7 @@
     const task = tasks.find((t) => t.id === taskId);
     if (!task || task.status === newStatus) return;
     // Client-side guard (PRD §13): never write a status outside the project's list
-    if (!project.statuses.includes(newStatus)) {
+    if (!activeStatuses().includes(newStatus)) {
       UI.toast("That column is not a valid status for this project.");
       return;
     }
@@ -442,7 +503,7 @@
   // ---- Task modal ----
   function fillSelects(selectedStatus, selectedAssignee) {
     const statusSel = document.getElementById("t-status");
-    statusSel.innerHTML = project.statuses
+    statusSel.innerHTML = activeStatuses()
       .map((s) => `<option value="${UI.esc(s)}" ${s === selectedStatus ? "selected" : ""}>${UI.esc(s)}</option>`)
       .join("");
 
@@ -475,7 +536,8 @@
       .map((n) => `<option value="${UI.esc(n)}"></option>`)
       .join("");
     document.getElementById("t-email").value = task ? task.fields?.email || "" : "";
-    document.getElementById("t-due").value = task ? task.due_date || "" : "";
+    const autoDate = !task && hasFeature("auto_date") && isHiringTab();
+    document.getElementById("t-due").value = task ? task.due_date || "" : autoDate ? new Date().toISOString().slice(0, 10) : "";
     fillSelects(task ? task.status : presetStatus, task ? task.assignee_id : "");
 
     const delBtn = document.getElementById("task-delete");
@@ -511,6 +573,9 @@
     const client = document.getElementById("t-client").value.trim();
     if (client) customFields.client = client;
     else delete customFields.client;
+    if (hasFeature("board_tabs") && !editingTask) {
+      customFields.hr_category = activeTab === "ops" ? "ops" : "candidate";
+    }
 
     const fields = {
       title,

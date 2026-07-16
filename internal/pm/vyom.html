@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=16">
+  <link rel="stylesheet" href="css/style.css?v=17">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -67,11 +67,28 @@
           <textarea id="p-desc" placeholder="What is this project about? (optional)"></textarea>
         </div>
         <div class="form-group">
+          <label>Visibility</label>
+          <div class="type-toggle">
+            <label class="type-opt"><input type="radio" name="p-visibility" value="internal" checked> Internal</label>
+            <label class="type-opt"><input type="radio" name="p-visibility" value="client"> Client Facing</label>
+          </div>
+        </div>
+        <div class="form-group">
           <label>Project type</label>
           <div class="type-toggle">
-            <label class="type-opt"><input type="radio" name="p-type" value="internal" checked> Internal</label>
-            <label class="type-opt"><input type="radio" name="p-type" value="client"> Client Facing</label>
+            <label class="type-opt"><input type="radio" name="p-kind" value="normal" checked> Normal</label>
+            <label class="type-opt"><input type="radio" name="p-kind" value="hr"> HR</label>
           </div>
+        </div>
+        <div class="form-group" id="p-features-group" hidden>
+          <label>HR Features</label>
+          <div class="feature-toggles">
+            <label class="toggle-label"><input type="checkbox" id="f-board-tabs" checked> Board tabs (Hiring + Ops)</label>
+            <label class="toggle-label"><input type="checkbox" id="f-roles-card" checked> Roles summary card</label>
+            <label class="toggle-label"><input type="checkbox" id="f-sla" checked> SLA tracking</label>
+            <label class="toggle-label"><input type="checkbox" id="f-auto-date" checked> Auto-date on candidate creation</label>
+          </div>
+          <div class="form-hint">These default to ON for HR projects. Normal projects can enable them individually.</div>
         </div>
         <div class="form-group" id="p-parent-group">
           <label for="p-parent">Parent project (sub-client)</label>
@@ -100,6 +117,13 @@
           </div>
           <div class="form-hint">These become the Kanban columns, in this order — drag chips to reorder. The last column counts as “done” (My Tasks hides tasks in it).</div>
         </div>
+        <div class="form-group" id="p-ops-statuses-group" hidden>
+          <label>Ops columns</label>
+          <div class="tag-editor" id="ops-status-tags">
+            <input type="text" id="ops-status-input" placeholder="Type a status, press Enter">
+          </div>
+          <div class="form-hint">Columns for the Ops tab — used for non-candidate tasks (ads, internal work, etc.).</div>
+        </div>
         <div class="form-group" id="p-inherited-group" hidden>
           <label>Status columns (inherited)</label>
           <div class="tag-editor readonly" id="inherited-statuses"></div>
@@ -126,12 +150,12 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=16"></script>
-  <script src="js/supabase.js?v=16"></script>
-  <script src="js/api.js?v=16"></script>
-  <script src="js/ui.js?v=16"></script>
-  <script src="js/auth.js?v=16"></script>
-  <script src="js/inbox.js?v=16"></script>
-  <script src="js/dashboard.js?v=16"></script>
+  <script src="js/config.js?v=17"></script>
+  <script src="js/supabase.js?v=17"></script>
+  <script src="js/api.js?v=17"></script>
+  <script src="js/ui.js?v=17"></script>
+  <script src="js/auth.js?v=17"></script>
+  <script src="js/inbox.js?v=17"></script>
+  <script src="js/dashboard.js?v=17"></script>
 </body>
 </html>

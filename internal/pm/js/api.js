@@ -175,6 +175,34 @@ const API = {
     );
   },
 
+  // ---- HR roles (roles summary card on HR project boards) ----
+  getHrRoles(projectId) {
+    return sbFetch(`hr_roles?project_id=eq.${projectId}&select=*&order=sort_order.asc`);
+  },
+  createHrRole(fields) {
+    return sbFetch("hr_roles", { method: "POST", body: fields }).then((r) => r[0]);
+  },
+  updateHrRole(id, fields) {
+    return sbFetch(`hr_roles?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
+  },
+  deleteHrRole(id) {
+    return sbFetch(`hr_roles?id=eq.${id}`, { method: "DELETE" });
+  },
+
+  // ---- HR SLA rules (per-project deadline config) ----
+  getSlaRules(projectId) {
+    return sbFetch(`hr_sla_rules?project_id=eq.${projectId}&select=*&order=created_at.asc`);
+  },
+  createSlaRule(fields) {
+    return sbFetch("hr_sla_rules", { method: "POST", body: fields }).then((r) => r[0]);
+  },
+  updateSlaRule(id, fields) {
+    return sbFetch(`hr_sla_rules?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
+  },
+  deleteSlaRule(id) {
+    return sbFetch(`hr_sla_rules?id=eq.${id}`, { method: "DELETE" });
+  },
+
   // ---- tags (central registry feeding all tag dropdowns) ----
   getTags() {
     return sbFetch("tags?select=*&order=name.asc");
