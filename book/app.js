@@ -29,7 +29,7 @@
     calMonth: null,       // calendar view month 'YYYY-MM'
     slots: null,          // array of 'HH:MM'
     time: null,           // selected 'HH:MM'
-    form: { name: '', email: '', phone: '' },
+    form: { name: '', email: '', phone: '', subject: '', guests: '' },
     fieldErrors: {},
     notice: null,         // amber banner on the current step (e.g. slot taken)
     error: null,          // { message, retry: fn } for the error screen
@@ -226,6 +226,15 @@
             value="${esc(state.form.phone)}" ${state.submitting ? 'disabled' : ''}>
           ${state.fieldErrors.phone ? `<span class="field-err">${esc(state.fieldErrors.phone)}</span>` : ''}
         </label>
+        <label>Meeting subject <span class="optional">Optional — custom title for the calendar invite</span>
+          <input name="subject" type="text" maxlength="200"
+            value="${esc(state.form.subject)}" ${state.submitting ? 'disabled' : ''}>
+        </label>
+        <label>Additional guests <span class="optional">Optional — comma-separated email addresses</span>
+          <input name="guests" type="text" maxlength="500" placeholder="e.g. colleague@company.com, partner@firm.com"
+            value="${esc(state.form.guests)}" ${state.submitting ? 'disabled' : ''}>
+          ${state.fieldErrors.guests ? `<span class="field-err">${esc(state.fieldErrors.guests)}</span>` : ''}
+        </label>
         <button class="btn-primary submit" type="submit" ${state.submitting ? 'disabled' : ''}>
           ${state.submitting ? 'Confirming…' : 'Confirm booking'}
         </button>
@@ -241,6 +250,7 @@
           <div><span>Time</span><strong>${esc(fmtTime12(state.time))} (${esc(state.client.timezone)})</strong></div>
           <div><span>Duration</span><strong>${state.duration} minutes</strong></div>
           <div><span>With</span><strong>Depesh Vyas, VBOG</strong></div>
+          ${state.form.subject.trim() ? `<div><span>Subject</span><strong>${esc(state.form.subject.trim())}</strong></div>` : ''}
         </div>
         ${state.client.notes_for_client ? `<p class="client-notes">${esc(state.client.notes_for_client)}</p>` : ''}
       </div>`
@@ -304,6 +314,8 @@
         state.form.name = form.elements.name.value;
         state.form.email = form.elements.email.value;
         state.form.phone = form.elements.phone.value;
+        state.form.subject = form.elements.subject.value;
+        state.form.guests = form.elements.guests.value;
       });
     }
   }
@@ -416,6 +428,15 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(state.form.email.trim())) errs.email = 'Please enter a valid email.';
     const phone = state.form.phone.trim();
     if (phone && !/^[+0-9 ()\-]{6,30}$/.test(phone)) errs.phone = 'Please enter a valid phone number.';
+    const guestsRaw = state.form.guests.trim();
+    if (guestsRaw) {
+      const guestList = guestsRaw.split(',').map(g => g.trim()).filter(Boolean);
+      if (guestList.length > 5) {
+        errs.guests = 'Maximum 5 additional guests.';
+      } else if (guestList.some(g => !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(g))) {
+        errs.guests = 'One or more email addresses are invalid.';
+      }
+    }
     state.fieldErrors = errs;
     return Object.keys(errs).length === 0;
   }
@@ -424,6 +445,8 @@
     state.form.name = form.elements.name.value;
     state.form.email = form.elements.email.value;
     state.form.phone = form.elements.phone.value;
+    state.form.subject = form.elements.subject.value;
+    state.form.guests = form.elements.guests.value;
     state.notice = null;
     if (!validateForm()) return render();
 
@@ -440,7 +463,9 @@
         duration: state.duration,
         booker_name: state.form.name.trim(),
         booker_email: state.form.email.trim(),
-        booker_phone: state.form.phone.trim()
+        booker_phone: state.form.phone.trim(),
+        booking_subject: state.form.subject.trim(),
+        extra_guests: state.form.guests.trim()
       });
     } catch (e) {
       // Timeout/network failure on a POST is ambiguous — the booking may have

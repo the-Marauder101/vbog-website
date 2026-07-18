@@ -64,7 +64,8 @@ var HEADERS_CLIENTS = ['slug', 'client_name', 'contact_email', 'allowed_days',
   'start_time', 'end_time', 'durations', 'active', 'timezone', 'notes_for_client'];
 var HEADERS_BOOKINGS = ['booking_id', 'slug', 'client_name', 'booker_name',
   'booker_email', 'booker_phone', 'booking_date', 'booking_time',
-  'duration_mins', 'calendar_event_id', 'created_at', 'reminder_sent'];
+  'duration_mins', 'calendar_event_id', 'created_at', 'reminder_sent',
+  'booking_subject', 'extra_guests'];
 var HEADERS_ACCOUNTS = ['account_id', 'email', 'is_primary', 'authorized', 'calendar_id'];
 
 /**
