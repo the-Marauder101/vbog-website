@@ -15,7 +15,7 @@ header text must match exactly.
 Header row (copy-paste-able):
 
 ```
-slug	client_name	contact_email	allowed_days	start_time	end_time	durations	active	timezone	notes_for_client
+slug	client_name	contact_email	allowed_days	start_time	end_time	durations	active	timezone	notes_for_client	buffer_mins
 ```
 
 | Column | Type | Description | Example |
@@ -30,6 +30,7 @@ slug	client_name	contact_email	allowed_days	start_time	end_time	durations	active
 | `active` | boolean text | `TRUE` = link live, `FALSE` = link shows "not available" | `TRUE` |
 | `timezone` | text | IANA name; the daily window is interpreted in this timezone and slots are displayed in it | `Asia/Kolkata` |
 | `notes_for_client` | text | Optional message on confirmation screen + email | `Please be on time.` |
+| `buffer_mins` | number | Optional minutes of buffer between meetings. Blank or 0 = no buffer (back-to-back allowed). Applied to both slot spacing and busy-interval checks. | `15` |
 
 Rules: new row = live immediately; `active=FALSE` on the first row kills the
 link instantly.
@@ -50,7 +51,7 @@ blank `active` means on, `FALSE` switches that window off). Full guide:
 Header row:
 
 ```
-booking_id	slug	client_name	booker_name	booker_email	booker_phone	booking_date	booking_time	duration_mins	calendar_event_id	created_at	reminder_sent
+booking_id	slug	client_name	booker_name	booker_email	booker_phone	booking_date	booking_time	duration_mins	calendar_event_id	created_at	reminder_sent	booking_subject	extra_guests
 ```
 
 | Column | Description |
@@ -65,6 +66,8 @@ booking_id	slug	client_name	booker_name	booker_email	booker_phone	booking_date	b
 | `calendar_event_id` | Google Calendar event ID on Account 1 (for future cancellation tooling) |
 | `created_at` | ISO timestamp of when the booking was made |
 | `reminder_sent` | Empty → reminder pending; `TRUE` → sent (or meeting already passed) |
+| `booking_subject` | Custom meeting subject entered by the booker (optional, blank = default title used) |
+| `extra_guests` | Comma-separated extra guest emails added by the booker (optional) |
 
 ---
 

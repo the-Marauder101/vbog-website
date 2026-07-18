@@ -84,8 +84,8 @@ interface is a Google Sheet. Runs entirely on free infrastructure.
 
 - No cancellation / rescheduling flow (the `calendar_event_id` column exists
   so this can be added later).
-- No buffer time between meetings, no Meet link generation, no payments,
-  no WhatsApp automation (phone number is collected for records only).
+- No Meet link generation, no payments, no WhatsApp automation (phone
+  number is collected for records only).
 - Consumer Gmail sends ~100 emails/day (2 per booking → ~50 bookings/day),
   far above expected volume. Workspace accounts get 1,500/day.
 - The booking page needs JavaScript (a `<noscript>` fallback points to
