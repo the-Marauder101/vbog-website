@@ -51,7 +51,7 @@ blank `active` means on, `FALSE` switches that window off). Full guide:
 Header row:
 
 ```
-booking_id	slug	client_name	booker_name	booker_email	booker_phone	booking_date	booking_time	duration_mins	calendar_event_id	created_at	reminder_sent
+booking_id	slug	client_name	booker_name	booker_email	booker_phone	booking_date	booking_time	duration_mins	calendar_event_id	created_at	reminder_sent	booking_subject	extra_guests
 ```
 
 | Column | Description |
@@ -66,6 +66,8 @@ booking_id	slug	client_name	booker_name	booker_email	booker_phone	booking_date	b
 | `calendar_event_id` | Google Calendar event ID on Account 1 (for future cancellation tooling) |
 | `created_at` | ISO timestamp of when the booking was made |
 | `reminder_sent` | Empty → reminder pending; `TRUE` → sent (or meeting already passed) |
+| `booking_subject` | Custom meeting subject entered by the booker (optional, blank = default title used) |
+| `extra_guests` | Comma-separated extra guest emails added by the booker (optional) |
 
 ---
 

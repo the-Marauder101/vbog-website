@@ -51,7 +51,7 @@ var DEFAULT_TIMEZONE = 'Asia/Kolkata';
 
 // Bumped when the API code changes; returned by ?action=ping so you can check
 // which version is actually deployed.
-var VERSION = 1;
+var VERSION = 2;
 
 // Names of the three tabs in the spreadsheet.
 var TAB_CLIENTS = 'clients';
