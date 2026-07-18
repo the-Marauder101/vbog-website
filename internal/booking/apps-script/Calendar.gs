@@ -74,17 +74,27 @@ function mergeIntervals_(intervals) {
  * confirmation email). Returns the calendar event ID for the bookings log.
  */
 function createCalendarEvent(client, booking, startDate, endDate) {
-  var title = 'Meeting — ' + booking.booker_name + ' (' + client.client_name + ')';
+  var title = booking.booking_subject
+    ? booking.booking_subject
+    : 'Meeting — ' + booking.booker_name + ' (' + client.client_name + ')';
+
   var description =
     'Booked via v-bog.com/book/' + client.slug + '\n' +
     'Booking ID: ' + booking.booking_id + '\n' +
     'Name: ' + booking.booker_name + '\n' +
     'Email: ' + booking.booker_email + '\n' +
-    (booking.booker_phone ? 'Phone: ' + booking.booker_phone + '\n' : '');
+    (booking.booker_phone ? 'Phone: ' + booking.booker_phone + '\n' : '') +
+    (booking.booking_subject ? 'Subject: ' + booking.booking_subject + '\n' : '') +
+    (booking.extra_guests ? 'Additional guests: ' + booking.extra_guests + '\n' : '');
+
+  var guests = booking.booker_email;
+  if (booking.extra_guests) {
+    guests = guests + ',' + booking.extra_guests;
+  }
 
   var event = CalendarApp.getDefaultCalendar().createEvent(
     title, startDate, endDate,
-    { guests: booking.booker_email, sendInvites: true, description: description }
+    { guests: guests, sendInvites: true, description: description }
   );
   return event.getId();
 }

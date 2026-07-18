@@ -36,13 +36,28 @@ function validateBookingPayload_(body) {
   var phone = String(body.booker_phone || '').trim();
   if (phone && !(phone.length <= 30 && /^[+0-9 ()\-]+$/.test(phone))) problems.push('phone');
 
+  var subject = String(body.booking_subject || '').trim();
+  if (subject.length > 200) problems.push('subject (max 200 characters)');
+
+  var extraGuestsRaw = String(body.extra_guests || '').trim();
+  var extraGuests = '';
+  if (extraGuestsRaw) {
+    var guestList = extraGuestsRaw.split(',').map(function (g) { return g.trim(); }).filter(Boolean);
+    if (guestList.length > 5) problems.push('extra guests (max 5)');
+    for (var i = 0; i < guestList.length; i++) {
+      if (!isValidEmail(guestList[i])) { problems.push('extra guests (invalid email)'); break; }
+    }
+    extraGuests = guestList.join(',');
+  }
+
   if (problems.length) {
     throw tagged_('VALIDATION_ERROR', 'Please check: ' + problems.join(', ') + '.');
   }
 
   return {
     slug: slug, date: date, time: time, duration: duration,
-    booker_name: name, booker_email: email, booker_phone: phone
+    booker_name: name, booker_email: email, booker_phone: phone,
+    booking_subject: subject, extra_guests: extraGuests
   };
 }
 
@@ -90,7 +105,9 @@ function handleCreateBooking(body) {
       duration_mins: p.duration,
       calendar_event_id: '',
       created_at: new Date().toISOString(),
-      reminder_sent: ''
+      reminder_sent: '',
+      booking_subject: p.booking_subject,
+      extra_guests: p.extra_guests
     };
 
     booking.calendar_event_id = createCalendarEvent(client, booking, startDate, endDate);
