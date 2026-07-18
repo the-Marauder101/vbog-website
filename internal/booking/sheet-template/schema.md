@@ -15,7 +15,7 @@ header text must match exactly.
 Header row (copy-paste-able):
 
 ```
-slug	client_name	contact_email	allowed_days	start_time	end_time	durations	active	timezone	notes_for_client
+slug	client_name	contact_email	allowed_days	start_time	end_time	durations	active	timezone	notes_for_client	buffer_mins
 ```
 
 | Column | Type | Description | Example |
@@ -30,6 +30,7 @@ slug	client_name	contact_email	allowed_days	start_time	end_time	durations	active
 | `active` | boolean text | `TRUE` = link live, `FALSE` = link shows "not available" | `TRUE` |
 | `timezone` | text | IANA name; the daily window is interpreted in this timezone and slots are displayed in it | `Asia/Kolkata` |
 | `notes_for_client` | text | Optional message on confirmation screen + email | `Please be on time.` |
+| `buffer_mins` | number | Optional minutes of buffer between meetings. Blank or 0 = no buffer (back-to-back allowed). Applied to both slot spacing and busy-interval checks. | `15` |
 
 Rules: new row = live immediately; `active=FALSE` on the first row kills the
 link instantly.

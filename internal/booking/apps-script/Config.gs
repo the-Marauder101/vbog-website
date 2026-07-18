@@ -61,7 +61,8 @@ var TAB_ACCOUNTS = 'accounts';
 // Exact header rows for each tab. Setup.gs writes these; Sheet.gs reads by
 // header name, so column ORDER can change but header TEXT must not.
 var HEADERS_CLIENTS = ['slug', 'client_name', 'contact_email', 'allowed_days',
-  'start_time', 'end_time', 'durations', 'active', 'timezone', 'notes_for_client'];
+  'start_time', 'end_time', 'durations', 'active', 'timezone', 'notes_for_client',
+  'buffer_mins'];
 var HEADERS_BOOKINGS = ['booking_id', 'slug', 'client_name', 'booker_name',
   'booker_email', 'booker_phone', 'booking_date', 'booking_time',
   'duration_mins', 'calendar_event_id', 'created_at', 'reminder_sent',

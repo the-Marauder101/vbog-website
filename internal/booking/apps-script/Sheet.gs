@@ -134,7 +134,8 @@ function buildClientFromRows_(rows) {
     client_name: String(master.client_name || '').trim(),
     contact_email: String(master.contact_email || '').trim(),
     active: truthy_(master.active),
-    notes_for_client: String(master.notes_for_client || '').trim()
+    notes_for_client: String(master.notes_for_client || '').trim(),
+    buffer_mins: Math.max(0, parseInt(master.buffer_mins, 10) || 0)
   };
 
   // durations: '30, 60' → [30, 60]; non-positive/non-numeric dropped.

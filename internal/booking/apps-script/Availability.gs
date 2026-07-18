@@ -54,11 +54,12 @@ function computeSlots(client, dateStr, duration) {
 
   // Candidate start times from every applicable window, deduped and sorted
   // ('HH:MM' strings are zero-padded, so plain string sort is chronological).
+  var buffer = client.buffer_mins || 0;
   var seen = {};
   var candidates = [];
   windows.forEach(function (w) {
     var endMin = hmToMinutes(w.end_time);
-    for (var m = hmToMinutes(w.start_time); m + duration <= endMin; m += duration) {
+    for (var m = hmToMinutes(w.start_time); m + duration <= endMin; m += duration + buffer) {
       var hm = minutesToHm(m);
       if (!seen[hm]) { seen[hm] = true; candidates.push(hm); }
     }
@@ -79,12 +80,12 @@ function computeSlots(client, dateStr, duration) {
     var slotStart = wallTimeToDate(dateStr, hm, tz);
     if (!slotStart) return false; // wall time skipped by DST spring-forward
     var startMs = slotStart.getTime();
-    var endMs = startMs + duration * 60000;
+    var endMs = startMs + (duration + buffer) * 60000;
 
     if (startMs <= earliestAllowed) return false; // already past / too little notice
 
-    // Strict overlap test: a meeting ending exactly at slot start (or starting
-    // exactly at slot end) does NOT block — back-to-back bookings are allowed.
+    // Overlap test includes the buffer: a slot's effective footprint extends
+    // by buffer_mins so back-to-back meetings always have breathing room.
     return !busy.some(function (b) {
       return startMs < b.end && endMs > b.start;
     });
