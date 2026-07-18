@@ -601,8 +601,8 @@
             <span class="path-desc">Attend in 3&ndash;5 days</span>
           </label>
           <label class="tile path">
-            <input type="radio" name="callOut" value="save">
-            <span class="path-title">Save</span>
+            <input type="radio" name="callOut" value="saver">
+            <span class="path-title">Saver</span>
             <span class="path-desc">Attend in 5&ndash;7 days</span>
           </label>
         </div>
@@ -1433,7 +1433,7 @@ function callOutLabel() {
   const type = getCallOut();
   if (type === "standard") return "Standard Call Out (1\u20132 days)";
   if (type === "flexi")    return "Flexi Call Out (3\u20135 days)";
-  return "Save Call Out (5\u20137 days)";
+  return "Saver Call Out (5\u20137 days)";
 }
 function lineHTML(desc, sub, amount) {
   const small = sub ? `<small>${sub}</small>` : "";
@@ -1478,7 +1478,7 @@ function recalc() {
       const loc = PRICING.locations[Number(el.location.value)] || PRICING.locations[0];
       const callOut = calcCallOutExVat();
       const type = getCallOut();
-      const sub = loc.label + (type === "save" ? " \u00b7 flat rate" : type === "flexi" ? " \u00b7 50% of standard" : "");
+      const sub = loc.label + (type === "saver" ? " \u00b7 flat rate" : type === "flexi" ? " \u00b7 50% of standard" : "");
       html += lineHTML(callOutLabel(), sub, callOut);
       subtotal += callOut;
       const qty = getRepairQty();
