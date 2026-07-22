@@ -1977,21 +1977,14 @@ select {
 }
 
 /* Conversion pass: pain-first narrative and direct booking journey */
-.wordmark > .founder-mark {
-  display: block;
-  padding: 8px 16px;
-  color: var(--ink);
-  border: 1px solid rgba(23, 23, 20, 0.18);
-  background: #fff;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: -0.045em;
-  line-height: 0.88;
+.brand-logo {
+  width: 112px;
+  height: auto;
+  flex: 0 0 auto;
 }
 
-.footer-mark > .founder-mark {
-  border-color: #fff;
+.footer-mark .brand-logo {
+  width: 126px;
 }
 
 .hero-copy {
