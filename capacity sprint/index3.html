@@ -16,7 +16,7 @@
   <meta property="og:image" content="https://v-bog.com/og-image.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="./assets/agency-capacity.css?v=20260722g">
-  <link rel="stylesheet" href="./assets/revenue-refusal.css?v=20260722a">
+  <link rel="stylesheet" href="./assets/revenue-refusal.css?v=20260722b">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -29,7 +29,7 @@
   }
   </script>
 </head>
-<body class="revenue3-page">
+<body class="revenue3-page" data-page-variant="revenue_refusal_v2">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header r3-header" data-header>
@@ -51,12 +51,12 @@
 
   <main id="main">
     <section class="r3-hero" id="top">
-      <div class="r3-hero-orbit" aria-hidden="true"><span>2×</span><small>AMBITION<br>NOT A PROMISE</small></div>
       <div class="page-shell r3-hero-grid">
         <div class="r3-hero-copy reveal">
           <p class="r3-eyebrow"><span>For Indian agencies with demand they cannot safely deliver</span></p>
-          <h1>Want <em>2× revenue?</em><br>First build an agency that can say <u>yes</u> to the next five clients.</h1>
-          <p class="r3-hero-lede">You do not need another growth promise. You need the operating capacity to accept the demand you already know how to create—without every new account becoming your new job.</p>
+          <h1><span>Want <em>2× revenue?</em></span><small>Build an agency that can say <u>yes</u> to the next five clients.</small></h1>
+          <p class="r3-hero-lede">You already paid to create the demand. Do not pay again by delaying it. VBOG installs the operating capacity to accept the clients you can already sell—without every new account becoming your new job.</p>
+          <div class="r3-growth-badge"><strong>2×</strong><p><b>THE AMBITION</b><span>Five equivalent clients is the operating plan. Ninety days is the installation window. Revenue is never guaranteed.</span></p></div>
           <div class="r3-promise">
             <span>THE 90-DAY PROMISE</span>
             <p>VBOG installs and operationalises the management system required to handle at least five additional equivalent client accounts without increasing your recurring operational workload.</p>
@@ -78,7 +78,7 @@
             <span><b data-refused-units>2</b> client units</span><i>×</i><span><b data-retainer-short>₹1L</b> / month</span><i>×</i><span><b data-retention>9</b> months</span>
           </div>
           <div class="receipt-lines">
-            <p><span>Contribution exposure</span><strong data-refused-contribution>₹6.5L</strong></p>
+            <p><span>Delivery profit exposure</span><strong data-refused-contribution>₹6.5L</strong></p>
             <p><span>Founder delivery load</span><strong><b data-founder-hours>15</b> hrs / week</strong></p>
             <p><span>Safe capacity</span><strong>UNKNOWN</strong></p>
           </div>
@@ -95,7 +95,7 @@
     <section class="r3-wound-section" id="cost">
       <div class="page-shell">
         <div class="r3-section-intro reveal">
-          <p class="r3-kicker">01 / THROW SALT HERE</p>
+          <p class="r3-kicker">01 / THE REVENUE YOU ARE REFUSING</p>
           <h2>The most expensive word in your agency is not “no.” It is <em>“not yet.”</em></h2>
           <p>A prospect hears a delayed start date. Your P&amp;L experiences revenue moved, discounted, declined or delivered at a margin that barely survives the founder rescue.</p>
         </div>
@@ -105,14 +105,14 @@
           <article class="wound-card reveal"><span>03</span><h3>“We can make it work.”</h3><p>The client comes in. So do rushed hiring, rework, escalation and another layer of founder review.</p><strong>Revenue arrives. Margin leaves.</strong></article>
           <article class="wound-card wound-card-dark reveal"><span>04</span><h3>“Slow the pipeline.”</h3><p>You quietly stop pushing acquisition because winning has become operationally dangerous.</p><strong>The ceiling becomes self-imposed.</strong></article>
         </div>
-        <div class="wound-close reveal"><p>You are not short on time.</p><h3>You are short on revenue your agency can safely fulfil without you.</h3></div>
+        <div class="wound-close reveal" id="revenue-constraint"><p>You are not short on time.</p><h3>You are short on <em>revenue your agency can safely fulfil without you.</em></h3></div>
       </div>
     </section>
 
     <section class="r3-calculator-section" id="calculator">
       <div class="page-shell">
         <div class="r3-section-intro calculator-intro reveal">
-          <p class="r3-kicker light">02 / THE REVENUE REFUSAL RECEIPT</p>
+          <p class="r3-kicker light">02 / YOUR COST OF “NOT YET”</p>
           <h2>Do not trust the big number.<br><em>Audit it.</em></h2>
           <p>Every output below names its inputs, shows its formula and tells you what it does—and does not—mean. Change one assumption and watch the relevant line move.</p>
         </div>
@@ -121,7 +121,7 @@
           <div class="calculator-controls reveal">
             <div class="control-group-head"><span>A / THE MONEY ALREADY BLOCKED</span><p>What did “not yet” cost in the last 90 days?</p></div>
             <label class="r3-field">
-              <span>Typical monthly client value <small>Changes every revenue and contribution line.</small></span>
+              <span>Typical monthly client value <small>Changes every revenue and delivery-profit line.</small></span>
               <span class="r3-input-wrap"><b>₹</b><input id="r3-retainer" name="retainer" type="number" min="25000" max="1000000" step="25000" value="100000" inputmode="numeric"></span>
             </label>
             <label class="r3-field">
@@ -133,7 +133,7 @@
               <select id="r3-retention" name="retentionMonths"><option value="3">3 months</option><option value="6">6 months</option><option value="9" selected>9 months</option><option value="12">12 months</option><option value="18">18 months</option></select>
             </label>
             <label class="r3-field">
-              <span>Contribution margin <small>Shows contribution—not just impressive gross revenue.</small></span>
+              <span>Profit left after direct delivery costs <small>Client revenue minus fulfilment payroll, freelancers and other costs directly required to deliver the work. If unsure, use 30–35%.</small></span>
               <span class="r3-input-wrap suffix"><input id="r3-margin" name="margin" type="number" min="10" max="80" step="5" value="35" inputmode="numeric"><b>%</b></span>
             </label>
 
@@ -168,7 +168,7 @@
               <p>Gross contract value declined or delayed</p>
               <strong data-refused-gross>₹18L</strong>
               <small><b data-refused-units>2</b> units × <b data-retainer-short>₹1L</b>/month × <b data-retention>9</b> months</small>
-              <div><span>Contribution exposure at <b data-margin>35%</b></span><b data-refused-contribution>₹6.5L</b></div>
+              <div><span>Delivery profit exposure at <b data-margin>35%</b></span><b data-refused-contribution>₹6.5L</b></div>
             </section>
 
             <section class="receipt-result future-result">
@@ -176,7 +176,7 @@
               <p>Risk-adjusted revenue capacity (up to 12 months)</p>
               <strong data-capacity-range>₹27L–₹36L</strong>
               <small><b data-target>5</b> units × <b data-retainer-short>₹1L</b>/month × <b data-capacity-months>9</b> months × <b data-fill>70%</b></small>
-              <div><span>Contribution midpoint at <b data-margin>35%</b></span><b data-capacity-contribution>₹11L</b></div>
+              <div><span>Delivery profit midpoint at <b data-margin>35%</b></span><b data-capacity-contribution>₹11L</b></div>
             </section>
 
             <section class="receipt-result founder-result">
@@ -187,8 +187,8 @@
 
             <section class="receipt-result fee-result">
               <span class="result-tag">THE ₹4L COMMERCIAL CHECK</span>
-              <div><span>Modelled monthly contribution across target capacity</span><b data-monthly-contribution>₹1.2L</b></div>
-              <div><span>Months of that contribution equal to Sprint fee</span><b data-payback-months>3.3</b></div>
+              <div><span>Modelled monthly delivery profit across target capacity</span><b data-monthly-contribution>₹1.2L</b></div>
+              <div><span>Months of that delivery profit equal to Sprint fee</span><b data-payback-months>3.3</b></div>
               <small>This is a break-even comparison, not a payback guarantee.</small>
             </section>
 
@@ -198,7 +198,7 @@
                 <p><b>Past contract value</b> = refused units × monthly client value × expected retention.</p>
                 <p><b>Future capacity midpoint</b> = target units × monthly client value × up to 12 retention months × fill probability.</p>
                 <p><b>Displayed range</b> = 85%–115% of that midpoint, rounded conservatively.</p>
-                <p><b>Contribution</b> = relevant gross value × contribution margin.</p>
+                <p><b>Delivery profit</b> = relevant gross value × the percentage left after direct fulfilment payroll, freelancers and delivery-specific costs.</p>
                 <p><b>Founder capacity locked</b> = entered weekly founder hours × 48 working weeks. It is not a release guarantee and is not added to revenue.</p>
               </div>
             </details>
@@ -252,7 +252,7 @@
 
     <section class="r3-value-section">
       <div class="page-shell value-grid">
-        <div class="value-copy reveal"><p class="r3-kicker">05 / THE RESTRAINED VALUE STACK</p><h2>₹7.25L of specialist work. One ₹4L installation.</h2><p>Not an invented ₹14,97,000 anchor. These are the strategy document’s restrained standalone comparisons for the capabilities required to make operational ownership function.</p></div>
+        <div class="value-copy reveal"><p class="r3-kicker">05 / WHAT IT WOULD COST TO ASSEMBLE</p><h2>₹7.25L of specialist work. One ₹4L installation.</h2><p>Capacity modelling, decision architecture, delivery control, operator training and live adoption normally require several different capabilities. The Sprint installs them as one operating system.</p></div>
         <div class="value-ledger reveal">
           <p><span>Capacity model + delivery control</span><strong>₹1.5L</strong></p>
           <p><span>Decision ownership + standard delivery</span><strong>₹2L</strong></p>
@@ -267,11 +267,11 @@
 
     <section class="r3-comparison-section" id="comparison">
       <div class="page-shell">
-        <div class="comparison-drumroll reveal"><span>AND NOW, THE COMMERCIAL DRUMROLL</span><h2>It costs less than three months of the senior ops hire you were already considering.</h2><p>But the real distinction is not ₹50,000. An operations manager is a person. VBOG installs the environment in which that person can succeed.</p></div>
+        <div class="comparison-drumroll reveal"><span>THE HIRE YOU WERE ALREADY CONSIDERING</span><h2>It costs less than three months of a senior operations manager.</h2><p>The important difference is not ₹50,000. An operations manager is a person. VBOG installs the authority, capacity logic and operating environment that let that person succeed.</p></div>
         <div class="comparison-cards">
-          <article class="comparison-card reveal"><div><span>₹60K coordinator</span><b>₹1.8L / 90 days</b></div><h3>Works inside today’s confusion.</h3><ul><li>Follows up and updates tools</li><li>Escalates unclear decisions</li><li>Limited operating-model design</li></ul><small>Useful role. Different job.</small></article>
-          <article class="comparison-card reveal"><div><span>₹1.5L ops manager</span><b>₹4.5L / 90 days</b></div><h3>May inherit today’s confusion.</h3><ul><li>Learns while fighting daily fires</li><li>Can be bypassed for the founder</li><li>Needs authority and a source of truth</li></ul><small>May be the right long-term hire.</small></article>
-          <article class="comparison-card comparison-vbog reveal"><div><span>VBOG Sprint</span><b>₹4L / 90 days</b></div><h3>Changes the operating environment.</h3><ul><li>Designs and installs the system</li><li>Runs it on live client work</li><li>Trains and authorises the operator</li></ul><small>Then the right hire can actually work.</small></article>
+          <article class="comparison-card reveal"><div class="comparison-role"><span>₹60K coordinator</span><b>₹1.8L / 90 days</b></div><h3>Works inside today’s confusion.</h3><ul><li>Follows up and updates tools</li><li>Escalates unclear decisions</li><li>Limited operating-model design</li></ul><small>Useful role. Different job.</small></article>
+          <article class="comparison-card reveal"><div class="comparison-role"><span>₹1.5L ops manager</span><b>₹4.5L / 90 days</b></div><h3>May inherit today’s confusion.</h3><ul><li>Learns while fighting daily fires</li><li>Can be bypassed for the founder</li><li>Needs authority and a source of truth</li></ul><small>May be the right long-term hire.</small></article>
+          <article class="comparison-card comparison-vbog reveal"><div class="comparison-role"><span>VBOG Sprint</span><b>₹4L / 90 days</b></div><h3>Changes the operating environment.</h3><ul><li>Designs and installs the system</li><li>Runs it on live client work</li><li>Trains and authorises the operator</li></ul><small>Then the right hire can actually work.</small></article>
         </div>
       </div>
     </section>
@@ -307,19 +307,19 @@
 
     <section class="r3-investment-section" id="investment">
       <div class="page-shell investment-grid">
-        <div class="investment-message reveal"><p class="r3-kicker light">09 / THE INVESTMENT</p><h2>One Sprint.<br>₹4L.<br>90 days.<br><em>Installed, operated, transferred.</em></h2><p>Your model currently shows <strong data-capacity-contribution>₹11L</strong> in risk-adjusted contribution capacity. The fee is the fixed cost of installing the operating environment—not a percentage of that upside.</p></div>
+        <div class="investment-message reveal"><p class="r3-kicker light">09 / THE INVESTMENT</p><h2>One Sprint.<br>₹4L.<br>90 days.<br><em>Installed, operated, transferred.</em></h2><p>Your model currently shows <strong data-capacity-contribution>₹11L</strong> in risk-adjusted delivery-profit capacity. The fee is the fixed cost of installing the operating environment—not a percentage of that upside.</p></div>
         <div class="r3-price-card reveal">
           <div class="price-top"><span>90-DAY AGENCY CAPACITY SPRINT</span><small>FIXED SCOPE</small></div>
           <strong class="r3-price">₹4,00,000</strong><small class="tax-note">+ applicable taxes</small>
           <div class="payment-plan"><p><b>₹2L</b><span>On signing</span></p><p><b>₹1L</b><span>Day 30</span></p><p><b>₹1L</b><span>Day 60</span></p></div>
-          <div class="price-commercial-check"><span>YOUR MODELLED CHECK</span><p><b data-monthly-contribution>₹1.2L</b> monthly contribution across target capacity</p><p><b data-payback-months>3.3 months</b> of that contribution equals the Sprint fee</p><small>Comparison only. Not a revenue or payback guarantee.</small></div>
+          <div class="price-commercial-check"><span>YOUR MODELLED CHECK</span><p><b data-monthly-contribution>₹1.2L</b> monthly delivery profit across target capacity</p><p><b data-payback-months>3.3 months</b> of that delivery profit equals the Sprint fee</p><small>Comparison only. Not a revenue or payback guarantee.</small></div>
           <ul><li>Capacity model and delivery control</li><li>Decision rights and operating cadence</li><li>Core workflows and quality gates</li><li>Internal operator installation</li><li>Founder responsibility transfer</li><li>Post-Sprint scale plan</li></ul>
           <a class="button r3-button-primary button-full" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener" data-track="pricing_call">Discuss the ₹4L commercial case <span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </section>
 
-    <section class="r3-founder-section">
+    <section class="r3-founder-section" id="founder">
       <div class="page-shell founder-grid reveal">
         <div class="founder-portrait"><img src="./assets/depesh.jpg" alt="Depesh Vyas, founder of VBOG" loading="lazy"></div>
         <div class="founder-copy"><p class="r3-kicker">10 / THE PERSON ACCOUNTABLE</p><h2>Depesh is not selling you a folder.</h2><p>VBOG is accountable for designing the operating system, using it with your team under live client load, correcting what fails and transferring decision ownership once it works.</p><blockquote>“The agency stops asking: ‘Can the founder carry another client?’ It starts asking: ‘What can the operating system safely carry?’”</blockquote><a class="button r3-button-dark" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener" data-track="founder_call">Speak directly with Depesh <span aria-hidden="true">↗</span></a></div>
@@ -361,6 +361,6 @@
     <a class="button" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener" data-track="mobile_sticky_call">Book the call <span aria-hidden="true">↗</span></a>
   </div>
 
-  <script src="./assets/revenue-refusal.js?v=20260722a" defer></script>
+  <script src="./assets/revenue-refusal.js?v=20260722b" defer></script>
 </body>
 </html>

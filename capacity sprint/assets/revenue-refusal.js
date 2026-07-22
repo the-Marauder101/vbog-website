@@ -120,11 +120,12 @@
   document.querySelectorAll('[data-track]').forEach((link) => {
     link.addEventListener('click', () => {
       const eventName = link.dataset.track || 'cta_click';
+      const pageVariant = document.body.dataset.pageVariant || 'revenue_refusal';
       if (typeof window.gtag === 'function') {
-        window.gtag('event', eventName, { page_variant: 'revenue_refusal' });
+        window.gtag('event', eventName, { page_variant: pageVariant });
       }
       if (Array.isArray(window.dataLayer)) {
-        window.dataLayer.push({ event: eventName, page_variant: 'revenue_refusal' });
+        window.dataLayer.push({ event: eventName, page_variant: pageVariant });
       }
     });
   });

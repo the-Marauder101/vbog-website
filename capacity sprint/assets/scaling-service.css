@@ -1,0 +1,281 @@
+:root {
+  --saas-ink: #101510;
+  --saas-green: #dff47a;
+  --saas-orange: #f45b2f;
+  --saas-paper: #f4efe3;
+  --saas-white: #fffdf7;
+  --saas-muted: #aeb5ab;
+}
+
+.saas-page { background: var(--saas-ink); }
+.saas-page .page-shell { width: min(1280px, calc(100% - 80px)); }
+.saas-header { border-bottom: 1px solid #354039 !important; background: rgba(16,21,16,.95) !important; color: var(--saas-white); }
+.saas-header .brand-logo { padding: 5px 7px; background: var(--saas-white); filter: none; }
+.saas-header .desktop-nav a { color: #cbd0c9; }
+.saas-header .wordmark small { color: #9aa199; }
+.saas-nav-cta { background: var(--saas-green); color: var(--saas-ink); }
+
+.saas-hero {
+  position: relative;
+  min-height: 990px;
+  padding-top: 72px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 82% 25%, rgba(223,244,122,.13), transparent 27%),
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+    var(--saas-ink);
+  background-size: auto, 48px 48px, 48px 48px, auto;
+  color: var(--saas-white);
+}
+
+.saas-hero::before { position: absolute; top: 72px; left: 0; width: 100%; height: 7px; background: linear-gradient(90deg,var(--saas-green) 0 38%,var(--saas-orange) 38% 68%,var(--saas-white) 68%); content: ""; }
+.saas-watermark { position: absolute; right: -90px; bottom: 35px; color: rgba(255,255,255,.025); font-family: var(--mono); font-size: 420px; font-weight: 700; letter-spacing: -.12em; line-height: .75; }
+.saas-hero-grid { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0,1fr) minmax(420px,.62fr); gap: clamp(55px,7vw,105px); align-items: center; min-height: 870px; padding-block: 95px 105px; }
+.saas-eyebrow,.saas-heading > p,.saas-investment-copy > p,.saas-guarantee-grid > div:nth-child(2) > p,.saas-final-grid > div > p { margin: 0 0 24px; color: var(--saas-green); font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: .16em; line-height: 1.5; text-transform: uppercase; }
+.saas-eyebrow { display: inline-block; padding: 10px 13px; border: 1px solid var(--saas-green); }
+.saas-hero h1 { max-width: 850px; margin: 0; font-family: var(--display); font-size: clamp(68px,7vw,106px); font-weight: 700; letter-spacing: -.058em; line-height: .88; }
+.saas-hero h1 em { display: block; margin-top: 18px; color: var(--saas-orange); font-size: .66em; font-weight: 500; line-height: 1; }
+.saas-hero-lede { max-width: 790px; margin: 34px 0 0; color: #c3c8c0; font-size: clamp(18px,1.45vw,22px); line-height: 1.6; }
+.saas-outcome-line { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: center; max-width: 870px; margin-top: 34px; padding-block: 20px; border-block: 1px solid #465047; }
+.saas-outcome-line p { margin: 0; }
+.saas-outcome-line span { display: block; color: #7f8980; font-family: var(--mono); font-size: 7px; letter-spacing: .11em; text-transform: uppercase; }
+.saas-outcome-line strong { display: block; margin-top: 6px; font-size: 12px; line-height: 1.4; }
+.saas-outcome-line i { color: var(--saas-orange); font-family: var(--mono); font-style: normal; }
+.saas-button { border: 1px solid var(--saas-green); background: var(--saas-green); color: var(--saas-ink); box-shadow: 5px 5px 0 var(--saas-orange); }
+.saas-button:hover { transform: translate(2px,2px); border-color: var(--saas-white); background: var(--saas-white); color: var(--saas-ink); box-shadow: 3px 3px 0 var(--saas-orange); }
+.saas-text-link { color: var(--saas-white); font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.saas-caveat { margin: 20px 0 0; color: #747d75; font-family: var(--mono); font-size: 8px; line-height: 1.55; }
+
+.scale-contract { position: relative; padding: 32px; border: 1px solid var(--saas-green); background: #171e18; box-shadow: 16px 16px 0 var(--saas-orange); }
+.scale-contract::before { position: absolute; top: -13px; left: 24px; padding: 6px 11px; background: var(--saas-green); color: var(--saas-ink); font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: .1em; content: "SERVICE ORDER / ACCEPTED"; }
+.contract-head { display: flex; justify-content: space-between; gap: 15px; padding-bottom: 19px; border-bottom: 1px solid #59635a; font-family: var(--mono); font-size: 8px; letter-spacing: .09em; }
+.contract-head b { color: var(--saas-orange); }
+.contract-title { margin: 35px 0 0; font-family: var(--display); font-size: 37px; letter-spacing: -.035em; line-height: 1; }
+.contract-unit { display: flex; gap: 20px; align-items: center; margin-top: 24px; padding: 20px; background: var(--saas-green); color: var(--saas-ink); }
+.contract-unit strong { font-family: var(--mono); font-size: 62px; letter-spacing: -.09em; line-height: 1; }
+.contract-unit span { font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: .1em; line-height: 1.45; }
+.contract-rows { margin-top: 20px; }
+.contract-rows p { display: flex; justify-content: space-between; gap: 18px; margin: 0; padding: 13px 0; border-bottom: 1px solid #465047; font-family: var(--mono); font-size: 8px; }
+.contract-rows span { color: #89928a; }
+.contract-rows b { color: var(--saas-white); text-align: right; }
+.contract-guarantee { margin-top: 22px; padding: 18px; border: 1px solid var(--saas-orange); }
+.contract-guarantee span { color: var(--saas-orange); font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: .12em; }
+.contract-guarantee p { margin: 9px 0 0; color: #aeb6af; font-size: 11px; line-height: 1.55; }
+.contract-stamp { width: fit-content; margin: 27px auto 2px; padding: 8px 16px; transform: rotate(-4deg); border: 4px double var(--saas-green); color: var(--saas-green); font-family: var(--mono); font-size: 18px; font-weight: 700; letter-spacing: .14em; line-height: 1; text-align: center; }
+.saas-strip { position: absolute; bottom: 0; left: 0; display: flex; width: 100%; justify-content: center; border-block: 1px solid var(--saas-green); background: var(--saas-green); color: var(--saas-ink); font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: .1em; }
+.saas-strip span,.saas-strip b { padding: 14px 18px; }
+.saas-strip b { background: var(--saas-ink); color: var(--saas-orange); }
+
+.saas-problem-section,.saas-service-section,.saas-calculator-section,.saas-transfer-section,.saas-comparison-section,.saas-guarantee-section,.saas-proof-section,.saas-investment-section,.saas-fit-section,.saas-faq-section,.saas-final-section { padding-block: clamp(105px,11vw,165px); }
+.saas-problem-section,.saas-comparison-section,.saas-fit-section,.saas-faq-section { background: var(--saas-paper); color: var(--saas-ink); }
+.saas-service-section,.saas-transfer-section,.saas-proof-section,.saas-final-section { background: var(--saas-ink); color: var(--saas-white); }
+.saas-calculator-section { background: var(--saas-green); color: var(--saas-ink); }
+.saas-guarantee-section { background: var(--saas-orange); color: var(--saas-ink); }
+.saas-investment-section { background: #20362b; color: var(--saas-white); }
+
+.saas-heading { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px,.38fr); gap: 45px 85px; align-items: end; margin-bottom: 70px; }
+.saas-heading > p { grid-column: 1/-1; color: var(--saas-orange); }
+.saas-heading h2,.saas-investment-copy h2,.saas-guarantee-grid h2,.saas-final-grid h2 { margin: 0; font-family: var(--display); font-size: clamp(52px,6vw,88px); letter-spacing: -.052em; line-height: .98; }
+.saas-heading h2 em,.saas-investment-copy h2 em { color: var(--saas-orange); font-weight: 500; }
+.saas-heading > span { color: #60635b; font-size: 17px; line-height: 1.6; }
+.saas-heading.light > span { color: #aab2ab; }
+
+.scale-failure-grid { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; border-block: 1px solid var(--saas-ink); }
+.scale-failure-grid > i { align-self: center; padding: 12px; color: var(--saas-orange); font-family: var(--mono); font-size: 24px; font-style: normal; }
+.scale-failure-grid article { min-height: 330px; padding: 28px; border-inline: 1px solid var(--saas-ink); background: var(--saas-white); }
+.scale-failure-grid article > span { color: var(--saas-orange); font-family: var(--mono); font-size: 8px; letter-spacing: .14em; }
+.scale-failure-grid h3 { margin: 70px 0 14px; font-family: var(--display); font-size: 38px; letter-spacing: -.035em; line-height: 1; }
+.scale-failure-grid p { color: #66685f; font-size: 14px; line-height: 1.5; }
+.scale-failure-grid strong { display: block; margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(16,21,16,.22); font-size: 13px; line-height: 1.45; }
+.saas-problem-close { display: grid; grid-template-columns: .7fr auto 1fr; gap: 38px; align-items: center; margin-top: 65px; padding: 32px 38px; background: var(--saas-ink); color: var(--saas-white); box-shadow: 11px 11px 0 var(--saas-orange); }
+.saas-problem-close > span { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; }
+.saas-problem-close > strong { color: var(--saas-green); font-family: var(--mono); font-size: 57px; letter-spacing: -.08em; }
+.saas-problem-close p { margin: 0; color: #aeb5ad; font-size: 12px; line-height: 1.55; }
+
+.service-chain { border-top: 1px solid #566159; }
+.service-chain article { display: grid; grid-template-columns: 70px 1.05fr .8fr .8fr; gap: 30px; padding: 36px 0; border-bottom: 1px solid #566159; }
+.service-number { color: var(--saas-orange); font-family: var(--mono); font-size: 24px; }
+.service-chain span { color: #78837a; font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: .12em; }
+.service-do h3 { margin: 10px 0 12px; font-family: var(--display); font-size: 36px; letter-spacing: -.035em; line-height: 1; }
+.service-do p,.service-change p { margin: 10px 0 0; color: #aeb6af; font-size: 13px; line-height: 1.55; }
+.service-change,.service-money { padding-left: 27px; border-left: 1px solid #48524b; }
+.service-money strong { display: block; margin-top: 10px; color: var(--saas-green); font-size: 15px; line-height: 1.45; }
+.service-money small { display: block; margin-top: 16px; color: #808a82; font-family: var(--mono); font-size: 7px; line-height: 1.5; }
+
+.saas-calculator-section .saas-heading > p { color: var(--saas-ink); }
+.saas-calculator-section .saas-heading > span { color: #4c553b; }
+.saas-calculator { color: var(--saas-ink); }
+.saas-calculator .calculator-controls { border-top-color: var(--saas-ink); }
+.saas-calculator .control-group-head,.saas-calculator .r3-field { border-bottom-color: rgba(16,21,16,.32); }
+.saas-calculator .control-group-head.second { border-top-color: var(--saas-orange); }
+.saas-calculator .control-group-head span { color: var(--saas-ink); }
+.saas-calculator .r3-field > span:first-child small { color: #566044; }
+.saas-calculator .r3-input-wrap,.saas-calculator .r3-field select { border-bottom-color: var(--saas-ink); }
+.saas-calculator .r3-input-wrap input,.saas-calculator .r3-field select { color: var(--saas-ink); }
+.saas-calculator .r3-input-wrap b,.saas-calculator .range-scale strong { color: var(--saas-orange); }
+.saas-calculator .calculator-receipt { box-shadow: 16px 16px 0 var(--saas-orange); }
+
+.transfer-grid { display: grid; grid-template-columns: repeat(3,1fr); border: 1px solid #58635b; }
+.transfer-grid article { min-height: 400px; padding: 34px; border-right: 1px solid #58635b; }
+.transfer-grid article:last-child { border-right: 0; }
+.transfer-grid article > span { color: var(--saas-orange); font-family: var(--mono); font-size: 8px; letter-spacing: .13em; }
+.transfer-grid h3 { margin: 90px 0 18px; color: var(--saas-green); font-family: var(--mono); font-size: 34px; letter-spacing: -.05em; }
+.transfer-grid p { color: #adb5ae; font-size: 14px; line-height: 1.6; }
+.transfer-grid strong { display: block; margin-top: 30px; padding-top: 16px; border-top: 1px solid #58635b; font-size: 13px; line-height: 1.45; }
+
+.saas-compare-grid { display: grid; grid-template-columns: repeat(3,1fr); border: 1px solid var(--saas-ink); }
+.saas-compare-grid article { min-height: 450px; padding: 30px; border-right: 1px solid var(--saas-ink); background: var(--saas-white); }
+.saas-compare-grid article:last-child { border-right: 0; }
+.saas-compare-grid article > div { display: flex; justify-content: space-between; gap: 15px; margin: -30px -30px 0; padding: 19px 21px; border-bottom: 1px solid var(--saas-ink); background: #e4ded2; font-family: var(--mono); }
+.saas-compare-grid article > div span { padding: 7px 9px; background: var(--saas-ink); color: var(--saas-white); font-size: 9px; font-weight: 700; letter-spacing: .08em; }
+.saas-compare-grid article > div strong { color: var(--saas-orange); font-size: 12px; }
+.saas-compare-grid h3 { margin: 95px 0 20px; font-family: var(--display); font-size: 39px; letter-spacing: -.035em; line-height: 1; }
+.saas-compare-grid p { color: #63665d; font-size: 14px; line-height: 1.55; }
+.saas-compare-grid article > b { display: block; margin-top: 35px; color: var(--saas-orange); font-family: var(--mono); font-size: 8px; letter-spacing: .12em; }
+.saas-compare-grid article > small { display: block; margin-top: 9px; font-size: 13px; line-height: 1.45; }
+.saas-compare-grid .saas-vbog { background: var(--saas-ink); color: var(--saas-white); box-shadow: 12px 12px 0 var(--saas-orange); }
+.saas-compare-grid .saas-vbog > div { background: var(--saas-green); color: var(--saas-ink); }
+.saas-compare-grid .saas-vbog p { color: #afb7b0; }
+.saas-compare-grid .saas-vbog > small { color: var(--saas-green); }
+
+.saas-guarantee-grid { display: grid; grid-template-columns: .7fr 1fr; gap: clamp(55px,8vw,120px); align-items: center; }
+.saas-guarantee-mark { padding: 45px; transform: rotate(-2deg); border: 6px double var(--saas-ink); font-family: var(--mono); font-size: 19px; font-weight: 700; letter-spacing: .07em; line-height: 1.45; text-align: center; }
+.saas-guarantee-mark strong { display: block; margin-top: 10px; font-size: 34px; letter-spacing: -.04em; }
+.saas-guarantee-grid > div:nth-child(2) > p { color: var(--saas-ink); }
+.saas-guarantee-grid h2 { font-size: clamp(48px,5.4vw,78px); }
+.saas-guarantee-grid h2 + span { display: block; margin-top: 27px; font-size: 18px; font-weight: 650; line-height: 1.55; }
+.saas-guarantee-grid small { display: block; margin-top: 18px; font-family: var(--mono); font-size: 8px; line-height: 1.55; }
+
+.saas-proof-grid { display: grid; grid-template-columns: repeat(2,1fr); border: 1px solid #556159; }
+.saas-proof-grid article { min-height: 370px; padding: 37px; border-right: 1px solid #556159; }
+.saas-proof-grid article:last-child { border-right: 0; }
+.saas-proof-grid article > span { color: #859087; font-family: var(--mono); font-size: 8px; }
+.saas-proof-grid article > div { position: relative; display: flex; gap: 20px; align-items: center; margin-top: 68px; }
+.saas-proof-grid article > div strong { color: var(--saas-orange); font-family: var(--mono); font-size: clamp(40px,4vw,58px); letter-spacing: -.06em; }
+.saas-proof-grid article > div i { color: #8d978f; font-style: normal; }
+.saas-proof-grid article > div b { position: absolute; top: -40px; right: 0; color: var(--saas-green); font-family: var(--mono); font-size: 25px; }
+.saas-proof-grid article p { margin: 45px 0 0; padding-top: 18px; border-top: 1px solid #556159; color: #b4bcb6; font-size: 14px; line-height: 1.6; }
+.saas-proof-section .proof-disclaimer { color: #818c84; }
+
+.saas-investment-grid { display: grid; grid-template-columns: .78fr 1fr; gap: clamp(60px,8vw,120px); align-items: center; }
+.saas-investment-copy > span { display: block; max-width: 620px; margin-top: 28px; color: #bec8c1; font-size: 17px; line-height: 1.6; }
+.saas-investment-copy > span strong { color: var(--saas-green); }
+.saas-investment-copy ul { display: grid; grid-template-columns: repeat(2,1fr); gap: 13px 25px; margin: 34px 0 0; padding: 0; list-style: none; }
+.saas-investment-copy li { padding-top: 12px; border-top: 1px solid #57685e; font-size: 12px; }
+.saas-investment-copy li::before { margin-right: 8px; color: var(--saas-orange); content: "✓"; }
+.saas-price-card { background: var(--saas-white); color: var(--saas-ink); box-shadow: 15px 15px 0 var(--saas-orange); }
+.saas-price-card > div { display: flex; justify-content: space-between; gap: 20px; padding: 20px 26px; border-bottom: 1px solid var(--saas-ink); font-family: var(--mono); font-size: 8px; letter-spacing: .08em; }
+.saas-price-card > div b { color: var(--saas-orange); }
+.saas-price-card > strong { display: block; padding: 36px 26px 0; color: #20362b; font-family: var(--mono); font-size: clamp(58px,6vw,85px); letter-spacing: -.08em; line-height: 1; }
+.saas-price-card > small { display: block; padding: 8px 26px 28px; color: #6e736c; font-family: var(--mono); font-size: 7px; }
+.saas-price-card > section { display: grid; grid-template-columns: repeat(3,1fr); border-block: 1px solid var(--saas-ink); }
+.saas-price-card > section p { margin: 0; padding: 18px 21px; border-right: 1px solid var(--saas-ink); }
+.saas-price-card > section p:last-child { border-right: 0; }
+.saas-price-card > section b { display: block; font-family: var(--mono); font-size: 17px; }
+.saas-price-card > section span { font-family: var(--mono); font-size: 7px; text-transform: uppercase; }
+.saas-price-card > aside { padding: 24px 26px; background: var(--saas-green); }
+.saas-price-card > aside > span { font-family: var(--mono); font-size: 8px; letter-spacing: .11em; }
+.saas-price-card > aside p { display: flex; justify-content: space-between; gap: 18px; margin: 13px 0 0; padding-top: 11px; border-top: 1px solid rgba(16,21,16,.23); font-size: 12px; }
+.saas-price-card > aside p b { font-family: var(--mono); }
+.saas-price-card > aside small { display: block; margin-top: 12px; font-family: var(--mono); font-size: 7px; }
+.saas-price-card .button { margin: 26px; width: calc(100% - 52px); }
+
+.saas-fit-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 22px; }
+.saas-fit-grid article { padding: 35px; border: 1px solid var(--saas-ink); background: var(--saas-white); }
+.saas-fit-grid article:first-child { background: var(--saas-green); }
+.saas-fit-grid article > span { display: inline-block; padding: 8px 10px; background: var(--saas-ink); color: var(--saas-white); font-family: var(--mono); font-size: 8px; letter-spacing: .1em; }
+.saas-fit-grid ul { display: grid; gap: 0; margin: 28px 0 0; padding: 0; list-style: none; }
+.saas-fit-grid li { padding: 15px 0; border-top: 1px solid rgba(16,21,16,.22); font-size: 14px; }
+.saas-fit-grid article:first-child li::before { margin-right: 9px; color: var(--saas-orange); content: "✓"; }
+.saas-fit-grid article:last-child li::before { margin-right: 9px; color: #767970; content: "×"; }
+
+.saas-faq-section { background: #e8e2d7; }
+.saas-faq-section .faq-list details { border-color: var(--saas-ink); }
+.saas-faq-section .faq-list summary { color: var(--saas-ink); }
+
+.saas-final-grid { display: grid; grid-template-columns: 1fr .42fr; gap: clamp(60px,9vw,130px); align-items: center; }
+.saas-final-grid > div > span { display: block; max-width: 720px; margin-top: 28px; color: #aeb7b0; font-size: 18px; line-height: 1.6; }
+.saas-final-grid aside { padding: 35px; border: 1px solid var(--saas-green); box-shadow: 12px 12px 0 var(--saas-orange); }
+.saas-final-grid aside > strong { color: var(--saas-green); font-family: var(--mono); font-size: 80px; letter-spacing: -.1em; line-height: 1; }
+.saas-final-grid aside > p { margin: 14px 0 27px; font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .14em; line-height: 1.45; }
+.saas-final-grid aside small { display: block; margin-top: 17px; color: #778179; font-family: var(--mono); font-size: 7px; text-align: center; }
+.saas-footer { background: #070a07; }
+.saas-mobile-sticky { background: var(--saas-ink); }
+.saas-mobile-sticky > div strong { color: var(--saas-green); font-family: var(--mono); font-size: 18px; }
+.saas-mobile-sticky > div span { display: block; color: #8b958d; font-family: var(--mono); font-size: 6px; }
+.saas-mobile-sticky .button { background: var(--saas-green); color: var(--saas-ink); }
+
+@media (max-width:1100px) {
+  .saas-page .page-shell { width: min(calc(100% - 48px),1280px); }
+  .saas-hero-grid { grid-template-columns: 1fr .6fr; gap: 42px; }
+  .saas-hero h1 { font-size: clamp(64px,7.4vw,88px); }
+  .service-chain article { grid-template-columns: 55px 1fr 1fr; }
+  .service-money { grid-column: 2/-1; margin-top: 12px; padding-top: 20px; border-top: 1px solid #48524b; }
+}
+
+@media (max-width:900px) {
+  .saas-hero { min-height: auto; }
+  .saas-hero-grid,.saas-heading,.saas-guarantee-grid,.saas-investment-grid,.saas-final-grid { grid-template-columns: 1fr; }
+  .saas-hero-grid { padding-block: 95px 125px; }
+  .scale-contract { max-width: 620px; }
+  .saas-heading > span { max-width: 660px; }
+  .scale-failure-grid { grid-template-columns: 1fr; }
+  .scale-failure-grid > i { transform: rotate(90deg); text-align: center; }
+  .scale-failure-grid article { min-height: auto; }
+  .scale-failure-grid h3 { margin-top: 45px; }
+  .service-chain article { grid-template-columns: 55px 1fr; }
+  .service-change,.service-money { grid-column: 2; margin-top: 15px; padding: 20px 0 0; border-top: 1px solid #48524b; border-left: 0; }
+  .transfer-grid,.saas-compare-grid { grid-template-columns: 1fr; }
+  .transfer-grid article,.saas-compare-grid article { min-height: auto; border-right: 0; border-bottom: 1px solid currentColor; }
+  .transfer-grid article:last-child,.saas-compare-grid article:last-child { border-bottom: 0; }
+  .transfer-grid h3,.saas-compare-grid h3 { margin-top: 55px; }
+  .saas-guarantee-mark { max-width: 600px; }
+}
+
+@media (max-width:780px) {
+  .saas-page .page-shell { width: calc(100% - 36px); }
+  .saas-hero { padding-top: 64px; }
+  .saas-hero::before { top: 64px; }
+  .saas-hero-grid { padding-block: 70px 150px; }
+  .saas-hero h1 { font-size: clamp(54px,14.7vw,70px); overflow-wrap: anywhere; }
+  .saas-hero h1 em { font-size: .72em; line-height: 1.05; }
+  .saas-hero-lede { font-size: 17px; }
+  .saas-outcome-line { grid-template-columns: 1fr; }
+  .saas-outcome-line i { transform: rotate(90deg); text-align: center; }
+  .saas-strip { width: max-content; min-width: 100%; justify-content: flex-start; }
+  .saas-strip span,.saas-strip b { padding-inline: 10px; font-size: 6px; }
+  .scale-contract { padding: 27px 21px; box-shadow: 8px 8px 0 var(--saas-orange); }
+  .contract-unit strong { font-size: 50px; }
+  .saas-heading h2,.saas-investment-copy h2,.saas-guarantee-grid h2,.saas-final-grid h2 { font-size: clamp(43px,12vw,62px); overflow-wrap: anywhere; }
+  .saas-problem-close { grid-template-columns: 1fr; gap: 15px; padding: 27px 23px; }
+  .saas-problem-close > strong { font-size: 50px; }
+  .service-chain article { grid-template-columns: 1fr; gap: 15px; }
+  .service-number,.service-do,.service-change,.service-money { grid-column: 1; }
+  .service-change,.service-money { padding-top: 18px; }
+  .service-do h3 { font-size: 34px; }
+  .transfer-grid article,.saas-compare-grid article { padding: 27px 23px; }
+  .saas-compare-grid article > div { margin: -27px -23px 0; }
+  .saas-guarantee-mark { padding: 32px 20px; font-size: 15px; }
+  .saas-guarantee-mark strong { font-size: 27px; }
+  .saas-proof-grid { grid-template-columns: 1fr; }
+  .saas-proof-grid article { border-right: 0; border-bottom: 1px solid #556159; }
+  .saas-proof-grid article:last-child { border-bottom: 0; }
+  .saas-investment-copy ul,.saas-fit-grid { grid-template-columns: 1fr; }
+  .saas-price-card > strong { font-size: 52px; }
+  .saas-price-card > section { grid-template-columns: 1fr; }
+  .saas-price-card > section p { border-right: 0; border-bottom: 1px solid var(--saas-ink); }
+  .saas-price-card > section p:last-child { border-bottom: 0; }
+  .saas-price-card > aside p { display: block; }
+  .saas-price-card > aside p b { display: block; margin-bottom: 4px; }
+  .saas-final-grid aside { padding: 27px 22px; }
+}
+
+@media (max-width:420px) {
+  .saas-hero h1 { font-size: 52px; }
+  .contract-head { font-size: 6px; }
+  .contract-title { font-size: 32px; }
+  .contract-unit { gap: 13px; padding: 15px; }
+  .contract-unit strong { font-size: 44px; }
+  .saas-proof-grid article > div strong { font-size: 34px; }
+}
