@@ -34,7 +34,10 @@
       opportunityRange: $("#opportunity-range"),
       annualCapacity: $("#annual-capacity"),
       releasedHours: $("#released-hours"),
-      founderHours: $("#founder-hours-output")
+      founderHours: $("#founder-hours-output"),
+      delayCost: $("#delay-cost"),
+      delayHours: $("#delay-hours"),
+      priceOpportunity: $("#price-opportunity")
     };
 
     const calculate = () => {
@@ -49,11 +52,16 @@
       const highEstimate = roundTo(riskAdjustedContribution * 1.1, 50000);
       const midpoint = roundTo(riskAdjustedContribution, 50000);
       const releasableHours = Math.round(Math.min(founderHours, 10) * 52);
+      const ninetyDayOpportunity = roundTo(midpoint / 4, 50000);
+      const quarterlyFounderHours = Math.round(Math.min(founderHours, 10) * 13);
 
       outputs.opportunityRange.textContent = `${formatCompactINR(lowEstimate)}–${formatCompactINR(highEstimate)}`;
       outputs.annualCapacity.textContent = formatCompactINR(midpoint);
       outputs.releasedHours.textContent = `${new Intl.NumberFormat("en-IN").format(releasableHours)} hrs`;
       outputs.founderHours.textContent = `${founderHours} hrs`;
+      outputs.delayCost.textContent = formatCompactINR(ninetyDayOpportunity);
+      outputs.delayHours.textContent = `${new Intl.NumberFormat("en-IN").format(quarterlyFounderHours)} hrs`;
+      outputs.priceOpportunity.textContent = formatCompactINR(midpoint);
     };
 
     Object.values(fields).forEach((field) => field.addEventListener("input", calculate));
