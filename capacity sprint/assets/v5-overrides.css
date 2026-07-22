@@ -1,0 +1,272 @@
+/* ═══════════════════════════════════════════════════════════
+   v5 overrides — structural changes only
+   Inherits everything from agency-capacity.css + revenue-refusal.css
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Hero: tighter, no growth badge, no promise block ────── */
+.v5-hero {
+  min-height: auto;
+  padding-bottom: 0;
+}
+
+.v5-hero .r3-hero-grid {
+  min-height: min(780px, calc(100vh - 72px));
+  padding-bottom: 60px;
+}
+
+.v5-hero h1 > span {
+  font-size: clamp(62px, 6vw, 88px);
+  line-height: 0.92;
+  white-space: normal;
+}
+
+.v5-hero h1 em {
+  display: inline;
+}
+
+.v5-hero .r3-hero-lede {
+  max-width: 680px;
+  margin-top: 32px;
+  font-size: clamp(17px, 1.4vw, 21px);
+}
+
+.v5-hero .r3-actions {
+  margin-top: 36px;
+}
+
+/* ── Wound bridge: continuous with hero, no section gap ──── */
+.v5-wound-bridge {
+  position: relative;
+  padding-block: clamp(80px, 8vw, 120px) 0;
+  background: var(--r3-paper);
+}
+
+.v5-wound-bridge .wound-close {
+  margin-bottom: 0;
+}
+
+/* ── Ticker: positioned after wound bridge ──────────────── */
+.v5-hero > .r3-ticker {
+  position: relative;
+  bottom: auto;
+}
+
+/* ── Commercial section: tighten gap above ───────────────── */
+.v5-commercial {
+  padding-top: clamp(90px, 9vw, 140px);
+}
+
+/* ── Guarantee inline with price card ───────────────────── */
+.v5-guarantee-inline {
+  margin: 0 26px;
+  padding: 22px 0 24px;
+  border-top: 2px solid var(--r3-ink);
+}
+
+.v5-guarantee-inline strong {
+  display: block;
+  color: var(--r3-orange-dark);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.v5-guarantee-inline p {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.v5-guarantee-inline small {
+  display: block;
+  margin-top: 10px;
+  color: #77786f;
+  font-family: var(--mono);
+  font-size: 7px;
+  line-height: 1.55;
+}
+
+/* ── Close section: founder + FAQ + CTA unified ─────────── */
+.v5-close {
+  padding-block: clamp(100px, 10vw, 160px);
+}
+
+.v5-founder-row {
+  display: grid;
+  grid-template-columns: 0.45fr 1fr;
+  gap: clamp(50px, 7vw, 100px);
+  align-items: center;
+  padding-bottom: clamp(70px, 8vw, 110px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.v5-founder-row .founder-portrait::before {
+  background: var(--r3-orange);
+}
+
+.v5-founder-row .founder-copy h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(42px, 4.8vw, 66px);
+  letter-spacing: -0.048em;
+  line-height: 1;
+}
+
+.v5-founder-row .founder-copy > p {
+  max-width: 640px;
+  margin: 28px 0 0;
+  color: #b0b2a8;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.v5-founder-row .founder-copy blockquote {
+  margin: 28px 0 0;
+  padding: 18px 0 18px 24px;
+  border-left: 4px solid var(--r3-acid);
+  color: var(--r3-paper-bright);
+  font-family: var(--display);
+  font-size: clamp(22px, 2.6vw, 36px);
+  line-height: 1.18;
+}
+
+/* ── FAQ compact — no section header, just the questions ── */
+.v5-faq-compact {
+  padding-block: clamp(50px, 5vw, 80px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.v5-faq-compact details {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.v5-faq-compact details:last-child {
+  border-bottom: 0;
+}
+
+.v5-faq-compact summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 0;
+  color: var(--r3-paper-bright);
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: clamp(20px, 2.2vw, 28px);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  list-style: none;
+}
+
+.v5-faq-compact summary::-webkit-details-marker {
+  display: none;
+}
+
+.v5-faq-compact summary span {
+  flex-shrink: 0;
+  color: var(--r3-orange);
+  font-family: var(--mono);
+  font-size: 18px;
+  transition: transform 200ms ease;
+}
+
+.v5-faq-compact summary span::after {
+  content: "+";
+}
+
+.v5-faq-compact details[open] summary span {
+  transform: rotate(45deg);
+}
+
+.v5-faq-compact details[open] summary span::after {
+  content: "+";
+}
+
+.v5-faq-compact p {
+  margin: 0 0 22px;
+  padding-left: 0;
+  color: #b4b6ac;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── Final CTA ─────────────────────────────────────────── */
+.v5-final-cta {
+  padding-top: clamp(60px, 6vw, 100px);
+  text-align: center;
+}
+
+.v5-final-cta h2 {
+  margin: 0 auto;
+  max-width: 900px;
+  font-family: var(--display);
+  font-size: clamp(52px, 6.5vw, 92px);
+  letter-spacing: -0.055em;
+  line-height: 0.93;
+}
+
+.v5-final-cta > p {
+  max-width: 600px;
+  margin: 28px auto 0;
+  color: #b0b2a8;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.v5-final-cta .button {
+  margin-top: 36px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Responsive overrides
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .v5-founder-row {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+
+  .v5-founder-row .founder-portrait {
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 780px) {
+  .v5-hero h1 > span {
+    font-size: clamp(48px, 12vw, 66px);
+  }
+
+  .v5-wound-bridge {
+    padding-top: clamp(60px, 8vw, 90px);
+  }
+
+  .v5-founder-row .founder-portrait {
+    max-width: 320px;
+  }
+
+  .v5-founder-row .founder-copy blockquote {
+    font-size: clamp(20px, 5.5vw, 30px);
+  }
+
+  .v5-faq-compact summary {
+    font-size: clamp(18px, 5vw, 24px);
+  }
+
+  .v5-final-cta h2 {
+    font-size: clamp(46px, 12vw, 72px);
+  }
+
+  .v5-guarantee-inline {
+    margin-inline: 20px;
+  }
+}
+
+@media (max-width: 420px) {
+  .v5-hero h1 > span {
+    font-size: 44px;
+  }
+}
