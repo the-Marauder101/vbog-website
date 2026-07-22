@@ -1,0 +1,668 @@
+/* Revenue-scale variant. Loaded after the shared Capacity Sprint design system. */
+
+.scale-page {
+  --money: #dff07a;
+  --money-dark: #213129;
+}
+
+.scale-hero {
+  background:
+    radial-gradient(circle at 87% 17%, rgba(223, 240, 122, 0.2), transparent 24%),
+    linear-gradient(115deg, var(--paper-bright) 0%, var(--paper-bright) 58%, #e8ead8 100%);
+}
+
+.scale-hero::after {
+  opacity: 0.18;
+  background-image:
+    linear-gradient(rgba(33, 49, 41, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(33, 49, 41, 0.16) 1px, transparent 1px);
+}
+
+.scale-hero h1 {
+  font-size: clamp(49px, 4.8vw, 70px);
+}
+
+.scale-hero h1 em {
+  color: #2f5b43;
+}
+
+.scale-hero .hero-offer {
+  border-left-color: #2f5b43;
+}
+
+.scale-hero .button-primary {
+  background: var(--money);
+  color: var(--ink);
+  box-shadow: 5px 5px 0 #2f5b43;
+}
+
+.revenue-console {
+  background: #16241d;
+  box-shadow: 12px 12px 0 rgba(223, 240, 122, 0.24);
+}
+
+.revenue-funnel {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 24px 18px;
+  border-bottom: 1px solid #3a493f;
+}
+
+.revenue-funnel > div {
+  min-width: 0;
+  padding: 15px 8px;
+  border: 1px solid #45564b;
+  text-align: center;
+}
+
+.revenue-funnel span,
+.revenue-funnel strong,
+.revenue-funnel small {
+  display: block;
+}
+
+.revenue-funnel span {
+  color: var(--money);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+
+.revenue-funnel strong {
+  margin-top: 16px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.revenue-funnel small {
+  margin-top: 6px;
+  color: #8fa095;
+  font-family: var(--mono);
+  font-size: 6px;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.revenue-funnel i {
+  color: #7b8b81;
+  font-style: normal;
+}
+
+.revenue-funnel .funnel-break {
+  border-color: var(--orange);
+  background: rgba(232, 74, 27, 0.14);
+  box-shadow: inset 0 -3px 0 var(--orange);
+}
+
+.revenue-funnel .funnel-break small {
+  color: #ff9d7d;
+}
+
+.revenue-funnel .funnel-dim {
+  opacity: 0.48;
+}
+
+.revenue-status {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid #3a493f;
+}
+
+.revenue-status p {
+  margin: 0;
+  padding: 18px 14px;
+  border-right: 1px solid #3a493f;
+}
+
+.revenue-status p:last-child {
+  border-right: 0;
+}
+
+.revenue-status span,
+.revenue-status strong {
+  display: block;
+}
+
+.revenue-status span {
+  min-height: 24px;
+  color: #839187;
+  font-family: var(--mono);
+  font-size: 6px;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.revenue-status strong {
+  margin-top: 7px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.revenue-status p:first-child strong {
+  color: var(--money);
+}
+
+.revenue-status p:not(:first-child) strong {
+  color: #ff8966;
+}
+
+.scale-meter .meter-track span {
+  width: 64%;
+  background: var(--money);
+}
+
+.scale-meter .meter-top strong {
+  color: var(--money);
+}
+
+.revenue-ceiling-section {
+  background: var(--paper-bright);
+}
+
+.revenue-leak-grid .reality-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 340px;
+}
+
+.revenue-leak-grid .reality-card::after {
+  position: absolute;
+  right: -22px;
+  bottom: -30px;
+  color: rgba(232, 74, 27, 0.08);
+  content: "₹";
+  font-family: var(--mono);
+  font-size: 150px;
+  font-weight: 800;
+}
+
+.money-close {
+  display: grid;
+  grid-template-columns: 0.35fr 1.45fr 0.5fr;
+  gap: 36px;
+  align-items: center;
+  margin-top: 28px;
+  padding: clamp(34px, 5vw, 60px);
+  color: #fff;
+  background: var(--money-dark);
+  box-shadow: inset 8px 0 0 var(--money);
+}
+
+.money-close-label {
+  color: var(--money);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.money-close h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(29px, 3.4vw, 46px);
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+}
+
+.money-close p {
+  margin: 0;
+  color: #c9d9ce;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.scale-calculator-section {
+  background: #101814;
+}
+
+.scale-calculator {
+  border-color: #415146;
+  background: #121b16;
+  box-shadow: 10px 10px 0 rgba(223, 240, 122, 0.14);
+}
+
+.scale-calculator .calculator-header,
+.scale-calculator .input-grid,
+.scale-calculator .input-grid label,
+.scale-calculator .input-grid input,
+.scale-calculator .input-grid select {
+  border-color: #415146;
+}
+
+.scale-result {
+  color: var(--ink);
+  background: var(--money);
+}
+
+.scale-result > p,
+.scale-result-meta span {
+  color: rgba(23, 23, 20, 0.68);
+}
+
+.scale-result-meta {
+  grid-template-columns: 1fr 1fr;
+}
+
+.scale-result-meta span {
+  min-height: 72px;
+}
+
+.scale-calculator .button-primary {
+  background: var(--money);
+  color: var(--ink);
+}
+
+.revenue-delay-section {
+  padding-block: clamp(90px, 10vw, 150px);
+  color: #fff;
+  background: var(--orange-dark);
+}
+
+.revenue-delay-grid {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: clamp(60px, 9vw, 130px);
+  align-items: center;
+}
+
+.revenue-delay-number {
+  padding: clamp(30px, 5vw, 58px);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow: 10px 10px 0 rgba(255, 255, 255, 0.16);
+}
+
+.revenue-delay-number span,
+.revenue-delay-number strong,
+.revenue-delay-number small {
+  display: block;
+}
+
+.revenue-delay-number span,
+.revenue-delay-number small {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.07em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.revenue-delay-number span {
+  color: #ffd0c0;
+}
+
+.revenue-delay-number strong {
+  margin: 22px 0 16px;
+  color: var(--money);
+  font-family: var(--mono);
+  font-size: clamp(55px, 8vw, 110px);
+  letter-spacing: -0.09em;
+  line-height: 0.85;
+}
+
+.revenue-delay-number small {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.revenue-delay-copy h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(45px, 5.3vw, 74px);
+  letter-spacing: -0.055em;
+  line-height: 0.96;
+}
+
+.revenue-delay-copy > p:not(.section-kicker, .delay-disclaimer) {
+  margin: 28px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.unlock-section {
+  background: #e5eadf;
+}
+
+.scale-highlight {
+  display: inline;
+  padding-inline: 0.06em;
+  background: linear-gradient(transparent 61%, var(--money) 61%);
+}
+
+.unlock-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 64px;
+  border-top: 1px solid var(--ink);
+  border-left: 1px solid var(--ink);
+}
+
+.unlock-card {
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  min-height: 440px;
+  padding: clamp(28px, 4vw, 48px);
+  border-right: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  background: rgba(255, 253, 247, 0.58);
+}
+
+.unlock-card > span {
+  color: var(--orange-dark);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.unlock-install {
+  margin: 38px 0 12px;
+  color: #6a6f67;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.unlock-card h3 {
+  max-width: 440px;
+  margin: 0;
+  font-size: clamp(29px, 3vw, 43px);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.unlock-card > p:not(.unlock-install) {
+  max-width: 480px;
+  margin: 24px 0 0;
+  color: #5d625a;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.unlock-card > strong {
+  margin-top: 32px;
+  padding-top: 18px;
+  color: #314c3b;
+  border-top: 1px solid rgba(23, 23, 20, 0.25);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.unlock-card.featured {
+  color: #fff;
+  background: var(--money-dark);
+  box-shadow: inset 0 6px 0 var(--money);
+}
+
+.unlock-card.featured > span,
+.unlock-card.featured > strong {
+  color: var(--money);
+}
+
+.unlock-card.featured .unlock-install,
+.unlock-card.featured > p:not(.unlock-install) {
+  color: #bdcbbf;
+}
+
+.unlock-card.featured > strong {
+  border-top-color: rgba(255, 255, 255, 0.25);
+}
+
+.scale-shift-section {
+  padding-block: clamp(95px, 11vw, 160px);
+  color: #fff;
+  background: #151b17;
+}
+
+.scale-shift-section .method-intro > p:last-child {
+  color: #a8afa9;
+}
+
+.scale-shift-section .shift-grid {
+  color: var(--ink);
+  border-color: #535b55;
+}
+
+.scale-bridge {
+  margin: 28px 0 0;
+  padding: 28px;
+  color: #c1c9c3;
+  border: 1px solid #535b55;
+  font-size: 18px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.scale-bridge strong {
+  color: var(--money);
+}
+
+.scale-why-section {
+  background: var(--paper);
+}
+
+.scale-why-grid .why-card.featured {
+  background: var(--money-dark);
+  box-shadow: inset 0 5px 0 var(--money);
+}
+
+.scale-why-grid .why-card.featured > span {
+  border-color: var(--money);
+  background: var(--money);
+}
+
+.scale-why-grid .why-card.featured > small {
+  color: var(--money);
+}
+
+.scale-why-grid .why-card.featured > small::before {
+  color: var(--money);
+}
+
+.scale-investment {
+  background: #101814;
+}
+
+.scale-roi-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 580px;
+  margin-top: 36px;
+  border: 1px solid #4a584f;
+  background: #121b16;
+}
+
+.scale-roi-card > div {
+  padding: 22px;
+  border-right: 1px solid #4a584f;
+}
+
+.scale-roi-card > div:nth-child(2) {
+  border-right: 0;
+}
+
+.scale-roi-card span,
+.scale-roi-card strong,
+.scale-roi-card small {
+  display: block;
+}
+
+.scale-roi-card span,
+.scale-roi-card small {
+  color: #8e9a92;
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.05em;
+  line-height: 1.55;
+  text-transform: uppercase;
+}
+
+.scale-roi-card strong {
+  margin-top: 12px;
+  color: var(--money);
+  font-family: var(--mono);
+  font-size: clamp(31px, 4vw, 48px);
+  letter-spacing: -0.07em;
+}
+
+.scale-roi-card > small {
+  grid-column: 1 / -1;
+  padding: 15px 22px;
+  border-top: 1px solid #4a584f;
+}
+
+.scale-investment .price {
+  color: var(--money);
+}
+
+.scale-investment .price-card .button-primary {
+  background: var(--money);
+  color: var(--ink);
+}
+
+.guarantee-grid > * {
+  min-width: 0;
+}
+
+.scale-final {
+  background: #dbe96e;
+}
+
+.scale-final .final-copy,
+.scale-final .application-preview {
+  color: var(--ink);
+}
+
+.scale-final .button-light {
+  color: #fff;
+  background: var(--money-dark);
+  box-shadow: 5px 5px 0 var(--orange);
+}
+
+.scale-final .application-preview {
+  border-color: rgba(23, 23, 20, 0.5);
+  background: rgba(255, 253, 247, 0.32);
+}
+
+.scale-final .final-note,
+.scale-final .final-copy > p:not(.section-kicker),
+.scale-final .application-preview small,
+.scale-final .application-preview > p {
+  color: rgba(23, 23, 20, 0.7);
+}
+
+.scale-page .mobile-cta .button {
+  background: var(--money);
+}
+
+@media (max-width: 1100px) {
+  .money-close {
+    grid-template-columns: 0.35fr 1.65fr;
+  }
+
+  .money-close p {
+    grid-column: 2;
+  }
+
+  .revenue-delay-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .scale-hero h1 {
+    font-size: clamp(43px, 12vw, 62px);
+  }
+
+  .guarantee-grid h2 {
+    font-size: clamp(36px, 10vw, 42px);
+  }
+
+  .revenue-funnel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .revenue-funnel i {
+    display: none;
+  }
+
+  .revenue-funnel > div:nth-of-type(n + 3) {
+    margin-top: 4px;
+  }
+
+  .revenue-status {
+    grid-template-columns: 1fr;
+  }
+
+  .revenue-status p {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-right: 0;
+    border-bottom: 1px solid #3a493f;
+  }
+
+  .revenue-status p:last-child {
+    border-bottom: 0;
+  }
+
+  .revenue-status span {
+    min-height: 0;
+  }
+
+  .revenue-status strong {
+    margin-top: 0;
+  }
+
+  .money-close,
+  .unlock-grid,
+  .scale-roi-card {
+    grid-template-columns: 1fr;
+  }
+
+  .money-close p {
+    grid-column: auto;
+  }
+
+  .scale-result-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .revenue-delay-copy h2 {
+    font-size: clamp(39px, 11vw, 58px);
+  }
+
+  .unlock-card {
+    min-height: 390px;
+  }
+
+  .scale-roi-card > div {
+    border-right: 0;
+    border-bottom: 1px solid #4a584f;
+  }
+
+  .scale-roi-card > div:nth-child(2) {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .revenue-funnel {
+    padding-inline: 12px;
+  }
+
+  .revenue-funnel > div {
+    padding-inline: 5px;
+  }
+
+  .revenue-delay-number strong {
+    font-size: 62px;
+  }
+
+  .scale-bridge {
+    text-align: left;
+  }
+}
