@@ -1,0 +1,165 @@
+/* ═══════════════════════════════════════════════════════════
+   vsl-final.css — overrides for the merged VSL page
+   Inherits everything from vsl-booking.css
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Proof strip inside offer section ────────────────────── */
+.vf-proof-strip {
+  margin-bottom: clamp(70px, 8vw, 110px);
+}
+
+.vf-proof-strip .vsl-proof-grid {
+  margin-top: 0;
+}
+
+.vf-proof-strip .vsl-proof-card {
+  background: var(--vsl-paper-bright);
+}
+
+.vf-proof-strip .vsl-proof-card > span {
+  color: #5e6057;
+}
+
+.vf-proof-strip .vsl-proof-card > strong {
+  color: var(--vsl-ink);
+}
+
+.vf-proof-strip .vsl-proof-card::before {
+  background: var(--vsl-ink);
+}
+
+.vf-proof-strip .vsl-proof-card:nth-child(2)::before {
+  background: var(--vsl-orange);
+}
+
+.vf-proof-strip .vsl-proof-note {
+  color: #5a5c53;
+}
+
+/* ── Close section: fit + founder unified ────────────────── */
+.vsl-close-section {
+  padding-block: clamp(96px, 10vw, 150px);
+  color: var(--vsl-paper-bright);
+  background:
+    radial-gradient(circle at 80% 15%, rgba(244, 91, 47, 0.1), transparent 28%),
+    var(--vsl-ink);
+}
+
+.vf-fit-row {
+  display: grid;
+  grid-template-columns: 0.7fr 1fr;
+  gap: clamp(60px, 8vw, 130px);
+  align-items: start;
+  padding-bottom: clamp(70px, 8vw, 110px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vf-fit-left h2 {
+  margin: 20px 0 0;
+  font-family: var(--display);
+  font-size: clamp(44px, 4.8vw, 68px);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 0.96;
+}
+
+.vsl-close-section .vsl-fit-list {
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.vsl-close-section .vsl-fit-list p {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 18px;
+  align-items: center;
+  margin: 0;
+  padding-block: 19px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.vsl-close-section .vsl-fit-list span {
+  color: var(--vsl-orange);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.vsl-close-section .vsl-fit-list strong {
+  font-size: 14px;
+}
+
+/* ── Founder inside close section ────────────────────────── */
+.vf-founder-final {
+  padding-top: clamp(70px, 8vw, 110px);
+}
+
+.vf-founder-final .vsl-founder-portrait::before {
+  background: var(--vsl-orange);
+}
+
+.vf-founder-final .vsl-founder-portrait img {
+  filter: grayscale(1) contrast(1.05);
+}
+
+.vf-founder-final .vsl-founder-portrait span {
+  color: var(--vsl-paper-bright);
+  background: var(--vsl-forest);
+}
+
+.vf-founder-final .vsl-founder-copy h2 {
+  font-size: clamp(48px, 5.2vw, 76px);
+}
+
+.vf-founder-final .vsl-founder-copy > p:not(.vsl-kicker) {
+  color: #b0b2a8;
+}
+
+.vf-founder-final .vsl-founder-copy blockquote {
+  color: var(--vsl-paper-bright);
+  border-left-color: var(--vsl-acid);
+}
+
+.vf-receipt-link {
+  display: block;
+  margin-top: 18px;
+  color: var(--vsl-orange) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .vf-fit-row,
+  .vf-founder-final {
+    grid-template-columns: 1fr;
+  }
+
+  .vf-fit-row {
+    gap: 50px;
+  }
+
+  .vf-founder-final {
+    gap: 60px;
+  }
+
+  .vf-founder-final .vsl-founder-portrait {
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 680px) {
+  .vf-fit-left h2 {
+    font-size: clamp(38px, 11vw, 52px);
+  }
+
+  .vf-founder-final .vsl-founder-copy h2 {
+    font-size: clamp(42px, 12vw, 58px);
+  }
+
+  .vf-founder-final .vsl-founder-portrait {
+    max-width: calc(100% - 18px);
+  }
+
+  .vf-founder-final .vsl-founder-copy blockquote {
+    font-size: clamp(20px, 6vw, 28px);
+  }
+}
