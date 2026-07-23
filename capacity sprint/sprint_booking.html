@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your Agency Is Refusing Revenue | VBOG</title>
+  <meta name="description" content="Watch: how Indian agencies at ₹12L+ MRR are losing lakhs every quarter by saying 'not yet' — and how to fix it in 90 days.">
+  <meta name="theme-color" content="#111510">
+  <meta name="robots" content="noindex, follow">
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Your agency is refusing revenue. Watch the 6-minute breakdown.">
+  <meta property="og:description" content="See why agencies at ₹12L+ MRR leak lakhs every quarter — and the 90-day fix.">
+  <meta property="og:image" content="https://v-bog.com/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>
+    :root {
+      --ink: #111510;
+      --paper: #f4efe3;
+      --paper-bright: #fffdf6;
+      --orange: #f45b2f;
+      --orange-dark: #c43d1b;
+      --acid: #dff47a;
+      --forest: #193429;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --display: Georgia, "Times New Roman", serif;
+      --body: Arial, Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--ink);
+      color: var(--paper-bright);
+      font-family: var(--body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .vsl-shell {
+      width: min(100% - 32px, 800px);
+      margin-inline: auto;
+    }
+
+    /* ── Header: minimal ─────────────────── */
+    .vsl-header {
+      padding: 18px 0;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .vsl-header img { height: 22px; display: inline-block; filter: brightness(10); }
+    .vsl-header small {
+      display: block; margin-top: 6px;
+      color: var(--orange); font-family: var(--mono);
+      font-size: 8px; letter-spacing: .14em; text-transform: uppercase;
+    }
+
+    /* ── Hero: video + hook ──────────────── */
+    .vsl-hero {
+      padding: 48px 0 40px;
+      text-align: center;
+    }
+    .vsl-eyebrow {
+      display: inline-block; padding: 8px 12px;
+      border: 1px solid var(--orange);
+      color: var(--orange); font-family: var(--mono);
+      font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+    }
+    .vsl-hero h1 {
+      max-width: 720px; margin: 28px auto 0;
+      font-family: var(--display); font-size: clamp(36px, 6vw, 56px);
+      font-weight: 700; letter-spacing: -.04em; line-height: 1.02;
+    }
+    .vsl-hero h1 em { color: var(--orange); font-weight: 500; }
+    .vsl-hero .vsl-sub {
+      max-width: 580px; margin: 18px auto 0;
+      color: #b0b2a8; font-size: 16px; line-height: 1.6;
+    }
+
+    /* ── Video container ─────────────────── */
+    .vsl-video {
+      position: relative; margin: 36px auto 0;
+      max-width: 760px; aspect-ratio: 16/9;
+      background: #0a0d0a; border: 1px solid rgba(255,255,255,.1);
+      overflow: hidden;
+    }
+    .vsl-video iframe,
+    .vsl-video video {
+      width: 100%; height: 100%; border: 0;
+    }
+    /* Placeholder when no video yet */
+    .vsl-video-placeholder {
+      display: grid; place-items: center;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #0a0d0a 0%, #1a1f1a 100%);
+      color: var(--orange); text-align: center;
+    }
+    .vsl-video-placeholder span {
+      font-family: var(--mono); font-size: 52px; line-height: 1;
+    }
+    .vsl-video-placeholder small {
+      display: block; margin-top: 12px;
+      color: #6a6c63; font-family: var(--mono);
+      font-size: 9px; letter-spacing: .1em;
+    }
+
+    .vsl-watch-time {
+      margin-top: 14px; text-align: center;
+      color: #6a6c63; font-family: var(--mono);
+      font-size: 8px; letter-spacing: .08em;
+    }
+
+    /* ── CTA block ───────────────────────── */
+    .vsl-cta-block {
+      max-width: 620px; margin: 44px auto 0;
+      padding: 32px;
+      background: var(--paper-bright); color: var(--ink);
+      text-align: center;
+      box-shadow: 10px 10px 0 var(--orange);
+    }
+    .vsl-cta-block h2 {
+      font-family: var(--display);
+      font-size: clamp(26px, 4.5vw, 38px);
+      letter-spacing: -.035em; line-height: 1.05;
+    }
+    .vsl-cta-block p {
+      margin: 14px 0 0; color: #5e6057;
+      font-size: 14px; line-height: 1.55;
+    }
+    .vsl-cta-block .vsl-btn {
+      display: inline-flex; align-items: center; gap: 18px;
+      margin-top: 24px; padding: 18px 28px;
+      background: var(--acid); color: var(--ink);
+      border: 1px solid var(--ink);
+      font-family: var(--mono); font-size: 12px; font-weight: 700;
+      letter-spacing: .03em; text-transform: uppercase;
+      text-decoration: none;
+      box-shadow: 5px 5px 0 var(--ink);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+    .vsl-cta-block .vsl-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+    .vsl-cta-block .vsl-receipt-link {
+      display: block; margin-top: 16px;
+      color: var(--orange-dark); font-family: var(--mono);
+      font-size: 9px; letter-spacing: .06em; text-transform: uppercase;
+    }
+
+    /* ── Proof strip ─────────────────────── */
+    .vsl-proof {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 18px; max-width: 620px;
+      margin: 50px auto 0;
+    }
+    .vsl-proof-card {
+      padding: 24px; border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.03);
+    }
+    .vsl-proof-card span {
+      color: #6a6c63; font-family: var(--mono);
+      font-size: 7px; letter-spacing: .12em;
+    }
+    .vsl-proof-card strong {
+      display: block; margin-top: 18px;
+      color: var(--orange); font-family: var(--mono);
+      font-size: clamp(28px, 4vw, 42px); letter-spacing: -.06em;
+    }
+    .vsl-proof-card i {
+      color: #5d6356; font-style: normal; font-size: 16px;
+    }
+    .vsl-proof-card p {
+      margin-top: 16px; padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      color: #9a9c93; font-size: 12px; line-height: 1.5;
+    }
+
+    /* ── What you get (3 bullets) ─────────── */
+    .vsl-what {
+      max-width: 620px; margin: 50px auto 0;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .vsl-what h3 {
+      color: var(--orange); font-family: var(--mono);
+      font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+    }
+    .vsl-what-item {
+      display: grid; grid-template-columns: 48px 1fr;
+      gap: 18px; align-items: start;
+      margin-top: 26px; padding-bottom: 26px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .vsl-what-item span {
+      display: grid; place-items: center;
+      width: 48px; height: 48px;
+      border: 1px solid var(--orange);
+      color: var(--orange); font-family: var(--mono);
+      font-size: 18px; font-weight: 700;
+    }
+    .vsl-what-item strong {
+      display: block; font-size: 16px; letter-spacing: -.01em;
+    }
+    .vsl-what-item p {
+      margin-top: 6px; color: #9a9c93;
+      font-size: 13px; line-height: 1.55;
+    }
+
+    /* ── Qualification strip ─────────────── */
+    .vsl-qualify {
+      max-width: 620px; margin: 40px auto 0;
+      padding: 28px; background: var(--forest);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .vsl-qualify h3 {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: .12em; color: var(--acid);
+      text-transform: uppercase;
+    }
+    .vsl-qualify ul {
+      margin: 18px 0 0; padding: 0; list-style: none;
+      display: grid; gap: 12px;
+    }
+    .vsl-qualify li {
+      padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1);
+      font-size: 13px; color: #c5c7be;
+    }
+    .vsl-qualify li::before {
+      content: "✓"; margin-right: 10px;
+      color: var(--acid); font-weight: 700;
+    }
+
+    /* ── Final CTA ───────────────────────── */
+    .vsl-final {
+      max-width: 620px; margin: 50px auto 0;
+      padding: 40px 0 80px;
+      text-align: center;
+    }
+    .vsl-final h2 {
+      font-family: var(--display);
+      font-size: clamp(32px, 5.5vw, 50px);
+      letter-spacing: -.04em; line-height: 1;
+    }
+    .vsl-final p {
+      margin: 16px auto 0; max-width: 460px;
+      color: #9a9c93; font-size: 14px; line-height: 1.6;
+    }
+    .vsl-final .vsl-btn { margin-top: 28px; }
+    .vsl-final .vsl-receipt-link { margin-top: 14px; }
+
+    /* ── Footer ───────────────────────────── */
+    .vsl-footer {
+      padding: 24px 0;
+      border-top: 1px solid rgba(255,255,255,.06);
+      text-align: center;
+      color: #4a4c44; font-family: var(--mono);
+      font-size: 7px; letter-spacing: .06em;
+    }
+
+    /* ── Mobile ───────────────────────────── */
+    @media (max-width: 600px) {
+      .vsl-proof { grid-template-columns: 1fr; }
+      .vsl-cta-block { padding: 24px 20px; box-shadow: 6px 6px 0 var(--orange); }
+      .vsl-hero h1 { font-size: clamp(32px, 8vw, 44px); }
+      .vsl-final h2 { font-size: clamp(30px, 8vw, 42px); }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="vsl-header">
+    <div class="vsl-shell">
+      <img src="./assets/vbog-logo.svg" alt="VBOG">
+      <small>Agency Capacity Installation</small>
+    </div>
+  </header>
+
+  <main>
+    <section class="vsl-hero">
+      <div class="vsl-shell">
+        <div class="vsl-eyebrow">For Indian agencies at ₹12L+ MRR</div>
+        <h1>Your agency is refusing revenue.<br><em>Here's the receipt.</em></h1>
+        <p class="vsl-sub">Watch: how "not yet" is costing you lakhs every quarter — and the 90-day system that fixes it.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="vsl-shell">
+        <div class="vsl-video">
+          <!-- Replace placeholder with actual video embed -->
+          <div class="vsl-video-placeholder">
+            <div>
+              <span>▶</span>
+              <small>VIDEO COMING SOON — RECORD YOUR VSL</small>
+            </div>
+          </div>
+          <!-- When ready:
+          <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe>
+          -->
+        </div>
+        <p class="vsl-watch-time">6 MINUTES · NO PITCH · JUST THE MATH</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="vsl-shell">
+        <div class="vsl-cta-block">
+          <h2>See what "not yet" is costing your agency.</h2>
+          <p>Build your Revenue Refusal Receipt — enter your real numbers, see the cost, and decide if the ₹4L fix makes commercial sense.</p>
+          <a class="vsl-btn" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener">Discuss this with Depesh — 30 min <span aria-hidden="true">↗</span></a>
+          <a class="vsl-receipt-link" href="./index5.html#calculator">Or build your receipt first →</a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="vsl-shell">
+        <div class="vsl-proof">
+          <div class="vsl-proof-card">
+            <span>CASE 01 / R2G DIGITAL</span>
+            <strong>$15K <i>→</i> $120K</strong>
+            <p>8× growth in 10 months. Built the ops layer, hiring system, and delivery structure.</p>
+          </div>
+          <div class="vsl-proof-card">
+            <span>CASE 02 / RIDE THE WAVE</span>
+            <strong>$5K <i>→</i> $220K</strong>
+            <p>44× growth. Started with an ops Sprint. Founder went from 80-hour weeks to 25.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="vsl-shell">
+        <div class="vsl-what">
+          <h3>WHAT THE 90-DAY SPRINT INSTALLS</h3>
+          <div class="vsl-what-item">
+            <span>01</span>
+            <div><strong>Capacity model + delivery control</strong><p>Know exactly how many clients you can safely add. Stop guessing.</p></div>
+          </div>
+          <div class="vsl-what-item">
+            <span>02</span>
+            <div><strong>Decision ownership + operator</strong><p>Routine decisions stop reaching you. One person is trained and authorised to run it.</p></div>
+          </div>
+          <div class="vsl-what-item">
+            <span>03</span>
+            <div><strong>Live installation — not a folder</strong><p>We run the system on your live clients, correct what breaks, and transfer it when it works.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="vsl-shell">
+        <div class="vsl-qualify">
+          <h3>THIS IS FOR YOU IF</h3>
+          <ul>
+            <li>₹12L+ monthly agency revenue</li>
+            <li>5–12 team members</li>
+            <li>₹75K+ average client value</li>
+            <li>Proven demand — you're turning away work</li>
+            <li>10–15+ founder hours stuck in delivery</li>
+            <li>Ready to transfer real authority</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="vsl-final">
+      <div class="vsl-shell">
+        <h2>₹4L. 90 days.<br>Installed, operated, transferred.</h2>
+        <p>Bring the last opportunity you delayed. 30 minutes with Depesh. No sales team. No revenue promise.</p>
+        <a class="vsl-btn" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener">Book the 30-min call <span aria-hidden="true">↗</span></a>
+        <a class="vsl-receipt-link" href="./index5.html#calculator">Build your Revenue Refusal Receipt first →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="vsl-footer">
+    <div class="vsl-shell">
+      © <script>document.write(new Date().getFullYear())</script> VBOG · India · Install operational ownership.
+    </div>
+  </footer>
+
+</body>
+</html>
