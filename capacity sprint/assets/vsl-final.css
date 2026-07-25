@@ -291,3 +291,28 @@
     font-size: 7px;
   }
 }
+
+
+/* Keep the final-page mobile CTA aligned with its .vsl-button markup. */
+@media (max-width: 640px) {
+  .vsl-mobile-cta .vsl-button {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin: 0;
+    padding: 11px 14px;
+    color: var(--vsl-ink);
+    border: 1px solid var(--vsl-acid);
+    background: var(--vsl-acid);
+    box-shadow: none;
+    font-family: var(--mono);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+}
