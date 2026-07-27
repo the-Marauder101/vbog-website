@@ -86,9 +86,9 @@ function computeSlots(client, dateStr, duration) {
 
     if (startMs <= earliestAllowed) return false; // already past / too little notice
 
-    // Overlap test includes the buffer in BOTH directions: the protected range
-    // extends buffer_mins before the slot start and buffer_mins after the slot
-    // end, so the minimum gap to any adjacent event is always respected.
+    // FIX 2026-07-27: buffer was only applied AFTER the slot (forward), so an
+    // external event ending 1 min before a slot passed with a 15-min buffer.
+    // Now the protected range extends buffer_mins in BOTH directions.
     return !busy.some(function (b) {
       return (startMs - bufferMs) < b.end && endMs > b.start;
     });
