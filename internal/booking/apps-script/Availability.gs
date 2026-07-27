@@ -76,6 +76,8 @@ function computeSlots(client, dateStr, duration) {
   var busy = getBusyIntervals(getAuthorizedCalendarIds(), dayStart, dayEnd);
   var earliestAllowed = Date.now() + MIN_NOTICE_MINS * 60000;
 
+  var bufferMs = buffer * 60000;
+
   return candidates.filter(function (hm) {
     var slotStart = wallTimeToDate(dateStr, hm, tz);
     if (!slotStart) return false; // wall time skipped by DST spring-forward
@@ -84,10 +86,11 @@ function computeSlots(client, dateStr, duration) {
 
     if (startMs <= earliestAllowed) return false; // already past / too little notice
 
-    // Overlap test includes the buffer: a slot's effective footprint extends
-    // by buffer_mins so back-to-back meetings always have breathing room.
+    // Overlap test includes the buffer in BOTH directions: the protected range
+    // extends buffer_mins before the slot start and buffer_mins after the slot
+    // end, so the minimum gap to any adjacent event is always respected.
     return !busy.some(function (b) {
-      return startMs < b.end && endMs > b.start;
+      return (startMs - bufferMs) < b.end && endMs > b.start;
     });
   });
 }
