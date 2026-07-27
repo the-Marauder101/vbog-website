@@ -30,6 +30,9 @@ function getBusyIntervals(calendarIds, startDate, endDate) {
     throw tagged_('CALENDAR_ERROR', 'Could not read calendars.');
   }
 
+  // FIX 2026-07-27: previously `if (!cal) continue` silently skipped calendars
+  // missing from the response, failing OPEN (empty busy list → all slots offered).
+  // Now we fail CLOSED: throw on any missing or malformed calendar data.
   if (!response.calendars || typeof response.calendars !== 'object') {
     console.error('Freebusy response missing calendars object: ' +
       JSON.stringify(response).substring(0, 500));
