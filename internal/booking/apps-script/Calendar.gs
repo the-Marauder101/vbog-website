@@ -30,11 +30,20 @@ function getBusyIntervals(calendarIds, startDate, endDate) {
     throw tagged_('CALENDAR_ERROR', 'Could not read calendars.');
   }
 
+  if (!response.calendars || typeof response.calendars !== 'object') {
+    console.error('Freebusy response missing calendars object: ' +
+      JSON.stringify(response).substring(0, 500));
+    throw tagged_('CALENDAR_ERROR', 'Could not read calendars (unexpected response).');
+  }
+
   var intervals = [];
   for (var i = 0; i < calendarIds.length; i++) {
-    var cal = response.calendars && response.calendars[calendarIds[i]];
-    if (!cal) continue;
-    // A per-calendar error means it isn't shared with this account (yet).
+    var cal = response.calendars[calendarIds[i]];
+    if (!cal) {
+      console.error('Calendar "' + calendarIds[i] +
+        '" missing from Freebusy response — is the calendar ID correct in the accounts tab?');
+      throw tagged_('CALENDAR_ERROR', 'One of the calendars could not be read.');
+    }
     if (cal.errors && cal.errors.length) {
       console.error('Calendar "' + calendarIds[i] + '" unreadable: ' +
         JSON.stringify(cal.errors) +
