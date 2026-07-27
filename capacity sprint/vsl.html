@@ -4,20 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>You can't afford your next ten clients. | VBOG</title>
-<meta name="description" content="Ten more clients need ₹5L a month of new people. The salaries start now, the clients pay later — so you stayed this size. VBOG builds the alternative in 90 days. ₹4L fixed.">
+<meta name="description" content="Six minutes on why ten more clients cost ₹5L a month before they pay you anything — and the other way to carry them.">
 <meta name="theme-color" content="#111510">
-<meta name="robots" content="index, follow">
-<link rel="canonical" href="https://v-bog.com/">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://v-bog.com/vsl.html">
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://v-bog.com/">
+<meta property="og:url" content="https://v-bog.com/vsl.html">
 <meta property="og:title" content="You can't afford your next ten clients.">
-<meta property="og:description" content="Ten more clients need ₹5L a month of people, six months before they pay for themselves. There is another way to carry them. ₹4L, once, in 90 days.">
+<meta property="og:description" content="Six minutes on why growth costs ₹5L a month before it pays — and the other option.">
 <meta property="og:image" content="https://v-bog.com/og-image.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"ProfessionalService","name":"VBOG","url":"https://v-bog.com/","founder":{"@type":"Person","name":"Depesh Vyas"},"areaServed":"IN","description":"A 90-day Agency Growth Installation for founder-led agencies."}
-</script>
 <style>
 :root{
   --vbog-ink:#111510; --vbog-paper:#f4efe3; --vbog-paper-bright:#fffdf6;
@@ -26,226 +23,137 @@
   --vbog-display:Georgia,"Times New Roman",serif;
   --vbog-body:Arial,Helvetica,sans-serif;
   --vbog-mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
-  --shell:1240px;
+  --shell:800px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--vbog-paper);color:var(--vbog-ink);font-family:var(--vbog-body);line-height:1.6;-webkit-font-smoothing:antialiased}
+body{background:var(--vbog-ink);color:var(--vbog-paper);font-family:var(--vbog-body);line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:74px}
+@media(min-width:900px){body{padding-bottom:0}}
 img{max-width:100%;display:block}
 a{color:inherit}
 .skip-link{position:absolute;left:-9999px}
-.skip-link:focus{left:12px;top:12px;background:var(--vbog-acid);padding:10px 16px;z-index:99;font-family:var(--vbog-mono);font-size:11px}
-
-.shell{max-width:var(--shell);margin:0 auto;padding:0 clamp(18px,5vw,64px)}
-.sec{padding:clamp(64px,10vw,150px) 0}
-.kicker{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--vbog-orange-dark);margin-bottom:22px}
-.dark .kicker{color:var(--vbog-orange)}
-h2{font-family:var(--vbog-display);font-weight:700;font-size:clamp(30px,5.1vw,60px);line-height:.98;letter-spacing:-.045em;max-width:19ch}
-h2 em{font-style:italic;font-weight:400}
-h3{font-family:var(--vbog-display);font-weight:700;font-size:clamp(19px,2.2vw,26px);line-height:1.08;letter-spacing:-.03em}
-.lede{max-width:62ch;margin-top:22px;font-size:clamp(15px,1.65vw,18px);line-height:1.6}
-.dark{background:var(--vbog-ink);color:var(--vbog-paper)}
-.dark .lede{color:var(--vbog-muted-light)}
-.forest{background:var(--vbog-forest);color:var(--vbog-paper-bright)}
-.mono{font-family:var(--vbog-mono);text-transform:uppercase;letter-spacing:.12em;font-size:10px}
-.rail{display:flex;height:5px}
+.skip-link:focus{left:12px;top:12px;background:var(--vbog-acid);color:var(--vbog-ink);padding:10px 16px;z-index:99;font-family:var(--vbog-mono);font-size:11px}
+.shell{max-width:var(--shell);margin:0 auto;padding:0 clamp(18px,5vw,40px)}
+.sec{padding:clamp(50px,7vw,76px) 0}
+.grid-bg{position:absolute;inset:0;pointer-events:none;color:#fff;
+  background-image:linear-gradient(to right,currentColor 1px,transparent 1px),linear-gradient(to bottom,currentColor 1px,transparent 1px);
+  background-size:42px 42px;opacity:.045}
+.rail{display:flex;height:4px}
 .rail i{display:block;height:100%}
 .rail i:nth-child(1){width:34%;background:var(--vbog-orange)}
 .rail i:nth-child(2){width:32%;background:var(--vbog-ink)}
 .rail i:nth-child(3){width:34%;background:var(--vbog-acid)}
-.grid-bg{position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(to right,currentColor 1px,transparent 1px),linear-gradient(to bottom,currentColor 1px,transparent 1px);
-  background-size:42px 42px;opacity:.045}
-
-/* header */
-header.top{position:sticky;top:0;z-index:50;background:var(--vbog-paper-bright);border-bottom:1px solid var(--vbog-ink)}
-.top-in{max-width:var(--shell);margin:0 auto;padding:12px clamp(18px,5vw,64px);display:flex;align-items:center;gap:20px}
-.wm{display:flex;align-items:center;gap:12px;text-decoration:none;flex:0 0 auto}
-.wm img{width:112px}
-.wm small{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--vbog-ink);opacity:.7;display:none}
-@media(min-width:900px){.wm small{display:block}}
-.top-nav{margin-left:auto;display:none;gap:26px}
-@media(min-width:900px){.top-nav{display:flex}}
-.top-nav a{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;padding:4px 0;border-bottom:1px solid transparent}
-.top-nav a:hover{border-bottom-color:var(--vbog-orange)}
+.kicker{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--vbog-orange);margin-bottom:20px}
+h2{font-family:var(--vbog-display);font-weight:700;font-size:clamp(26px,4.4vw,40px);line-height:1;letter-spacing:-.04em;max-width:20ch}
+h2 em{font-style:italic;font-weight:400}
+h3{font-family:var(--vbog-display);font-weight:700;font-size:clamp(17px,2.2vw,21px);line-height:1.1;letter-spacing:-.025em}
+.lede{max-width:60ch;margin-top:18px;font-size:15.5px;line-height:1.6;color:var(--vbog-muted-light)}
 .btn{display:inline-flex;align-items:center;gap:10px;background:var(--vbog-acid);color:var(--vbog-ink);border:1px solid var(--vbog-ink);
-  font-family:var(--vbog-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:13px 20px;text-decoration:none;
-  box-shadow:5px 5px 0 var(--vbog-ink);transition:transform .12s,box-shadow .12s}
-.btn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--vbog-ink)}
-.btn.big{padding:18px 30px;font-size:11px;box-shadow:8px 8px 0 var(--vbog-ink)}
-.btn.on-dark{box-shadow:5px 5px 0 var(--vbog-orange)}
-.btn.on-dark:hover{box-shadow:3px 3px 0 var(--vbog-orange)}
-.slink{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px}
+  font-family:var(--vbog-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:15px 22px;text-decoration:none;
+  box-shadow:5px 5px 0 var(--vbog-orange);transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--vbog-orange)}
+.btn.big{padding:19px 30px;font-size:11px;box-shadow:8px 8px 0 var(--vbog-orange)}
+.slink{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px;color:var(--vbog-muted-light)}
+
+header.top{position:sticky;top:0;z-index:50;background:var(--vbog-ink);border-bottom:1px solid rgba(255,255,255,.16)}
+.top-in{max-width:var(--shell);margin:0 auto;padding:11px clamp(18px,5vw,40px);display:flex;align-items:center;gap:16px}
+.wm{display:flex;align-items:center;gap:11px;text-decoration:none}
+.wm img{width:100px}
+.wm small{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--vbog-muted-light);display:none}
+@media(min-width:760px){.wm small{display:block}}
+.top-meta{margin-left:auto;display:none;gap:14px}
+@media(min-width:760px){.top-meta{display:flex}}
+.top-meta span{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--vbog-muted-light);border:1px solid rgba(255,255,255,.22);padding:5px 9px}
 
 /* hero */
-.hero{position:relative;background:var(--vbog-paper);border-bottom:1px solid var(--vbog-ink);overflow:hidden}
-.hero .grid-bg{color:var(--vbog-ink)}
-.hero-in{position:relative;padding:clamp(48px,8vw,110px) 0 0}
-.eyebrow{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;display:inline-block;border:1px solid var(--vbog-ink);padding:7px 13px;margin-bottom:34px}
-h1{font-family:var(--vbog-display);font-weight:700;font-size:clamp(44px,9.4vw,116px);line-height:.9;letter-spacing:-.055em;max-width:15ch}
-h1 em{font-style:italic;font-weight:400;color:var(--vbog-orange-dark)}
-.hero-sub{max-width:60ch;margin-top:34px;font-size:clamp(15px,1.8vw,19px);line-height:1.55}
-.hero-sub b{font-weight:400;background:var(--vbog-orange);color:var(--vbog-paper-bright);padding:0 5px}
-.hero-cta{display:flex;flex-wrap:wrap;gap:20px;align-items:center;margin-top:40px}
-.hero-note{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;opacity:.6;margin-top:24px}
+.hero{position:relative;overflow:hidden;padding:clamp(36px,6vw,60px) 0 0}
+.eyebrow{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;display:inline-block;border:1px solid rgba(255,255,255,.3);padding:6px 12px;margin-bottom:24px}
+h1{font-family:var(--vbog-display);font-weight:700;font-size:clamp(36px,7.6vw,66px);line-height:.92;letter-spacing:-.05em;max-width:15ch}
+h1 em{font-style:italic;font-weight:400;color:var(--vbog-orange)}
+.hero-sub{max-width:56ch;margin-top:24px;font-size:16px;line-height:1.55;color:var(--vbog-muted-light)}
+.hero-sub b{font-weight:400;color:var(--vbog-paper-bright);background:var(--vbog-orange);padding:0 5px}
+.chapters{display:flex;flex-direction:column;gap:8px;margin-top:26px}
+.chapters span{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--vbog-muted-light);display:flex;gap:12px}
+.chapters b{color:var(--vbog-orange)}
 
-/* the step ledger (brand kit extension: "step") */
-.step-wrap{margin-top:clamp(48px,7vw,86px);border-top:1px solid var(--vbog-ink);padding-top:34px;padding-bottom:clamp(40px,6vw,80px)}
-.step-label{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;opacity:.72;margin-bottom:20px}
-.steps{display:grid;grid-template-columns:1fr;gap:0;border:1px solid var(--vbog-ink);background:var(--vbog-paper-bright)}
-@media(min-width:820px){.steps{grid-template-columns:repeat(4,1fr)}}
-.stp{padding:24px 20px;border-bottom:1px solid var(--vbog-ink)}
-@media(min-width:820px){.stp{border-bottom:0;border-right:1px solid var(--vbog-ink)}.stp:last-child{border-right:0}}
-.stp:last-child{border-bottom:0}
-.stp span{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;display:block;margin-bottom:12px}
-.stp b{font-family:var(--vbog-mono);font-size:clamp(22px,3vw,32px);letter-spacing:-.03em;display:block;line-height:1}
-.stp.wound b{color:var(--vbog-orange-dark)}
-.stp p{font-size:13px;line-height:1.5;margin-top:11px;opacity:.78}
+/* player */
+.player-wrap{margin-top:clamp(28px,4vw,40px)}
+.player{position:relative;border:1px solid rgba(255,255,255,.28);background:var(--vbog-forest);aspect-ratio:16/9;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(16px,2.6vw,24px);box-shadow:10px 10px 0 var(--vbog-orange)}
+.p-meta,.p-status{display:flex;justify-content:space-between;align-items:center;gap:12px;font-family:var(--vbog-mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--vbog-muted-light)}
+.p-status b{color:var(--vbog-acid)}
+.p-status .no{color:var(--vbog-orange)}
+.p-mid{text-align:center}
+.p-play{display:inline-block;font-size:26px;color:var(--vbog-acid);margin-bottom:12px}
+.p-mid p{font-family:var(--vbog-display);font-weight:700;font-size:clamp(20px,3.6vw,32px);line-height:1;letter-spacing:-.04em;color:var(--vbog-paper-bright)}
+.p-mid p em{display:block;font-style:italic;font-weight:400;color:var(--vbog-orange);margin-top:6px}
+.watch{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-family:var(--vbog-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--vbog-muted-light)}
 
-/* four cards */
-.cards{display:grid;gap:0;margin-top:clamp(40px,5vw,64px);border-top:1px solid currentColor}
-@media(min-width:760px){.cards{grid-template-columns:1fr 1fr}}
-.card{padding:clamp(26px,3.2vw,40px) clamp(20px,2.6vw,34px) clamp(30px,3.6vw,44px);border-bottom:1px solid currentColor}
-@media(min-width:760px){.card:nth-child(odd){border-right:1px solid currentColor}}
-.card .num{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.16em;color:var(--vbog-orange);display:block;margin-bottom:16px}
-.card p{margin-top:14px;font-size:14.5px;line-height:1.6;color:var(--vbog-muted-light);max-width:44ch}
-.card .when{margin-top:20px;border-top:1px solid rgba(255,255,255,.2);padding-top:14px;font-family:var(--vbog-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--vbog-acid)}
-.card .when b{display:block;color:var(--vbog-muted-light);font-weight:400;margin-bottom:6px}
+/* conversion block */
+.conv{margin-top:clamp(28px,4vw,40px);border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.03);padding:clamp(22px,3vw,30px);display:flex;flex-direction:column;gap:18px}
+.conv .lbl{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--vbog-orange)}
+.conv strong{display:block;font-family:var(--vbog-display);font-weight:700;font-size:clamp(19px,2.8vw,25px);letter-spacing:-.03em;line-height:1.1;margin-top:8px}
+.conv .row{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
 
-/* capacity bars (brand kit extension: "capacity bar") */
-.cap{margin-top:clamp(38px,5vw,60px);border:1px solid var(--vbog-ink);background:var(--vbog-paper-bright);padding:clamp(24px,3.4vw,44px);box-shadow:12px 12px 0 var(--vbog-orange)}
-.cap-h{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;opacity:.65;margin-bottom:26px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.bar{margin-bottom:26px}
-.bar:last-of-type{margin-bottom:0}
-.bar-top{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-bottom:9px;font-family:var(--vbog-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
-.bar-top b{font-size:clamp(20px,2.6vw,28px);letter-spacing:-.03em}
-.track{height:24px;border:1px solid var(--vbog-ink);background:var(--vbog-paper)}
-.fill{height:100%;display:block}
-.fill.before{width:38.5%;background:var(--vbog-orange)}
-.fill.after{width:100%;background:var(--vbog-acid)}
-.cap-note{margin-top:22px;border-top:1px dashed var(--vbog-ink);padding-top:14px;font-size:13px;line-height:1.55;max-width:64ch}
-.cap-note strong{font-weight:400;border-bottom:2px solid var(--vbog-acid)}
+/* step strip */
+.strip{border-top:1px solid rgba(255,255,255,.2);border-bottom:1px solid rgba(255,255,255,.2);margin-top:clamp(38px,5vw,54px);display:grid;grid-template-columns:1fr 1fr}
+@media(min-width:700px){.strip{grid-template-columns:repeat(4,1fr)}}
+.strip div{padding:20px 16px;border-right:1px solid rgba(255,255,255,.2);border-bottom:1px solid rgba(255,255,255,.2)}
+.strip div:last-child{border-right:0}
+@media(min-width:700px){.strip div{border-bottom:0}}
+.strip span{font-family:var(--vbog-mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--vbog-muted-light);display:block;margin-bottom:9px}
+.strip b{font-family:var(--vbog-mono);font-size:clamp(18px,2.6vw,24px);letter-spacing:-.03em;display:block}
+.strip .w b{color:var(--vbog-orange)}
 
-/* compare */
-.cmp{display:grid;gap:0;margin-top:clamp(38px,5vw,58px);border:1px solid var(--vbog-ink)}
-@media(min-width:880px){.cmp{grid-template-columns:1fr 1fr 1fr}}
-.cmp>div{padding:clamp(24px,2.8vw,34px);border-bottom:1px solid var(--vbog-ink);background:var(--vbog-paper-bright)}
-@media(min-width:880px){.cmp>div{border-bottom:0;border-right:1px solid var(--vbog-ink)}.cmp>div:last-child{border-right:0}}
-.cmp>div:last-child{border-bottom:0}
-.cmp .lbl{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.62}
-.cmp .amt{font-family:var(--vbog-mono);font-size:clamp(22px,2.8vw,30px);letter-spacing:-.03em;margin:12px 0 4px;display:block}
-.cmp .per{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;opacity:.6}
-.cmp h3{margin-top:20px;font-size:19px}
-.cmp ul{list-style:none;margin-top:16px}
-.cmp li{font-size:13.5px;line-height:1.5;padding-left:16px;position:relative;margin-bottom:9px}
-.cmp li:before{content:"";position:absolute;left:0;top:9px;width:6px;height:1px;background:var(--vbog-ink)}
-.cmp .tail{margin-top:18px;font-family:var(--vbog-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;opacity:.55}
-.cmp .win{background:var(--vbog-ink);color:var(--vbog-paper-bright)}
-.cmp .win .amt{color:var(--vbog-acid)}
-.cmp .win li:before{background:var(--vbog-acid)}
-.cmp .win .lbl,.cmp .win .per,.cmp .win .tail{color:var(--vbog-muted-light);opacity:1}
-
-/* phases */
-.ph{display:grid;gap:0;margin-top:clamp(36px,5vw,56px);border-top:1px solid rgba(255,255,255,.22)}
-@media(min-width:900px){.ph{grid-template-columns:repeat(4,1fr)}}
-.ph>div{padding:26px 22px 30px;border-bottom:1px solid rgba(255,255,255,.22)}
-@media(min-width:900px){.ph>div{border-bottom:0;border-right:1px solid rgba(255,255,255,.22)}.ph>div:last-child{border-right:0}}
-.ph>div:last-child{border-bottom:0}
-.ph .day{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.16em;color:var(--vbog-orange);display:block;margin-bottom:12px}
-.ph p{font-size:13.5px;line-height:1.55;color:var(--vbog-muted-light);margin-top:12px}
-.ph .exit{margin-top:16px;font-family:var(--vbog-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--vbog-acid)}
+/* install rows */
+.rows{margin-top:clamp(26px,3.5vw,38px);border-top:1px solid rgba(255,255,255,.2)}
+.row-i{padding:22px 0;border-bottom:1px solid rgba(255,255,255,.2);display:grid;gap:10px}
+@media(min-width:700px){.row-i{grid-template-columns:.9fr 1.1fr;gap:26px;align-items:start}}
+.row-i .n{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.15em;color:var(--vbog-orange);display:block;margin-bottom:8px}
+.row-i p{font-size:14px;line-height:1.55;color:var(--vbog-muted-light)}
+.row-i .eff{margin-top:10px;font-family:var(--vbog-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--vbog-acid)}
 
 /* proof */
-.proof{display:grid;gap:0;margin-top:clamp(36px,5vw,54px);border:1px solid var(--vbog-ink);background:var(--vbog-paper-bright)}
-@media(min-width:820px){.proof{grid-template-columns:1fr 1fr}}
-.proof>article{padding:clamp(26px,3.2vw,40px);border-bottom:1px solid var(--vbog-ink)}
-@media(min-width:820px){.proof>article{border-bottom:0;border-right:1px solid var(--vbog-ink)}.proof>article:last-child{border-right:0}}
-.proof>article:last-child{border-bottom:0}
-.proof .cse{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;opacity:.6;display:block;margin-bottom:20px}
-.proof .big{font-family:var(--vbog-mono);font-size:clamp(26px,3.6vw,40px);letter-spacing:-.04em;line-height:1;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.proof .big i{font-style:normal;color:var(--vbog-orange);font-size:.6em}
-.proof .cap2{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;opacity:.6;margin-top:10px}
-.proof ul{list-style:none;margin-top:22px}
-.proof li{font-size:13.5px;line-height:1.55;margin-bottom:10px;padding-left:16px;position:relative}
-.proof li:before{content:"";position:absolute;left:0;top:9px;width:6px;height:1px;background:var(--vbog-orange)}
-.disc{font-family:var(--vbog-mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.55;margin-top:22px;line-height:1.7}
-
-/* investment */
-.inv{border:1px solid currentColor;background:var(--vbog-paper-bright);color:var(--vbog-ink);margin-top:clamp(34px,4.5vw,52px);box-shadow:14px 14px 0 var(--vbog-acid)}
-.inv-h{padding:clamp(24px,3vw,36px);border-bottom:1px solid var(--vbog-ink);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-end}
-.inv-h .price{font-family:var(--vbog-mono);font-size:clamp(34px,5.4vw,58px);letter-spacing:-.045em;line-height:1;display:block}
-.inv-h .tax{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;opacity:.6;margin-top:10px}
-.tranche{display:flex;gap:0;border:1px solid var(--vbog-ink)}
-.tranche div{padding:11px 16px;border-right:1px solid var(--vbog-ink);font-family:var(--vbog-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;text-align:center}
-.tranche div:last-child{border-right:0}
-.tranche b{display:block;font-size:15px;letter-spacing:-.02em;margin-bottom:4px}
-.inv-b{display:grid;gap:0}
-@media(min-width:820px){.inv-b{grid-template-columns:1.15fr .85fr}}
-.inv-b>div{padding:clamp(24px,3vw,36px)}
-.inv-b>div:first-child{border-bottom:1px solid var(--vbog-ink)}
-@media(min-width:820px){.inv-b>div:first-child{border-bottom:0;border-right:1px solid var(--vbog-ink)}}
-.inv-b ul{list-style:none}
-.inv-b li{font-size:14px;line-height:1.5;padding-left:18px;position:relative;margin-bottom:11px}
-.inv-b li:before{content:"→";position:absolute;left:0;top:0;color:var(--vbog-orange);font-family:var(--vbog-mono);font-size:11px}
-.gtee{background:var(--vbog-forest);color:var(--vbog-paper-bright)}
-.gtee .lbl{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--vbog-acid);margin-bottom:16px;display:block}
-.gtee p{font-size:14.5px;line-height:1.6}
-.gtee small{display:block;margin-top:16px;font-family:var(--vbog-mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.65;line-height:1.7}
+.proof{display:grid;gap:0;margin-top:clamp(26px,3.5vw,38px);border:1px solid rgba(255,255,255,.24)}
+@media(min-width:700px){.proof{grid-template-columns:1fr 1fr}}
+.proof article{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.24)}
+@media(min-width:700px){.proof article{border-bottom:0;border-right:1px solid rgba(255,255,255,.24)}.proof article:last-child{border-right:0}}
+.proof article:last-child{border-bottom:0}
+.proof .cse{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--vbog-muted-light);display:block;margin-bottom:16px}
+.proof .big{font-family:var(--vbog-mono);font-size:clamp(24px,3.6vw,32px);letter-spacing:-.04em;line-height:1}
+.proof .big i{font-style:normal;color:var(--vbog-orange)}
+.proof .cap2{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--vbog-muted-light);margin-top:8px}
+.proof p{font-size:13.5px;line-height:1.55;color:var(--vbog-muted-light);margin-top:14px}
+.disc{font-family:var(--vbog-mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--vbog-muted-light);opacity:.7;margin-top:16px;line-height:1.75}
 
 /* fit */
-.fit{display:grid;gap:0;margin-top:clamp(34px,4.5vw,52px);border:1px solid var(--vbog-ink)}
-@media(min-width:820px){.fit{grid-template-columns:1fr 1fr}}
-.fit>div{padding:clamp(24px,3vw,36px);border-bottom:1px solid var(--vbog-ink)}
-@media(min-width:820px){.fit>div{border-bottom:0;border-right:1px solid var(--vbog-ink)}.fit>div:last-child{border-right:0}}
-.fit>div:last-child{border-bottom:0}
-.fit h3{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:400}
-.fit .yes h3{color:var(--vbog-orange-dark)}
-.fit ul{list-style:none;margin-top:22px}
-.fit li{font-size:14px;line-height:1.5;padding-left:22px;position:relative;margin-bottom:12px}
-.fit li:before{position:absolute;left:0;top:0;font-family:var(--vbog-mono);font-size:12px}
-.fit .yes li:before{content:"✓";color:var(--vbog-orange-dark)}
-.fit .no li:before{content:"✕";opacity:.45}
-.fit .no{background:var(--vbog-paper-bright)}
-.fit .no li{opacity:.72}
+.fit{display:grid;grid-template-columns:1fr;gap:0;margin-top:clamp(24px,3.5vw,34px);border:1px solid rgba(255,255,255,.24)}
+@media(min-width:600px){.fit{grid-template-columns:1fr 1fr}}
+.fit div{padding:15px 18px;border-bottom:1px solid rgba(255,255,255,.24);font-family:var(--vbog-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;display:flex;gap:12px;align-items:flex-start;line-height:1.6}
+@media(min-width:600px){.fit div:nth-child(odd){border-right:1px solid rgba(255,255,255,.24)}}
+.fit div b{color:var(--vbog-orange);flex:0 0 auto}
 
-/* about */
-.about{display:grid;gap:clamp(28px,4vw,54px);align-items:start;margin-top:clamp(30px,4vw,48px)}
-@media(min-width:840px){.about{grid-template-columns:.85fr 1.15fr}}
-.about figure{border:1px solid var(--vbog-ink);box-shadow:12px 12px 0 var(--vbog-orange);background:var(--vbog-paper-bright)}
-.about img{filter:grayscale(1) contrast(1.12);width:100%}
-.about figcaption{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:12px 14px;border-top:1px solid var(--vbog-ink)}
-.pull{font-family:var(--vbog-display);font-style:italic;font-size:clamp(18px,2.5vw,26px);line-height:1.25;letter-spacing:-.02em;border-left:3px solid var(--vbog-orange);padding-left:20px;margin:28px 0}
+/* investment */
+.inv{margin-top:clamp(24px,3.5vw,34px);border:1px solid var(--vbog-acid);background:rgba(223,244,122,.05);padding:clamp(22px,3vw,30px)}
+.inv .price{font-family:var(--vbog-mono);font-size:clamp(30px,5vw,44px);letter-spacing:-.045em;line-height:1;display:block;color:var(--vbog-paper-bright)}
+.inv .tax{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--vbog-muted-light);margin-top:9px}
+.tranche{display:flex;margin-top:20px;border:1px solid rgba(255,255,255,.24)}
+.tranche div{flex:1;padding:11px 10px;border-right:1px solid rgba(255,255,255,.24);font-family:var(--vbog-mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;text-align:center;color:var(--vbog-muted-light)}
+.tranche div:last-child{border-right:0}
+.tranche b{display:block;font-size:15px;letter-spacing:-.02em;margin-bottom:4px;color:var(--vbog-paper-bright)}
+.gtee{margin-top:20px;border-top:1px dashed rgba(255,255,255,.3);padding-top:18px}
+.gtee .lbl{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--vbog-acid);display:block;margin-bottom:10px}
+.gtee p{font-size:14px;line-height:1.6;color:var(--vbog-muted-light)}
+.gtee small{display:block;margin-top:12px;font-family:var(--vbog-mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--vbog-muted-light);opacity:.7;line-height:1.75}
 
-/* faq */
-.faq{margin-top:clamp(30px,4vw,48px);border-top:1px solid var(--vbog-ink)}
-details{border-bottom:1px solid var(--vbog-ink)}
-summary{cursor:pointer;list-style:none;padding:22px 40px 22px 0;font-family:var(--vbog-display);font-weight:700;font-size:clamp(16px,2vw,21px);letter-spacing:-.02em;position:relative}
-summary::-webkit-details-marker{display:none}
-summary:after{content:"+";position:absolute;right:6px;top:20px;font-family:var(--vbog-mono);font-size:20px;color:var(--vbog-orange)}
-details[open] summary:after{content:"−"}
-details p{padding:0 0 24px;font-size:14.5px;line-height:1.65;max-width:74ch}
+footer{border-top:1px solid rgba(255,255,255,.16);padding:34px 0 46px}
+.f-legal{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--vbog-muted-light);margin-top:20px;line-height:1.9}
 
-/* close */
-.close{text-align:left}
-.close h2{max-width:16ch}
-.close .row{display:flex;flex-wrap:wrap;gap:22px;align-items:center;margin-top:36px}
-
-/* footer */
-footer{background:var(--vbog-ink);color:var(--vbog-muted-light);padding:44px 0 60px;border-top:1px solid rgba(255,255,255,.16)}
-.f-in{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:center}
-.f-in a{font-family:var(--vbog-mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;text-decoration:none}
-.f-nav{display:flex;gap:22px;flex-wrap:wrap}
-.f-legal{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;margin-top:26px;line-height:1.9}
-
-/* sticky mobile bar */
 .sticky{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--vbog-ink);border-top:1px solid var(--vbog-acid);
   padding:11px clamp(14px,4vw,22px);display:flex;align-items:center;justify-content:space-between;gap:14px}
 .sticky span{font-family:var(--vbog-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--vbog-muted-light)}
-.sticky b{display:block;color:var(--vbog-paper-bright);font-size:12px;letter-spacing:-.01em}
-.sticky .btn{box-shadow:4px 4px 0 var(--vbog-orange);padding:11px 15px}
+.sticky b{display:block;color:var(--vbog-paper-bright);font-size:12px}
+.sticky .btn{padding:11px 15px;box-shadow:4px 4px 0 var(--vbog-orange)}
 @media(min-width:900px){.sticky{display:none}}
-body{padding-bottom:74px}
-@media(min-width:900px){body{padding-bottom:0}}
 </style>
 </head>
 <body>
@@ -257,366 +165,145 @@ body{padding-bottom:74px}
       <img src="./assets/vbog-logo.svg" alt="VBOG">
       <small>Agency Growth Installation</small>
     </a>
-    <nav class="top-nav">
-      <a href="#wall">The problem</a>
-      <a href="#capacity">The other option</a>
-      <a href="#investment">₹4L Growth Sprint</a>
-    </nav>
-    <a class="btn" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener" data-track="nav_call">Book the call <span aria-hidden="true">↗</span></a>
+    <div class="top-meta"><span>₹4L fixed</span><span>90 days</span><span>Direct with Depesh</span></div>
   </div>
   <div class="rail" aria-hidden="true"><i></i><i></i><i></i></div>
 </header>
 
 <main id="main">
 
-<!-- ═══════════ HERO ═══════════ -->
 <section class="hero" id="top">
   <div class="grid-bg" aria-hidden="true"></div>
-  <div class="shell hero-in">
+  <div class="shell" style="position:relative">
     <p class="eyebrow">For Indian agency founders at ₹12L+ MRR</p>
     <h1>You can't afford your next <em>ten clients.</em></h1>
-    <p class="hero-sub">Ten more clients need about <b>₹5 lakh a month</b> of new people. The salaries start now. The clients pay later.</p>
-    <p class="hero-sub" style="margin-top:18px">So you stayed this size. That was the right call — and it was the only option anyone showed you.</p>
-    <div class="hero-cta">
-      <a class="btn big" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener" data-track="hero_call">Book the 30-minute call <span aria-hidden="true">↗</span></a>
-      <a class="slink" href="#capacity" data-track="hero_scroll">See the other option →</a>
-    </div>
-    <p class="hero-note">₹4L fixed · 90 days · No equity · No profit share</p>
+    <p class="hero-sub">Ten more clients need about <b>₹5 lakh a month</b> of new people. The salaries start now. The clients pay later. Six minutes on the other way to do this.</p>
 
-    <!-- step ledger -->
-    <div class="step-wrap">
-      <div class="step-label">
-        <span>Why ten clients cost more than ten clients</span>
-        <span>Illustrative — a ₹12L agency adding ten accounts</span>
-      </div>
-      <div class="steps">
-        <div class="stp">
-          <span>01 / What you'd win</span>
-          <b>₹10L</b>
-          <p>Ten accounts at ₹1L. The demand for this already exists.</p>
+    <div class="chapters">
+      <span><b>01</b> Why ten clients cost more than ten clients</span>
+      <span><b>02</b> The number that changes the whole equation</span>
+      <span><b>03</b> What ₹4L buys — and what it doesn't</span>
+    </div>
+
+    <div class="player-wrap">
+      <div class="player" data-video-embed-slot>
+        <div class="p-meta"><span>VBOG / THE CAPACITY BRIEFING</span><b>06:12</b></div>
+        <div class="p-mid">
+          <span class="p-play" aria-hidden="true">▶</span>
+          <p>5 ACCOUNTS<em>THEN 13</em></p>
         </div>
-        <div class="stp wound">
-          <span>02 / What you'd spend</span>
-          <b>₹5L</b>
-          <p>Every month. A strategist, an account manager, senior review.</p>
-        </div>
-        <div class="stp wound">
-          <span>03 / When you'd spend it</span>
-          <b>Now</b>
-          <p>Salaries begin on day one. The ten clients arrive over six months.</p>
-        </div>
-        <div class="stp">
-          <span>04 / What you did</span>
-          <b>Nothing</b>
-          <p>You stayed at twenty. Anyone sensible would have.</p>
-        </div>
+        <div class="p-status"><span>Demand problem</span><b class="no">NO</b><span>Operating constraint</span><b>YES</b></div>
       </div>
+      <p class="watch"><span>6 minutes</span><span>No pitch</span><span>Just the arithmetic</span></p>
+    </div>
+
+    <div class="conv">
+      <div>
+        <span class="lbl">If the maths sounds familiar</span>
+        <strong>Bring one number: accounts per person.</strong>
+      </div>
+      <div class="row">
+        <a class="btn big" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener" data-track="hero_call">Book 30 minutes with Depesh <span aria-hidden="true">↗</span></a>
+        <a class="slink" href="./index.html#capacity" data-track="hero_lander">Read it instead →</a>
+      </div>
+    </div>
+
+    <div class="strip">
+      <div><span>You'd win</span><b>₹10L</b></div>
+      <div class="w"><span>You'd spend</span><b>₹5L/mo</b></div>
+      <div class="w"><span>Starting</span><b>Now</b></div>
+      <div><span>So you did</span><b>Nothing</b></div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════ THE WALL ═══════════ -->
-<section class="sec dark" id="wall" style="position:relative;overflow:hidden">
-  <div class="grid-bg" aria-hidden="true" style="color:#fff"></div>
-  <div class="shell" style="position:relative">
-    <p class="kicker">01 / Why this happens to good agencies</p>
-    <h2>You can add one more client. You can't add <em>ten.</em></h2>
-    <p class="lede">One more client fits in the gaps. Ten needs a person. And people don't come in halves — you can't buy 30% of a strategist.</p>
-    <p class="lede" style="margin-top:18px">So growth stops being a slope and becomes a jump. And the jump is expensive, upfront, and paid for out of profit you can see.</p>
-
-    <div class="cards">
-      <div class="card">
-        <span class="num">01</span>
-        <h3>The salary starts before the revenue does.</h3>
-        <p>A decent manager begins at ₹70–80K. Someone who can hold strategy across thirty accounts costs more. You pay from month one. The clients that justify it show up over six.</p>
-      </div>
-      <div class="card">
-        <span class="num">02</span>
-        <h3>So you do that job for free.</h3>
-        <p>Strategy, review, the difficult client call — all of it routes to you, because you're already paid for. Cheapest possible answer. Also the reason nothing moves.</p>
-      </div>
-      <div class="card">
-        <span class="num">03</span>
-        <h3>Your team executes. Nobody decides.</h3>
-        <p>They can do the work. They can't judge it. So every unclear thing comes back up to you — and hiring more juniors adds output and adds review in the same breath.</p>
-      </div>
-      <div class="card">
-        <span class="num">04</span>
-        <h3>You choose the profit. Every time.</h3>
-        <p>Hold the book, protect the margin, put your energy somewhere the numbers work. It's the right call on the information you have. It's also a ceiling that never lifts.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ THE CAPACITY ═══════════ -->
-<section class="sec" id="capacity">
-  <div class="shell">
-    <p class="kicker">02 / The other option</p>
-    <h2>Or your people carry <em>more.</em></h2>
-    <p class="lede">Everything above assumes one person can only handle about as many accounts as your people handle today. Change that and there's no ₹5L, no strategist, no six-month wait.</p>
-
-    <div class="cap">
-      <div class="cap-h">
-        <span>Ride The Wave · accounts handled per person</span>
-        <span>Measured, March 2024 → October 2025</span>
-      </div>
-      <div class="bar">
-        <div class="bar-top"><span>Before</span><b>5 accounts</b></div>
-        <div class="track"><i class="fill before"></i></div>
-      </div>
-      <div class="bar">
-        <div class="bar-top"><span>After</span><b>13 accounts</b></div>
-        <div class="track"><i class="fill after"></i></div>
-      </div>
-      <p class="cap-note">Same people. Same pay. The work was cut into repeatable pieces, it was made obvious who decides what, and two project managers held quality across the whole book. <strong>Cost to serve one client went up 21%. Price went up 157%.</strong></p>
-    </div>
-
-    <p class="lede" style="margin-top:34px">That's the entire product. Not more leads. Not more hours. Not a better manager. Just: how many accounts can one person hold, and what has to be true before that number moves.</p>
-    <p class="lede" style="margin-top:16px"><strong style="font-weight:400;border-bottom:2px solid var(--vbog-acid)">Check it tonight.</strong> Count your live accounts. Divide by the people delivering them. If it's four to seven, the ₹5L hire was never your only option.</p>
-  </div>
-</section>
-
-<!-- ═══════════ WHAT GETS INSTALLED ═══════════ -->
-<section class="sec forest" style="position:relative;overflow:hidden">
-  <div class="grid-bg" aria-hidden="true" style="color:#fff"></div>
-  <div class="shell" style="position:relative">
-    <p class="kicker" style="color:var(--vbog-acid)">03 / What we build</p>
-    <h2>Four things stop coming back to <em>you.</em></h2>
-    <p class="lede" style="color:var(--vbog-paper-bright);opacity:.8">None of these is a document. If it isn't being used on live client work, it isn't finished.</p>
-
-    <div class="cards">
-      <div class="card">
-        <span class="num">01</span>
-        <h3>How much your team can actually take</h3>
-        <p>A real number, not a feeling. A small retainer and a full-service account stop counting as the same thing, so you know exactly how many more clients you can say yes to — and when you genuinely need to hire.</p>
-        <p class="when"><b>Done when</b>You've used it to make four capacity calls in a row.</p>
-      </div>
-      <div class="card">
-        <span class="num">02</span>
-        <h3>Who decides what</h3>
-        <p>Written down: what your team can approve alone, what needs a manager, what actually needs you. Most of what reaches you today shouldn't, and everyone will be able to see that in writing.</p>
-        <p class="when"><b>Done when</b>Things stop landing on your desk, and we can show the drop.</p>
-      </div>
-      <div class="card">
-        <span class="num">03</span>
-        <h3>One place every account lives</h3>
-        <p>Every client, owner, deadline and problem in a single view, reviewed on a fixed rhythm. You find out something is going wrong while it's still cheap to fix.</p>
-        <p class="when"><b>Done when</b>Your team runs the meeting off it without you.</p>
-      </div>
-      <div class="card">
-        <span class="num">04</span>
-        <h3>Someone other than you runs it</h3>
-        <p>Usually a senior person you already employ, trained and given real authority while I'm still in the room. If nobody fits, we define the role and help you hire — at a junior salary, not the ₹1L manager you'd priced.</p>
-        <p class="when"><b>Done when</b>They make the call and you don't overrule it.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ 90 DAYS ═══════════ -->
-<section class="sec dark" style="position:relative;overflow:hidden">
-  <div class="grid-bg" aria-hidden="true" style="color:#fff"></div>
-  <div class="shell" style="position:relative">
-    <p class="kicker">04 / Embed · Build · Implement · Exit</p>
-    <h2>Ninety days. And then I'm <em>gone.</em></h2>
-    <p class="lede">Every firm you've hired had a reason to stay. This one is measured on leaving — and on your team still running it three months after I do.</p>
-    <div class="ph">
-      <div><span class="day">Day 01–15</span><h3>Embed</h3><p>I work inside the business. How the work really moves, where it stalls, who is quietly holding it together, and what you personally decide in a week.</p><p class="exit">Ends when: we agree what's actually broken</p></div>
-      <div><span class="day">Day 16–35</span><h3>Build</h3><p>The capacity number, the decision rules, the account view, the workflows underneath them. Built for your service mix, not lifted from a template.</p><p class="exit">Ends when: it's built and signed off</p></div>
-      <div><span class="day">Day 36–70</span><h3>Implement</h3><p>It goes live on real clients this month. We hand decisions over one band at a time and fix what breaks under load — because it will.</p><p class="exit">Ends when: your team uses it by default</p></div>
-      <div><span class="day">Day 71–90</span><h3>Exit</h3><p>Your person is running it and you've stopped overruling them. No handover meeting, because there's nothing left to hand over.</p><p class="exit">Ends when: it runs without either of us</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ THE COMPARISON ═══════════ -->
 <section class="sec">
   <div class="shell">
-    <p class="kicker">05 / What you're really choosing between</p>
-    <h2>₹4L once, against ₹4–5L <em>every month.</em></h2>
-    <p class="lede">The question was never VBOG versus another consultant. It's VBOG versus the hire you already looked at and decided against. Three ways to get more done. Here's what each one actually costs and actually does.</p>
-    <div class="cmp">
-      <div>
-        <span class="lbl">Option A</span>
-        <h3 style="margin-top:8px">Hire a coordinator</h3>
-        <span class="amt">₹60K</span>
-        <span class="per">per month · ₹1.8L per 90 days · forever</span>
-        <ul><li>Chases updates, keeps the trackers current</li><li>Sends anything unclear back to you</li><li>More output, more review — same ceiling</li></ul>
-        <p class="tail">Useful person. Doesn't move the number.</p>
+    <p class="kicker">What we build</p>
+    <h2>Four things stop coming back to <em>you.</em></h2>
+    <p class="lede">None of it is a document. If it isn't being used on live client work, it isn't finished.</p>
+
+    <div class="rows">
+      <div class="row-i">
+        <div><span class="n">01</span><h3>How much your team can take</h3></div>
+        <div><p>A real number, not a feeling. You know exactly how many more clients you can say yes to — and when you genuinely need to hire.</p><p class="eff">Effect: you stop postponing work you could do.</p></div>
       </div>
-      <div>
-        <span class="lbl">Option B</span>
-        <h3 style="margin-top:8px">Hire an ops manager</h3>
-        <span class="amt">₹1.5L</span>
-        <span class="per">per month · ₹4.5L per 90 days · forever</span>
-        <ul><li>Learns your business while firefighting in it</li><li>Gets bypassed the first time something is urgent</li><li>Needs the rules and the numbers to exist before they can work</li></ul>
-        <p class="tail">Might be right. Just not first.</p>
+      <div class="row-i">
+        <div><span class="n">02</span><h3>Who decides what</h3></div>
+        <div><p>Written down: what your team approves alone, what needs a manager, what actually needs you. Most of what reaches you today shouldn't.</p><p class="eff">Effect: work starts faster, without a senior hire.</p></div>
       </div>
-      <div class="win">
-        <span class="lbl">Option C</span>
-        <h3 style="margin-top:8px">The VBOG Growth Sprint</h3>
-        <span class="amt">₹4L</span>
-        <span class="per">once · 90 days · then it's yours</span>
-        <ul><li>Builds the rules, the numbers and the rhythm</li><li>Runs it on your live clients and fixes what breaks</li><li>Trains someone you already employ to keep it running</li></ul>
-        <p class="tail">And afterwards, Option B finally works — if you still want it.</p>
+      <div class="row-i">
+        <div><span class="n">03</span><h3>One place every account lives</h3></div>
+        <div><p>Every client, owner, deadline and problem in one view on a fixed rhythm. You hear about trouble while it's still cheap.</p><p class="eff">Effect: clients stay, rescue weeks disappear.</p></div>
+      </div>
+      <div class="row-i">
+        <div><span class="n">04</span><h3>Someone other than you runs it</h3></div>
+        <div><p>Usually a senior person you already employ, trained and given real authority. If nobody fits, we write the role and help you hire — at a junior salary, not ₹1L.</p><p class="eff">Effect: no ₹5L a month, ever.</p></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════ PROOF ═══════════ -->
-<section class="sec" style="background:var(--vbog-paper-bright);border-top:1px solid var(--vbog-ink);border-bottom:1px solid var(--vbog-ink)">
+<section class="sec" style="border-top:1px solid rgba(255,255,255,.16)">
   <div class="shell">
-    <p class="kicker">06 / Operating proof</p>
+    <p class="kicker">Operating proof</p>
     <h2>Two agencies. Same <em>method.</em></h2>
-    <p class="lede">These are operating figures, not revenue claims. They describe what changed inside delivery — the only part I am accountable for.</p>
     <div class="proof">
       <article>
-        <span class="cse">Case 01 / Ride The Wave · Mar 2024 – Oct 2025</span>
+        <span class="cse">Ride The Wave · 2024–25</span>
         <div class="big">5 <i>→</i> 13</div>
-        <p class="cap2">Accounts carried per delivery executive</p>
-        <ul>
-          <li>Cost to serve one client moved from $350 to $425. Price moved from $700 to $1,800.</li>
-          <li>Delivery staff hired at $500–800 across India, Pakistan, the Philippines and Africa — not a senior management layer.</li>
-          <li>Work divided into repeatable, replaceable units with an explicit escalation matrix and reporting standard.</li>
-          <li>At exit: 42 people, 35 in delivery, 2 project managers. Founder went from 80-hour weeks to 25.</li>
-        </ul>
-        <p class="disc">Individual engagement outcome. Revenue depends on demand, sales, pricing and retention.</p>
+        <p class="cap2">Accounts handled per person</p>
+        <p>Same people, same pay. Cost to serve one client went up 21%; price went up 157%. At exit: 42 people, 35 in delivery, 2 project managers.</p>
       </article>
       <article>
-        <span class="cse">Case 02 / R2G Digital · May 2022 – Mar 2023</span>
+        <span class="cse">R2G Digital · 2022–23</span>
         <div class="big">7 <i>→</i> 9</div>
-        <p class="cap2">Total headcount, across the growth period</p>
-        <ul>
-          <li>Revenue moved roughly 6× while the team grew by two people.</li>
-          <li>The operating structure, hiring system and delivery layer carried the growth — headcount did not.</li>
-          <li>Founder moved from 60-hour operating weeks to roughly 20, spent on growth.</li>
-        </ul>
-        <p class="disc">Individual engagement outcome. Historical figures reconstructed from operating records; revenue is not guaranteed.</p>
+        <p class="cap2">Total headcount across the growth period</p>
+        <p>Revenue moved roughly 6× while the team grew by two people. The operating structure carried the growth; headcount did not.</p>
       </article>
     </div>
+    <p class="disc">Individual engagement outcomes. Not a promise of revenue, growth rate or founder-hour reduction.</p>
   </div>
 </section>
 
-<!-- ═══════════ INVESTMENT ═══════════ -->
-<section class="sec dark" id="investment" style="position:relative;overflow:hidden">
-  <div class="grid-bg" aria-hidden="true" style="color:#fff"></div>
-  <div class="shell" style="position:relative">
-    <p class="kicker">07 / The investment</p>
-    <h2>₹4L. 90 days. Built, run, then <em>handed over.</em></h2>
-    <p class="lede">Fixed fee, fixed scope, no cut of your upside, no equity. You are paying for something to be working in your agency — not for advice about it.</p>
+<section class="sec" style="border-top:1px solid rgba(255,255,255,.16)">
+  <div class="shell">
+    <p class="kicker">Book only if this is true</p>
+    <h2>Don't book if you need more <em>leads.</em></h2>
+    <div class="fit">
+      <div><b>01</b> ₹12L+ monthly agency revenue</div>
+      <div><b>02</b> ₹75K+ average client value</div>
+      <div><b>03</b> 5–12 people, mostly executing</div>
+      <div><b>04</b> Real demand you are not acting on</div>
+      <div><b>05</b> You personally do strategy and reviews</div>
+      <div><b>06</b> Willing to give someone real authority</div>
+    </div>
 
     <div class="inv">
-      <div class="inv-h">
-        <div>
-          <span class="lbl mono" style="opacity:.6">The 90-day Growth Sprint</span>
-          <span class="price">₹4,00,000</span>
-          <span class="tax">+ applicable taxes · fixed scope</span>
-        </div>
-        <div class="tranche">
-          <div><b>₹2L</b>On signing</div>
-          <div><b>₹1L</b>Day 30</div>
-          <div><b>₹1L</b>Day 60</div>
-        </div>
+      <span class="kicker" style="margin-bottom:14px">The 90-day Growth Sprint</span>
+      <span class="price">₹4,00,000</span>
+      <p class="tax">+ applicable taxes · fixed scope · no equity, no profit share</p>
+      <div class="tranche">
+        <div><b>₹2L</b>On signing</div>
+        <div><b>₹1L</b>Day 30</div>
+        <div><b>₹1L</b>Day 60</div>
       </div>
-      <div class="inv-b">
-        <div>
-          <span class="mono" style="opacity:.6;display:block;margin-bottom:20px">What you end up with</span>
-          <ul>
-            <li>A real number for how much your team can take</li>
-            <li>Written rules for who decides what</li>
-            <li>One view of every account, on a fixed rhythm</li>
-            <li>The workflows and quality checks underneath</li>
-            <li>One person trained and given authority to run it</li>
-            <li>Your own responsibilities handed over, in writing</li>
-          </ul>
-        </div>
-        <div class="gtee">
-          <span class="lbl">The 90-day guarantee</span>
-          <p>If what we agreed isn't built and in live use by Day 90, we keep working at no extra fee until it is.</p>
-          <small>Subject to participation, access, authority and implementation obligations. Revenue, margin and profit are not guaranteed.</small>
-        </div>
+      <div class="gtee">
+        <span class="lbl">The 90-day guarantee</span>
+        <p>If what we agreed isn't built and in live use by Day 90, we keep working at no extra fee until it is.</p>
+        <small>Subject to participation, access, authority and implementation obligations. Revenue, margin and profit are not guaranteed.</small>
       </div>
     </div>
 
-    <p class="lede" style="margin-top:34px">The question isn't whether ₹4L is cheap. It's whether ₹4L once beats ₹5L every month for the same result. You can work that out before you ever speak to me.</p>
-  </div>
-</section>
-
-<!-- ═══════════ FIT ═══════════ -->
-<section class="sec">
-  <div class="shell">
-    <p class="kicker">08 / Book only if this is true</p>
-    <h2>Don't book if you need more <em>leads.</em></h2>
-    <p class="lede">We run a small number of these at once, because we are inside the business for all ninety days. This is the same filter I use on the call — save yourself the thirty minutes if the right column is you.</p>
-    <div class="fit">
-      <div class="yes">
-        <h3>Strong fit</h3>
-        <ul>
-          <li>₹12L+ monthly agency revenue, ₹75K+ average client value</li>
-          <li>5–12 people, most of them executing rather than deciding</li>
-          <li>Real demand — referrals or pipeline you haven't moved on</li>
-          <li>You personally do the strategy, the reviews, or both</li>
-          <li>You've priced a senior hire and decided against it</li>
-          <li>You'll give someone on your team real authority</li>
-        </ul>
-      </div>
-      <div class="no">
-        <h3>Do not book</h3>
-        <ul>
-          <li>You need more leads, not more capacity</li>
-          <li>Your service is not yet proven or repeatable</li>
-          <li>You want a revenue or profit guarantee</li>
-          <li>You want documents or software, not change</li>
-          <li>You intend to keep making every decision</li>
-          <li>Your team will not participate in the change</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ ABOUT ═══════════ -->
-<section class="sec" style="background:var(--vbog-paper-bright);border-top:1px solid var(--vbog-ink)">
-  <div class="shell">
-    <p class="kicker">09 / Who does the work</p>
-    <h2>I lead it. My team <em>runs</em> it.</h2>
-    <div class="about">
-      <figure>
-        <img src="./assets/depesh.jpg" alt="Depesh Vyas, founder of VBOG">
-        <figcaption>Depesh Vyas · VBOG</figcaption>
-      </figure>
+    <div class="conv" style="margin-top:clamp(28px,4vw,40px)">
       <div>
-        <p class="lede" style="margin-top:0">I own the diagnosis, the design and every decision that matters — and I'm on your calls every week. My team does the building, the documentation and the day-to-day implementation alongside your people.</p>
-        <p class="pull">"I'm selling you a business that doesn't depend on one person. It would be strange to run mine that way."</p>
-        <p class="lede">That's deliberate. An agency that stalls because everything routes through the founder is exactly the problem we fix — so VBOG is built not to have it. You get senior judgement without waiting in a queue for it.</p>
-        <p class="lede">What we don't do: sales, media buying, creative, or your pipeline. If leads are your real constraint, I'll say so on the call and point you somewhere more useful.</p>
+        <span class="lbl">Thirty minutes. No sales team.</span>
+        <strong>Bring your accounts-per-person number and the last client you didn't chase.</strong>
       </div>
-    </div>
-
-    <div class="faq">
-      <details><summary>Will this double my revenue?</summary><p>No, and I won't pretend otherwise. We build the capacity and the ownership so your agency can take on more work without adding ₹5L a month of people. Whether that capacity fills depends on your pipeline, your pricing and your close rate — none of which I control.</p></details>
-      <details><summary>Will my people really go from 5 accounts to 13?</summary><p>That's what happened in one engagement with one service mix. It is not a promise. Your number depends on how complex your accounts are and how much judgement each piece of work needs. The first two weeks establish where you are now and where you can credibly get to — and if the answer is "barely further than today," I'll tell you the Sprint isn't worth ₹4L to you.</p></details>
-      <details><summary>Who ends up running this after you leave?</summary><p>Usually a senior person already on your team who has judgement but has never been given authority. Finding that person is part of the first two weeks. If genuinely nobody fits, we write the role and help you hire for it — but at a junior salary, because the system already exists by then. That's the difference from hiring a ₹1L manager into a vacuum.</p></details>
-      <details><summary>Why not just hire the ops manager?</summary><p>You still might, later. But a manager who joins an agency with no capacity number, no written decision rules and no single view of the work spends six months learning the business while firefighting, and gets bypassed the first time something is urgent. This is sequencing, not substitution.</p></details>
-      <details><summary>What exactly is guaranteed?</summary><p>That the agreed system is built and in live use by Day 90 — assuming you participate, give access, and let decisions move. If it isn't live, I keep working at no extra fee until it is. Revenue, margin and profit are not guaranteed by me or by anyone honest.</p></details>
-      <details><summary>Do you take equity or a share of profit?</summary><p>No. Fixed fee, fixed scope, one engagement, then it's yours.</p></details>
-      <details><summary>What if my team resists it?</summary><p>Some resistance is normal and we plan for it. Sustained resistance from you is fatal — if you keep making the decisions you've just handed over, nothing holds. That's the single biggest reason this fails, and it's why the fit filter above is worded the way it is.</p></details>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ CLOSE ═══════════ -->
-<section class="sec dark close" style="position:relative;overflow:hidden">
-  <div class="grid-bg" aria-hidden="true" style="color:#fff"></div>
-  <div class="shell" style="position:relative">
-    <p class="kicker">Book the call</p>
-    <h2>Bring one number: accounts per person. We start <em>there.</em></h2>
-    <p class="lede">Thirty minutes with me. No sales team, no deck, no revenue promise. If this is the wrong move for your agency, you should find out before spending ₹4L — and I would rather be the one to tell you.</p>
-    <div class="row">
-      <a class="btn big on-dark" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener" data-track="close_call">Book the 30-minute call <span aria-hidden="true">↗</span></a>
-      <a class="slink" href="./vsl.html" data-track="close_vsl">Watch the 6-minute breakdown first →</a>
+      <div class="row">
+        <a class="btn big" href="https://calendly.com/depesh-v-bog/vbog-discovery-call-r" target="_blank" rel="noopener" data-track="close_call">Book the call <span aria-hidden="true">↗</span></a>
+        <a class="slink" href="./index.html" data-track="close_lander">Read the full breakdown →</a>
+      </div>
     </div>
   </div>
 </section>
@@ -625,16 +312,8 @@ body{padding-bottom:74px}
 
 <footer>
   <div class="shell">
-    <div class="f-in">
-      <a href="#top" aria-label="VBOG home"><img src="./assets/vbog-logo.svg" alt="VBOG" style="width:112px"></a>
-      <nav class="f-nav">
-        <a href="#wall">The problem</a>
-        <a href="#capacity">The other option</a>
-        <a href="#investment">Investment</a>
-        <a href="https://www.linkedin.com/in/depesh-vyas/" target="_blank" rel="noopener">LinkedIn</a>
-      </nav>
-    </div>
-    <p class="f-legal">© VBOG · India · Install operational ownership.<br>Case figures describe individual engagements and are not a promise of revenue, growth rate or founder-hour reduction.</p>
+    <a href="#top" aria-label="VBOG home"><img src="./assets/vbog-logo.svg" alt="VBOG" style="width:100px"></a>
+    <p class="f-legal">© VBOG · India · Install operational ownership.<br>Results are not guaranteed.</p>
   </div>
 </footer>
 
