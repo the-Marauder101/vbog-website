@@ -286,6 +286,7 @@
       <div class="golden searchable">
         <b>Golden rules that apply to every SOP</b>
         <ul>
+          <li><b>Acknowledge within 30 minutes.</b> Every incoming email and WhatsApp gets a basic human acknowledgement within 30 minutes (business hours) if proper intake hasn't started yet — at minimum a greeting and your name (<a href="#tpl-ak1">Template AK-1</a>). A customer should never sit in silence wondering if the message arrived.</li>
           <li><b>Log every enquiry in Airtable</b> — warranty complaint, spare part, sales, anything. Use the single <span class="status">Complaint Status</span> field, and put the details in <span class="status">Intake: Brief Complaint</span>. If it's not logged, it didn't happen.</li>
           <li>Assign a <b>Job Number</b> internally — but never quote it to the customer. It's our job to know which client maps to which Job Number.</li>
           <li>Never make a financial decision (replacement, PO, chargeable visit, discount) without the Manager's validation.</li>
@@ -304,6 +305,8 @@
       <div class="callout fix searchable"><span class="tag">Leakage</span>Leakage complaints skip the checklist — get videos + bill/TOC fast, rule out a Teflon-tape fix (24h confirm → close), else issue a replacement.</div>
       <div class="callout fix searchable"><span class="tag">Docs</span>Warranty is checked against the <b>reseller bill</b> (dated, lists units — verify the units) or, for projects, the <b>Take Over Certificate (TOC)</b> (its date governs; covers all units in the project; no unit list).</div>
       <div class="callout fix searchable"><span class="tag">SLA</span>Closure after <b>4 days &amp; a minimum of 4 unanswered follow-ups</b>, with a close-out message first. Dispatch <b>48h</b> for Dubai/Sharjah; Abu Dhabi stretched; RAK/Fujairah stacked as far as possible — but a complaint is never left unattended.</div>
+      <div class="callout fix searchable"><span class="tag">Water quality</span>Brown / yellow / rusty water now has a defined path — <b>normal intake, but the likely non-warranty position and the AED 160 terms are stated upfront</b> (<a href="#tpl-bw1">BW-1</a>) before any visit is booked. Usual cause is anode rod depletion or tank sediment, both consumables. <b>Red water is different — escalate to the MD, say nothing to the customer.</b></div>
+      <div class="callout fix searchable"><span class="tag">First touch</span>All incoming <b>email and WhatsApp</b> get a basic human acknowledgement <b>within 30 minutes</b> (business hours) if proper intake hasn't started — greeting + your name (<a href="#tpl-ak1">AK-1</a>). It's a holding message, not a replacement for the full intake request.</div>
       <div class="callout fix searchable"><span class="tag">Job No.</span>"Case ID" is now "Job Number", removed from all customer-facing messages.</div>
     </section>
 
@@ -327,14 +330,15 @@
       </ul>
 
       <div class="callout amber searchable"><span class="tag">Fast path</span><b>If the complaint is a leak, don't start with the checklist.</b> Jump to the <a href="#leak-path">Leakage Fast-Path</a> below — get videos + the bill/TOC, rule out a Teflon-tape fix, and only then treat it as a warranty replacement.</div>
+      <div class="callout amber searchable"><span class="tag">Set expectations</span><b>If the complaint is brown, yellow, or rusty water</b>, run the normal intake — but tell the customer upfront that this is most likely outside warranty, and confirm the AED 160 charge position before booking any visit. See <a href="#water-path">Discoloured Water</a> below.</div>
 
       <h3 class="blk">Process Flow</h3>
       <div class="steps">
-        <div class="step searchable" id="sop01-step1"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Acknowledge</div><p>Log the enquiry in Airtable: date, channel, customer name, contact number, the details in <span class="status">Intake: Brief Complaint</span>, and set <span class="status">Complaint Status</span>. Assign a Job Number for internal tracking (never shared with the customer).</p><p>Acknowledge the customer so they know someone is on it — target within 2 business hours. Keep it to plain communication; no Job Number in the message. For retail customers, the acknowledgement + basic intake request goes out via <a href="#tpl-rt1">Template RT-1</a> — use the Email, WhatsApp, or phone-script version to match the channel they contacted us on.</p><p>If the complaint is a leak → go to the <a href="#leak-path">Leakage Fast-Path</a>.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable" id="sop01-step1"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Acknowledge</div><p>Log the enquiry in Airtable: date, channel, customer name, contact number, the details in <span class="status">Intake: Brief Complaint</span>, and set <span class="status">Complaint Status</span>. Assign a Job Number for internal tracking (never shared with the customer).</p><p>Acknowledge the customer so they know someone is on it — target within 2 business hours. Keep it to plain communication; no Job Number in the message. For retail customers, the acknowledgement + basic intake request goes out via <a href="#tpl-rt1">Template RT-1</a> — use the Email, WhatsApp, or phone-script version to match the channel they contacted us on.</p><p><b>30-minute first touch:</b> if you can't begin proper intake within 30 minutes of the message arriving (email or WhatsApp), send <a href="#tpl-ak1">Template AK-1</a> first — a short greeting with your name so the customer knows a real person has it. The full intake request still follows within the 2-hour target. Messages that arrive outside business hours get their first touch within the first 30 minutes of the next business day.</p><p>If the complaint is a leak → go to the <a href="#leak-path">Leakage Fast-Path</a>. If it's brown, yellow, or rusty water → see <a href="#water-path">Discoloured Water</a>.</p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Collect Basic Information</div><p>We collect what we need to assess warranty — not a full "case file". Sadara/contractor/project → send the official intake email (<a href="#tpl-sd1">Template SD-1</a>) with the Checklist &amp; Declaration form. Retail → request the basics (<a href="#tpl-rt1">Template RT-1</a>).</p><p>Ask for: photos/video of the fault, photo of the model + serial number label, the <b>full address where the unit is installed</b>, and the <b>reseller bill or the project's TOC</b> (see <a href="#bill-vs-toc">Bill vs TOC</a> below). Getting the address upfront avoids back-and-forth and means we have everything before making a decision. For Sadara: also the site pin + access + site contact.</p><p>Update Airtable: <span class="status">Complaint Status = 'Awaiting Customer Documents'</span></p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable" id="sop01-step3"><div class="step-num">3</div><div class="step-main"><div class="step-title">Confirm Receipt &amp; Chase Gaps</div><p>Reply to confirm you received whatever came in — even if incomplete. If something's missing, send <a href="#tpl-md1">Template MD-1</a> listing only the missing items.</p><p>Follow the 4-day closure SLA (<a href="#sop01-step8">Step 8</a>) if the customer goes quiet.</p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable" id="sop01-step4"><div class="step-num">4</div><div class="step-main"><div class="step-title">Validate Warranty</div><p>Manager checks warranty against the <b>bill</b> (dated, lists the units — verify the specific unit) or, for a project, the <b>TOC</b> (the TOC date governs and covers all units in the project). For Sadara projects <b>not yet handed over</b> (no TOC exists), assess warranty on the <b>Submittal + delivery notes</b> instead. Periods: 2 years electrical, 5 years body.</p><p>Update Airtable: <span class="status">Complaint Status = 'Warranty Verified'</span> or <span class="status">'Out of Warranty'</span>, with the reason.</p><span class="owner">Manager</span></div></div>
-        <div class="step searchable"><div class="step-num">5</div><div class="step-main"><div class="step-title">Try to Resolve at the Desk First</div><p>Before dispatching anyone, attempt a remote fix: guidance on settings/heating time, a Teflon-tape re-seal for a minor connection leak, thermostat/usage checks (see <a href="#track-b">SOP-04 Track B pre-checks</a>).</p><p>Resolved remotely → confirm with the customer and close. Update Airtable: <span class="status">Complaint Status = 'Resolved — Remote'</span>.</p><span class="owner">Front Desk Coordinator / Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">5</div><div class="step-main"><div class="step-title">Try to Resolve at the Desk First</div><p>Before dispatching anyone, attempt a remote fix: guidance on settings/heating time, a Teflon-tape re-seal for a minor connection leak, thermostat/usage checks (see <a href="#track-b">SOP-04 Track B pre-checks</a>).</p><p>Discoloured water is the exception — it's normally a consumable/maintenance outcome (anode rod or sediment) rather than something we can fix remotely. Set the expectation and charge position instead (<a href="#water-path">Discoloured Water</a>).</p><p>Resolved remotely → confirm with the customer and close. Update Airtable: <span class="status">Complaint Status = 'Resolved — Remote'</span>.</p><span class="owner">Front Desk Coordinator / Manager</span></div></div>
         <div class="step searchable" id="sop01-step6"><div class="step-num">6</div><div class="step-main"><div class="step-title">Under Warranty &amp; Can't Desk-Resolve → Dispatch</div><p>Verify the documents are complete, then hand to the Manager to schedule a technician (→ <a href="#sop-04">SOP-04</a>). Over-the-phone troubleshooting can continue in the interim.</p><p>Update Airtable: <span class="status">Complaint Status = 'Under Warranty — Pending Site Visit'</span></p><span class="owner">Manager → Technician</span></div></div>
         <div class="step searchable"><div class="step-num">7</div><div class="step-main"><div class="step-title">Out of Warranty → Inform Customer</div><p>Send <a href="#tpl-ow1">Template OW-1</a> with the specific reason and the AED 160 chargeable-visit option. If the issue is isolated to a part, offer to hand off to <a href="#sop-03">SOP-03 (Spare Parts)</a> for a quote instead.</p><p>Update Airtable: <span class="status">Complaint Status = 'Out of Warranty — Customer Notified'</span></p><span class="owner">Front Desk Coordinator (Manager validates)</span></div></div>
         <div class="step searchable" id="sop01-step8"><div class="step-num">8</div><div class="step-main"><div class="step-title">Follow Up &amp; Close (4-day SLA)</div><p>If the customer goes quiet, follow up — a minimum of 4 unanswered follow-ups over 4 days, using <a href="#tpl-cf1">Template CF-1</a>. This happens a lot after we send the checklist and customers see the requirements — the follow-up reassures them and offers help. Before closing, send the final closure message (<a href="#tpl-cc1">Template CC-1</a>).</p><p>Update Airtable: <span class="status">Complaint Status = 'Closed — No Response'</span>. Any case can be reopened later.</p><span class="owner">Front Desk Coordinator</span></div></div>
@@ -351,6 +355,18 @@
         <div class="step searchable"><div class="step-num">L4</div><div class="step-main"><div class="step-title">Real Body Leak &amp; Under Warranty → Replacement</div><p>If it's a genuine body/tank leak and warranty checks out (bill or TOC), issue a replacement via the two-option process in <a href="#sec-repl">SOP-05 Section 5</a> (our stock for Sadara, or a PO to a reseller). Supply-only — installation is not included.</p><span class="owner">Manager</span></div></div>
       </div>
 
+      <!-- Discoloured water -->
+      <div id="water-path" style="scroll-margin-top:74px"></div>
+      <h3 class="blk">Discoloured Water (Brown / Yellow / Rusty) — Set Expectations Upfront</h3>
+      <div class="callout amber searchable"><span class="tag">Key point</span>These complaints run the <b>normal intake, Steps 1–8</b> — nothing is skipped. The difference is <b>what we say at first contact</b>: discoloured water is usually caused by anode rod depletion or sediment build-up, which are consumable/maintenance items, not manufacturing defects. So it most likely falls <b>outside warranty</b>. Say that upfront and confirm the charge position <b>before</b> booking a visit — it prevents a dispute after the technician has already been.</div>
+      <div class="steps">
+        <div class="step searchable"><div class="step-num">W1</div><div class="step-main"><div class="step-title">Run the Normal Intake</div><p>Send <a href="#tpl-rt1">RT-1</a> (retail) or <a href="#tpl-sd1">SD-1</a> (Sadara/contractor) as usual — bill or TOC, serial number photo, address, photos/videos.</p><p>Additionally, ask the customer to run the hot tap and tell us what comes out: <b>murky/cloudy with visible particles</b> (sediment), <b>rusty smell / dark or brown discolouration</b> (anode depletion), or <b>red water</b> (see the red-water flag below). Also ask roughly how long the unit has been in service.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">W2</div><div class="step-main"><div class="step-title">Set the Expectation Immediately</div><p>Send <a href="#tpl-bw1">Template BW-1</a> at first contact — don't wait for the warranty check. It explains in plain language why discoloured water is usually a maintenance issue rather than a product fault, and states the charge position clearly.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">W3</div><div class="step-main"><div class="step-title">Confirm the Charge Position Before Dispatch</div><p>The customer must acknowledge the terms before any visit is booked — the same gate as <a href="#tpl-vc1">VC-1</a>: <b>covered under warranty → no charge. Not covered → AED 160 (VAT inclusive) payable</b>, per water heater unit, covering the inspection only.</p><p>The Manager still validates warranty as normal (<a href="#sop01-step4">Step 4</a>) — "most likely out of warranty" is not the same as decided.</p><span class="owner">Front Desk Coordinator → Manager</span></div></div>
+        <div class="step searchable"><div class="step-num">W4</div><div class="step-main"><div class="step-title">Outcome &amp; Close</div><p>Not covered (anode wear or sediment — the usual outcome) → AED 160 applies, and offer an <b>anode rod replacement + tank flush</b>; hand to <a href="#sop-03">SOP-03</a> for a parts quote.</p><p>Genuine warranty defect → normal warranty route, <b>no charge to the customer</b>. Log the outcome in Airtable either way.</p><span class="owner">Manager / Front Desk Coordinator</span></div></div>
+      </div>
+      <div class="callout fix searchable"><span class="tag">Red water</span><b>RED water is not a normal brown-water case. Stop.</b> Do not send BW-1, do not quote AED 160, and do not discuss cause with the customer. Escalate to the <b>MD immediately</b> and wait for instructions. (Same rule as fault F6 in the Deep Troubleshooting tool.)</div>
+
       <!-- Bill vs TOC -->
       <h3 class="blk" id="bill-vs-toc">Bill vs TOC — Which Date Governs Warranty</h3>
       <table class="tbl searchable">
@@ -363,6 +379,24 @@
       </table>
 
       <h3 class="blk">Templates</h3>
+      <div class="callout note searchable">AK-1 goes first — it's the 30-minute holding message. It does <b>not</b> replace the full intake request (RT-1 / SD-1), which still follows.</div>
+      <div class="tpl searchable" id="tpl-ak1">
+        <div class="tpl-head"><span class="code">AK-1</span><span class="ch">📧 Email</span><span class="name">First-Touch Acknowledgement (within 30 min)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: We've received your message</span>
+
+Hello, good [morning / afternoon / evening] — my name is [Your Name] from Atlantic After-Sales.
+
+Thank you for reaching out. We've received your message and I'm looking into it now. I'll come back to you shortly with the next steps and anything we need from your side.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+      <div class="tpl searchable" id="tpl-ak1-wa">
+        <div class="tpl-head"><span class="code">AK-1</span><span class="ch">💬 WhatsApp</span><span class="name">First-Touch Acknowledgement (within 30 min)</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hello, good [morning / afternoon / evening] 👋 My name is [Your Name] from Atlantic After-Sales.
+
+Thank you for reaching out — we've received your message and I'm looking into it now. I'll come back to you shortly with the next steps. 🙏</div>
+      </div>
       <div class="tpl searchable" id="tpl-sd1">
         <div class="tpl-head"><span class="code">SD-1</span><span class="name">Sadara / Contractor-Managed Account Intake (actual template in use)</span><button class="copy">Copy</button></div>
         <div class="tpl-body"><span class="subj">Subject: Warranty Confirmation Request for Water Heater — [Brand] — [Unit/Flat No., Building/Site Name]</span>
@@ -478,6 +512,45 @@ Best,
 [Your Name] | [Company Name]</div>
       </div>
 
+      <div class="tpl searchable" id="tpl-bw1">
+        <div class="tpl-head"><span class="code">BW-1</span><span class="ch">📧 Email</span><span class="name">Brown / Yellow / Rusty Water — Expectation &amp; Charge Policy</span><button class="copy">Copy</button></div>
+        <div class="tpl-body"><span class="subj">Subject: About the discoloured water from your water heater</span>
+
+Hi [Customer Name / Team],
+
+Thank you for letting us know about the [brown / yellow / rusty] water coming from your Atlantic water heater. We're looking into it.
+
+So you know where you stand from the start: discoloured water is usually caused by the anode rod reaching the end of its life, or by sediment building up inside the tank over time. Both are normal wear and maintenance items rather than a manufacturing defect — which means this type of issue most likely falls outside warranty coverage.
+
+We'll still check your warranty properly before deciding anything. If you'd like a technician to come and inspect the unit, the terms are:
+
+• If the issue turns out to be covered under warranty — there is no charge to you.
+• If it turns out not to be covered — a charge of AED 160 (VAT inclusive) applies per water heater unit. This covers the inspection visit only; it does not include labour for any repair or service afterwards, which we'd quote separately.
+
+If the cause is the anode rod or sediment, we can quote you for an anode rod replacement and a tank flush, which is the usual fix.
+
+Please confirm you're happy to proceed on these terms and we'll arrange the visit.
+
+Best,
+[Your Name] | [Company Name]</div>
+      </div>
+
+      <div class="tpl searchable" id="tpl-bw1-wa">
+        <div class="tpl-head"><span class="code">BW-1</span><span class="ch">💬 WhatsApp</span><span class="name">Brown / Yellow / Rusty Water — Expectation &amp; Charge Policy</span><button class="copy">Copy</button></div>
+        <div class="tpl-body">Hi [Customer Name], thanks for letting us know about the [brown / yellow / rusty] water from your Atlantic water heater 🙏
+
+Just so you know upfront: this is usually caused by the anode rod wearing out or sediment building up in the tank. Both are normal maintenance items rather than a product fault, so this type of issue most likely falls outside warranty.
+
+We'll still check your warranty properly first. If you'd like a technician to inspect it:
+
+✅ Covered under warranty → no charge
+💰 Not covered → AED 160 (VAT incl.) per unit — inspection only, repair quoted separately
+
+If it's the anode rod or sediment, we can quote you for an anode replacement + tank flush, which is the usual fix.
+
+Shall we go ahead and arrange the visit on these terms?</div>
+      </div>
+
       <div class="tpl searchable" id="tpl-cf1">
         <div class="tpl-head"><span class="code">CF-1</span><span class="ch">Follow-up</span><span class="name">Complaint Follow-up (Customer Gone Quiet)</span><button class="copy">Copy</button></div>
         <div class="tpl-body"><span class="subj">Subject: Following up on your water heater complaint</span>
@@ -508,7 +581,8 @@ Best,
       <table class="tbl searchable">
         <thead><tr><th>Stage</th><th>Target Turnaround</th></tr></thead>
         <tbody>
-          <tr><td class="k">Acknowledgment (<a href="#sop01-step1">Step 1</a>)</td><td><b>Within 2 business hours</b></td></tr>
+          <tr><td class="k">First-touch acknowledgement — email &amp; WhatsApp (<a href="#tpl-ak1">AK-1</a>)</td><td><b>Within 30 minutes (business hours), if intake hasn't started</b></td></tr>
+          <tr><td class="k">Full acknowledgement + intake request (<a href="#sop01-step1">Step 1</a>)</td><td><b>Within 2 business hours</b></td></tr>
           <tr><td class="k">Document receipt confirmation (<a href="#sop01-step3">Step 3</a>)</td><td><b>Same business day</b></td></tr>
           <tr><td class="k">Warranty validation (<a href="#sop01-step4">Step 4</a>)</td><td><b>Within 1 business day of documents</b></td></tr>
           <tr><td class="k">Dispatch or resolution (<a href="#sop01-step6">Step 6</a>)</td><td><b>48 hours — Dubai/Sharjah (see <a href="#dispatch-sla">dispatch SLA</a> for distant cities)</b></td></tr>
@@ -533,7 +607,7 @@ Best,
       <p class="lead searchable">Applies to all new (pre-purchase) inquiries about buying an Atlantic water heater, received via phone, WhatsApp, website, or walk-in.</p>
       <h3 class="blk">Process Flow (Draft)</h3>
       <div class="steps">
-        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Acknowledge</div><p>Log in Airtable: date, channel, customer name, contact number, <span class="status">Complaint Status = 'Sales Enquiry'</span>, with the details in <span class="status">Intake: Brief Complaint</span>.</p><p>Respond promptly, confirming you're on it and asking a couple of quick questions to recommend the right unit.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Acknowledge</div><p>Log in Airtable: date, channel, customer name, contact number, <span class="status">Complaint Status = 'Sales Enquiry'</span>, with the details in <span class="status">Intake: Brief Complaint</span>.</p><p>Respond promptly, confirming you're on it and asking a couple of quick questions to recommend the right unit. If it came in by email or WhatsApp and you can't start properly within 30 minutes, send <a href="#tpl-ak1">Template AK-1</a> first.</p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Understand Requirement</div><p>Capture: household/business size or hot water usage pattern, preferred capacity (litres), installation type (horizontal / vertical), power type (electric / gas), space constraints, budget range, and installation timeline.</p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable"><div class="step-num">3</div><div class="step-main"><div class="step-title">Recommend &amp; Share Quote</div><p>Recommend 1–3 suitable Atlantic models (good / better / best) and send a quotation — price, warranty terms (2 yr electrical / 5 yr body), installation charges if any, and validity period. Quotations are approved by the Manager.</p><span class="owner">Front Desk Coordinator (Manager approves)</span></div></div>
         <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Follow Up (4-day SLA)</div><p>Follow up across the 4-day window — a minimum of 4 unanswered follow-ups before closing. Answer questions, confirm availability.</p><span class="owner">Front Desk Coordinator</span></div></div>
@@ -551,7 +625,7 @@ Best,
       <p class="lead searchable">Applies to all inquiries for individual spare parts (heating element, thermostat, anode rod, valve, etc.) for Atlantic water heaters, whether from an existing owner or via a technician.</p>
       <h3 class="blk">Process Flow</h3>
       <div class="steps">
-        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Identify the Unit</div><p>Log in Airtable: date, channel, customer name, contact number, <span class="status">Complaint Status = 'Sales Enquiry'</span>, with the part(s) and details in <span class="status">Intake: Brief Complaint</span>.</p><p>Get the Serial Number if the customer has it — it identifies the exact model and compatible parts. If not, get the Capacity (litres) and whether the unit is Horizontal or Vertical.</p><span class="owner">Front Desk Coordinator</span></div></div>
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Log &amp; Identify the Unit</div><p>Log in Airtable: date, channel, customer name, contact number, <span class="status">Complaint Status = 'Sales Enquiry'</span>, with the part(s) and details in <span class="status">Intake: Brief Complaint</span>.</p><p>Get the Serial Number if the customer has it — it identifies the exact model and compatible parts. If not, get the Capacity (litres) and whether the unit is Horizontal or Vertical.</p><p>If it came in by email or WhatsApp and you can't start properly within 30 minutes, send <a href="#tpl-ak1">Template AK-1</a> first.</p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Get the Requirement</div><p>Confirm which part(s) are needed, whether it's from visible damage/diagnosis or a technician's recommendation, and how urgent it is. Log the part name(s).</p><span class="owner">Front Desk Coordinator</span></div></div>
         <div class="step searchable"><div class="step-num">3</div><div class="step-main"><div class="step-title">Get Pricing &amp; Check Stock</div><p>Check stock and get the price from the Manager. Do not quote from memory or guess. Note availability and any lead time.</p><span class="owner">Front Desk Coordinator (Manager prices)</span></div></div>
         <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Share Quote</div><p>Send an itemized quote (<a href="#tpl-pq1">Template PQ-1</a>): part(s), price, availability/lead time, and validity period.</p><span class="owner">Front Desk Coordinator</span></div></div>
@@ -827,6 +901,7 @@ Best,
           <tr><td class="k"><span class="menu-emoji">📞</span>Customer on the Phone Now</td><td>A live call — figure out what they need on the line.</td><td class="goesto">Pick the matching option below</td></tr>
           <tr><td class="k"><span class="menu-emoji">💧</span>New Enquiry — Price Quote</td><td>Someone wants to buy a unit.</td><td class="goesto"><a href="#sop-02">SOP-02 — Sales Inquiry</a></td></tr>
           <tr><td class="k"><span class="menu-emoji">🔧</span>Repair Request</td><td>Unit has a problem.</td><td class="goesto"><a href="#sop-01">SOP-01 — Complaint Intake</a></td></tr>
+          <tr><td class="k"><span class="menu-emoji">🟤</span>Brown / Rusty Water</td><td>Discoloured water — likely non-warranty; set expectations upfront.</td><td class="goesto"><a href="#water-path">Discoloured Water</a></td></tr>
           <tr><td class="k"><span class="menu-emoji">🛡️</span>Warranty Claim</td><td>Customer asking about warranty coverage.</td><td class="goesto"><a href="#sop-01">SOP-01</a> → validation</td></tr>
           <tr><td class="k"><span class="menu-emoji">🔁</span>Replacement</td><td>Confirmed body leak — replacement to issue.</td><td class="goesto"><a href="#sec-repl">Section 5, below</a></td></tr>
           <tr><td class="k"><span class="menu-emoji">🚿</span>Installation Request</td><td>Unit needs installing — new purchase or post-replacement.</td><td class="goesto"><a href="#sec-install">Section 6, below</a></td></tr>
@@ -1064,6 +1139,7 @@ Best,
       <table class="tbl searchable">
         <thead><tr><th>Stage</th><th>Target</th></tr></thead>
         <tbody>
+          <tr><td class="k">First-touch acknowledgement — email &amp; WhatsApp (<a href="#tpl-ak1">AK-1</a>)</td><td><b>Within 30 minutes (business hours), if intake hasn't started</b></td></tr>
           <tr><td class="k">Dispatch — Dubai / Sharjah</td><td><b>Within 48 hours</b></td></tr>
           <tr><td class="k">Dispatch — Abu Dhabi</td><td><b>Stretched / stacked; scheduled date by day 4</b></td></tr>
           <tr><td class="k">Dispatch — RAK / Fujairah</td><td><b>Stacked as far as possible; scheduled date by day 4, never dropped</b></td></tr>
@@ -1095,7 +1171,7 @@ Best,
       <div class="sop-head"><span class="id">😟</span><h2>Water Heater Complaint</h2></div>
       <h3 class="blk">The Process</h3>
       <div class="steps">
-        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Reply right away</div><p>Say sorry and let the customer know you're helping. Log it in Airtable first. Sadara/contractor account → send <a href="#msg-a-email">Message A</a>. Normal customer → send <a href="#msg-b-email">Message B</a>. <b>If it's a leak, don't ask for the checklist</b> — just get a video + the bill/TOC.</p></div></div>
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Reply right away</div><p>Say sorry and let the customer know you're helping. Log it in Airtable first. Sadara/contractor account → send <a href="#msg-a-email">Message A</a>. Normal customer → send <a href="#msg-b-email">Message B</a>. <b>If it's a leak, don't ask for the checklist</b> — just get a video + the bill/TOC.</p><p><b>Can't start within 30 minutes?</b> Send <a href="#tpl-ak1">AK-1</a> first — just "Hello, good [morning/afternoon], my name is [Your Name] from Atlantic After-Sales." Never leave an email or WhatsApp unanswered while you're busy.</p><p><b>Brown, yellow or rusty water?</b> Send <a href="#tpl-bw1">BW-1</a> — tell them upfront it's most likely not covered by warranty, and get them to agree to the AED 160 terms before you promise a visit (<a href="#water-path">details</a>).</p></div></div>
         <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Collect papers &amp; photos</div><p>Sadara/contractor: completed Warranty Claim Request form, bill or TOC, photo/video of the fault, photo of model + serial label, Google Maps pin + access, site contact name + mobile. Normal customers: name &amp; phone, full address (where the unit is installed), where/when they bought it (bill), model &amp; serial, photo/video of the problem.</p><p>Everything received → <a href="#qr-step3">Step 3</a>. Something missing → send <a href="#msg-c-email">Message C</a>. If the customer goes quiet, follow the 4-day close-out rule (<a href="#qr-step5">Step 5</a>).</p></div></div>
         <div class="step searchable" id="qr-step3"><div class="step-num">3</div><div class="step-main"><div class="step-title">Ask Manager: is it under warranty?</div><p>Send the papers/photos/serial + bill or TOC to the Manager and ask: "Is this under warranty? Yes or No?" Wait for the answer — don't decide yourself. (Projects: warranty is judged on the TOC date.)</p></div></div>
         <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Tell the customer</div><p>Manager says YES → try a desk fix first; if a visit is needed, send <a href="#msg-d-email">Message D</a>. Manager says NO → send <a href="#msg-e-email">Message E</a>.</p></div></div>
@@ -1264,7 +1340,7 @@ Would you like us to go ahead? 🙏</div>
       <div class="sop-head"><span class="id">🔧</span><h2>Spare Parts Inquiry</h2></div>
       <h3 class="blk">The Process</h3>
       <div class="steps">
-        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Find out which water heater</div><p>Log it in Airtable (Complaint Status = 'Sales Enquiry', details in Intake: Brief Complaint). Ask for the Serial Number (metal plate on the tank). No serial → ask Capacity (litres, e.g. 15L/25L/50L) and Horizontal or Vertical.</p></div></div>
+        <div class="step searchable"><div class="step-num">1</div><div class="step-main"><div class="step-title">Find out which water heater</div><p>Log it in Airtable (Complaint Status = 'Sales Enquiry', details in Intake: Brief Complaint). Ask for the Serial Number (metal plate on the tank). No serial → ask Capacity (litres, e.g. 15L/25L/50L) and Horizontal or Vertical.</p><p>Can't start within 30 minutes? Send <a href="#tpl-ak1">AK-1</a> first.</p></div></div>
         <div class="step searchable"><div class="step-num">2</div><div class="step-main"><div class="step-title">Ask what part they need</div><p>"Which part is broken or needed?" (e.g. heating rod, thermostat, valve). Write down the part name and whether it's urgent.</p></div></div>
         <div class="step searchable"><div class="step-num">3</div><div class="step-main"><div class="step-title">Get the price &amp; send the quote</div><p>Send the part + unit details to the Manager for the price — don't guess. Then send <a href="#msg-f-email">Message F</a>.</p></div></div>
         <div class="step searchable"><div class="step-num">4</div><div class="step-main"><div class="step-title">Follow up (only if no reply)</div><p>Follow up across the 4-day window — minimum 4 unanswered follow-ups. <a href="#msg-g-email">Message G</a>, then <a href="#msg-h-email">Message H</a>, and <a href="#msg-i-email">Message I</a> (5% off) on the final follow-up.</p></div></div>
