@@ -1617,3 +1617,12 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
 }
 .cl-controls .filter-search { min-width: 200px; height: 34px; }
 .cl-controls .filter-count { font-size: 12.5px; }
+/* A hidden column holding an SLA-flagged card gets the warning treatment —
+   the point of an SLA flag is that it can't be missed. */
+.hidden-cols-pill.has-flagged {
+  border-color: #F59E0B;
+  border-style: solid;
+  color: #B45309;
+  background: rgba(245, 158, 11, 0.08);
+}
+.hidden-cols-pill.has-flagged:hover { border-color: #B45309; color: #B45309; }

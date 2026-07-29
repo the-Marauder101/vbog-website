@@ -246,7 +246,7 @@ adding tests.** Highlights:
 - Drive the custom dropdowns via their `.dd-btn`/`.dd-item` elements (native selects
   are hidden). Assert outcomes in the DB via `sbFetch` inside the page.
 - Keep the suite green: every new feature ships with tests (see `test/README.md`
-  for the current expected pass count — **73** as of v18).
+  for the current expected pass count — **76** as of v18).
 
 ## 10. Hideable status columns (v18)
 
@@ -290,6 +290,20 @@ sql/13 trigger, falling back to `created_at`.
   as cards are saved — the change log records each one. Sorting flips to
   oldest-in-stage first, which matches what the SLA flags are for. My Tasks still
   groups by due date, so stage-dated cards land under "No due date".
+
+**SLA rules read the same timestamp** (`hr_sla_rules`, sql/13): "cards in status X
+must move within N days", flagged on the card as `sla-warning` (≥75% of the deadline)
+or `sla-breach`. Three traps, all fixed in v18 — don't reintroduce them:
+
+1. `board.js` must **await** `HrSla.init()` before the first `renderBoard()`. It
+   fetches the rules, so an un-awaited init paints an unflagged board and the flags
+   only appear once something else re-renders it.
+2. The rules must load for **every** user. Only the rule *editor* (the SLA Rules
+   button and modal) is admin-only — the flags are for whoever works the board, and
+   putting the fetch behind the admin check meant members never saw one.
+3. A hidden column can hide a breach, which defeats the point of an SLA. The
+   hidden-columns pill therefore counts flagged cards that are out of view and turns
+   amber when there are any.
 
 ## 12. The change log (v18)
 
