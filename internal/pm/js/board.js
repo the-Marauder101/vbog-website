@@ -108,7 +108,9 @@
       // HR features
       if (hasFeature("board_tabs")) initBoardTabs();
       if (hasFeature("roles_card") && typeof HrRoles !== "undefined") HrRoles.init(project);
-      if (hasFeature("sla") && typeof HrSla !== "undefined") HrSla.init(project, members);
+      // Awaited on purpose: SLA rules have to be in memory before the first
+      // renderBoard(), or no card is flagged until something re-renders.
+      if (hasFeature("sla") && typeof HrSla !== "undefined") await HrSla.init(project, members);
       initFilters();
       renderBoard();
       if (openTaskId) {
@@ -467,12 +469,24 @@
     // click to get them back. The count of parked tasks is part of the point.
     const hiddenHere = statuses.filter((s) => hidden.includes(s));
     const pill = document.getElementById("hidden-cols-pill");
-    const parked = tabTasks.filter((t) => hiddenHere.includes(t.status)).length;
+    const parkedTasks = tabTasks.filter((t) => hiddenHere.includes(t.status));
+    // An SLA breach inside a folded-away column would otherwise be invisible —
+    // exactly the thing SLA rules exist to prevent. Surface the count.
+    const parkedFlagged =
+      hasFeature("sla") && isHiringTab() && typeof HrSla !== "undefined"
+        ? parkedTasks.filter((t) => ["warning", "breach"].includes(HrSla.slaState(t)?.level)).length
+        : 0;
     pill.hidden = hiddenHere.length === 0;
     pill.textContent =
       `${hiddenHere.length} column${hiddenHere.length === 1 ? "" : "s"} hidden` +
-      (parked ? ` · ${parked} task${parked === 1 ? "" : "s"}` : "");
-    pill.title = `Hidden: ${hiddenHere.join(", ")} — click to manage`;
+      (parkedTasks.length ? ` · ${parkedTasks.length} task${parkedTasks.length === 1 ? "" : "s"}` : "") +
+      (parkedFlagged ? ` · ${parkedFlagged} SLA-flagged` : "");
+    pill.classList.toggle("has-flagged", parkedFlagged > 0);
+    pill.title =
+      `Hidden: ${hiddenHere.join(", ")} — click to manage` +
+      (parkedFlagged
+        ? `\n${parkedFlagged} card${parkedFlagged === 1 ? " is" : "s are"} past or near an SLA deadline in a hidden column.`
+        : "");
 
     const clearBtn = document.getElementById("filter-clear");
     const countEl = document.getElementById("filter-count");

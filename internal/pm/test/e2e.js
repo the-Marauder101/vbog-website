@@ -1,10 +1,10 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 73 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// 76 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
 // @mentions, roles/external scoping, tags, webhooks, client tags, status reorder +
 // transition mapping, sub-client status inheritance, hideable status columns,
-// the HR Stage Date, the task change log, cleanup.
+// the HR Stage Date, HR SLA flags, the task change log, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
 // the end; count assertions are scoped to the test project so live data is
 // never touched or asserted against.
@@ -1269,6 +1269,80 @@ async function expectToast(substr) {
     const row = (await rest(`tasks?project_id=eq.${hrId}&title=eq.E2E%20Ops%20Task&select=due_date,fields`))[0];
     if (row.due_date !== isoDaysFromNow(5)) throw new Error(`ops due_date = ${row.due_date}`);
     if (row.fields.hr_category !== "ops") throw new Error("ops card not tagged hr_category=ops");
+  });
+
+  // ---------- HR SLA flags (sql/13) ----------
+  // Regression guards: the flags used to be missing on first paint (the rules
+  // were fetched after renderBoard) and invisible to non-admins entirely (the
+  // fetch sat behind the admin check that guards the rule EDITOR).
+  let slaCardId;
+  await step("SLA: a breaching card is flagged on the first paint of the board", async () => {
+    await rest(`projects?id=eq.${hrId}`, {
+      method: "PATCH",
+      body: { features: { board_tabs: true, roles_card: false, sla: true, auto_date: true } },
+    });
+    await rest("hr_sla_rules", {
+      method: "POST",
+      body: { project_id: hrId, from_status: "Applied", deadline_days: 4 },
+    });
+    slaCardId = (
+      await rest("tasks", {
+        method: "POST",
+        body: {
+          project_id: hrId,
+          title: "E2E SLA Card",
+          status: "Applied",
+          source: "manual",
+          fields: { hr_category: "candidate" },
+        },
+      })
+    )[0].id;
+    // 9 days in a 4-day stage = breach. Patching status_changed_at directly is
+    // safe: the sql/13 trigger only overwrites it when the STATUS changes.
+    await rest(`tasks?id=eq.${slaCardId}`, {
+      method: "PATCH",
+      body: { status_changed_at: new Date(Date.now() - 9 * 86400000).toISOString() },
+    });
+    await page.goto(`${BASE}/board.html?project=${hrId}`);
+    const card = page.locator(`.task-card[data-id="${slaCardId}"]`);
+    await card.waitFor({ timeout: 8000 });
+    // No re-render, no waiting: it must be flagged as soon as it's drawn
+    const cls = await card.getAttribute("class");
+    if (!/sla-breach/.test(cls)) throw new Error(`expected sla-breach on first paint, got "${cls}"`);
+  });
+
+  await step("SLA: flags are visible to a non-admin too (rules aren't admin-only)", async () => {
+    await become("sahil"); // member
+    await page.goto(`${BASE}/board.html?project=${hrId}`);
+    const card = page.locator(`.task-card[data-id="${slaCardId}"]`);
+    await card.waitFor({ timeout: 8000 });
+    const cls = await card.getAttribute("class");
+    if (!/sla-breach/.test(cls)) throw new Error(`member sees no SLA flag: "${cls}"`);
+    // …but the rule EDITOR stays admin-only
+    if (!(await page.locator("#sla-btn").isHidden()))
+      throw new Error("a member should not get the SLA Rules button");
+    await become("depesh");
+  });
+
+  await step("SLA: hiding a column reports the flagged cards it takes out of view", async () => {
+    await page.goto(`${BASE}/board.html?project=${hrId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    await page.click("#columns-btn");
+    await page.locator("#columns-modal.open").waitFor({ timeout: 5000 });
+    await page.click('#cols-list input[data-col-status="Applied"]');
+    await page.click("#cols-close");
+    const pill = page.locator("#hidden-cols-pill");
+    await pill.waitFor({ state: "visible", timeout: 5000 });
+    const text = await pill.textContent();
+    if (!/1 SLA-flagged/.test(text)) throw new Error(`pill should warn about the flagged card: "${text}"`);
+    if (!(await pill.getAttribute("class")).includes("has-flagged"))
+      throw new Error("pill missing the has-flagged treatment");
+    // Restore, so the change-log steps below can still reach their card
+    await page.click("#columns-btn");
+    await page.locator("#columns-modal.open").waitFor({ timeout: 5000 });
+    await page.click("#cols-show-all");
+    await page.waitForTimeout(500);
+    await page.click("#cols-close");
   });
 
   // ---------- Change log (sql/14) ----------

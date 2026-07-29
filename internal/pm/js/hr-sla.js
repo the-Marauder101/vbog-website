@@ -14,20 +14,25 @@ const HrSla = (() => {
   let editing = null;
   let deleteArmedFor = null;
 
+  // Load the rules FIRST, for every user — the flags on cards are for whoever
+  // works the board, not just for admins. Only the rule-editing UI is
+  // admin-only. (Both halves used to be behind the admin check, which meant
+  // members never saw a flag; and board.js has to AWAIT this, or the first
+  // paint happens before the rules arrive and no card gets flagged until
+  // something else re-renders the board.)
   async function init(proj, mems) {
     project = proj;
     members = mems;
     const btn = document.getElementById("sla-btn");
-    if (!btn || !Auth.isAdmin()) return;
-    btn.hidden = false;
     try {
       rules = await API.getSlaRules(project.id);
     } catch (e) {
-      if (/does not exist|relation/i.test(e.message)) {
-        btn.hidden = true;
-        return;
-      }
+      // No table yet (pre-sql/13) or unreachable: no flags, no button.
+      if (btn) btn.hidden = true;
+      return;
     }
+    if (!btn || !Auth.isAdmin()) return;
+    btn.hidden = false;
     btn.addEventListener("click", openModal);
     document.getElementById("sla-form").addEventListener("submit", onSubmit);
     document.getElementById("sla-close").addEventListener("click", () => UI.closeModal("sla-modal"));

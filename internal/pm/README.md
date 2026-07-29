@@ -121,6 +121,12 @@ entered the status it's in now.
 - The **Ops tab keeps normal due dates** — that's ordinary internal work.
 - Every previous stage and its date is in the card's **History**.
 
+**SLA rules use the same date.** Set them from **SLA Rules** on the board (admin only):
+"a card in this status must move within N days". Cards get an amber stripe as they
+approach the deadline and a red one once they pass it — visible to **everyone** on the
+board, not just admins. If a flagged card sits in a column you've hidden, the
+hidden-columns pill turns amber and says how many are out of sight.
+
 Toggle it per project with "Stage Date instead of due dates" in the project modal's
 HR Features (on by default for HR projects).
 
