@@ -1473,3 +1473,147 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
 .feature-toggles .toggle-label {
   font-size: 13.5px;
 }
+
+/* ---------- Hidden status columns (board "Columns" control) ---------- */
+/* Standing reminder in the filter bar — a hidden column must never be a
+   silent omission, so this pill also carries the parked task count. */
+.hidden-cols-pill {
+  border: 1px dashed #B9C2CE;
+  background: #fff;
+  color: var(--muted);
+  border-radius: 999px;
+  height: 30px;
+  padding: 0 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.hidden-cols-pill:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
+.cols-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.cols-row:hover { border-color: #B9C2CE; background: #FAFCFE; }
+.cols-row.locked { cursor: default; background: var(--bg); }
+.cols-row.locked:hover { border-color: var(--border); background: var(--bg); }
+.cols-row input { width: 15px; height: 15px; accent-color: var(--accent); cursor: inherit; }
+.cols-row .cols-name { font-weight: 600; }
+.cols-row input:not(:checked) ~ .cols-name { color: var(--muted); font-weight: 500; }
+.cols-row .cols-count { color: var(--muted); font-size: 12.5px; margin-left: auto; white-space: nowrap; }
+.cols-row .cols-note {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+/* ---------- Stage Date (HR cards: replaces the due date) ---------- */
+/* Deliberately NOT styled like .due — it is a measurement, not a deadline,
+   and must never pick up the red "overdue" treatment. */
+.stage-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 52, 96, 0.06);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.stage-pill .stage-icon { opacity: 0.6; }
+.stage-date-box {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* ---------- Change log ---------- */
+.cl-toggle {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cl-toggle:hover { color: var(--accent); }
+.cl-toggle-caret { display: inline-block; transition: transform 0.15s ease; font-size: 11px; }
+.cl-toggle.open .cl-toggle-caret { transform: rotate(90deg); }
+.cl-panel {
+  margin-top: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--bg);
+}
+.cl-panel-tall { max-height: 46vh; }
+.cl-list { list-style: none; }
+.cl-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.cl-entry:last-child { border-bottom: none; }
+.cl-entry .avatar { margin-top: 1px; }
+.cl-entry .avatar.cl-bot { background: #C3CAD5; font-size: 11px; }
+.cl-body { min-width: 0; flex: 1; }
+.cl-task {
+  display: block;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--primary);
+  margin-bottom: 1px;
+}
+.cl-text { color: var(--text); word-break: break-word; }
+.cl-val { font-weight: 600; }
+.cl-new { color: var(--primary); }
+.cl-arrow { color: var(--muted); margin: 0 1px; }
+.cl-empty { color: var(--muted); font-weight: 400; }
+.cl-when { color: var(--muted); font-size: 11.5px; white-space: nowrap; margin-top: 2px; }
+/* Status moves are what people scan the log for */
+.cl-entry.cl-status { background: rgba(0, 180, 216, 0.045); border-radius: 6px; padding-left: 6px; }
+.cl-day {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 10px 2px 4px;
+  position: sticky;
+  top: -8px;
+  background: var(--bg);
+}
+.cl-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+}
+.cl-controls .filter-search { min-width: 200px; height: 34px; }
+.cl-controls .filter-count { font-size: 12.5px; }

@@ -5,6 +5,14 @@
 // is scannable in one file. All methods return promises of parsed JSON rows.
 
 const API = {
+  // Who is making this change. Stamped onto every task write so the
+  // changelog trigger (sql/14) can attribute it — there is no server to ask.
+  // Read lazily: api.js loads before auth.js, but nothing calls this at
+  // load time.
+  _actorId() {
+    return (typeof Auth !== "undefined" && Auth.user()?.id) || null;
+  },
+
   // ---- projects ----
   getProjects() {
     return sbFetch("projects?select=*&order=created_at.asc");
@@ -48,13 +56,27 @@ const API = {
     );
   },
   createTask(fields) {
-    return sbFetch("tasks", { method: "POST", body: fields }).then((r) => r[0]);
+    return sbFetch("tasks", { method: "POST", body: { ...fields, last_actor_id: API._actorId() } })
+      .then((r) => r[0]);
   },
   updateTask(id, fields) {
-    return sbFetch(`tasks?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
+    return sbFetch(`tasks?id=eq.${id}`, {
+      method: "PATCH",
+      body: { ...fields, last_actor_id: API._actorId() },
+    }).then((r) => r[0]);
   },
+  // Goes through the delete_task_logged RPC (sql/14) so the changelog records
+  // WHO deleted it — a plain DELETE leaves nothing behind to read the actor
+  // from, and PATCHing the row first would fire webhooks for a phantom edit.
+  // Falls back to a plain DELETE if the migration hasn't been run yet.
   deleteTask(id) {
-    return sbFetch(`tasks?id=eq.${id}`, { method: "DELETE" });
+    return sbFetch("rpc/delete_task_logged", {
+      method: "POST",
+      body: { p_task_id: id, p_actor_id: API._actorId() },
+    }).catch((e) => {
+      if (!/does not exist|Could not find the function|schema cache/i.test(e.message)) throw e;
+      return sbFetch(`tasks?id=eq.${id}`, { method: "DELETE" });
+    });
   },
   // Task id/status/project across a set of projects — feeds the transition
   // mapping step when status columns change.
@@ -67,7 +89,7 @@ const API = {
   moveTasksByStatus(projectIds, fromStatus, toStatus) {
     return sbFetch(
       `tasks?project_id=in.(${projectIds.join(",")})&status=eq.${encodeURIComponent(fromStatus)}`,
-      { method: "PATCH", body: { status: toStatus } }
+      { method: "PATCH", body: { status: toStatus, last_actor_id: API._actorId() } }
     );
   },
   memberHasTasks(memberId) {
@@ -175,6 +197,16 @@ const API = {
     );
   },
 
+  // ---- change log (sql/14 — written by a trigger, read-only from here) ----
+  // One row per changed field. Ordered newest-first for both views.
+  getTaskChangelog(taskId) {
+    return sbFetch(`task_changelog?task_id=eq.${taskId}&select=*&order=created_at.desc&limit=200`);
+  },
+  getProjectChangelog(projectId, limit = 300) {
+    return sbFetch(
+      `task_changelog?project_id=eq.${projectId}&select=*&order=created_at.desc&limit=${limit}`
+    );
+  },
   // ---- HR roles (roles summary card on HR project boards) ----
   getHrRoles(projectId) {
     return sbFetch(`hr_roles?project_id=eq.${projectId}&select=*&order=sort_order.asc`);

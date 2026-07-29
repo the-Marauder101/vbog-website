@@ -5,8 +5,10 @@
 > (so you don't hit them again). The README covers *what Vyom does*; this file
 > covers *how it's built*.
 
-Last updated: v16 (July 2026) — client tags on tasks + form polish; plus the v14
-status reordering, guided transition mapping, and sub-client status inheritance.
+Last updated: v18 (July 2026) — hideable status columns, the HR **Stage Date**
+(no due dates on candidate cards), and a database-written **change log** for every
+task; plus the v16 client tags and the v14 status reordering, guided transition
+mapping, and sub-client status inheritance.
 
 ---
 
@@ -43,16 +45,18 @@ Browser ── sbFetch() ──> https://<project>.supabase.co/rest/v1/<table>?<
 | `js/ui.js` | Shared UI kit: toasts, modals, date helpers, field errors, `enhanceSelect()` custom dropdowns |
 | `js/auth.js` | Login state (localStorage), page guards, role checks, nav user chip |
 | `js/inbox.js` | Bell + slide-in inbox panel (notifications + My Tasks) |
+| `js/changelog.js` | The change log: per-task History in the task modal + the board's project-wide History modal (read-only — §12) |
 | `js/dashboard.js` | Page logic for `vyom.html` |
 | `js/board.js` | Page logic for `board.html` (drag-drop, task modal, @mentions) |
 | `js/team.js` | Page logic for `team.html` |
 | `js/settings.js` | Page logic for `settings.html` |
 | `css/style.css` | All styles, one file, sectioned with `/* ---------- */` headers |
-| `sql/01…12_*.sql` | Migrations, numbered, idempotent — the full schema history |
+| `sql/01…14_*.sql` | Migrations, numbered, idempotent — the full schema history |
 | `img/vyom.svg` | The logo (also the favicon). Same SVG is inlined in each page's nav |
 
 **Script load order matters** (each page loads, in order):
-`config → supabase → api → ui → auth → inbox → <page>.js`
+`config → supabase → api → ui → auth → inbox → changelog → <page>.js`
+(the board additionally loads `automations`, `hr-roles`, `hr-sla` before `board.js`)
 Later files depend on earlier globals (`API`, `UI`, `Auth`, `Inbox`).
 
 ## 3. Database schema (Supabase / Postgres)
@@ -61,8 +65,8 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `projects` | One per client/workstream | `statuses jsonb` (the Kanban columns, ordered), `type` (`internal`\|`client`), `tags jsonb` (array of tag *names*), `color`, `archived`, `parent_project_id` FK (sql/08 — set = this is a **sub-client** project, one level deep), `inherit_statuses` (sql/12 — sub-client live-inherits the parent's columns, see §7) |
-| `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`\|`api`), `external_id`, `fields jsonb` (sql/11 — structured per-task data, more keys later WITHOUT migrations: `email` feeds automations, `client` is the task-level client tag — see §7), auto `updated_at` trigger |
+| `projects` | One per client/workstream | `statuses jsonb` (the Kanban columns, ordered), `type` (`internal`\|`client`), `tags jsonb` (array of tag *names*), `color`, `archived`, `parent_project_id` FK (sql/08 — set = this is a **sub-client** project, one level deep), `inherit_statuses` (sql/12 — sub-client live-inherits the parent's columns, see §7), `hidden_statuses`/`hidden_ops_statuses` (sql/14 — columns an **admin** folded away for the whole project, by name; see §10) |
+| `tasks` | The work items | `project_id` FK, `status` (must match a project status — enforced client-side only), `assignee_id` FK, `due_date`, `source` (`manual`\|`zapier`\|`api`), `external_id`, `fields jsonb` (sql/11 — structured per-task data, more keys later WITHOUT migrations: `email` feeds automations, `client` is the task-level client tag — see §7), `status_changed_at` (sql/13 — trigger-maintained; the HR **Stage Date**, see §11), `last_actor_id` (sql/14 — stamped by `api.js` on every write so the changelog trigger knows who acted, see §12), auto `updated_at` trigger |
 | `team_members` | Every user (internal and external) | `role` = free-text job title; `user_role` = permission level (`admin`\|`member`\|`external`); `login_code` unique = what they type at the gate; `active` |
 | `project_members` | Which projects an **external** user can see | composite PK (`project_id`,`member_id`), both cascade on delete |
 | `notifications` | Inbox rows | `member_id` recipient, `kind` (see §6), `actor_id`, `task_id`/`project_id` (cascade — deleting a task cleans its notifications), `message`, `read`, `data jsonb` for future payloads |
@@ -70,6 +74,8 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 | `webhooks` | Zapier fan-out targets | `url`, `project_id` (NULL = all projects), `events jsonb`, `active` |
 | `automations` | Per-project rules (sql/09) | `project_id` FK (rules NEVER cross projects), `trigger_type`, `conditions jsonb`, `action_type`, `action_config jsonb`, `active` |
 | `api_keys` | Native inbound API keys (sql/10) | `project_id` FK (a key writes to ONE project), `key` unique (`vyom_…`, DB-generated), `label`, `active`, `last_used_at` |
+| `hr_roles` / `hr_sla_rules` | HR roles summary card + SLA deadlines (sql/13) | both `project_id` FK, cascade on project delete |
+| `task_changelog` | Every task change, one row per changed FIELD (sql/14) | `task_id` (**ON DELETE SET NULL** — history outlives the task), `task_title`/`actor_name` snapshots, `actor_id`, `action` (`created`\|`updated`\|`deleted`), `field`, `old_value`, `new_value`. **Written only by a trigger**; INSERT/UPDATE/DELETE/TRUNCATE are revoked from `anon` — see §12 |
 
 Also: `task_details` **view** (sql/04) joins human-readable names — used by webhook
 payloads. `notify_task_webhooks()` **trigger** (sql/05) fires on task INSERT/UPDATE/DELETE
@@ -79,7 +85,9 @@ Triggers/RPCs added later: `run_task_automations()` (sql/09) fires AFTER INSERT/
 tasks and executes matching `automations` rows — webhook POST via `pg_net`, task moves,
 assignment, or inbox notifications (kind `automation`); every action is exception-wrapped so
 a bad rule never blocks a save, and `pg_trigger_depth() > 2` stops rule chains from looping.
-`send_test_automation()` mirrors `send_test_webhook()`. `ingest_task()` (sql/10, RPC,
+`send_test_automation()` mirrors `send_test_webhook()`. `log_task_changes()` (sql/14) fires AFTER INSERT/UPDATE/DELETE on tasks and writes the
+change log; `delete_task_logged()` (sql/14, RPC) is how the frontend deletes a task, so the
+log can record *who* deleted it. `ingest_task()` (sql/10, RPC,
 recreated in sql/11 and sql/12) is the native inbound API: validates an `api_keys` row,
 resolves the **effective** status list (the parent's for inheriting sub-clients), defaults
 an unknown status to its first column, inserts the task with `source: "api"`.
@@ -117,7 +125,7 @@ an unknown status to its first column, inserts the task with `source: "api"`.
 4. **Cache busting**: every CSS/JS reference carries `?v=N`. **Bump N in all five
    HTML files on every release** — GitHub Pages caches ~10 min and users will
    otherwise run mixed old/new code (this caused "API.x is not a function" bugs).
-   Current version: `v=16`.
+   Current version: `v=18`.
 5. **Escape everything**: any user data inserted via innerHTML goes through
    `UI.esc()`. No exceptions.
 6. **Optimistic, in-place updates in async handlers** — the hard-won rule:
@@ -238,9 +246,81 @@ adding tests.** Highlights:
 - Drive the custom dropdowns via their `.dd-btn`/`.dd-item` elements (native selects
   are hidden). Assert outcomes in the DB via `sbFetch` inside the page.
 - Keep the suite green: every new feature ships with tests (see `test/README.md`
-  for the current expected pass count).
+  for the current expected pass count — **73** as of v18).
 
-## 10. Roadmap notes for the next builder
+## 10. Hideable status columns (v18)
+
+A board can be tidied without touching any data. `renderBoard()` simply skips a
+hidden status; **nothing is moved, archived or deleted**.
+
+- **Two layers, decided by role.** An **admin** toggling a column writes
+  `projects.hidden_statuses` (or `hidden_ops_statuses` for the Ops tab) — a shared
+  decision, so everyone's board matches. **Everyone else** writes
+  `localStorage["vyom_hidden_cols_<projectId>"]` (`{hiring:[…],ops:[…]}`) — their own
+  view only. What a user doesn't see is the **union** of the two, and a non-admin
+  cannot unhide an admin's column (that row renders disabled, labelled
+  "hidden for everyone").
+- **Names, not indexes** — status lists are reorderable. The cost is that a rename
+  or removal would leave a stale entry that later hides the wrong column, so
+  `dashboard.js` **prunes both arrays on every project save** against the new
+  status list. Keep that pruning if you touch the project form.
+- **Invariants worth preserving**: the last visible column can't be hidden (an empty
+  board reads as broken); the `#hidden-cols-pill` always states how many columns and
+  how many tasks are parked out of view; hidden statuses stay **selectable** in the
+  task modal (marked "(hidden)") with a toast when you file a card into one; and
+  `(removed)` orphan columns are never hideable.
+
+## 11. The HR Stage Date (v18)
+
+HR candidate cards have **no due date**. A hiring pipeline doesn't have deadlines
+per card — what matters is *how long has this candidate sat here* — so the field is
+replaced by a read-only **Stage Date**: `tasks.status_changed_at`, maintained by the
+sql/13 trigger, falling back to `created_at`.
+
+- **Never editable by hand.** It is a measurement, not a plan. It's set when the card
+  is created and rewritten on every status change, including moves made by drag-drop,
+  automations, Zapier and the API. Its full history is in the change log (§12).
+- Gated by the per-project `features.auto_date` flag (labelled "Stage Date instead of
+  due dates" in the project modal) via `UI.stageDateMode(project, task)`. **Ops-tab
+  cards are excluded** — that's ordinary internal work and keeps real deadlines.
+- Consequences to respect: the pill is styled deliberately *unlike* `.due` and must
+  **never** turn red — "overdue" is meaningless here. The board's due-date filter
+  hides itself (and resets to "All dates") in Stage Date mode. Saving a stage-date
+  card writes `due_date: null`, so switching a project to Stage Date clears due dates
+  as cards are saved — the change log records each one. Sorting flips to
+  oldest-in-stage first, which matches what the SLA flags are for. My Tasks still
+  groups by due date, so stage-dated cards land under "No due date".
+
+## 12. The change log (v18)
+
+`task_changelog` records **every** change to **every** task in **every** project —
+one row per changed field, so "Depesh moved R1 Selected → R2 Rejected" is one row.
+
+- **Written by a Postgres trigger, not by the client.** That's the whole design: work
+  arriving from Zapier, the Vyom API or an automation rule is logged identically to a
+  click, and no page can forget to log. Bookkeeping columns (`updated_at`,
+  `status_changed_at`, `last_actor_id`) are not tracked, so stamping the actor alone
+  never writes a row. `fields` jsonb is diffed **per key**, so future keys are logged
+  with no migration.
+- **Attribution without a server**: `api.js` merges `last_actor_id` into every task
+  INSERT/PATCH (same request — no extra round trip, no phantom webhook fires). Deletes
+  can't work that way (the row is gone before the trigger reads it), so
+  `API.deleteTask()` calls the `delete_task_logged` RPC, which puts the actor in a
+  transaction-local setting first. When `pg_trigger_depth() > 1` the change came from
+  an automation, so the actor is recorded as "Automation" rather than the last human
+  to touch the card; `source` supplies "Vyom API" / "Zapier".
+- **History outlives its task**: `task_id` is `ON DELETE SET NULL` and `task_title` is
+  a snapshot, so a deleted task's trail survives (deleting a *project* does cascade).
+- **Append-only from a browser**: INSERT/UPDATE/DELETE/TRUNCATE are revoked from
+  `anon`, so the publishable key can read history but never rewrite it. The trigger is
+  `SECURITY DEFINER`, so it is unaffected. **Don't "fix" a permission error by granting
+  these back** — that would make the audit trail forgeable.
+- **To add a field to the log**: nothing, if it lives in `fields` jsonb. For a new
+  column, add one `IF NEW.x IS DISTINCT FROM OLD.x` block to `log_task_changes()` and a
+  label to `FIELD_LABELS` in `changelog.js`. Unknown fields already render with a
+  prettified key, so old clients never break.
+
+## 13. Roadmap notes for the next builder
 
 Deliberately not built yet, in rough priority order — the schema anticipates them:
 
@@ -250,11 +330,14 @@ Deliberately not built yet, in rough priority order — the schema anticipates t
    what's missing is invite-flow niceties (e.g. emailing the login link).
 3. **New notification kinds**: comments, due-date reminders (`kind` + `data jsonb`
    are ready; reminders would need a scheduled function — Supabase cron/pg_cron).
+   A "stuck in stage too long" reminder is now cheap — `status_changed_at` is the
+   input the SLA rules already use.
 4. **Comments on tasks**: new `task_comments` table; reuse the mention parser and
    `notify()`; add a `comment` kind.
 5. **Attachments**: Supabase Storage bucket; store paths on tasks.
 6. **Mobile layout**: CSS is desktop-first (≥1024px); the board needs a rethink.
-7. Sub-tasks, reporting, time tracking — nothing blocks them.
+7. Sub-tasks, reporting, time tracking — nothing blocks them. `task_changelog` is
+   the natural source for cycle-time reporting (time per stage per candidate).
 
 When you ship: bump `?v=N` everywhere (§5.4), add a numbered `sql/NN_*.sql` for any
 schema change (idempotent, run it yourself, commit the file), extend the E2E suite,

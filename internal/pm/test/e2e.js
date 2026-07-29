@@ -1,9 +1,10 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 58 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// 73 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
 // @mentions, roles/external scoping, tags, webhooks, client tags, status reorder +
-// transition mapping, sub-client status inheritance, cleanup.
+// transition mapping, sub-client status inheritance, hideable status columns,
+// the HR Stage Date, the task change log, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
 // the end; count assertions are scoped to the test project so live data is
 // never touched or asserted against.
@@ -179,7 +180,7 @@ async function expectToast(substr) {
 
   // ---------- Pre-clean any leftovers from previous runs ----------
   await page.waitForLoadState("networkidle");
-  const leftovers = await rest(`projects?name=in.("${PROJECT_NAME}","E2E Scope Other","E2E Sub Client")&select=id`);
+  const leftovers = await rest(`projects?name=in.("${PROJECT_NAME}","E2E Scope Other","E2E Sub Client","E2E HR Project")&select=id`);
   for (const p of leftovers) await rest(`projects?id=eq.${p.id}`, { method: "DELETE" });
   const leftoverMembers = await rest(`team_members?name=in.("E2E Temp","E2E External")&select=id`);
   for (const m of leftoverMembers) await rest(`team_members?id=eq.${m.id}`, { method: "DELETE" });
@@ -1088,6 +1089,268 @@ async function expectToast(substr) {
     await rest(`projects?id=eq.${subId}`, { method: "DELETE" });
     if ((await rest("api_keys?label=eq.E2E%20Key&select=id")).length)
       throw new Error("api key did not cascade");
+  });
+
+  // ---------- Hidden status columns (sql/14) ----------
+  // Admin hides for the whole project; everyone else hides only for themselves.
+  const colTitles = () =>
+    page.$$eval(".kanban-col .col-title", (els) => els.map((e) => e.textContent.trim()));
+
+  await step("Columns: admin hiding a column removes it and reports it in the pill", async () => {
+    await become("depesh");
+    await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    const statuses = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0].statuses;
+    const target = statuses[1];
+    await page.click("#columns-btn");
+    await page.locator("#columns-modal.open").waitFor({ timeout: 5000 });
+    if (!/for everyone/i.test(await page.textContent("#cols-scope-note")))
+      throw new Error("admin should be told the change is project-wide");
+    await page.click(`#cols-list input[data-col-status="${target}"]`);
+    await page.click("#cols-close");
+    if ((await colTitles()).includes(target)) throw new Error(`${target} still rendered`);
+    const pill = page.locator("#hidden-cols-pill");
+    await pill.waitFor({ state: "visible", timeout: 5000 });
+    if (!/1 column hidden/.test(await pill.textContent()))
+      throw new Error(`pill text = ${await pill.textContent()}`);
+    const row = (await rest(`projects?id=eq.${projectId}&select=hidden_statuses`))[0];
+    if (JSON.stringify(row.hidden_statuses) !== JSON.stringify([target]))
+      throw new Error(`hidden_statuses = ${JSON.stringify(row.hidden_statuses)}`);
+  });
+
+  await step("Columns: hidden column survives reload and stays selectable on a card", async () => {
+    const target = (await rest(`projects?id=eq.${projectId}&select=hidden_statuses`))[0].hidden_statuses[0];
+    await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    if ((await colTitles()).includes(target)) throw new Error("hidden column came back");
+    await page.locator(".kanban-col .add-task-btn").first().click();
+    await page.locator("#task-modal.open").waitFor({ timeout: 5000 });
+    const opts = await page.$$eval("#t-status option", (els) => els.map((e) => e.textContent));
+    if (!opts.some((o) => o === `${target} (hidden)`))
+      throw new Error(`hidden status not offered: ${opts.join(", ")}`);
+    await page.click("#task-cancel");
+  });
+
+  await step("Columns: the last visible column refuses to hide", async () => {
+    const statuses = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0].statuses;
+    await page.click("#columns-btn");
+    await page.locator("#columns-modal.open").waitFor({ timeout: 5000 });
+    // Hide everything except the final column, then try to hide that too
+    for (const s of statuses.slice(0, -1)) {
+      const cb = page.locator(`#cols-list input[data-col-status="${s}"]`);
+      if (await cb.isChecked()) {
+        await cb.click();
+        await page.waitForTimeout(220);
+      }
+    }
+    const last = statuses[statuses.length - 1];
+    await page.click(`#cols-list input[data-col-status="${last}"]`);
+    await page.waitForTimeout(250);
+    if (!(await page.locator(`#cols-list input[data-col-status="${last}"]`).isChecked()))
+      throw new Error("the last visible column was allowed to be hidden");
+    await expectToast("At least one column");
+    if (!(await colTitles()).includes(last)) throw new Error("board lost its last column");
+  });
+
+  await step("Columns: Show all restores every column and clears the project's set", async () => {
+    await page.click("#cols-show-all");
+    await page.waitForTimeout(500);
+    await page.click("#cols-close");
+    const statuses = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0].statuses;
+    const titles = await colTitles();
+    for (const s of statuses) if (!titles.includes(s)) throw new Error(`${s} missing: ${titles}`);
+    if (!(await page.locator("#hidden-cols-pill").isHidden())) throw new Error("pill still visible");
+    const row = (await rest(`projects?id=eq.${projectId}&select=hidden_statuses`))[0];
+    if (JSON.stringify(row.hidden_statuses) !== "[]") throw new Error("project set not cleared");
+  });
+
+  await step("Columns: a non-admin's hide is local and never touches the project", async () => {
+    await become("sahil"); // member
+    await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    const target = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0].statuses[1];
+    await page.click("#columns-btn");
+    await page.locator("#columns-modal.open").waitFor({ timeout: 5000 });
+    if (!/only you/i.test(await page.textContent("#cols-scope-note")))
+      throw new Error("member should be told the change is personal");
+    await page.click(`#cols-list input[data-col-status="${target}"]`);
+    await page.click("#cols-close");
+    if ((await colTitles()).includes(target)) throw new Error("personal hide had no effect");
+    const row = (await rest(`projects?id=eq.${projectId}&select=hidden_statuses`))[0];
+    if (JSON.stringify(row.hidden_statuses) !== "[]") throw new Error("a member wrote to the project row");
+    const stored = await page.evaluate((id) => localStorage.getItem(`vyom_hidden_cols_${id}`), projectId);
+    if (!stored || !stored.includes(target)) throw new Error(`not stored locally: ${stored}`);
+  });
+
+  await step("Columns: an admin's project-wide hide is locked for a non-admin", async () => {
+    const statuses = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0].statuses;
+    await rest(`projects?id=eq.${projectId}`, {
+      method: "PATCH",
+      body: { hidden_statuses: [statuses[2]] },
+    });
+    await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    await page.click("#columns-btn");
+    await page.locator("#columns-modal.open").waitFor({ timeout: 5000 });
+    const cb = page.locator(`#cols-list input[data-col-status="${statuses[2]}"]`);
+    if (!(await cb.isDisabled())) throw new Error("a member could unhide an admin's column");
+    if (!/hidden for everyone/i.test(await page.textContent(".cols-row.locked")))
+      throw new Error("lock note missing");
+    await page.click("#cols-close");
+    const titles = await colTitles();
+    if (titles.includes(statuses[1]) || titles.includes(statuses[2]))
+      throw new Error(`both the personal and project hides should apply: ${titles}`);
+    // Leave the board clean for the remaining checks
+    await rest(`projects?id=eq.${projectId}`, { method: "PATCH", body: { hidden_statuses: [] } });
+    await page.evaluate((id) => localStorage.removeItem(`vyom_hidden_cols_${id}`), projectId);
+    await become("depesh");
+  });
+
+  // ---------- HR Stage Date (sql/13 status_changed_at, surfaced by sql/14) ----------
+  let hrId, hrTaskId;
+  await step("HR project: candidate cards have no due date, only a Stage Date", async () => {
+    hrId = (
+      await rest("projects", {
+        method: "POST",
+        body: {
+          name: "E2E HR Project",
+          type: "hr",
+          visibility: "internal",
+          statuses: ["Applied", "Interview", "Hired"],
+          ops_statuses: ["To Do", "Done"],
+          features: { board_tabs: true, roles_card: false, sla: false, auto_date: true },
+        },
+      })
+    )[0].id;
+    await page.goto(`${BASE}/board.html?project=${hrId}`);
+    await page.locator('.kanban-col[data-status="Applied"]').waitFor({ timeout: 8000 });
+    await page.click('.kanban-col[data-status="Applied"] .add-task-btn');
+    await page.locator("#task-modal.open").waitFor({ timeout: 5000 });
+    if (!(await page.locator("#t-due-group").isHidden())) throw new Error("due-date field should be gone");
+    if (!(await page.locator("#t-stage-group").isVisible())) throw new Error("Stage Date missing");
+    await page.fill("#t-title", "E2E Candidate");
+    await page.click("#task-save");
+    await expectToast("Task created");
+    const rows = await rest(`tasks?project_id=eq.${hrId}&title=eq.E2E%20Candidate&select=*`);
+    if (rows.length !== 1) throw new Error("task not created");
+    hrTaskId = rows[0].id;
+    if (rows[0].due_date !== null) throw new Error(`due_date = ${rows[0].due_date}`);
+    if (!(await page.locator(".task-card .stage-pill").count())) throw new Error("stage pill missing");
+    if (await page.locator(".task-card .due").count())
+      throw new Error("a stage-dated card must never render a due pill");
+  });
+
+  await step("HR project: the due-date filter is hidden where there are no due dates", async () => {
+    if (!(await page.$eval("#filter-due", (el) => el.closest(".dd").hidden)))
+      throw new Error("due-date filter should be hidden in Stage Date mode");
+  });
+
+  await step("HR project: moving a card advances its Stage Date", async () => {
+    const before = (await rest(`tasks?id=eq.${hrTaskId}&select=status_changed_at`))[0].status_changed_at;
+    await dragCardToColumn(hrTaskId, "Interview");
+    await page.waitForTimeout(700);
+    const after = (await rest(`tasks?id=eq.${hrTaskId}&select=status,status_changed_at`))[0];
+    if (after.status !== "Interview") throw new Error(`status = ${after.status}`);
+    if (!(new Date(after.status_changed_at) > new Date(before)))
+      throw new Error(`stage date did not advance: ${before} -> ${after.status_changed_at}`);
+  });
+
+  await step("HR project: Ops-tab cards keep real due dates", async () => {
+    await page.click('.board-tab[data-tab="ops"]');
+    await page.locator('.kanban-col[data-status="To Do"]').waitFor({ timeout: 5000 });
+    await page.click('.kanban-col[data-status="To Do"] .add-task-btn');
+    await page.locator("#task-modal.open").waitFor({ timeout: 5000 });
+    if (!(await page.locator("#t-due-group").isVisible())) throw new Error("Ops cards need a due date");
+    if (!(await page.locator("#t-stage-group").isHidden())) throw new Error("Ops cards shouldn't show a Stage Date");
+    await page.fill("#t-title", "E2E Ops Task");
+    await page.fill("#t-due", isoDaysFromNow(5));
+    await page.click("#task-save");
+    await expectToast("Task created");
+    const row = (await rest(`tasks?project_id=eq.${hrId}&title=eq.E2E%20Ops%20Task&select=due_date,fields`))[0];
+    if (row.due_date !== isoDaysFromNow(5)) throw new Error(`ops due_date = ${row.due_date}`);
+    if (row.fields.hr_category !== "ops") throw new Error("ops card not tagged hr_category=ops");
+  });
+
+  // ---------- Change log (sql/14) ----------
+  await step("Change log: a task's History shows its creation and its moves, with the actor", async () => {
+    await page.click('.board-tab[data-tab="hiring"]');
+    await page.locator(`.task-card[data-id="${hrTaskId}"]`).click();
+    await page.locator("#task-modal.open").waitFor({ timeout: 5000 });
+    await page.click("#t-history-toggle");
+    await page.locator("#t-history .cl-entry").first().waitFor({ timeout: 8000 });
+    const text = await page.textContent("#t-history");
+    for (const want of ["Depesh", "created this task", "Applied", "Interview"]) {
+      if (!text.includes(want)) throw new Error(`history missing "${want}": ${text.slice(0, 300)}`);
+    }
+    await page.click("#task-cancel");
+  });
+
+  await step("Change log: the project History modal lists entries and filters them", async () => {
+    await page.click("#changelog-btn");
+    await page.locator("#changelog-modal.open").waitFor({ timeout: 5000 });
+    await page.locator("#changelog-list .cl-entry").first().waitFor({ timeout: 8000 });
+    if ((await page.locator("#changelog-list .cl-entry").count()) < 3)
+      throw new Error("expected several entries");
+    if (!(await page.locator(".cl-day").count())) throw new Error("day headings missing");
+    await page.check("#cl-status-only");
+    await page.waitForTimeout(250);
+    // Creations and deletions are logged against field='status' on purpose —
+    // they bookend a card's stage timeline — so the filter keeps them.
+    const fields = await page.$$eval("#changelog-list .cl-entry", (els) =>
+      els.map((e) => e.dataset.field));
+    if (!fields.length || !fields.every((f) => f === "status"))
+      throw new Error(`status-only filter leaked other fields: ${fields.join(",")}`);
+    await page.fill("#cl-search", "zzz-no-such-task");
+    await page.waitForTimeout(250);
+    if (!/Nothing matches/i.test(await page.textContent("#changelog-list")))
+      throw new Error("search filter did not narrow");
+    await page.click("#changelog-close");
+  });
+
+  await step("Change log: deleting a task keeps its history, attributed to the deleter", async () => {
+    // Don't inherit an open modal from a previous step's failure
+    await page.keyboard.press("Escape");
+    await page.locator("#changelog-modal").waitFor({ state: "hidden", timeout: 5000 });
+    await page.locator(`.task-card[data-id="${hrTaskId}"]`).click();
+    await page.locator("#task-modal.open").waitFor({ timeout: 5000 });
+    await page.click("#task-delete");
+    await page.click("#task-delete");
+    await expectToast("Task deleted");
+    const del = await rest(`task_changelog?project_id=eq.${hrId}&action=eq.deleted&select=*`);
+    if (del.length !== 1) throw new Error(`expected 1 delete entry, got ${del.length}`);
+    if (del[0].actor_name !== "Depesh") throw new Error(`delete actor = ${del[0].actor_name}`);
+    if (del[0].task_title !== "E2E Candidate") throw new Error("deleted task title not kept");
+    if (del[0].task_id !== null) throw new Error("task_id should be nulled once the task is gone");
+    const kept = await rest(`task_changelog?project_id=eq.${hrId}&select=id`);
+    if (kept.length < 3) throw new Error("earlier history was wiped with the task");
+  });
+
+  await step("Change log: the browser cannot rewrite history (append-only grants)", async () => {
+    const codes = await page.evaluate(async () => {
+      const out = {};
+      const attempt = async (method, path, body) => {
+        try {
+          await sbFetch(path, { method, body });
+          return "ALLOWED";
+        } catch (e) {
+          return e.message;
+        }
+      };
+      out.PATCH = await attempt("PATCH", "task_changelog?field=eq.status", { new_value: "tampered" });
+      out.DELETE = await attempt("DELETE", "task_changelog?field=eq.status");
+      out.POST = await attempt("POST", "task_changelog", { action: "forged", task_title: "E2E forged" });
+      return out;
+    });
+    for (const [method, msg] of Object.entries(codes)) {
+      if (msg === "ALLOWED") throw new Error(`${method} on task_changelog was allowed`);
+      if (!/permission denied/i.test(msg)) throw new Error(`${method} failed oddly: ${msg}`);
+    }
+  });
+
+  await step("Cleanup: delete the HR project (cascades tasks and its change log)", async () => {
+    await rest(`projects?id=eq.${hrId}`, { method: "DELETE" });
+    if ((await rest(`task_changelog?project_id=eq.${hrId}&select=id`)).length)
+      throw new Error("change log did not cascade with the project");
   });
 
   // ---------- cleanup ----------
