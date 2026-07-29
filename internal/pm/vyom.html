@@ -15,12 +15,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=17">
+  <link rel="stylesheet" href="css/style.css?v=18">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
   <div id="setup-needed" class="warn-box" style="margin:16px 32px" hidden>
-    Database not set up yet — run the numbered files in <code>pm/sql/</code> (01→12, in order) in the Supabase SQL Editor, then reload.
+    Database not set up yet — run the numbered files in <code>pm/sql/</code> (01→14, in order) in the Supabase SQL Editor, then reload.
   </div>
 
   <nav class="topnav">
@@ -86,9 +86,14 @@
             <label class="toggle-label"><input type="checkbox" id="f-board-tabs" checked> Board tabs (Hiring + Ops)</label>
             <label class="toggle-label"><input type="checkbox" id="f-roles-card" checked> Roles summary card</label>
             <label class="toggle-label"><input type="checkbox" id="f-sla" checked> SLA tracking</label>
-            <label class="toggle-label"><input type="checkbox" id="f-auto-date" checked> Auto-date on candidate creation</label>
+            <label class="toggle-label"><input type="checkbox" id="f-auto-date" checked> Stage Date instead of due dates</label>
           </div>
-          <div class="form-hint">These default to ON for HR projects. Normal projects can enable them individually.</div>
+          <div class="form-hint">
+            These default to ON for HR projects. Normal projects can enable them individually.
+            <strong>Stage Date</strong> replaces the due-date field on candidate cards with the date the card
+            entered its current status — set automatically on creation and on every move, never edited by hand.
+            Ops-tab cards keep normal due dates.
+          </div>
         </div>
         <div class="form-group" id="p-parent-group">
           <label for="p-parent">Parent project (sub-client)</label>
@@ -150,12 +155,12 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=17"></script>
-  <script src="js/supabase.js?v=17"></script>
-  <script src="js/api.js?v=17"></script>
-  <script src="js/ui.js?v=17"></script>
-  <script src="js/auth.js?v=17"></script>
-  <script src="js/inbox.js?v=17"></script>
-  <script src="js/dashboard.js?v=17"></script>
+  <script src="js/config.js?v=18"></script>
+  <script src="js/supabase.js?v=18"></script>
+  <script src="js/api.js?v=18"></script>
+  <script src="js/ui.js?v=18"></script>
+  <script src="js/auth.js?v=18"></script>
+  <script src="js/inbox.js?v=18"></script>
+  <script src="js/dashboard.js?v=18"></script>
 </body>
 </html>

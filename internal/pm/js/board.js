@@ -7,6 +7,12 @@
 // @MENTIONS: initMentionPicker() = the @ autocomplete in the notes field;
 // notifyForTask() diffs mentions against previous notes and fires inbox
 // notifications (mention + task_assigned) — fire-and-forget, never blocks a save.
+// HIDDEN COLUMNS: an admin folds a column away for the whole project
+// (projects.hidden_statuses); everyone else folds it away just for themselves
+// (localStorage). Both are view state — no task is ever moved or deleted, and
+// the "N columns hidden" pill keeps that honest. See §10 of the handbook.
+// STAGE DATE: HR cards have no due date. They show tasks.status_changed_at —
+// the moment the card entered the stage it's in — which is read-only by design.
 
 (() => {
   if (!Auth.requireLogin()) return;
@@ -26,6 +32,10 @@
   let deleteArmed = false;
   const filters = { assignee: "", client: "", due: "all", from: "", to: "" };
   let activeTab = "hiring"; // "hiring" | "ops" (only matters for HR projects with board_tabs)
+  // Personal hidden columns: {hiring: [...], ops: [...]} of status NAMES, per
+  // project, per browser. Names not indexes — status lists get reordered.
+  const HIDE_KEY = `vyom_hidden_cols_${projectId}`;
+  let myHidden = loadMyHidden();
 
   if (!projectId) {
     window.location.replace("vyom.html");
@@ -93,6 +103,8 @@
           .catch(() => {});
       }
       if (typeof Automations !== "undefined") Automations.init(project, members);
+      if (typeof Changelog !== "undefined") Changelog.initBoard(project);
+      initColumnsControl();
       // HR features
       if (hasFeature("board_tabs")) initBoardTabs();
       if (hasFeature("roles_card") && typeof HrRoles !== "undefined") HrRoles.init(project);
@@ -110,11 +122,59 @@
 
   // ---- HR feature helpers ----
   function hasFeature(key) {
-    if (!project) return false;
-    const feat = project.features;
-    if (feat && typeof feat === "object" && key in feat) return !!feat[key];
-    return project.type === "hr";
+    return UI.hasFeature(project, key);
   }
+
+  // ---- Stage Date (HR): the read-only replacement for a due date ----
+  // For an existing card the mode follows the card itself (Ops-tab work keeps
+  // real due dates); for a card being created it follows the tab we're on.
+  function stageMode(task) {
+    return UI.stageDateMode(
+      project,
+      task || { fields: { hr_category: activeTab === "ops" ? "ops" : "candidate" } }
+    );
+  }
+
+  // ---- Hidden status columns ----
+  function loadMyHidden() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(HIDE_KEY));
+      return {
+        hiring: Array.isArray(raw?.hiring) ? raw.hiring : [],
+        ops: Array.isArray(raw?.ops) ? raw.ops : [],
+      };
+    } catch (_) {
+      return { hiring: [], ops: [] };
+    }
+  }
+
+  function saveMyHidden() {
+    try {
+      localStorage.setItem(HIDE_KEY, JSON.stringify(myHidden));
+    } catch (_) { /* private mode / quota — the board still works, just unsaved */ }
+  }
+
+  const tabKey = () => (hasFeature("board_tabs") && activeTab === "ops" ? "ops" : "hiring");
+
+  // Set by an admin, applies to everyone. The column may not exist yet on
+  // pre-migration rows, hence the array guards.
+  function projectHidden() {
+    const raw = tabKey() === "ops" ? project?.hidden_ops_statuses : project?.hidden_statuses;
+    return Array.isArray(raw) ? raw : [];
+  }
+
+  const myHiddenList = () => myHidden[tabKey()] || [];
+
+  // What the current user doesn't see: the project's hidden set plus their own.
+  function hiddenStatuses() {
+    return [...new Set([...projectHidden(), ...myHiddenList()])];
+  }
+
+  const isHidden = (status) => hiddenStatuses().includes(status);
+
+  // Has the 14 migration been applied? Until it has, only personal hiding
+  // works — same graceful degradation as the sub-client/inherit guards.
+  const hiddenColExists = () => !!project && "hidden_statuses" in project;
 
   function activeStatuses() {
     if (hasFeature("board_tabs") && activeTab === "ops") {
@@ -150,11 +210,126 @@
     });
   }
 
+  // ---- Columns modal (show / hide status columns) ----
+  // Admins change the project's own hidden set, so the whole team sees the
+  // same tidied board. Everyone else changes their personal set. That split is
+  // the whole design: one shared decision, plus a private one on top of it.
+  function adminScope() {
+    return Auth.isAdmin() && hiddenColExists();
+  }
+
+  function initColumnsControl() {
+    document.getElementById("columns-btn").addEventListener("click", openColumnsModal);
+    document.getElementById("cols-close").addEventListener("click", () => UI.closeModal("columns-modal"));
+    document.getElementById("hidden-cols-pill").addEventListener("click", openColumnsModal);
+    document.getElementById("cols-show-all").addEventListener("click", async () => {
+      myHidden[tabKey()] = [];
+      saveMyHidden();
+      if (adminScope() && projectHidden().length) {
+        await setProjectHidden([]);
+      }
+      renderColumnsList();
+      renderBoard();
+    });
+  }
+
+  // Persist the project-level set (admins only). Optimistic like every other
+  // write here: update in place, revert on failure.
+  async function setProjectHidden(list) {
+    const key = tabKey() === "ops" ? "hidden_ops_statuses" : "hidden_statuses";
+    const prev = projectHidden();
+    project[key] = list;
+    renderBoard();
+    try {
+      await API.updateProject(project.id, { [key]: list });
+    } catch (e) {
+      project[key] = prev;
+      renderColumnsList();
+      renderBoard();
+      UI.toast(`Could not save hidden columns: ${e.message}`);
+    }
+  }
+
+  function openColumnsModal() {
+    document.getElementById("cols-scope-note").innerHTML = adminScope()
+      ? "You're an admin, so hiding a column here hides it <strong>for everyone</strong> on this project."
+      : hiddenColExists()
+        ? "Hiding a column here affects <strong>only you</strong>, in this browser. Columns an admin has hidden for the whole project are marked below."
+        : "Hiding a column here affects <strong>only you</strong>, in this browser. (Project-wide hiding needs the 14_hidden_statuses_changelog.sql migration.)";
+    renderColumnsList();
+    UI.openModal("columns-modal");
+  }
+
+  function renderColumnsList() {
+    const host = document.getElementById("cols-list");
+    const tabTasks = tasks.filter(taskMatchesTab);
+    const statuses = activeStatuses();
+    const byAdmin = projectHidden();
+    host.innerHTML = statuses
+      .map((s) => {
+        const n = tabTasks.filter((t) => t.status === s).length;
+        // A non-admin can't undo an admin's decision — the row explains why
+        // rather than silently doing nothing when clicked.
+        const locked = !adminScope() && byAdmin.includes(s);
+        const visible = !isHidden(s);
+        return `
+          <label class="cols-row${locked ? " locked" : ""}">
+            <input type="checkbox" data-col-status="${UI.esc(s)}" ${visible ? "checked" : ""} ${locked ? "disabled" : ""}>
+            <span class="cols-name">${UI.esc(s)}</span>
+            <span class="cols-count">${n} task${n === 1 ? "" : "s"}</span>
+            ${locked ? '<span class="cols-note">hidden for everyone</span>' : ""}
+          </label>`;
+      })
+      .join("");
+
+    host.querySelectorAll("[data-col-status]").forEach((cb) => {
+      cb.addEventListener("change", () => onColumnToggle(cb));
+    });
+  }
+
+  async function onColumnToggle(cb) {
+    const status = cb.dataset.colStatus;
+    const hide = !cb.checked;
+    // Never let the board become empty — an all-hidden board looks broken.
+    if (hide && activeStatuses().filter((s) => !isHidden(s)).length <= 1) {
+      cb.checked = true;
+      UI.toast("At least one column has to stay visible.");
+      return;
+    }
+    if (adminScope()) {
+      const next = hide
+        ? [...projectHidden(), status]
+        : projectHidden().filter((s) => s !== status);
+      await setProjectHidden(next);
+      // An admin unhiding a column shouldn't have it stay hidden by their own
+      // older personal setting.
+      if (!hide) {
+        myHidden[tabKey()] = myHiddenList().filter((s) => s !== status);
+        saveMyHidden();
+      }
+    } else {
+      myHidden[tabKey()] = hide
+        ? [...myHiddenList(), status]
+        : myHiddenList().filter((s) => s !== status);
+      saveMyHidden();
+    }
+    renderColumnsList();
+    renderBoard();
+  }
+
   function memberName(id) {
     return members.find((m) => m.id === id)?.name || null;
   }
 
   function sortTasks(list) {
+    // Stage-date columns sort oldest-first: the card that has sat in this
+    // stage longest is the one that needs attention, which is exactly what
+    // the SLA flags are about.
+    if (stageMode(list[0])) {
+      return [...list].sort((a, b) =>
+        String(UI.stageDateTs(a)) < String(UI.stageDateTs(b)) ? -1 : 1
+      );
+    }
     // Due date ascending (overdue naturally first), tasks without a due
     // date last, ties broken by creation time. (PRD F-04)
     return [...list].sort((a, b) => {
@@ -254,6 +429,15 @@
   }
 
   function renderBoard() {
+    // Switching to a stage-date tab retires any due-date filter rather than
+    // leaving it silently narrowing a board that no longer shows due dates.
+    if (stageMode() && filters.due !== "all") {
+      filters.due = "all";
+      const dueSel = document.getElementById("filter-due");
+      dueSel.value = "all";
+      UI.syncSelect(dueSel);
+      document.getElementById("range-inputs").hidden = true;
+    }
     const tabTasks = tasks.filter(taskMatchesTab);
     const shown = tabTasks.filter((t) => {
       if (filters.assignee === "none" && t.assignee_id) return false;
@@ -264,15 +448,31 @@
     });
 
     const statuses = activeStatuses();
+    const hidden = hiddenStatuses();
     // Statuses no longer in the active list but still on tasks get their
-    // own dimmed column so no task ever silently disappears.
+    // own dimmed column so no task ever silently disappears. Orphans are
+    // never hideable — they're already the exception that needs looking at.
     const orphanStatuses = [...new Set(tabTasks.map((t) => t.status))].filter(
       (s) => !statuses.includes(s)
     );
 
     boardEl.innerHTML = "";
-    for (const status of statuses) renderColumn(status, false, shown);
+    for (const status of statuses) {
+      if (hidden.includes(status)) continue;
+      renderColumn(status, false, shown);
+    }
     for (const status of orphanStatuses) renderColumn(status, true, shown);
+
+    // Hidden columns are a view choice, so say so out loud and make it one
+    // click to get them back. The count of parked tasks is part of the point.
+    const hiddenHere = statuses.filter((s) => hidden.includes(s));
+    const pill = document.getElementById("hidden-cols-pill");
+    const parked = tabTasks.filter((t) => hiddenHere.includes(t.status)).length;
+    pill.hidden = hiddenHere.length === 0;
+    pill.textContent =
+      `${hiddenHere.length} column${hiddenHere.length === 1 ? "" : "s"} hidden` +
+      (parked ? ` · ${parked} task${parked === 1 ? "" : "s"}` : "");
+    pill.title = `Hidden: ${hiddenHere.join(", ")} — click to manage`;
 
     const clearBtn = document.getElementById("filter-clear");
     const countEl = document.getElementById("filter-count");
@@ -285,6 +485,10 @@
     UI.syncSelect(document.getElementById("filter-assignee"));
     UI.syncSelect(document.getElementById("filter-client"));
     UI.syncSelect(document.getElementById("filter-due"));
+    // A due-date filter is meaningless where cards have no due date — the
+    // Stage Date isn't a deadline and must never read as "overdue".
+    const dueWrap = document.getElementById("filter-due").closest(".dd");
+    if (dueWrap) dueWrap.hidden = stageMode();
   }
 
   function renderColumn(status, isRemoved, shown) {
@@ -334,6 +538,16 @@
       ? assignee.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()
       : "?";
     const overdue = UI.isOverdue(task.due_date);
+    const stage = stageMode(task);
+    const stageIso = stage ? UI.stageDateIso(task) : null;
+    // Stage date pill: a measurement, never a deadline, so it never turns red.
+    const dateChip = stage
+      ? stageIso
+        ? `<span class="stage-pill" title="In this stage since ${UI.esc(UI.fmtDateTime(UI.stageDateTs(task)))}">${UI.stageIcon}${UI.esc(UI.fmtDate(stageIso))}</span>`
+        : ""
+      : task.due_date
+        ? `<span class="due ${overdue ? "overdue" : ""}">${UI.fmtDate(task.due_date)}</span>`
+        : "";
     const notesInd = task.notes
       ? '<span class="notes-ind" title="Has notes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>'
       : "";
@@ -345,7 +559,7 @@
           <span class="avatar ${assignee ? "" : "unassigned"}"${assignee ? ` style="background:${UI.avatarColor(assignee)}"` : ""}>${UI.esc(initials)}</span>
           <span class="name">${UI.esc(assignee || "Unassigned")}</span>
         </span>
-        ${task.due_date ? `<span class="due ${overdue ? "overdue" : ""}">${UI.fmtDate(task.due_date)}</span>` : ""}
+        ${dateChip}
       </div>`;
 
     if (hasFeature("sla") && isHiringTab() && typeof HrSla !== "undefined") {
@@ -374,11 +588,21 @@
     }
     const oldStatus = task.status;
     task.status = newStatus; // optimistic
+    // The Stage Date IS the move date, so show it immediately rather than
+    // leaving yesterday's date on a card that just moved.
+    const oldStageTs = task.status_changed_at;
+    task.status_changed_at = new Date().toISOString();
     renderBoard();
     try {
-      await API.updateTask(taskId, { status: newStatus });
+      const updated = await API.updateTask(taskId, { status: newStatus });
+      // Take the server's timestamp, but only if the user hasn't moved this
+      // card again in the meantime (handbook §5.6).
+      if (updated && task.status === newStatus) {
+        task.status_changed_at = updated.status_changed_at;
+      }
     } catch (e) {
       task.status = oldStatus; // revert
+      task.status_changed_at = oldStageTs;
       renderBoard();
       UI.toast(`Could not move task: ${e.message}`);
     }
@@ -503,8 +727,14 @@
   // ---- Task modal ----
   function fillSelects(selectedStatus, selectedAssignee) {
     const statusSel = document.getElementById("t-status");
+    // Hidden columns stay selectable — hiding a column must never stop you
+    // from filing a card in it — but they're labelled so the card doesn't
+    // seem to vanish afterwards.
     statusSel.innerHTML = activeStatuses()
-      .map((s) => `<option value="${UI.esc(s)}" ${s === selectedStatus ? "selected" : ""}>${UI.esc(s)}</option>`)
+      .map(
+        (s) =>
+          `<option value="${UI.esc(s)}" ${s === selectedStatus ? "selected" : ""}>${UI.esc(s)}${isHidden(s) ? " (hidden)" : ""}</option>`
+      )
       .join("");
 
     const assigneeSel = document.getElementById("t-assignee");
@@ -536,9 +766,34 @@
       .map((n) => `<option value="${UI.esc(n)}"></option>`)
       .join("");
     document.getElementById("t-email").value = task ? task.fields?.email || "" : "";
-    const autoDate = !task && hasFeature("auto_date") && isHiringTab();
-    document.getElementById("t-due").value = task ? task.due_date || "" : autoDate ? new Date().toISOString().slice(0, 10) : "";
+
+    // Due date vs Stage Date: exactly one of the two groups is ever shown.
+    const stage = stageMode(task);
+    document.getElementById("t-due-group").hidden = stage;
+    document.getElementById("t-stage-group").hidden = !stage;
+    document.getElementById("t-due").value = task ? task.due_date || "" : "";
+    if (stage) {
+      const ts = task ? UI.stageDateTs(task) : null;
+      document.getElementById("t-stage-date").textContent = task
+        ? UI.fmtDateTime(ts) || "—"
+        : "Set when you create this card";
+      document.getElementById("t-stage-hint").textContent = task
+        ? "Set automatically — it becomes the date of the move every time this card changes status. Not editable by hand; see History below for every previous stage."
+        : "This card's Stage Date will be right now, and will update itself each time the card moves to another status.";
+    }
+
     fillSelects(task ? task.status : presetStatus, task ? task.assignee_id : "");
+
+    // History: collapsed by default and loaded only when opened, so the modal
+    // stays as fast as it was for people who don't need it.
+    const histGroup = document.getElementById("t-history-group");
+    const histPanel = document.getElementById("t-history");
+    const histToggle = document.getElementById("t-history-toggle");
+    histGroup.hidden = !task;
+    histPanel.hidden = true;
+    histPanel.innerHTML = "";
+    histToggle.setAttribute("aria-expanded", "false");
+    histToggle.classList.remove("open");
 
     const delBtn = document.getElementById("task-delete");
     delBtn.hidden = !task;
@@ -577,12 +832,19 @@
       customFields.hr_category = activeTab === "ops" ? "ops" : "candidate";
     }
 
+    // hr_category is set above for new cards, so the stage-date decision has
+    // to be made against the values we're about to save, not the old row.
+    const savingStage = UI.stageDateMode(project, { fields: customFields });
+
     const fields = {
       title,
       notes: document.getElementById("t-notes").value.trim() || null,
       status: document.getElementById("t-status").value,
       assignee_id: document.getElementById("t-assignee").value || null,
-      due_date: document.getElementById("t-due").value || null,
+      // Stage-date cards have no due date at all. Clearing it (rather than
+      // leaving a stale one behind) is deliberate: it's what makes the field
+      // gone rather than merely hidden — and the change log records it.
+      due_date: savingStage ? null : document.getElementById("t-due").value || null,
       fields: customFields,
     };
 
@@ -603,8 +865,26 @@
       UI.closeModal("task-modal");
       refreshClientFilter(); // a save can add/retire a client name
       renderBoard();
+      // Filing a card in a hidden column would otherwise look like the save
+      // silently failed.
+      if (isHidden(fields.status)) {
+        UI.toast(`Saved in “${fields.status}” — that column is hidden on this board.`);
+      }
     } catch (err) {
       UI.toast(err.message);
+    }
+  });
+
+  // Lazy-load the per-task history the first time it's expanded
+  document.getElementById("t-history-toggle").addEventListener("click", () => {
+    const panel = document.getElementById("t-history");
+    const toggle = document.getElementById("t-history-toggle");
+    const open = panel.hidden;
+    panel.hidden = !open;
+    toggle.classList.toggle("open", open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open && !panel.innerHTML && editingTask) {
+      Changelog.renderTask(panel, editingTask.id);
     }
   });
 

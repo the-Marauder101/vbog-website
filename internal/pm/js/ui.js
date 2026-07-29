@@ -7,6 +7,9 @@
 //                     re-call after repopulating options; UI.syncSelect() after
 //                     setting .value programmatically
 // UI.matchesDateFilter()/dateFilterOptions  shared due-date filter logic
+// UI.hasFeature()     per-project feature flags (HR defaults ON, normal OFF)
+// UI.stageDateMode()/stageDateTs()/stageDateIso()  the HR Stage Date, which
+//                     replaces the due date on candidate cards (handbook §11)
 // Also: modal open/close, offline banner, avatar colors, date formatting.
 
 const UI = {
@@ -28,6 +31,35 @@ const UI = {
     return `${String(d).padStart(2, "0")} ${months[m - 1]} ${y}`;
   },
 
+  // timestamptz -> "07 Jul 2026, 15:13" (local time)
+  fmtDateTime(ts) {
+    if (!ts) return "";
+    const d = new Date(ts);
+    if (isNaN(d)) return "";
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}, ` +
+      `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  },
+
+  // "3 days ago" / "just now" — the change log's at-a-glance column
+  relTime(ts) {
+    if (!ts) return "";
+    const secs = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+    if (isNaN(secs)) return "";
+    if (secs < 60) return "just now";
+    const units = [
+      [31536000, "year"], [2592000, "month"], [604800, "week"],
+      [86400, "day"], [3600, "hour"], [60, "minute"],
+    ];
+    for (const [size, name] of units) {
+      if (secs >= size) {
+        const n = Math.floor(secs / size);
+        return `${n} ${name}${n === 1 ? "" : "s"} ago`;
+      }
+    }
+    return "just now";
+  },
+
   todayIso(offsetDays = 0) {
     const d = new Date(Date.now() + offsetDays * 86400000);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -45,6 +77,47 @@ const UI = {
     return project?.inherit_statuses && parent?.statuses?.length
       ? parent.statuses
       : (project?.statuses || []);
+  },
+
+  // Per-project feature flags (projects.features, sql/13). A key that is
+  // present wins; otherwise HR projects default every feature ON and normal
+  // projects OFF. Shared so the board, All Tasks and the dashboard agree.
+  hasFeature(project, key) {
+    if (!project) return false;
+    const feat = project.features;
+    if (feat && typeof feat === "object" && key in feat) return !!feat[key];
+    return project.type === "hr";
+  },
+
+  // ---- Stage Date (HR) ----
+  // Marks a Stage Date so it never gets mistaken for a deadline at a glance
+  stageIcon:
+    '<svg class="stage-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+
+  // HR cards have no due date. Instead they carry a Stage Date: the moment
+  // the card entered the stage it is in now — its creation time until the
+  // first move, then the time of each move (tasks.status_changed_at, kept by
+  // the trigger in sql/13). It is never editable by hand, which is the point:
+  // it's a measurement, not a plan.
+  stageDateTs(task) {
+    return task?.status_changed_at || task?.created_at || null;
+  },
+  stageDateIso(task) {
+    const ts = UI.stageDateTs(task);
+    if (!ts) return null;
+    const d = new Date(ts);
+    return isNaN(d)
+      ? null
+      : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  },
+  // True when this card should show a Stage Date instead of a due date:
+  // the project has the auto_date feature and the card isn't Ops-tab work
+  // (Ops tasks are ordinary internal work and keep real deadlines).
+  stageDateMode(project, task) {
+    if (!UI.hasFeature(project, "auto_date")) return false;
+    if (UI.hasFeature(project, "board_tabs") && task?.fields?.hr_category === "ops") return false;
+    return true;
   },
 
   // Due-date filter presets shared by the board and All Tasks views

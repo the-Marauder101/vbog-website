@@ -537,6 +537,19 @@
     if (inheritColExists()) fields.inherit_statuses = inheritOn;
     // Ops statuses for HR / board_tabs projects
     if (fields.features.board_tabs) fields.ops_statuses = opsStatusTags;
+    // Hidden columns are stored by NAME, so renaming or removing a column
+    // would otherwise leave a stale entry that quietly hides a *different*
+    // column later. Prune to what still exists (14_hidden_statuses_changelog.sql).
+    if (projects.some((p) => "hidden_statuses" in p)) {
+      fields.hidden_statuses = (editingProject?.hidden_statuses || []).filter((s) =>
+        newEffective.includes(s)
+      );
+      if (fields.features.board_tabs) {
+        fields.hidden_ops_statuses = (editingProject?.hidden_ops_statuses || []).filter((s) =>
+          opsStatusTags.includes(s)
+        );
+      }
+    }
 
     try {
       if (editingProject) {

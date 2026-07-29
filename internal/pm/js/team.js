@@ -161,16 +161,24 @@
       return;
     }
 
+    // HR cards have no due date — they carry a Stage Date instead (the moment
+    // they entered their current status). The column covers both, and only
+    // renames itself when there's actually a stage-dated task in view.
+    const anyStage = shown.some((t) => UI.stageDateMode(t.projects, t));
+
     content.innerHTML = `
       <table class="data-table">
         <thead>
-          <tr><th>Project</th><th>Task</th><th>Assignee</th><th>Status</th><th>Due date</th></tr>
+          <tr><th>Project</th><th>Task</th><th>Assignee</th><th>Status</th><th>${
+            anyStage ? "Due / Stage date" : "Due date"
+          }</th></tr>
         </thead>
         <tbody>
           ${shown
             .map((t) => {
               const overdue = UI.isOverdue(t.due_date);
               const assignee = memberName(t.assignee_id);
+              const stageIso = UI.stageDateMode(t.projects, t) ? UI.stageDateIso(t) : null;
               return `
                 <tr class="clickable" data-project="${t.projects.id}">
                   <td>
@@ -184,7 +192,13 @@
                       : '<span style="color:var(--muted)">Unassigned</span>'
                   }</td>
                   <td><span class="status-chip">${UI.esc(t.status)}</span></td>
-                  <td class="${overdue ? "due overdue" : "due"}">${t.due_date ? UI.fmtDate(t.due_date) : "—"}</td>
+                  <td class="${stageIso ? "due" : overdue ? "due overdue" : "due"}">${
+                    stageIso
+                      ? `<span class="stage-pill" title="In this stage since ${UI.esc(UI.fmtDateTime(UI.stageDateTs(t)))}">${UI.stageIcon}${UI.fmtDate(stageIso)}</span>`
+                      : t.due_date
+                        ? UI.fmtDate(t.due_date)
+                        : "—"
+                  }</td>
                 </tr>`;
             })
             .join("")}
