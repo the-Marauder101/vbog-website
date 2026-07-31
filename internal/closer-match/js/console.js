@@ -17,7 +17,7 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const VIEWS = ["signin", "reqs", "req", "queue", "health", "loading"];
+const VIEWS = ["signin", "reqs", "req", "queue", "health", "guide", "loading"];
 
 function view(name) {
   VIEWS.forEach((v) => {
@@ -109,9 +109,23 @@ async function loadRequirements() {
             : `<span class="mono muted">no matches yet</span>`}
         </span>
       </a>`).join("")
-    : `<div class="empty"><h3>No open requirements</h3>
-       <p class="muted">Start a client intake above. A requirement opens when the
-       client submits it.</p></div>`;
+    : `<div class="empty" style="text-align:left;padding:26px 24px">
+        <h3>Nothing open yet — here is the order of operations</h3>
+        <ul class="evidence" style="margin-top:14px">
+          <li><span class="glyph mono">1</span><span><strong>Create an intake link</strong> above and send it
+            to a client. They answer six short steps about the role; the engine turns that into
+            required levels. A requirement opens the moment they submit.</span></li>
+          <li><span class="glyph mono">2</span><span><strong>Create a test link</strong> under Candidates and
+            send it to a closer. 44 items, about 25 minutes, mobile. They never see a client,
+            and one assessment is matched against every open requirement.</span></li>
+          <li><span class="glyph mono">3</span><span><strong>Open the requirement</strong> to see the ranked
+            shortlist, with the reasons and the concerns spelled out.</span></li>
+          <li><span class="glyph mono">4</span><span><strong>Run the verification call</strong> from a
+            candidate row — predictions first, then the call sheet, then the scores unlock.</span></li>
+        </ul>
+        <p class="disclaimer">Nothing here is ever shown to a client. They receive a CV and your
+          written recommendation — never a score, a percentage, or the test.</p>
+       </div>`;
 
   el("reqs-list").querySelectorAll("[data-req]").forEach((a) =>
     a.addEventListener("click", (e) => { e.preventDefault(); loadRequirement(a.dataset.req); }));
@@ -141,7 +155,7 @@ el("btn-new-intake").addEventListener("click", async () => {
 async function loadRequirement(id) {
   const [req] = await sbFetch(`v_requirements?id=eq.${id}`);
   const rows = await sbFetch(
-    `v_console?requirement_id=eq.${id}&order=engine_rank.asc`);
+    `v_console_clean?requirement_id=eq.${id}&order=engine_rank.asc`);
 
   el("req-title").textContent = `${req.business_name} — ${req.title}`;
   el("req-meta").innerHTML =
@@ -213,6 +227,8 @@ function candidateRow(r, reqId) {
                 data-cand="${esc(r.candidate_id)}" data-rank="${r.engine_rank}">Advance</button>
         <button class="btn-quiet btn-small" data-decide="no"
                 data-cand="${esc(r.candidate_id)}" data-rank="${r.engine_rank}">Not this role</button>
+        <a class="btn btn-quiet btn-small"
+           href="interview.html?req=${esc(reqId)}&cand=${esc(r.candidate_id)}">Verification call</a>
         <span class="savestate" data-slot="${esc(r.candidate_id)}"></span>
       </div>
     </div>
@@ -325,6 +341,50 @@ async function loadHealth() {
   view("health");
 }
 
+// The order of operations, always reachable. It used to appear only on an empty
+// console, which meant it vanished permanently after the first requirement —
+// exactly when someone new to the tool still needs it.
+const GUIDE = [
+  ["1", "A client tells you about the role",
+   "Create an intake link and send it. Six short steps, in their language — deal size, how long a sale takes, how their buyer responds, what separated their best closer from their worst. They never see a dimension name. The engine turns those answers into required levels, a deal-motion target and a closing-style weighting. A requirement opens the moment they submit."],
+  ["2", "A closer takes the assessment, once",
+   "Create a test link under Candidates. 44 items, about 25 minutes, on a phone. They are assessed with no knowledge of any client, which is what makes one assessment usable against every open role — and what lets a norm base build up at all."],
+  ["3", "The engine ranks and explains",
+   "Open a requirement to see the shortlist. Each row carries the reasons AND the concerns, with the operational consequence spelled out, plus flags, a note when someone is a frame-specific closer, and a line if they fit a different requirement better. It orders and explains. It never decides — there is no reject button, and no column in the database that could hold one."],
+  ["4", "You run the verification call",
+   "From any candidate row. You write your predicted ratings first, then get the call sheet: 15 minutes technical, 20 minutes band-matched role-play with three fixed objections, 15 minutes of probes the engine picked from that person's profile. You rate what happened, and only then do the scores unlock."],
+  ["5", "The client gets a person, never a number",
+   "A CV and your written recommendation. Optionally the role-play recording, with consent. No dimension scores, no match percentage, no rating sheet, no test. That single rule is why the compliance surface of this tool is small."],
+];
+
+const GUIDE_NOTES = [
+  ["Why the percentage is small on the screen",
+   "Because it is not validated yet. There is no outcome data linking these scores to who actually succeeded, so the weights are expert-set rather than learned. The number is a sorting aid, not a verdict, and the design refuses to let it look like one."],
+  ["Why concerns sit next to reasons",
+   "A shortlist that only shows strengths is a sales document. If a candidate is weak somewhere that matters for this role, that belongs in the same column at the same size."],
+  ["Why excluded candidates are still listed",
+   "A dimmed row names every filter it failed. Someone two weeks over a notice period is often still the right hire, and that call is yours to make — so the tool shows them rather than hiding them."],
+  ["What needs your attention first",
+   "Instrument health needs 30 completed assessments before it means anything — about two weeks at 60 candidates a month. And placement outcomes need recording for every placement from day one; that table is the only thing that will ever turn these expert guesses into findings."],
+];
+
+async function loadGuide() {
+  el("guide-body").innerHTML =
+    GUIDE.map(([n, title, body]) => `
+      <div class="panel">
+        <div class="cand-head"><span class="mono muted">Step ${n}</span></div>
+        <h3 style="margin:6px 0 8px">${esc(title)}</h3>
+        <p class="small">${esc(body)}</p>
+      </div>`).join("") +
+    `<div class="region" style="margin-top:34px">
+      <div class="region-head"><h2>Things that will look odd until explained</h2></div>
+      ${GUIDE_NOTES.map(([q, a]) => `
+        <div class="panel"><h3>${esc(q)}</h3><p class="small">${esc(a)}</p></div>`).join("")}
+    </div>`;
+  view("guide");
+}
+
+el("nav-guide").addEventListener("click", (e) => { e.preventDefault(); loadGuide(); });
 el("nav-reqs").addEventListener("click", (e) => { e.preventDefault(); loadRequirements(); });
 el("nav-queue").addEventListener("click", (e) => { e.preventDefault(); loadQueue(); });
 el("nav-health").addEventListener("click", (e) => { e.preventDefault(); loadHealth(); });
