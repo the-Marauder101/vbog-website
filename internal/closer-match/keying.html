@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Item keying · Nikash</title>
+<link rel="icon" href="/favicon.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+<link rel="stylesheet" href="css/nikash.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="nikash.html">nikash<span class="dot">.</span></a>
+    <span class="brand-sub mono">SUBItem keying</span>
+    <span class="spacer"></span>
+    <span class="savestate" id="savestate"></span>
+    <nav><a href="nikash.html">← Console</a></nav>
+  </div>
+</header>
+
+<!--
+  §13 blind re-keying. Every SJT key in the bank is currently one person's
+  opinion; three experts keying independently is what turns it into a finding.
+
+  The blindness is the entire value, so it is enforced server-side:
+  get_keying_items() does not select score_key at all. There is no way for this
+  page to show you the existing key, even by mistake.
+-->
+
+<main class="narrow">
+  <section class="screen" id="v-gate" hidden>
+    <h1>Sign in first</h1>
+    <p class="muted">Open <a href="nikash.html">the console</a>, sign in, then come back.</p>
+  </section>
+
+  <section class="screen" id="v-pick" hidden>
+    <h1>Item keying</h1>
+    <p class="muted">You will see all 28 scenario items with their four options,
+       and pick the best and worst answer for each. <strong>You will not see the
+       existing keys</strong> — that is the point. Items where all three of you
+       agree are solid; where you split, the item gets rewritten before launch.</p>
+    <div class="notice"><span class="label">Roughly half a day</span>
+      Your answers save as you go. You can stop and come back.</div>
+    <div id="rounds"></div>
+    <div class="panel" style="margin-top:14px">
+      <div class="field" style="margin:0">
+        <label for="new-round">Start a new round <span class="muted">(admin)</span></label>
+        <div class="row">
+          <input type="text" id="new-round" placeholder="e.g. Pre-launch re-key, Aug 2026">
+          <button class="btn-quiet" id="btn-new-round">Create round</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="v-key" hidden>
+    <div class="steps" id="steps"></div>
+    <p class="mono muted" id="counter"></p>
+    <div class="framing" id="framing" hidden>
+      <strong>Assume this setup</strong><span id="framing-text"></span>
+    </div>
+    <p class="stem" id="stem" style="font-size:19px;line-height:1.45;font-weight:500;margin:0 0 20px"></p>
+
+    <div class="field">
+      <span class="q">Best answer</span>
+      <span class="help">The response you would most want to hear from a closer.</span>
+      <div id="best"></div>
+    </div>
+    <div class="field">
+      <span class="q">Worst answer <span class="muted">(optional)</span></span>
+      <span class="help">The one that would most worry you.</span>
+      <div id="worst"></div>
+    </div>
+    <div class="field">
+      <label for="note">Why, in a line <span class="muted">(optional)</span></label>
+      <textarea id="note"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn-quiet" id="btn-prev">Back</button>
+      <span class="spacer"></span>
+      <button class="btn-primary" id="btn-next" disabled>Next</button>
+    </div>
+  </section>
+
+  <section class="screen" id="v-agree" hidden>
+    <h1>Where you disagree</h1>
+    <p class="muted">Items marked <strong>split</strong> are the ones to rewrite
+       before launch — "the obvious right answer" was not obvious.</p>
+    <div id="agree-body"></div>
+  </section>
+
+  <section class="screen" id="v-loading"><p class="muted">Loading…</p></section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/keying.js"></script>
+</body>
+</html>

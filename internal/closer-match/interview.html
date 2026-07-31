@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Verification call · Nikash</title>
+<link rel="icon" href="/favicon.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+<link rel="stylesheet" href="css/nikash.css">
+</head>
+<body>
+
+<!--
+  Step 4 — the verification call. interview.html?req=<id>&cand=<id>
+
+  The whole page is built around one gate: you write your PREDICTED ratings
+  before the call, you rate what actually happened, and only then do the scores
+  unlock. In a one-person operation real independence is unrecoverable; the
+  divergence between predicted and actual is what survives, and it is the part
+  that tells you whether the instrument works.
+
+  The gate is enforced in the database (a CHECK on interviews, plus
+  reveal_scores refusing), not just here — a UI-only gate is a suggestion.
+
+  This call does NOT re-measure the eight dimensions. That work is done. Asking
+  "tell me about a time you handled rejection" when you already hold RES 72
+  wastes the slot and lets an impression override a measured score.
+-->
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="nikash.html">nikash<span class="dot">.</span></a>
+    <span class="brand-sub mono">Verification call</span>
+    <span class="spacer"></span>
+    <span class="savestate" id="savestate"></span>
+    <nav><a href="nikash.html">← Console</a></nav>
+  </div>
+</header>
+
+<main>
+  <section class="screen" id="v-gate" hidden>
+    <h1>Sign in first</h1>
+    <p class="muted">Open <a href="nikash.html">the console</a>, sign in, then reopen this call.</p>
+  </section>
+
+  <section class="screen" id="v-error" hidden>
+    <h1>Couldn't open this call</h1>
+    <div class="notice notice-error" id="error-text"></div>
+  </section>
+
+  <!-- ── 1. Predict, before the call ──────────────────────────────────── -->
+  <section class="screen narrow" id="v-predict" hidden>
+    <h1>Before the call</h1>
+    <p class="muted">Write what you expect from the profile alone. This is the
+       substitute for rating blind, and it only works if you do it now — the
+       scores stay sealed either way, but the divergence is only meaningful if
+       your prediction came first.</p>
+    <div id="predict-body"></div>
+    <button class="btn-primary btn-wide" id="btn-predict">Save predictions and open the call sheet</button>
+  </section>
+
+  <!-- ── 2. The call sheet ────────────────────────────────────────────── -->
+  <section class="screen" id="v-call" hidden>
+    <h1 id="call-title">Call sheet</h1>
+    <p class="muted">60–70 minutes. Technical first — it warms them up on
+       concrete ground and leaves the role-play fresh when you rate immediately
+       after. Send the role-play brief 10 minutes before, not the night before.</p>
+
+    <div class="region">
+      <div class="region-head"><h2>B · Technical</h2><span class="count mono">15 min</span></div>
+      <div id="technical-body"></div>
+    </div>
+
+    <div class="region">
+      <div class="region-head"><h2>C · Role-play</h2><span class="count mono">20 min</span></div>
+      <div id="pack-body"></div>
+    </div>
+
+    <div class="region">
+      <div class="region-head"><h2>D · Probes</h2><span class="count mono">15 min</span></div>
+      <div id="probes-body"></div>
+    </div>
+
+    <div class="region">
+      <div class="region-head"><h2>Rate it now</h2><span class="count mono">before reopening the rationale</span></div>
+      <div id="ratings-body"></div>
+      <label class="opt" style="margin-top:14px">
+        <input type="checkbox" id="consent-rec">
+        <span class="t">The candidate gave explicit consent to record, stated at the top of the call
+          <em>24-month retention, same as everything else</em></span>
+      </label>
+      <div class="notice" id="submit-error" hidden></div>
+      <button class="btn-primary btn-wide" id="btn-submit">Submit ratings</button>
+      <p class="disclaimer">Submitting locks your ratings and unlocks the scores.
+         You cannot change a rating afterwards — that is what makes the
+         divergence record worth having.</p>
+    </div>
+  </section>
+
+  <!-- ── 3. Reveal ────────────────────────────────────────────────────── -->
+  <section class="screen" id="v-reveal" hidden>
+    <h1>Ratings locked — here are the scores</h1>
+    <div id="reveal-body"></div>
+    <div class="region" style="margin-top:26px">
+      <div class="region-head"><h2>Contradictions</h2></div>
+      <p class="muted small">If a score and what you heard disagree — DSC 78 but
+         no describable system — log it. It is either a faked response or a broken
+         item, and both matter. This is the cheapest early warning you have.</p>
+      <div class="field">
+        <textarea id="contra" placeholder="What contradicted what?"></textarea>
+      </div>
+      <button class="btn-quiet" id="btn-contra">Log contradiction</button>
+    </div>
+  </section>
+
+  <section class="screen" id="v-loading"><p class="muted">Loading…</p></section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/interview.js"></script>
+</body>
+</html>

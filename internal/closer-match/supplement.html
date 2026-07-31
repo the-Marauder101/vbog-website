@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>A few more questions · V-BOG</title>
+<link rel="icon" href="/favicon.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+<link rel="stylesheet" href="css/nikash.css">
+</head>
+<body>
+
+<!--
+  §10 client supplement. supplement.html?t=<token>
+
+  Covers only genuine client idiosyncrasy — a vertical, a specific sales motion,
+  a founder non-negotiable, a language nuance. Scored separately by a human and
+  NEVER merged into the candidate's profile or written back as a dimension.
+
+  Deliberately does not name the client whose role this is beyond what they
+  already know, and carries the V-BOG lockup rather than the Nikash name — the
+  candidate is dealing with the firm.
+-->
+
+<header class="masthead">
+  <div class="masthead-in">
+    <span class="brand">V-BOG</span>
+    <span class="brand-sub mono">Role questions</span>
+    <span class="spacer"></span>
+    <span class="savestate" id="savestate"></span>
+  </div>
+</header>
+
+<main class="narrow">
+  <section class="screen" id="v-loading"><p class="muted">Loading…</p></section>
+
+  <section class="screen" id="v-error" hidden>
+    <h1>We couldn't open this</h1>
+    <div class="notice notice-error" id="error-text"></div>
+    <p class="muted">Reply to your recruiter and they can send a fresh link.</p>
+  </section>
+
+  <section class="screen" id="v-done" hidden>
+    <h1>Thank you — received</h1>
+    <p>That's everything we need for this role. Your recruiter will be in touch.</p>
+  </section>
+
+  <section class="screen" id="v-form" hidden>
+    <h1>A few questions about this role</h1>
+    <p class="muted" id="lede"></p>
+    <div class="notice" id="form-error" hidden></div>
+    <div id="body"></div>
+    <button class="btn-primary btn-wide" id="btn-submit">Send my answers</button>
+  </section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/supplement.js"></script>
+</body>
+</html>

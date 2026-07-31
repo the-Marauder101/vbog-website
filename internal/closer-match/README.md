@@ -10,6 +10,9 @@ VBOG's second internal tool, after Vyom.
 | Console — ranked shortlists, rationale, instrument health | **`nikash.html`** (`index.html` redirects here) | staff, behind auth |
 | Client role brief | `intake.html?t=<token>` | the client, no account |
 | Candidate assessment | `assess.html?t=<token>` | the candidate, no account |
+| Client supplement | `supplement.html?t=<token>` | the candidate, no account |
+| Blind item keying | `keying.html` | staff, §13 gate |
+| Verification call | `interview.html?req=&cand=` | staff, Step 4 |
 
 `assess.html` deliberately keeps the V-BOG lockup rather than the Nikash name:
 candidates are being assessed by the firm, not by a tool, and the internal name
@@ -51,7 +54,7 @@ against **every** open client requirement, with the reasoning shown.
 
 ## Database setup
 
-Run the files in `sql/` in numeric order (01→11) in the Supabase SQL Editor. All
+Run the files in `sql/` in numeric order (01→13) in the Supabase SQL Editor. All
 are idempotent. The project is already set up; this is for rebuilding on a fresh
 one.
 
@@ -78,6 +81,10 @@ the scoring arithmetic end to end, and the confidence multiplier.
 | `select * from v_human_agreement` | Whether the score has become a gate in practice |
 | `select * from v_keying_agreement` | Where the three expert keys diverge (§13) |
 | `select * from v_c10_audit` | **Must always be empty** — any row is a score exposed to a non-staff principal |
+| `select * from v_outcomes_due` | Overdue outcome checkpoints. The one table everything else depends on |
+| `select * from v_predictor_validity` | Which of the three predictors actually predicted retention |
+| `select * from v_criterion_validity` | Do the dimensions separate known-strong from known-average closers |
+| `select * from v_supplement_overlap` | Three clients asking the same thing means the dictionary is short a dimension |
 
 ## Status
 
@@ -86,7 +93,14 @@ with keys, scoring, target profiles, match engine, golden cases, RLS, scheduled
 retention purge) plus all three surfaces — candidate assessment, client intake,
 and the console.
 
-**Not yet built:** the §13 keying surface and the Step 4 interview surface.
+**Everything in the five-step process is now built.** Deliberately still open,
+per the PRD's own list:
+
+- **20 alternate items and bank rotation** — Phase 5, from month 3 (§7.3)
+- **Extra role-play packs** for field, channel, renewals and enterprise
+  multi-stakeholder — write the pack rather than stretching one (§17)
+- **Fitted weights** — needs ~100 outcomes (§12). `v_predictor_validity` is
+  built and will answer it when the data exists
 
 ## Staff access
 

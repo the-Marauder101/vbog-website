@@ -17,7 +17,7 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const VIEWS = ["signin", "reqs", "req", "queue", "health", "loading"];
+const VIEWS = ["signin", "reqs", "req", "queue", "health", "guide", "place", "supp", "loading"];
 
 function view(name) {
   VIEWS.forEach((v) => {
@@ -109,9 +109,23 @@ async function loadRequirements() {
             : `<span class="mono muted">no matches yet</span>`}
         </span>
       </a>`).join("")
-    : `<div class="empty"><h3>No open requirements</h3>
-       <p class="muted">Start a client intake above. A requirement opens when the
-       client submits it.</p></div>`;
+    : `<div class="empty" style="text-align:left;padding:26px 24px">
+        <h3>Nothing open yet — here is the order of operations</h3>
+        <ul class="evidence" style="margin-top:14px">
+          <li><span class="glyph mono">1</span><span><strong>Create an intake link</strong> above and send it
+            to a client. They answer six short steps about the role; the engine turns that into
+            required levels. A requirement opens the moment they submit.</span></li>
+          <li><span class="glyph mono">2</span><span><strong>Create a test link</strong> under Candidates and
+            send it to a closer. 44 items, about 25 minutes, mobile. They never see a client,
+            and one assessment is matched against every open requirement.</span></li>
+          <li><span class="glyph mono">3</span><span><strong>Open the requirement</strong> to see the ranked
+            shortlist, with the reasons and the concerns spelled out.</span></li>
+          <li><span class="glyph mono">4</span><span><strong>Run the verification call</strong> from a
+            candidate row — predictions first, then the call sheet, then the scores unlock.</span></li>
+        </ul>
+        <p class="disclaimer">Nothing here is ever shown to a client. They receive a CV and your
+          written recommendation — never a score, a percentage, or the test.</p>
+       </div>`;
 
   el("reqs-list").querySelectorAll("[data-req]").forEach((a) =>
     a.addEventListener("click", (e) => { e.preventDefault(); loadRequirement(a.dataset.req); }));
@@ -141,7 +155,7 @@ el("btn-new-intake").addEventListener("click", async () => {
 async function loadRequirement(id) {
   const [req] = await sbFetch(`v_requirements?id=eq.${id}`);
   const rows = await sbFetch(
-    `v_console?requirement_id=eq.${id}&order=engine_rank.asc`);
+    `v_console_clean?requirement_id=eq.${id}&order=engine_rank.asc`);
 
   el("req-title").textContent = `${req.business_name} — ${req.title}`;
   el("req-meta").innerHTML =
@@ -167,6 +181,10 @@ async function loadRequirement(id) {
 
   el("req-list").querySelectorAll("[data-decide]").forEach((btn) =>
     btn.addEventListener("click", () => decide(btn, id)));
+  el("req-list").querySelectorAll("[data-supp]").forEach((btn) =>
+    btn.addEventListener("click", () => sendSupplement(btn, id)));
+  el("req-list").querySelectorAll("[data-place]").forEach((btn) =>
+    btn.addEventListener("click", () => markPlaced(btn, id)));
   view("req");
 }
 
@@ -213,6 +231,10 @@ function candidateRow(r, reqId) {
                 data-cand="${esc(r.candidate_id)}" data-rank="${r.engine_rank}">Advance</button>
         <button class="btn-quiet btn-small" data-decide="no"
                 data-cand="${esc(r.candidate_id)}" data-rank="${r.engine_rank}">Not this role</button>
+        <a class="btn btn-quiet btn-small"
+           href="interview.html?req=${esc(reqId)}&cand=${esc(r.candidate_id)}">Verification call</a>
+        <button class="btn-quiet btn-small" data-supp="${esc(r.candidate_id)}">Send supplement</button>
+        <button class="btn-quiet btn-small" data-place="${esc(r.candidate_id)}">Placed</button>
         <span class="savestate" data-slot="${esc(r.candidate_id)}"></span>
       </div>
     </div>
@@ -236,6 +258,188 @@ async function decide(btn, reqId) {
     slot.textContent = e.message; slot.dataset.state = "error";
   }
 }
+
+// §2 caps supplement fan-out at two. The database refuses a third and explains
+// why, so this surfaces the error verbatim rather than paraphrasing it.
+async function sendSupplement(btn, reqId) {
+  const slot = document.querySelector(`[data-slot="${btn.dataset.supp}"]`);
+  slot.textContent = "Issuing…"; slot.removeAttribute("data-state");
+  try {
+    const r = await sbRpc("issue_supplement_token",
+      { p_candidate_id: btn.dataset.supp, p_requirement_id: reqId });
+    const base = location.pathname.replace(/nikash\.html$/, "");
+    const url = `${location.origin}${base}supplement.html?t=${r.token}`;
+    slot.textContent = "Link ready"; slot.dataset.state = "saved";
+    btn.insertAdjacentHTML("afterend",
+      `<input type="text" readonly value="${esc(url)}" onclick="this.select()" style="margin-top:8px">`);
+  } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+}
+
+async function markPlaced(btn, reqId) {
+  const on = prompt("Joining date (YYYY-MM-DD)?", new Date().toISOString().slice(0, 10));
+  if (!on) return;
+  const slot = document.querySelector(`[data-slot="${btn.dataset.place}"]`);
+  try {
+    await sbRpc("record_placement",
+      { p_requirement_id: reqId, p_candidate_id: btn.dataset.place, p_joined_on: on });
+    slot.textContent = "Placement recorded"; slot.dataset.state = "saved";
+  } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+}
+
+// ═══ PLACEMENTS AND OUTCOMES (§12) ═════════════════════════════════════════
+// §18 names an empty placement_outcomes as the most likely single point of
+// failure. Code cannot make anyone fill it in; it can make the gap impossible
+// to overlook, which is what the overdue list is for.
+
+async function loadPlacements() {
+  const [due, places, valid] = await Promise.all([
+    sbFetch("v_outcomes_due?order=days_overdue.desc"),
+    sbFetch("v_placements"),
+    sbFetch("v_predictor_validity"),
+  ]);
+
+  el("due-count").textContent = due.length ? `${due.length} overdue` : "all current";
+  el("due-list").innerHTML = due.length
+    ? due.map((d) => `
+      <div class="cand" style="grid-template-columns:1fr">
+        <div>
+          <div class="cand-head">
+            <span class="cand-name">${esc(d.full_name)}</span>
+            <span class="chip warn">${esc(d.checkpoint)} · ${d.days_overdue} days late</span>
+            <span class="spacer"></span>
+            <span class="small muted">${esc(d.business_name)} — ${esc(d.title)} · joined ${esc(d.joined_on)}</span>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="btn-quiet btn-small" data-out="${esc(d.placement_id)}"
+              data-cp="${esc(d.checkpoint)}" data-ret="1">Still there</button>
+            <button class="btn-quiet btn-small" data-out="${esc(d.placement_id)}"
+              data-cp="${esc(d.checkpoint)}" data-ret="0">Gone</button>
+            <span class="savestate" data-oslot="${esc(d.placement_id)}${esc(d.checkpoint)}"></span>
+          </div>
+        </div>
+      </div>`).join("")
+    : `<div class="empty"><p class="muted">Nothing overdue. Checkpoints appear here at
+       3, 6 and 12 months after a joining date.</p></div>`;
+
+  el("due-list").querySelectorAll("[data-out]").forEach((b) =>
+    b.addEventListener("click", () => recordOutcome(b)));
+
+  el("place-count").textContent = `${places.length}`;
+  el("place-list").innerHTML = places.length
+    ? places.map((p) => `
+      <div class="cand" style="grid-template-columns:1fr">
+        <div class="cand-head">
+          <span class="cand-name">${esc(p.full_name)}</span>
+          ${p.retained_so_far === false ? `<span class="chip warn">exited</span>` : ""}
+          <span class="spacer"></span>
+          <span class="small muted">${esc(p.business_name)} · joined ${esc(p.joined_on)} ·
+            predicted ${p.predicted_pct ?? "—"}% · ${p.outcomes_recorded} of 3 checkpoints</span>
+        </div>
+      </div>`).join("")
+    : `<div class="empty"><p class="muted">No placements yet. Mark one from a shortlist row.</p></div>`;
+
+  const v = valid[0] || {};
+  el("validity-body").innerHTML = `
+    <div class="panel">
+      <p class="small muted">${esc(v.verdict || "no data yet")}</p>
+      <ul class="evidence" style="margin-top:10px">
+        <li><span class="glyph mono">${v.composite_vs_retention ?? "—"}</span><span>Engine composite vs retention</span></li>
+        <li><span class="glyph mono">${v.interview_vs_retention ?? "—"}</span><span>Role-play mean vs retention</span></li>
+        <li><span class="glyph mono">${v.technical_vs_retention ?? "—"}</span><span>Technical mean vs retention</span></li>
+      </ul>
+      <p class="disclaimer">Kept apart on purpose. Merging them is what would make
+        "which of the three actually predicted this?" unanswerable — and that answer
+        is worth more than any of them individually.</p>
+    </div>`;
+  view("place");
+}
+
+async function recordOutcome(b) {
+  const retained = b.dataset.ret === "1";
+  const slot = document.querySelector(`[data-oslot="${b.dataset.out}${b.dataset.cp}"]`);
+  const args = { p_placement_id: b.dataset.out, p_checkpoint: b.dataset.cp, p_retained: retained };
+  if (!retained) {
+    const type = prompt("Voluntary or involuntary?", "voluntary");
+    if (!type) return;
+    args.p_exit_type = type.toLowerCase().startsWith("i") ? "involuntary" : "voluntary";
+    args.p_exit_reason = prompt("Reason, in a line?") || null;
+  } else {
+    const d = prompt("Days to first closed deal? (blank to skip)");
+    if (d) args.p_days_to_first_close = Number(d);
+    const q = prompt("Quota attainment %? (blank to skip)");
+    if (q) args.p_quota_pct = Number(q);
+    const s = prompt("Client satisfaction, 1-5? (blank to skip)");
+    if (s) args.p_satisfaction = Number(s);
+  }
+  slot.textContent = "Saving…"; slot.removeAttribute("data-state");
+  try { await sbRpc("record_outcome", args); await loadPlacements(); }
+  catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+}
+
+// ═══ CLIENT SUPPLEMENTS (§10) ══════════════════════════════════════════════
+
+async function loadSupplements() {
+  const [clients, supps, overlap] = await Promise.all([
+    sbFetch("clients?select=id,business_name&order=business_name.asc"),
+    sbFetch("v_supplements"),
+    sbFetch("v_supplement_overlap").catch(() => []),
+  ]);
+  const real = clients.filter((c) => !c.business_name.startsWith("ZZ_FIXTURE"));
+  const byClient = Object.fromEntries(supps.map((s) => [s.client_id, s]));
+
+  el("supp-count").textContent = `${supps.length} of ${real.length} clients`;
+  el("supp-list").innerHTML = real.length
+    ? real.map((c) => {
+        const s = byClient[c.id];
+        const items = s ? s.items : [];
+        const text = items.map((i) => (i.kind === "technical" ? "tech: " : "") + i.prompt).join("\n");
+        return `
+        <div class="panel">
+          <div class="cand-head">
+            <span class="cand-name">${esc(c.business_name)}</span>
+            ${s ? `<span class="chip">${s.n_items} items</span>` : `<span class="chip warn">not written</span>`}
+            ${s && s.unscored ? `<span class="chip warn">${s.unscored} unscored</span>` : ""}
+          </div>
+          <div class="field" style="margin:14px 0 0">
+            <label for="si-${esc(c.id)}">One question per line. Prefix a vertical or
+              technical one with <code>tech:</code></label>
+            <textarea id="si-${esc(c.id)}" rows="7">${esc(text)}</textarea>
+          </div>
+          <button class="btn-quiet btn-small" data-save-supp="${esc(c.id)}">Save</button>
+          <span class="savestate" data-sslot="${esc(c.id)}"></span>
+        </div>`;
+      }).join("")
+    : `<div class="empty"><p class="muted">No clients yet.</p></div>`;
+
+  el("supp-list").querySelectorAll("[data-save-supp]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const id = b.dataset.saveSupp;
+      const slot = document.querySelector(`[data-sslot="${id}"]`);
+      const items = el("si-" + id).value.split("\n").map((l) => l.trim()).filter(Boolean)
+        .map((l) => l.toLowerCase().startsWith("tech:")
+          ? { kind: "technical", prompt: l.slice(5).trim() }
+          : { kind: "behavioural", prompt: l });
+      slot.textContent = "Saving…"; slot.removeAttribute("data-state");
+      try {
+        await sbRpc("save_supplement", { p_client_id: id, p_items: items });
+        slot.textContent = `Saved — ${items.length} items`; slot.dataset.state = "saved";
+      } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+    }));
+
+  if (overlap.length) {
+    el("supp-overlap-region").hidden = false;
+    el("supp-overlap").innerHTML = overlap.map((o) => `
+      <div class="panel">
+        <div class="cand-head"><span class="chip ${o.clients_asking >= 3 ? "warn" : ""}">${o.clients_asking} clients</span></div>
+        <p class="small" style="margin-top:8px">${esc(o.prompt)}</p>
+        ${o.clients_asking >= 3 ? `<p class="small"><strong>${esc(o.verdict)}</strong></p>` : ""}
+      </div>`).join("");
+  }
+  view("supp");
+}
+
+el("nav-place").addEventListener("click", (e) => { e.preventDefault(); loadPlacements(); });
+el("nav-supp").addEventListener("click", (e) => { e.preventDefault(); loadSupplements(); });
 
 el("btn-back-reqs").addEventListener("click", loadRequirements);
 
@@ -325,6 +529,50 @@ async function loadHealth() {
   view("health");
 }
 
+// The order of operations, always reachable. It used to appear only on an empty
+// console, which meant it vanished permanently after the first requirement —
+// exactly when someone new to the tool still needs it.
+const GUIDE = [
+  ["1", "A client tells you about the role",
+   "Create an intake link and send it. Six short steps, in their language — deal size, how long a sale takes, how their buyer responds, what separated their best closer from their worst. They never see a dimension name. The engine turns those answers into required levels, a deal-motion target and a closing-style weighting. A requirement opens the moment they submit."],
+  ["2", "A closer takes the assessment, once",
+   "Create a test link under Candidates. 44 items, about 25 minutes, on a phone. They are assessed with no knowledge of any client, which is what makes one assessment usable against every open role — and what lets a norm base build up at all."],
+  ["3", "The engine ranks and explains",
+   "Open a requirement to see the shortlist. Each row carries the reasons AND the concerns, with the operational consequence spelled out, plus flags, a note when someone is a frame-specific closer, and a line if they fit a different requirement better. It orders and explains. It never decides — there is no reject button, and no column in the database that could hold one."],
+  ["4", "You run the verification call",
+   "From any candidate row. You write your predicted ratings first, then get the call sheet: 15 minutes technical, 20 minutes band-matched role-play with three fixed objections, 15 minutes of probes the engine picked from that person's profile. You rate what happened, and only then do the scores unlock."],
+  ["5", "The client gets a person, never a number",
+   "A CV and your written recommendation. Optionally the role-play recording, with consent. No dimension scores, no match percentage, no rating sheet, no test. That single rule is why the compliance surface of this tool is small."],
+];
+
+const GUIDE_NOTES = [
+  ["Why the percentage is small on the screen",
+   "Because it is not validated yet. There is no outcome data linking these scores to who actually succeeded, so the weights are expert-set rather than learned. The number is a sorting aid, not a verdict, and the design refuses to let it look like one."],
+  ["Why concerns sit next to reasons",
+   "A shortlist that only shows strengths is a sales document. If a candidate is weak somewhere that matters for this role, that belongs in the same column at the same size."],
+  ["Why excluded candidates are still listed",
+   "A dimmed row names every filter it failed. Someone two weeks over a notice period is often still the right hire, and that call is yours to make — so the tool shows them rather than hiding them."],
+  ["What needs your attention first",
+   "Instrument health needs 30 completed assessments before it means anything — about two weeks at 60 candidates a month. And placement outcomes need recording for every placement from day one; that table is the only thing that will ever turn these expert guesses into findings."],
+];
+
+async function loadGuide() {
+  el("guide-body").innerHTML =
+    GUIDE.map(([n, title, body]) => `
+      <div class="panel">
+        <div class="cand-head"><span class="mono muted">Step ${n}</span></div>
+        <h3 style="margin:6px 0 8px">${esc(title)}</h3>
+        <p class="small">${esc(body)}</p>
+      </div>`).join("") +
+    `<div class="region" style="margin-top:34px">
+      <div class="region-head"><h2>Things that will look odd until explained</h2></div>
+      ${GUIDE_NOTES.map(([q, a]) => `
+        <div class="panel"><h3>${esc(q)}</h3><p class="small">${esc(a)}</p></div>`).join("")}
+    </div>`;
+  view("guide");
+}
+
+el("nav-guide").addEventListener("click", (e) => { e.preventDefault(); loadGuide(); });
 el("nav-reqs").addEventListener("click", (e) => { e.preventDefault(); loadRequirements(); });
 el("nav-queue").addEventListener("click", (e) => { e.preventDefault(); loadQueue(); });
 el("nav-health").addEventListener("click", (e) => { e.preventDefault(); loadHealth(); });

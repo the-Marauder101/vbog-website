@@ -40,6 +40,10 @@
       <a href="#" id="nav-reqs">Requirements</a>
       <a href="#" id="nav-queue">Candidates</a>
       <a href="#" id="nav-health">Instrument</a>
+      <a href="#" id="nav-place">Placements</a>
+      <a href="#" id="nav-supp">Supplements</a>
+      <a href="keying.html">Keying</a>
+      <a href="#" id="nav-guide">How it works</a>
       <a href="#" id="nav-signout" class="muted">Sign out</a>
     </nav>
   </div>
@@ -131,6 +135,53 @@
       </div>
       <div id="queue-list"></div>
     </div>
+  </section>
+
+  <!-- ── Placements and outcomes (§12) ───────────────────────────────────── -->
+  <section class="screen" id="v-place" hidden>
+    <div class="region">
+      <div class="region-head"><h2>Outcomes overdue</h2><span class="count mono" id="due-count"></span></div>
+      <p class="muted small" style="margin-bottom:14px">This is the table everything
+         else depends on. Without it the engine stays expert guesswork forever, so an
+         overdue checkpoint is a real cost, not admin.</p>
+      <div id="due-list"></div>
+    </div>
+    <div class="region">
+      <div class="region-head"><h2>Placements</h2><span class="count mono" id="place-count"></span></div>
+      <div id="place-list"></div>
+    </div>
+    <div class="region">
+      <div class="region-head"><h2>Which predictor actually predicts</h2></div>
+      <div id="validity-body"></div>
+    </div>
+  </section>
+
+  <!-- ── Client supplements (§10) ─────────────────────────────────────────── -->
+  <section class="screen" id="v-supp" hidden>
+    <div class="region">
+      <div class="region-head"><h2>Client supplements</h2><span class="count mono" id="supp-count"></span></div>
+      <p class="muted small" style="margin-bottom:14px">5–8 behavioural plus 3–5
+         vertical questions per client, written once and reused for every role they
+         open. Covers genuine idiosyncrasy only — a vertical, a specific motion, a
+         founder non-negotiable. Scored separately, never merged into a profile.</p>
+      <div id="supp-list"></div>
+    </div>
+    <div class="region" id="supp-overlap-region" hidden>
+      <div class="region-head"><h2>Overlap across clients</h2></div>
+      <p class="muted small" style="margin-bottom:14px">If three or more clients ask the
+         same thing, the dictionary is missing a dimension. That is the only legitimate
+         route to changing the eight.</p>
+      <div id="supp-overlap"></div>
+    </div>
+  </section>
+
+  <!-- ── How it works — always reachable, not only when empty ────────────── -->
+  <section class="screen narrow" id="v-guide" hidden>
+    <h1>How Nikash works</h1>
+    <p class="muted">निकष is a touchstone — the stone gold is rubbed against to read
+       its purity. It tells you what the metal is. Deciding whether to buy stays
+       with you, and the tool is built so it cannot take that over.</p>
+    <div id="guide-body"></div>
   </section>
 
   <!-- ── Instrument health ───────────────────────────────────────────────── -->

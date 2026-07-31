@@ -344,13 +344,55 @@ el("btn-submit").addEventListener("click", async () => {
         `The server has ${res.answered} of ${res.expected} answers. Please reopen the link to finish the rest.`;
       return;
     }
-    show("done");
+    showMonitoring();
   } catch (e) {
     S.submitting = false;
     el("btn-submit").disabled = false;
     el("btn-submit").textContent = "Submit my answers";
     fail(e.message);
   }
+});
+
+// ═══ MONITORING (§14.3) ════════════════════════════════════════════════════
+// Deliberately after submission and deliberately skippable. A 15-point gap
+// between groups on a dimension is a fact about our items, not about closers —
+// and we can only find it if we ask.
+
+const M_GENDER = ["Woman", "Man", "Another term", "Prefer not to say"];
+const M_AGE = ["Under 25", "25–34", "35–44", "45 or over", "Prefer not to say"];
+
+function radios(host, name, opts) {
+  el(host).innerHTML = opts.map((o) => `
+    <label class="option"><input type="radio" name="${name}" value="${o.startsWith("Prefer") ? "" : o}">
+      <span class="text">${o}</span></label>`).join("");
+}
+
+function showMonitoring() {
+  radios("m-gender", "m_gender", M_GENDER);
+  radios("m-age", "m_age", M_AGE);
+  document.querySelectorAll('#screen-monitor input[type="radio"]').forEach((i) =>
+    i.addEventListener("change", () => {
+      i.closest("#screen-monitor").querySelectorAll(`input[name="${i.name}"]`).forEach((o) =>
+        o.closest(".option").classList.toggle("selected", o.checked));
+    }));
+  show("monitor");
+}
+
+el("btn-monitor-skip").addEventListener("click", () => show("done"));
+
+el("btn-monitor-save").addEventListener("click", async () => {
+  const pick = (n) => {
+    const c = document.querySelector(`#screen-monitor input[name="${n}"]:checked`);
+    return c ? c.value : "";
+  };
+  const b = el("btn-monitor-save"); b.disabled = true;
+  try {
+    await sbRpc("save_monitoring", {
+      p_token: S.token, p_gender: pick("m_gender"),
+      p_age_band: pick("m_age"), p_region: el("m-region").value.trim(),
+    });
+  } catch (e) { console.error(e); }   // never block the candidate on this
+  show("done");
 });
 
 // Guard against a mid-assessment tab close taking an unsaved selection with it.

@@ -145,6 +145,38 @@
     <button class="btn-primary btn-wide" id="btn-submit">Submit my answers</button>
   </section>
 
+  <!-- ── Monitoring (§14.3) — voluntary, skippable, AFTER submission ───
+       Asked only once the assessment is already recorded, so answering cannot
+       affect anything. Kept in an RLS-isolated table that is never joined into
+       the matching path; it exists so we can check our own items for group
+       bias, which is the only reason it is safe to collect at all. -->
+  <section class="screen" id="screen-monitor" hidden>
+    <h1>One optional page</h1>
+    <p>Your assessment is submitted — this part changes nothing about it.</p>
+    <p class="muted">We check our own questions for bias by comparing average
+       scores across groups. That only works if some people tell us. It is
+       voluntary, it is never shown to a client, and it is never used to match
+       you to a role. Skip any or all of it.</p>
+
+    <div class="field">
+      <span class="q">Gender</span>
+      <div id="m-gender"></div>
+    </div>
+    <div class="field">
+      <span class="q">Age</span>
+      <div id="m-age"></div>
+    </div>
+    <div class="field">
+      <label for="m-region">Which state are you based in?</label>
+      <input type="text" id="m-region" placeholder="Optional">
+    </div>
+
+    <div class="actions" style="margin-top:8px">
+      <button class="btn-primary" id="btn-monitor-save">Share this</button>
+      <button class="btn-quiet" id="btn-monitor-skip">Skip</button>
+    </div>
+  </section>
+
   <!-- ── Done ────────────────────────────────────────────────────────── -->
   <section class="screen" id="screen-done" hidden>
     <div class="lockup">
