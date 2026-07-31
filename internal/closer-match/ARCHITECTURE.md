@@ -251,6 +251,34 @@ plausible one.
 
 ---
 
+## 7a. Candidate surface — what it enforces, and how it was verified
+
+`assess.html` + `js/assess.js` + `css/assess.css`. Mobile-first, one item per
+screen, autosave per item.
+
+Rules it exists to honour, each of which would be invisible if broken:
+
+| Rule | How |
+|---|---|
+| No back-navigation **between** blocks | `S.blockFloor` is set to the first index of each block on entry; Back is disabled at or below it. Verified barred at all 9 block starts. Matters because the CLS key **inverts** between blocks D and D2 — a candidate who sees the fast-close framing must not be able to revise their considered-purchase answers in light of it |
+| Never name a dimension | Block titles describe the sales situation ("Judgement calls", not "Sales Integrity"). §11.4 — the vocabulary leaks into the pool and contaminates every future assessment |
+| Never frame it as an honesty test | No block is labelled as such anywhere in the UI |
+| Framing notes on D and D2 | Shown on the block interstitial *and* repeated on each item, so a candidate returning after a break does not lose the setup |
+| Option order randomised | Server-side, seeded per session. `position_shown` records the **displayed** position, which is what the `straightline` flag needs — `option_key` would miss someone always clicking the second option |
+| Resume | The first unanswered item, from the server's own record of answers |
+| No score reaches the browser | `finish_assessment()` returns `{complete: true}`. There is nothing to leak |
+
+**Verified in a real browser** (Chromium, 390×844) end to end: consent gate blocks
+until ticked, all 44 items walked, every answer autosaved, submitted, and the
+database received 44 responses each with `seconds_on_item` and `position_shown`,
+the recorded `consent_version`, nine computed scores with no blended CLS, and the
+`fast_completion` and `straightline` flags correctly raised on a bot-speed run.
+
+Note for anyone re-running that harness: Chromium in the dev container does not
+use the egress proxy, so its direct connection to Supabase hangs. The harness
+routes `**/rest/v1/**` through Node, which does respect `HTTPS_PROXY` and the CA
+bundle. Do not "fix" this by disabling TLS verification.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

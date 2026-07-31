@@ -74,9 +74,34 @@ golden cases, RLS, and a scheduled 24-month retention purge.
 **Not yet built:** the three frontend surfaces (client intake, candidate test,
 internal console), the §13 keying surface, and the Step 4 interview surface.
 
-**Blocked on input:** the §15.1 consent notice needs the firm's legal name, the
-deletion/withdrawal email, and a named grievance officer with an email address.
-The candidate test cannot honestly go live without them.
+## Before the candidate test can be used — four values
+
+The §15.1 consent notice is assembled from `app_settings`, and **the assessment
+will not open until all four are filled in.** That is deliberate: a consent notice
+still saying "[Firm]" is not consent. A candidate opening the link today sees
+"this assessment isn't quite ready yet", and `start_assessment()` refuses.
+
+```sql
+update app_settings set value = 'Your Legal Entity Pvt Ltd' where key = 'firm_legal_name';
+update app_settings set value = 'privacy@v-bog.com'         where key = 'data_deletion_email';
+update app_settings set value = 'Depesh Vyas'               where key = 'grievance_officer';
+update app_settings set value = 'depesh@v-bog.com'          where key = 'grievance_email';
+
+select consent_settings_missing();   -- must return {}
+```
+
+`grievance_officer` must be a **named person**, not a role title — that is what
+C1 asks for. Bump `consent_version` whenever the notice changes materially; each
+candidate's `consent_version` records which text they agreed to.
+
+## Sending a candidate the test
+
+```sql
+select issue_assessment_token('<candidate_id>', 14);   -- staff only, 14-day link
+```
+
+Then send them `https://v-bog.com/internal/closer-match/assess.html?t=<token>`.
+Answers autosave per item, so the same link resumes exactly where they stopped.
 
 **Resolved:** the CLS blend is now a continuous consideration axis (65% ticket /
 35% cycle, both interpolated) rather than a step lookup — see ARCHITECTURE.md §5.1.
