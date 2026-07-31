@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Nikash · V-BOG</title>
+<link rel="icon" href="/favicon.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+<link rel="stylesheet" href="css/nikash.css">
+</head>
+<body>
+
+<!--
+  NIKASH — internal console. Staff only, behind Supabase Auth + RLS.
+
+  This page renders scores. It is the ONLY surface that ever does (R1 / C10).
+  There is no client-facing view of anything here, and no policy exists that
+  would allow one.
+
+  It also has no reject control, because `matches` has no column to record one
+  (R3 / C9). A hard-filter failure renders dimmed, still names every failing
+  filter, and can still be advanced — overriding a two-week notice gap is the
+  designed behaviour, not a loophole.
+-->
+
+<header class="masthead" id="masthead" hidden>
+  <div class="masthead-in">
+    <a class="brand" href="nikash.html">nikash<span class="dot">.</span></a>
+    <span class="brand-sub mono">Closer matching</span>
+    <span class="spacer"></span>
+    <nav>
+      <a href="#" id="nav-reqs">Requirements</a>
+      <a href="#" id="nav-queue">Candidates</a>
+      <a href="#" id="nav-health">Instrument</a>
+      <a href="#" id="nav-signout" class="muted">Sign out</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Sign in ─────────────────────────────────────────────────────────── -->
+  <section class="screen narrow" id="v-signin" hidden>
+    <p class="brand" style="font-size:34px">nikash<span class="dot">.</span></p>
+    <p class="mono muted" style="margin:6px 0 30px">निकष · touchstone</p>
+    <h1>Sign in</h1>
+    <p class="muted">Staff access only. Your account must already be listed by an
+       admin — creating one does not grant access on its own.</p>
+    <div class="notice notice-error" id="signin-error" hidden></div>
+    <div class="field">
+      <label for="si-email">Email</label>
+      <input type="email" id="si-email" autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="si-pass">Password</label>
+      <input type="password" id="si-pass" autocomplete="current-password">
+    </div>
+    <div class="actions">
+      <button class="btn-primary" id="btn-signin">Sign in</button>
+      <button class="btn-quiet" id="btn-signup">Create account</button>
+    </div>
+  </section>
+
+  <!-- ── Requirements ────────────────────────────────────────────────────── -->
+  <section class="screen" id="v-reqs" hidden>
+    <div class="region">
+      <div class="region-head">
+        <h2>Open requirements</h2>
+        <span class="count mono" id="reqs-count"></span>
+        <span class="spacer" style="flex:1"></span>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
+        <div class="field" style="margin:0">
+          <label for="new-client">Start a client intake</label>
+          <span class="help">Creates the client if new, and returns a link they fill in themselves.</span>
+          <div class="row">
+            <input type="text" id="new-client" placeholder="Business name">
+            <button class="btn-quiet" id="btn-new-intake">Create intake link</button>
+          </div>
+        </div>
+        <div class="notice" id="intake-link" hidden style="margin:14px 0 0"></div>
+      </div>
+      <div id="reqs-list"></div>
+    </div>
+  </section>
+
+  <!-- ── One requirement's shortlist ─────────────────────────────────────── -->
+  <section class="screen" id="v-req" hidden>
+    <button class="btn-quiet btn-small" id="btn-back-reqs" style="margin-bottom:18px">← All requirements</button>
+    <h1 id="req-title"></h1>
+    <p class="muted" id="req-meta"></p>
+    <div id="req-conflicts"></div>
+    <div class="region" style="margin-top:26px">
+      <div class="region-head">
+        <h2>Ranked candidates</h2>
+        <span class="count mono" id="req-count"></span>
+      </div>
+      <div id="req-list"></div>
+      <p class="disclaimer">
+        Weights are expert-set, not learned from outcomes. This ranking orders and
+        explains; it does not decide, and nothing here is shared with the client.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Candidate queue ─────────────────────────────────────────────────── -->
+  <section class="screen" id="v-queue" hidden>
+    <div class="region">
+      <div class="region-head">
+        <h2>Candidates</h2>
+        <span class="count mono" id="queue-count"></span>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
+        <div class="field" style="margin:0">
+          <label for="new-cand">Add a candidate and get their test link</label>
+          <span class="help">A single-use link, valid 14 days. Answers save as they go.</span>
+          <div class="row">
+            <input type="text" id="new-cand" placeholder="Full name">
+            <button class="btn-quiet" id="btn-new-cand">Create test link</button>
+          </div>
+        </div>
+        <div class="notice" id="cand-link" hidden style="margin:14px 0 0"></div>
+      </div>
+      <div id="queue-list"></div>
+    </div>
+  </section>
+
+  <!-- ── Instrument health ───────────────────────────────────────────────── -->
+  <section class="screen" id="v-health" hidden>
+    <h1>Instrument health</h1>
+    <p class="muted">These are the checks that decide whether the assessment is
+       measuring anything. Most need n=30 completed assessments to mean much.</p>
+    <div id="health-body"></div>
+  </section>
+
+  <section class="screen" id="v-loading">
+    <p class="muted">Loading…</p>
+  </section>
+
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/console.js"></script>
+</body>
+</html>

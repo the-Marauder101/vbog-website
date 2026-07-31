@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Sales Assessment · V-BOG</title>
+<link rel="icon" href="/favicon.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+
+<!-- Brand faces, matching v-bog.com. Only the weights actually used are
+     requested — this loads over mobile data before a 25-minute test. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+
+<link rel="stylesheet" href="css/assess.css">
+</head>
+<body>
+
+<!--
+  Candidate assessment surface. Reached with a single-use signed token:
+    assess.html?t=<token>
+
+  Rules this page exists to honour (item_bank_v1.1_FINAL, PRD §7, §15):
+    · one item per screen on mobile
+    · autosave per item
+    · NO back-navigation between blocks
+    · option order randomised per session (done server-side)
+    · SD and BF items are interleaved and must never look like their own block
+    · a dimension name is NEVER shown to the candidate
+    · this is never described as a personality, intelligence or integrity test
+
+  The page has no access to any table. Everything goes through three RPCs.
+  It never receives a score, and there is no score to leak into the DOM.
+-->
+
+<div class="topbar" id="topbar" hidden>
+  <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+  <div class="topbar-row">
+    <span id="counter"></span>
+    <span class="elapsed" id="elapsed"></span>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── Loading ─────────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-loading">
+    <p class="muted">Loading…</p>
+  </section>
+
+  <!-- ── Error ───────────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-error" hidden>
+    <div class="lockup">
+      <span class="wordmark">V<i>-</i>BOG</span>
+      <span class="kicker mono">Sales assessment</span>
+    </div>
+    <h1>We couldn't open this assessment</h1>
+    <div class="notice notice-error" id="error-text"></div>
+    <p class="muted">If you were sent this link by a recruiter, reply to them and
+       they can send a fresh one.</p>
+  </section>
+
+  <!-- ── Consent (C1) ────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-consent" hidden>
+    <div class="lockup">
+      <span class="wordmark">V<i>-</i>BOG</span>
+      <span class="kicker mono">Sales assessment</span>
+    </div>
+    <h1>Before you start</h1>
+    <div class="consent">
+      <dl>
+        <dt>What this is</dt>
+        <dd id="c-intro"></dd>
+
+        <dt>What we collect</dt>
+        <dd>Your answers to this assessment, the time you spend on it, and the
+            contact and work-history details you provided.</dd>
+
+        <dt>Why</dt>
+        <dd>To understand your working style so we can match you to the sales
+            roles you are most likely to succeed in.</dd>
+
+        <dt>Who sees it</dt>
+        <dd id="c-who"></dd>
+
+        <dt>How long we keep it</dt>
+        <dd>24 months after your last activity with us, then it is deleted.</dd>
+
+        <dt>Your choices</dt>
+        <dd id="c-choices"></dd>
+
+        <dt>This is not a test of intelligence, personality disorder, or mental health</dt>
+        <dd>It asks how you would handle realistic sales situations. There are no
+            trick questions.</dd>
+
+        <dt>Grievances</dt>
+        <dd id="c-grievance"></dd>
+      </dl>
+    </div>
+
+    <label class="checkline">
+      <input type="checkbox" id="consent-box">
+      <span id="c-checkbox-label"></span>
+    </label>
+
+    <p class="muted">About 25 minutes. Your answers save as you go, so you can
+       close this and come back to the same place on the same link.</p>
+
+    <button class="btn-primary btn-wide" id="btn-consent" disabled>Start the assessment</button>
+  </section>
+
+  <!-- ── Block interstitial ──────────────────────────────────────────── -->
+  <section class="screen" id="screen-block" hidden>
+    <h1 id="block-title"></h1>
+    <div class="framing" id="block-framing" hidden>
+      <strong>For the next few questions</strong>
+      <span id="block-framing-text"></span>
+    </div>
+    <p class="muted" id="block-note"></p>
+    <button class="btn-primary btn-wide" id="btn-block-go">Continue</button>
+  </section>
+
+  <!-- ── Item ────────────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-item" hidden>
+    <div class="framing" id="item-framing" hidden>
+      <strong>Remember</strong>
+      <span id="item-framing-text"></span>
+    </div>
+    <p class="stem" id="item-stem"></p>
+    <p class="hint" id="item-hint" hidden></p>
+    <div class="options" id="item-options"></div>
+  </section>
+
+  <!-- ── Review before submit ────────────────────────────────────────── -->
+  <section class="screen" id="screen-review" hidden>
+    <h1>That's everything</h1>
+    <p id="review-text"></p>
+    <div class="notice" id="review-warn" hidden></div>
+    <button class="btn-primary btn-wide" id="btn-submit">Submit my answers</button>
+  </section>
+
+  <!-- ── Done ────────────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-done" hidden>
+    <div class="lockup">
+      <span class="wordmark">V<i>-</i>BOG</span>
+      <span class="kicker mono">Sales assessment</span>
+    </div>
+    <h1>Thank you — that's submitted</h1>
+    <p>Your answers are recorded. A recruiter will be in touch about roles that
+       look like a good fit for how you work.</p>
+    <p class="muted">You can close this page. The link will no longer open the
+       assessment.</p>
+  </section>
+
+</main>
+
+<!-- ── Nav ───────────────────────────────────────────────────────────── -->
+<div class="nav" id="nav" hidden>
+  <div class="nav-inner">
+    <button class="btn-quiet" id="btn-back">Back</button>
+    <span class="savestate" id="savestate"></span>
+    <button class="btn-primary" id="btn-next" disabled>Next</button>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/assess.js"></script>
+</body>
+</html>

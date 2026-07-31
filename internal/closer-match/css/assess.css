@@ -1,0 +1,329 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Candidate assessment — VBOG brand surface
+   Mobile-first. Mode: Operate (the visitor completes a task).
+
+   VISUAL AUTHORITY: index.html on v-bog.com. Its system, verbatim:
+     · zero border-radius — square is the language, not a rounding default
+     · zero box-shadows   — depth is lines and offset, never a soft halo
+     · hover = translate(-2px, -2px), the brand's one physical gesture
+     · Satoshi 900 display / Inter body / DM Mono 11px small labels
+     · warm off-white canvas, near-black ink, orange accent
+
+   ONE DELIBERATE DEPARTURE, for accessibility:
+   the site's primary button is white on #ff4d00, which measures 3.33:1 and
+   fails AA for text at that size. Fills here use #cc3d00 (4.96:1 with white).
+   Bright #ff4d00 is kept for non-text elements — the progress rule, the
+   selection marker — where the 3:1 UI-component threshold applies and 3.09:1
+   clears it. Same palette, same feel, legible.
+
+   The scene this is designed for: one candidate, on a phone, twenty-five
+   minutes, possibly tired, deciding whether this firm is serious. Calm canvas,
+   one decision per screen, brand at the door rather than shouting through the
+   whole test.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ink:        #0a0a0a;
+  --ink-soft:   #6b6b6b;   /* 4.76:1 on --off */
+  --off:        #f7f5f2;
+  --white:      #ffffff;
+  --line:       #e0dcd6;
+  --line-strong:#c9c2b8;
+  --accent:     #ff4d00;   /* non-text only */
+  --accent-fill:#cc3d00;   /* text-bearing fills */
+  --accent-deep:#a82d00;
+  --accent-wash:rgba(255, 77, 0, 0.055);
+  --green:      #0f7a52;
+
+  --measure: 34rem;
+  --gap: 20px;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* The hidden attribute must always win, even over a display rule below it. */
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--off);
+  color: var(--ink);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--accent); color: var(--white); }
+
+.mono {
+  font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Top bar: progress rule + the two measurements ──────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--off);
+  border-bottom: 1px solid var(--line);
+}
+.progress-track { height: 2px; background: var(--line); }
+.progress-fill {
+  /* scaleX, not width: animating width relayouts the sticky header on every
+     answer. transform-origin pins the growth to the left edge. */
+  height: 2px; width: 100%;
+  transform: scaleX(0); transform-origin: left center;
+  background: var(--accent);
+  transition: transform 0.45s var(--ease);
+  will-change: transform;
+}
+.topbar-row {
+  max-width: var(--measure); margin: 0 auto;
+  padding: 11px 22px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+  color: var(--ink-soft);
+}
+.topbar-row .elapsed { font-variant-numeric: tabular-nums; }
+
+/* ── Shell ──────────────────────────────────────────────────────────────── */
+main { max-width: var(--measure); margin: 0 auto; padding: 34px 22px 130px; }
+
+/* Screens are visible by default; the entrance only plays on transition, so
+   nothing depends on JS or animation to become readable. */
+.screen.enter { animation: rise 0.34s var(--ease) both; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Brand lockup — once, at the door ───────────────────────────────────── */
+.lockup {
+  display: flex; align-items: baseline; gap: 11px;
+  margin: 0 0 40px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--ink);
+}
+.lockup .wordmark {
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-weight: 900; font-size: 21px; letter-spacing: -0.02em;
+  line-height: 1;
+}
+.lockup .wordmark i { font-style: normal; color: var(--accent-fill); }
+.lockup .kicker { color: var(--ink-soft); }
+
+/* ── Type ───────────────────────────────────────────────────────────────── */
+h1, h2 {
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+  text-wrap: balance;
+  margin: 0 0 18px;
+}
+h1 { font-size: clamp(31px, 8.4vw, 42px); }
+h2 { font-size: clamp(24px, 6vw, 30px); }
+
+p { margin: 0 0 15px; }
+p:last-child { margin-bottom: 0; }
+.muted { color: var(--ink-soft); font-size: 15px; line-height: 1.55; }
+
+a { color: var(--ink); text-decoration: underline;
+    text-decoration-color: var(--accent); text-decoration-thickness: 2px;
+    text-underline-offset: 2px; }
+a:hover { color: var(--accent-fill); }
+
+/* ── Consent panel ──────────────────────────────────────────────────────── */
+.consent {
+  background: var(--white);
+  border: 1px solid var(--line);
+  padding: 26px 24px;
+  margin: 0 0 8px;
+}
+.consent dl { margin: 0; }
+.consent dt {
+  font-weight: 600; font-size: 15px; letter-spacing: -0.01em;
+  margin-top: 22px;
+}
+.consent dt:first-of-type { margin-top: 0; }
+.consent dd {
+  margin: 5px 0 0; font-size: 15px; line-height: 1.55; color: var(--ink-soft);
+}
+.consent .emphasis { color: var(--ink); font-weight: 600; }
+
+.checkline {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 24px 2px 18px; font-size: 16px; line-height: 1.5;
+  cursor: pointer;
+}
+/* ── The square marker ──────────────────────────────────────────────────────
+   The real input IS the marker: appearance:none, then styled directly. No
+   visually-hidden input and no decorative span — native keyboard behaviour,
+   a real 20px hit target, and one element to reason about.
+   The fill is painted with background-clip:content-box rather than a
+   pseudo-element, because ::after on a replaced element is not guaranteed. */
+.option input,
+.checkline input {
+  appearance: none; -webkit-appearance: none;
+  flex: none; width: 20px; height: 20px; margin: 2px 0 0; padding: 3px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--off);          /* NOT --white: the card is already white */
+  cursor: pointer;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+.option input:checked,
+.checkline input:checked {
+  border-color: var(--ink);
+  background: var(--accent) content-box;
+}
+.option input:focus-visible,
+.checkline input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ── Framing note (Blocks D and D2 — the setup the key depends on) ──────── */
+.framing {
+  background: var(--accent-wash);
+  border: 1px solid rgba(255, 77, 0, 0.28);
+  padding: 15px 17px;
+  margin: 0 0 26px;
+  font-size: 16px; line-height: 1.5;
+}
+.framing strong {
+  display: block; margin-bottom: 5px;
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--accent-deep);
+}
+
+/* ── Item ───────────────────────────────────────────────────────────────── */
+.stem {
+  font-size: 19px; line-height: 1.45; font-weight: 500;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+  text-wrap: pretty;
+}
+.hint { font-size: 15px; color: var(--ink-soft); margin: 0 0 4px; }
+.stem + .hint { margin-top: -2px; }
+
+.options { display: flex; flex-direction: column; gap: 11px; margin: 22px 0 0; }
+.option {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--white);
+  border: 1px solid var(--line);
+  padding: 16px 17px;
+  cursor: pointer;
+  transition: border-color 0.14s ease, transform 0.14s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.option span.text { font-size: 16px; line-height: 1.45; }
+.option:hover { border-color: var(--line-strong); }
+.option.selected { border-color: var(--ink); }
+
+@media (hover: hover) {
+  .option:hover { transform: translate(-2px, -2px); }
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+button {
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1.5px solid transparent;
+  padding: 15px 30px;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.14s var(--ease),
+              color 0.16s ease, border-color 0.16s ease;
+}
+.btn-primary { background: var(--accent-fill); color: var(--white); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-deep); transform: translate(-2px, -2px); }
+.btn-primary:active:not(:disabled) { transform: none; }
+.btn-primary:disabled {
+  background: var(--line); color: var(--ink-soft);
+  border-color: var(--line); cursor: not-allowed;
+}
+.btn-quiet {
+  background: transparent; color: var(--ink);
+  border-color: var(--line-strong); padding: 14px 22px;
+}
+.btn-quiet:hover:not(:disabled) { border-color: var(--ink); }
+.btn-quiet:disabled { color: var(--line-strong); border-color: var(--line); cursor: not-allowed; }
+.btn-wide { width: 100%; margin-top: 22px; }
+
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ── Bottom nav ─────────────────────────────────────────────────────────── */
+.nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+  background: var(--off);
+  border-top: 1px solid var(--line);
+  padding: 13px 22px calc(13px + env(safe-area-inset-bottom));
+}
+.nav-inner {
+  max-width: var(--measure); margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: center; gap: 14px;
+}
+.savestate {
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-soft); text-align: center; flex: 1;
+  min-height: 15px;
+}
+.savestate[data-state="saved"] { color: var(--green); }
+.savestate[data-state="error"] { color: var(--accent-deep); }
+
+/* ── Notices ────────────────────────────────────────────────────────────── */
+.notice {
+  background: var(--white); border: 1px solid var(--line);
+  border-top: 2px solid var(--ink);
+  padding: 17px 18px; margin: 0 0 20px;
+  font-size: 16px; line-height: 1.5;
+}
+.notice-error { border-top-color: var(--accent-fill); }
+
+/* ── Larger screens: this is a phone-first form, so it stays a column and
+      simply breathes more. Widening the measure would hurt the reading line. */
+@media (min-width: 620px) {
+  main { padding-top: 56px; padding-bottom: 140px; }
+  .consent { padding: 32px 30px; }
+  .options { gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .option:hover, .btn-primary:hover:not(:disabled) { transform: none; }
+}
+
+/* ── Dark scheme ────────────────────────────────────────────────────────────
+   Candidates take this on a phone, often in the evening. Derived from the
+   brand's own dark sections (#141414 / #1e1e1e), not from generic greys. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink:         #f4f2ef;
+    --ink-soft:    #a3a09b;   /* 5.9:1 on --off below */
+    --off:         #141414;
+    --white:       #1e1e1e;
+    --line:        #333230;
+    --line-strong: #4d4b47;
+    --accent:      #ff5c14;
+    --accent-fill: #ff5c14;   /* dark text sits on it, see below */
+    --accent-deep: #ff7a3d;
+    --accent-wash: rgba(255, 92, 20, 0.09);
+    --green:       #3ddc97;
+  }
+  /* On a dark canvas the legible pairing inverts: ink text on bright orange
+     measures 7.4:1, where white on the same fill would be 3.2:1. */
+  .btn-primary { color: #141414; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-deep); color: #141414; }
+  .framing strong { color: var(--accent-deep); }
+  .lockup .wordmark i { color: var(--accent); }
+  a { color: var(--ink); text-decoration-color: var(--accent); }
+  a:hover { color: var(--accent-deep); }
+}
