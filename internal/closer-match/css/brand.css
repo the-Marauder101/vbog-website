@@ -245,6 +245,20 @@ input[type="checkbox"]:checked, input[type="radio"]:checked {
   transition: border-color .14s ease;
 }
 .rank-item .n { color: var(--ink); }
+
+/* The reason a row is unavailable. A disabled control with no stated reason is
+   indistinguishable from a broken one — this is the sentence that tells them apart. */
+.rank-item .why {
+  display: block; margin-top: 5px;
+  font-size: 12.5px; line-height: 1.4; color: var(--ink-soft);
+}
+.rank-item .why:empty { display: none; }
+.rank-item:disabled { opacity: 1; cursor: not-allowed; background: var(--off); }
+.rank-item:disabled .n, .rank-item:disabled .p { color: var(--ink-soft); }
+
+/* How full each list is. Invisible caps read as bugs. */
+.tally { color: var(--ink-soft); margin-left: 6px; font-weight: 500; }
+.tally[data-state="done"] { color: var(--accent-deep); }
 .rank-item:hover { border-color: var(--line-strong); }
 .rank-item[aria-pressed="true"] { border-color: var(--ink); }
 .rank-item .pos {

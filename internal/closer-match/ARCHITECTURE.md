@@ -502,6 +502,45 @@ never miss its target. Cheaper per tap as well.
 QA now fires three taps with no waits between them and asserts all three register
 **in order**, which is the condition the old implementation failed.
 
+## 7i. The forced-rank rules were correct and invisible
+
+Reported as "the selection looked broken", and the greying "random". It was
+neither — it was three true rules, none of which the page stated:
+
+| Rule | Was it visible? |
+|---|---|
+| "Matter most" takes **exactly 3** | No counter, no cap shown |
+| "Matter least" takes **up to 2**, optional | Buried in help text |
+| A quality can sit in **one list or the other**, never both | Rows simply greyed, with no reason |
+
+So a client who picked three could see rows greying in the *other* list and
+reasonably conclude the cap was shared across both sections — and tapping a fourth
+in a full list did **nothing at all**, which is indistinguishable from a fault.
+
+Fixed by making each rule state itself:
+
+- A live tally per list: "3 of 3 chosen", "0 of 2 chosen".
+- Every disabled row says **which** of the two reasons applies — "Already chosen as
+  one of the three that matter most", or "Three already chosen — remove one to pick
+  this instead". A disabled control with no stated reason is indistinguishable from
+  a broken one.
+- The lede now says there are two separate lists and that a quality goes in one or
+  the other.
+
+**One copy correction while in here.** The help text said "Pick exactly three, in
+order", implying tap order carried weight. It does not — §6.3 gives every top-3
+dimension the same +15 and the same 3.0 weight. Promising precision the scoring
+does not have is worse than saying nothing, so it now reads "the numbers only show
+what you picked — all three count equally".
+
+**What the QA gap was.** The mechanics were tested from the first build: three taps
+register in order, and a top-ranked dimension is blocked in the bottom list. Both
+passed. What was never asserted is that a *person* could tell why a row was
+unavailable. Behaviour was covered; legibility was not. There are now assertions
+that each list reports how full it is, that a cap-blocked row explains the cap,
+that a cross-list-blocked row explains the other list, and that five of the six
+qualities can be placed across the two lists — the thing that was actually in doubt.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
