@@ -78,6 +78,8 @@ internal console), the §13 keying surface, and the Step 4 interview surface.
 deletion/withdrawal email, and a named grievance officer with an email address.
 The candidate test cannot honestly go live without them.
 
-**Open findings needing a decision:** see ARCHITECTURE.md §5 — the CLS band-edge
-step size and the cycle adjustment's magnitude both behave as specified but do not
-match the intent stated in PRD §14.1.
+**Resolved:** the CLS blend is now a continuous consideration axis (65% ticket /
+35% cycle, both interpolated) rather than a step lookup — see ARCHITECTURE.md §5.1.
+A ₹2,000 ticket difference now moves the blend by 0.006 instead of 0.20, and a
+long cycle can genuinely correct a small ticket band. Set
+`dimension_params('cls_blend_mode','interpolated')` to `0` to revert.

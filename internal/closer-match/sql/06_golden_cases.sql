@@ -264,39 +264,31 @@ begin
     and ((v_blend_81->>'w_C')::numeric - (v_blend_79->>'w_C')::numeric) <= 0.25,
     format('w_C 79k=%s -> 81k=%s', v_blend_79->>'w_C', v_blend_81->>'w_C');
 
-  -- §14.1 #2 wants "a slight shift, not a reorder". That guarantee holds only
-  -- for candidates whose CLS_C = CLS_F, whose effective CLS is band-invariant by
-  -- construction. Any candidate who leans one way is exposed to the band step,
-  -- because §9.2.1 IS a step function — see 2c and ARCHITECTURE.md "Findings".
-  -- This assertion is the regression guard against a genuine step-function bug:
-  -- if a band-invariant candidate ever moves, the lookup itself is broken.
+  -- §14.1 #2: "a slight shift, not a reorder." Asserted at full strength across
+  -- EVERY candidate, which the v1 stepped lookup could not satisfy and the v2
+  -- interpolated axis does. If this ever fails again, someone has reintroduced a
+  -- step into the blend.
   select string_agg(m.candidate_id::text, ',' order by m.composite desc, m.candidate_id) into v_order_79
-  from matches m join candidate_profile p on p.candidate_id = m.candidate_id
-  where m.requirement_id = '40000000-0000-4000-8000-000000000003'
-    and (p.scores->>'CLS_C')::numeric = (p.scores->>'CLS_F')::numeric;
+  from matches m where m.requirement_id = '40000000-0000-4000-8000-000000000003';
 
   select string_agg(m.candidate_id::text, ',' order by m.composite desc, m.candidate_id) into v_order_81
-  from matches m join candidate_profile p on p.candidate_id = m.candidate_id
-  where m.requirement_id = '40000000-0000-4000-8000-000000000004'
-    and (p.scores->>'CLS_C')::numeric = (p.scores->>'CLS_F')::numeric;
+  from matches m where m.requirement_id = '40000000-0000-4000-8000-000000000004';
 
-  return query select '2b', 'No reorder among band-invariant candidates (CLS_C = CLS_F)',
+  return query select '2b', 'No reorder of ANY candidate across the 80k band edge',
     v_order_79 = v_order_81,
-    case when v_order_79 = v_order_81 then 'order stable across the 80k edge' else 'REORDERED' end;
+    case when v_order_79 = v_order_81
+         then 'order identical for all 10 candidates' else 'REORDERED' end;
 
-  -- 2c makes the step's blast radius explicit rather than leaving it implicit.
-  -- A 2,000-rupee ticket difference moves w_C by a full 0.20 at the 80k edge, so
-  -- a candidate with a CLS gap of g sees their effective CLS move by 0.20 x g.
-  -- At the frame_split_flag threshold (25) that is 5 points; the fixture pair
-  -- F6/F7 sit at a 23-point gap, below the flag, and still swap rank.
-  -- This is a DESIGN CONSEQUENCE of §9.2.1, recorded so it cannot be forgotten.
+  -- 2c pins the blast radius. A Rs 2,000 ticket difference must not move the
+  -- blend meaningfully — the owner's rule was "don't move the candidate a whole
+  -- grade for Rs 2,000". A candidate with a CLS gap of g moves by step x g, so
+  -- at the widest realistic gap (100) this must stay well under a point.
   return query select '2c',
-    'Band-edge step size is known and bounded (documents reorder exposure)',
-    ((cls_blend(81000,20)->>'w_C')::numeric - (cls_blend(79000,20)->>'w_C')::numeric) = 0.20,
-    format('w_C step at the 80k edge = %s -> a candidate with a CLS gap of g moves %s x g points. '
-        || 'Candidates below the frame_split_flag threshold of 25 CAN still reorder.',
-      round((cls_blend(81000,20)->>'w_C')::numeric - (cls_blend(79000,20)->>'w_C')::numeric, 2),
-      round((cls_blend(81000,20)->>'w_C')::numeric - (cls_blend(79000,20)->>'w_C')::numeric, 2));
+    'A Rs 2,000 ticket difference barely moves the blend (no grade jump)',
+    ((cls_blend(81000,20)->>'w_C')::numeric - (cls_blend(79000,20)->>'w_C')::numeric) < 0.02,
+    format('w_C 79k=%s -> 81k=%s, step %s (v1 stepped was 0.20)',
+      cls_blend(79000,20)->>'w_C', cls_blend(81000,20)->>'w_C',
+      round((cls_blend(81000,20)->>'w_C')::numeric - (cls_blend(79000,20)->>'w_C')::numeric, 4));
 
   -- ── 3. CYCLE OVERRIDE (§14.1 #3) ─────────────────────────────────────────
   -- Rs 20,000 ticket, 45-day cycle. w_C must rise so a CLS_C-strong candidate
@@ -310,10 +302,14 @@ begin
     (v_blend_45->>'w_C')::numeric > (v_blend_sameday->>'w_C')::numeric,
     format('w_C same-day=%s -> 45-day=%s', v_blend_sameday->>'w_C', v_blend_45->>'w_C');
 
-  return query select '3b', 'and raises the C-strong candidate''s effective CLS',
-    v_eff_45 > v_eff_sd,
-    format('CLS_effective %s -> %s (+%s)', round(v_eff_sd,1), round(v_eff_45,1),
-           round(v_eff_45 - v_eff_sd,1));
+  -- The point of §14.1 #3 is that the rise must be big enough to matter, not
+  -- merely non-zero. Under the v1 additive nudge it was +4.0 points against a
+  -- required level of 75 — directionally right and practically useless. The
+  -- threshold below is what makes this case a real test rather than a tautology.
+  return query select '3b', 'and raises the C-strong candidate''s effective CLS materially (>= 8 pts)',
+    (v_eff_45 - v_eff_sd) >= 8,
+    format('CLS_effective %s -> %s (+%s); v1 additive nudge gave only +4.0',
+           round(v_eff_sd,1), round(v_eff_45,1), round(v_eff_45 - v_eff_sd,1));
 
   -- ── 4. NEGATIVE CASES (§14.1 #4) ─────────────────────────────────────────
   select hard_filter_pass, hard_filter_fails into v_pass, v_fails

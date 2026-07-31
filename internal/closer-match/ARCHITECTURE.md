@@ -106,43 +106,66 @@ exactly three `SECURITY DEFINER` functions:
 Recorded here because a golden case that gets quietly weakened to go green is
 worse than no golden case.
 
-### 5.1 §14.1 case 2 cannot hold as literally worded — **decision needed**
+### 5.1 & 5.2 — the CLS blend was a step function. **RESOLVED, `sql/09`.**
 
-The case asks that ₹79,000 vs ₹81,000 produce *"a slight shift, not a reorder."*
-Under §9.2.1's **banded** lookup, crossing the ₹80,000 edge moves `w_C` by a full
-**0.20** in one step. A candidate with a CLS gap of *g* therefore sees effective
-CLS move by `0.20 × g`, and two candidates leaning opposite ways can swap rank.
+Two findings with one root cause, closed together on 31 July 2026.
 
-Measured on the fixtures: F6 (CLS_C 55 / CLS_F 78) and F7 (78 / 55) are exactly
-tied at 66.50 at ₹79,000 and separate to 61.90 vs 71.10 at ₹81,000. **They swap.**
-Both have a 23-point gap — *below* the `frame_split_flag` threshold of 25, so
-neither is flagged as frame-specific. The flag does not capture who is exposed.
+**5.1 — the band edge was a cliff.** §14.1 case 2 asks that ₹79,000 vs ₹81,000
+produce *"a slight shift, not a reorder."* Under §9.2.1's **banded** lookup,
+crossing the ₹80,000 edge moved `w_C` by a full **0.20** in one step. Measured on
+the fixtures: F6 (CLS_C 55 / CLS_F 78) and F7 (78 / 55) were exactly tied at 66.50
+at ₹79,000 and separated to 61.90 vs 71.10 at ₹81,000. **They swapped.** Both have
+a 23-point gap — *below* the `frame_split_flag` threshold of 25 — so neither was
+flagged. The flag did not capture who was exposed.
 
-Golden case `2b` therefore asserts the guarantee that is actually real —
-candidates with `CLS_C = CLS_F` are band-invariant and never reorder, which is a
-genuine regression guard against a step-function bug — and `2c` pins the step
-size at 0.20 so the exposure is documented rather than implicit.
+**5.2 — cycle could not correct the ticket band.** §14.1 case 3 wants a ₹20,000 /
+45-day requirement to raise `w_C` *"enough that a CLS_C-strong candidate isn't
+penalised."* Measured under v1: `w_C` rose 0.130 → 0.227, moving a
+CLS_C-82 / CLS_F-41 candidate's effective CLS 46.3 → **50.3, only +4.0 points**
+against a required 75. Directionally right, practically useless. The cause was
+scale: ticket controlled a range of 0.70, cycle adjusted by at most ±0.15. §9.2.1
+Step 2 exists precisely to catch "₹40k on one call vs ₹40k over six weeks with
+three stakeholders", and additively it could not.
 
-**Two ways to close it properly, both a product decision:**
-1. **Interpolate** `w_F` linearly between band midpoints instead of stepping. Removes
-   cliff behaviour entirely; the ₹2,000 difference then moves `w_C` by ~0.004.
-2. **Lower `frame_split_delta`** from 25 to ~10, so anyone exposed to a band step
-   is at least flagged to the recruiter.
+**The fix — one continuous consideration axis.** The owner's instruction on 5.1
+was "if the difference is ₹2,000, don't move the candidate a whole grade."
+Snapping to the lower band satisfies that for one pair and recreates it at the
+next boundary, because the cliff *is* the steps. So both components are now
+interpolated positions on a single axis:
 
-Neither is implemented — changing scoring behaviour is not mine to decide.
+```
+consideration_index ∈ [0,1]     0 = pure fast momentum · 1 = pure deal-craft
+index_ticket = interpolated over ticket anchors, in log10(ticket)
+index_cycle  = interpolated over cycle-day anchors, linear in days
+w_C = 0.65 × index_ticket + 0.35 × index_cycle,  clamped to [0.10, 0.90]
+```
 
-### 5.2 The cycle adjustment cannot "override" the ticket band — **decision needed**
+Ticket interpolates in **log space** because ticket size spans orders of
+magnitude — ₹10k→20k is a different kind of jump from ₹3L→3.1L, and linear
+interpolation would let the top band swallow the axis. Anchors are set so each
+reproduces the v1 `w_C` at the middle of its band, so v2 is a smoothing of v1
+rather than a different opinion. The **0.65 / 0.35** split is expert-set like
+every other weight (§9.4): ticket stays primary, cycle gets enough authority to
+correct a band that misdescribes the job.
 
-§14.1 case 3 wants a ₹20,000 / 45-day requirement to raise `w_C` *"enough that a
-CLS_C-strong candidate isn't penalised."* Measured: `w_C` rises 0.130 → 0.227, and
-a CLS_C-82 / CLS_F-41 candidate's effective CLS rises 46.3 → **50.3, only +4.0
-points**, against a required level of 75. They are still heavily penalised.
+Measured after the change:
 
-The cause is scale: the ticket table spans 0.15–0.85 (a range of 0.70) while the
-cycle table adjusts by at most ±0.15. Cycle can nudge; it cannot override. Golden
-cases `3a`/`3b` assert the **direction**, which is real, and this note records
-that the **magnitude** does not meet the stated intent. Fix would be larger cycle
-deltas (±0.30) or making cycle multiplicative. Again: parameter change, your call.
+| | v1 stepped | v2 interpolated |
+|---|---|---|
+| `w_C` step across the ₹80k edge | **0.20** | **0.0057** |
+| Reorder across that edge | F6/F7 swap | **none, all 10 candidates** |
+| ₹20k: same-day → 45-day, effective CLS | +4.0 | **+9.5** (46.7 → 56.2) |
+| ₹20k/same-day effective CLS vs §9.5's worked example ("47") | 46.4 | **46.7** |
+
+Golden cases `2b`, `2c` and `3b` were **strengthened** as a result — `2b` now
+asserts no reorder for *every* candidate rather than only band-invariant ones, and
+`3b` requires the cycle rise to exceed 8 points rather than merely be positive.
+A test that only passes because it was weakened is not a test.
+
+**Rollback:** set `dimension_params('cls_blend_mode','interpolated')` to `0` for
+exact original §9.2.1 behaviour. The v1 tables are retained; the golden cases run
+against whichever mode is active, and `2b`/`2c`/`3b` will fail under v1 — which
+is the honest outcome, since v1 is what they were written to catch.
 
 ### 5.3 STY target — ambiguity resolved, flagging it
 
