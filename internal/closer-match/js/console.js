@@ -17,7 +17,7 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const VIEWS = ["signin", "reqs", "req", "queue", "health", "guide", "loading"];
+const VIEWS = ["signin", "reqs", "req", "queue", "health", "guide", "place", "supp", "loading"];
 
 function view(name) {
   VIEWS.forEach((v) => {
@@ -181,6 +181,10 @@ async function loadRequirement(id) {
 
   el("req-list").querySelectorAll("[data-decide]").forEach((btn) =>
     btn.addEventListener("click", () => decide(btn, id)));
+  el("req-list").querySelectorAll("[data-supp]").forEach((btn) =>
+    btn.addEventListener("click", () => sendSupplement(btn, id)));
+  el("req-list").querySelectorAll("[data-place]").forEach((btn) =>
+    btn.addEventListener("click", () => markPlaced(btn, id)));
   view("req");
 }
 
@@ -229,6 +233,8 @@ function candidateRow(r, reqId) {
                 data-cand="${esc(r.candidate_id)}" data-rank="${r.engine_rank}">Not this role</button>
         <a class="btn btn-quiet btn-small"
            href="interview.html?req=${esc(reqId)}&cand=${esc(r.candidate_id)}">Verification call</a>
+        <button class="btn-quiet btn-small" data-supp="${esc(r.candidate_id)}">Send supplement</button>
+        <button class="btn-quiet btn-small" data-place="${esc(r.candidate_id)}">Placed</button>
         <span class="savestate" data-slot="${esc(r.candidate_id)}"></span>
       </div>
     </div>
@@ -252,6 +258,188 @@ async function decide(btn, reqId) {
     slot.textContent = e.message; slot.dataset.state = "error";
   }
 }
+
+// §2 caps supplement fan-out at two. The database refuses a third and explains
+// why, so this surfaces the error verbatim rather than paraphrasing it.
+async function sendSupplement(btn, reqId) {
+  const slot = document.querySelector(`[data-slot="${btn.dataset.supp}"]`);
+  slot.textContent = "Issuing…"; slot.removeAttribute("data-state");
+  try {
+    const r = await sbRpc("issue_supplement_token",
+      { p_candidate_id: btn.dataset.supp, p_requirement_id: reqId });
+    const base = location.pathname.replace(/nikash\.html$/, "");
+    const url = `${location.origin}${base}supplement.html?t=${r.token}`;
+    slot.textContent = "Link ready"; slot.dataset.state = "saved";
+    btn.insertAdjacentHTML("afterend",
+      `<input type="text" readonly value="${esc(url)}" onclick="this.select()" style="margin-top:8px">`);
+  } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+}
+
+async function markPlaced(btn, reqId) {
+  const on = prompt("Joining date (YYYY-MM-DD)?", new Date().toISOString().slice(0, 10));
+  if (!on) return;
+  const slot = document.querySelector(`[data-slot="${btn.dataset.place}"]`);
+  try {
+    await sbRpc("record_placement",
+      { p_requirement_id: reqId, p_candidate_id: btn.dataset.place, p_joined_on: on });
+    slot.textContent = "Placement recorded"; slot.dataset.state = "saved";
+  } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+}
+
+// ═══ PLACEMENTS AND OUTCOMES (§12) ═════════════════════════════════════════
+// §18 names an empty placement_outcomes as the most likely single point of
+// failure. Code cannot make anyone fill it in; it can make the gap impossible
+// to overlook, which is what the overdue list is for.
+
+async function loadPlacements() {
+  const [due, places, valid] = await Promise.all([
+    sbFetch("v_outcomes_due?order=days_overdue.desc"),
+    sbFetch("v_placements"),
+    sbFetch("v_predictor_validity"),
+  ]);
+
+  el("due-count").textContent = due.length ? `${due.length} overdue` : "all current";
+  el("due-list").innerHTML = due.length
+    ? due.map((d) => `
+      <div class="cand" style="grid-template-columns:1fr">
+        <div>
+          <div class="cand-head">
+            <span class="cand-name">${esc(d.full_name)}</span>
+            <span class="chip warn">${esc(d.checkpoint)} · ${d.days_overdue} days late</span>
+            <span class="spacer"></span>
+            <span class="small muted">${esc(d.business_name)} — ${esc(d.title)} · joined ${esc(d.joined_on)}</span>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="btn-quiet btn-small" data-out="${esc(d.placement_id)}"
+              data-cp="${esc(d.checkpoint)}" data-ret="1">Still there</button>
+            <button class="btn-quiet btn-small" data-out="${esc(d.placement_id)}"
+              data-cp="${esc(d.checkpoint)}" data-ret="0">Gone</button>
+            <span class="savestate" data-oslot="${esc(d.placement_id)}${esc(d.checkpoint)}"></span>
+          </div>
+        </div>
+      </div>`).join("")
+    : `<div class="empty"><p class="muted">Nothing overdue. Checkpoints appear here at
+       3, 6 and 12 months after a joining date.</p></div>`;
+
+  el("due-list").querySelectorAll("[data-out]").forEach((b) =>
+    b.addEventListener("click", () => recordOutcome(b)));
+
+  el("place-count").textContent = `${places.length}`;
+  el("place-list").innerHTML = places.length
+    ? places.map((p) => `
+      <div class="cand" style="grid-template-columns:1fr">
+        <div class="cand-head">
+          <span class="cand-name">${esc(p.full_name)}</span>
+          ${p.retained_so_far === false ? `<span class="chip warn">exited</span>` : ""}
+          <span class="spacer"></span>
+          <span class="small muted">${esc(p.business_name)} · joined ${esc(p.joined_on)} ·
+            predicted ${p.predicted_pct ?? "—"}% · ${p.outcomes_recorded} of 3 checkpoints</span>
+        </div>
+      </div>`).join("")
+    : `<div class="empty"><p class="muted">No placements yet. Mark one from a shortlist row.</p></div>`;
+
+  const v = valid[0] || {};
+  el("validity-body").innerHTML = `
+    <div class="panel">
+      <p class="small muted">${esc(v.verdict || "no data yet")}</p>
+      <ul class="evidence" style="margin-top:10px">
+        <li><span class="glyph mono">${v.composite_vs_retention ?? "—"}</span><span>Engine composite vs retention</span></li>
+        <li><span class="glyph mono">${v.interview_vs_retention ?? "—"}</span><span>Role-play mean vs retention</span></li>
+        <li><span class="glyph mono">${v.technical_vs_retention ?? "—"}</span><span>Technical mean vs retention</span></li>
+      </ul>
+      <p class="disclaimer">Kept apart on purpose. Merging them is what would make
+        "which of the three actually predicted this?" unanswerable — and that answer
+        is worth more than any of them individually.</p>
+    </div>`;
+  view("place");
+}
+
+async function recordOutcome(b) {
+  const retained = b.dataset.ret === "1";
+  const slot = document.querySelector(`[data-oslot="${b.dataset.out}${b.dataset.cp}"]`);
+  const args = { p_placement_id: b.dataset.out, p_checkpoint: b.dataset.cp, p_retained: retained };
+  if (!retained) {
+    const type = prompt("Voluntary or involuntary?", "voluntary");
+    if (!type) return;
+    args.p_exit_type = type.toLowerCase().startsWith("i") ? "involuntary" : "voluntary";
+    args.p_exit_reason = prompt("Reason, in a line?") || null;
+  } else {
+    const d = prompt("Days to first closed deal? (blank to skip)");
+    if (d) args.p_days_to_first_close = Number(d);
+    const q = prompt("Quota attainment %? (blank to skip)");
+    if (q) args.p_quota_pct = Number(q);
+    const s = prompt("Client satisfaction, 1-5? (blank to skip)");
+    if (s) args.p_satisfaction = Number(s);
+  }
+  slot.textContent = "Saving…"; slot.removeAttribute("data-state");
+  try { await sbRpc("record_outcome", args); await loadPlacements(); }
+  catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+}
+
+// ═══ CLIENT SUPPLEMENTS (§10) ══════════════════════════════════════════════
+
+async function loadSupplements() {
+  const [clients, supps, overlap] = await Promise.all([
+    sbFetch("clients?select=id,business_name&order=business_name.asc"),
+    sbFetch("v_supplements"),
+    sbFetch("v_supplement_overlap").catch(() => []),
+  ]);
+  const real = clients.filter((c) => !c.business_name.startsWith("ZZ_FIXTURE"));
+  const byClient = Object.fromEntries(supps.map((s) => [s.client_id, s]));
+
+  el("supp-count").textContent = `${supps.length} of ${real.length} clients`;
+  el("supp-list").innerHTML = real.length
+    ? real.map((c) => {
+        const s = byClient[c.id];
+        const items = s ? s.items : [];
+        const text = items.map((i) => (i.kind === "technical" ? "tech: " : "") + i.prompt).join("\n");
+        return `
+        <div class="panel">
+          <div class="cand-head">
+            <span class="cand-name">${esc(c.business_name)}</span>
+            ${s ? `<span class="chip">${s.n_items} items</span>` : `<span class="chip warn">not written</span>`}
+            ${s && s.unscored ? `<span class="chip warn">${s.unscored} unscored</span>` : ""}
+          </div>
+          <div class="field" style="margin:14px 0 0">
+            <label for="si-${esc(c.id)}">One question per line. Prefix a vertical or
+              technical one with <code>tech:</code></label>
+            <textarea id="si-${esc(c.id)}" rows="7">${esc(text)}</textarea>
+          </div>
+          <button class="btn-quiet btn-small" data-save-supp="${esc(c.id)}">Save</button>
+          <span class="savestate" data-sslot="${esc(c.id)}"></span>
+        </div>`;
+      }).join("")
+    : `<div class="empty"><p class="muted">No clients yet.</p></div>`;
+
+  el("supp-list").querySelectorAll("[data-save-supp]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const id = b.dataset.saveSupp;
+      const slot = document.querySelector(`[data-sslot="${id}"]`);
+      const items = el("si-" + id).value.split("\n").map((l) => l.trim()).filter(Boolean)
+        .map((l) => l.toLowerCase().startsWith("tech:")
+          ? { kind: "technical", prompt: l.slice(5).trim() }
+          : { kind: "behavioural", prompt: l });
+      slot.textContent = "Saving…"; slot.removeAttribute("data-state");
+      try {
+        await sbRpc("save_supplement", { p_client_id: id, p_items: items });
+        slot.textContent = `Saved — ${items.length} items`; slot.dataset.state = "saved";
+      } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+    }));
+
+  if (overlap.length) {
+    el("supp-overlap-region").hidden = false;
+    el("supp-overlap").innerHTML = overlap.map((o) => `
+      <div class="panel">
+        <div class="cand-head"><span class="chip ${o.clients_asking >= 3 ? "warn" : ""}">${o.clients_asking} clients</span></div>
+        <p class="small" style="margin-top:8px">${esc(o.prompt)}</p>
+        ${o.clients_asking >= 3 ? `<p class="small"><strong>${esc(o.verdict)}</strong></p>` : ""}
+      </div>`).join("");
+  }
+  view("supp");
+}
+
+el("nav-place").addEventListener("click", (e) => { e.preventDefault(); loadPlacements(); });
+el("nav-supp").addEventListener("click", (e) => { e.preventDefault(); loadSupplements(); });
 
 el("btn-back-reqs").addEventListener("click", loadRequirements);
 

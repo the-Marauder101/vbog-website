@@ -378,6 +378,27 @@ nothing**: every policy keys off a `staff` row that only an admin inserts, and
 Tokens live in `sessionStorage`, not `localStorage` — a shared recruiter laptop
 should not stay signed into the one surface that renders scores.
 
+## 7d. The last four gaps, and how each is enforced
+
+| Gap | Where | Enforcement worth knowing |
+|---|---|---|
+| §10 client supplement | `supplement.html` + Supplements view | Fan-out **capped at two** in `issue_supplement_token()` — a third is refused with the reason, rather than trusted to a recruiter counting in their head. `v_supplement_overlap` flags when three clients ask the same thing, which is the §17 tripwire for a missing dimension. |
+| §12 placements and outcomes | Placements view | `record_placement()` freezes `match_id` and `interview_id`, so the outcome can always be compared to what was predicted. `record_outcome()` copies the **three predictors separately** from that frozen prediction. `v_outcomes_due` lists overdue checkpoints — the only real mitigation for §18's named point of failure. |
+| Criterion validity | `mark_benchmark()` | Tags a benchmark taker with their real performance tier, feeding `v_criterion_validity`. Concurrent, not predictive, and labelled as such — but answerable in a fortnight rather than two years. |
+| §14.3 monitoring | End of `assess.html` | Asked **after** submission, so answering cannot affect anything, and written through the candidate's own token so no staff member links a face to a row. Table stays RLS-isolated to admin/psych; recruiters cannot read it at all. |
+
+## 7e. A branch-recovery incident worth recording
+
+The PR containing the keying and interview surfaces was merged at an earlier
+commit than the branch head, and restarting the branch from `main` with
+`checkout -B` **discarded that unmerged commit**. It was recovered with
+`cherry-pick`, but two edits made against the wrong base had already silently
+no-oped, because their anchor text only existed in the dropped commit.
+
+The lesson is in the tooling, not the git: **a string-replace edit that finds no
+match must fail loudly.** Every scripted edit in this repo now asserts its
+anchor exists before writing. A silent no-op looks exactly like success.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
