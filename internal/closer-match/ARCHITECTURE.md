@@ -1,4 +1,4 @@
-# Closer–Match — Architecture & Developer Handbook
+# Nikash — Architecture & Developer Handbook
 
 > **Read this before changing anything.** The PRD says *what* to build; this file
 > records *how it is built*, which decisions were forced, and which questions the
@@ -329,6 +329,54 @@ Decisions worth keeping:
 Known accepted warning: the design detector flags Inter as an overused face. It
 is VBOG's actual brand body font; incumbent brand truth outranks a genericness
 warning.
+
+## 7c. Console and intake — how form follows function
+
+Four rules shape every view, and each is a consequence of something the PRD
+insists on rather than a style preference. They live at the top of `nikash.css`.
+
+1. **A number never appears without its reason.** The composite is unvalidated
+   (§4 rules out predictive-validity claims), so `.figure` is 26px, not 56px, and
+   the sentence explaining a score is never smaller than the score. A hero metric
+   would be a confidence this instrument has not earned.
+2. **Concerns are not decoration.** Reasons and concerns render in the same
+   column at the same weight, always visible, never behind a disclosure. A
+   shortlist that shows only strengths is a sales document.
+3. **Exclusion is visible and reversible.** No reject control exists, because
+   `matches` has no column to hold one. A hard-filter failure renders dimmed and
+   still names every failing filter — overriding a two-week notice gap is the
+   designed behaviour (§2).
+4. **Rank is typography, not colour.** No red-amber-green anywhere. A traffic
+   light on an unvalidated score reads as a verdict. Position carries rank.
+
+### Intake design
+
+Six steps, autosaved, phrased entirely in the client's own terms — ticket size,
+cycle length, how their buyer responds. **The mapping onto dimensions happens in
+Postgres, never in the browser**: a client should never have to think in the
+instrument's vocabulary, and §6.1 is explicit that free text must not be the
+primary input, so the prose box is last and optional.
+
+The client ranks a **single** closing ability; the candidate is measured on two.
+That asymmetry is resolved in the engine and never surfaces on the form.
+
+**Gender Preference is absent by design** (§6.6). Forced-rank enforces exactly
+three, and a dimension ranked top is disabled in the bottom list.
+
+### Intake auth — a deviation from §8
+
+§8 specifies a magic link. That needs SMTP this project does not have and would
+make every client contact an auth user. Intake uses a staff-issued signed token
+instead — resumable, revocable, no account, and the client never touches a table.
+`client_users` remains for a future magic-link path.
+
+### Staff auth
+
+Supabase Auth, email + password, autoconfirm on (no SMTP). **Signing up grants
+nothing**: every policy keys off a `staff` row that only an admin inserts, and
+`link_staff_account()` binds an auth user to a pre-created staff record by email.
+Tokens live in `sessionStorage`, not `localStorage` — a shared recruiter laptop
+should not stay signed into the one surface that renders scores.
 
 ## 8. Next
 

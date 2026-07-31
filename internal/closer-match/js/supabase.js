@@ -61,6 +61,45 @@ async function sbRequest(url, { method = "GET", body } = {}) {
   return res.json();
 }
 
+// ── Auth (staff console only) ───────────────────────────────────────────────
+// The token is kept in sessionStorage, not localStorage: a shared recruiter
+// laptop should not stay signed into a surface that renders scores.
+
+async function sbAuth(path, body) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error_description || data.msg || data.message || `Sign-in failed (${res.status})`);
+  }
+  return data;
+}
+
+async function sbSignIn(email, password) {
+  const d = await sbAuth("token?grant_type=password", { email, password });
+  sbSetToken(d.access_token);
+  sessionStorage.setItem("nikash_token", d.access_token);
+  return d;
+}
+
+async function sbSignUp(email, password) {
+  return sbAuth("signup", { email, password });
+}
+
+function sbRestoreToken() {
+  const t = sessionStorage.getItem("nikash_token");
+  if (t) sbSetToken(t);
+  return t;
+}
+
+function sbSignOut() {
+  sbSetToken(null);
+  sessionStorage.removeItem("nikash_token");
+}
+
 // PostgREST. Filters live in the path:
 //   sbFetch("requirements?status=eq.open&select=*,clients(business_name)")
 function sbFetch(path, opts) {

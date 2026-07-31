@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Role brief · V-BOG</title>
+<link rel="icon" href="/favicon.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+<link rel="stylesheet" href="css/nikash.css">
+</head>
+<body>
+
+<!--
+  Client intake. Reached with a staff-issued link: intake.html?t=<token>
+
+  Design constraints that come from the PRD, not from taste:
+
+  · The client ranks a SINGLE closing ability. The candidate is measured on two
+    (considered vs fast). That asymmetry is resolved inside the engine and must
+    never surface here (§6.1) — asking a client to rank both would be asking
+    them to do the engine's job with none of its information.
+
+  · Every field is either a forced-rank, a number, or a choice. Free text is
+    kept for the recruiter to read and is NEVER the primary input (§6.1), which
+    is why the prose boxes sit at the end and are all optional.
+
+  · Gender Preference is deliberately absent. It was removed from the old form
+    because even internal-only it teaches the matching data to reproduce the
+    preference (§6.6).
+
+  · The client never sees a score, a dimension score, or a match percentage.
+    Nothing on this page reads anything back from the engine.
+-->
+
+<header class="masthead">
+  <div class="masthead-in">
+    <span class="brand">V-BOG</span>
+    <span class="brand-sub mono">Role brief</span>
+    <span class="spacer"></span>
+    <span class="savestate" id="savestate"></span>
+  </div>
+</header>
+
+<main class="narrow">
+
+  <section class="screen" id="v-loading"><p class="muted">Loading…</p></section>
+
+  <section class="screen" id="v-error" hidden>
+    <h1>We couldn't open this brief</h1>
+    <div class="notice notice-error" id="error-text"></div>
+    <p class="muted">Reply to whoever sent you the link and they can issue a fresh one.</p>
+  </section>
+
+  <section class="screen" id="v-done" hidden>
+    <h1>Received — thank you</h1>
+    <p>We have what we need to start matching. You'll hear from us with candidates,
+       each with a written recommendation rather than a score.</p>
+    <p class="muted">If anything about the role changes, tell your recruiter and
+       we'll reopen the brief.</p>
+  </section>
+
+  <form class="screen" id="v-form" hidden>
+    <div class="steps" id="steps"></div>
+    <p class="mono muted" id="step-of"></p>
+    <h1 id="step-title"></h1>
+    <p class="muted" id="step-lede"></p>
+    <div class="notice notice-error" id="form-error" hidden></div>
+    <div id="step-body"></div>
+    <div class="actions" style="margin-top:30px">
+      <button type="button" class="btn-quiet" id="btn-prev">Back</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn-primary" id="btn-next">Continue</button>
+    </div>
+  </form>
+
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/intake.js"></script>
+</body>
+</html>

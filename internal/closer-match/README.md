@@ -1,8 +1,22 @@
-# Closer–Match — closer-to-client matching system
+# Nikash — closer-to-client matching
 
-VBOG's second internal tool. Assess a sales closer **once** against eight
-constructs; match that one profile against **every** open client requirement,
-with the reasoning shown.
+**निकष · touchstone** — the stone you rub gold against to read its purity.
+It tells you what the metal is. It does not decide whether to buy.
+
+VBOG's second internal tool, after Vyom.
+
+| Surface | File | Who |
+|---|---|---|
+| Console — ranked shortlists, rationale, instrument health | **`nikash.html`** (`index.html` redirects here) | staff, behind auth |
+| Client role brief | `intake.html?t=<token>` | the client, no account |
+| Candidate assessment | `assess.html?t=<token>` | the candidate, no account |
+
+`assess.html` deliberately keeps the V-BOG lockup rather than the Nikash name:
+candidates are being assessed by the firm, not by a tool, and the internal name
+is not theirs to carry.
+
+Assess a sales closer **once** against eight constructs; match that one profile
+against **every** open client requirement, with the reasoning shown.
 
 > 🧭 **Building or changing anything? Read [`ARCHITECTURE.md`](ARCHITECTURE.md) first.**
 > It covers how each file works, which PRD decisions were deviated from and why,
@@ -37,7 +51,7 @@ with the reasoning shown.
 
 ## Database setup
 
-Run the files in `sql/` in numeric order (01→08) in the Supabase SQL Editor. All
+Run the files in `sql/` in numeric order (01→11) in the Supabase SQL Editor. All
 are idempotent. The project is already set up; this is for rebuilding on a fresh
 one.
 
@@ -67,12 +81,26 @@ the scoring arithmetic end to end, and the confidence multiplier.
 
 ## Status
 
-Phase 0 and the database half of Phase 1 are complete and verified live: schema,
-dictionary, all 44 items with keys, scoring, target profiles, the match engine,
-golden cases, RLS, and a scheduled 24-month retention purge.
+**Built and verified live:** the full database (schema, dictionary, all 44 items
+with keys, scoring, target profiles, match engine, golden cases, RLS, scheduled
+retention purge) plus all three surfaces — candidate assessment, client intake,
+and the console.
 
-**Not yet built:** the three frontend surfaces (client intake, candidate test,
-internal console), the §13 keying surface, and the Step 4 interview surface.
+**Not yet built:** the §13 keying surface and the Step 4 interview surface.
+
+## Staff access
+
+Supabase Auth, email + password. **Creating an account grants nothing** — every
+policy keys off a `staff` row, so an admin adds the person first:
+
+```sql
+insert into staff (email, full_name, role) values ('them@v-bog.com','Their Name','recruiter');
+```
+
+They then sign up at `nikash.html` with that same email and the account links
+itself. Roles: `admin`, `recruiter`, `psych`. Only `admin` and `psych` can read
+`monitoring_attributes` — recruiters, who make the shortlist calls, cannot see it
+at all, which is the protection that matters (§14.3).
 
 ## Before the candidate test can be used — four values
 
