@@ -169,30 +169,48 @@ function yesno(key, label, help) {
 // order" are different answers and the engine weights them the same either way —
 // but the client's sense of priority is worth capturing and showing back.
 function renderRanks() {
-  const draw = (host, key, max) => {
-    el(host).innerHTML = (S.form.rankable || []).map((d) => {
-      const picked = (S.d[key] || []).indexOf(d.code);
-      const other = key === "top3" ? "bottom3" : "top3";
-      const blocked = picked < 0 && (S.d[other] || []).includes(d.code);
-      return `<button type="button" class="rank-item" data-code="${d.code}" data-key="${key}"
-        aria-pressed="${picked >= 0}" ${blocked ? "disabled" : ""}>
-        <span class="pos">${picked >= 0 ? picked + 1 : ""}</span>
+  // Built ONCE, then updated in place. The earlier version replaced both grids'
+  // innerHTML on every tap, which meant a tap landing mid-rerender hit a detached
+  // node and was silently lost — easy to trigger by selecting quickly on a phone.
+  // Nothing is recreated now, so a click can never miss its target.
+  const build = (host, key) => {
+    el(host).innerHTML = (S.form.rankable || []).map((d) => `
+      <button type="button" class="rank-item" data-code="${d.code}" data-key="${key}" aria-pressed="false">
+        <span class="pos"></span>
         <span><span class="n">${esc(d.name)}</span><br><span class="p">${esc(d.plain)}</span></span>
-      </button>`;
-    }).join("");
-    el(host).querySelectorAll(".rank-item").forEach((b) =>
-      b.addEventListener("click", () => {
-        const list = S.d[key] || [];
-        const at = list.indexOf(b.dataset.code);
-        if (at >= 0) list.splice(at, 1);
-        else if (list.length < max) list.push(b.dataset.code);
-        S.d[key] = list;
-        draw("rank-top", "top3", 3); draw("rank-bottom", "bottom3", 2);
-        save();
-      }));
+      </button>`).join("");
   };
-  draw("rank-top", "top3", 3);
-  draw("rank-bottom", "bottom3", 2);
+
+  const paint = () => {
+    [["rank-top", "top3"], ["rank-bottom", "bottom3"]].forEach(([host, key]) => {
+      const other = key === "top3" ? "bottom3" : "top3";
+      el(host).querySelectorAll(".rank-item").forEach((b) => {
+        const at = (S.d[key] || []).indexOf(b.dataset.code);
+        b.setAttribute("aria-pressed", at >= 0 ? "true" : "false");
+        b.querySelector(".pos").textContent = at >= 0 ? at + 1 : "";
+        // A dimension ranked most-important cannot also be ranked least.
+        b.disabled = at < 0 && (S.d[other] || []).includes(b.dataset.code);
+      });
+    });
+  };
+
+  const max = { top3: 3, bottom3: 2 };
+  ["rank-top", "rank-bottom"].forEach((host, i) => {
+    const key = i === 0 ? "top3" : "bottom3";
+    build(host, key);
+    el(host).addEventListener("click", (e) => {
+      const b = e.target.closest(".rank-item");
+      if (!b || b.disabled) return;
+      const list = S.d[key] || [];
+      const at = list.indexOf(b.dataset.code);
+      if (at >= 0) list.splice(at, 1);
+      else if (list.length < max[key]) list.push(b.dataset.code);
+      S.d[key] = list;
+      paint();
+      save();
+    });
+  });
+  paint();
 }
 
 // ═══ RENDER / COLLECT ══════════════════════════════════════════════════════

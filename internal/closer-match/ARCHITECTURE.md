@@ -466,6 +466,42 @@ the user walks through is not testing the door.
 must *create* through the same one the user does. QA now clicks "Create intake
 link" and "Create test link" rather than inserting tokens.
 
+## 7g. The dark-mode bug that light mode could not show
+
+The client intake's forced-rank titles rendered **dark on a dark card** — unreadable
+— while the description underneath was fine. The split is the clue: `.p` sets its
+own colour, the title did not.
+
+Neither `.rank-item` nor the base `button` declared a `color`, so both inherited
+the UA's `buttontext`, which stays dark in the dark scheme. In light mode dark text
+on a white card looks correct, so the omission was invisible in every screenshot
+taken until a user opened it on a dark-mode machine.
+
+**Rule:** every interactive element states its own colour. Inheriting is fine for
+`<div>` and `<p>`, which take `body`'s colour; it is never fine for `<button>`,
+`<input>`, `<select>` or `<textarea>`, which have UA defaults that ignore the
+scheme.
+
+**The systematic guard** is a dark-mode contrast audit in QA that walks up for each
+element's real backdrop, computes the WCAG ratio, and applies the right floor
+(4.5:1, or 3:1 for large text). It covers both stylesheets and fails the run on any
+element below its floor. A visual check cannot catch this reliably; a measurement
+can. Worst ratio was dark-on-dark before the fix, 14.92:1 after.
+
+## 7h. Forced-rank: rebuilt on every tap, so taps went missing
+
+Selecting three qualities in quick succession dropped one. `renderRanks` replaced
+both grids' `innerHTML` on every click, so a tap landing mid-rerender hit a
+detached node and vanished — trivially reproducible on a phone, and it showed up as
+"the selection looks broken".
+
+The grid is now built once and updated in place: `aria-pressed`, the order badge and
+the disabled state are set on existing nodes. Nothing is recreated, so a click can
+never miss its target. Cheaper per tap as well.
+
+QA now fires three taps with no waits between them and asserts all three register
+**in order**, which is the condition the old implementation failed.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

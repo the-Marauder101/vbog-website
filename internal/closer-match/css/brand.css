@@ -241,8 +241,10 @@ input[type="checkbox"]:checked, input[type="radio"]:checked {
   background: var(--white); border: 1px solid var(--line);
   padding: 13px 15px; cursor: pointer; text-align: left;
   font: inherit; width: 100%;
+  color: var(--ink);            /* see the note on `button` above */
   transition: border-color .14s ease;
 }
+.rank-item .n { color: var(--ink); }
 .rank-item:hover { border-color: var(--line-strong); }
 .rank-item[aria-pressed="true"] { border-color: var(--ink); }
 .rank-item .pos {
@@ -261,6 +263,10 @@ input[type="checkbox"]:checked, input[type="radio"]:checked {
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 button, .btn {
   font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
+  /* A button with no `color` inherits the UA's `buttontext`, which stays DARK in
+     dark mode — invisible on a dark card. Every interactive element must state
+     its own colour; the light scheme hides the omission. */
+  color: var(--ink);
   border: 1.5px solid transparent; padding: 13px 26px; cursor: pointer;
   text-decoration: none; display: inline-block; text-align: center;
   transition: background .16s ease, transform .14s var(--ease),
