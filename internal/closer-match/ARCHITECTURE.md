@@ -279,6 +279,57 @@ use the egress proxy, so its direct connection to Supabase hangs. The harness
 routes `**/rest/v1/**` through Node, which does respect `HTTPS_PROXY` and the CA
 bundle. Do not "fix" this by disabling TLS verification.
 
+## 7b. Visual system — candidate surface
+
+**Visual authority is `index.html` on v-bog.com, not Vyom.** The repo holds two
+palettes: the marketing brand (warm off-white, orange) and Vyom's internal blue.
+This surface is seen by **external candidates**, so it wears the brand.
+
+The brand system, taken verbatim:
+
+| | |
+|---|---|
+| Radius | **0** — the site has exactly one `border-radius` and it is a 50% dot. Square is the language, not a rounding default |
+| Shadows | **none, anywhere on the site.** Depth is 1px lines and offset |
+| Hover | `translate(-2px, -2px)` — the brand's one physical gesture |
+| Type | Satoshi 900 display · Inter body · DM Mono 11px small labels |
+| Colour | `--off #f7f5f2` canvas · `--ink #0a0a0a` · `--accent #ff4d00` · `--line #e0dcd6` |
+
+**One deliberate departure.** The site's primary button is white on `#ff4d00`,
+which measures **3.33:1** — below AA for text at that size. Text-bearing fills
+here use `#cc3d00` (**4.96:1** with white); bright `#ff4d00` is kept for non-text
+elements (progress rule, selection marker) where the 3:1 UI-component threshold
+applies and 3.09:1 clears it. Same palette, legible.
+
+Decisions worth keeping:
+
+- **Brand at the door, instrument inside.** The lockup appears on the consent,
+  error and completion screens. During the 44 items the header carries only two
+  measurements (question count, elapsed) in DM Mono — mono for measurement, not
+  as a technical costume.
+- **The input *is* the marker.** `appearance: none` on the real radio, styled as
+  a 20px square, filled via `background-clip: content-box` rather than `::after`
+  (pseudo-elements on replaced elements are not guaranteed). No visually-hidden
+  input: native keyboard behaviour, a real hit target, one element to reason
+  about. An earlier hidden-input version broke automated interaction, which is a
+  fair proxy for breaking assistive interaction.
+- **Marker fill is `--off`, not `--white`** — the option card is already white,
+  so a white marker was invisible. Caught by screenshot, not by code review.
+- **Progress uses `scaleX`, not `width`** — animating width relayouts the sticky
+  header on every answer.
+- **The clock starts when the test does**, not while the consent notice is being
+  read. The top bar is hidden until the first item.
+- **Dark scheme derived from the brand's own darks** (`#141414` / `#1e1e1e`), not
+  generic greys, because candidates take this on a phone in the evening. On dark,
+  the legible pairing inverts: ink on bright orange is 7.4:1 where white would
+  be 3.2:1.
+- One authored motion moment: a 0.34s rise per screen, from an already-visible
+  default, disabled under `prefers-reduced-motion`.
+
+Known accepted warning: the design detector flags Inter as an overused face. It
+is VBOG's actual brand body font; incumbent brand truth outranks a genericness
+warning.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

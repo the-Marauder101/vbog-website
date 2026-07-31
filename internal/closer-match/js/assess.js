@@ -43,10 +43,25 @@ const BLOCK_INTRO = {
 const el = (id) => document.getElementById(id);
 
 function show(name) {
-  document.querySelectorAll(".screen").forEach((s) => (s.hidden = true));
-  el("screen-" + name).hidden = false;
+  document.querySelectorAll(".screen").forEach((s) => {
+    s.hidden = true;
+    s.classList.remove("enter");
+  });
+  const target = el("screen-" + name);
+  target.hidden = false;
+  // One authored moment: a short rise as each screen arrives. The default state
+  // is fully visible, so nothing depends on the animation to be readable.
+  void target.offsetWidth;
+  target.classList.add("enter");
   el("nav").hidden = name !== "item";
   window.scrollTo(0, 0);
+}
+
+function setSave(text, state) {
+  const s = el("savestate");
+  s.textContent = text;
+  if (state) s.dataset.state = state;
+  else delete s.dataset.state;
 }
 
 function fail(msg) {
@@ -58,6 +73,7 @@ function fail(msg) {
 // candidate who is slow because they are thinking should not be punished, and a
 // fast completion is already caught server-side by the fast_completion flag.
 function tickClock() {
+  if (el("topbar").hidden) return;
   const s = Math.floor((Date.now() - S.startedAt) / 1000);
   el("elapsed").textContent =
     `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -66,7 +82,7 @@ setInterval(tickClock, 1000);
 
 function updateProgress() {
   const done = Object.keys(S.answers).length;
-  el("progress").style.width = `${(done / S.items.length) * 100}%`;
+  el("progress").style.transform = `scaleX(${done / S.items.length})`;
   el("counter").textContent = `Question ${Math.min(S.i + 1, S.items.length)} of ${S.items.length}`;
 }
 
@@ -123,6 +139,7 @@ async function beginAssessment() {
     S.i = S.items.findIndex((it) => !(it.id in S.answers));
     if (S.i < 0) S.i = S.items.length;
     S.startedAt = Date.now();
+    el("topbar").hidden = false;   // the clock starts when the test does
     advance(true);
   } catch (e) {
     el("btn-consent").disabled = false;
@@ -221,7 +238,10 @@ function renderItem() {
     input.name = item.id;
     input.value = opt.key;
     input.checked = S.answers[item.id] === opt.key;
+    // The input itself is the visible square marker (appearance:none in CSS),
+    // so there is no decorative element to keep in sync with it.
     const span = document.createElement("span");
+    span.className = "text";
     span.textContent = opt.text;
     label.append(input, span);
     // position_shown is the DISPLAYED position, which is what the straightline
@@ -234,7 +254,7 @@ function renderItem() {
   el("btn-back").disabled = S.i <= S.blockFloor;
   el("btn-next").disabled = !(item.id in S.answers);
   el("btn-next").textContent = S.i === S.items.length - 1 ? "Finish" : "Next";
-  el("savestate").textContent = "";
+  setSave("");
   updateProgress();
   show("item");
 }
@@ -248,7 +268,7 @@ async function pick(item, optionKey, position) {
   el("btn-next").disabled = false;
   updateProgress();
 
-  el("savestate").textContent = "Saving…";
+  setSave("Saving…");
   try {
     await sbRpc("save_response", {
       p_token: S.token,
@@ -257,12 +277,12 @@ async function pick(item, optionKey, position) {
       p_seconds: Math.round((Date.now() - S.itemShownAt) / 1000),
       p_position: position,
     });
-    el("savestate").textContent = "Saved";
+    setSave("Saved", "saved");
   } catch (e) {
     // Keep the answer on screen and let them continue; the next item's save, or
     // the completeness check at submit, will surface a genuine problem. Losing a
     // selection because the network blinked would be worse than a stale label.
-    el("savestate").textContent = "Not saved — check your connection";
+    setSave("Not saved — check connection", "error");
     console.error(e);
   }
 }

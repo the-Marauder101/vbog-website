@@ -4,8 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Sales Assessment</title>
-<link rel="icon" href="../../favicon.svg">
+<title>Sales Assessment · V-BOG</title>
+<link rel="icon" href="/favicon.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+
+<!-- Brand faces, matching v-bog.com. Only the weights actually used are
+     requested — this loads over mobile data before a 25-minute test. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+
 <link rel="stylesheet" href="css/assess.css">
 </head>
 <body>
@@ -27,7 +39,7 @@
   It never receives a score, and there is no score to leak into the DOM.
 -->
 
-<div class="topbar">
+<div class="topbar" id="topbar" hidden>
   <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
   <div class="topbar-row">
     <span id="counter"></span>
@@ -44,6 +56,10 @@
 
   <!-- ── Error ───────────────────────────────────────────────────────── -->
   <section class="screen" id="screen-error" hidden>
+    <div class="lockup">
+      <span class="wordmark">V<i>-</i>BOG</span>
+      <span class="kicker mono">Sales assessment</span>
+    </div>
     <h1>We couldn't open this assessment</h1>
     <div class="notice notice-error" id="error-text"></div>
     <p class="muted">If you were sent this link by a recruiter, reply to them and
@@ -52,6 +68,10 @@
 
   <!-- ── Consent (C1) ────────────────────────────────────────────────── -->
   <section class="screen" id="screen-consent" hidden>
+    <div class="lockup">
+      <span class="wordmark">V<i>-</i>BOG</span>
+      <span class="kicker mono">Sales assessment</span>
+    </div>
     <h1>Before you start</h1>
     <div class="consent">
       <dl>
@@ -127,6 +147,10 @@
 
   <!-- ── Done ────────────────────────────────────────────────────────── -->
   <section class="screen" id="screen-done" hidden>
+    <div class="lockup">
+      <span class="wordmark">V<i>-</i>BOG</span>
+      <span class="kicker mono">Sales assessment</span>
+    </div>
     <h1>Thank you — that's submitted</h1>
     <p>Your answers are recorded. A recruiter will be in touch about roles that
        look like a good fit for how you work.</p>
