@@ -205,7 +205,8 @@ function candidateRow(r, reqId) {
         <span><span class="figure">${r.composite_pct}</span><span class="figure-unit">%</span></span>
       </div>
       <p class="small muted" style="margin:3px 0 0">
-        Quality ${r.quality_pct}% · Fit ${r.fit_pct}% · effective closing ${Math.round(r.cls_effective)}
+        Quality ${r.quality_pct}% of what this role requires · Fit ${r.fit_pct}% ·
+        effective closing ${Math.round(r.cls_effective)}
       </p>
 
       ${!r.hard_filter_pass ? `
