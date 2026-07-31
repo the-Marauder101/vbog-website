@@ -279,6 +279,33 @@ use the egress proxy, so its direct connection to Supabase hangs. The harness
 routes `**/rest/v1/**` through Node, which does respect `HTTPS_PROXY` and the CA
 bundle. Do not "fix" this by disabling TLS verification.
 
+## 7b0. Two visual worlds, on purpose
+
+The repo holds two design languages and this tool uses **both**, split by who is
+looking:
+
+| Sheet | Used by | Language |
+|---|---|---|
+| `css/nikash.css` | console, keying, verification call | **Vyom's** — navy `#0F3460`, cyan `#00B4D8`, 10px radius, soft navy shadows, gradient primary |
+| `css/brand.css` | client role brief, candidate supplement | **v-bog.com's** — warm off-white, orange, zero radius, zero shadows |
+| `css/assess.css` | candidate assessment | v-bog.com's, mobile-first |
+
+The reason is who the surface serves. A recruiter moves between Vyom and Nikash
+all day, and those should feel like one toolset rather than two products. A client
+filling in a role brief, or a candidate taking a test, should see **V-BOG** — not
+the internal tooling.
+
+Cyan needed one correction to be usable: `#00B4D8` measures **2.4:1** on Vyom's
+light ground, below the 3:1 floor for a UI component that carries meaning. So cyan
+does what it does in Vyom — gradients, the nav hairline, decoration — while
+anything that actually signals (a selected option, a checked box, a progress fill)
+uses navy at 12.5:1. Same look, meaning that survives.
+
+The four form-follows-function rules were unchanged by the repaint, because they
+govern hierarchy and behaviour rather than colour. They are asserted in QA against
+the new palette: the figure is still 26px, concerns still render beside reasons,
+there is still no reject control.
+
 ## 7b. Visual system — candidate surface
 
 **Visual authority is `index.html` on v-bog.com, not Vyom.** The repo holds two

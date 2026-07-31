@@ -31,6 +31,14 @@ against **every** open client requirement, with the reasoning shown.
 - **Zero AI at runtime, zero API cost.** All scoring is deterministic arithmetic
   in Postgres functions
 
+## Two visual worlds
+
+The console, keying and verification-call surfaces follow **Vyom's** design
+language, so staff moving between the two internal tools stay in one world. The
+client role brief, the candidate assessment and the supplement follow **v-bog.com's
+brand**, because those are seen from outside. Stylesheets: `nikash.css` (internal)
+and `brand.css` / `assess.css` (external).
+
 ## The three rules
 
 1. **Scores never leave the building.** Clients get a candidate and a written
@@ -54,7 +62,7 @@ against **every** open client requirement, with the reasoning shown.
 
 ## Database setup
 
-Run the files in `sql/` in numeric order (01→14) in the Supabase SQL Editor. All
+Run the files in `sql/` in numeric order (01→15) in the Supabase SQL Editor. All
 are idempotent. The project is already set up; this is for rebuilding on a fresh
 one.
 

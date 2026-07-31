@@ -1,0 +1,340 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   V-BOG BRAND — external surfaces (client role brief, candidate supplement)
+
+   These pages are seen by people OUTSIDE the firm, so they wear v-bog.com's
+   identity: warm off-white, near-black ink, orange accent, zero radius, zero
+   shadows, hover as a −2/−2 nudge. Satoshi 900 display / Inter body / DM Mono
+   for measurement.
+
+   The internal console deliberately does NOT use this sheet — it follows Vyom's
+   language instead (see nikash.css), so staff moving between the two internal
+   tools stay in one visual world. A client should see V-BOG; a recruiter should
+   see the toolset.
+
+   Accessibility note carried over: the site's white-on-#ff4d00 button measures
+   3.33:1 and fails AA, so text-bearing fills here use #cc3d00 (4.96:1) while
+   bright #ff4d00 is reserved for non-text elements.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ink:        #0a0a0a;
+  --ink-2:      #3d3d3d;
+  --ink-soft:   #6b6b6b;
+  --off:        #f7f5f2;
+  --white:      #ffffff;
+  --line:       #e0dcd6;
+  --line-strong:#c9c2b8;
+  --accent:     #ff4d00;
+  --accent-fill:#cc3d00;
+  --accent-deep:#a82d00;
+  --accent-wash:rgba(255, 77, 0, 0.055);
+  --green:      #0f7a52;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --shell: 1120px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--off);
+  color: var(--ink);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--accent); color: var(--white); }
+
+.mono {
+  font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+h1, h2, h3 {
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-weight: 900; letter-spacing: -0.025em; line-height: 1.06;
+  text-wrap: balance; margin: 0 0 14px;
+}
+h1 { font-size: clamp(28px, 4.4vw, 40px); }
+h2 { font-size: clamp(21px, 2.8vw, 27px); }
+h3 { font-size: 17px; letter-spacing: -0.02em; }
+p { margin: 0 0 12px; }
+p:last-child { margin-bottom: 0; }
+.muted { color: var(--ink-soft); }
+small, .small { font-size: 13px; line-height: 1.5; }
+
+a { color: var(--ink); text-decoration: underline;
+    text-decoration-color: var(--accent); text-decoration-thickness: 2px;
+    text-underline-offset: 2px; }
+a:hover { color: var(--accent-fill); }
+
+/* ── Masthead ───────────────────────────────────────────────────────────── */
+.masthead {
+  background: var(--off); border-bottom: 2px solid var(--ink);
+  position: sticky; top: 0; z-index: 30;
+}
+.masthead-in {
+  max-width: var(--shell); margin: 0 auto; padding: 15px 26px;
+  display: flex; align-items: baseline; gap: 13px; flex-wrap: wrap;
+}
+.brand {
+  font-family: "Satoshi", system-ui, sans-serif; font-weight: 900;
+  font-size: 22px; letter-spacing: -0.03em; line-height: 1;
+  text-decoration: none; color: var(--ink);
+}
+.brand .dot { color: var(--accent-fill); }
+.brand-sub { color: var(--ink-soft); }
+.masthead .spacer { flex: 1 1 auto; }
+.masthead nav { display: flex; gap: 18px; align-items: baseline; }
+.masthead nav a { text-decoration: none; color: var(--ink-soft); }
+.masthead nav a:hover, .masthead nav a[aria-current="page"] { color: var(--ink); }
+.masthead nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--accent); }
+
+main { max-width: var(--shell); margin: 0 auto; padding: 34px 26px 90px; }
+.narrow { max-width: 660px; }
+
+/* ── Section rule: a named kicker, used once per region, not as an eyebrow
+      over every block ───────────────────────────────────────────────────── */
+.region { margin: 0 0 40px; }
+.region-head {
+  display: flex; align-items: baseline; gap: 12px;
+  padding-bottom: 9px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.region-head .count { color: var(--ink-soft); }
+
+/* ── Panels — flat, lined, square. Never nested. ────────────────────────── */
+.panel { background: var(--white); border: 1px solid var(--line); padding: 20px 22px; }
+.panel + .panel { margin-top: 12px; }
+
+/* ── Requirement row ────────────────────────────────────────────────────── */
+.req {
+  display: grid; gap: 4px 20px; align-items: baseline;
+  grid-template-columns: 1fr auto;
+  background: var(--white); border: 1px solid var(--line);
+  padding: 17px 19px; margin-bottom: 11px;
+  text-decoration: none; color: inherit;
+  transition: border-color .14s ease, transform .14s var(--ease);
+}
+@media (hover: hover) { .req:hover { border-color: var(--ink); transform: translate(-2px, -2px); } }
+.req .title { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
+.req .meta { color: var(--ink-soft); grid-column: 1; }
+.req .figures { grid-row: 1 / span 2; grid-column: 2; text-align: right; }
+
+/* Rule 1: the number is restrained on purpose. */
+.figure {
+  font-family: "Satoshi", system-ui, sans-serif; font-weight: 900;
+  font-size: 26px; letter-spacing: -0.03em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.figure-unit { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+
+/* ── Candidate row — the core of the console ────────────────────────────── */
+.cand {
+  background: var(--white); border: 1px solid var(--line);
+  padding: 18px 20px; margin-bottom: 11px;
+  display: grid; gap: 14px;
+  grid-template-columns: 42px 1fr;
+}
+.cand.excluded { background: transparent; border-style: dashed; }
+.cand .rank {
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+.cand-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.cand-name { font-weight: 600; font-size: 17px; letter-spacing: -0.015em; }
+.cand-head .spacer { flex: 1 1 auto; }
+
+/* Reasons and concerns: same column, same weight, both always visible. */
+.evidence { display: grid; gap: 7px; margin: 13px 0 0; padding: 0; list-style: none; }
+.evidence li {
+  display: grid; grid-template-columns: 15px 1fr; gap: 9px;
+  font-size: 14px; line-height: 1.5;
+}
+.evidence .glyph {
+  font-family: "DM Mono", ui-monospace, monospace; font-size: 13px;
+  color: var(--ink-soft); line-height: 1.55;
+}
+.evidence .concern .glyph { color: var(--accent-fill); }
+
+/* ── Notes: the frame-split explanation and the cross-client line ───────── */
+.callout {
+  margin: 13px 0 0; padding: 12px 14px;
+  background: var(--accent-wash); border: 1px solid rgba(255, 77, 0, 0.28);
+  font-size: 14px; line-height: 1.5;
+}
+.callout .label {
+  display: block; margin-bottom: 4px;
+  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
+  font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent-deep);
+}
+.callout.plain { background: var(--off); border-color: var(--line); }
+.callout.plain .label { color: var(--ink-soft); }
+
+/* ── Chips: flags and states. No traffic lights (rule 4). ───────────────── */
+.chip {
+  display: inline-block; padding: 3px 8px;
+  border: 1px solid var(--line-strong);
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 10px; font-weight: 500; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--ink-2);
+  white-space: nowrap;
+}
+.chip.strong { border-color: var(--ink); color: var(--ink); }
+.chip.warn { border-color: var(--accent-fill); color: var(--accent-deep); }
+
+/* ── Forms ──────────────────────────────────────────────────────────────── */
+.field { margin: 0 0 22px; }
+.field > label, .field > .q {
+  display: block; font-weight: 600; font-size: 15px;
+  letter-spacing: -0.01em; margin-bottom: 3px;
+}
+.field .help { display: block; color: var(--ink-soft); font-size: 13.5px; margin-bottom: 9px; }
+
+input[type="text"], input[type="number"], input[type="email"], select, textarea {
+  font-family: inherit; font-size: 15px;
+  width: 100%; padding: 11px 13px;
+  background: var(--white); color: var(--ink);
+  border: 1px solid var(--line-strong);
+}
+textarea { min-height: 86px; resize: vertical; line-height: 1.5; }
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--ink); outline-offset: 1px; border-color: var(--ink);
+}
+.row { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 620px) { .row { grid-template-columns: 1fr; } }
+
+/* Square marker: the real input, styled directly (see assess.css note). */
+input[type="checkbox"], input[type="radio"] {
+  appearance: none; -webkit-appearance: none;
+  flex: none; width: 19px; height: 19px; margin: 1px 0 0; padding: 3px;
+  border: 1.5px solid var(--line-strong); background: var(--off);
+  cursor: pointer; transition: border-color .14s ease, background-color .14s ease;
+}
+input[type="checkbox"]:checked, input[type="radio"]:checked {
+  border-color: var(--ink); background: var(--accent) content-box;
+}
+.opt {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--white); border: 1px solid var(--line);
+  padding: 13px 15px; margin-bottom: 8px; cursor: pointer;
+  transition: border-color .14s ease;
+  font-size: 15px; line-height: 1.45;
+}
+.opt:hover { border-color: var(--line-strong); }
+.opt:has(:checked) { border-color: var(--ink); }
+.opt .t { flex: 1; }
+.opt .t em { font-style: normal; color: var(--ink-soft); display: block; font-size: 13.5px; }
+
+/* Forced-rank: pick-3 grid. Selection order is shown, because "which three"
+   and "in what order" are different answers. */
+.rank-grid { display: grid; gap: 8px; }
+.rank-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--white); border: 1px solid var(--line);
+  padding: 13px 15px; cursor: pointer; text-align: left;
+  font: inherit; width: 100%;
+  transition: border-color .14s ease;
+}
+.rank-item:hover { border-color: var(--line-strong); }
+.rank-item[aria-pressed="true"] { border-color: var(--ink); }
+.rank-item .pos {
+  flex: none; width: 22px; height: 22px;
+  border: 1.5px solid var(--line-strong);
+  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
+  display: grid; place-items: center; color: transparent;
+}
+.rank-item[aria-pressed="true"] .pos {
+  background: var(--accent); border-color: var(--accent-fill); color: var(--white);
+}
+.rank-item .n { font-weight: 600; }
+.rank-item .p { color: var(--ink-soft); font-size: 13.5px; }
+.rank-item:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+button, .btn {
+  font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
+  border: 1.5px solid transparent; padding: 13px 26px; cursor: pointer;
+  text-decoration: none; display: inline-block; text-align: center;
+  transition: background .16s ease, transform .14s var(--ease),
+              color .16s ease, border-color .16s ease;
+}
+.btn-primary { background: var(--accent-fill); color: var(--white); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-deep); transform: translate(-2px, -2px); }
+.btn-primary:active:not(:disabled) { transform: none; }
+.btn-primary:disabled { background: var(--line); color: var(--ink-soft); border-color: var(--line); cursor: not-allowed; }
+.btn-quiet { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+.btn-quiet:hover:not(:disabled) { border-color: var(--ink); }
+.btn-quiet:disabled { color: var(--line-strong); border-color: var(--line); cursor: not-allowed; }
+.btn-small { padding: 8px 15px; font-size: 13px; }
+.btn-wide { width: 100%; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.actions .spacer { flex: 1 1 auto; }
+
+/* ── Notices ────────────────────────────────────────────────────────────── */
+.notice {
+  background: var(--white); border: 1px solid var(--line);
+  border-top: 2px solid var(--ink);
+  padding: 15px 17px; margin: 0 0 18px; line-height: 1.5;
+}
+.notice-error { border-top-color: var(--accent-fill); }
+.notice .label {
+  display: block; margin-bottom: 4px;
+  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
+  font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* The unvalidated-weights disclaimer. §9.4 requires it wherever the number is,
+   so it is part of the system rather than a thing to remember to add. */
+.disclaimer {
+  margin-top: 26px; padding-top: 13px; border-top: 1px solid var(--line);
+  color: var(--ink-soft); font-size: 13px;
+}
+
+.empty { padding: 40px 22px; border: 1px dashed var(--line-strong); text-align: center; }
+.empty h3 { margin-bottom: 6px; }
+
+.savestate {
+  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft);
+}
+.savestate[data-state="saved"] { color: var(--green); }
+.savestate[data-state="error"] { color: var(--accent-deep); }
+
+.enter { animation: rise .3s var(--ease) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ── Progress: steps for a form that must not feel endless ─────────────── */
+.steps { display: flex; gap: 6px; margin: 0 0 26px; }
+.steps span { height: 3px; flex: 1; background: var(--line); }
+.steps span.done { background: var(--accent); }
+.steps span.now { background: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  .req:hover, .btn-primary:hover:not(:disabled) { transform: none; }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f4f2ef; --ink-2: #cbc7c1; --ink-soft: #a3a09b;
+    --off: #141414; --white: #1e1e1e;
+    --line: #333230; --line-strong: #4d4b47;
+    --accent: #ff5c14; --accent-fill: #ff5c14; --accent-deep: #ff7a3d;
+    --accent-wash: rgba(255, 92, 20, 0.09); --green: #3ddc97;
+  }
+  .btn-primary, .btn-primary:hover:not(:disabled) { color: #141414; }
+  .rank-item[aria-pressed="true"] .pos { color: #141414; }
+  .callout .label, .framing strong { color: var(--accent-deep); }
+  a:hover { color: var(--accent-deep); }
+}
