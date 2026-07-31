@@ -399,6 +399,46 @@ The lesson is in the tooling, not the git: **a string-replace edit that finds no
 match must fail loudly.** Every scripted edit in this repo now asserts its
 anchor exists before writing. A silent no-op looks exactly like success.
 
+## 7f. Two bugs that only a real user found
+
+Both shipped through four rounds of green QA. Worth recording because the reason
+they survived is the same reason in each case.
+
+### The console died after an hour
+
+Supabase access tokens live for **one hour**. `sbSignIn` stored the access token
+and threw the refresh token away, so the console worked until the token aged out
+and then failed every action with a raw `JWT expired`. Fixed: both tokens are
+held, a 401 triggers exactly one silent refresh-and-retry through a shared
+promise so parallel requests cannot each refresh, and an unrecoverable session
+returns to sign-in with a sentence rather than jargon.
+
+Every automated run signed in and finished inside a minute, so no test ever
+reached the second hour. Now tested by corrupting the stored access token, which
+produces the identical 401.
+
+### Every token the console minted was broken
+
+Supabase installs pgcrypto into the `extensions` schema. All SECURITY DEFINER
+functions here pin `search_path = public` — correct hardening, since an unpinned
+path on a definer function is a privilege-escalation vector — but that made
+`gen_random_bytes()` invisible to them. `issue_assessment_token`,
+`create_client_intake_link` and `issue_supplement_token` all failed with
+`function gen_random_bytes(integer) does not exist`. That is **every link the
+console hands out.** Fixed in `sql/14` by appending `extensions` to those three
+search paths, with an assertion that fails the migration if any pgcrypto-using
+definer function lacks it.
+
+It survived because **every test seeded its own tokens with direct SQL through
+the Management API**, which runs as a superuser whose search_path already
+includes `extensions`. The staff RPC — the thing a recruiter actually clicks —
+was never called. A test that sets up its fixtures through a different door than
+the user walks through is not testing the door.
+
+**The standing rule this produces:** a test may read through any door, but it
+must *create* through the same one the user does. QA now clicks "Create intake
+link" and "Create test link" rather than inserting tokens.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

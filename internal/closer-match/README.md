@@ -54,7 +54,7 @@ against **every** open client requirement, with the reasoning shown.
 
 ## Database setup
 
-Run the files in `sql/` in numeric order (01→13) in the Supabase SQL Editor. All
+Run the files in `sql/` in numeric order (01→14) in the Supabase SQL Editor. All
 are idempotent. The project is already set up; this is for rebuilding on a fresh
 one.
 
@@ -101,6 +101,12 @@ per the PRD's own list:
   multi-stakeholder — write the pack rather than stretching one (§17)
 - **Fitted weights** — needs ~100 outcomes (§12). `v_predictor_validity` is
   built and will answer it when the data exists
+
+## If the console says your session expired
+
+Access tokens last an hour. The app now refreshes them silently, so this should
+not happen — but if it ever does, sign out and back in. Nothing is lost:
+everything is already in the database.
 
 ## Staff access
 

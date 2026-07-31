@@ -9,10 +9,40 @@
 //
 // Every query in the app goes through here. No SDK, no other fetch calls.
 
-let SB_ACCESS_TOKEN = null;   // set by auth.js after a staff sign-in
+// A Supabase access token lives for ONE HOUR. Storing only the access token
+// meant the console worked for an hour after sign-in and then failed every
+// action with a raw "JWT expired". The refresh token is what fixes that, so both
+// are held and a 401 triggers exactly one silent refresh-and-retry.
+let SB_ACCESS_TOKEN = null;
+let SB_REFRESH_TOKEN = null;
+let SB_REFRESHING = null;     // shared promise: parallel 401s must not each refresh
 
 function sbSetToken(token) {
   SB_ACCESS_TOKEN = token;
+}
+
+function sbSetSession(d) {
+  if (d.access_token) {
+    SB_ACCESS_TOKEN = d.access_token;
+    sessionStorage.setItem("nikash_token", d.access_token);
+  }
+  if (d.refresh_token) {
+    SB_REFRESH_TOKEN = d.refresh_token;
+    sessionStorage.setItem("nikash_refresh", d.refresh_token);
+  }
+}
+
+// Returns true if a fresh access token is now in place.
+function sbRefreshSession() {
+  if (!SB_REFRESH_TOKEN) return Promise.resolve(false);
+  if (SB_REFRESHING) return SB_REFRESHING;
+
+  SB_REFRESHING = sbAuth("token?grant_type=refresh_token", { refresh_token: SB_REFRESH_TOKEN })
+    .then((d) => { sbSetSession(d); return true; })
+    .catch(() => { sbSignOut(); return false; })
+    .finally(() => { SB_REFRESHING = null; });
+
+  return SB_REFRESHING;
 }
 
 function sbHeaders(hasBody) {
@@ -24,7 +54,7 @@ function sbHeaders(hasBody) {
   return h;
 }
 
-async function sbRequest(url, { method = "GET", body } = {}) {
+async function sbRequest(url, { method = "GET", body } = {}, _retried) {
   const headers = sbHeaders(body !== undefined);
   if (method === "POST" || method === "PATCH") headers.Prefer = "return=representation";
 
@@ -39,6 +69,15 @@ async function sbRequest(url, { method = "GET", body } = {}) {
     throw new Error("Network error — could not reach the server.");
   }
 
+  // Expired access token. Refresh once, silently, and replay the request. Only
+  // attempted when we actually hold a refresh token, so anon calls fall through.
+  if (res.status === 401 && !_retried && SB_REFRESH_TOKEN) {
+    if (await sbRefreshSession()) {
+      return sbRequest(url, { method, body }, true);
+    }
+    throw new Error("Your session expired. Please sign in again.");
+  }
+
   if (!res.ok) {
     let msg = `Request failed (${res.status})`;
     try {
@@ -50,6 +89,9 @@ async function sbRequest(url, { method = "GET", body } = {}) {
       } else if (err.code === "42501") {
         // RLS denial. Almost always a missing sign-in rather than a bug.
         msg = "Not permitted. Sign in with a staff account.";
+      } else if (err.code === "PGRST301" || /jwt (expired|invalid)/i.test(err.message || "")) {
+        // Refresh already failed by the time we get here.
+        msg = "Your session expired. Please sign in again.";
       } else if (err.message) {
         msg = err.message;
       }
@@ -80,8 +122,7 @@ async function sbAuth(path, body) {
 
 async function sbSignIn(email, password) {
   const d = await sbAuth("token?grant_type=password", { email, password });
-  sbSetToken(d.access_token);
-  sessionStorage.setItem("nikash_token", d.access_token);
+  sbSetSession(d);
   return d;
 }
 
@@ -91,13 +132,17 @@ async function sbSignUp(email, password) {
 
 function sbRestoreToken() {
   const t = sessionStorage.getItem("nikash_token");
-  if (t) sbSetToken(t);
+  const r = sessionStorage.getItem("nikash_refresh");
+  if (t) SB_ACCESS_TOKEN = t;
+  if (r) SB_REFRESH_TOKEN = r;
   return t;
 }
 
 function sbSignOut() {
-  sbSetToken(null);
+  SB_ACCESS_TOKEN = null;
+  SB_REFRESH_TOKEN = null;
   sessionStorage.removeItem("nikash_token");
+  sessionStorage.removeItem("nikash_refresh");
 }
 
 // PostgREST. Filters live in the path:
