@@ -466,6 +466,81 @@ the user walks through is not testing the door.
 must *create* through the same one the user does. QA now clicks "Create intake
 link" and "Create test link" rather than inserting tokens.
 
+## 7g. The dark-mode bug that light mode could not show
+
+The client intake's forced-rank titles rendered **dark on a dark card** — unreadable
+— while the description underneath was fine. The split is the clue: `.p` sets its
+own colour, the title did not.
+
+Neither `.rank-item` nor the base `button` declared a `color`, so both inherited
+the UA's `buttontext`, which stays dark in the dark scheme. In light mode dark text
+on a white card looks correct, so the omission was invisible in every screenshot
+taken until a user opened it on a dark-mode machine.
+
+**Rule:** every interactive element states its own colour. Inheriting is fine for
+`<div>` and `<p>`, which take `body`'s colour; it is never fine for `<button>`,
+`<input>`, `<select>` or `<textarea>`, which have UA defaults that ignore the
+scheme.
+
+**The systematic guard** is a dark-mode contrast audit in QA that walks up for each
+element's real backdrop, computes the WCAG ratio, and applies the right floor
+(4.5:1, or 3:1 for large text). It covers both stylesheets and fails the run on any
+element below its floor. A visual check cannot catch this reliably; a measurement
+can. Worst ratio was dark-on-dark before the fix, 14.92:1 after.
+
+## 7h. Forced-rank: rebuilt on every tap, so taps went missing
+
+Selecting three qualities in quick succession dropped one. `renderRanks` replaced
+both grids' `innerHTML` on every click, so a tap landing mid-rerender hit a
+detached node and vanished — trivially reproducible on a phone, and it showed up as
+"the selection looks broken".
+
+The grid is now built once and updated in place: `aria-pressed`, the order badge and
+the disabled state are set on existing nodes. Nothing is recreated, so a click can
+never miss its target. Cheaper per tap as well.
+
+QA now fires three taps with no waits between them and asserts all three register
+**in order**, which is the condition the old implementation failed.
+
+## 7i. The forced-rank rules were correct and invisible
+
+Reported as "the selection looked broken", and the greying "random". It was
+neither — it was three true rules, none of which the page stated:
+
+| Rule | Was it visible? |
+|---|---|
+| "Matter most" takes **exactly 3** | No counter, no cap shown |
+| "Matter least" takes **up to 2**, optional | Buried in help text |
+| A quality can sit in **one list or the other**, never both | Rows simply greyed, with no reason |
+
+So a client who picked three could see rows greying in the *other* list and
+reasonably conclude the cap was shared across both sections — and tapping a fourth
+in a full list did **nothing at all**, which is indistinguishable from a fault.
+
+Fixed by making each rule state itself:
+
+- A live tally per list: "3 of 3 chosen", "0 of 2 chosen".
+- Every disabled row says **which** of the two reasons applies — "Already chosen as
+  one of the three that matter most", or "Three already chosen — remove one to pick
+  this instead". A disabled control with no stated reason is indistinguishable from
+  a broken one.
+- The lede now says there are two separate lists and that a quality goes in one or
+  the other.
+
+**One copy correction while in here.** The help text said "Pick exactly three, in
+order", implying tap order carried weight. It does not — §6.3 gives every top-3
+dimension the same +15 and the same 3.0 weight. Promising precision the scoring
+does not have is worse than saying nothing, so it now reads "the numbers only show
+what you picked — all three count equally".
+
+**What the QA gap was.** The mechanics were tested from the first build: three taps
+register in order, and a top-ranked dimension is blocked in the bottom list. Both
+passed. What was never asserted is that a *person* could tell why a row was
+unavailable. Behaviour was covered; legibility was not. There are now assertions
+that each list reports how full it is, that a cap-blocked row explains the cap,
+that a cross-list-blocked row explains the other list, and that five of the six
+qualities can be placed across the two lists — the thing that was actually in doubt.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

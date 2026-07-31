@@ -84,16 +84,20 @@ const STEPS = [
   },
   {
     title: "What actually matters",
-    lede: "Pick the three qualities that most separate someone who succeeds here from someone who doesn't. Then, if you like, the ones that matter least.",
+    lede: "Two separate lists. Pick exactly three qualities that most separate someone who succeeds here from someone who doesn't, and optionally up to two that matter least. A quality can go in one list or the other, not both.",
     body: () => `
       <div class="field">
-        <span class="q">The three that matter most</span>
-        <span class="help">Pick exactly three, in order. Tap again to remove.</span>
+        <span class="q">The three that matter most <span class="tally mono" id="tally-top"></span></span>
+        <span class="help">Pick exactly three. Tap one again to remove it. The numbers
+          only show what you picked — all three count equally.</span>
         <div class="rank-grid" id="rank-top"></div>
       </div>
       <div class="field">
-        <span class="q">Anything that matters least here? <span class="muted">(optional)</span></span>
-        <span class="help">Up to two. We still measure these — we just weight them lower for this role.</span>
+        <span class="q">Anything that matters least here? <span class="muted">(optional)</span>
+          <span class="tally mono" id="tally-bottom"></span></span>
+        <span class="help">Up to two, and you can leave this empty. We still measure these
+          — we just weight them lower for this role. The three you picked above are greyed
+          out here, because a quality cannot matter both most and least.</span>
         <div class="rank-grid" id="rank-bottom"></div>
       </div>`,
     after: renderRanks,
@@ -169,30 +173,77 @@ function yesno(key, label, help) {
 // order" are different answers and the engine weights them the same either way —
 // but the client's sense of priority is worth capturing and showing back.
 function renderRanks() {
-  const draw = (host, key, max) => {
-    el(host).innerHTML = (S.form.rankable || []).map((d) => {
-      const picked = (S.d[key] || []).indexOf(d.code);
-      const other = key === "top3" ? "bottom3" : "top3";
-      const blocked = picked < 0 && (S.d[other] || []).includes(d.code);
-      return `<button type="button" class="rank-item" data-code="${d.code}" data-key="${key}"
-        aria-pressed="${picked >= 0}" ${blocked ? "disabled" : ""}>
-        <span class="pos">${picked >= 0 ? picked + 1 : ""}</span>
-        <span><span class="n">${esc(d.name)}</span><br><span class="p">${esc(d.plain)}</span></span>
-      </button>`;
-    }).join("");
-    el(host).querySelectorAll(".rank-item").forEach((b) =>
-      b.addEventListener("click", () => {
-        const list = S.d[key] || [];
-        const at = list.indexOf(b.dataset.code);
-        if (at >= 0) list.splice(at, 1);
-        else if (list.length < max) list.push(b.dataset.code);
-        S.d[key] = list;
-        draw("rank-top", "top3", 3); draw("rank-bottom", "bottom3", 2);
-        save();
-      }));
+  // Built ONCE, then updated in place. The earlier version replaced both grids'
+  // innerHTML on every tap, which meant a tap landing mid-rerender hit a detached
+  // node and was silently lost — easy to trigger by selecting quickly on a phone.
+  // Nothing is recreated now, so a click can never miss its target.
+  const build = (host, key) => {
+    el(host).innerHTML = (S.form.rankable || []).map((d) => `
+      <button type="button" class="rank-item" data-code="${d.code}" data-key="${key}" aria-pressed="false">
+        <span class="pos"></span>
+        <span><span class="n">${esc(d.name)}</span><br><span class="p">${esc(d.plain)}</span>
+          <span class="why"></span></span>
+      </button>`).join("");
   };
-  draw("rank-top", "top3", 3);
-  draw("rank-bottom", "bottom3", 2);
+
+  // Two caps, two lists, and a quality may sit in only one of them. All three of
+  // those facts were true before and none of them were visible, which is why a
+  // correct control read as a broken one. Each disabled row now states WHICH
+  // reason applies, and each list shows how full it is.
+  const LABEL = { top3: "one of the three that matter most", bottom3: "one that matters least" };
+  const CAP = { top3: 3, bottom3: 2 };
+
+  const paint = () => {
+    [["rank-top", "top3"], ["rank-bottom", "bottom3"]].forEach(([host, key]) => {
+      const other = key === "top3" ? "bottom3" : "top3";
+      const mine = S.d[key] || [];
+      const full = mine.length >= CAP[key];
+
+      el(host).querySelectorAll(".rank-item").forEach((b) => {
+        const at = mine.indexOf(b.dataset.code);
+        const inOther = (S.d[other] || []).includes(b.dataset.code);
+        b.setAttribute("aria-pressed", at >= 0 ? "true" : "false");
+        b.querySelector(".pos").textContent = at >= 0 ? at + 1 : "";
+        const why = b.querySelector(".why");
+
+        if (at < 0 && inOther) {
+          b.disabled = true;
+          why.textContent = `Already chosen as ${LABEL[other]}`;
+        } else if (at < 0 && full) {
+          // Tapping a fourth used to do nothing at all, which looks like a fault.
+          b.disabled = true;
+          why.textContent = `${CAP[key] === 3 ? "Three" : "Two"} already chosen — remove one to pick this instead`;
+        } else {
+          b.disabled = false;
+          why.textContent = "";
+        }
+      });
+
+      const tally = el(key === "top3" ? "tally-top" : "tally-bottom");
+      if (tally) {
+        tally.textContent = `${mine.length} of ${CAP[key]} chosen`;
+        if (mine.length === CAP[key]) tally.dataset.state = "done";
+        else delete tally.dataset.state;
+      }
+    });
+  };
+
+  ["rank-top", "rank-bottom"].forEach((host, i) => {
+    const key = i === 0 ? "top3" : "bottom3";
+    build(host, key);
+    el(host).addEventListener("click", (e) => {
+      const b = e.target.closest(".rank-item");
+      if (!b || b.disabled) return;
+      const list = S.d[key] || [];
+      const at = list.indexOf(b.dataset.code);
+      if (at >= 0) list.splice(at, 1);
+      else if (list.length < CAP[key]) list.push(b.dataset.code);
+      S.d[key] = list;
+      paint();
+      save();
+    });
+  });
+  paint();
 }
 
 // ═══ RENDER / COLLECT ══════════════════════════════════════════════════════
