@@ -961,6 +961,65 @@ The last line matters most. A recruiter reading "0 eligible" would reasonably
 conclude the candidate is not on the shortlist. Under R3 they are — set aside,
 with every failing filter named, and advanceable. The copy now says so.
 
+## 7r. The per-candidate view, built so it cannot become a verdict
+
+Asked for directly. Worth recording *how* it was built, because a page of nine
+numbers with nothing to read them against is precisely the artefact this system
+was designed not to produce — and the easiest one to produce by accident.
+
+**A score is never shown alone.** Every dimension carries the required level from
+every open role, the gap in points, and whether it meets. The QA asserts this
+structurally, not by reading copy: it walks each rendered dimension and fails if
+any of them has no target line. With no open role the page says so in a callout —
+*"nine numbers on their own are not an assessment; 72 on Resilience is strong for
+one desk and short for another"* — rather than quietly rendering the table.
+
+**Bipolar dimensions get a dot, not a bar.** §6.3 says neither pole of MOT or STY
+is better. A bar filling toward 100 claims otherwise, whatever the caption says,
+so `.meter-bipolar` hides the fill entirely and shows a position marker between
+the two pole labels. The line reads "sits best near 17 · this candidate is 3
+away", never "20 out of 100". QA asserts the fill is `display: none` and the dot
+and pole labels are present, because this one is a visual claim and copy cannot
+carry it.
+
+**The bar's tick is the target, and the target is the only orange on the page.**
+The streak marks position, never quality (rule 4) — here it marks *what the role
+requires*, which is a fact about the client, not a judgement about the person.
+
+**CLS is shown twice and blended never.** `CLS_C` and `CLS_F` each appear with the
+role's weight and the effective value the engine used — "this role weights it 28%
+of closing, effective 55.7". There is no single closing score to show, because
+storing one would make a candidate's score depend on which client they met first
+(§7.2), and the page would rather show the mechanism than invent a number.
+
+**Flags carry their own caveat.** `fast_completion` on its own reads as an
+accusation; with *"could be a fast reader, could be clicking through — the
+role-play in Step 4 settles it"* it reads as something to ask about. The section
+ends with the sentence that matters: none of them changes a score, and none of
+them excludes anybody.
+
+The whole payload comes from one `SECURITY DEFINER` RPC with an `is_staff()`
+guard — the most score-dense object in the system, and the one where R1 is least
+forgiving. Ranks are read from `v_console_clean` rather than recomputed, so there
+is one implementation of the ordering rather than two waiting to disagree.
+
+### Step 4 had never been driven in a browser
+
+Noticed while building this, and worth stating plainly: `interview.html` was
+written, applied and never once opened by a test. The reveal gate is a CHECK
+constraint (`scores_revealed_at >= ratings_submitted_at`), so a page that let you
+reach the scores before rating would not silently misbehave — it would fail at the
+database, mid-call, with a recruiter and a candidate on the line. It is now
+covered: the page loads for a real candidate-and-role pair, renders the
+predict-first screen, and QA asserts no score is on screen before ratings are
+submitted.
+
+### Also fixed
+
+Dates rendered through the browser's default locale — `8/1/2026`, ambiguous
+everywhere and back to front for the people reading it. Money was already
+formatted `en-IN`; dates now match and spell the month.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

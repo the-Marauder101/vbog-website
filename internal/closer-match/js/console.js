@@ -17,7 +17,7 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const VIEWS = ["signin", "reqs", "req", "queue", "health", "guide", "place", "supp", "loading"];
+const VIEWS = ["signin", "reqs", "req", "queue", "cand", "health", "guide", "place", "supp", "loading"];
 
 function view(name) {
   VIEWS.forEach((v) => {
@@ -37,7 +37,7 @@ function view(name) {
 // screen you were on. `aria-current` is both the announcement a screen reader
 // needs and the hook the streak under the active item hangs off. A shortlist is
 // still "Requirements", because that is where you came from and where Back goes.
-const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue",
+const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue", cand: "nav-queue",
                  health: "nav-health", place: "nav-place", supp: "nav-supp",
                  guide: "nav-guide" };
 
@@ -55,6 +55,14 @@ function rupees(n) {
   return "₹" + v;
 }
 const cycle = (d) => (Number(d) === 0 ? "same-day" : `${d}-day`);
+
+// Dates were left to the browser's locale, which renders "8/1/2026" — ambiguous
+// everywhere and back to front for the people reading it. Money is already
+// formatted en-IN; dates now match, and spell the month so there is nothing to
+// misread.
+const onDate = (v) => (v
+  ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+  : "—");
 
 // ═══ SIGN IN ═══════════════════════════════════════════════════════════════
 
@@ -654,7 +662,8 @@ async function loadQueue() {
       <div class="cand" style="grid-template-columns:1fr">
         <div>
           <div class="cand-head">
-            <span class="cand-name">${esc(c.full_name)}</span>
+            <span class="cand-name"><a href="#cand-${esc(c.id)}" data-cand="${esc(c.id)}"
+              >${esc(c.full_name)}</a></span>
             ${c.assessment_complete
               ? `<span class="chip strong">assessed</span>`
               : `<span class="chip">not finished</span>`}
@@ -673,6 +682,9 @@ async function loadQueue() {
       </div>`).join("")
     : `<div class="empty"><h3>No candidates yet</h3>
        <p class="muted">Create a test link above.</p></div>`;
+
+  el("queue-list").querySelectorAll("[data-cand]").forEach((a) =>
+    a.addEventListener("click", (e) => { e.preventDefault(); openCandidate(a.dataset.cand); }));
 
   const cslot = (id) => document.querySelector(`[data-cslot="${id}"]`);
   const cerr = (id) => (m) => { cslot(id).textContent = m; cslot(id).dataset.state = "error"; };
@@ -698,6 +710,160 @@ async function loadQueue() {
 
   view("queue");
 }
+
+// ═══ ONE CANDIDATE ═════════════════════════════════════════════════════════
+// The only screen that shows all nine scores at once, and the one most likely to
+// be misread. Three rules shape it:
+//
+//   · A score is never shown alone. Every dimension carries the required level
+//     from every open role, the gap, and whether it meets. With no open role the
+//     page says so instead of rendering a table that looks like a verdict.
+//   · Bipolar dimensions get a target and a distance, never a filled bar —
+//     neither pole is better, and a bar growing toward 100 would claim otherwise.
+//   · CLS_C and CLS_F are shown with the role's blend weights. Neither is "the"
+//     closing score; the role decides the mix, which is why no blend is stored.
+
+const num = (v) => (v === null || v === undefined ? null : Number(v));
+
+// One bar per dimension: ink fill to the score, a tick per role target. Position
+// carries the meaning, not colour — rule 4 holds here too.
+function scoreBar(score, targets, bipolar) {
+  const ticks = targets.map((t) => {
+    const at = num(bipolar ? t.target : t.target);
+    if (at === null) return "";
+    return `<span class="tick" style="left:${Math.max(0, Math.min(100, at))}%"
+              title="${esc(t.business_name)} — ${esc(t.title)}: ${at}"></span>`;
+  }).join("");
+  return `<span class="meter${bipolar ? " meter-bipolar" : ""}">
+    <span class="meter-fill" style="width:${Math.max(0, Math.min(100, score))}%"></span>
+    ${bipolar ? `<span class="meter-dot" style="left:${Math.max(0, Math.min(100, score))}%"></span>` : ""}
+    ${ticks}</span>`;
+}
+
+function targetLine(d, t) {
+  const who = `${esc(t.business_name)} — ${esc(t.title)}`;
+  if (d.kind === "bipolar") {
+    const dist = num(t.distance);
+    return `${who}: sits best near <strong>${t.target}</strong> · this candidate is
+            <strong>${dist}</strong> away${dist <= 15 ? " — close" : ""}`;
+  }
+  const delta = num(t.delta);
+  const bit = delta >= 0
+    ? `<strong>meets ${t.target}</strong>, ${delta} above`
+    : `<strong>needs ${t.target}</strong>, ${Math.abs(delta)} short`;
+  if (t.w !== null && t.w !== undefined) {
+    return `${who}: ${bit} · this role weights it
+            <strong>${Math.round(num(t.w) * 100)}%</strong> of closing,
+            effective ${t.cls_effective}`;
+  }
+  return `${who}: ${bit}`;
+}
+
+async function openCandidate(id) {
+  view("loading");
+  let d;
+  try { d = await sbRpc("get_candidate_detail", { p_candidate_id: id }); }
+  catch (e) {
+    el("cd-name").textContent = "Could not load this candidate";
+    el("cd-meta").textContent = e.message;
+    el("cd-body").innerHTML = ""; el("cd-disclaimer").textContent = "";
+    return view("cand");
+  }
+
+  const c = d.candidate, a = d.assessment;
+  el("cd-name").textContent = c.full_name;
+  el("cd-meta").innerHTML = [
+    a && a.completed_at ? `assessed ${onDate(a.completed_at)}` : null,
+    a && a.minutes ? `${a.minutes} minutes` : null,
+    a ? `${a.answered} of ${a.expected} answered` : null,
+    c.consent_at ? `consented ${onDate(c.consent_at)}` : null,
+  ].filter(Boolean).map(esc).join(" · ");
+
+  if (!d.scored) {
+    el("cd-body").innerHTML = `<div class="notice"><span class="label">Nothing to show yet</span>${esc(d.reason)}</div>`;
+    el("cd-disclaimer").textContent = "";
+    return view("cand");
+  }
+
+  // Where they stand, before any dimension is shown — the number that matters
+  // is the one against a role, not the nine underneath it.
+  const roles = d.roles || [];
+  const rolesHtml = roles.length ? `
+    <div class="region">
+      <div class="region-head"><h2>Against the open roles</h2>
+        <span class="count mono">${roles.length}</span></div>
+      ${roles.map((r) => `
+        <div class="req">
+          <span class="title"><a href="#req-${esc(r.requirement_id)}"
+            data-cdreq="${esc(r.requirement_id)}">${esc(r.business_name)} — ${esc(r.title)}</a></span>
+          <span class="meta small">rank ${r.rank} of ${r.of} · quality ${r.quality_pct}% ·
+            fit ${r.fit_pct}% · confidence ${esc(r.confidence || "—")}
+            ${r.hard_filter_pass ? "" : ` · <strong>outside the stated filters</strong>:
+              ${(r.hard_filter_fails || []).map(esc).join(" · ")}`}</span>
+          <span class="figures"><span class="figure">${r.composite_pct}</span
+            ><span class="figure-unit">%</span><br><span class="mono muted">match</span></span>
+        </div>`).join("")}
+    </div>` : `
+    <div class="callout"><span class="label">No open role to read these against</span>
+      Nine numbers on their own are not an assessment — 72 on Resilience is strong for
+      one desk and short for another. The scores below are shown for completeness;
+      they mean something once a client opens a role and the engine has a required
+      level to compare each one to.</div>`;
+
+  const flagsHtml = (d.flags || []).length ? `
+    <div class="region">
+      <div class="region-head"><h2>Flags</h2><span class="count mono">${d.flags.length}</span></div>
+      <ul class="evidence">
+        ${d.flags.map((f) => `<li><span class="glyph mono">!</span>
+          <span><strong>${esc(f.code.replace(/_/g, " "))}</strong> — ${esc(f.meaning)}</span></li>`).join("")}
+      </ul>
+      <p class="small muted" style="margin-top:10px">A flag is something to ask about on
+        the call. None of them changes a score, and none of them excludes anybody.</p>
+    </div>` : "";
+
+  const dims = (d.dimensions || []).map((dim) => {
+    const score = num(dim.score);
+    const targets = dim.targets || [];
+    return `
+      <div class="panel dim">
+        <div class="cand-head">
+          <span class="cand-name">${esc(dim.name)}</span>
+          <span class="chip">${esc(dim.code)}</span>
+          ${dim.kind === "bipolar" ? `<span class="chip">no better pole</span>` : ""}
+          <span class="spacer"></span>
+          <span class="figure">${score}</span>
+        </div>
+        ${scoreBar(score, targets, dim.kind === "bipolar")}
+        ${dim.kind === "bipolar"
+          ? `<div class="poles small muted"><span>${esc(dim.pole_0 || "0")}</span>
+             <span>${esc(dim.pole_100 || "100")}</span></div>` : ""}
+        <p class="small muted" style="margin:8px 0 0">${esc(dim.definition || "")}</p>
+        ${targets.length
+          ? `<ul class="evidence" style="margin-top:10px">
+              ${targets.map((t) => `<li><span class="glyph mono">${
+                dim.kind === "bipolar" ? "~" : (num(t.delta) >= 0 ? "+" : "!")
+              }</span><span>${targetLine(dim, t)}</span></li>`).join("")}
+             </ul>`
+          : `<p class="small muted" style="margin-top:8px">No open role states a
+             requirement for this one.</p>`}
+      </div>`;
+  }).join("");
+
+  el("cd-body").innerHTML = rolesHtml + flagsHtml + `
+    <div class="region">
+      <div class="region-head"><h2>The nine, against what each role asks for</h2>
+        <span class="count mono">${(d.dimensions || []).length}</span></div>
+      ${dims}
+    </div>`;
+  el("cd-disclaimer").textContent = d.disclaimer || "";
+
+  el("cd-body").querySelectorAll("[data-cdreq]").forEach((x) =>
+    x.addEventListener("click", (e) => { e.preventDefault(); loadRequirement(x.dataset.cdreq); }));
+
+  view("cand");
+}
+
+el("btn-back-queue").addEventListener("click", loadQueue);
 
 el("btn-new-cand").addEventListener("click", async () => {
   const name = el("new-cand").value.trim();

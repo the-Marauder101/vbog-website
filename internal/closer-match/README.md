@@ -90,17 +90,21 @@ the scoring arithmetic end to end, and the confidence multiplier.
 
 ## Where the results are
 
-**Requirements → open the role.** That is the only screen that shows a score, and
-it shows it *against a target*: rank, composite, the quality/fit split, three
-reasons, the concerns, any failing hard filters, and whether the person fits a
-different open role better.
+**Requirements → open the role** for the shortlist: rank, composite, the
+quality/fit split, three reasons, the concerns, any failing hard filters, and
+whether the person fits a different open role better.
 
-There is deliberately **no per-candidate score sheet**. A dimension score means
-nothing without a requirement to read it against — 72 on Resilience is strong for
-one desk and short for another — and a standalone number would be the first step
-toward the score becoming the decision. **Candidates** tells you whether a
-submission landed and how many open roles the person is eligible for; the
-shortlist tells you what it means.
+**Candidates → click a name** for one person in full — all nine dimensions, each
+one shown *against every open role's required level*, with the gap in points and a
+tick on the bar marking what the role asks for.
+
+That "against" is the whole design. A dimension score means nothing on its own —
+72 on Resilience is strong for one desk and short for another — so the page never
+shows a bare number. With no open role it says so instead of rendering the table.
+Bipolar dimensions (Deal Motion, Interpersonal Style) show a position between
+their two poles rather than a bar filling toward 100, because neither pole is
+better. Closing appears twice, considered and fast, with each role's blend weight
+and the effective value — there is no single closing score, by design.
 
 Matching runs at both ends: when a client submits their brief, and when a
 candidate finishes their test. So the order does not matter — see ARCHITECTURE.md

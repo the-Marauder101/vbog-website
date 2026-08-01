@@ -150,7 +150,7 @@ async function loadKeyerLinks(rounds) {
           <span class="mono muted">${k.keyed} / ${k.total} keyed</span>
         </div>
         <p class="small muted" style="margin:6px 0 0">${esc(k.email)} · round ${esc(k.round_label)}
-           · expires ${new Date(k.expires_at).toLocaleDateString()}</p>
+           · expires ${new Date(k.expires_at).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" })}</p>
         ${k.revoked || k.expired ? "" : `
         <input type="text" readonly value="${esc(url)}" onclick="this.select()" style="margin-top:8px">`}
         <div class="actions" style="margin-top:10px">
