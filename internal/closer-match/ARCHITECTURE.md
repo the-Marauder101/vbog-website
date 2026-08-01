@@ -734,7 +734,157 @@ the active marker proven to *move* rather than be hard-coded; no horizontal scro
 at 380px; and create/rename/delete re-run through the buttons, since `view()`
 changed.
 
-## 8. Next
+## 7n. Every view was bypassing RLS. Found while adding keying links.
+
+The most serious defect in the project so far, present since the first view was
+created, and invisible to every check that existed.
+
+### What was wrong
+
+A Postgres view runs with the privileges of its **owner** unless created with
+`security_invoker = true`. Every view here was owned by `postgres` and none set
+it, so reading a view executed as `postgres` and the row policies on the
+underlying tables **were never consulted**. Separately, Supabase's default
+privileges grant `anon` and `authenticated` everything on new objects in
+`public`, and a view is a new object in `public`.
+
+Verified against the live project with nothing but the publishable key — the one
+that ships in `js/config.js`, sits in this repo, and is in every visitor's
+browser:
+
+| Request | Result |
+|---|---|
+| `GET /rest/v1/v_candidate_queue` | **200** — candidate names, flags, eligibility counts |
+| `GET /rest/v1/v_requirements` | **200** — client names, ticket sizes, target profiles, best match % |
+| `GET /rest/v1/v_keying_links` | **200** — **live keying tokens** |
+| `GET /rest/v1/v_console_clean` | **200** — empty only because no matches exist yet; it projects dimension scores and match percentages |
+
+That is R1 and C10 broken. Scores did leave the building, and a keying token was
+readable by anyone, which would have let a stranger key items as an invited
+expert and quietly corrupt the only pre-launch validation the instrument has.
+
+### Why nothing caught it
+
+**`v_c10_audit` audits policies.** It looks for a policy admitting a non-staff
+principal, and there is none — which is why every previous check passed. The hole
+was not a policy. It was a mechanism that never consulted policies at all. *An
+audit only ever covers the mechanism you thought of.*
+
+**Every browser test signed in first.** A signed-in staff user gets the same rows
+through either mechanism, so no test could tell them apart. The candidate surface
+*was* tested as `anon`, but only against the three RPCs it actually calls — never
+against a view it had no reason to call.
+
+The §7f lesson — *a test may read through any door, but it must create through
+the one the user does* — had the right shape and too narrow a scope. The full
+version:
+
+> **You have to try the doors the user never uses.** An attacker is not
+> constrained to your call graph.
+
+### The fix — `sql/18`
+
+1. `security_invoker = true` on every view in `public`, applied in a loop so none
+   can be missed, including ones added later.
+2. `anon` loses every privilege on every table and view in `public`. It needs
+   none: the candidate, client, keyer and supplement surfaces reach the database
+   exclusively through `SECURITY DEFINER` functions (§4).
+3. Default privileges changed, so a view created tomorrow is not granted to
+   `anon` the moment it exists.
+4. **`v_rls_bypass_audit`**, which must always be empty — beside `v_c10_audit`,
+   asking the question the other one does not: *can anything reach these rows
+   without a policy being consulted?*
+
+A consequence worth stating plainly: `v_group_differences` and `v_group_gaps`
+read `monitoring_attributes`, which §14.3 restricts to admin and psych. Until now
+a **recruiter could read group data through those views**. Now they cannot. That
+is not a regression — it is the isolation §14.3 asked for, finally holding.
+
+## 7o. Two more, each exposed by the previous fix
+
+Closing one hole made the next one visible. Worth recording as a pattern: a
+system with a bypass in it hides the bugs downstream of the bypass.
+
+### The console had no authorisation check at all — `sql/19`
+
+`afterSignIn()` decided you were staff by running `loadRequirements()` and seeing
+whether it threw. Before `sql/18` that inference was wrong in the dangerous
+direction: the view bypassed RLS, so a stranger who signed up saw **real
+requirements**. After `sql/18` it was wrong in the merely embarrassing direction:
+RLS returns zero rows, zero rows is not an exception, so a stranger landed inside
+an empty console with the whole navigation bar available.
+
+Both are the same mistake. **An empty result is not a denial.** Postgres RLS is
+deliberately silent — it filters rows rather than raising — so any client that
+treats "no error" as "permitted" has no authorisation check whatsoever.
+
+Permission is now a positive answer from the database: `whoami()` returns
+`{staff, role, name, reason}`, `SECURITY DEFINER` so a non-staff caller can still
+be told no, and nothing loads without `staff === true`. The restored-token path on
+boot goes through the same check, because reloading the page is not a second way
+in. An invited keyer who signs up with their invited email is told, in words, to
+use their keying link instead.
+
+### Resume had never worked on the candidate assessment
+
+`start_assessment()` returns the answer map as `answered`. `js/assess.js` read
+`data.answers`. One wrong property name silently disabled every piece of resume
+in the file at once: the index landed on item 1, no option was pre-selected, the
+progress bar started at zero, and the review screen counted nothing. Everything
+downstream of that line was already correct.
+
+So a candidate who closed the tab at question 30 came back to question 1 with a
+blank sheet and re-answered all 44 items — while the README promised the link
+"resumes exactly where they stopped". `save_response()` upserts, so no data was
+corrupted; the cost was paid entirely by the candidate.
+
+Two things made it invisible: `|| {}` turned the undefined into a plausible empty
+state instead of an error, and every test had checked that the page *loaded*
+rather than what it loaded *with*. The check now asserts the resumed position and
+the progress bar, not the absence of a crash.
+
+While there: a returning candidate was also shown the whole §15.1 consent notice
+again and made to re-tick the box. `start_assessment()` already refuses without
+consent and with a distinct message, so the page now tries it first and falls
+back to the notice only when consent is what is actually missing.
+
+## 7p. Keying by link — `sql/17`
+
+§13 wants three experts keying all 28 SJT items blind, and the most independent
+keyers are the ones who do not work here. Until now keying required a Supabase
+account plus a `staff` row, which means handing an outsider a login to the tool
+that renders every score in the system — a bad trade for half a day of work. So
+keying now follows the pattern the other three external surfaces already use:
+
+```
+keying.html?t=<token>     no account, no table access, nothing reachable but the items
+```
+
+Four things this could have broken, and how each is held:
+
+| | How |
+|---|---|
+| **Blindness** | `get_keying_by_token()` does not select `score_key`, exactly as `get_keying_items()` does not. `sql/17` asserts it on every deploy — with SQL comments stripped first, because both functions carry a comment *saying* the key is absent and the first version of the assertion matched its own documentation. |
+| **Nothing else reachable** | Three `SECURITY DEFINER` RPCs, granted to `anon`; no table grant. QA probes 41 views and tables with the publishable key and all 41 refuse. |
+| **A link is not an account** | Each keyer gets a `staff` row so keys can be attributed and `v_keying_agreement` works unchanged — with `auth_uid = null`, `active = false`, `role = 'keyer'`. `is_staff()` requires `auth_uid = auth.uid() AND active`, so the row grants exactly nothing. If that email signs up for real it links and is still inactive. |
+| **One link, one keyer** | `keying_submissions` is keyed on (round, expert, item), so two people sharing a link would silently overwrite each other. The link is minted per named keyer and the page shows **whose it is**, in the open, before they answer anything. |
+
+The console lists every link with progress (`keyed / total`) and a state — not
+opened, in progress, finished, expired, withdrawn — because §13 stalls when one of
+the three never finishes and that is invisible unless it is on screen. Withdrawing
+a link stops it immediately and keeps everything already keyed.
+
+### Verified — 39 assertions, two browser contexts
+
+The admin issues the link in one context; a **separate** anonymous context with no
+session opens it. Sharing one context would have let a leftover token do the work
+and proved nothing. Covered end to end: the link opens with no sign-in, names its
+keyer, offers all 28 items, saves an answer, resumes on the first *unkeyed* item
+after a reload, clears an answer, shows progress back to the admin, feeds the
+agreement report, refuses a withdrawn link and a made-up token with sentences a
+person can act on, and never — in 16.5KB of payload — mentions `score_key`.
+
+## 8. Next## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
 

@@ -61,15 +61,30 @@ const cycle = (d) => (Number(d) === 0 ? "same-day" : `${d}-day`);
 async function afterSignIn() {
   // Signing up grants nothing. Access exists only once an admin has added a
   // staff row, which link_staff_account() binds to this auth user.
-  const link = await sbRpc("link_staff_account").catch(() => null);
+  //
+  // This used to decide by running loadRequirements() and seeing whether it
+  // threw — which is not an authorisation check. RLS is silent: it filters rows
+  // rather than raising, so a stranger who signed up got a console that merely
+  // happened to be empty, with the whole navigation bar available. Permission is
+  // now a POSITIVE answer from the database, and nothing loads without it.
+  await sbRpc("link_staff_account").catch(() => null);
+  let me = null;
+  try { me = await sbRpc("whoami"); } catch (_) { /* fall through to refusal */ }
+
+  if (!me || me.staff !== true) {
+    sbSignOut();
+    el("signin-error").hidden = false;
+    el("signin-error").innerHTML = `<span class="label">No access</span>` +
+      esc((me && me.reason) || "This account is not a staff account.");
+    return view("signin");
+  }
+
   try {
     await loadRequirements();
   } catch (e) {
     sbSignOut();
-    const why = link && link.linked === false ? link.reason : e.message;
     el("signin-error").hidden = false;
-    el("signin-error").innerHTML =
-      `<span class="label">No access</span>${esc(why)}`;
+    el("signin-error").innerHTML = `<span class="label">Could not load the console</span>${esc(e.message)}`;
     view("signin");
   }
 }
@@ -90,9 +105,15 @@ el("btn-signin").addEventListener("click", async () => {
 
 el("btn-signup").addEventListener("click", async () => {
   el("signin-error").hidden = true;
+  const email = el("si-email").value.trim(), pass = el("si-pass").value;
   try {
-    await sbSignUp(el("si-email").value.trim(), el("si-pass").value);
-    await sbSignIn(el("si-email").value.trim(), el("si-pass").value);
+    // An account that already exists is not a failure worth a dead end. People
+    // are told to "sign up at nikash.html with that email", forget they already
+    // did, and press the wrong button — so fall through to signing in and let the
+    // password decide.
+    try { await sbSignUp(email, pass); }
+    catch (e) { if (!/already registered|already exists/i.test(e.message)) throw e; }
+    await sbSignIn(email, pass);
     await afterSignIn();
   } catch (e) {
     el("signin-error").hidden = false;
@@ -774,9 +795,15 @@ el("nav-queue").addEventListener("click", (e) => { e.preventDefault(); loadQueue
 el("nav-health").addEventListener("click", (e) => { e.preventDefault(); loadHealth(); });
 
 // ═══ BOOT ══════════════════════════════════════════════════════════════════
+// A restored token gets the same positive check as a fresh sign-in. Reloading
+// the page is not a second way in.
 (async () => {
   if (sbRestoreToken()) {
-    try { await loadRequirements(); return; } catch (_) { sbSignOut(); }
+    try {
+      const me = await sbRpc("whoami");
+      if (me && me.staff === true) { await loadRequirements(); return; }
+    } catch (_) { /* fall through */ }
+    sbSignOut();
   }
   view("signin");
 })();

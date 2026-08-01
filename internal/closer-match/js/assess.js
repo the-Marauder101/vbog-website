@@ -124,7 +124,39 @@ async function loadConsent() {
   });
   el("btn-consent").addEventListener("click", beginAssessment);
 
+  // ALREADY CONSENTED? Then do not ask again. Someone who closes the tab halfway
+  // through and reopens the link was being shown the whole C1 notice a second
+  // time and made to tick the box again, which reads as "the tool forgot me" and
+  // contradicts what we tell them: that the link resumes where they stopped.
+  //
+  // No new RPC for this: start_assessment() already refuses without consent, and
+  // with a distinct message. Try it, and fall back to the notice only when it
+  // says consent is what is missing.
+  try {
+    return enterTest(await sbRpc("start_assessment", { p_token: S.token }));
+  } catch (e) {
+    if (!/consent has not been recorded/i.test(e.message)) return fail(e.message);
+  }
+
   show("consent");
+}
+
+// The one place the test actually starts, shared by both paths so a resumed
+// session and a fresh one cannot drift apart.
+function enterTest(data) {
+  S.items = data.items;
+  // `answered`, not `answers` — start_assessment() has always returned the map
+  // under that name, and reading the wrong property silently disabled every
+  // piece of resume in this file at once: the index landed on item 1, no radio
+  // was pre-selected, the progress bar started at zero and the review screen
+  // counted nothing. Everything downstream of this line was already correct.
+  S.answers = data.answered || {};
+  // Resume where they left off: the first unanswered item.
+  S.i = S.items.findIndex((it) => !(it.id in S.answers));
+  if (S.i < 0) S.i = S.items.length;
+  S.startedAt = Date.now();
+  el("topbar").hidden = false;   // the clock starts when the test does
+  advance(true);
 }
 
 async function beginAssessment() {
@@ -132,15 +164,7 @@ async function beginAssessment() {
   el("btn-consent").textContent = "Starting…";
   try {
     await sbRpc("record_consent", { p_token: S.token });
-    const data = await sbRpc("start_assessment", { p_token: S.token });
-    S.items = data.items;
-    S.answers = data.answers || {};
-    // Resume where they left off: the first unanswered item.
-    S.i = S.items.findIndex((it) => !(it.id in S.answers));
-    if (S.i < 0) S.i = S.items.length;
-    S.startedAt = Date.now();
-    el("topbar").hidden = false;   // the clock starts when the test does
-    advance(true);
+    enterTest(await sbRpc("start_assessment", { p_token: S.token }));
   } catch (e) {
     el("btn-consent").disabled = false;
     el("btn-consent").textContent = "Start the assessment";
