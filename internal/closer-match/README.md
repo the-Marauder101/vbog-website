@@ -67,7 +67,7 @@ ARCHITECTURE.md §7b0 and §7m.
 | 1 | Candidate takes the 44-item test | 9 scores |
 | 1.1 | Client completes intake | target profile |
 | 1.5 | **Hard filters** — before any matching | eligibility, failing filter named |
-| 2 | Match + rank | ranked requirements |
+| 2 | Match + rank — runs when a client submits **and** when a candidate finishes | ranked requirements |
 | 3 | Client supplement — **top 2 requirements only** | supplement verdict |
 | 4 | Verification call: technical + role-play + psych probes | interview ratings |
 | 5 | Sent to client | placement + outcomes |
@@ -88,6 +88,24 @@ select * from run_golden_cases();
 CLS-blend frame split, band boundaries, the cycle override, hard-filter naming,
 the scoring arithmetic end to end, and the confidence multiplier.
 
+## Where the results are
+
+**Requirements → open the role.** That is the only screen that shows a score, and
+it shows it *against a target*: rank, composite, the quality/fit split, three
+reasons, the concerns, any failing hard filters, and whether the person fits a
+different open role better.
+
+There is deliberately **no per-candidate score sheet**. A dimension score means
+nothing without a requirement to read it against — 72 on Resilience is strong for
+one desk and short for another — and a standalone number would be the first step
+toward the score becoming the decision. **Candidates** tells you whether a
+submission landed and how many open roles the person is eligible for; the
+shortlist tells you what it means.
+
+Matching runs at both ends: when a client submits their brief, and when a
+candidate finishes their test. So the order does not matter — see ARCHITECTURE.md
+§7q, because for a while it did.
+
 ## Health checks
 
 | Query | Tells you |
@@ -102,6 +120,7 @@ the scoring arithmetic end to end, and the confidence multiplier.
 | `select * from v_keying_agreement` | Where the three expert keys diverge (§13) |
 | `select * from v_c10_audit` | **Must always be empty** — any row is a policy exposing a score to a non-staff principal |
 | `select * from v_rls_bypass_audit` | **Must always be empty** — any row is something reachable *without* a policy being consulted at all (see ARCHITECTURE.md §7n) |
+| `select * from v_unmatched_audit` | **Must always be empty** — any row is an assessed candidate missing from an open role's shortlist (§7q) |
 | `select * from v_outcomes_due` | Overdue outcome checkpoints. The one table everything else depends on |
 | `select * from v_predictor_validity` | Which of the three predictors actually predicted retention |
 | `select * from v_criterion_validity` | Do the dimensions separate known-strong from known-average closers |

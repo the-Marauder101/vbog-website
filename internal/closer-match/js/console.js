@@ -632,6 +632,20 @@ el("btn-back-reqs").addEventListener("click", loadRequirements);
 
 // ═══ CANDIDATE QUEUE ═══════════════════════════════════════════════════════
 
+// "0 eligible requirements" was the same sentence whether nothing was open, the
+// person had not finished, or they were open and failed every filter. Those need
+// three different actions from a recruiter, so they get three different lines —
+// and the last one says where to look, because an excluded candidate is still ON
+// the shortlist (R3) rather than missing from it.
+function queueStatus(c) {
+  if (!c.assessment_complete) return "waiting on them to finish";
+  if (!c.open_reqs) return "assessed · no open roles to match against yet";
+  if (c.eligible_reqs) {
+    return `${c.eligible_reqs} of ${c.open_reqs} open role${c.open_reqs === 1 ? "" : "s"} — see the shortlist`;
+  }
+  return `assessed · passes no filter on ${c.open_reqs === 1 ? "the open role" : `any of ${c.open_reqs} open roles`}, still listed with the reason`;
+}
+
 async function loadQueue() {
   const rows = await sbFetch("v_candidate_queue?order=created_at.desc&limit=100");
   el("queue-count").textContent = `${rows.length}`;
@@ -646,7 +660,7 @@ async function loadQueue() {
               : `<span class="chip">not finished</span>`}
             ${(c.flags || []).map((f) => `<span class="chip">${esc(f.replace(/_/g, " "))}</span>`).join(" ")}
             <span class="spacer"></span>
-            <span class="small muted">${c.eligible_reqs} eligible requirement${c.eligible_reqs === 1 ? "" : "s"}</span>
+            <span class="small muted">${queueStatus(c)}</span>
           </div>
           <div class="actions" style="margin-top:10px">
             <button class="btn-quiet btn-small" data-cand-rename="${esc(c.id)}"

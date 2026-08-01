@@ -884,7 +884,84 @@ after a reload, clears an answer, shows progress back to the admin, feeds the
 agreement report, refuses a withdrawn link and a made-up token with sentences a
 person can act on, and never — in 16.5KB of payload — mentions `score_key`.
 
-## 8. Next## 8. Next
+## 7q. A finished assessment was never matched against anything
+
+Found by the owner asking a plain question — *"where do I see candidate results,
+the ones who have submitted?"* — with one candidate on the live project who had
+answered 44 of 44 and appeared nowhere.
+
+### The bug
+
+Matching ran in exactly one direction. `submit_intake()` calls `compute_matches()`
+when a **client** submits their brief, matching the new requirement against every
+candidate assessed so far. Nothing did the mirror image: `finish_assessment()`
+computed the candidate's profile and stopped.
+
+So a candidate who finished the test **after** a role was opened produced no
+`matches` row at all. The queue said "assessed · 0 eligible requirements", the
+shortlist for the open role was empty, and there was nowhere in the console to
+see that their submission had landed. Whether the work was visible depended on
+the order of two events, which is not a property any pipeline should have. §9
+does not say "match on intake" — it says one assessment is matched against every
+open requirement, and that is a claim about both directions.
+
+### Why the tests missed it
+
+Every prior QA run created the candidate **and** the requirement inside the same
+script, and the golden cases call `compute_matches()` explicitly because they
+exist to exercise the arithmetic. So the fixtures always ran intake-last or
+invoked the engine by hand. Nobody ever ran the real sequence: *open a role
+today, have somebody finish the test tomorrow.*
+
+Which is the same failure mode as §7f and §7n, in its third costume:
+
+> A test that constructs its own world in one order never discovers that the
+> product depends on that order.
+
+### The fix — `sql/20`
+
+`finish_assessment()` now matches against every open, non-fixture requirement
+that has a target profile. Same `compute_matches()`, same arithmetic, same golden
+cases; the only change is that it is called from both ends of the pipeline. Each
+requirement is attempted separately and a failure is logged as a warning rather
+than raised — the assessment is already saved and scored, and a requirement that
+cannot be matched right now must not cost the candidate their submission. The
+return value reports `matched_requirements` and `failed_requirements`, so
+"matched against nothing because nothing is open" is distinguishable from
+"matching broke".
+
+**`v_unmatched_audit`** is the assertion that would have caught it: any candidate
+with a computed profile who is missing from an open requirement. It must always
+be empty — there is no legitimate state where an assessed candidate is absent
+from an open role's shortlist, because exclusion is recorded **as** a match row
+with `hard_filter_pass = false` (R3), never as a missing one.
+
+### Two things fixed alongside it
+
+**Fixture requirements were being matched too.** The golden-case roles are
+`status = 'open'`, so the first version of the fix gave every real candidate
+seven match rows against ZZ_FIXTURE roles. The console cannot display them
+(`v_requirements` filters fixture clients) but `eligible_reqs` counted them
+happily. Excluded on the same rule used everywhere else.
+
+**`eligible_reqs` counted history, not the present.** It counted every passing
+match a candidate had ever had, including roles since closed. "3 eligible
+requirements" pointing at two closed roles is worse than no number. It now counts
+open, non-fixture roles only, and the view also returns `open_reqs` so the queue
+can distinguish four states that used to render as the same "0 eligible":
+
+| State | What the queue says now |
+|---|---|
+| Not finished | *waiting on them to finish* |
+| Assessed, nothing open | *assessed · no open roles to match against yet* |
+| Assessed, eligible somewhere | *1 of 2 open roles — see the shortlist* |
+| Assessed, passes no filter | *assessed · passes no filter on the open role, still listed with the reason* |
+
+The last line matters most. A recruiter reading "0 eligible" would reasonably
+conclude the candidate is not on the shortlist. Under R3 they are — set aside,
+with every failing filter named, and advanceable. The copy now says so.
+
+## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
 
