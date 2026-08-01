@@ -222,6 +222,8 @@ each time a recruiter reloads it. Found by golden case 2b.
 - Contradictory forced-ranks → low confidence. Quality cap biting at 1.15.
 - The 24-month retention purge is **actually scheduled** in `cron.job`, not just
   defined as a function.
+- Rename, delete, the delete refusals, the keying-round lifecycle and supplement
+  drafting — 21 RPC assertions and 25 UI assertions, all green (§7l).
 
 **Written but not yet exercised by real data:** the §14.2 instrument-health views
 (need n=30 — at ~60 candidates/month, about two weeks), §14.3 group-difference
@@ -598,6 +600,49 @@ which intake facts drove each choice, and warns if the draft exceeds §10's cap 
 The two `vertical` rows are deliberately generic and labelled as needing
 replacement. A vertical question that could apply to any industry tests nothing,
 and §3.6 expects these to be written per client at onboarding.
+
+## 7l. The bug in the suggester, and what found it
+
+`sql/16` shipped with the rename/delete/suggest surface unverified at runtime — the
+migration asserted its own state on the way in, and I said so in the commit rather
+than claiming otherwise. Running it as a signed-in recruiter found a real fault on
+the first call:
+
+```
+HTTP 400  22P02  malformed array literal: "ticket_high"
+```
+
+`v_conds text[] := array['always']` followed by `v_conds := v_conds || 'ticket_high'`
+looks like appending a string to an array. It is not. The literal is `unknown`, and
+Postgres resolves `text[] || unknown` toward the **array-array** operator, so it
+tries to parse `ticket_high` as an array literal and fails. Every condition after
+`always` was dead, which means every client would have received the same seven
+generic questions and nothing else — the exact failure the feature exists to avoid,
+and one that would have looked like working software. Fixed by casting each appended
+literal to `::text`, which selects the element-append operator.
+
+Two things about how it was caught matter more than the fix:
+
+**The Management API could not have found it.** `suggest_supplement()` correctly
+refuses when `auth.uid()` is null, so running it as superuser returns
+`suggest_supplement: staff only` — a pass-looking result from a door no user walks
+through. This is the same lesson as the pgcrypto failure in §7f: **a test may read
+through any door, but it must create through the one the user does.**
+
+**A failing check must print the body, not the status.** The first run reported
+`HTTP 400` and nothing else, which named a symptom common to a dozen causes and sent
+me guessing at schema caches. Printing the response body identified it in one line.
+Every check in the QA scripts now carries the body on failure.
+
+### Verified live, 25 UI assertions plus 21 RPC assertions
+
+Both suites pass in full. The UI pass clicks rather than calls: Suggest → draft in
+the textarea → Save → reload → draft unchanged; rename a client, a candidate and a
+round; cancel a confirm and observe nothing deleted; blank rename dropped before it
+reaches the server; and the guard that matters — deleting a **placed** candidate
+shows `Cannot delete: 1 placement(s) reference this…` verbatim beside the row,
+styled as an error, with the row still present. 19/19 golden cases still green and
+`v_c10_audit` still empty afterwards.
 
 ## 8. Next
 

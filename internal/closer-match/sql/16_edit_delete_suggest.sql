@@ -289,7 +289,7 @@ insert into supplement_templates (id, kind, condition, prompt, why, sort_order) 
 -- Returns a DRAFT. The recruiter edits and saves it; nothing is auto-applied.
 create or replace function suggest_supplement(p_client_id uuid)
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
-declare v_p jsonb; v_conds text[] := array['always'];
+declare v_p jsonb; v_conds text[] := array['always']::text[];
 begin
   if not is_staff() then raise exception 'suggest_supplement: staff only'; end if;
 
@@ -303,14 +303,14 @@ begin
   end if;
 
   -- Conditions read straight off the intake. Same inputs, same draft, every time.
-  if (v_p->>'ticket_size')::numeric >= 150000 then v_conds := v_conds || 'ticket_high'; end if;
-  if (v_p->>'ticket_size')::numeric <  50000  then v_conds := v_conds || 'ticket_low';  end if;
-  if coalesce((v_p->>'cycle_days')::numeric, 30) <= 7 then v_conds := v_conds || 'cycle_short'; end if;
-  if coalesce((v_p->>'has_crm')::boolean, true) = false then v_conds := v_conds || 'no_crm'; end if;
-  if coalesce((v_p->>'cold_outbound_pct')::numeric, 0) > 50 then v_conds := v_conds || 'cold_heavy'; end if;
-  if coalesce((v_p->>'refund_policy_exists')::boolean, false) then v_conds := v_conds || 'refund_policy'; end if;
-  if coalesce((v_p->>'buyer_is_senior')::boolean, false) then v_conds := v_conds || 'senior_buyer'; end if;
-  v_conds := v_conds || 'vertical';
+  if (v_p->>'ticket_size')::numeric >= 150000 then v_conds := v_conds || 'ticket_high'::text; end if;
+  if (v_p->>'ticket_size')::numeric <  50000  then v_conds := v_conds || 'ticket_low'::text;  end if;
+  if coalesce((v_p->>'cycle_days')::numeric, 30) <= 7 then v_conds := v_conds || 'cycle_short'::text; end if;
+  if coalesce((v_p->>'has_crm')::boolean, true) = false then v_conds := v_conds || 'no_crm'::text; end if;
+  if coalesce((v_p->>'cold_outbound_pct')::numeric, 0) > 50 then v_conds := v_conds || 'cold_heavy'::text; end if;
+  if coalesce((v_p->>'refund_policy_exists')::boolean, false) then v_conds := v_conds || 'refund_policy'::text; end if;
+  if coalesce((v_p->>'buyer_is_senior')::boolean, false) then v_conds := v_conds || 'senior_buyer'::text; end if;
+  v_conds := v_conds || 'vertical'::text;
 
   return jsonb_build_object(
     'ok', true,
