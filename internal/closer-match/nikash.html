@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Nikash · V-BOG</title>
-<link rel="icon" href="/favicon.svg">
+<link rel="icon" href="img/nikash.svg">
 <meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,7 +33,7 @@
 
 <header class="masthead" id="masthead" hidden>
   <div class="masthead-in">
-    <a class="brand" href="nikash.html">nikash<span class="dot">.</span></a>
+    <a class="brand" href="nikash.html"><img class="brand-mark" src="img/nikash.svg" alt="" width="28" height="28"><span>nikash<span class="dot">.</span></span></a>
     <span class="brand-sub mono">Closer matching</span>
     <span class="spacer"></span>
     <nav>
@@ -52,25 +52,50 @@
 <main>
 
   <!-- ── Sign in ─────────────────────────────────────────────────────────── -->
-  <section class="screen narrow" id="v-signin" hidden>
-    <p class="brand" style="font-size:34px">nikash<span class="dot">.</span></p>
-    <p class="mono muted" style="margin:6px 0 30px">निकष · touchstone</p>
-    <h1>Sign in</h1>
-    <p class="muted">Staff access only. Your account must already be listed by an
-       admin — creating one does not grant access on its own.</p>
-    <div class="notice notice-error" id="signin-error" hidden></div>
-    <div class="field">
-      <label for="si-email">Email</label>
-      <input type="email" id="si-email" autocomplete="username">
+  <!-- Two columns, because the space beside a four-field form is otherwise
+       dead and the three rules are what a new recruiter most needs to read
+       BEFORE they are inside a screen full of scores. -->
+  <section class="screen signin-split" id="v-signin" hidden>
+    <div class="signin-form">
+      <p class="signin-brand"><img src="img/nikash.svg" alt=""
+         ><span>nikash<span class="dot">.</span></span></p>
+      <p class="gloss"><span class="dev">निकष · touchstone</span><br>
+         The stone you rub gold against to read its purity. It tells you what the
+         metal is. It does not decide whether to buy.</p>
+      <h1>Sign in</h1>
+      <p class="muted">Staff access only. Your account must already be listed by an
+         admin — creating one does not grant access on its own.</p>
+      <div class="notice notice-error" id="signin-error" hidden></div>
+      <div class="field">
+        <label for="si-email">Email</label>
+        <input type="email" id="si-email" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="si-pass">Password</label>
+        <input type="password" id="si-pass" autocomplete="current-password">
+      </div>
+      <div class="actions">
+        <button class="btn-primary" id="btn-signin">Sign in</button>
+        <button class="btn-quiet" id="btn-signup">Create account</button>
+      </div>
     </div>
-    <div class="field">
-      <label for="si-pass">Password</label>
-      <input type="password" id="si-pass" autocomplete="current-password">
-    </div>
-    <div class="actions">
-      <button class="btn-primary" id="btn-signin">Sign in</button>
-      <button class="btn-quiet" id="btn-signup">Create account</button>
-    </div>
+
+    <aside class="stone-card">
+      <!-- No mark here: the card IS the stone. Repeating an ink logo on an ink
+           ground left the streak floating with no stone under it. -->
+      <p class="mono stone-card-kicker">Three rules, enforced in the database</p>
+      <ol class="stone-rules">
+        <li><strong>Scores never leave the building.</strong> A client gets a
+            person and a written recommendation. Never a dimension score, a match
+            percentage, or the test.</li>
+        <li><strong>The candidate is assessed knowing nothing about any client.</strong>
+            Everyone takes the identical 44 items, which is what makes one
+            assessment usable against every open role.</li>
+        <li><strong>The system ranks and explains. It never decides.</strong>
+            There is no reject button, and no column in the database that could
+            hold one.</li>
+      </ol>
+    </aside>
   </section>
 
   <!-- ── Requirements ────────────────────────────────────────────────────── -->

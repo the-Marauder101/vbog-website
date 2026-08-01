@@ -281,32 +281,33 @@ use the egress proxy, so its direct connection to Supabase hangs. The harness
 routes `**/rest/v1/**` through Node, which does respect `HTTPS_PROXY` and the CA
 bundle. Do not "fix" this by disabling TLS verification.
 
-## 7b0. Two visual worlds, on purpose
+## 7b0. One family, two registers
 
-The repo holds two design languages and this tool uses **both**, split by who is
-looking:
+The repo holds design languages for three surfaces and this tool uses all three,
+split by who is looking:
 
-| Sheet | Used by | Language |
+| Sheet | Used by | Register |
 |---|---|---|
-| `css/nikash.css` | console, keying, verification call | **Vyom's** — navy `#0F3460`, cyan `#00B4D8`, 10px radius, soft navy shadows, gradient primary |
-| `css/brand.css` | client role brief, candidate supplement | **v-bog.com's** — warm off-white, orange, zero radius, zero shadows |
+| `css/nikash.css` | console, keying, verification call | **the workshop** — ink `#141416`, V-BOG orange `#FF4D00`, 3px radius, hairlines, no shadows, mono readouts |
+| `css/brand.css` | client role brief, candidate supplement | **v-bog.com's** — warm off-white, orange, zero radius, zero shadows, Satoshi at display size |
 | `css/assess.css` | candidate assessment | v-bog.com's, mobile-first |
 
-The reason is who the surface serves. A recruiter moves between Vyom and Nikash
-all day, and those should feel like one toolset rather than two products. A client
-filling in a role brief, or a candidate taking a test, should see **V-BOG** — not
-the internal tooling.
+All three now sit in one family — V-BOG's ink and V-BOG's orange, on V-BOG's warm
+paper — and differ in register rather than in palette. The outward-facing sheets are
+spacious and loud, because they are the firm introducing itself. The console is
+dense, square-cornered and set in mono wherever a number appears, because it is the
+same firm at work. See §7m for why this replaced a straight copy of Vyom's navy.
 
-Cyan needed one correction to be usable: `#00B4D8` measures **2.4:1** on Vyom's
-light ground, below the 3:1 floor for a UI component that carries meaning. So cyan
-does what it does in Vyom — gradients, the nav hairline, decoration — while
-anything that actually signals (a selected option, a checked box, a progress fill)
-uses navy at 12.5:1. Same look, meaning that survives.
+Bright `#FF4D00` measures **3.04:1** on paper: enough for a non-text mark or
+display-size type, not enough for body copy. So the bright orange is confined to
+streaks, fills, bars and the wordmark's period, and anything carrying words uses
+`#C43C00` at 4.84:1. Checked by measurement in both colour schemes, not by eye.
 
 The four form-follows-function rules were unchanged by the repaint, because they
 govern hierarchy and behaviour rather than colour. They are asserted in QA against
-the new palette: the figure is still 26px, concerns still render beside reasons,
-there is still no reject control.
+the new palette: rank and score carry no saturated colour at all (the audit fails
+the run if they do), concerns still render beside reasons, there is still no reject
+control.
 
 ## 7b. Visual system — candidate surface
 
@@ -643,6 +644,95 @@ reaches the server; and the guard that matters — deleting a **placed** candida
 shows `Cannot delete: 1 placement(s) reference this…` verbatim beside the row,
 styled as an error, with the row still present. 19/19 golden cases still green and
 `v_c10_audit` still empty afterwards.
+
+## 7m. The repaint — why Vyom's palette was the wrong thing to copy
+
+The instruction two rounds earlier was "make it closer to Vyom", and what shipped
+was a faithful copy: navy `#0F3460`, cyan `#00B4D8`, 10px radius, soft navy
+shadows, Vyom's cosmic gradient hairline. Technically correct, and it had no
+character. The verdict when it came back was exact — *"the dark blue background
+isn't great… it is missing some real character… you got the UI for Vyom bang on in
+one go."*
+
+**The diagnosis matters more than the fix.** Vyom has character because its look is
+derived from its **name**: व्योम is sky, so the mark is a world with an orbit, the
+accent is the cyan of a planet's limb, and the nav carries a cyan→violet hairline
+like a spectrum. None of that is transferable. Copying the palette imported the
+*output* of that reasoning while leaving the reasoning behind — which is why the
+result read as a navy admin panel rather than as a tool with a point of view.
+
+So Nikash now derives its look the same way Vyom did, from निकष:
+
+> A touchstone is a black stone. You rub gold on it and read the streak.
+
+- **Ink and one orange streak.** No second accent, no gradient, no shadow. The
+  ground is V-BOG's warm paper `#F6F4F1`, not a cold grey.
+- **The streak is the interaction language, not decoration.** It marks *where you
+  are*: on the masthead's bottom edge under the wordmark, under the active nav
+  item, down the leading edge of the row under the cursor, inside a focused field,
+  under the primary button, on the current step. It never marks quality — rule 4
+  still holds, and QA fails the run if a rank or a score carries any saturated
+  colour at all.
+- **Numbers are readings.** `.figure` is DM Mono with tabular figures, and every
+  meta label and chip is mono uppercase. A number set in a monospace looks
+  measured; the same number in a heavy sans looks awarded. That is rule 1 done
+  with type instead of with size.
+- **Satoshi 900 for headings**, which is what gives a heading a voice rather than
+  a weight.
+- **3px radius and hairline borders.** Depth previously came from shadows, which
+  is why every surface sat the same distance away and the page read as cards
+  adrift. A rule now runs from each region heading to the right margin, and the
+  page has a spine.
+
+**What is genuinely shared with Vyom is the grammar, not the palette:** sticky
+masthead, wordmark plus a coloured dot, mono descriptor beside it, nav on the
+right, region head then rule then rows. A recruiter moving between the two tools
+recognises the layout instantly. That is what makes a toolset feel related;
+matching hex codes never was.
+
+### The logo — `img/nikash.svg`
+
+Vyom has a mark, so Nikash without one looked unfinished. The mark is the stone
+and the streak the gold leaves on it. Three decisions did the work, and the first
+two drafts are worth recording because they failed for instructive reasons:
+
+- **Draft 1** — a rounded-square stone with a bold diagonal and a fainter one
+  behind it. Read as an app icon with `//` on it. A rounded square is UI chrome,
+  not an object, and two constant-width parallels are a code comment.
+- **Draft 2** — three unequal bars, meant as "several samples compared on one
+  stone". Read as a hamburger menu on a circle.
+- **Shipped** — an irregular silhouette with a flatter base, so it reads as
+  something resting on a surface; **one streak that tapers**, drawn as a filled
+  path wide where the metal bites and narrow where it lifts, because a
+  constant-width diagonal reads as a slash *through* the stone rather than a mark
+  *on* it; and the narrow end **crosses the edge and continues**, because the
+  reading does not stay on the instrument. Verified legible at 16px, and carrying
+  a rim in dark mode via a `prefers-color-scheme` block inside the SVG, since an
+  ink stone on a dark ground otherwise loses its edge.
+
+### Two fixes that came with the repaint
+
+- **The nav had no active state at all.** The console could not tell you which
+  screen you were on. `view()` now sets `aria-current="page"`, which is both the
+  screen-reader announcement and the hook the streak hangs off. A shortlist marks
+  *Requirements*, because that is where Back goes.
+- **`.row` was a `1fr 1fr` grid.** Every use of it on these pages is an input plus
+  a button, so "Create intake link" was stretched to half the panel. It is a flex
+  row now: the field takes the space, the button takes what it needs.
+
+### Verified — 37 assertions, both colour schemes
+
+Every view in both light and dark, with contrast **measured**: for each
+text-bearing element the audit climbs the tree to the real backdrop, computes the
+WCAG ratio and applies the correct floor for the computed size, failing the run on
+anything below. 1,384 elements audited per scheme across eight screens, zero
+failures — including the inverted stone card on the sign-in screen, which is
+exactly where a contrast bug would hide. Plus: the streak's geometry checked
+against the masthead's own bottom edge rather than a hard-coded offset (the first
+attempt computed `(62 − 28) / 2` by hand and hung the streak 30px into the page);
+the active marker proven to *move* rather than be hard-coded; no horizontal scroll
+at 380px; and create/rename/delete re-run through the buttons, since `view()`
+changed.
 
 ## 8. Next
 

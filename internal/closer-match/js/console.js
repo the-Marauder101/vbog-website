@@ -29,7 +29,22 @@ function view(name) {
   void t.offsetWidth;
   t.classList.add("enter");
   el("masthead").hidden = name === "signin";
+  markNav(name);
   window.scrollTo(0, 0);
+}
+
+// The nav had no active state at all, so the console never told you which
+// screen you were on. `aria-current` is both the announcement a screen reader
+// needs and the hook the streak under the active item hangs off. A shortlist is
+// still "Requirements", because that is where you came from and where Back goes.
+const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue",
+                 health: "nav-health", place: "nav-place", supp: "nav-supp",
+                 guide: "nav-guide" };
+
+function markNav(name) {
+  Object.values(NAV_OF).forEach((id) => el(id) && el(id).removeAttribute("aria-current"));
+  const active = NAV_OF[name] && el(NAV_OF[name]);
+  if (active) active.setAttribute("aria-current", "page");
 }
 
 function rupees(n) {
