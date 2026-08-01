@@ -94,8 +94,9 @@ async function loadRequirements() {
   el("reqs-count").textContent = `${rows.length} open`;
   el("reqs-list").innerHTML = rows.length
     ? rows.map((r) => `
-      <a class="req" href="#req-${esc(r.id)}" data-req="${esc(r.id)}">
-        <span class="title">${esc(r.business_name)} — ${esc(r.title)}</span>
+      <div class="req" data-reqrow="${esc(r.id)}">
+        <span class="title"><a href="#req-${esc(r.id)}" data-req="${esc(r.id)}"
+          >${esc(r.business_name)} — ${esc(r.title)}</a></span>
         <span class="meta small">
           ${rupees(r.ticket_size)} · ${esc(cycle(r.cycle_days))} · ${esc(r.roleplay_pack)} pack
           · ${r.eligible} of ${r.assessed} eligible
@@ -108,7 +109,15 @@ async function loadRequirements() {
                <br><span class="mono muted">best match</span>`
             : `<span class="mono muted">no matches yet</span>`}
         </span>
-      </a>`).join("")
+        <div class="actions" style="grid-column:1/-1;margin-top:10px">
+          <button class="btn-quiet btn-small" data-req-rename="${esc(r.id)}"
+            data-title="${esc(r.title)}">Rename</button>
+          <button class="btn-quiet btn-small" data-req-close="${esc(r.id)}">Close role</button>
+          <button class="btn-quiet btn-small" data-req-del="${esc(r.id)}"
+            data-title="${esc(r.title)}" data-client="${esc(r.business_name)}">Delete</button>
+          <span class="savestate" data-rslot="${esc(r.id)}"></span>
+        </div>
+      </div>`).join("")
     : `<div class="empty" style="text-align:left;padding:26px 24px">
         <h3>Nothing open yet — here is the order of operations</h3>
         <ul class="evidence" style="margin-top:14px">
@@ -129,6 +138,32 @@ async function loadRequirements() {
 
   el("reqs-list").querySelectorAll("[data-req]").forEach((a) =>
     a.addEventListener("click", (e) => { e.preventDefault(); loadRequirement(a.dataset.req); }));
+
+  const rslot = (id) => document.querySelector(`[data-rslot="${id}"]`);
+  const rerr = (id) => (m) => { rslot(id).textContent = m; rslot(id).dataset.state = "error"; };
+
+  el("reqs-list").querySelectorAll("[data-req-rename]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const next = prompt("Rename this role:", b.dataset.title);
+      if (next === null || !next.trim()) return;
+      doRename("rename_requirement", { p_id: b.dataset.reqRename, p_title: next.trim() },
+        loadRequirements, rerr(b.dataset.reqRename));
+    }));
+
+  el("reqs-list").querySelectorAll("[data-req-close]").forEach((b) =>
+    b.addEventListener("click", () =>
+      doDelete("set_requirement_status", { p_id: b.dataset.reqClose, p_status: "closed" },
+        "Close this role? It stops appearing in the open list. Nothing is deleted and you can reopen it.",
+        loadRequirements, rerr(b.dataset.reqClose))));
+
+  el("reqs-list").querySelectorAll("[data-req-del]").forEach((b) =>
+    b.addEventListener("click", () =>
+      doDelete("delete_requirement", { p_id: b.dataset.reqDel },
+        `Delete "${b.dataset.client} — ${b.dataset.title}" permanently?\n\n` +
+        `This removes the role and every match computed for it. Candidate assessments are NOT affected.\n\n` +
+        `If a verification call or a placement exists, the server will refuse and tell you to close it instead.`,
+        loadRequirements, rerr(b.dataset.reqDel))));
+
   view("reqs");
 }
 
@@ -287,6 +322,79 @@ async function markPlaced(btn, reqId) {
   } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
 }
 
+// ═══ RENAME AND DELETE ══════════════════════════════════════════════════════
+// Every list that can create a record can now rename and remove one. Two rules:
+//
+//   · A destructive action names what it will destroy, before doing it.
+//   · The server, not the browser, decides what may be destroyed. It refuses
+//     anything that would cascade into a placement, because outcome data cannot
+//     be recreated — nobody can go back and re-observe whether a hire lasted.
+//     The refusal comes back as a sentence and is shown verbatim.
+
+async function doRename(rpc, args, after, onError) {
+  try { await sbRpc(rpc, args); if (after) await after(); }
+  catch (e) { (onError || alert)(e.message); }
+}
+
+async function doDelete(rpc, args, confirmText, after, onError) {
+  if (!confirm(confirmText)) return;
+  try {
+    const r = await sbRpc(rpc, args);
+    if (after) await after();
+    return r;
+  } catch (e) { (onError || alert)(e.message); }
+}
+
+// ═══ SUPPLEMENT SUGGESTION ══════════════════════════════════════════════════
+// §10 keeps the supplement human-authored. This produces a DRAFT from templates
+// selected against the client's own intake — the same mechanism §9.5 uses for
+// the match rationale: identical phrasing every time, auditable, no model.
+// It writes into the textarea; nothing is saved until the recruiter saves it.
+
+async function suggestSupplement(clientId) {
+  const slot = document.querySelector(`[data-sslot="${clientId}"]`);
+  slot.textContent = "Building a draft…"; slot.removeAttribute("data-state");
+  try {
+    const r = await sbRpc("suggest_supplement", { p_client_id: clientId });
+    if (!r.ok) { slot.textContent = r.reason; slot.dataset.state = "error"; return; }
+
+    const box = el("si-" + clientId);
+    const lines = r.items.map((i) => (i.kind === "technical" ? "tech: " : "") + i.prompt);
+    box.value = lines.join("\n");
+
+    const b = r.because;
+    const why = el("why-" + clientId);
+    why.hidden = false;
+    why.innerHTML =
+      `<span class="label">Drafted from this client's intake — edit before saving</span>` +
+      `${r.items.length} questions, chosen because: ` +
+      [`ticket ${b.ticket_size ? "₹" + Number(b.ticket_size).toLocaleString("en-IN") : "—"}`,
+       `${b.cycle_days}-day cycle`,
+       b.has_crm === "false" ? "no CRM" : "has a CRM",
+       `${b.cold_outbound_pct}% cold outbound`,
+       b.refund_policy_exists === "true" ? "refund policy exists" : "no refund policy",
+       b.buyer_is_senior === "true" ? "senior/owner buyer" : "non-senior buyer",
+      ].join(" · ") +
+      `<br><br>These are a starting point, not a finished supplement. The two ` +
+      `<code>vertical</code> questions in particular need replacing with something ` +
+      `specific to what this client sells — a generic version tests nothing.` +
+      `<ul class="evidence" style="margin-top:10px">` +
+      r.items.map((i) => `<li><span class="glyph">${i.kind === "technical" ? "T" : "B"}</span>
+        <span><strong>${esc(i.prompt)}</strong><br><span class="muted">${esc(i.why)}</span></span></li>`).join("") +
+      `</ul>`;
+
+    const nB = r.items.filter((i) => i.kind === "behavioural").length;
+    const nT = r.items.filter((i) => i.kind === "technical").length;
+    slot.textContent = `Draft ready — ${nB} behavioural, ${nT} technical`;
+    slot.dataset.state = "saved";
+    // §10 caps a supplement at 5-8 behavioural plus 3-5 technical.
+    if (nB > 8 || nT > 5) {
+      slot.textContent += " · over the §10 cap, trim before saving";
+      slot.dataset.state = "error";
+    }
+  } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+}
+
 // ═══ PLACEMENTS AND OUTCOMES (§12) ═════════════════════════════════════════
 // §18 names an empty placement_outcomes as the most likely single point of
 // failure. Code cannot make anyone fill it in; it can make the gap impossible
@@ -406,7 +514,18 @@ async function loadSupplements() {
               technical one with <code>tech:</code></label>
             <textarea id="si-${esc(c.id)}" rows="7">${esc(text)}</textarea>
           </div>
-          <button class="btn-quiet btn-small" data-save-supp="${esc(c.id)}">Save</button>
+          <div class="notice" id="why-${esc(c.id)}" hidden style="margin:12px 0"></div>
+          <div class="actions">
+            <button class="btn-primary btn-small" data-suggest="${esc(c.id)}">Suggest from their intake</button>
+            <button class="btn-quiet btn-small" data-save-supp="${esc(c.id)}">Save</button>
+            <span class="spacer"></span>
+            <button class="btn-quiet btn-small" data-client-rename="${esc(c.id)}"
+              data-name="${esc(c.business_name)}">Rename client</button>
+            ${s ? `<button class="btn-quiet btn-small" data-supp-del="${esc(c.id)}"
+              data-name="${esc(c.business_name)}">Delete questions</button>` : ""}
+            <button class="btn-quiet btn-small" data-client-del="${esc(c.id)}"
+              data-name="${esc(c.business_name)}">Delete client</button>
+          </div>
           <span class="savestate" data-sslot="${esc(c.id)}"></span>
         </div>`;
       }).join("")
@@ -426,6 +545,37 @@ async function loadSupplements() {
         slot.textContent = `Saved — ${items.length} items`; slot.dataset.state = "saved";
       } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
     }));
+
+  const sslot = (id) => document.querySelector(`[data-sslot="${id}"]`);
+  const serr = (id) => (m) => { sslot(id).textContent = m; sslot(id).dataset.state = "error"; };
+
+  el("supp-list").querySelectorAll("[data-suggest]").forEach((b) =>
+    b.addEventListener("click", () => suggestSupplement(b.dataset.suggest)));
+
+  el("supp-list").querySelectorAll("[data-client-rename]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const next = prompt("Rename this client:", b.dataset.name);
+      if (next === null || !next.trim()) return;
+      doRename("rename_client", { p_id: b.dataset.clientRename, p_name: next.trim() },
+        loadSupplements, serr(b.dataset.clientRename));
+    }));
+
+  el("supp-list").querySelectorAll("[data-supp-del]").forEach((b) =>
+    b.addEventListener("click", () =>
+      doDelete("delete_supplement", { p_client_id: b.dataset.suppDel },
+        `Delete the supplement questions for ${b.dataset.name}?\n\n` +
+        `The questions go; the client and their roles stay. If any candidate has already ` +
+        `answered them, the server will refuse — edit the questions instead.`,
+        loadSupplements, serr(b.dataset.suppDel))));
+
+  el("supp-list").querySelectorAll("[data-client-del]").forEach((b) =>
+    b.addEventListener("click", () =>
+      doDelete("delete_client", { p_id: b.dataset.clientDel },
+        `Delete ${b.dataset.name} entirely?\n\n` +
+        `This removes the client, their intake, every role they opened and every match ` +
+        `for those roles. Candidate assessments are NOT affected.\n\n` +
+        `If anyone has been placed with them, the server will refuse.`,
+        loadSupplements, serr(b.dataset.clientDel))));
 
   if (overlap.length) {
     el("supp-overlap-region").hidden = false;
@@ -462,10 +612,40 @@ async function loadQueue() {
             <span class="spacer"></span>
             <span class="small muted">${c.eligible_reqs} eligible requirement${c.eligible_reqs === 1 ? "" : "s"}</span>
           </div>
+          <div class="actions" style="margin-top:10px">
+            <button class="btn-quiet btn-small" data-cand-rename="${esc(c.id)}"
+              data-name="${esc(c.full_name)}">Rename</button>
+            <button class="btn-quiet btn-small" data-cand-del="${esc(c.id)}"
+              data-name="${esc(c.full_name)}">Delete all their data</button>
+            <span class="savestate" data-cslot="${esc(c.id)}"></span>
+          </div>
         </div>
       </div>`).join("")
     : `<div class="empty"><h3>No candidates yet</h3>
        <p class="muted">Create a test link above.</p></div>`;
+
+  const cslot = (id) => document.querySelector(`[data-cslot="${id}"]`);
+  const cerr = (id) => (m) => { cslot(id).textContent = m; cslot(id).dataset.state = "error"; };
+
+  el("queue-list").querySelectorAll("[data-cand-rename]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const next = prompt("Rename this candidate:", b.dataset.name);
+      if (next === null || !next.trim()) return;
+      doRename("rename_candidate", { p_id: b.dataset.candRename, p_name: next.trim() },
+        loadQueue, cerr(b.dataset.candRename));
+    }));
+
+  // This is also the C3 withdrawal-and-deletion path, so it must exist whether
+  // or not it is convenient: a candidate who asks to be removed gets removed.
+  el("queue-list").querySelectorAll("[data-cand-del]").forEach((b) =>
+    b.addEventListener("click", () =>
+      doDelete("delete_candidate", { p_id: b.dataset.candDel },
+        `Delete everything held on ${b.dataset.name}?\n\n` +
+        `Their answers, scores, flags, match rows and interview records all go, permanently. ` +
+        `This is the same action to take when someone asks to withdraw consent.\n\n` +
+        `If they have been placed, the server will refuse — that outcome data cannot be recreated.`,
+        loadQueue, cerr(b.dataset.candDel))));
+
   view("queue");
 }
 

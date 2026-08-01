@@ -541,6 +541,64 @@ that each list reports how full it is, that a cap-blocked row explains the cap,
 that a cross-list-blocked row explains the other list, and that five of the six
 qualities can be placed across the two lists — the thing that was actually in doubt.
 
+## 7j. Rename and delete — and the one thing delete must refuse
+
+Every list that can create a record can now rename and remove one: requirements,
+candidates, clients, supplements, keying rounds. Two rules shape all of them.
+
+**A destructive action names what it destroys, before doing it.** Not "are you
+sure" — the actual consequence: which records go, and which explicitly do not.
+Deleting a client removes their roles and matches but *not* candidate assessments,
+and the confirmation says so.
+
+**The server decides what may be destroyed, not the browser.** `assert_no_placements()`
+refuses any delete that would cascade into a placement, because outcome data cannot
+be recreated — a candidate can retake a test and a client can refill an intake, but
+nobody can go back and re-observe whether a hire lasted three months. §12 calls that
+table the asset; this is what stops a stray click from spending it. Two further
+refusals in the same spirit: a requirement with completed verification calls (an
+hour of judgement per call), and a supplement with candidate answers.
+
+`delete_candidate()` is also the **C3 withdrawal-and-deletion path**, so it has to
+exist regardless of convenience. It cascades by construction, since every child
+table declares `ON DELETE CASCADE`.
+
+Keying rounds additionally get open/close, because closing is the normal end of a
+round — the three experts finish, you stop further keying, and every submission is
+retained for the agreement report. A keyer can also clear their own answer on one
+item without disturbing the round.
+
+## 7k. The supplement was never auto-generated — and now it drafts itself
+
+§10 specifies the supplement as *"written by the psych function at client
+onboarding"*, so human-authored was always the design. But "I don't know what to
+ask" is a fair objection, and the answer is the mechanism §9.5 already uses for the
+match rationale: **templates selected deterministically, not text generated.**
+
+`supplement_templates` holds a library, each row carrying a condition. `suggest_supplement()`
+reads the client's own submitted intake and returns the matching draft:
+
+| Condition | Fires when | Adds |
+|---|---|---|
+| `always` | every client | offer comprehension, motivation, expected objection |
+| `ticket_high` | ticket ≥ ₹1.5L | status-gap composure, multi-stakeholder — the §17 gaps |
+| `ticket_low` | ticket < ₹50k | volume discipline |
+| `cycle_short` | cycle ≤ 7 days | a rehearsed deferral answer at speed |
+| `no_crm` | client has no CRM | what they would build in two weeks |
+| `cold_heavy` | cold outbound > 50% | cold-open craft, which the 44 items never reach |
+| `refund_policy` | a written policy exists | what they tell a prospect who asks |
+| `senior_buyer` | owner or senior professional | naming a deferral rather than accepting it |
+| `vertical` | always | two placeholders that **must** be rewritten per client |
+
+Same intake, same draft, every time — auditable, no model dependency. It writes
+into the textarea and saves nothing; the recruiter edits and saves. The panel shows
+which intake facts drove each choice, and warns if the draft exceeds §10's cap of
+5–8 behavioural plus 3–5 technical.
+
+The two `vertical` rows are deliberately generic and labelled as needing
+replacement. A vertical question that could apply to any industry tests nothing,
+and §3.6 expects these to be written per client at onboarding.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
