@@ -110,7 +110,7 @@ async function loadRounds() {
         ${split} split · ${disagree} unanimous but disagreeing with the current key.
         <a href="#" id="see-agree">See the breakdown</a>
       </div>`);
-    el("see-agree").addEventListener("click", (e) => { e.preventDefault(); showAgreement(agree); });
+    el("see-agree").addEventListener("click", (e) => { e.preventDefault(); showAgreement(); });
   }
   await loadKeyerLinks(rounds);
   view("pick");
@@ -285,82 +285,142 @@ el("btn-next").addEventListener("click", async () => {
 });
 
 // ═══ AGREEMENT ═════════════════════════════════════════════════════════════
+// What the experts actually chose, item by item, against what the bank scores —
+// and the button that does something about it.
+//
+// Until now the keys went nowhere. Submissions were recorded, a count was
+// reported, and no code path anywhere wrote item_options.score_key. Three
+// experts could agree an item was keyed wrong and the bank would keep the wrong
+// key forever. §13 exists to turn one person's opinion into a finding; a finding
+// that cannot be applied is a survey.
 
-function showAgreement(rows) {
-  el("agree-body").innerHTML = rows.map((a) => `
+const KEYSCORE = { "2": "best", "1": "good", "0": "weak", "-1": "worst" };
+
+function verdictOf(it) {
+  if (!it.n_experts) return { label: "not keyed yet", tone: "" };
+  if (it.n_distinct > 1) return { label: "split — rewrite it", tone: "warn" };
+  if (it.chosen === it.current_best) return { label: "agrees with the bank", tone: "strong" };
+  return { label: "all agree the bank is wrong", tone: "warn" };
+}
+
+async function showAgreement() {
+  view("loading");
+  const d = await sbRpc("get_keying_report");
+  const items = d.items || [];
+  const keyed = items.filter((i) => i.n_experts > 0);
+  const split = keyed.filter((i) => i.n_distinct > 1);
+  const wrong = keyed.filter((i) => i.n_distinct === 1 && i.chosen !== i.current_best);
+  const agree = keyed.filter((i) => i.n_distinct === 1 && i.chosen === i.current_best);
+
+  el("agree-summary").innerHTML =
+    `<span class="label">Where the bank stands</span>
+     <strong>${agree.length}</strong> item${agree.length === 1 ? "" : "s"} the experts and the
+     bank agree on · <strong>${wrong.length}</strong> the experts unanimously say are keyed
+     wrong · <strong>${split.length}</strong> the experts split on ·
+     <strong>${items.length - keyed.length}</strong> not yet keyed by anybody.
+     ${split.length ? `<br><br>A <strong>split</strong> is not a re-key. It means the item
+       itself is ambiguous — "the obvious right answer" was not obvious — so §13 asks for
+       it to be rewritten before launch, not re-scored.` : ""}`;
+
+  // The actionable list.
+  el("pending-region").hidden = wrong.length === 0;
+  el("pending-count").textContent = `${wrong.length}`;
+  el("pending-list").innerHTML = wrong.map((i) => {
+    const cur = (i.options || []).find((o) => o.key === i.current_best) || {};
+    const nxt = (i.options || []).find((o) => o.key === i.chosen) || {};
+    return `
     <div class="cand" style="grid-template-columns:1fr">
       <div>
         <div class="cand-head">
-          <span class="cand-name mono">${esc(a.item_id)}</span>
-          <span class="chip">${esc(a.dimension_code)}</span>
-          <span class="chip ${a.verdict.startsWith("unanimous, matches") ? "" : "warn"}">
-            ${esc(a.verdict.split(" —")[0])}</span>
-          <span class="spacer"></span>
-          <span class="small muted">${a.n_experts} expert${a.n_experts === 1 ? "" : "s"} · chose ${esc(a.chosen)}</span>
+          <span class="cand-name mono">${esc(i.item_id)}</span>
+          <span class="chip">${esc(i.dimension)}</span>
+          <span class="chip warn">${i.n_experts} of ${i.n_experts} chose ${esc(i.chosen)}</span>
         </div>
-        ${a.verdict.startsWith("split")
-          ? `<p class="small" style="margin:8px 0 0">Rewrite this one before launch — the experts did not converge.</p>`
-          : a.verdict.includes("DISAGREES")
-          ? `<p class="small" style="margin:8px 0 0">Unanimous on <strong>${esc(a.chosen)}</strong>,
-             but the bank currently keys <strong>${esc(a.current_key)}</strong>. Re-key it.</p>` : ""}
+        <p class="small" style="margin:10px 0 0">${esc(i.stem)}</p>
+        <ul class="evidence" style="margin-top:10px">
+          <li><span class="glyph mono">−</span><span><strong>Bank keys ${esc(i.current_best)}</strong>
+            — ${esc(cur.text || "")}</span></li>
+          <li><span class="glyph mono">+</span><span><strong>Experts chose ${esc(i.chosen)}</strong>
+            — ${esc(nxt.text || "")}</span></li>
+        </ul>
+        <div class="actions" style="margin-top:12px">
+          <button class="btn-primary btn-small" data-apply="${esc(i.item_id)}"
+            data-best="${esc(i.chosen)}" data-old="${esc(i.current_best)}">Re-key to ${esc(i.chosen)}</button>
+          <span class="savestate" data-aslot="${esc(i.item_id)}"></span>
+        </div>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
+
+  // Everything, so the whole picture is inspectable rather than just the deltas.
+  el("agree-count").textContent = `${items.length}`;
+  el("agree-body").innerHTML = items.map((i) => {
+    const v = verdictOf(i);
+    return `
+    <div class="cand" style="grid-template-columns:1fr">
+      <div>
+        <div class="cand-head">
+          <span class="cand-name mono">${esc(i.item_id)}</span>
+          <span class="chip">${esc(i.dimension)}</span>
+          <span class="chip ${v.tone}">${esc(v.label)}</span>
+          <span class="spacer"></span>
+          <span class="small muted">${i.n_experts} expert${i.n_experts === 1 ? "" : "s"}</span>
+        </div>
+        <p class="small" style="margin:10px 0 0">${esc(i.stem)}</p>
+        <ul class="evidence" style="margin-top:10px">
+          ${(i.options || []).map((o) => `
+            <li><span class="glyph mono">${o.score}</span><span>
+              <strong>${esc(o.key)}</strong> ${esc(o.text)}
+              <span class="muted">— bank scores this ${esc(KEYSCORE[String(o.score)] || o.score)}</span>
+              ${(i.picks || []).some((pk) => pk.best === o.key)
+                ? ` · <strong>chosen best by ${
+                    (i.picks || []).filter((pk) => pk.best === o.key)
+                      .map((pk) => esc(pk.expert)).join(", ")}</strong>` : ""}
+              ${(i.picks || []).some((pk) => pk.worst === o.key)
+                ? ` · marked worst by ${
+                    (i.picks || []).filter((pk) => pk.worst === o.key)
+                      .map((pk) => esc(pk.expert)).join(", ")}` : ""}
+            </span></li>`).join("")}
+        </ul>
+        ${(i.picks || []).filter((pk) => pk.note).map((pk) => `
+          <div class="callout plain" style="margin-top:10px">
+            <span class="label">${esc(pk.expert)} wrote</span>${esc(pk.note)}</div>`).join("")}
+        ${i.last_change
+          ? `<p class="small muted" style="margin-top:10px">Re-keyed from
+             <strong>${esc(i.last_change.old_best)}</strong> to
+             <strong>${esc(i.last_change.new_best)}</strong> by
+             ${esc(i.last_change.by || "an admin")} on
+             ${new Date(i.last_change.at).toLocaleDateString("en-IN",
+               { day: "numeric", month: "short", year: "numeric" })}.</p>`
+          : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  el("pending-list").querySelectorAll("[data-apply]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const item = b.dataset.apply, slot = document.querySelector(`[data-aslot="${item}"]`);
+      if (!confirm(
+        `Re-key ${item} so ${b.dataset.best} becomes the best answer, instead of ` +
+        `${b.dataset.old}?\n\n` +
+        `This edits the item bank. Every candidate profile and every open shortlist ` +
+        `will be recomputed straight afterwards, because a score measured under the ` +
+        `old key does not mean the same thing under the new one.\n\n` +
+        `It is recorded against your name, and it can be undone.`)) return;
+      b.disabled = true;
+      slot.textContent = "Re-keying and recomputing…"; delete slot.dataset.state;
+      try {
+        const r = await sbRpc("apply_rekey", { p_item_id: item, p_new_best: b.dataset.best });
+        if (r && r.changed === false) { slot.textContent = r.reason; slot.dataset.state = "error"; return; }
+        await showAgreement();
+      } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; b.disabled = false; }
+    }));
+
   view("agree");
 }
 
-// ═══ INVITED KEYER ═════════════════════════════════════════════════════════
-// No account, no table access: everything on this path goes through the three
-// token RPCs. The screen names whose link it is before anything else, because
-// one link is one keyer and a shared link would overwrite somebody's work.
-
-async function bootToken() {
-  try {
-    const d = await api.get();
-    S.items = d.items;
-    el("tk-name").textContent = d.expert_name || "this keyer";
-    el("tk-round").textContent = d.round;
-    el("tk-count").textContent = d.items.length;
-    const done = d.items.filter((x) => x.mine).length;
-    if (!d.round_open) {
-      el("tk-error").hidden = false;
-      el("tk-error").innerHTML =
-        `<span class="label">This round is closed</span>You keyed ${done} of ` +
-        `${d.items.length} items and all of it was saved. Nothing more is needed.`;
-      el("btn-begin").disabled = true;
-    } else if (done) {
-      el("btn-begin").textContent = `Continue — ${done} of ${d.items.length} keyed`;
-    }
-    view("token");
-  } catch (e) {
-    // The RPC raises a sentence a person can act on; show it as-is.
-    el("tk-error").hidden = false;
-    el("tk-error").innerHTML = `<span class="label">This link does not work</span>${esc(e.message)}`;
-    el("btn-begin").disabled = true;
-    el("tk-name").textContent = "—";
-    view("token");
-  }
-}
-
-function finishedByToken() {
-  const done = S.items.filter((x) => x.mine).length;
-  el("tk-error").hidden = false;
-  el("tk-error").className = "notice";
-  el("tk-error").innerHTML =
-    `<span class="label">All saved</span>You have keyed ${done} of ${S.items.length} items. ` +
-    (done < S.items.length
-      ? `Open the same link any time to finish the rest.`
-      : `That is everything — thank you. You can close the tab.`);
-  el("btn-begin").textContent = "Go back over them";
-  el("btn-begin").disabled = false;
-  view("token");
-}
-
-const begin = el("btn-begin");
-if (begin) begin.addEventListener("click", () => {
-  S.i = Math.max(0, S.items.findIndex((it) => !it.mine));
-  if (S.i < 0) S.i = 0;
-  render();
-});
+const backRounds = el("btn-back-rounds");
+if (backRounds) backRounds.addEventListener("click", loadRounds);
 
 // ═══ BOOT ══════════════════════════════════════════════════════════════════
 (async () => {

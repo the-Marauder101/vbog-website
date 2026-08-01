@@ -522,6 +522,12 @@ button, .btn {
   color: var(--muted); margin-bottom: 1px;
 }
 
+.strip-key {
+  align-self: center; margin-left: 4px; padding: 5px 8px;
+  color: var(--streak-t); font-size: 10px; text-decoration: none;
+}
+.strip-key:hover { text-decoration: underline; }
+
 /* ── One dimension: the meter ─────────────────────────────────────────────
    A score bar with a tick for every open role's required level, so the number
    and the thing it must clear are the same picture. Ink for the fill, because

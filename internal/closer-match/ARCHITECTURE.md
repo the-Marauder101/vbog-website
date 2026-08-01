@@ -1089,6 +1089,167 @@ feature I had just built and reading the row rather than the thing I had added**
 The row said two contradictory things at once — 80.2% and "waiting on them to
 finish" — and the contradiction was the whole bug.
 
+## 7u. The keyed answers went nowhere
+
+*"I cannot see the keyed scores. And what do they do? I don't see them going
+anywhere."*
+
+Correct on both counts, and the second is the defect. `keying_submissions`
+recorded every expert's pick and `v_keying_agreement` counted the splits — and
+then nothing. **No code path anywhere wrote `item_options.score_key` after the
+bank was seeded.** Three experts could spend half a day each agreeing an item is
+keyed wrong and the bank would keep the wrong key forever.
+
+§13 exists to turn one person's opinion into a finding. **A finding that cannot
+be applied is a survey.**
+
+On the live project, two experts had already keyed all 28 items and agreed the
+bank is wrong on four of them. That evidence had been sitting in the database
+doing nothing.
+
+### Seeing it
+
+`get_keying_report()` returns the whole picture per item: the stem, all four
+options with what the bank scores each one, what every expert chose, their note,
+and the verdict. Previously the console showed a count and not a single answer.
+Staff-only, and the one payload a keyer must never receive — it is the answer key.
+
+### Applying it
+
+`apply_rekey()` moves the top score to the option the experts chose. Three
+decisions worth recording:
+
+**It swaps, it does not overwrite.** The old top option takes the new one's
+score. That preserves the −1/0/+1/+2 spread the whole scoring model assumes;
+assigning a fresh number to one option would silently change this item's range
+and make it weigh differently from its 27 peers.
+
+**It recomputes everything, in the same transaction.** A score measured under the
+old key does not mean the same thing under the new one. Applying a re-key
+recomputes every completed candidate profile and re-runs every open requirement.
+A re-key that leaves stale profiles behind is worse than no re-key: it makes two
+candidates assessed a week apart silently incomparable.
+
+**It is recorded and reversible.** `key_changes` holds what moved, who moved it,
+on which round's evidence, and how many profiles and matches were recomputed.
+`undo_rekey()` swaps back and recomputes again.
+
+**A split is not a re-key.** Where the experts disagree with each other, the item
+itself is ambiguous — "the obvious right answer" was not obvious — and §13 asks
+for it to be *rewritten*, not re-scored. Only unanimous-and-against-the-bank
+items are offered for re-keying, and the page says why.
+
+### What the QA does, and one thing it found
+
+It does not check that the button exists. It **presses** it, then checks the
+candidate's profile actually changed, the change was recorded, and the undo
+restores both the bank and the score.
+
+The first version also asserted the match percentage moved, and failed. It was
+wrong: §9 caps a dimension's contribution at **1.15 ×** its requirement. The
+re-keyed item lifted CCH from 83 to 92 against a required 60 — already over the
+cap at 1.38 — so the composite correctly did not move at all. The assertion now
+checks the recompute *ran*, and that the composite moved only where the cap
+allowed it. A test that expects a number to change must know why it would.
+
+## 7v. What the scores mean, in language a recruiter can use
+
+*"Can we see what the candidate scores actually mean? CLS-C, F etc., I can't
+really understand those."*
+
+`dimensions.definition` was written for whoever built the instrument. *"Behaviour
+change after correction, including correction they disagree with"* is precise and
+tells a recruiter nothing about what a 55 looks like on a Tuesday. **A construct
+definition is not an explanation.**
+
+Each dimension now carries four plain-language fields — what a high score does on
+the floor, what a low one does without pretending it is a character flaw, the
+commercial consequence, and which items produce the number so it is inspectable
+rather than magic. A **Dictionary** screen renders them, with the required level
+each open role asks for, so the glossary is not a separate world from the
+shortlist.
+
+CLS_C and CLS_F get the most care, because they are the two that confuse people
+and the two the engine turns on. They are not closing parts one and two — they
+are the *same trait in two different sales motions*, and which one counts is
+decided by the client's ticket and cycle, not by the candidate.
+
+### The dictionary was wrong on its first draft, and QA caught it
+
+Three dimensions — RES, DRV and DSC — say "four scenario items". They each have
+four scenario items **plus one behavioural-frequency item**: a self-reported count
+about the candidate's own last week or month. The copy was written from the
+construct design rather than from the bank.
+
+**A dictionary that misstates how a number is produced is worse than none** — it
+is the one page a reader will trust when deciding whether to trust the number. So
+the migration now asserts, per dimension, that the stated item count matches the
+bank, and QA re-checks it in the browser against `items`. Prose about data is
+data, and it gets an assertion like anything else.
+
+## 7w. Two things the re-key broke, and one of them was older than the re-key
+
+Both found by `run_golden_cases()` going from 19/19 to 16/19 the moment
+`apply_rekey()` was exercised for real. This is the entire reason those fixtures
+exist, and the first time they have earned their keep by catching something I
+wrote rather than something the PRD left ambiguous.
+
+### A recompute could erase a profile — `sql/04`, `sql/26`
+
+`apply_rekey()` recomputes every completed session, because a score measured
+under the old key does not mean the same thing under the new one. It recomputed
+the **golden-case fixtures** too — and those are seeded by writing
+`candidate_profile.scores` *directly*, with no `candidate_responses` at all,
+because their purpose is to pin known vectors against known requirements. So
+`compute_candidate_profile()` summed zero responses, produced `{}`, and wrote
+that over twelve carefully constructed profiles.
+
+Two defects, and only one of them was mine:
+
+1. `apply_rekey()` did not exclude fixtures. Every other operational path does.
+   Narrow, mine, fixed.
+2. **`compute_candidate_profile()` would happily write an empty profile over a
+   real one** — true since the day it was written. Any future recompute pointed
+   at a session whose responses had gone would silently destroy that candidate's
+   scores and leave a valid-looking row behind. A dictionary change, a bank
+   rotation, a manual repair; all of them loaded.
+
+The second is the one that matters, and the guard now lives inside the function
+rather than in the caller: no responses, no write, raise instead.
+
+> **An empty result is not a result.** Recomputing something that cannot be
+> computed is not a no-op, it is deletion.
+
+Which is §7o's lesson — *an empty result is not a denial* — arriving from the
+other direction. Empty is not a value, it is the absence of one, and code that
+treats the two as the same will eventually delete something. `v_empty_profile_audit`
+must always be empty.
+
+### The RLS fix had a half-life — `sql/27`
+
+While repairing the above I re-applied `sql/04`, and `v_rls_bypass_audit` went
+from 0 rows to **7**.
+
+**`CREATE OR REPLACE VIEW` does not preserve `security_invoker`.** It resets to
+the default, which is off. So every one of the seven instrument-health views
+defined in `sql/04` quietly reopened the hole `sql/18` was written to close — the
+one where the publishable key could read candidate names, client brief data and
+live keying tokens.
+
+That made `sql/18` a fix that is correct at the moment it runs and decays every
+time anyone re-applies an earlier migration, adds a view, or edits one. Which is
+a normal Tuesday.
+
+> **A security property that depends on everybody remembering is not a property,
+> it is a habit.**
+
+So it is now a rule the database enforces on itself: an event trigger sets
+`security_invoker` on any view created or replaced in `public`, at the moment it
+is created. There is nothing left to remember and no migration order that can
+undo it. The migration proves it rather than assuming it — it creates a probe
+view, checks the option was set, and drops it — and then the whole thing is
+re-verified by re-applying `sql/04` and watching the audit stay at zero.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
