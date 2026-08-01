@@ -42,6 +42,7 @@
       <a href="#" id="nav-place">Placements</a>
       <a href="#" id="nav-supp">Supplements</a>
       <a href="keying.html">Keying</a>
+      <a href="#" id="nav-dict">Dictionary</a>
       <a href="#" id="nav-guide">How it works</a>
       <a href="#" id="nav-signout" class="muted">Sign out</a>
     </nav>
@@ -140,6 +141,17 @@
   </section>
 
   <!-- ── Candidate queue ─────────────────────────────────────────────────── -->
+  <!-- ── Dictionary ───────────────────────────────────────────────────────
+       What each score means in plain language. The one-line construct
+       definitions were written for whoever built the instrument; these are for
+       whoever reads a shortlist. -->
+  <section class="screen" id="v-dict" hidden>
+    <h1>What the scores mean</h1>
+    <p class="muted" id="dict-scale"></p>
+    <div id="dict-body"></div>
+    <p class="disclaimer" id="dict-caveat"></p>
+  </section>
+
   <!-- ── One candidate ────────────────────────────────────────────────────
        Nine scores, each read against every open role's stated requirement. The
        page refuses to show a bare number: with no open role it says so instead

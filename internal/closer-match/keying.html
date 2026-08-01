@@ -148,10 +148,42 @@
   </section>
 
   <section class="screen" id="v-agree" hidden>
-    <h1>Where you disagree</h1>
-    <p class="muted">Items marked <strong>split</strong> are the ones to rewrite
-       before launch — "the obvious right answer" was not obvious.</p>
-    <div id="agree-body"></div>
+    <button class="btn-quiet btn-small" id="btn-back-rounds" style="margin-bottom:18px">← Rounds</button>
+    <h1>What the experts keyed</h1>
+    <p class="muted">Every scenario item, what the bank currently scores, and what
+       each expert chose. This is the answer key — it is why a keyer never sees
+       this page, only the items.</p>
+
+    <div class="callout" id="agree-summary" style="margin-bottom:8px"></div>
+
+    <div class="region" id="pending-region" hidden>
+      <div class="region-head"><h2>Ready to re-key</h2>
+        <span class="count mono" id="pending-count"></span></div>
+      <div class="notice"><span class="label">What this does</span>
+        Applying a re-key moves the top score to the option the experts chose, then
+        <strong>recomputes every candidate profile and every open shortlist</strong>,
+        because a score measured under the old key does not mean the same thing
+        under the new one. It is recorded and it can be undone.</div>
+      <div id="pending-list"></div>
+    </div>
+
+    <div class="region" id="dispute-region" hidden>
+      <div class="region-head"><h2>Needs a decision</h2>
+        <span class="count mono" id="dispute-count"></span></div>
+      <div class="notice"><span class="label">Why there is no button here</span>
+        The experts did not converge. That is evidence about the <strong>item</strong>,
+        not about the option — "the obvious right answer" was not obvious to people
+        who sell for a living. §13 asks for the item to be rewritten rather than
+        re-scored. You can still override, but the override has to say why, and the
+        reason is kept beside it permanently.</div>
+      <div id="dispute-list"></div>
+    </div>
+
+    <div class="region">
+      <div class="region-head"><h2>Every item</h2>
+        <span class="count mono" id="agree-count"></span></div>
+      <div id="agree-body"></div>
+    </div>
   </section>
 
   <section class="screen" id="v-loading"><p class="muted">Loading…</p></section>

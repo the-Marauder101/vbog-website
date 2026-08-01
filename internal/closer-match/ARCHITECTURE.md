@@ -1089,6 +1089,274 @@ feature I had just built and reading the row rather than the thing I had added**
 The row said two contradictory things at once — 80.2% and "waiting on them to
 finish" — and the contradiction was the whole bug.
 
+## 7u. The keyed answers went nowhere
+
+*"I cannot see the keyed scores. And what do they do? I don't see them going
+anywhere."*
+
+Correct on both counts, and the second is the defect. `keying_submissions`
+recorded every expert's pick and `v_keying_agreement` counted the splits — and
+then nothing. **No code path anywhere wrote `item_options.score_key` after the
+bank was seeded.** Three experts could spend half a day each agreeing an item is
+keyed wrong and the bank would keep the wrong key forever.
+
+§13 exists to turn one person's opinion into a finding. **A finding that cannot
+be applied is a survey.**
+
+On the live project, two experts had already keyed all 28 items and agreed the
+bank is wrong on four of them. That evidence had been sitting in the database
+doing nothing.
+
+### Seeing it
+
+`get_keying_report()` returns the whole picture per item: the stem, all four
+options with what the bank scores each one, what every expert chose, their note,
+and the verdict. Previously the console showed a count and not a single answer.
+Staff-only, and the one payload a keyer must never receive — it is the answer key.
+
+### Applying it
+
+`apply_rekey()` moves the top score to the option the experts chose. Three
+decisions worth recording:
+
+**It swaps, it does not overwrite.** The old top option takes the new one's
+score. That preserves the −1/0/+1/+2 spread the whole scoring model assumes;
+assigning a fresh number to one option would silently change this item's range
+and make it weigh differently from its 27 peers.
+
+**It recomputes everything, in the same transaction.** A score measured under the
+old key does not mean the same thing under the new one. Applying a re-key
+recomputes every completed candidate profile and re-runs every open requirement.
+A re-key that leaves stale profiles behind is worse than no re-key: it makes two
+candidates assessed a week apart silently incomparable.
+
+**It is recorded and reversible.** `key_changes` holds what moved, who moved it,
+on which round's evidence, and how many profiles and matches were recomputed.
+`undo_rekey()` swaps back and recomputes again.
+
+**A split is not a re-key.** Where the experts disagree with each other, the item
+itself is ambiguous — "the obvious right answer" was not obvious — and §13 asks
+for it to be *rewritten*, not re-scored. Only unanimous-and-against-the-bank
+items are offered for re-keying, and the page says why.
+
+### What the QA does, and one thing it found
+
+It does not check that the button exists. It **presses** it, then checks the
+candidate's profile actually changed, the change was recorded, and the undo
+restores both the bank and the score.
+
+The first version also asserted the match percentage moved, and failed. It was
+wrong: §9 caps a dimension's contribution at **1.15 ×** its requirement. The
+re-keyed item lifted CCH from 83 to 92 against a required 60 — already over the
+cap at 1.38 — so the composite correctly did not move at all. The assertion now
+checks the recompute *ran*, and that the composite moved only where the cap
+allowed it. A test that expects a number to change must know why it would.
+
+## 7v. What the scores mean, in language a recruiter can use
+
+*"Can we see what the candidate scores actually mean? CLS-C, F etc., I can't
+really understand those."*
+
+`dimensions.definition` was written for whoever built the instrument. *"Behaviour
+change after correction, including correction they disagree with"* is precise and
+tells a recruiter nothing about what a 55 looks like on a Tuesday. **A construct
+definition is not an explanation.**
+
+Each dimension now carries four plain-language fields — what a high score does on
+the floor, what a low one does without pretending it is a character flaw, the
+commercial consequence, and which items produce the number so it is inspectable
+rather than magic. A **Dictionary** screen renders them, with the required level
+each open role asks for, so the glossary is not a separate world from the
+shortlist.
+
+CLS_C and CLS_F get the most care, because they are the two that confuse people
+and the two the engine turns on. They are not closing parts one and two — they
+are the *same trait in two different sales motions*, and which one counts is
+decided by the client's ticket and cycle, not by the candidate.
+
+### The dictionary was wrong on its first draft, and QA caught it
+
+Three dimensions — RES, DRV and DSC — say "four scenario items". They each have
+four scenario items **plus one behavioural-frequency item**: a self-reported count
+about the candidate's own last week or month. The copy was written from the
+construct design rather than from the bank.
+
+**A dictionary that misstates how a number is produced is worse than none** — it
+is the one page a reader will trust when deciding whether to trust the number. So
+the migration now asserts, per dimension, that the stated item count matches the
+bank, and QA re-checks it in the browser against `items`. Prose about data is
+data, and it gets an assertion like anything else.
+
+## 7w. Two things the re-key broke, and one of them was older than the re-key
+
+Both found by `run_golden_cases()` going from 19/19 to 16/19 the moment
+`apply_rekey()` was exercised for real. This is the entire reason those fixtures
+exist, and the first time they have earned their keep by catching something I
+wrote rather than something the PRD left ambiguous.
+
+### A recompute could erase a profile — `sql/04`, `sql/26`
+
+`apply_rekey()` recomputes every completed session, because a score measured
+under the old key does not mean the same thing under the new one. It recomputed
+the **golden-case fixtures** too — and those are seeded by writing
+`candidate_profile.scores` *directly*, with no `candidate_responses` at all,
+because their purpose is to pin known vectors against known requirements. So
+`compute_candidate_profile()` summed zero responses, produced `{}`, and wrote
+that over twelve carefully constructed profiles.
+
+Two defects, and only one of them was mine:
+
+1. `apply_rekey()` did not exclude fixtures. Every other operational path does.
+   Narrow, mine, fixed.
+2. **`compute_candidate_profile()` would happily write an empty profile over a
+   real one** — true since the day it was written. Any future recompute pointed
+   at a session whose responses had gone would silently destroy that candidate's
+   scores and leave a valid-looking row behind. A dictionary change, a bank
+   rotation, a manual repair; all of them loaded.
+
+The second is the one that matters, and the guard now lives inside the function
+rather than in the caller: no responses, no write, raise instead.
+
+> **An empty result is not a result.** Recomputing something that cannot be
+> computed is not a no-op, it is deletion.
+
+Which is §7o's lesson — *an empty result is not a denial* — arriving from the
+other direction. Empty is not a value, it is the absence of one, and code that
+treats the two as the same will eventually delete something. `v_empty_profile_audit`
+must always be empty.
+
+### The RLS fix had a half-life — `sql/27`
+
+While repairing the above I re-applied `sql/04`, and `v_rls_bypass_audit` went
+from 0 rows to **7**.
+
+**`CREATE OR REPLACE VIEW` does not preserve `security_invoker`.** It resets to
+the default, which is off. So every one of the seven instrument-health views
+defined in `sql/04` quietly reopened the hole `sql/18` was written to close — the
+one where the publishable key could read candidate names, client brief data and
+live keying tokens.
+
+That made `sql/18` a fix that is correct at the moment it runs and decays every
+time anyone re-applies an earlier migration, adds a view, or edits one. Which is
+a normal Tuesday.
+
+> **A security property that depends on everybody remembering is not a property,
+> it is a habit.**
+
+So it is now a rule the database enforces on itself: an event trigger sets
+`security_invoker` on any view created or replaced in `public`, at the moment it
+is created. There is nothing left to remember and no migration order that can
+undo it. The migration proves it rather than assuming it — it creates a probe
+view, checks the option was set, and drops it — and then the whole thing is
+re-verified by re-applying `sql/04` and watching the audit stay at zero.
+
+## 7x. What happens when the keys conflict — and why there is no second key table
+
+*"What happens when the keys are in conflict? How do you resolve them? Do we
+need an intermediate table where keyed info gets stored and then another table
+with final keys?"*
+
+### The intermediate table already exists
+
+`keying_submissions` is exactly that: one row per (round, expert, item), holding
+what each person chose and why. Raw evidence. Never overwritten, never merged.
+
+### A second table of "final keys" would be a mistake
+
+`item_options.score_key` is already the live key — the one the scoring functions
+read. Adding a parallel `final_keys` table would create two places that both
+claim to hold the same number. Every scoring query would then have to know which
+one wins, and on the day they disagree — a partial migration, a failed
+transaction, someone editing one and not the other — the system produces scores
+with no way to tell which key set made them.
+
+> **Two sources of truth for one number is not redundancy, it is a race.**
+
+What was genuinely missing was not a second key. It was three other things, and
+`sql/28` adds each.
+
+### 1. A record of the decision
+
+The report could show a conflict and there was nowhere to write down what you
+concluded about it. An item stayed "disputed" forever whether you had thought
+about it for an hour or never opened the page. `key_decisions` holds one row per
+item — `rekeyed` / `kept` / `rewrite_pending` / `rewritten` / `deferred` — with
+who decided and when. Not keys. Decisions.
+
+A decision that overrides what the experts found (`kept`, `rewrite_pending`) is
+refused without a written rationale. In six months nobody remembers why.
+
+### 2. How a conflict is actually resolved — three cases, not two
+
+The old report had two buckets: unanimous, and "split". That put a 2-of-3
+majority in the same bucket as a 3-way disagreement, and **they call for
+opposite actions.**
+
+| Shape | What it means | What happens |
+|---|---|---|
+| **Unanimous, agrees with the bank** | The item is solid | Nothing to do |
+| **Unanimous, disagrees with the bank** | This is the finding §13 exists to produce | One-click re-key, recorded, undoable |
+| **Majority** (e.g. 2 of 3) | The experts did not converge — evidence about the *item* | No automatic action. An admin may override, with a rationale kept beside it forever |
+| **Even split** | "The obvious right answer" was not obvious to people who sell for a living | Do **not** re-key. §13 asks for a rewrite, and the decision to rewrite is now trackable rather than a note in somebody's head |
+
+`v_keying_conflicts` does the classification in the database, so the screen
+renders a verdict rather than deriving one. Today: 12 unanimous-agrees, 4
+unanimous-disagrees, 12 even splits, 0 majorities.
+
+### 3. Look before you leap
+
+`preview_rekey()` runs the entire re-key — swap the keys, recompute every real
+candidate profile, diff each one — inside a subtransaction that always rolls
+back, and returns who would move and by how much. Undo is a good safety net and
+a bad substitute for looking first, with four pending changes and every profile
+downstream. The QA proves it leaves no trace by comparing the key fingerprint
+either side of a preview, not by trusting the rollback.
+
+### 4. Provenance on the score
+
+Two candidates assessed either side of a re-key had identical-looking profiles
+with no way to tell they were measured with different instruments.
+`key_fingerprint()` hashes the whole SJT key set; a trigger stamps it on every
+`candidate_profile` row; `v_key_drift_audit` shows when profiles in the system
+no longer share one. The report names the key set in force.
+
+### The bug the data found, not the reasoning
+
+After a QA run that applied a re-key and then undid it, `key_decisions` still
+said `rekeyed` while the bank was back to the key the experts had rejected. The
+item read as settled — which is the worst state, because it is the one that stops
+you looking. `undo_rekey()` now clears the decision it created: undoing a change
+must undo the record that the change was decided.
+
+### And one on the way out
+
+Every QA script in the suite signed in by pressing **Create account**, because
+the button used to work either way. Fixing the button broke seventeen scripts at
+once — which is the clearest possible evidence that no test had ever exercised
+the sign-in path, and that the tests had been quietly documenting the bug.
+
+## 7y. "Create account" signed you into the tool
+
+Reported plainly: *clicking "Create account" moves us inside the tool, and not
+creating an account.*
+
+It did, and the reason was a kindness I had written in on purpose. The handler
+called `sbSignUp()`, and if that failed because the email already existed, it
+fell through to `sbSignIn()` — on the reasoning that people forget which button
+they need and the friendly thing is to get them where they were going.
+
+That reasoning is wrong, and it is worth being precise about why. It is not that
+the behaviour is unhelpful — it is helpful. It is that the button now does
+something other than what it says, and **once a label is unreliable the user has
+to test every button rather than read it.** The cost is not this button; it is
+every other one.
+
+So `btn-signup` now only signs up. An existing email produces a refusal that
+names the address, says it already has a password, and points at Sign in. A new
+email creates the account — and is then refused entry by `whoami()`, because
+signing up grants nothing until an admin adds a staff row. Both paths are in the
+QA, and the second one matters more: it is the path a stranger takes.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

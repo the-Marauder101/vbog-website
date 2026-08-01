@@ -17,7 +17,7 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const VIEWS = ["signin", "reqs", "req", "queue", "cand", "health", "guide", "place", "supp", "loading"];
+const VIEWS = ["signin", "reqs", "req", "queue", "cand", "health", "guide", "dict", "place", "supp", "loading"];
 
 function view(name) {
   VIEWS.forEach((v) => {
@@ -39,7 +39,7 @@ function view(name) {
 // still "Requirements", because that is where you came from and where Back goes.
 const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue", cand: "nav-queue",
                  health: "nav-health", place: "nav-place", supp: "nav-supp",
-                 guide: "nav-guide" };
+                 guide: "nav-guide", dict: "nav-dict" };
 
 function markNav(name) {
   Object.values(NAV_OF).forEach((id) => el(id) && el(id).removeAttribute("aria-current"));
@@ -114,18 +114,26 @@ el("btn-signin").addEventListener("click", async () => {
 el("btn-signup").addEventListener("click", async () => {
   el("signin-error").hidden = true;
   const email = el("si-email").value.trim(), pass = el("si-pass").value;
+  const b = el("btn-signup"); b.disabled = true; b.textContent = "Creating…";
   try {
-    // An account that already exists is not a failure worth a dead end. People
-    // are told to "sign up at nikash.html with that email", forget they already
-    // did, and press the wrong button — so fall through to signing in and let the
-    // password decide.
-    try { await sbSignUp(email, pass); }
-    catch (e) { if (!/already registered|already exists/i.test(e.message)) throw e; }
+    // A button labelled "Create account" must create an account. An earlier
+    // version quietly fell through to signing in when the email already existed,
+    // on the reasoning that people forget and press the wrong button — which is
+    // true, and still not a licence for the button to do something other than
+    // what it says. Pressing Create and landing inside the tool teaches you that
+    // the label is decoration.
+    await sbSignUp(email, pass);
     await sbSignIn(email, pass);
     await afterSignIn();
   } catch (e) {
     el("signin-error").hidden = false;
-    el("signin-error").innerHTML = `<span class="label">Could not create the account</span>${esc(e.message)}`;
+    el("signin-error").innerHTML = /already registered|already exists/i.test(e.message)
+      ? `<span class="label">That account already exists</span>` +
+        `${esc(email)} already has a password set. Use <strong>Sign in</strong> instead — ` +
+        `and if you have forgotten it, an admin can reset it in Supabase.`
+      : `<span class="label">Could not create the account</span>${esc(e.message)}`;
+  } finally {
+    b.disabled = false; b.textContent = "Create account";
   }
 });
 
@@ -652,7 +660,8 @@ function scoreStrip(scores) {
   if (!scores) return "";
   return `<div class="strip mono">${DIMS.map(([k, label]) =>
     scores[k] === undefined ? "" :
-    `<span><em>${label}</em>${scores[k]}</span>`).join("")}</div>`;
+    `<span><em>${label}</em>${scores[k]}</span>`).join("")}
+    <a href="#" class="strip-key mono" data-dict>what these mean →</a></div>`;
 }
 
 // Every open role this person has been matched against, best first. The
@@ -716,6 +725,9 @@ async function loadQueue() {
     : `<div class="empty"><h3>No candidates yet</h3>
        <p class="muted">Create a test link above.</p></div>`;
 
+  el("queue-list").querySelectorAll("[data-dict]").forEach((a) =>
+    a.addEventListener("click", (e) => { e.preventDefault(); loadDictionary(); }));
+
   el("queue-list").querySelectorAll("[data-cand]").forEach((a) =>
     a.addEventListener("click", (e) => { e.preventDefault(); openCandidate(a.dataset.cand); }));
 
@@ -743,6 +755,57 @@ async function loadQueue() {
 
   view("queue");
 }
+
+// ═══ DICTIONARY ════════════════════════════════════════════════════════════
+// The construct definitions in the database were written for whoever built the
+// instrument. "Behaviour change after correction" is precise and tells a
+// recruiter nothing about what a 55 looks like on a Tuesday. This screen answers
+// the question people actually have: what does this number mean, and what does
+// it cost me if it is low.
+
+async function loadDictionary() {
+  view("loading");
+  const d = await sbRpc("get_dictionary");
+  el("dict-scale").textContent = d.scale;
+  el("dict-caveat").textContent = d.caveat;
+
+  el("dict-body").innerHTML = d.dimensions.map((x) => `
+    <div class="panel dim">
+      <div class="cand-head">
+        <span class="cand-name">${esc(x.plain_name || x.name)}</span>
+        <span class="chip">${esc(x.code)}</span>
+        ${x.kind === "bipolar" ? `<span class="chip">fit, not quality</span>` : ""}
+        <span class="spacer"></span>
+        <span class="mono muted">${x.n_items} items</span>
+      </div>
+      <p class="small muted" style="margin:6px 0 14px">
+        <strong>${esc(x.name)}</strong> — ${esc(x.definition)}</p>
+
+      <ul class="evidence">
+        <li><span class="glyph mono">${x.kind === "bipolar" ? "→" : "+"}</span>
+          <span><strong>${x.kind === "bipolar" ? esc(x.pole_100 || "high end") : "High"}</strong>
+          — ${esc(x.high_looks_like)}</span></li>
+        <li><span class="glyph mono">${x.kind === "bipolar" ? "←" : "!"}</span>
+          <span><strong>${x.kind === "bipolar" ? esc(x.pole_0 || "low end") : "Low"}</strong>
+          — ${esc(x.low_looks_like)}</span></li>
+        <li><span class="glyph mono">₹</span>
+          <span><strong>Why it matters</strong> — ${esc(x.why_it_matters)}</span></li>
+        <li><span class="glyph mono">?</span>
+          <span><strong>How it is measured</strong> — ${esc(x.how_measured)}</span></li>
+      </ul>
+
+      ${(x.required_by || []).length
+        ? `<div class="callout plain" style="margin-top:12px">
+             <span class="label">What the open roles ask for</span>
+             ${x.required_by.map((r) => `${esc(r.business_name)} — ${esc(r.title)}:
+               <strong>${r.level == null ? "not stated" : r.level}</strong>`).join(" · ")}
+           </div>`
+        : ""}
+    </div>`).join("");
+  view("dict");
+}
+
+el("nav-dict").addEventListener("click", (e) => { e.preventDefault(); loadDictionary(); });
 
 // ═══ ONE CANDIDATE ═════════════════════════════════════════════════════════
 // The only screen that shows all nine scores at once, and the one most likely to

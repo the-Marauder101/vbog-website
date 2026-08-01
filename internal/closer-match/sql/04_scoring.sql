@@ -65,6 +65,25 @@ begin
     raise exception 'compute_candidate_profile: no such session %', p_session_id;
   end if;
 
+  -- REFUSE TO COMPUTE NOTHING. Without this the function happily sums zero
+  -- responses, produces {}, and writes that over whatever profile was there.
+  --
+  -- Found the hard way: apply_rekey() recomputes every completed session, and
+  -- the golden-case fixtures are seeded by writing candidate_profile.scores
+  -- DIRECTLY — they have no responses at all, because their purpose is to pin
+  -- known score vectors against known requirements. One re-key erased twelve of
+  -- them and took run_golden_cases() from 19/19 to 16/19.
+  --
+  -- The narrow fix was to stop apply_rekey() touching fixtures. This is the real
+  -- one: any future recompute pointed at a session whose responses have gone
+  -- would silently destroy that candidate's scores and leave a valid-looking row.
+  -- An empty result is not a result. Recomputing something that cannot be
+  -- computed is not a no-op, it is deletion.
+  if not exists (select 1 from candidate_responses where session_id = p_session_id) then
+    raise exception 'compute_candidate_profile: session % has no responses. '
+                    'Refusing to overwrite a profile with an empty one.', p_session_id;
+  end if;
+
   -- ── UNIPOLAR ─────────────────────────────────────────────────────────────
   for v_dim in
     select code from dimensions

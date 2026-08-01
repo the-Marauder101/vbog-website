@@ -12,6 +12,7 @@ VBOG's second internal tool, after Vyom.
 | Candidate assessment | `assess.html?t=<token>` | the candidate, no account |
 | Client supplement | `supplement.html?t=<token>` | the candidate, no account |
 | Blind item keying | `keying.html` · `keying.html?t=<token>` | staff, **or an invited expert with no account** |
+| What the scores mean | `nikash.html` → Dictionary | staff |
 | Verification call | `interview.html?req=&cand=` | staff, Step 4 |
 
 `assess.html` deliberately keeps the V-BOG lockup rather than the Nikash name:
@@ -88,6 +89,19 @@ select * from run_golden_cases();
 CLS-blend frame split, band boundaries, the cycle override, hard-filter naming,
 the scoring arithmetic end to end, and the confidence multiplier.
 
+## What the scores mean
+
+**Dictionary** in the console. Each of the nine, in plain language: what a high
+score does on the floor, what a low one does, the commercial consequence, and
+which items produce it — plus the level every open role asks for.
+
+The short version of the one that confuses everybody: **CLS_C and CLS_F are the
+same trait in two different sales motions.** Closing on a considered sale (weeks,
+several conversations, a senior buyer) and closing on a fast one (inside the
+inbound call you are already on). A candidate can be strong at one and weak at the
+other. Which one counts is decided by the client's ticket size and cycle length —
+never by the candidate — which is why no blended closing score is ever stored.
+
 ## Where the results are
 
 **Requirements → open the role** for the shortlist: rank, composite, the
@@ -130,6 +144,8 @@ candidate finishes their test. So the order does not matter — see ARCHITECTURE
 | `select * from v_rls_bypass_audit` | **Must always be empty** — any row is something reachable *without* a policy being consulted at all (see ARCHITECTURE.md §7n) |
 | `select * from v_unmatched_audit` | **Must always be empty** — any row is an assessed candidate missing from an open role's shortlist (§7q) |
 | `select * from v_double_session_audit` | **Must always be empty** — any row is a candidate who reopened a finished link and got a fresh empty session (§7t) |
+| `select * from v_empty_profile_audit` | **Must always be empty** — any row is a profile a recompute erased (§7w) |
+| `select * from v_rekey_pending` | Items where every expert who keyed it agreed, and disagreed with the bank — the re-key shortlist (§7u) |
 | `select * from v_outcomes_due` | Overdue outcome checkpoints. The one table everything else depends on |
 | `select * from v_predictor_validity` | Which of the three predictors actually predicted retention |
 | `select * from v_criterion_validity` | Do the dimensions separate known-strong from known-average closers |
@@ -190,6 +206,21 @@ otherwise. **Withdraw link** stops it immediately and keeps everything already k
 
 Send each expert their own link. Keys are attributed to the name on the link, so a
 forwarded one would overwrite somebody's work — the page says so before they start.
+
+### And then do something with it
+
+**Keying → See the breakdown.** Every item, what the bank currently scores, what
+each expert chose, and their note. Where the experts are **unanimous and disagree
+with the bank**, there is a **Re-key** button.
+
+Applying one moves the top score to the option they chose — by swapping, so the
+−1/0/+1/+2 spread survives — then **recomputes every candidate profile and every
+open shortlist**, because a score measured under the old key does not mean the
+same thing under the new one. It is recorded in `key_changes` against your name,
+and `undo_rekey()` reverses it.
+
+Where the experts **split**, do not re-key. The item itself is ambiguous, and §13
+asks for it to be rewritten before launch.
 
 A keyer's email is **not** a console account. It gets a `staff` row so the keys can
 be attributed, marked inactive, which grants nothing. If they try to sign in to the
