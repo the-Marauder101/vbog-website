@@ -62,7 +62,7 @@ and `brand.css` / `assess.css` (external).
 
 ## Database setup
 
-Run the files in `sql/` in numeric order (01→15) in the Supabase SQL Editor. All
+Run the files in `sql/` in numeric order (01→16) in the Supabase SQL Editor. All
 are idempotent. The project is already set up; this is for rebuilding on a fresh
 one.
 
@@ -109,6 +109,18 @@ per the PRD's own list:
   multi-stakeholder — write the pack rather than stretching one (§17)
 - **Fitted weights** — needs ~100 outcomes (§12). `v_predictor_validity` is
   built and will answer it when the data exists
+
+## Writing a client supplement
+
+Open **Supplements**, pick the client, and press **Suggest from their intake**. That
+builds a draft from templates chosen against what they already told you — ticket
+band, cycle length, whether they have a CRM, how much is cold outbound, whether a
+refund policy exists, whether the buyer is an owner. Same intake, same draft, every
+time; no model involved.
+
+It is a starting point, not a finished supplement. **Rewrite the two vertical
+questions** — a question that could apply to any industry tests nothing. Then edit,
+trim to 5–8 behavioural plus 3–5 technical, and save.
 
 ## If the console says your session expired
 

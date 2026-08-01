@@ -31,16 +31,55 @@ async function loadRounds() {
 
   el("rounds").innerHTML = rounds.length
     ? rounds.map((r) => `
-      <a class="req" href="#" data-round="${esc(r.id)}">
-        <span class="title">${esc(r.label)}</span>
+      <div class="req">
+        <span class="title"><a href="#" data-round="${esc(r.id)}">${esc(r.label)}</a></span>
         <span class="meta small">${r.open ? "open" : "closed"} · bank ${esc(r.bank_version)}</span>
-        <span class="figures"><span class="mono muted">key it →</span></span>
-      </a>`).join("")
+        <span class="figures"><span class="mono muted">${r.open ? "key it →" : "closed"}</span></span>
+        <div class="actions" style="grid-column:1/-1;margin-top:10px">
+          <button class="btn-quiet btn-small" data-rn="${esc(r.id)}" data-label="${esc(r.label)}">Rename</button>
+          <button class="btn-quiet btn-small" data-toggle="${esc(r.id)}" data-open="${r.open}">
+            ${r.open ? "Close round" : "Reopen"}</button>
+          <button class="btn-quiet btn-small" data-rdel="${esc(r.id)}" data-label="${esc(r.label)}">Delete</button>
+          <span class="savestate" data-kslot="${esc(r.id)}"></span>
+        </div>
+      </div>`).join("")
     : `<div class="empty"><h3>No rounds yet</h3><p class="muted">Create one below,
        then have each expert sign in and key the same round.</p></div>`;
 
   el("rounds").querySelectorAll("[data-round]").forEach((a) =>
     a.addEventListener("click", (e) => { e.preventDefault(); openRound(a.dataset.round); }));
+
+  const kslot = (id) => document.querySelector(`[data-kslot="${id}"]`);
+  const kfail = (id, m) => { kslot(id).textContent = m; kslot(id).dataset.state = "error"; };
+
+  el("rounds").querySelectorAll("[data-rn]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const next = prompt("Rename this round:", b.dataset.label);
+      if (next === null || !next.trim()) return;
+      try { await sbRpc("rename_keying_round", { p_id: b.dataset.rn, p_label: next.trim() }); await loadRounds(); }
+      catch (e) { kfail(b.dataset.rn, e.message); }
+    }));
+
+  // Closing a round stops further keying without losing what was submitted —
+  // which is what you want once the three experts are done.
+  el("rounds").querySelectorAll("[data-toggle]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const open = b.dataset.open !== "true";
+      try { await sbRpc("set_keying_round_open", { p_id: b.dataset.toggle, p_open: open }); await loadRounds(); }
+      catch (e) { kfail(b.dataset.toggle, e.message); }
+    }));
+
+  el("rounds").querySelectorAll("[data-rdel]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      if (!confirm(`Delete the round "${b.dataset.label}"?\n\n` +
+        `Every expert's submitted keys for this round go with it, and the agreement ` +
+        `report loses them. The item bank itself is untouched.`)) return;
+      try {
+        const r = await sbRpc("delete_keying_round", { p_id: b.dataset.rdel });
+        await loadRounds();
+        if (r) console.info(`Deleted ${r.deleted}: ${r.submissions} submissions from ${r.experts} expert(s)`);
+      } catch (e) { kfail(b.dataset.rdel, e.message); }
+    }));
 
   if (agree.length) {
     const split = agree.filter((a) => a.verdict.startsWith("split")).length;
@@ -98,6 +137,8 @@ function render() {
   el("worst").querySelectorAll("input").forEach((i) => i.addEventListener("change", save));
   el("note").addEventListener("change", save);
 
+  const clear = el("btn-clear");
+  if (clear) clear.disabled = !it.mine;
   el("btn-prev").disabled = S.i === 0;
   el("btn-next").disabled = !document.querySelector('input[name="best"]:checked');
   el("btn-next").textContent = S.i === S.items.length - 1 ? "Finish" : "Next";
@@ -119,6 +160,16 @@ async function save() {
     setSave("Saved", "saved");
   } catch (e) { setSave(e.message, "error"); }
 }
+
+el("btn-clear").addEventListener("click", async () => {
+  // Undo one answer without disturbing the rest of the round.
+  try {
+    await sbRpc("clear_keying", { p_round: S.round, p_item: S.items[S.i].id });
+    S.items[S.i].mine = null;
+    setSave("Cleared", "saved");
+    render();
+  } catch (e) { setSave(e.message, "error"); }
+});
 
 el("btn-prev").addEventListener("click", () => { if (S.i > 0) { S.i--; render(); } });
 el("btn-next").addEventListener("click", async () => {
