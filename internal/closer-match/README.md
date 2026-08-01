@@ -31,13 +31,25 @@ against **every** open client requirement, with the reasoning shown.
 - **Zero AI at runtime, zero API cost.** All scoring is deterministic arithmetic
   in Postgres functions
 
-## Two visual worlds
+## The look
 
-The console, keying and verification-call surfaces follow **Vyom's** design
-language, so staff moving between the two internal tools stay in one world. The
-client role brief, the candidate assessment and the supplement follow **v-bog.com's
-brand**, because those are seen from outside. Stylesheets: `nikash.css` (internal)
-and `brand.css` / `assess.css` (external).
+**A touchstone is a black stone; you rub gold on it and read the streak.** Ink,
+V-BOG orange, warm paper. One accent, no gradients, no shadows. The streak is not
+decoration — it marks *where you are*: under the wordmark, under the active nav
+item, down the edge of the row you are on, inside a focused field. It never marks
+quality; nothing in this console gets a green light.
+
+Numbers are set in mono with tabular figures, because a number set in a monospace
+looks measured and the same number in a heavy sans looks awarded — and these
+weights are expert-set, not learned.
+
+The mark is `img/nikash.svg`: the stone, and the tapering streak the gold leaves on
+it, running off the edge because the reading does not stay on the instrument.
+
+Stylesheets: `nikash.css` (console, keying, verification call), `brand.css` and
+`assess.css` (the client brief, the candidate assessment and the supplement — the
+surfaces an outsider sees, which wear v-bog.com's own register). See
+ARCHITECTURE.md §7b0 and §7m.
 
 ## The three rules
 

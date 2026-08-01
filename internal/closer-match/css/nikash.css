@@ -1,64 +1,78 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    NIKASH — internal console. निकष · touchstone.
 
-   VISUAL AUTHORITY: Vyom (internal/pm/css/style.css), not v-bog.com.
+   THE IDEA: a touchstone is a black stone. You rub gold on it and read the
+   streak. Ink and one orange streak is the whole system — and it is not
+   decoration, it is the interaction language:
 
-   Why: a recruiter moves between Vyom and Nikash all day. Those two should feel
-   like one toolset, not two products. The marketing brand belongs on surfaces an
-   OUTSIDER sees — the client role brief and the candidate pages, which use
-   brand.css. A client should see V-BOG; staff should see the tools.
+     · The streak marks WHERE YOU ARE — the open view, the row under the
+       cursor, the current step, the focused field. It never marks quality.
+       Nothing in this console gets a green light.
+     · Ink carries structure. Hairlines carry separation. Nothing floats.
+     · Measurements are set in mono, so a number looks like a reading off an
+       instrument rather than a score on a dashboard.
 
-   Vyom's system, adopted as-is:
-     --primary #0F3460 navy · --accent #00B4D8 cyan · 10px radius, 8px on controls
-     soft navy-tinted shadows · gradient primary button · Inter, 15px base
-     white cards on #F9FAFB · cyan→violet hairline under the top nav
+   WHY THIS AND NOT VYOM'S NAVY (a deliberate reversal, recorded in
+   ARCHITECTURE.md §7m). The previous version copied Vyom's palette outright so
+   the two internal tools would feel like one world. What it actually produced
+   was a navy tool with no identity of its own — Vyom has character because its
+   look comes from its NAME (व्योम, sky: a planet, an orbit, a cosmic hairline),
+   and a borrowed palette cannot inherit that. So Nikash now takes its look from
+   निकष the same way. The two tools still share their GRAMMAR — sticky masthead,
+   wordmark plus a coloured dot, mono meta labels, a rule after every region
+   head — which is what actually makes a toolset feel related. Palette is not
+   grammar.
 
-   ONE CORRECTION. Cyan #00B4D8 measures 2.4:1 on Vyom's light background, below
-   the 3:1 floor for a UI component that carries meaning. So cyan is used the way
-   Vyom uses it — gradients and hairlines, decoration — while anything that
-   actually SIGNALS (a selected option, a progress fill, a checked box) uses navy,
-   which is 12.5:1. Same look, meaning that survives.
+   The ink and the orange are V-BOG's own, which ties the tool to the firm
+   without turning the console into a marketing page.
 
-   FORM FOLLOWS FUNCTION — four rules that survive any repaint, because they are
-   about hierarchy and behaviour rather than colour:
+   CONTRAST. Bright #FF4D00 measures 3.04:1 on paper — enough for large text
+   and non-text marks, not enough for body copy. So the bright orange is used
+   only for streaks, fills, bars and the display-size wordmark dot, while any
+   orange that carries WORDS uses #C43C00 (4.84:1). Verified by measurement in
+   QA, not by eye; the audit walks every element and fails the run below floor.
+
+   FORM FOLLOWS FUNCTION — four rules that survive any repaint, because they
+   are about hierarchy and behaviour rather than colour:
 
    1. A NUMBER NEVER APPEARS WITHOUT ITS REASON. The composite is unvalidated
-      (§4 rules out predictive-validity claims), so `.figure` stays 26px and the
-      sentence explaining a score is never smaller than the score.
-   2. CONCERNS ARE NOT DECORATION. Reasons and concerns render in the same column
-      at the same weight, always visible. A shortlist showing only strengths is a
-      sales document.
+      (§4 rules out predictive-validity claims), so `.figure` stays restrained
+      and the sentence explaining a score is never smaller than the score.
+   2. CONCERNS ARE NOT DECORATION. Reasons and concerns render in the same
+      column at the same weight, always visible. A shortlist showing only
+      strengths is a sales document.
    3. EXCLUSION IS VISIBLE AND REVERSIBLE. No reject control exists, because
-      `matches` has no column to hold one. A hard-filter failure renders muted and
-      still names every failing filter.
-   4. RANK IS TYPOGRAPHY, NOT COLOUR. No red-amber-green on an unvalidated score —
-      that reads as a verdict. Position carries rank. --danger is reserved for
-      genuine problems (an exit, an overdue checkpoint), never for "scored lower".
+      `matches` has no column to hold one. A hard-filter failure renders set
+      aside and still names every failing filter.
+   4. RANK IS TYPOGRAPHY, NOT COLOUR. No red-amber-green on an unvalidated
+      score — that reads as a verdict. Position carries rank. --danger is for
+      genuine problems (an exit, an overdue checkpoint), never for "scored
+      lower", and the streak never means "good".
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg:        #F9FAFB;
+  --stone:     #141416;   /* the stone: fills, primary buttons, the mark */
+  --ink:       #17171A;   /* body text — 15.9:1 on paper */
+  --ink-2:     #45454C;
+  --muted:     #6A6A72;   /* 5.1:1 on paper */
+  --paper:     #F6F4F1;   /* warm, V-BOG's own off-white */
   --surface:   #FFFFFF;
-  --raised:    #F3F5F8;
-  --primary:   #0F3460;
-  --primary-2: #14507E;
-  --accent:    #00B4D8;
-  --violet:    #7C3AED;
-  --danger:    #DC2626;
+  --raised:    #EFEBE5;
+  --line:      #E3DED7;
+  --line-2:    #C8C0B5;
+
+  --streak:    #FF4D00;   /* non-text and large-display only — 3.04:1 */
+  --streak-t:  #C43C00;   /* anything that carries words — 4.84:1 */
+  --streak-w:  rgba(255, 77, 0, 0.07);
+  --danger:    #C0261D;
   --success:   #0F7A52;
-  --text:      #1A1A2E;
-  --muted:     #6B7280;   /* 4.7:1 on --bg */
-  --border:    #E5E7EB;
-  --border-2:  #CBD5E1;
 
-  --shadow:    0 1px 3px rgba(15, 52, 96, 0.08), 0 1px 2px rgba(15, 52, 96, 0.06);
-  --shadow-md: 0 4px 12px rgba(15, 52, 96, 0.10), 0 1px 3px rgba(15, 52, 96, 0.06);
-  --shadow-lg: 0 10px 30px rgba(15, 52, 96, 0.18);
-  --radius:    10px;
-  --radius-sm: 8px;
-
+  --radius:    3px;       /* near-square: an instrument, not a card */
+  --radius-sm: 2px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --shell: 1180px;
+  --display: "Satoshi", "Inter", system-ui, sans-serif;
+  --mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -67,176 +81,241 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--paper);
+  color: var(--ink);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
-::selection { background: rgba(0, 180, 216, 0.28); }
+::selection { background: var(--streak); color: #fff; }
 
 .mono {
-  font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--mono);
   font-size: 11px; font-weight: 500;
-  letter-spacing: 0.06em; text-transform: uppercase;
+  letter-spacing: 0.07em; text-transform: uppercase;
 }
 
+/* Satoshi 900 is V-BOG's display face. It is what gives a heading a voice
+   instead of a weight. */
 h1, h2, h3 {
-  font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;
-  color: var(--text); text-wrap: balance; margin: 0 0 12px;
+  font-family: var(--display);
+  font-weight: 900; letter-spacing: -0.03em; line-height: 1.1;
+  color: var(--ink); text-wrap: balance; margin: 0 0 12px;
 }
-h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.025em; }
-h2 { font-size: 19px; }
-h3 { font-size: 16px; letter-spacing: -0.015em; }
+h1 { font-size: 32px; letter-spacing: -0.038em; }
+h2 { font-size: 21px; }
+h3 { font-size: 16px; letter-spacing: -0.022em; }
 p { margin: 0 0 12px; }
 p:last-child { margin-bottom: 0; }
 .muted { color: var(--muted); }
 small, .small { font-size: 13px; line-height: 1.5; }
+code { font-family: var(--mono); font-size: 0.92em; background: var(--raised); padding: 1px 4px; }
 
-a { color: var(--primary); text-decoration: none; font-weight: 500; }
-a:hover { color: var(--accent); text-decoration: underline; }
+a { color: var(--ink); text-decoration: none; font-weight: 500; }
+a:hover { color: var(--streak-t); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 
-/* ── Masthead — Vyom's nav, including its cyan→violet hairline ───────────── */
+/* ── Masthead ─────────────────────────────────────────────────────────────
+   Vyom's grammar — sticky bar, wordmark, mono descriptor, nav on the right —
+   with Vyom's full-width cosmic gradient replaced by ONE deliberate mark: a
+   2px streak on the bottom edge, exactly as wide as the wordmark. Same move,
+   reduced to the thing it is about. */
 .masthead {
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  background-image: linear-gradient(90deg, var(--accent), var(--violet) 55%, transparent 85%);
-  background-repeat: no-repeat;
-  background-size: 100% 2px;
-  background-position: bottom left;
+  border-bottom: 1px solid var(--line);
   position: sticky; top: 0; z-index: 50;
 }
 .masthead-in {
   max-width: var(--shell); margin: 0 auto;
-  padding: 0 28px; min-height: 60px;
+  padding: 0 28px; min-height: 62px;
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
 }
 .brand {
-  font-weight: 800; font-size: 19px; letter-spacing: -0.03em;
-  color: var(--primary); text-decoration: none;
+  /* Stretched to the full height of the bar so the streak below can be pinned
+     to the bar's own bottom edge rather than to a guessed offset. The first
+     attempt hard-coded `(62 - 28) / 2` and the streak hung 30px into the page,
+     because the brand's line box is taller than the mark it contains. Geometry
+     you can compute in your head is still geometry you should let the layout
+     compute. */
+  align-self: stretch;
+  position: relative;
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--display);
+  font-weight: 900; font-size: 21px; letter-spacing: -0.045em;
+  color: var(--ink); text-decoration: none;
 }
-.brand:hover { color: var(--primary); text-decoration: none; }
-.brand .dot { color: var(--accent); }
+.brand:hover { color: var(--ink); text-decoration: none; }
+.brand .dot { color: var(--streak); }
+.brand-mark { width: 28px; height: 28px; flex: none; }
+
+/* The streak: exactly as wide as the wordmark, sitting on the masthead's
+   bottom edge and covering its hairline. Retired below 860px, where the bar
+   wraps and the brand is no longer flush with the bottom. */
+.masthead .brand::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px; background: var(--streak);
+}
+@media (max-width: 860px) { .masthead .brand::after { display: none; } }
+
 .brand-sub { color: var(--muted); }
 .masthead .spacer { flex: 1 1 auto; }
-.masthead nav { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.masthead nav { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; }
 .masthead nav a {
+  position: relative;
   color: var(--muted); font-size: 14px; font-weight: 500;
-  padding: 7px 11px; border-radius: var(--radius-sm);
-  transition: background 0.14s ease, color 0.14s ease;
+  padding: 8px 11px;
+  transition: color 0.14s ease;
 }
-.masthead nav a:hover { background: var(--raised); color: var(--text); text-decoration: none; }
-.masthead nav a[aria-current="page"] { background: var(--raised); color: var(--primary); }
+.masthead nav a:hover { color: var(--ink); text-decoration: none; }
+/* Where you are, marked by the streak. Set by the view switcher, so the nav
+   answers "which screen am I on" — which it previously could not. */
+.masthead nav a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+.masthead nav a[aria-current="page"]::after {
+  content: ""; position: absolute; left: 11px; right: 11px; bottom: 1px;
+  height: 2px; background: var(--streak);
+}
 
-main { max-width: var(--shell); margin: 0 auto; padding: 28px 28px 90px; }
-.narrow { max-width: 700px; }
+main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
+.narrow { max-width: 660px; }
 
-/* ── Regions ─────────────────────────────────────────────────────────────── */
-.region { margin: 0 0 34px; }
+/* ── Regions ──────────────────────────────────────────────────────────────
+   A rule runs from the heading to the right margin. One line of CSS, and the
+   page gains a spine — cards stop reading as debris on a background. */
+.region { margin: 0 0 38px; }
 .region-head {
-  display: flex; align-items: baseline; gap: 10px;
-  margin-bottom: 14px;
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 16px;
 }
-.region-head .count { color: var(--muted); }
+.region-head::after {
+  content: ""; flex: 1 1 auto; height: 1px; background: var(--line);
+  transform: translateY(-4px);
+}
+.region-head .count { color: var(--muted); flex: none; }
+.region-head .spacer { display: none; }   /* the rule does that job now */
 
-/* ── Cards ───────────────────────────────────────────────────────────────── */
+/* ── Panels and rows ───────────────────────────────────────────────────────
+   Hairline borders, near-square corners, no shadows. Depth came from shadows
+   before, which is why every surface looked the same distance away. */
 .panel {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius);
   padding: 18px 20px;
 }
 .panel + .panel { margin-top: 12px; }
 
-/* ── Requirement row ─────────────────────────────────────────────────────── */
+/* A row you can open carries the streak on its leading edge on hover and
+   focus: 3px of orange is the affordance, so nothing has to move. */
+.req, .cand {
+  position: relative;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  text-decoration: none; color: inherit;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.req::before, .cand::before {
+  content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px;
+  width: 3px; background: transparent;
+  border-radius: var(--radius) 0 0 var(--radius);
+  transition: background 0.16s ease;
+}
 .req {
   display: grid; gap: 4px 20px; align-items: baseline;
   grid-template-columns: 1fr auto;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 16px 20px; margin-bottom: 10px;
-  text-decoration: none; color: inherit;
-  transition: box-shadow 0.16s ease, transform 0.16s var(--ease), border-color 0.16s ease;
+  padding: 16px 20px 16px 22px;
 }
 @media (hover: hover) {
-  .req:hover {
-    box-shadow: var(--shadow-md); border-color: var(--border-2);
-    transform: translateY(-1px); text-decoration: none;
+  .req:hover { border-color: var(--line-2); text-decoration: none; }
+  .req:hover::before { background: var(--streak); }
+  .req:hover .title a, .req:hover a.title {
+    text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px;
   }
 }
-.req .title { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; color: var(--text); }
+.req:focus-within { border-color: var(--line-2); }
+.req:focus-within::before { background: var(--streak); }
+.req .title {
+  font-family: var(--display); font-weight: 900; font-size: 17px;
+  letter-spacing: -0.028em; color: var(--ink);
+}
 .req .meta { color: var(--muted); grid-column: 1; }
 .req .figures { grid-row: 1 / span 2; grid-column: 2; text-align: right; }
 
-/* Rule 1: restrained on purpose. */
+/* Rule 1: a reading, not a score. Mono and tabular, so the number looks
+   measured rather than awarded. */
 .figure {
-  font-weight: 800; font-size: 26px; letter-spacing: -0.03em; line-height: 1;
-  font-variant-numeric: tabular-nums; color: var(--primary);
+  font-family: var(--mono); font-weight: 500;
+  font-size: 27px; letter-spacing: -0.02em; line-height: 1.05;
+  font-variant-numeric: tabular-nums; color: var(--ink);
 }
-.figure-unit { font-size: 14px; font-weight: 700; color: var(--muted); }
+.figure-unit { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--muted); }
 
 /* ── Candidate row ───────────────────────────────────────────────────────── */
 .cand {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 18px 20px; margin-bottom: 10px;
+  padding: 18px 20px 18px 22px;
   display: grid; gap: 14px; grid-template-columns: 40px 1fr;
 }
-/* Rule 3: still listed, visibly set aside, never hidden. */
-.cand.excluded { background: var(--raised); box-shadow: none; border-style: dashed; }
+/* Rule 3: still listed, visibly set aside, never hidden and never crossed out. */
+.cand.excluded { background: var(--raised); border-style: dashed; }
+.cand.excluded::before { background: transparent !important; }
 .cand .rank {
-  font-family: "DM Mono", ui-monospace, monospace;
-  font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 2px;
+  font-family: var(--mono); font-size: 15px; color: var(--muted);
+  font-variant-numeric: tabular-nums; padding-top: 3px;
 }
 .cand-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.cand-name { font-weight: 600; font-size: 16px; letter-spacing: -0.015em; }
+.cand-name {
+  font-family: var(--display); font-weight: 900; font-size: 17px;
+  letter-spacing: -0.028em;
+}
+.cand-name.mono { font-family: var(--mono); font-weight: 500; letter-spacing: 0.06em; }
 .cand-head .spacer { flex: 1 1 auto; }
 
 /* Rule 2: same column, same weight, always visible. */
-.evidence { display: grid; gap: 7px; margin: 12px 0 0; padding: 0; list-style: none; }
+.evidence { display: grid; gap: 8px; margin: 13px 0 0; padding: 0; list-style: none; }
 .evidence li {
   display: grid; grid-template-columns: 16px 1fr; gap: 10px;
   font-size: 14px; line-height: 1.5;
 }
 .evidence .glyph {
-  font-family: "DM Mono", ui-monospace, monospace; font-size: 12px;
+  font-family: var(--mono); font-size: 12px;
   color: var(--muted); line-height: 1.6; text-align: center;
 }
 .evidence .concern .glyph { color: var(--danger); }
 
-/* ── Callouts ────────────────────────────────────────────────────────────── */
+/* ── Callouts ─────────────────────────────────────────────────────────────
+   A 3px streak on the leading edge instead of a tinted box with a border all
+   the way round. Less ink, more direction. */
 .callout {
-  margin: 12px 0 0; padding: 12px 14px;
-  background: rgba(0, 180, 216, 0.07);
-  border: 1px solid rgba(0, 180, 216, 0.30);
-  border-radius: var(--radius-sm);
+  margin: 13px 0 0; padding: 12px 15px;
+  background: var(--streak-w);
+  border-left: 3px solid var(--streak);
   font-size: 14px; line-height: 1.5;
 }
 .callout .label {
   display: block; margin-bottom: 4px;
-  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
-  font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--primary);
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--streak-t);
 }
-.callout.plain { background: var(--raised); border-color: var(--border); }
+.callout.plain { background: var(--raised); border-left-color: var(--line-2); }
 .callout.plain .label { color: var(--muted); }
 
-/* ── Chips ───────────────────────────────────────────────────────────────── */
+/* ── Chips — square, mono, a readout not a badge ─────────────────────────── */
 .chip {
-  display: inline-block; padding: 3px 9px;
-  border: 1px solid var(--border-2); border-radius: 999px;
+  display: inline-block; padding: 3px 8px;
+  border: 1px solid var(--line-2); border-radius: var(--radius-sm);
   background: var(--surface);
-  font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  letter-spacing: 0.07em; text-transform: uppercase;
   color: var(--muted); white-space: nowrap;
 }
-.chip.strong { border-color: var(--primary); color: var(--primary); background: rgba(15, 52, 96, 0.06); }
-.chip.warn { border-color: rgba(220, 38, 38, 0.45); color: var(--danger); background: rgba(220, 38, 38, 0.05); }
+.chip.strong { border-color: var(--ink); color: var(--ink); background: var(--raised); }
+.chip.warn { border-color: var(--danger); color: var(--danger); background: rgba(192, 38, 29, 0.05); }
 
 /* ── Forms ───────────────────────────────────────────────────────────────── */
 .field { margin: 0 0 20px; }
 .field > label, .field > .q {
-  display: block; font-weight: 600; font-size: 14px; color: var(--text);
+  display: block; font-weight: 600; font-size: 14px; color: var(--ink);
   margin-bottom: 3px;
 }
 .field .help { display: block; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
@@ -245,200 +324,285 @@ input[type="text"], input[type="number"], input[type="email"],
 input[type="password"], select, textarea {
   font-family: inherit; font-size: 14px;
   width: 100%; padding: 10px 12px;
-  background: var(--surface); color: var(--text);
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-2); border-radius: var(--radius-sm);
   transition: border-color 0.14s ease, box-shadow 0.14s ease;
 }
+input[readonly] { background: var(--raised); color: var(--ink-2); }
 textarea { min-height: 84px; resize: vertical; line-height: 1.5; }
 input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: none; border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.12);
+  outline: none; border-color: var(--stone);
+  box-shadow: inset 3px 0 0 var(--streak);
 }
-.row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
-@media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
 
-/* Checkbox and radio: navy, because these carry meaning (see the cyan note). */
+/* input + button, which is every .row on these three pages: the field takes
+   the space, the button takes what it needs. It used to be a 1fr 1fr grid,
+   which stretched "Create intake link" to half the panel. */
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > input, .row > select, .row > textarea { flex: 1 1 220px; width: auto; }
+.row > button, .row > .btn { flex: 0 0 auto; }
+
+/* Checkbox and radio: ink, because these carry meaning and the bright orange
+   is below the 3:1 floor for a component this small. */
 input[type="checkbox"], input[type="radio"] {
   appearance: none; -webkit-appearance: none;
   flex: none; width: 18px; height: 18px; margin: 1px 0 0; padding: 3px;
-  border: 1.5px solid var(--border-2); border-radius: 4px;
+  border: 1.5px solid var(--line-2); border-radius: var(--radius-sm);
   background: var(--surface); cursor: pointer;
   transition: border-color 0.14s ease, background-color 0.14s ease;
 }
 input[type="radio"] { border-radius: 50%; }
 input[type="checkbox"]:checked, input[type="radio"]:checked {
-  border-color: var(--primary); background: var(--primary) content-box;
+  border-color: var(--stone); background: var(--stone) content-box;
 }
 
 .opt {
+  position: relative;
   display: flex; gap: 11px; align-items: flex-start;
-  background: var(--surface); border: 1px solid var(--border);
+  background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 12px 14px; margin-bottom: 8px; cursor: pointer;
-  transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+  transition: border-color 0.14s ease, background 0.14s ease;
   font-size: 14px; line-height: 1.45;
 }
-.opt:hover { border-color: var(--border-2); box-shadow: var(--shadow); }
-.opt:has(:checked) { border-color: var(--primary); background: rgba(15, 52, 96, 0.035); }
+.opt:hover { border-color: var(--line-2); }
+.opt:has(:checked) { border-color: var(--stone); box-shadow: inset 3px 0 0 var(--streak); }
 .opt .t { flex: 1; }
 .opt .t em { font-style: normal; color: var(--muted); display: block; font-size: 13px; margin-top: 2px; }
 
-/* Forced-rank: selection order is shown, because "which three" and "in what
-   order" are different answers. */
+/* Forced-rank (kept in sync with brand.css, where it is actually used): the
+   selection order is shown, because "which three" and "in what order" are
+   different answers. */
 .rank-grid { display: grid; gap: 8px; }
 .rank-item {
   display: flex; align-items: flex-start; gap: 11px;
-  background: var(--surface); border: 1px solid var(--border);
+  background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 12px 14px; cursor: pointer; text-align: left;
-  font: inherit; width: 100%; color: var(--text);
+  font: inherit; width: 100%; color: var(--ink);
   transition: border-color 0.14s ease, box-shadow 0.14s ease;
 }
-.rank-item:hover { border-color: var(--border-2); box-shadow: var(--shadow); }
-.rank-item[aria-pressed="true"] { border-color: var(--primary); background: rgba(15, 52, 96, 0.035); }
+.rank-item:hover { border-color: var(--line-2); }
+.rank-item[aria-pressed="true"] { border-color: var(--stone); box-shadow: inset 3px 0 0 var(--streak); }
 .rank-item .pos {
   flex: none; width: 22px; height: 22px; border-radius: 50%;
-  border: 1.5px solid var(--border-2);
-  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
+  border: 1.5px solid var(--line-2);
+  font-family: var(--mono); font-size: 11px;
   display: grid; place-items: center; color: transparent;
 }
 .rank-item[aria-pressed="true"] .pos {
-  background: var(--primary); border-color: var(--primary); color: #fff;
+  background: var(--stone); border-color: var(--stone); color: #fff;
 }
 .rank-item .n { font-weight: 600; }
 .rank-item .p { color: var(--muted); font-size: 13px; }
 .rank-item:disabled { opacity: .5; cursor: not-allowed; }
 
-/* ── Buttons — Vyom's gradient primary ───────────────────────────────────── */
+/* ── Buttons ──────────────────────────────────────────────────────────────
+   The primary is the stone with the streak along its base: 18.7:1 for the
+   label, and the accent still present without carrying any text. Hover is
+   V-BOG's −1/−1 nudge onto a hard ink shadow, no blur. */
 button, .btn {
   font-family: inherit; font-size: 14px; font-weight: 600;
   /* Stated explicitly: an unset colour falls back to the UA's `buttontext`,
-     which is dark in dark mode and therefore invisible on a dark surface. */
-  color: var(--text);
+     which stays dark in dark mode and vanishes on a dark surface. */
+  color: var(--ink);
   border: none; border-radius: var(--radius-sm);
   padding: 10px 18px; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   text-decoration: none;
-  transition: box-shadow 0.15s ease, transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition: transform 0.14s var(--ease), box-shadow 0.14s ease,
+              background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
 }
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 60%, #0E7490 100%);
-  color: #fff; box-shadow: var(--shadow);
+  background: var(--stone); color: #fff;
+  box-shadow: inset 0 -2px 0 var(--streak);
 }
-.btn-primary:hover:not(:disabled) { box-shadow: var(--shadow-md); transform: translateY(-1px); color: #fff; text-decoration: none; }
-.btn-primary:active:not(:disabled) { transform: none; }
-.btn-primary:disabled { background: var(--border); color: var(--muted); box-shadow: none; cursor: not-allowed; }
+.btn-primary:hover:not(:disabled) {
+  color: #fff; text-decoration: none;
+  transform: translate(-1px, -1px);
+  box-shadow: inset 0 -2px 0 var(--streak), 2px 2px 0 var(--line-2);
+}
+.btn-primary:active:not(:disabled) { transform: none; box-shadow: inset 0 -2px 0 var(--streak); }
+.btn-primary:disabled {
+  background: var(--raised); color: var(--muted); box-shadow: none; cursor: not-allowed;
+}
 .btn-quiet {
-  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line-2);
 }
-.btn-quiet:hover:not(:disabled) { border-color: var(--border-2); box-shadow: var(--shadow); color: var(--text); text-decoration: none; }
-.btn-quiet:disabled { color: var(--border-2); cursor: not-allowed; }
-.btn-small { padding: 7px 13px; font-size: 13px; }
+.btn-quiet:hover:not(:disabled) {
+  border-color: var(--stone); color: var(--ink); text-decoration: none;
+}
+.btn-quiet:disabled { color: var(--line-2); border-color: var(--line); cursor: not-allowed; }
+.btn-small { padding: 7px 12px; font-size: 13px; }
 .btn-wide { width: 100%; }
-:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--stone); outline-offset: 2px; }
 
 .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .actions .spacer { flex: 1 1 auto; }
 
 /* ── Notices ─────────────────────────────────────────────────────────────── */
 .notice {
-  background: var(--raised); border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: var(--raised); border-left: 3px solid var(--line-2);
   padding: 14px 16px; margin: 0 0 16px; line-height: 1.5;
 }
 .notice-error {
-  background: rgba(220, 38, 38, 0.05);
-  border-color: rgba(220, 38, 38, 0.30);
+  background: rgba(192, 38, 29, 0.05);
+  border-left-color: var(--danger);
 }
 .notice-error .label { color: var(--danger); }
 .notice .label {
   display: block; margin-bottom: 4px;
-  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
-  font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase;
   color: var(--muted);
 }
 
 /* §9.4 requires the expert-set caveat wherever the number appears, so it is
    part of the system rather than something to remember to add. */
 .disclaimer {
-  margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border);
+  margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--line);
   color: var(--muted); font-size: 13px;
 }
 
 .empty {
-  background: var(--surface); border: 1px dashed var(--border-2);
-  border-radius: var(--radius); padding: 44px 24px; text-align: center;
+  background: transparent; border: 1px dashed var(--line-2);
+  border-radius: var(--radius); padding: 48px 24px; text-align: center;
 }
 .empty h3 { margin-bottom: 6px; }
 
 .savestate {
-  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
-  letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
 }
 .savestate[data-state="saved"] { color: var(--success); }
 .savestate[data-state="error"] { color: var(--danger); }
 
-.enter { animation: rise .28s var(--ease) both; }
-@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.enter { animation: rise .26s var(--ease) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 
-/* Step progress: navy for done, cyan only as the "you are here" marker beside
-   it, where it sits against navy rather than carrying meaning alone. */
-.steps { display: flex; gap: 5px; margin: 0 0 22px; }
-.steps span { height: 4px; flex: 1; background: var(--border); border-radius: 999px; }
-.steps span.done { background: var(--primary); }
-.steps span.now { background: linear-gradient(90deg, var(--primary), var(--accent)); }
+/* Step progress: ink for done, the streak for where you are. */
+.steps { display: flex; gap: 4px; margin: 0 0 24px; }
+.steps span { height: 3px; flex: 1; background: var(--line); }
+.steps span.done { background: var(--stone); }
+.steps span.now { background: var(--streak); }
 
 /* The stem on a keyed item reads as content, not chrome. */
-.stem { font-size: 17px; line-height: 1.5; font-weight: 500; letter-spacing: -0.01em; }
+.stem { font-size: 17px; line-height: 1.5; font-weight: 500; letter-spacing: -0.012em; }
 .framing {
-  background: rgba(0, 180, 216, 0.07);
-  border: 1px solid rgba(0, 180, 216, 0.30);
-  border-radius: var(--radius-sm);
+  background: var(--streak-w);
+  border-left: 3px solid var(--streak);
   padding: 13px 15px; margin: 0 0 20px; font-size: 14px; line-height: 1.5;
 }
 .framing strong {
   display: block; margin-bottom: 4px;
-  font-family: "DM Mono", ui-monospace, monospace; font-size: 11px;
-  font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--primary);
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--streak-t);
 }
+
+/* ── Sign-in ──────────────────────────────────────────────────────────────
+   Two columns. A watermark of the mark behind the form was the first attempt
+   and it kept landing on the inputs at some widths — a decorative element
+   fighting the layout it sits in. The space is better spent: the form on the
+   left, and beside it the stone card carrying the three rules. A new recruiter
+   reads what the tool refuses to do before they are inside a screen of scores,
+   and a grid cell cannot collide with anything. */
+.screen { position: relative; }
+.signin-split {
+  display: grid; gap: 44px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  align-items: start; padding-top: 8px;
+}
+@media (max-width: 940px) {
+  .signin-split { grid-template-columns: 1fr; gap: 32px; }
+  .signin-split .stone-card { order: 2; }
+}
+.signin-form { max-width: 520px; }
+
+/* The stone, at size, holding the rules. Ink on ink with the streak beneath the
+   mark — the only place in the console where the palette is inverted, because
+   this is the one panel that is about the tool rather than about the work. */
+.stone-card {
+  position: relative;
+  background: var(--stone); color: #F2EEE8;
+  border-radius: var(--radius);
+  padding: 30px 30px 32px;
+}
+/* The streak, on the stone. Same 2px mark as the masthead, so the language is
+   one language rather than two. */
+.stone-card::before {
+  content: ""; position: absolute; top: 0; left: 30px;
+  width: 56px; height: 2px; background: var(--streak);
+}
+.stone-card-kicker {
+  color: #FF7A45;   /* 4.6:1 on the stone */
+  margin: 0 0 14px;
+}
+.stone-rules {
+  margin: 0; padding: 0; list-style: none;
+  counter-reset: rule;
+}
+.stone-rules li {
+  position: relative;
+  padding: 14px 0 14px 30px;
+  border-top: 1px solid rgba(242, 238, 232, 0.14);
+  font-size: 13.5px; line-height: 1.5; color: #CFC9C1;
+}
+.stone-rules li::before {
+  counter-increment: rule; content: counter(rule);
+  position: absolute; left: 0; top: 14px;
+  font-family: var(--mono); font-size: 11px; color: var(--streak);
+}
+.stone-rules strong { color: #F7F4F0; font-weight: 600; }
+
+.signin-brand {
+  display: inline-flex; align-items: center; gap: 13px;
+  font-family: var(--display); font-weight: 900; font-size: 38px;
+  letter-spacing: -0.05em; color: var(--ink); line-height: 1;
+}
+.signin-brand .dot { color: var(--streak); }
+.signin-brand img { width: 44px; height: 44px; }
+.gloss { color: var(--muted); margin: 12px 0 34px; max-width: 46ch; }
+.gloss .dev { font-family: var(--mono); font-size: 12px; letter-spacing: .06em;
+              text-transform: uppercase; color: var(--ink-2); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-  .req:hover, .btn-primary:hover:not(:disabled) { transform: none; }
+  .btn-primary:hover:not(:disabled) { transform: none; }
 }
 
-/* ── Dark scheme ────────────────────────────────────────────────────────────
-   Vyom is light-only, but recruiters work evenings and a forced-light console at
-   night is worse than a coherent dark one. Derived from Vyom's own navy rather
-   than neutral greys, so it still reads as the same tool. */
+/* ── Dark scheme ──────────────────────────────────────────────────────────
+   Recruiters work evenings and a forced-light console at night is worse than a
+   coherent dark one. Warm near-black rather than neutral grey, so it reads as
+   the same tool with the lights off: stone and ember. The streak lifts to
+   #FF6A2B, which measures 4.9:1 on the dark ground — bright orange on warm
+   black is close enough in luminance to blur. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg:        #0E1622;
-    --surface:   #16202E;
-    --raised:    #1D2937;
-    --primary:   #4FA8DC;   /* lifted: navy on a dark ground is unreadable */
-    --primary-2: #3E8FC4;
-    --accent:    #22C9EC;
-    --text:      #E8EDF4;
-    --muted:     #97A3B4;   /* 5.6:1 on --bg */
-    --border:    #26323F;
-    --border-2:  #3A4857;
-    --danger:    #F87171;
-    --success:   #3DDC97;
-    --shadow:    0 1px 3px rgba(0, 0, 0, 0.40);
-    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 12px 34px rgba(0, 0, 0, 0.55);
+    --stone:    #ECE7E0;   /* inverted: the fill that must contrast with text */
+    --ink:      #F2EEE8;
+    --ink-2:    #C4BDB4;
+    --muted:    #A29B92;   /* 5.9:1 on --paper */
+    --paper:    #131211;
+    --surface:  #1B1917;
+    --raised:   #23201D;
+    --line:     #2E2A26;
+    --line-2:   #443E38;
+    --streak:   #FF6A2B;
+    --streak-t: #FF854F;   /* 6.5:1 on the dark ground */
+    --streak-w: rgba(255, 106, 43, 0.09);
+    --danger:   #F0736A;
+    --success:  #3DDC97;
   }
-  .btn-primary {
-    background: linear-gradient(135deg, #1D4E77 0%, #226A96 60%, #1C7C93 100%);
-    color: #fff;
-  }
+  /* --stone is now light, so the primary button inverts of its own accord and
+     only the label colour needs restating. */
+  .btn-primary { color: #131211; }
+  .btn-primary:hover:not(:disabled) { color: #131211; box-shadow: inset 0 -2px 0 var(--streak), 2px 2px 0 var(--line-2); }
   .btn-primary:disabled { background: var(--raised); color: var(--muted); }
-  .rank-item[aria-pressed="true"] .pos, input:checked { color: #0E1622; }
-  .chip.strong { background: rgba(79, 168, 220, 0.12); }
-  .chip.warn { background: rgba(248, 113, 113, 0.10); }
-  .callout, .framing { background: rgba(34, 201, 236, 0.08); border-color: rgba(34, 201, 236, 0.26); }
-  .callout .label, .framing strong { color: var(--accent); }
-  .opt:has(:checked), .rank-item[aria-pressed="true"] { background: rgba(79, 168, 220, 0.10); }
+  .rank-item[aria-pressed="true"] .pos { color: #131211; }
+  .chip.strong { color: var(--ink); border-color: var(--ink-2); }
+  .chip.warn { background: rgba(240, 115, 106, 0.10); }
+  /* --stone inverted to a light fill above, but the sign-in card is meant to
+     BE the stone, so it keeps its ink ground in both schemes. */
+  .stone-card { background: #1E1B19; }
 }
