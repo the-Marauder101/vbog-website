@@ -1020,6 +1020,75 @@ Dates rendered through the browser's default locale — `8/1/2026`, ambiguous
 everywhere and back to front for the people reading it. Money was already
 formatted `en-IN`; dates now match and spell the month.
 
+## 7s. Scores in the list, and the friction I should not have added
+
+Asked twice, the second time plainly: *"maybe I can just see scores? it is all
+data for me. I'd love to see it."*
+
+**The friction was mine, not the PRD's.** R1 says scores never reach a **client**;
+it says nothing about the firm that produced them. Rule 1 — a number never
+appears without its reason — is a principle I imposed to stop a score becoming a
+verdict by accident, and it earns its keep on any surface where the tool is
+persuading somebody. It does not earn its keep when the owner of the data is
+trying to read their own instrument. Withholding data from the person who
+commissioned it is not a safeguard; it is a preference wearing one's uniform.
+
+So the candidate queue now carries, on every assessed row:
+
+- the **nine raw dimension scores** as a mono strip, tabular, one size, no colour
+- **every open role** the person has been matched against, best first, with the
+  match percentage, the rank, and any failing hard filter still named
+
+What is deliberately *not* relaxed: nothing here reaches a client, `v_c10_audit`
+still governs that, and each percentage still travels **with the role it was
+computed against**. A match percentage detached from its requirement is not a
+smaller truth, it is a different one — the same score means different things
+against a ₹45k two-day desk and a ₹3L sixty-day one. The detail page (§7r) is
+still where each dimension is read against its target; the strip is for scanning.
+
+## 7t. A finished assessment did not stay finished
+
+Found by looking at the screenshot of the change above: a candidate with 44 of 44
+answered, a computed profile and an 80.2% match was rendering as **NOT FINISHED ·
+waiting on them to finish.**
+
+`start_assessment()` looked for an *incomplete* session and, finding none,
+created one:
+
+```sql
+select id into v_session from assessment_sessions
+where candidate_id = v_candidate and completed_at is null ...
+if v_session is null then insert ... end if;
+```
+
+Once somebody finished, that query found nothing — because their session was
+complete — so **every later open of the link minted a fresh empty session**. The
+queue read the newest session, so the person flipped back to "not finished" the
+moment they revisited their own link. Worse, they were handed all 44 items again,
+with their real profile sitting behind a session that looked unfinished.
+
+The `screen-done` copy has said *"the link will no longer open the assessment"*
+since the day it was written. The code never kept that promise, and nothing
+checked that it did. **Copy that describes behaviour is a specification; if
+nothing asserts it, it is decoration.**
+
+The consent-skip in §7o made it much easier to trigger — `start_assessment()` now
+runs on page load rather than on a button press, so merely opening the link was
+enough. The latent bug predates that change; the change is what exposed it.
+
+**Fixed:** a completed session is terminal. `start_assessment()` returns
+`{already_complete, completed_at, session_id}` and creates nothing; the page shows
+the done screen. `assessment_complete` in the queue is now
+`exists(... completed_at is not null)` rather than a property of whichever session
+is newest — defence in depth, because "have they finished" should never have been
+a question about ordering. **`v_double_session_audit`** must always be empty, and
+the stray sessions this had already created were removed.
+
+Worth noting how it was caught: not by a test, by **looking at a screenshot of a
+feature I had just built and reading the row rather than the thing I had added**.
+The row said two contradictory things at once — 80.2% and "waiting on them to
+finish" — and the contradiction was the whole bug.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

@@ -500,6 +500,28 @@ button, .btn {
   color: var(--streak-t);
 }
 
+/* ── The nine, as a strip ─────────────────────────────────────────────────
+   On a queue row this is data to scan, not a table to read. Mono, tabular, one
+   size, no colour: nine numbers that look like a readout off an instrument
+   rather than nine judgements. The label sits above its number so the eye can
+   run along the row without re-reading the key. */
+.strip {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.strip span {
+  display: inline-flex; flex-direction: column; align-items: center;
+  min-width: 52px; padding: 5px 6px;
+  background: var(--raised); border-radius: var(--radius-sm);
+  font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink);
+  letter-spacing: 0;
+}
+.strip span em {
+  font-style: normal; font-size: 9px; letter-spacing: .1em;
+  color: var(--muted); margin-bottom: 1px;
+}
+
 /* ── One dimension: the meter ─────────────────────────────────────────────
    A score bar with a tick for every open role's required level, so the number
    and the thing it must clear are the same picture. Ink for the fill, because

@@ -640,6 +640,34 @@ el("btn-back-reqs").addEventListener("click", loadRequirements);
 
 // ═══ CANDIDATE QUEUE ═══════════════════════════════════════════════════════
 
+// The nine, in the same order as the detail page, so the eye learns one
+// sequence. Short labels because this is a strip to scan, not a table to read —
+// the full name and its target live one click away.
+const DIMS = [
+  ["CLS_C", "cls·c"], ["CLS_F", "cls·f"], ["RES", "res"], ["DRV", "drv"],
+  ["DSC", "dsc"], ["CCH", "cch"], ["INT", "int"], ["MOT", "mot"], ["STY", "sty"],
+];
+
+function scoreStrip(scores) {
+  if (!scores) return "";
+  return `<div class="strip mono">${DIMS.map(([k, label]) =>
+    scores[k] === undefined ? "" :
+    `<span><em>${label}</em>${scores[k]}</span>`).join("")}</div>`;
+}
+
+// Every open role this person has been matched against, best first. The
+// percentage travels with the role it was computed against — detached from the
+// requirement it is a different number, not a shorter one.
+function roleLines(roles) {
+  if (!roles || !roles.length) return "";
+  return `<ul class="evidence" style="margin-top:10px">${roles.map((r) => `
+    <li><span class="glyph mono">${r.pass ? "+" : "!"}</span><span>
+      <strong>${r.pct}%</strong> · ${esc(r.business_name)} — ${esc(r.title)}
+      · rank ${r.rank} of ${r.of}${r.pass ? "" :
+        ` · <strong>outside the stated filters</strong>: ${(r.fails || []).map(esc).join(" · ")}`}
+    </span></li>`).join("")}</ul>`;
+}
+
 // "0 eligible requirements" was the same sentence whether nothing was open, the
 // person had not finished, or they were open and failed every filter. Those need
 // three different actions from a recruiter, so they get three different lines —
@@ -669,8 +697,13 @@ async function loadQueue() {
               : `<span class="chip">not finished</span>`}
             ${(c.flags || []).map((f) => `<span class="chip">${esc(f.replace(/_/g, " "))}</span>`).join(" ")}
             <span class="spacer"></span>
-            <span class="small muted">${queueStatus(c)}</span>
+            ${c.best_pct != null
+              ? `<span class="figure">${c.best_pct}</span><span class="figure-unit">%</span>`
+              : `<span class="small muted">${queueStatus(c)}</span>`}
           </div>
+          ${c.best_pct != null ? `<p class="small muted" style="margin:4px 0 0">${queueStatus(c)}</p>` : ""}
+          ${roleLines(c.roles)}
+          ${scoreStrip(c.scores)}
           <div class="actions" style="margin-top:10px">
             <button class="btn-quiet btn-small" data-cand-rename="${esc(c.id)}"
               data-name="${esc(c.full_name)}">Rename</button>
