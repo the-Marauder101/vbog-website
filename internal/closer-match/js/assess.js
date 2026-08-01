@@ -133,7 +133,12 @@ async function loadConsent() {
   // with a distinct message. Try it, and fall back to the notice only when it
   // says consent is what is missing.
   try {
-    return enterTest(await sbRpc("start_assessment", { p_token: S.token }));
+    const d = await sbRpc("start_assessment", { p_token: S.token });
+    // A submitted assessment is the end of the road for this link. The done
+    // screen has always said "the link will no longer open the assessment";
+    // until sql/23 the code handed them a fresh 44 items instead.
+    if (d.already_complete) return show("done");
+    return enterTest(d);
   } catch (e) {
     if (!/consent has not been recorded/i.test(e.message)) return fail(e.message);
   }
@@ -164,7 +169,9 @@ async function beginAssessment() {
   el("btn-consent").textContent = "Starting…";
   try {
     await sbRpc("record_consent", { p_token: S.token });
-    enterTest(await sbRpc("start_assessment", { p_token: S.token }));
+    const d = await sbRpc("start_assessment", { p_token: S.token });
+    if (d.already_complete) return show("done");
+    enterTest(d);
   } catch (e) {
     el("btn-consent").disabled = false;
     el("btn-consent").textContent = "Start the assessment";

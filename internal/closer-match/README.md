@@ -94,6 +94,10 @@ the scoring arithmetic end to end, and the confidence multiplier.
 quality/fit split, three reasons, the concerns, any failing hard filters, and
 whether the person fits a different open role better.
 
+**Candidates** lists everyone with their nine raw scores and, beside each name,
+the match percentage against every open role — best first, with the rank and any
+failing hard filter named. Scan the list; click through for the reasoning.
+
 **Candidates → click a name** for one person in full — all nine dimensions, each
 one shown *against every open role's required level*, with the gap in points and a
 tick on the bar marking what the role asks for.
@@ -125,6 +129,7 @@ candidate finishes their test. So the order does not matter — see ARCHITECTURE
 | `select * from v_c10_audit` | **Must always be empty** — any row is a policy exposing a score to a non-staff principal |
 | `select * from v_rls_bypass_audit` | **Must always be empty** — any row is something reachable *without* a policy being consulted at all (see ARCHITECTURE.md §7n) |
 | `select * from v_unmatched_audit` | **Must always be empty** — any row is an assessed candidate missing from an open role's shortlist (§7q) |
+| `select * from v_double_session_audit` | **Must always be empty** — any row is a candidate who reopened a finished link and got a fresh empty session (§7t) |
 | `select * from v_outcomes_due` | Overdue outcome checkpoints. The one table everything else depends on |
 | `select * from v_predictor_validity` | Which of the three predictors actually predicted retention |
 | `select * from v_criterion_validity` | Do the dimensions separate known-strong from known-average closers |
