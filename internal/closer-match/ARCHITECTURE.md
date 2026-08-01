@@ -1250,6 +1250,113 @@ undo it. The migration proves it rather than assuming it — it creates a probe
 view, checks the option was set, and drops it — and then the whole thing is
 re-verified by re-applying `sql/04` and watching the audit stay at zero.
 
+## 7x. What happens when the keys conflict — and why there is no second key table
+
+*"What happens when the keys are in conflict? How do you resolve them? Do we
+need an intermediate table where keyed info gets stored and then another table
+with final keys?"*
+
+### The intermediate table already exists
+
+`keying_submissions` is exactly that: one row per (round, expert, item), holding
+what each person chose and why. Raw evidence. Never overwritten, never merged.
+
+### A second table of "final keys" would be a mistake
+
+`item_options.score_key` is already the live key — the one the scoring functions
+read. Adding a parallel `final_keys` table would create two places that both
+claim to hold the same number. Every scoring query would then have to know which
+one wins, and on the day they disagree — a partial migration, a failed
+transaction, someone editing one and not the other — the system produces scores
+with no way to tell which key set made them.
+
+> **Two sources of truth for one number is not redundancy, it is a race.**
+
+What was genuinely missing was not a second key. It was three other things, and
+`sql/28` adds each.
+
+### 1. A record of the decision
+
+The report could show a conflict and there was nowhere to write down what you
+concluded about it. An item stayed "disputed" forever whether you had thought
+about it for an hour or never opened the page. `key_decisions` holds one row per
+item — `rekeyed` / `kept` / `rewrite_pending` / `rewritten` / `deferred` — with
+who decided and when. Not keys. Decisions.
+
+A decision that overrides what the experts found (`kept`, `rewrite_pending`) is
+refused without a written rationale. In six months nobody remembers why.
+
+### 2. How a conflict is actually resolved — three cases, not two
+
+The old report had two buckets: unanimous, and "split". That put a 2-of-3
+majority in the same bucket as a 3-way disagreement, and **they call for
+opposite actions.**
+
+| Shape | What it means | What happens |
+|---|---|---|
+| **Unanimous, agrees with the bank** | The item is solid | Nothing to do |
+| **Unanimous, disagrees with the bank** | This is the finding §13 exists to produce | One-click re-key, recorded, undoable |
+| **Majority** (e.g. 2 of 3) | The experts did not converge — evidence about the *item* | No automatic action. An admin may override, with a rationale kept beside it forever |
+| **Even split** | "The obvious right answer" was not obvious to people who sell for a living | Do **not** re-key. §13 asks for a rewrite, and the decision to rewrite is now trackable rather than a note in somebody's head |
+
+`v_keying_conflicts` does the classification in the database, so the screen
+renders a verdict rather than deriving one. Today: 12 unanimous-agrees, 4
+unanimous-disagrees, 12 even splits, 0 majorities.
+
+### 3. Look before you leap
+
+`preview_rekey()` runs the entire re-key — swap the keys, recompute every real
+candidate profile, diff each one — inside a subtransaction that always rolls
+back, and returns who would move and by how much. Undo is a good safety net and
+a bad substitute for looking first, with four pending changes and every profile
+downstream. The QA proves it leaves no trace by comparing the key fingerprint
+either side of a preview, not by trusting the rollback.
+
+### 4. Provenance on the score
+
+Two candidates assessed either side of a re-key had identical-looking profiles
+with no way to tell they were measured with different instruments.
+`key_fingerprint()` hashes the whole SJT key set; a trigger stamps it on every
+`candidate_profile` row; `v_key_drift_audit` shows when profiles in the system
+no longer share one. The report names the key set in force.
+
+### The bug the data found, not the reasoning
+
+After a QA run that applied a re-key and then undid it, `key_decisions` still
+said `rekeyed` while the bank was back to the key the experts had rejected. The
+item read as settled — which is the worst state, because it is the one that stops
+you looking. `undo_rekey()` now clears the decision it created: undoing a change
+must undo the record that the change was decided.
+
+### And one on the way out
+
+Every QA script in the suite signed in by pressing **Create account**, because
+the button used to work either way. Fixing the button broke seventeen scripts at
+once — which is the clearest possible evidence that no test had ever exercised
+the sign-in path, and that the tests had been quietly documenting the bug.
+
+## 7y. "Create account" signed you into the tool
+
+Reported plainly: *clicking "Create account" moves us inside the tool, and not
+creating an account.*
+
+It did, and the reason was a kindness I had written in on purpose. The handler
+called `sbSignUp()`, and if that failed because the email already existed, it
+fell through to `sbSignIn()` — on the reasoning that people forget which button
+they need and the friendly thing is to get them where they were going.
+
+That reasoning is wrong, and it is worth being precise about why. It is not that
+the behaviour is unhelpful — it is helpful. It is that the button now does
+something other than what it says, and **once a label is unreliable the user has
+to test every button rather than read it.** The cost is not this button; it is
+every other one.
+
+So `btn-signup` now only signs up. An existing email produces a refusal that
+names the address, says it already has a password, and points at Sign in. A new
+email creates the account — and is then refused entry by `whoami()`, because
+signing up grants nothing until an admin adds a staff row. Both paths are in the
+QA, and the second one matters more: it is the path a stranger takes.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

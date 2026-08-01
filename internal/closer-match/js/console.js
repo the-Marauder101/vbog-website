@@ -114,18 +114,26 @@ el("btn-signin").addEventListener("click", async () => {
 el("btn-signup").addEventListener("click", async () => {
   el("signin-error").hidden = true;
   const email = el("si-email").value.trim(), pass = el("si-pass").value;
+  const b = el("btn-signup"); b.disabled = true; b.textContent = "Creating…";
   try {
-    // An account that already exists is not a failure worth a dead end. People
-    // are told to "sign up at nikash.html with that email", forget they already
-    // did, and press the wrong button — so fall through to signing in and let the
-    // password decide.
-    try { await sbSignUp(email, pass); }
-    catch (e) { if (!/already registered|already exists/i.test(e.message)) throw e; }
+    // A button labelled "Create account" must create an account. An earlier
+    // version quietly fell through to signing in when the email already existed,
+    // on the reasoning that people forget and press the wrong button — which is
+    // true, and still not a licence for the button to do something other than
+    // what it says. Pressing Create and landing inside the tool teaches you that
+    // the label is decoration.
+    await sbSignUp(email, pass);
     await sbSignIn(email, pass);
     await afterSignIn();
   } catch (e) {
     el("signin-error").hidden = false;
-    el("signin-error").innerHTML = `<span class="label">Could not create the account</span>${esc(e.message)}`;
+    el("signin-error").innerHTML = /already registered|already exists/i.test(e.message)
+      ? `<span class="label">That account already exists</span>` +
+        `${esc(email)} already has a password set. Use <strong>Sign in</strong> instead — ` +
+        `and if you have forgotten it, an admin can reset it in Supabase.`
+      : `<span class="label">Could not create the account</span>${esc(e.message)}`;
+  } finally {
+    b.disabled = false; b.textContent = "Create account";
   }
 });
 

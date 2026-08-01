@@ -296,11 +296,88 @@ el("btn-next").addEventListener("click", async () => {
 
 const KEYSCORE = { "2": "best", "1": "good", "0": "weak", "-1": "worst" };
 
+// Four verdicts, not three. A 2-of-3 majority and a 3-way split used to be the
+// same category — "split" — and they call for opposite actions: one is a
+// judgement call an admin can override, the other says the item is broken.
+const VERDICT = {
+  unanimous_agrees:    { label: "agrees with the bank", tone: "strong" },
+  unanimous_disagrees: { label: "all agree the bank is wrong", tone: "warn" },
+  majority:            { label: "majority, not unanimous", tone: "warn" },
+  split:               { label: "split — rewrite it", tone: "warn" },
+};
+
+const DECISION = {
+  rekeyed:         "re-keyed",
+  kept:            "kept as-is",
+  rewrite_pending: "marked for rewrite",
+  rewritten:       "rewritten",
+  deferred:        "deferred",
+};
+
 function verdictOf(it) {
   if (!it.n_experts) return { label: "not keyed yet", tone: "" };
-  if (it.n_distinct > 1) return { label: "split — rewrite it", tone: "warn" };
-  if (it.chosen === it.current_best) return { label: "agrees with the bank", tone: "strong" };
-  return { label: "all agree the bank is wrong", tone: "warn" };
+  return VERDICT[it.conflict] || { label: "keyed", tone: "" };
+}
+
+// One card, two postures. Unanimous-and-wrong gets a re-key button, because §13
+// produced a finding and a finding you cannot apply is a survey. Everything else
+// gets the same evidence and no button — only a recorded decision — because the
+// point of a disagreement is that the system should not resolve it for you.
+function conflictCard(i, actionable) {
+  const target = i.top_choice;
+  const cur = (i.options || []).find((o) => o.key === i.current_best) || {};
+  const nxt = (i.options || []).find((o) => o.key === target) || {};
+  const tally = (i.picks || []).reduce((m, p) => (m[p.best] = (m[p.best] || 0) + 1, m), {});
+  const spread = Object.keys(tally).sort()
+    .map((k) => `${tally[k]}× ${k}`).join(" · ");
+  const v = verdictOf(i);
+
+  return `
+  <div class="cand" style="grid-template-columns:1fr">
+    <div>
+      <div class="cand-head">
+        <span class="cand-name mono">${esc(i.item_id)}</span>
+        <span class="chip">${esc(i.dimension)}</span>
+        <span class="chip ${v.tone}">${esc(v.label)}</span>
+        <span class="spacer"></span>
+        <span class="small muted">${esc(spread)}</span>
+      </div>
+      <p class="small" style="margin:10px 0 0">${esc(i.stem)}</p>
+      <ul class="evidence" style="margin-top:10px">
+        <li><span class="glyph mono">−</span><span><strong>Bank keys ${esc(i.current_best)}</strong>
+          — ${esc(cur.text || "")}</span></li>
+        <li><span class="glyph mono">+</span><span><strong>${
+          actionable ? "Experts chose" : "Most chose"} ${esc(target)}</strong>
+          — ${esc(nxt.text || "")}</span></li>
+      </ul>
+      ${(i.picks || []).filter((p) => p.note).map((p) => `
+        <div class="callout plain" style="margin-top:10px">
+          <span class="label">${esc(p.expert)} wrote</span>${esc(p.note)}</div>`).join("")}
+      ${i.decision ? `<p class="small muted" style="margin-top:10px">Decision on record:
+        <strong>${esc(DECISION[i.decision] || i.decision)}</strong>${
+          i.decided_by ? ` by ${esc(i.decided_by)}` : ""}${
+          i.rationale ? ` — “${esc(i.rationale)}”` : ""}.</p>` : ""}
+      <div class="actions" style="margin-top:12px">
+        <button class="btn-quiet btn-small" data-preview="${esc(i.item_id)}"
+          data-best="${esc(target)}">See what this would change</button>
+        ${actionable
+          ? `<button class="btn-primary btn-small" data-apply="${esc(i.item_id)}"
+               data-best="${esc(target)}" data-old="${esc(i.current_best)}"
+               >Re-key to ${esc(target)}</button>
+             <button class="btn-quiet btn-small" data-decide="${esc(i.item_id)}"
+               data-decision="kept">Keep the bank as it is</button>`
+          : `<button class="btn-quiet btn-small" data-decide="${esc(i.item_id)}"
+               data-decision="rewrite_pending">Mark for rewrite</button>
+             <button class="btn-quiet btn-small" data-decide="${esc(i.item_id)}"
+               data-decision="deferred">Defer</button>
+             <button class="btn-quiet btn-small" data-apply="${esc(i.item_id)}"
+               data-best="${esc(target)}" data-old="${esc(i.current_best)}"
+               data-override="1">Override and re-key to ${esc(target)}</button>`}
+        <span class="savestate" data-aslot="${esc(i.item_id)}"></span>
+      </div>
+      <div class="small" data-pslot="${esc(i.item_id)}" style="margin-top:10px"></div>
+    </div>
+  </div>`;
 }
 
 async function showAgreement() {
@@ -308,49 +385,34 @@ async function showAgreement() {
   const d = await sbRpc("get_keying_report");
   const items = d.items || [];
   const keyed = items.filter((i) => i.n_experts > 0);
-  const split = keyed.filter((i) => i.n_distinct > 1);
-  const wrong = keyed.filter((i) => i.n_distinct === 1 && i.chosen !== i.current_best);
-  const agree = keyed.filter((i) => i.n_distinct === 1 && i.chosen === i.current_best);
+  const of = (c) => keyed.filter((i) => i.conflict === c);
+  const agree = of("unanimous_agrees");
+  const wrong = of("unanimous_disagrees").filter((i) => i.decision !== "kept");
+  const dispute = of("majority").concat(of("split"));
 
   el("agree-summary").innerHTML =
     `<span class="label">Where the bank stands</span>
      <strong>${agree.length}</strong> item${agree.length === 1 ? "" : "s"} the experts and the
-     bank agree on · <strong>${wrong.length}</strong> the experts unanimously say are keyed
-     wrong · <strong>${split.length}</strong> the experts split on ·
+     bank agree on · <strong>${of("unanimous_disagrees").length}</strong> the experts unanimously
+     say are keyed wrong · <strong>${of("majority").length}</strong> where most but not all
+     agree · <strong>${of("split").length}</strong> the experts split evenly on ·
      <strong>${items.length - keyed.length}</strong> not yet keyed by anybody.
-     ${split.length ? `<br><br>A <strong>split</strong> is not a re-key. It means the item
-       itself is ambiguous — "the obvious right answer" was not obvious — so §13 asks for
-       it to be rewritten before launch, not re-scored.` : ""}`;
+     <br><br><span class="label">How a conflict is settled</span>
+     Unanimous and the bank disagrees → re-key, one click, undoable. Most but not all →
+     no automatic action; an admin may override, and has to write down why. Split evenly →
+     the item is ambiguous, so §13 asks for a <strong>rewrite</strong>, not a re-score.
+     ${d.fingerprint ? `<br><br><span class="label">Key set in force</span>
+       <span class="mono">${esc(d.fingerprint)}</span> — every profile carries this, so two
+       candidates measured either side of a re-key can be told apart.` : ""}`;
 
   // The actionable list.
   el("pending-region").hidden = wrong.length === 0;
   el("pending-count").textContent = `${wrong.length}`;
-  el("pending-list").innerHTML = wrong.map((i) => {
-    const cur = (i.options || []).find((o) => o.key === i.current_best) || {};
-    const nxt = (i.options || []).find((o) => o.key === i.chosen) || {};
-    return `
-    <div class="cand" style="grid-template-columns:1fr">
-      <div>
-        <div class="cand-head">
-          <span class="cand-name mono">${esc(i.item_id)}</span>
-          <span class="chip">${esc(i.dimension)}</span>
-          <span class="chip warn">${i.n_experts} of ${i.n_experts} chose ${esc(i.chosen)}</span>
-        </div>
-        <p class="small" style="margin:10px 0 0">${esc(i.stem)}</p>
-        <ul class="evidence" style="margin-top:10px">
-          <li><span class="glyph mono">−</span><span><strong>Bank keys ${esc(i.current_best)}</strong>
-            — ${esc(cur.text || "")}</span></li>
-          <li><span class="glyph mono">+</span><span><strong>Experts chose ${esc(i.chosen)}</strong>
-            — ${esc(nxt.text || "")}</span></li>
-        </ul>
-        <div class="actions" style="margin-top:12px">
-          <button class="btn-primary btn-small" data-apply="${esc(i.item_id)}"
-            data-best="${esc(i.chosen)}" data-old="${esc(i.current_best)}">Re-key to ${esc(i.chosen)}</button>
-          <span class="savestate" data-aslot="${esc(i.item_id)}"></span>
-        </div>
-      </div>
-    </div>`;
-  }).join("");
+  el("pending-list").innerHTML = wrong.map((i) => conflictCard(i, true)).join("");
+
+  el("dispute-region").hidden = dispute.length === 0;
+  el("dispute-count").textContent = `${dispute.length}`;
+  el("dispute-list").innerHTML = dispute.map((i) => conflictCard(i, false)).join("");
 
   // Everything, so the whole picture is inspectable rather than just the deltas.
   el("agree-count").textContent = `${items.length}`;
@@ -397,9 +459,70 @@ async function showAgreement() {
     </div>`;
   }).join("");
 
-  el("pending-list").querySelectorAll("[data-apply]").forEach((b) =>
+  const cards = [el("pending-list"), el("dispute-list")];
+  const q = (sel) => cards.flatMap((c) => Array.from(c.querySelectorAll(sel)));
+
+  // Look before you leap. This runs the whole re-key on the server, measures who
+  // moves, and rolls it back — so the answer to "what would this do" comes from
+  // doing it, not from reasoning about it.
+  q("[data-preview]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const item = b.dataset.preview;
+      const slot = document.querySelector(`[data-pslot="${item}"]`);
+      b.disabled = true;
+      slot.innerHTML = `<span class="muted">Working out what would change…</span>`;
+      try {
+        const r = await sbRpc("preview_rekey", { p_item_id: item, p_new_best: b.dataset.best });
+        slot.innerHTML = r.candidates_affected === 0
+          ? `<div class="callout plain"><span class="label">Nothing would move</span>
+             No candidate's ${esc(r.dimension)} score changes. Either nobody has answered
+             this item yet, or the change cancels out. Nothing was written.</div>`
+          : `<div class="callout plain"><span class="label">${r.candidates_affected}
+               candidate${r.candidates_affected === 1 ? "" : "s"} would move</span>
+             <ul class="evidence" style="margin-top:8px">${
+               r.moves.map((m) => `<li><span class="glyph mono">${
+                 m.to > m.from ? "↑" : "↓"}</span><span>${esc(m.full_name)} — ${esc(m.dimension)}
+                 <strong>${m.from} → ${m.to}</strong></span></li>`).join("")}</ul>
+             <p class="small muted" style="margin:8px 0 0">Computed and rolled back. The bank
+                is untouched.</p></div>`;
+      } catch (e) {
+        slot.innerHTML = `<span class="savestate" data-state="error">${esc(e.message)}</span>`;
+      } finally { b.disabled = false; }
+    }));
+
+  // A decision is not a key. It is the record of what you concluded about an item
+  // the experts disagreed on, so "disputed" stops meaning both "unexamined" and
+  // "examined and left alone".
+  q("[data-decide]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const item = b.dataset.decide, dec = b.dataset.decision;
+      const slot = document.querySelector(`[data-aslot="${item}"]`);
+      let why = null;
+      if (dec === "kept" || dec === "rewrite_pending") {
+        why = prompt(dec === "kept"
+          ? `Keeping ${item} as it is means overruling what the experts found. ` +
+            `Why? (One sentence — it is kept beside the item permanently.)`
+          : `Marking ${item} for rewrite. What is ambiguous about it?`);
+        if (why === null) return;
+        if (!why.trim()) { slot.textContent = "A reason is required."; slot.dataset.state = "error"; return; }
+      }
+      b.disabled = true;
+      slot.textContent = "Recording…"; delete slot.dataset.state;
+      try {
+        await sbRpc("record_key_decision",
+          { p_item_id: item, p_decision: dec, p_rationale: why });
+        await showAgreement();
+      } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; b.disabled = false; }
+    }));
+
+  q("[data-apply]").forEach((b) =>
     b.addEventListener("click", async () => {
       const item = b.dataset.apply, slot = document.querySelector(`[data-aslot="${item}"]`);
+      if (b.dataset.override && !confirm(
+        `The experts did not agree on ${item}. Re-keying anyway is an override, ` +
+        `not a finding.\n\nIf the item is ambiguous, the fix is to rewrite it, ` +
+        `because every future candidate will meet the same ambiguity.\n\n` +
+        `Continue?`)) return;
       if (!confirm(
         `Re-key ${item} so ${b.dataset.best} becomes the best answer, instead of ` +
         `${b.dataset.old}?\n\n` +
@@ -412,6 +535,9 @@ async function showAgreement() {
       try {
         const r = await sbRpc("apply_rekey", { p_item_id: item, p_new_best: b.dataset.best });
         if (r && r.changed === false) { slot.textContent = r.reason; slot.dataset.state = "error"; return; }
+        // The change is in key_changes either way; this is the decision beside it,
+        // so the item leaves "disputed" rather than sitting there looking untouched.
+        await sbRpc("record_key_decision", { p_item_id: item, p_decision: "rekeyed" });
         await showAgreement();
       } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; b.disabled = false; }
     }));
