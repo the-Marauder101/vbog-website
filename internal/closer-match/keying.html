@@ -23,7 +23,7 @@
     <span class="brand-sub mono">Item keying</span>
     <span class="spacer"></span>
     <span class="savestate" id="savestate"></span>
-    <nav><a href="nikash.html">← Console</a></nav>
+    <nav id="staff-nav"><a href="nikash.html">← Console</a></nav>
   </div>
 </header>
 
@@ -31,15 +31,49 @@
   §13 blind re-keying. Every SJT key in the bank is currently one person's
   opinion; three experts keying independently is what turns it into a finding.
 
-  The blindness is the entire value, so it is enforced server-side:
-  get_keying_items() does not select score_key at all. There is no way for this
-  page to show you the existing key, even by mistake.
+  TWO WAYS IN, one flow:
+    keying.html            staff, signed in — runs rounds, issues keyer links
+    keying.html?t=<token>  an invited keyer, NO account, no table access
+
+  The second exists because the most independent keyers are the ones who do not
+  work here, and handing an outsider a login to the tool that renders every score
+  in the system is a bad trade for half a day of work.
+
+  The blindness is the entire value, so it is enforced server-side: NEITHER
+  get_keying_items() nor get_keying_by_token() selects score_key. There is no way
+  for this page to show you the existing key, even by mistake — and sql/17
+  asserts it on every deploy.
 -->
 
 <main class="narrow">
   <section class="screen" id="v-gate" hidden>
     <h1>Sign in first</h1>
     <p class="muted">Open <a href="nikash.html">the console</a>, sign in, then come back.</p>
+  </section>
+
+  <!-- What an invited keyer sees first. It names them, because one link is one
+       keyer and a shared link would silently overwrite somebody's work. -->
+  <section class="screen" id="v-token" hidden>
+    <h1>Item keying</h1>
+    <p class="gloss"><span class="dev">निकष · touchstone</span><br>
+       You are helping us check the answer key on a sales assessment.</p>
+    <div class="callout"><span class="label">Whose link this is</span>
+      <strong id="tk-name"></strong> · round <span id="tk-round"></span><br>
+      <span class="small muted">If that is not you, stop and ask for your own link —
+      keys are recorded against the name above.</span></div>
+    <p class="muted" style="margin-top:16px">You will see <strong id="tk-count">28</strong>
+       short sales scenarios, each with four possible responses, and pick the best
+       and the worst for each. <strong>You will not see the answers we currently
+       use</strong> — that is the whole point. Where all three experts agree, the
+       item stands; where you split, we rewrite it.</p>
+    <div class="notice"><span class="label">Roughly half a day</span>
+      Every answer saves the moment you make it. Close the tab whenever you like
+      and open the same link again — it picks up where you stopped. Nothing is
+      submitted at the end; there is no end button to miss.</div>
+    <div class="notice notice-error" id="tk-error" hidden></div>
+    <div class="actions">
+      <button class="btn-primary" id="btn-begin">Begin</button>
+    </div>
   </section>
 
   <section class="screen" id="v-pick" hidden>
@@ -51,6 +85,26 @@
     <div class="notice"><span class="label">Roughly half a day</span>
       Your answers save as you go. You can stop and come back.</div>
     <div id="rounds"></div>
+    <div class="panel" style="margin-top:14px">
+      <div class="field" style="margin:0">
+        <label for="kl-name">Invite a keyer <span class="muted">(admin)</span></label>
+        <span class="help">Creates a link they open without an account. §13 wants
+          three independent keyers; the outside ones are worth the most.</span>
+        <div class="row">
+          <select id="kl-round"></select>
+          <input type="text" id="kl-name" placeholder="Their name">
+          <input type="email" id="kl-email" placeholder="Their email">
+          <button class="btn-quiet" id="btn-kl">Create keying link</button>
+        </div>
+        <span class="savestate" id="kl-state"></span>
+        <div id="kl-out"></div>
+      </div>
+    </div>
+    <div class="region" id="kl-region" hidden style="margin-top:22px">
+      <div class="region-head"><h2>Keyer links</h2>
+        <span class="count mono" id="kl-count"></span></div>
+      <div id="kl-list"></div>
+    </div>
     <div class="panel" style="margin-top:14px">
       <div class="field" style="margin:0">
         <label for="new-round">Start a new round <span class="muted">(admin)</span></label>

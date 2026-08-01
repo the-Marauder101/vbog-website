@@ -1,18 +1,37 @@
-// js/keying.js — §13 blind re-keying.
+// js/keying.js — §13 blind re-keying, for staff and for invited keyers.
 //
 // The one thing this file must never do is show the existing key. It cannot:
-// get_keying_items() does not project score_key, so the data is not here to
-// leak. That is deliberate — a UI that merely hides the key would be one bug
-// away from destroying the only pre-launch validation available.
+// neither get_keying_items() nor get_keying_by_token() projects score_key, so
+// the data is not here to leak. That is deliberate — a UI that merely hides the
+// key would be one bug away from destroying the only pre-launch validation
+// available.
+//
+// TWO CALLERS, ONE ITEM FLOW. A signed-in expert and an invited one answer the
+// same 28 items in the same widget; only the three RPCs underneath differ. That
+// pairing lives in one object, `api`, bound once at boot — so the item flow has
+// no idea which door the person came through and cannot drift between them.
 
 const el = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+const TOKEN = new URLSearchParams(location.search).get("t");
 const S = { round: null, items: [], i: 0 };
 
+const api = TOKEN ? {
+  get:   ()          => sbRpc("get_keying_by_token", { p_token: TOKEN }),
+  save:  (item, b, w, n) => sbRpc("save_keying_by_token",
+                              { p_token: TOKEN, p_item: item, p_best: b, p_worst: w, p_note: n }),
+  clear: (item)      => sbRpc("clear_keying_by_token", { p_token: TOKEN, p_item: item }),
+} : {
+  get:   ()          => sbRpc("get_keying_items", { p_round: S.round }),
+  save:  (item, b, w, n) => sbRpc("save_keying",
+                              { p_round: S.round, p_item: item, p_best: b, p_worst: w, p_note: n }),
+  clear: (item)      => sbRpc("clear_keying", { p_round: S.round, p_item: item }),
+};
+
 function view(n) {
-  ["gate", "pick", "key", "agree", "loading"].forEach((v) => {
+  ["gate", "token", "pick", "key", "agree", "loading"].forEach((v) => {
     const x = el("v-" + v); x.hidden = true; x.classList.remove("enter");
   });
   const t = el("v-" + n); t.hidden = false; void t.offsetWidth; t.classList.add("enter");
@@ -44,7 +63,7 @@ async function loadRounds() {
         </div>
       </div>`).join("")
     : `<div class="empty"><h3>No rounds yet</h3><p class="muted">Create one below,
-       then have each expert sign in and key the same round.</p></div>`;
+       then send each expert a link to the same round.</p></div>`;
 
   el("rounds").querySelectorAll("[data-round]").forEach((a) =>
     a.addEventListener("click", (e) => { e.preventDefault(); openRound(a.dataset.round); }));
@@ -93,8 +112,96 @@ async function loadRounds() {
       </div>`);
     el("see-agree").addEventListener("click", (e) => { e.preventDefault(); showAgreement(agree); });
   }
+  await loadKeyerLinks(rounds);
   view("pick");
 }
+
+// ═══ KEYER LINKS (admin) ═══════════════════════════════════════════════════
+// §13 stalls when one of the three experts never finishes, and that is invisible
+// unless it is on screen. So the list shows progress per keyer, not just who was
+// invited.
+
+const KL_ORIGIN = location.origin + location.pathname.replace(/[^/]*$/, "");
+
+async function loadKeyerLinks(rounds) {
+  const sel = el("kl-round");
+  if (sel) {
+    sel.innerHTML = rounds.map((r) =>
+      `<option value="${esc(r.id)}">${esc(r.label)}${r.open ? "" : " (closed)"}</option>`).join("")
+      || `<option value="">No rounds yet</option>`;
+  }
+
+  const links = await sbFetch("v_keying_links?order=issued_at.desc").catch(() => []);
+  el("kl-count").textContent = `${links.length}`;
+  el("kl-region").hidden = links.length === 0;
+  if (!links.length) return;
+
+  el("kl-list").innerHTML = links.map((k) => {
+    const url = `${KL_ORIGIN}keying.html?t=${k.token}`;
+    const state = k.revoked ? "withdrawn" : k.expired ? "expired"
+                : k.keyed >= k.total ? "finished" : k.last_seen_at ? "in progress" : "not opened";
+    return `
+    <div class="cand" style="grid-template-columns:1fr">
+      <div>
+        <div class="cand-head">
+          <span class="cand-name">${esc(k.full_name || k.email)}</span>
+          <span class="chip ${k.revoked || k.expired ? "warn" : k.keyed >= k.total ? "strong" : ""}">${state}</span>
+          <span class="spacer"></span>
+          <span class="mono muted">${k.keyed} / ${k.total} keyed</span>
+        </div>
+        <p class="small muted" style="margin:6px 0 0">${esc(k.email)} · round ${esc(k.round_label)}
+           · expires ${new Date(k.expires_at).toLocaleDateString()}</p>
+        ${k.revoked || k.expired ? "" : `
+        <input type="text" readonly value="${esc(url)}" onclick="this.select()" style="margin-top:8px">`}
+        <div class="actions" style="margin-top:10px">
+          ${k.revoked ? "" : `<button class="btn-quiet btn-small" data-klrev="${esc(k.token)}"
+            data-name="${esc(k.full_name || k.email)}">Withdraw link</button>`}
+          <span class="savestate" data-klslot="${esc(k.token)}"></span>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  el("kl-list").querySelectorAll("[data-klrev]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      if (!confirm(`Withdraw ${b.dataset.name}'s link?\n\n` +
+        `The link stops working immediately. Everything they already keyed stays ` +
+        `in the agreement report — nothing is lost. Issue a new link to let them ` +
+        `carry on.`)) return;
+      const slot = document.querySelector(`[data-klslot="${b.dataset.klrev}"]`);
+      try { await sbRpc("revoke_keying_link", { p_token: b.dataset.klrev }); await loadRounds(); }
+      catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+    }));
+}
+
+const btnKl = el("btn-kl");
+if (btnKl) btnKl.addEventListener("click", async () => {
+  const round = el("kl-round").value, name = el("kl-name").value.trim(),
+        email = el("kl-email").value.trim();
+  const st = el("kl-state");
+  if (!round) { st.textContent = "Create a round first"; st.dataset.state = "error"; return; }
+  st.textContent = "Creating…"; delete st.dataset.state;
+  btnKl.disabled = true;
+  try {
+    const r = await sbRpc("create_keying_link",
+      { p_round: round, p_name: name, p_email: email, p_valid_days: 21 });
+    const url = `${KL_ORIGIN}keying.html?t=${r.token}`;
+    el("kl-out").innerHTML = `
+      <div class="callout" style="margin-top:12px">
+        <span class="label">Send this to ${esc(r.name)}</span>
+        <input type="text" readonly value="${esc(url)}" onclick="this.select()">
+        <p class="small muted" style="margin:8px 0 0">Good for 21 days. It opens straight
+           into the items — no account, no password, and it shows their name so a
+           forwarded link cannot quietly overwrite somebody else's keys.</p>
+      </div>`;
+    el("kl-name").value = ""; el("kl-email").value = "";
+    // The list is refreshed BEFORE reporting success, so "Link created" is never
+    // on screen next to a list that does not yet contain the link.
+    await loadRounds();
+    st.textContent = "Link created"; st.dataset.state = "saved";
+  } catch (e) { st.textContent = e.message; st.dataset.state = "error"; }
+  finally { btnKl.disabled = false; }
+});
 
 el("btn-new-round").addEventListener("click", async () => {
   const label = el("new-round").value.trim();
@@ -104,8 +211,8 @@ el("btn-new-round").addEventListener("click", async () => {
 });
 
 async function openRound(id) {
-  const data = await sbRpc("get_keying_items", { p_round: id });
   S.round = id;
+  const data = await api.get();
   S.items = data.items;
   S.i = Math.max(0, S.items.findIndex((it) => !it.mine));
   if (S.i < 0) S.i = 0;
@@ -152,10 +259,8 @@ async function save() {
   const worst = document.querySelector('input[name="worst"]:checked');
   setSave("Saving…");
   try {
-    await sbRpc("save_keying", {
-      p_round: S.round, p_item: S.items[S.i].id, p_best: best.value,
-      p_worst: worst ? worst.value : null, p_note: el("note").value || null,
-    });
+    await api.save(S.items[S.i].id, best.value,
+                   worst ? worst.value : null, el("note").value || null);
     S.items[S.i].mine = { best: best.value, worst: worst ? worst.value : null, note: el("note").value };
     setSave("Saved", "saved");
   } catch (e) { setSave(e.message, "error"); }
@@ -164,7 +269,7 @@ async function save() {
 el("btn-clear").addEventListener("click", async () => {
   // Undo one answer without disturbing the rest of the round.
   try {
-    await sbRpc("clear_keying", { p_round: S.round, p_item: S.items[S.i].id });
+    await api.clear(S.items[S.i].id);
     S.items[S.i].mine = null;
     setSave("Cleared", "saved");
     render();
@@ -174,7 +279,9 @@ el("btn-clear").addEventListener("click", async () => {
 el("btn-prev").addEventListener("click", () => { if (S.i > 0) { S.i--; render(); } });
 el("btn-next").addEventListener("click", async () => {
   await save();
-  if (S.i < S.items.length - 1) { S.i++; render(); } else loadRounds();
+  if (S.i < S.items.length - 1) { S.i++; render(); }
+  else if (TOKEN) finishedByToken();
+  else loadRounds();
 });
 
 // ═══ AGREEMENT ═════════════════════════════════════════════════════════════
@@ -201,8 +308,67 @@ function showAgreement(rows) {
   view("agree");
 }
 
+// ═══ INVITED KEYER ═════════════════════════════════════════════════════════
+// No account, no table access: everything on this path goes through the three
+// token RPCs. The screen names whose link it is before anything else, because
+// one link is one keyer and a shared link would overwrite somebody's work.
+
+async function bootToken() {
+  try {
+    const d = await api.get();
+    S.items = d.items;
+    el("tk-name").textContent = d.expert_name || "this keyer";
+    el("tk-round").textContent = d.round;
+    el("tk-count").textContent = d.items.length;
+    const done = d.items.filter((x) => x.mine).length;
+    if (!d.round_open) {
+      el("tk-error").hidden = false;
+      el("tk-error").innerHTML =
+        `<span class="label">This round is closed</span>You keyed ${done} of ` +
+        `${d.items.length} items and all of it was saved. Nothing more is needed.`;
+      el("btn-begin").disabled = true;
+    } else if (done) {
+      el("btn-begin").textContent = `Continue — ${done} of ${d.items.length} keyed`;
+    }
+    view("token");
+  } catch (e) {
+    // The RPC raises a sentence a person can act on; show it as-is.
+    el("tk-error").hidden = false;
+    el("tk-error").innerHTML = `<span class="label">This link does not work</span>${esc(e.message)}`;
+    el("btn-begin").disabled = true;
+    el("tk-name").textContent = "—";
+    view("token");
+  }
+}
+
+function finishedByToken() {
+  const done = S.items.filter((x) => x.mine).length;
+  el("tk-error").hidden = false;
+  el("tk-error").className = "notice";
+  el("tk-error").innerHTML =
+    `<span class="label">All saved</span>You have keyed ${done} of ${S.items.length} items. ` +
+    (done < S.items.length
+      ? `Open the same link any time to finish the rest.`
+      : `That is everything — thank you. You can close the tab.`);
+  el("btn-begin").textContent = "Go back over them";
+  el("btn-begin").disabled = false;
+  view("token");
+}
+
+const begin = el("btn-begin");
+if (begin) begin.addEventListener("click", () => {
+  S.i = Math.max(0, S.items.findIndex((it) => !it.mine));
+  if (S.i < 0) S.i = 0;
+  render();
+});
+
 // ═══ BOOT ══════════════════════════════════════════════════════════════════
 (async () => {
+  if (TOKEN) {
+    // An invited keyer must never be shown a route into the console.
+    const nav = el("staff-nav"); if (nav) nav.hidden = true;
+    return bootToken();
+  }
   if (!sbRestoreToken()) return view("gate");
   try { await loadRounds(); } catch (e) { view("gate"); }
 })();

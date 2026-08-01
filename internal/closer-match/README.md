@@ -11,7 +11,7 @@ VBOG's second internal tool, after Vyom.
 | Client role brief | `intake.html?t=<token>` | the client, no account |
 | Candidate assessment | `assess.html?t=<token>` | the candidate, no account |
 | Client supplement | `supplement.html?t=<token>` | the candidate, no account |
-| Blind item keying | `keying.html` | staff, §13 gate |
+| Blind item keying | `keying.html` · `keying.html?t=<token>` | staff, **or an invited expert with no account** |
 | Verification call | `interview.html?req=&cand=` | staff, Step 4 |
 
 `assess.html` deliberately keeps the V-BOG lockup rather than the Nikash name:
@@ -74,7 +74,7 @@ ARCHITECTURE.md §7b0 and §7m.
 
 ## Database setup
 
-Run the files in `sql/` in numeric order (01→16) in the Supabase SQL Editor. All
+Run the files in `sql/` in numeric order (01→19) in the Supabase SQL Editor. All
 are idempotent. The project is already set up; this is for rebuilding on a fresh
 one.
 
@@ -100,7 +100,8 @@ the scoring arithmetic end to end, and the confidence multiplier.
 | `select * from v_drift_monthly` | Leakage signature: scores up + variance down + time down, together |
 | `select * from v_human_agreement` | Whether the score has become a gate in practice |
 | `select * from v_keying_agreement` | Where the three expert keys diverge (§13) |
-| `select * from v_c10_audit` | **Must always be empty** — any row is a score exposed to a non-staff principal |
+| `select * from v_c10_audit` | **Must always be empty** — any row is a policy exposing a score to a non-staff principal |
+| `select * from v_rls_bypass_audit` | **Must always be empty** — any row is something reachable *without* a policy being consulted at all (see ARCHITECTURE.md §7n) |
 | `select * from v_outcomes_due` | Overdue outcome checkpoints. The one table everything else depends on |
 | `select * from v_predictor_validity` | Which of the three predictors actually predicted retention |
 | `select * from v_criterion_validity` | Do the dimensions separate known-strong from known-average closers |
@@ -139,6 +140,32 @@ trim to 5–8 behavioural plus 3–5 technical, and save.
 Access tokens last an hour. The app now refreshes them silently, so this should
 not happen — but if it ever does, sign out and back in. Nothing is lost:
 everything is already in the database.
+
+## Getting three experts to key the items (§13)
+
+Every SJT key in the bank is currently one person's opinion. Three experts keying
+independently is what turns it into a finding — and the most useful keyers are the
+ones who do not work here.
+
+Open **Keying**, create a round, then **Invite a keyer** with their name and email.
+You get a link to send them:
+
+```
+keying.html?t=<token>
+```
+
+No account, no password. It opens straight into the 28 items, shows them whose link
+it is, saves every answer as they make it, and resumes where they stopped. Good for
+21 days. The list shows each keyer's progress — *not opened, in progress, finished*
+— because a round stalls when one of the three never finishes and you cannot see it
+otherwise. **Withdraw link** stops it immediately and keeps everything already keyed.
+
+Send each expert their own link. Keys are attributed to the name on the link, so a
+forwarded one would overwrite somebody's work — the page says so before they start.
+
+A keyer's email is **not** a console account. It gets a `staff` row so the keys can
+be attributed, marked inactive, which grants nothing. If they try to sign in to the
+console they are told to use their keying link instead.
 
 ## Staff access
 
