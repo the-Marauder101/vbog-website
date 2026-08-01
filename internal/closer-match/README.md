@@ -67,7 +67,7 @@ ARCHITECTURE.md §7b0 and §7m.
 | 1 | Candidate takes the 44-item test | 9 scores |
 | 1.1 | Client completes intake | target profile |
 | 1.5 | **Hard filters** — before any matching | eligibility, failing filter named |
-| 2 | Match + rank | ranked requirements |
+| 2 | Match + rank — runs when a client submits **and** when a candidate finishes | ranked requirements |
 | 3 | Client supplement — **top 2 requirements only** | supplement verdict |
 | 4 | Verification call: technical + role-play + psych probes | interview ratings |
 | 5 | Sent to client | placement + outcomes |
@@ -88,6 +88,28 @@ select * from run_golden_cases();
 CLS-blend frame split, band boundaries, the cycle override, hard-filter naming,
 the scoring arithmetic end to end, and the confidence multiplier.
 
+## Where the results are
+
+**Requirements → open the role** for the shortlist: rank, composite, the
+quality/fit split, three reasons, the concerns, any failing hard filters, and
+whether the person fits a different open role better.
+
+**Candidates → click a name** for one person in full — all nine dimensions, each
+one shown *against every open role's required level*, with the gap in points and a
+tick on the bar marking what the role asks for.
+
+That "against" is the whole design. A dimension score means nothing on its own —
+72 on Resilience is strong for one desk and short for another — so the page never
+shows a bare number. With no open role it says so instead of rendering the table.
+Bipolar dimensions (Deal Motion, Interpersonal Style) show a position between
+their two poles rather than a bar filling toward 100, because neither pole is
+better. Closing appears twice, considered and fast, with each role's blend weight
+and the effective value — there is no single closing score, by design.
+
+Matching runs at both ends: when a client submits their brief, and when a
+candidate finishes their test. So the order does not matter — see ARCHITECTURE.md
+§7q, because for a while it did.
+
 ## Health checks
 
 | Query | Tells you |
@@ -102,6 +124,7 @@ the scoring arithmetic end to end, and the confidence multiplier.
 | `select * from v_keying_agreement` | Where the three expert keys diverge (§13) |
 | `select * from v_c10_audit` | **Must always be empty** — any row is a policy exposing a score to a non-staff principal |
 | `select * from v_rls_bypass_audit` | **Must always be empty** — any row is something reachable *without* a policy being consulted at all (see ARCHITECTURE.md §7n) |
+| `select * from v_unmatched_audit` | **Must always be empty** — any row is an assessed candidate missing from an open role's shortlist (§7q) |
 | `select * from v_outcomes_due` | Overdue outcome checkpoints. The one table everything else depends on |
 | `select * from v_predictor_validity` | Which of the three predictors actually predicted retention |
 | `select * from v_criterion_validity` | Do the dimensions separate known-strong from known-average closers |

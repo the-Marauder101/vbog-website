@@ -140,6 +140,18 @@
   </section>
 
   <!-- ── Candidate queue ─────────────────────────────────────────────────── -->
+  <!-- ── One candidate ────────────────────────────────────────────────────
+       Nine scores, each read against every open role's stated requirement. The
+       page refuses to show a bare number: with no open role it says so instead
+       of rendering a table that looks like a verdict. -->
+  <section class="screen" id="v-cand" hidden>
+    <button class="btn-quiet btn-small" id="btn-back-queue" style="margin-bottom:18px">← All candidates</button>
+    <h1 id="cd-name"></h1>
+    <p class="muted" id="cd-meta"></p>
+    <div id="cd-body"></div>
+    <p class="disclaimer" id="cd-disclaimer"></p>
+  </section>
+
   <section class="screen" id="v-queue" hidden>
     <div class="region">
       <div class="region-head">
