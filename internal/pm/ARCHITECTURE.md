@@ -246,7 +246,7 @@ adding tests.** Highlights:
 - Drive the custom dropdowns via their `.dd-btn`/`.dd-item` elements (native selects
   are hidden). Assert outcomes in the DB via `sbFetch` inside the page.
 - Keep the suite green: every new feature ships with tests (see `test/README.md`
-  for the current expected pass count — **76** as of v18).
+  for the current expected pass count — **77** as of v18).
 
 ## 10. Hideable status columns (v18)
 
@@ -290,6 +290,14 @@ sql/13 trigger, falling back to `created_at`.
   as cards are saved — the change log records each one. Sorting flips to
   oldest-in-stage first, which matches what the SLA flags are for. My Tasks still
   groups by due date, so stage-dated cards land under "No due date".
+- **The board's date filter is not removed in this mode — it is re-vocabularised.**
+  `fillDateFilter()` swaps `UI.dateFilterOptions` for `UI.stageFilterOptions`
+  ("Entered today", "In stage 7+ days", …) and `renderBoard()` matches with
+  `UI.matchesStageFilter()` instead of `matchesDateFilter()`. v18 originally *hid*
+  the control, which read as "the filters are broken" — don't do that again. The
+  HR tab switch rebuilds it, and a selection with no meaning in the new vocabulary
+  (`stale7` on an Ops tab) falls back to "all" rather than silently hiding every
+  card. All filters remain ANDed.
 
 **SLA rules read the same timestamp** (`hr_sla_rules`, sql/13): "cards in status X
 must move within N days", flagged on the card as `sla-warning` (≥75% of the deadline)

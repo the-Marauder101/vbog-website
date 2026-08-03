@@ -1,10 +1,10 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 76 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// 77 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
 // @mentions, roles/external scoping, tags, webhooks, client tags, status reorder +
 // transition mapping, sub-client status inheritance, hideable status columns,
-// the HR Stage Date, HR SLA flags, the task change log, cleanup.
+// the HR Stage Date and its filter, HR SLA flags, the task change log, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
 // the end; count assertions are scoped to the test project so live data is
 // never touched or asserted against.
@@ -931,8 +931,15 @@ async function expectToast(substr) {
     const card = page.locator(".project-card", { hasText: PROJECT_NAME });
     await card.waitFor();
     const meta = await card.locator(".meta").innerText();
-    if (!meta.includes("3 tasks")) throw new Error(`meta = ${meta}`);
-    if (!meta.includes("1 overdue")) throw new Error(`meta = ${meta}`);
+    // Counted from the database rather than hardcoded: an earlier step that
+    // bails out mid-way (the four webhook checks do exactly that when there's
+    // no SUPA_MGMT_TOKEN) leaves its task behind, and that must not show up
+    // here as a phantom dashboard bug.
+    const rows = await rest(`tasks?project_id=eq.${projectId}&select=due_date`);
+    const overdue = rows.filter((r) => r.due_date && r.due_date < isoDaysFromNow(0)).length;
+    if (!meta.includes(`${rows.length} task`)) throw new Error(`meta = ${meta}; db has ${rows.length}`);
+    if (!overdue) throw new Error("expected at least one overdue task by this point");
+    if (!meta.includes(`${overdue} overdue`)) throw new Error(`meta = ${meta}; db has ${overdue} overdue`);
   });
 
   await step("F-02: archive hides project; Show archived reveals; unarchive restores", async () => {
@@ -1240,11 +1247,6 @@ async function expectToast(substr) {
       throw new Error("a stage-dated card must never render a due pill");
   });
 
-  await step("HR project: the due-date filter is hidden where there are no due dates", async () => {
-    if (!(await page.$eval("#filter-due", (el) => el.closest(".dd").hidden)))
-      throw new Error("due-date filter should be hidden in Stage Date mode");
-  });
-
   await step("HR project: moving a card advances its Stage Date", async () => {
     const before = (await rest(`tasks?id=eq.${hrTaskId}&select=status_changed_at`))[0].status_changed_at;
     await dragCardToColumn(hrTaskId, "Interview");
@@ -1343,6 +1345,43 @@ async function expectToast(substr) {
     await page.click("#cols-show-all");
     await page.waitForTimeout(500);
     await page.click("#cols-close");
+  });
+
+  await step("HR project: the date filter speaks Stage Date, and still narrows", async () => {
+    await page.goto(`${BASE}/board.html?project=${hrId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    const opts = await page.$$eval("#filter-due option", (e) => e.map((x) => x.textContent));
+    if (!opts.includes("In stage 7+ days"))
+      throw new Error(`stage vocabulary missing: ${opts.join(" | ")}`);
+    if (opts.includes("Overdue"))
+      throw new Error("a Stage Date is not a deadline — 'Overdue' must not be offered");
+    if (await page.$eval("#filter-due", (e) => e.closest(".dd").hidden))
+      throw new Error("the date filter must not be hidden on an HR board");
+    // Only the backdated SLA card has been in its stage for 7+ days
+    await choose("filter-due", { value: "stale7" });
+    await page.waitForTimeout(300);
+    const shown = await page.$$eval(".task-card .task-title", (e) => e.map((x) => x.textContent.trim()));
+    if (shown.length !== 1 || !shown[0].includes("E2E SLA Card"))
+      throw new Error(`stale7 should leave only the 9-day card, got ${JSON.stringify(shown)}`);
+    await page.click("#filter-clear");
+    await page.waitForTimeout(300);
+  });
+
+  await step("HR project: the Ops tab switches the filter back to real due dates", async () => {
+    await page.click('.board-tab[data-tab="ops"]');
+    await page.waitForTimeout(400);
+    const opts = await page.$$eval("#filter-due option", (e) => e.map((x) => x.textContent));
+    if (!opts.includes("Overdue")) throw new Error(`ops tab needs due-date options: ${opts.join(" | ")}`);
+    // A stage-only choice must not survive the switch
+    await page.click('.board-tab[data-tab="hiring"]');
+    await page.waitForTimeout(300);
+    await choose("filter-due", { value: "stale14" });
+    await page.click('.board-tab[data-tab="ops"]');
+    await page.waitForTimeout(400);
+    const val = await page.$eval("#filter-due", (e) => e.value);
+    if (val !== "all") throw new Error(`expected the stale14 choice to reset, got "${val}"`);
+    await page.click('.board-tab[data-tab="hiring"]');
+    await page.waitForTimeout(300);
   });
 
   // ---------- Change log (sql/14) ----------

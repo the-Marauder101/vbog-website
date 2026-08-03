@@ -202,6 +202,9 @@
       btn.addEventListener("click", () => {
         activeTab = btn.dataset.tab;
         tabBar.querySelectorAll(".board-tab").forEach((b) => b.classList.toggle("active", b === btn));
+        // Hiring uses Stage Dates, Ops uses due dates — the date filter has to
+        // be rebuilt for the tab we just moved to.
+        fillDateFilter();
         // Show/hide roles card on tab switch
         if (typeof HrRoles !== "undefined") {
           if (activeTab === "hiring" && hasFeature("roles_card")) HrRoles.show();
@@ -365,6 +368,33 @@
     sel.closest(".dd").hidden = names.length === 0;
   }
 
+  // ---- The date filter changes meaning with the board ----
+  // Due dates on a normal board; Stage Dates on an HR hiring tab, where
+  // "Overdue" would be nonsense. Same control either way — it is rebuilt when
+  // the mode changes (i.e. on the HR tab switch), and a selection that has no
+  // meaning in the new vocabulary falls back to "all" rather than silently
+  // filtering everything out.
+  function fillDateFilter() {
+    const sel = document.getElementById("filter-due");
+    const stage = stageMode();
+    const opts = stage ? UI.stageFilterOptions : UI.dateFilterOptions;
+    if (!opts.some(([v]) => v === filters.due)) {
+      filters.due = "all";
+      filters.from = "";
+      filters.to = "";
+      document.getElementById("filter-from").value = "";
+      document.getElementById("filter-to").value = "";
+    }
+    sel.innerHTML = opts
+      .map(([v, label]) => `<option value="${v}" ${v === filters.due ? "selected" : ""}>${UI.esc(label)}</option>`)
+      .join("");
+    const aria = stage ? "Filter by stage date" : "Filter by due date";
+    sel.setAttribute("aria-label", aria);
+    UI.enhanceSelect(sel);
+    sel.closest(".dd")?.querySelector(".dd-btn")?.setAttribute("aria-label", aria);
+    document.getElementById("range-inputs").hidden = filters.due !== "custom";
+  }
+
   // ---- Filters (assignee + client + due date) ----
   function initFilters() {
     refreshClientFilter();
@@ -380,12 +410,9 @@
       `<option value="">Everyone</option><option value="none">Unassigned</option>` +
       options.map((m) => `<option value="${m.id}">${UI.esc(m.name)}${m.active ? "" : " (inactive)"}</option>`).join("");
 
-    document.getElementById("filter-due").innerHTML = UI.dateFilterOptions
-      .map(([v, label]) => `<option value="${v}">${label}</option>`)
-      .join("");
+    fillDateFilter();
 
     UI.enhanceSelect(assigneeSel);
-    UI.enhanceSelect(document.getElementById("filter-due"));
 
     assigneeSel.addEventListener("change", () => { filters.assignee = assigneeSel.value; renderBoard(); });
     document.getElementById("filter-due").addEventListener("change", (e) => {
@@ -431,22 +458,18 @@
   }
 
   function renderBoard() {
-    // Switching to a stage-date tab retires any due-date filter rather than
-    // leaving it silently narrowing a board that no longer shows due dates.
-    if (stageMode() && filters.due !== "all") {
-      filters.due = "all";
-      const dueSel = document.getElementById("filter-due");
-      dueSel.value = "all";
-      UI.syncSelect(dueSel);
-      document.getElementById("range-inputs").hidden = true;
-    }
     const tabTasks = tasks.filter(taskMatchesTab);
+    // Every filter is ANDed — assignee AND client AND date all narrow together.
+    const range = { from: filters.from, to: filters.to };
+    const byStage = stageMode();
     const shown = tabTasks.filter((t) => {
       if (filters.assignee === "none" && t.assignee_id) return false;
       if (filters.assignee && filters.assignee !== "none" && t.assignee_id !== filters.assignee) return false;
       if (filters.client === "none" && t.fields?.client) return false;
       if (filters.client && filters.client !== "none" && t.fields?.client !== filters.client) return false;
-      return UI.matchesDateFilter(t.due_date, filters.due, { from: filters.from, to: filters.to });
+      return byStage
+        ? UI.matchesStageFilter(UI.stageDateIso(t), filters.due, range)
+        : UI.matchesDateFilter(t.due_date, filters.due, range);
     });
 
     const statuses = activeStatuses();
@@ -499,10 +522,6 @@
     UI.syncSelect(document.getElementById("filter-assignee"));
     UI.syncSelect(document.getElementById("filter-client"));
     UI.syncSelect(document.getElementById("filter-due"));
-    // A due-date filter is meaningless where cards have no due date — the
-    // Stage Date isn't a deadline and must never read as "overdue".
-    const dueWrap = document.getElementById("filter-due").closest(".dd");
-    if (dueWrap) dueWrap.hidden = stageMode();
   }
 
   function renderColumn(status, isRemoved, shown) {

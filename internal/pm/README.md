@@ -120,6 +120,11 @@ entered the status it's in now.
   is the same timestamp the SLA rules use).
 - The **Ops tab keeps normal due dates** — that's ordinary internal work.
 - Every previous stage and its date is in the card's **History**.
+- The board's **date filter still works** on these boards — it just asks a different
+  question: "Entered today", "Entered in last 7 days", "In stage 3+ / 7+ / 14+ days",
+  or a custom date range. It combines with the assignee and client filters as usual,
+  so "Rihen's Acme candidates stuck 7+ days" is three clicks. The Ops tab keeps the
+  ordinary due-date filter (Overdue, Due today, Next 7 days…).
 
 **SLA rules use the same date.** Set them from **SLA Rules** on the board (admin only):
 "a card in this status must move within N days". Cards get an amber stripe as they
