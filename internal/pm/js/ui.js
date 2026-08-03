@@ -120,6 +120,39 @@ const UI = {
     return true;
   },
 
+  // Stage-date filter presets. The Stage Date needs its own vocabulary: it is
+  // not a deadline, so "Overdue" is meaningless — what a hiring board actually
+  // gets asked is "what has gone stale in this stage".
+  stageFilterOptions: [
+    ["all", "Any time in stage"],
+    ["today", "Entered today"],
+    ["week", "Entered in last 7 days"],
+    ["stale3", "In stage 3+ days"],
+    ["stale7", "In stage 7+ days"],
+    ["stale14", "In stage 14+ days"],
+    ["custom", "Custom range…"],
+  ],
+
+  // `iso` = the card's stage date (UI.stageDateIso). Same shape as
+  // matchesDateFilter so the two are interchangeable at the call site.
+  matchesStageFilter(iso, key, range) {
+    switch (key) {
+      case "today":   return iso === UI.todayIso();
+      case "week":    return !!iso && iso >= UI.todayIso(-7);
+      case "stale3":  return !!iso && iso <= UI.todayIso(-3);
+      case "stale7":  return !!iso && iso <= UI.todayIso(-7);
+      case "stale14": return !!iso && iso <= UI.todayIso(-14);
+      case "custom": {
+        if (!range || (!range.from && !range.to)) return true; // no bounds yet
+        if (!iso) return false;
+        if (range.from && iso < range.from) return false;
+        if (range.to && iso > range.to) return false;
+        return true;
+      }
+      default: return true; // "all"
+    }
+  },
+
   // Due-date filter presets shared by the board and All Tasks views
   dateFilterOptions: [
     ["all", "All dates"],
