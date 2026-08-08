@@ -1,0 +1,25 @@
+/* VBOG — typography
+   Source of truth: capacity sprint/VBOG_BRAND_KIT.md §5
+
+   Exactly three type roles. There is no fourth.
+   All three are system stacks — no webfonts ship with this kit and none are needed. */
+
+:root {
+  --vbog-display: Georgia, "Times New Roman", serif;
+  --vbog-body: Arial, Helvetica, sans-serif;
+  --vbog-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* Display — headlines, major claims, pull quotes.
+     Sentence case, never all caps. Max one italic phrase per headline. */
+  --vbog-display-tracking: -0.04em;       /* range: -0.04em to -0.06em */
+  --vbog-display-tracking-tight: -0.06em;
+  --vbog-display-leading: 0.96;           /* range: 0.90 to 1.02 */
+
+  /* Body — explanations and paragraphs. Never centre long body copy. */
+  --vbog-body-leading: 1.6;               /* range: 1.55 to 1.65 */
+
+  /* Mono — labels, prices, steps, evidence, buttons, annotations.
+     Usually uppercase. Never for long paragraphs. */
+  --vbog-mono-tracking: 0.12em;           /* range: 0.06em to 0.16em */
+  --vbog-mono-tracking-wide: 0.18em;
+}

@@ -1,0 +1,8 @@
+/* VBOG design kit — entry stylesheet.
+   Rendered designs receive only this file's transitive @import closure,
+   so everything the brand needs must be reachable from here. */
+
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/layout.css";
+@import "./vbog-base.css";

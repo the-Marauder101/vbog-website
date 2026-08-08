@@ -1,0 +1,9 @@
+{
+  "shape": "package",
+  "pkg": "vbog-design-kit",
+  "globalName": "VBOG",
+  "readmeHeader": ".design-sync/conventions.md",
+  "cssEntry": "design-kit/styles.css",
+  "tokensGlob": "design-kit/tokens/*.css",
+  "guidelinesGlob": "design-kit/guidelines/*.md"
+}

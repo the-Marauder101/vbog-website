@@ -1,0 +1,33 @@
+/* VBOG — layout
+   Source of truth: capacity sprint/VBOG_BRAND_KIT.md §8
+
+   Corner radius is 0 everywhere. This is a non-negotiable, not a default. */
+
+:root {
+  --vbog-radius: 0;
+
+  /* Shell widths */
+  --vbog-max: 1240px;       /* long-form pages */
+  --vbog-max-focused: 800px; /* VSL / booking pages */
+
+  /* Outer gutter: 18-24px mobile, 40-64px desktop */
+  --vbog-gutter: clamp(18px, 4vw, 64px);
+
+  /* Vertical rhythm between major sections */
+  --vbog-section: clamp(88px, 9vw, 160px);
+  --vbog-section-focused: clamp(50px, 5vw, 76px);
+
+  /* Borders are 1px, ink or 12-22% white. Never heavier. */
+  --vbog-border: 1px solid var(--vbog-line);
+  --vbog-border-dark: 1px solid var(--vbog-line-dark);
+
+  /* Hard offset shadow: 5-18px, zero blur. The signature device. */
+  --vbog-shadow: 5px 5px 0 var(--vbog-ink);
+  --vbog-shadow-lg: 12px 12px 0 var(--vbog-orange);
+  --vbog-shadow-xl: 18px 18px 0 rgba(17, 21, 16, 0.92);
+
+  /* Operating grid: 42px squares at 4-5% opacity */
+  --vbog-grid-size: 42px;
+
+  --vbog-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}

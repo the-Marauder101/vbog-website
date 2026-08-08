@@ -1,0 +1,266 @@
+/* VBOG — component recipes and signature devices
+   Source of truth: capacity sprint/VBOG_BRAND_KIT.md §6 (devices) and §7 (recipes)
+   Extracted from the shipped implementation in capacity sprint/assets/revenue-refusal.css
+
+   Every class here is a real, built VBOG pattern — not a proposal.
+   Use two or three devices per asset, never all of them. */
+
+/* ── Foundation ─────────────────────────────────────────────────────────── */
+
+.vbog {
+  background: var(--vbog-paper);
+  color: var(--vbog-ink);
+  font-family: var(--vbog-body);
+  line-height: var(--vbog-body-leading);
+}
+
+.vbog *,
+.vbog *::before,
+.vbog *::after { box-sizing: border-box; border-radius: var(--vbog-radius); }
+
+.vbog-dark { background: var(--vbog-ink); color: var(--vbog-paper-bright); }
+.vbog-forest { background: var(--vbog-forest); color: var(--vbog-paper-bright); }
+
+/* Dark-surface overrides apply to BOTH dark surfaces. Orange Dark is a
+   light-background colour — on Ink or Forest it goes muddy, so use Orange. */
+.vbog-dark .vbog-muted,
+.vbog-forest .vbog-muted { color: var(--vbog-muted-light); }
+
+.vbog-shell { max-width: var(--vbog-max); margin: 0 auto; padding: 0 var(--vbog-gutter); }
+.vbog-shell-focused { max-width: var(--vbog-max-focused); margin: 0 auto; padding: 0 var(--vbog-gutter); }
+.vbog-section { padding: var(--vbog-section) 0; }
+.vbog-muted { color: var(--vbog-muted-dark); }
+
+/* ── Type roles ─────────────────────────────────────────────────────────── */
+
+.vbog-display {
+  font-family: var(--vbog-display);
+  font-weight: 700;
+  letter-spacing: var(--vbog-display-tracking);
+  line-height: var(--vbog-display-leading);
+}
+
+/* The single permitted emotional phrase inside a headline. One per headline. */
+.vbog-display em { font-weight: 400; font-style: italic; }
+
+.vbog-h1 { font-size: clamp(44px, 6.4vw, 92px); letter-spacing: var(--vbog-display-tracking-tight); }
+.vbog-h2 { font-size: clamp(32px, 4.2vw, 60px); }
+.vbog-h3 { font-size: clamp(22px, 2.4vw, 32px); }
+
+/* Mono kicker — always precedes a section heading. e.g. "02 / WHAT THE ₹4L BUYS" */
+.vbog-kicker {
+  margin: 0 0 24px;
+  color: var(--vbog-orange-dark);
+  font-family: var(--vbog-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--vbog-mono-tracking-wide);
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.vbog-dark .vbog-kicker,
+.vbog-forest .vbog-kicker { color: var(--vbog-orange); }
+
+.vbog-label {
+  font-family: var(--vbog-mono);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+/* ── §7 Primary CTA — Acid fill, ink text, hard shadow, ↗ at far right ──── */
+
+.vbog-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 22px;
+  border: 1px solid var(--vbog-ink);
+  background: var(--vbog-acid);
+  color: var(--vbog-ink);
+  box-shadow: var(--vbog-shadow);
+  font-family: var(--vbog-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--vbog-mono-tracking);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.18s var(--vbog-ease);
+}
+
+/* Hover is a -2/-2 nudge into the shadow — never a colour wash or lift. */
+.vbog-cta:hover {
+  transform: translate(2px, 2px);
+  background: var(--vbog-orange);
+  box-shadow: 3px 3px 0 var(--vbog-ink);
+}
+
+.vbog-cta::after { content: "↗"; margin-left: auto; }
+
+/* §7 Dark CTA — only in light headers or light sections. */
+.vbog-cta-dark {
+  background: var(--vbog-ink);
+  color: var(--vbog-paper-bright);
+  box-shadow: 5px 5px 0 var(--vbog-orange);
+}
+
+.vbog-cta-dark:hover { background: var(--vbog-orange); color: var(--vbog-ink); }
+
+.vbog-text-link {
+  color: var(--vbog-ink);
+  font-family: var(--vbog-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── §7 Receipt card — the signature proof surface ──────────────────────── */
+
+.vbog-receipt {
+  position: relative;
+  padding: 34px 34px 30px;
+  border: 1px solid var(--vbog-ink);
+  background: var(--vbog-paper-bright);
+  color: var(--vbog-ink);
+  box-shadow: var(--vbog-shadow-xl);
+}
+
+/* Torn top edge */
+.vbog-receipt-tear {
+  position: absolute;
+  top: -9px;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background:
+    repeating-linear-gradient(135deg, var(--vbog-paper-bright) 0 8px, transparent 8px 16px);
+}
+
+.vbog-receipt-line {
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--vbog-line);
+  font-family: var(--vbog-mono);
+  font-size: 9px;
+}
+
+.vbog-receipt-line span { color: var(--vbog-muted-dark); }
+
+/* One dominant commercial number per receipt. */
+.vbog-money {
+  color: var(--vbog-orange);
+  font-family: var(--vbog-mono);
+  font-size: clamp(68px, 6vw, 92px);
+  font-weight: 700;
+  letter-spacing: -0.08em;
+  line-height: 1;
+}
+
+/* The 6-8px mono disclaimer that must sit near every claim. */
+.vbog-disclaimer {
+  margin: 0;
+  color: var(--vbog-muted-dark);
+  font-family: var(--vbog-mono);
+  font-size: 7px;
+  line-height: 1.6;
+}
+
+/* ── §6 Signature devices ───────────────────────────────────────────────── */
+
+/* 1. Operating grid — 42px squares at 4-5% opacity */
+.vbog-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(17, 21, 16, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 21, 16, 0.045) 1px, transparent 1px);
+  background-size: var(--vbog-grid-size) var(--vbog-grid-size);
+}
+
+.vbog-dark .vbog-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255, 253, 246, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 253, 246, 0.05) 1px, transparent 1px);
+}
+
+/* 2. Three-colour rail — Orange 34% / Ink 32% / Acid 34% */
+.vbog-rail {
+  height: 6px;
+  background: linear-gradient(
+    to right,
+    var(--vbog-orange) 0 34%,
+    var(--vbog-ink) 34% 66%,
+    var(--vbog-acid) 66% 100%
+  );
+}
+
+/* 5. Stamp — rotated -3 to -6deg, double border, mono uppercase */
+.vbog-stamp {
+  width: fit-content;
+  padding: 8px 18px;
+  transform: rotate(-6deg);
+  border: 4px double var(--vbog-orange-dark);
+  color: var(--vbog-orange-dark);
+  font-family: var(--vbog-mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-align: center;
+  opacity: 0.82;
+}
+
+/* 6. Ledger row — label → operating change → money effect */
+.vbog-ledger-row {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  gap: 24px;
+  align-items: baseline;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--vbog-line);
+}
+
+.vbog-ledger-row > :first-child {
+  font-family: var(--vbog-mono);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--vbog-muted-dark);
+}
+
+.vbog-ledger-row > :last-child {
+  font-family: var(--vbog-mono);
+  font-weight: 700;
+  color: var(--vbog-orange-dark);
+}
+
+/* 7. Annotation box — thin 1px rule, mono label, square corners */
+.vbog-annotation {
+  padding: 16px 18px;
+  border: 1px solid var(--vbog-line);
+  font-family: var(--vbog-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  line-height: 1.7;
+}
+
+/* Proof card — one case label, one dominant result, one explanation, one disclaimer */
+/* Light cards set their own ink colour so they stay readable when placed on a
+   dark section — without this they inherit Paper Bright and go invisible. */
+.vbog-proof {
+  padding: 28px;
+  border: 1px solid var(--vbog-ink);
+  background: var(--vbog-paper-bright);
+  color: var(--vbog-ink);
+  box-shadow: var(--vbog-shadow-lg);
+}
+
+.vbog-proof .vbog-muted,
+.vbog-receipt .vbog-muted { color: var(--vbog-muted-dark); }
+
+/* Founder / client imagery: grayscale with an orange offset block behind. */
+.vbog-portrait {
+  filter: grayscale(1) contrast(1.08);
+  box-shadow: 12px 12px 0 var(--vbog-orange);
+}

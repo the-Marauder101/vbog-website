@@ -1,0 +1,28 @@
+/* VBOG — colour system
+   Source of truth: capacity sprint/VBOG_BRAND_KIT.md §4
+   Reference implementation: capacity sprint/assets/revenue-refusal.css
+
+   Orange identifies the wound or tension.
+   Acid identifies the action, proof of change, or commercial upside.
+   Never swap those meanings. */
+
+:root {
+  /* Base — 60% of any surface is one of these */
+  --vbog-ink: #111510;            /* main dark background, text, rules */
+  --vbog-paper: #f4efe3;          /* main light background */
+  --vbog-paper-bright: #fffdf6;   /* receipts, cards, logo surroundings */
+
+  /* Accents — Orange ~10%, Acid ~5% */
+  --vbog-orange: #f45b2f;         /* pain, urgency, hard shadows, key emphasis */
+  --vbog-orange-dark: #c43d1b;    /* orange TEXT on light backgrounds (contrast-safe) */
+  --vbog-acid: #dff47a;           /* action, positive money effect, CTA fill */
+
+  /* Secondary */
+  --vbog-forest: #193429;         /* secondary dark panel, qualification */
+  --vbog-muted-light: #a6a89f;    /* supporting copy on dark backgrounds */
+
+  /* Derived rules — 1px only, never heavier */
+  --vbog-line: rgba(17, 21, 16, 0.22);        /* on light surfaces */
+  --vbog-line-dark: rgba(255, 253, 246, 0.18); /* on dark surfaces */
+  --vbog-muted-dark: #77786f;                  /* supporting copy on light surfaces */
+}
