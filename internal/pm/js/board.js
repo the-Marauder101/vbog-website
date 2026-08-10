@@ -104,6 +104,7 @@
       }
       if (typeof Automations !== "undefined") Automations.init(project, members);
       if (typeof Changelog !== "undefined") Changelog.initBoard(project);
+      if (typeof Reports !== "undefined") Reports.init(project);
       initColumnsControl();
       // HR features
       if (hasFeature("board_tabs")) initBoardTabs();

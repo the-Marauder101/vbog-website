@@ -22,7 +22,7 @@ manager for the whole team, replacing Asana. Lives at **https://v-bog.com/intern
 | `vyom.html` (index.html redirects here) | Dashboard — project cards with task/overdue counts, type badge (Internal/Client), tag chips, and a tag filter. Create/edit/archive projects with **custom status columns per project** — drag the chips to reorder columns; removing a column that still has tasks walks you through moving them (no task is ever stranded). |
 | `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop, task modal with **@mentions** in notes and a **Client** tag (label a task with the end client it's for — lighter than a sub-client project). Filters: assignee, client, due date (presets + custom range). **Columns** hides/shows status columns; **History** shows every recorded change to the project's tasks. |
 | `team.html` | All Tasks — master list across every project. Filter by project, assignee, client, due date, or title search. |
-| `settings.html` | **Admin only.** Users & access (add users, roles, login IDs, per-project access for externals), the central **tag registry**, and Zapier integrations. |
+| `settings.html` | **Admin only.** Users & access (add users, roles, login IDs, per-project access for externals), the central **tag registry**, **Slack channels**, and Zapier integrations. |
 
 Every page also has the **Inbox** (bell icon): notifications (task assignments,
 @mentions — each with a read/unread toggle) and My Tasks (your open work grouped by
@@ -148,6 +148,60 @@ Changes made by **Zapier, the Vyom API and automation rules are logged too** (th
 is written inside the database, not by the browser), and they're labelled as such
 rather than being blamed on a person. A deleted task keeps its history — the trail
 outlives the card. Nothing in the app can edit or erase a log entry.
+
+## Daily reports to Slack
+
+Every board can post a daily summary to Slack: **who added how many cards and into which
+stage**, who moved what between stages, and where the pipeline stands right now. Nothing
+to run and nothing to remember — it sends itself.
+
+**Set it up once:**
+
+1. **Create the webhook in Slack.** Go to [api.slack.com/apps](https://api.slack.com/apps)
+   → *Create New App → From scratch*, name it “Vyom” and pick your workspace. Open
+   **Incoming Webhooks** in the sidebar, switch **Activate Incoming Webhooks** on, then
+   **Add New Webhook to Workspace** at the bottom, choose the channel, and Allow. Copy the
+   URL it gives you (`https://hooks.slack.com/services/…`).
+
+   One URL posts to exactly one channel — for a second channel click *Add New Webhook to
+   Workspace* again in the same app. Treat the URL like a password; anyone holding it can
+   post to that channel.
+2. **Settings → Slack channels.** Paste the URL with a name like `#hiring-updates`, then
+   hit **Send test** to confirm it lands. You only do this once per channel — every report
+   picks from this list, and if a URL is ever rotated you change it here and everything
+   follows.
+3. **Open a board → 📊 Daily Report.** Choose the channel, what the report covers
+   (Hiring, Ops, or both), the send time and timezone, and which days. **Preview** shows
+   the exact message; **Send test** posts it to the channel right now.
+
+**What you can turn on or off:** cards added (by person, by stage) · cards moved
+(from → to) · the pipeline snapshot · a breakdown by client tag · whether Zapier/API/
+automation activity counts as work (off by default, so the numbers mean *people*) ·
+whether it still posts on a day with no activity (on by default, so silence means
+"nothing happened", not "the report broke").
+
+A typical message:
+
+```
+GetClosers — Daily report
+
+Candidates added — 8
+• Anjali — 4 · R1 Rejected 4
+• Sarika — 4 · R1 Selected 2, New Candidates 2
+
+Candidates moved — 11
+• Sarika — 6 · R1 Selected → R2 Awaiting R3 2, New Candidates → R1 Selected 1, …
+• Anjali — 5 · R1 Selected → R2 Rejected 5
+
+Pipeline now
+R1 Rejected 106 · New Candidates 59 · R2 Rejected 17 · R1 Selected 13 · …
+
+vs yesterday — added 9 (+5), moved 6 (+5)
+```
+
+Reports are admin-managed, and each project can have more than one — e.g. hiring to one
+channel and Ops to another. The modal also shows the **last two weeks** of numbers, so
+day-over-day movement is visible without leaving Vyom.
 
 ## Automations (per-project rules)
 

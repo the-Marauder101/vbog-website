@@ -5,7 +5,8 @@
 > (so you don't hit them again). The README covers *what Vyom does*; this file
 > covers *how it's built*.
 
-Last updated: v18 (July 2026) — hideable status columns, the HR **Stage Date**
+Last updated: v19 (August 2026) — daily Slack reports + a central Slack channel
+registry, and the app's first scheduled job (pg_cron). Previously: v18 (July 2026) — hideable status columns, the HR **Stage Date**
 (no due dates on candidate cards), and a database-written **change log** for every
 task; plus the v16 client tags and the v14 status reordering, guided transition
 mapping, and sub-client status inheritance.
@@ -45,6 +46,7 @@ Browser ── sbFetch() ──> https://<project>.supabase.co/rest/v1/<table>?<
 | `js/ui.js` | Shared UI kit: toasts, modals, date helpers, field errors, `enhanceSelect()` custom dropdowns |
 | `js/auth.js` | Login state (localStorage), page guards, role checks, nav user chip |
 | `js/inbox.js` | Bell + slide-in inbox panel (notifications + My Tasks) |
+| `js/reports.js` | The per-project daily Slack report: admin button, config modal, preview, test send (§13) |
 | `js/changelog.js` | The change log: per-task History in the task modal + the board's project-wide History modal (read-only — §12) |
 | `js/dashboard.js` | Page logic for `vyom.html` |
 | `js/board.js` | Page logic for `board.html` (drag-drop, task modal, @mentions) |
@@ -56,6 +58,7 @@ Browser ── sbFetch() ──> https://<project>.supabase.co/rest/v1/<table>?<
 
 **Script load order matters** (each page loads, in order):
 `config → supabase → api → ui → auth → inbox → changelog → <page>.js`
+(the board additionally loads `automations`, `reports`, `hr-roles`, `hr-sla`)
 (the board additionally loads `automations`, `hr-roles`, `hr-sla` before `board.js`)
 Later files depend on earlier globals (`API`, `UI`, `Auth`, `Inbox`).
 
@@ -75,6 +78,9 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 | `automations` | Per-project rules (sql/09) | `project_id` FK (rules NEVER cross projects), `trigger_type`, `conditions jsonb`, `action_type`, `action_config jsonb`, `active` |
 | `api_keys` | Native inbound API keys (sql/10) | `project_id` FK (a key writes to ONE project), `key` unique (`vyom_…`, DB-generated), `label`, `active`, `last_used_at` |
 | `hr_roles` / `hr_sla_rules` | HR roles summary card + SLA deadlines (sql/13) | both `project_id` FK, cascade on project delete |
+| `slack_channels` | Registry of Slack incoming-webhook URLs (sql/15) — `label` unique, `url`, `active`. The ONLY place a Slack URL is stored; everything references a channel by id |
+| `daily_report_configs` | One scheduled report per row, scoped to a project (sql/15) — channel, scope (hiring/ops/both), send time + timezone, days, content toggles, `last_sent_on` |
+| `daily_report_runs` | Every run's numbers — the trend series (sql/15). Writes revoked from `anon` |
 | `task_changelog` | Every task change, one row per changed FIELD (sql/14) | `task_id` (**ON DELETE SET NULL** — history outlives the task), `task_title`/`actor_name` snapshots, `actor_id`, `action` (`created`\|`updated`\|`deleted`), `field`, `old_value`, `new_value`. **Written only by a trigger**; INSERT/UPDATE/DELETE/TRUNCATE are revoked from `anon` — see §12 |
 
 Also: `task_details` **view** (sql/04) joins human-readable names — used by webhook
@@ -246,7 +252,7 @@ adding tests.** Highlights:
 - Drive the custom dropdowns via their `.dd-btn`/`.dd-item` elements (native selects
   are hidden). Assert outcomes in the DB via `sbFetch` inside the page.
 - Keep the suite green: every new feature ships with tests (see `test/README.md`
-  for the current expected pass count — **77** as of v18).
+  for the current expected pass count — **85** as of v19).
 
 ## 10. Hideable status columns (v18)
 
@@ -342,7 +348,47 @@ one row per changed field, so "Depesh moved R1 Selected → R2 Rejected" is one 
   label to `FIELD_LABELS` in `changelog.js`. Unknown fields already render with a
   prettified key, so old clients never break.
 
-## 13. Roadmap notes for the next builder
+## 13. Daily Slack reports (v19)
+
+A per-project digest posted on a schedule: who added how many cards and into which
+stage, who moved what, and where the pipeline stands. Configured from a board button
+next to SLA Rules; nobody touches Supabase.
+
+- **Data source is `task_changelog`, not a new pipeline.** `field='status'` alone is a
+  card's whole stage history (§12), so the report is a `GROUP BY` — no counters to keep
+  in sync, and the report can never disagree with the History modal.
+- **Slack URLs live in one place**: `slack_channels`, managed in Settings like the tag
+  registry. Reports reference `channel_id`, so rotating a URL is one edit and a new
+  Slack message is configuration rather than code. The FK is `ON DELETE RESTRICT` — a
+  channel a live report depends on can't be deleted out from under it.
+- **One cron job, many timezones.** `cron.schedule('vyom-daily-reports', '*/5 * * * *')`
+  runs `run_due_daily_reports()`, which asks each config whether `now()` in *its*
+  timezone is past its send time. Cron expressions have no timezone and run in UTC, so
+  one job per report would drift by an hour twice a year in any DST zone. Send time is
+  stored as `time` + `timezone`, never a timestamptz, for the same reason.
+- **Exactly once, three guards.** `send_daily_report()` inserts the `daily_report_runs`
+  row *before* posting, in one transaction: the `(config_id, local_date)` unique index
+  makes a concurrent second attempt fail before Slack is touched, and because pg_net's
+  enqueue is a table insert, a later rollback un-sends it. Then `last_sent_on`
+  short-circuits the 5-minute job, and `FOR UPDATE … SKIP LOCKED` stops overlapping
+  ticks. Re-running the migration can't double-send: `last_sent_on` lives in a data
+  table that `CREATE TABLE IF NOT EXISTS` leaves alone.
+- **A config created after its send time claims today** (validation trigger), or setting
+  one up at 20:30 would fire five minutes later for a day nobody was measuring.
+- **Two traps the aggregation exists to avoid.** Machine actors are filtered **by name**
+  (`'Automation','Vyom API','Zapier','Unknown'`), never by `actor_id IS NULL` — actor_id
+  is `ON DELETE SET NULL`, so deleting a departed employee would otherwise reclassify
+  their work as automation. And `hr_category` lives on `tasks`, not the log, so orphaned
+  rows (task deleted the same day) fall back to whether the status name belongs to
+  `ops_statuses`.
+- **`run_due_daily_reports` is REVOKEd from `anon`** — the publishable key ships in
+  `config.js`, and this would otherwise be a "send to everyone" button. Don't grant it.
+- Rendering is a pure function (`daily_report_text`), so Send test, the modal preview and
+  the real 19:00 send are byte-for-byte identical. `daily_report_reconcile()` runs hourly
+  and flips a run to `failed` when `net._http_response` shows Slack rejected it — pg_net
+  is fire-and-forget, so without it a revoked webhook would look like success forever.
+
+## 14. Roadmap notes for the next builder
 
 Deliberately not built yet, in rough priority order — the schema anticipates them:
 
@@ -351,7 +397,8 @@ Deliberately not built yet, in rough priority order — the schema anticipates t
 2. **Client portal polish**: externals already work (role + `project_members`);
    what's missing is invite-flow niceties (e.g. emailing the login link).
 3. **New notification kinds**: comments, due-date reminders (`kind` + `data jsonb`
-   are ready; reminders would need a scheduled function — Supabase cron/pg_cron).
+   are ready). pg_cron is now installed (§13), so a scheduled reminder is a new function
+   plus one `cron.schedule` line — the hard part is done.
    A "stuck in stage too long" reminder is now cheap — `status_changed_at` is the
    input the SLA rules already use.
 4. **Comments on tasks**: new `task_comments` table; reuse the mention parser and

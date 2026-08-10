@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=18">
+  <link rel="stylesheet" href="css/style.css?v=19">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -92,6 +92,40 @@
     </div>
 
     <div class="settings-card">
+      <h2>Slack channels</h2>
+      <p class="form-hint" style="margin: -6px 0 16px;">
+        Add a Slack channel once here, then point daily reports (and anything else that posts to Slack)
+        at it by name — the URL is never typed twice, and rotating it updates everything at once.
+      </p>
+      <details class="setup-steps">
+        <summary>How to get a Slack webhook URL</summary>
+        <ol>
+          <li>Go to <a href="https://api.slack.com/apps" target="_blank" rel="noopener">api.slack.com/apps</a>
+              and choose <strong>Create New App → From scratch</strong>. Name it “Vyom” and pick your workspace.</li>
+          <li>In the left sidebar open <strong>Incoming Webhooks</strong> and turn
+              <strong>Activate Incoming Webhooks</strong> on.</li>
+          <li>Scroll down, click <strong>Add New Webhook to Workspace</strong>, pick the channel, and Allow.</li>
+          <li>Copy the URL it shows (<code>https://hooks.slack.com/services/…</code>) and paste it above.</li>
+        </ol>
+        <p>
+          One URL posts to one channel — for a second channel, click <strong>Add New Webhook to Workspace</strong>
+          again in the same app. Treat the URL like a password: anyone with it can post to that channel.
+          To revoke one, delete it in that same Slack screen and paste the replacement here.
+        </p>
+      </details>
+      <form id="add-slack-form" class="inline-form" novalidate>
+        <div class="form-group" style="flex: 0 0 200px;">
+          <input type="text" id="sc-label" placeholder="Name (e.g. #hiring-updates)" autocomplete="off">
+        </div>
+        <div class="form-group" style="flex: 1 1 320px;">
+          <input type="text" id="sc-url" placeholder="https://hooks.slack.com/services/…" autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-primary" disabled>Add Channel</button>
+      </form>
+      <div id="slack-table" style="margin-top: 14px;"></div>
+    </div>
+
+    <div class="settings-card">
       <h2>Send tasks to Zapier / Google Sheets</h2>
       <p class="form-hint" style="margin: -6px 0 16px;">
         Paste a Zapier <strong>Catch Hook</strong> URL and this app will send task events to it automatically —
@@ -157,12 +191,12 @@
     </div>
   </main>
 
-  <script src="js/config.js?v=18"></script>
-  <script src="js/supabase.js?v=18"></script>
-  <script src="js/api.js?v=18"></script>
-  <script src="js/ui.js?v=18"></script>
-  <script src="js/auth.js?v=18"></script>
-  <script src="js/inbox.js?v=18"></script>
-  <script src="js/settings.js?v=18"></script>
+  <script src="js/config.js?v=19"></script>
+  <script src="js/supabase.js?v=19"></script>
+  <script src="js/api.js?v=19"></script>
+  <script src="js/ui.js?v=19"></script>
+  <script src="js/auth.js?v=19"></script>
+  <script src="js/inbox.js?v=19"></script>
+  <script src="js/settings.js?v=19"></script>
 </body>
 </html>

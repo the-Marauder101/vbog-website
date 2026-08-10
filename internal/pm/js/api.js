@@ -235,6 +235,50 @@ const API = {
     return sbFetch(`hr_sla_rules?id=eq.${id}`, { method: "DELETE" });
   },
 
+  // ---- Slack channels (central registry — the only place a Slack URL lives) ----
+  getSlackChannels() {
+    return sbFetch("slack_channels?select=*&order=label.asc");
+  },
+  createSlackChannel(fields) {
+    return sbFetch("slack_channels", { method: "POST", body: fields }).then((r) => r[0]);
+  },
+  updateSlackChannel(id, fields) {
+    return sbFetch(`slack_channels?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
+  },
+  deleteSlackChannel(id) {
+    return sbFetch(`slack_channels?id=eq.${id}`, { method: "DELETE" });
+  },
+  sendTestSlackChannel(id) {
+    return sbFetch("rpc/send_test_slack_channel", { method: "POST", body: { p_channel_id: id } });
+  },
+
+  // ---- daily reports (per-project scheduled Slack digest) ----
+  getReportConfigs(projectId) {
+    return sbFetch(`daily_report_configs?project_id=eq.${projectId}&select=*&order=created_at.asc`);
+  },
+  createReportConfig(fields) {
+    return sbFetch("daily_report_configs", { method: "POST", body: fields }).then((r) => r[0]);
+  },
+  updateReportConfig(id, fields) {
+    return sbFetch(`daily_report_configs?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
+  },
+  deleteReportConfig(id) {
+    return sbFetch(`daily_report_configs?id=eq.${id}`, { method: "DELETE" });
+  },
+  sendTestReport(id) {
+    return sbFetch("rpc/send_test_report", { method: "POST", body: { p_config_id: id } });
+  },
+  previewReport(id) {
+    return sbFetch("rpc/daily_report_preview", { method: "POST", body: { p_config_id: id } });
+  },
+  // The stored trend series — feeds the "last N days" table in the modal.
+  getReportRuns(projectId, limit = 14) {
+    return sbFetch(
+      `daily_report_runs?project_id=eq.${projectId}&status=neq.test&select=*` +
+        `&order=local_date.desc&limit=${limit}`
+    );
+  },
+
   // ---- tags (central registry feeding all tag dropdowns) ----
   getTags() {
     return sbFetch("tags?select=*&order=name.asc");
