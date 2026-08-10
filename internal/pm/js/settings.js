@@ -27,6 +27,9 @@
   let webhookDeleteArmedFor = null;
   let tagDeleteArmedFor = null;
   let apiKeyDeleteArmedFor = null;
+  let slackChannels = [];
+  let slackAvailable = true; // false until sql/15_daily_reports.sql has been run
+  let slackDeleteArmedFor = null;
 
   const ROLE_LABELS = { admin: "Admin", member: "Member", external: "External" };
 
@@ -46,8 +49,16 @@
       } catch (_) {
         apiKeysAvailable = false;
       }
+      // Same treatment for the Slack registry (sql/15) — a missing migration
+      // must never take down the rest of Settings.
+      try {
+        slackChannels = await API.getSlackChannels();
+      } catch (_) {
+        slackAvailable = false;
+      }
       render();
       renderTags();
+      renderSlack();
       initIntegrations();
       initApiKeys();
       // Data is authoritative now — accept form submits (buttons start disabled
@@ -324,6 +335,146 @@
       input.value = "";
       UI.toast(`Tag “${created.name}” added.`, "success");
       renderTags();
+    } catch (err) {
+      UI.toast(err.message);
+    }
+  });
+
+  // ================= Slack channels =================
+  // The central registry: a Slack URL is typed here and nowhere else, so
+  // reports (and any future Slack message) reference a channel by name and a
+  // rotated URL is a single edit. Same idea as the tag registry above.
+
+  function renderSlack() {
+    const host = document.getElementById("slack-table");
+    if (!host) return;
+    if (!slackAvailable) {
+      host.innerHTML =
+        '<div class="form-hint">Slack channels need the 15_daily_reports.sql migration — run it in Supabase first.</div>';
+      return;
+    }
+    if (!slackChannels.length) {
+      host.innerHTML =
+        '<div class="form-hint">No channels yet — add one above, then Send test to check it works.</div>';
+      return;
+    }
+    host.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Webhook URL</th><th style="width:90px;">Active</th><th style="width:200px;"></th></tr></thead>
+        <tbody>
+          ${slackChannels
+            .map((c) => {
+              const shortUrl = c.url.length > 34 ? c.url.slice(0, 34) + "…" : c.url;
+              return `
+                <tr class="${c.active ? "" : "inactive-row"}">
+                  <td style="font-weight:600;">${UI.esc(c.label)}</td>
+                  <td title="${UI.esc(c.url)}" style="color:var(--muted);font-size:13px;">${UI.esc(shortUrl)}</td>
+                  <td>
+                    <label class="switch">
+                      <input type="checkbox" data-sc-toggle="${c.id}" ${c.active ? "checked" : ""}>
+                      <span class="slider"></span>
+                    </label>
+                  </td>
+                  <td style="text-align:right;white-space:nowrap;">
+                    <button class="btn btn-secondary" data-sc-test="${c.id}" style="padding:5px 10px;font-size:13px;">Send test</button>
+                    <button class="btn btn-danger" data-sc-delete="${c.id}" style="padding:5px 10px;font-size:13px;">${
+                      slackDeleteArmedFor === c.id ? "Confirm delete" : "Delete"
+                    }</button>
+                  </td>
+                </tr>`;
+            })
+            .join("")}
+        </tbody>
+      </table>`;
+
+    host.querySelectorAll("[data-sc-toggle]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const id = input.dataset.scToggle;
+        const active = input.checked;
+        try {
+          const updated = await API.updateSlackChannel(id, { active });
+          slackChannels = slackChannels.map((c) => (c.id === updated.id ? updated : c));
+        } catch (e) {
+          input.checked = !active;
+          UI.toast(e.message);
+        }
+      });
+    });
+
+    host.querySelectorAll("[data-sc-test]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.textContent = "Sending…";
+        try {
+          await API.sendTestSlackChannel(btn.dataset.scTest);
+          UI.toast("Test message sent — check the channel.", "success");
+        } catch (e) {
+          UI.toast(e.message);
+        }
+        btn.disabled = false;
+        btn.textContent = "Send test";
+      });
+    });
+
+    host.querySelectorAll("[data-sc-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.scDelete;
+        if (slackDeleteArmedFor !== id) {
+          slackDeleteArmedFor = id;
+          btn.textContent = "Confirm delete";
+          btn.classList.add("confirming");
+          return;
+        }
+        try {
+          await API.deleteSlackChannel(id);
+          slackChannels = slackChannels.filter((c) => c.id !== id);
+          slackDeleteArmedFor = null;
+          UI.toast("Channel removed.", "success");
+          renderSlack();
+        } catch (e) {
+          // The FK is ON DELETE RESTRICT: a channel a live report depends on
+          // can't vanish underneath it.
+          UI.toast(
+            /foreign key|violates/i.test(e.message)
+              ? "A daily report is still using this channel — delete or re-point that report first."
+              : e.message
+          );
+          slackDeleteArmedFor = null;
+          renderSlack();
+        }
+      });
+    });
+  }
+
+  document.getElementById("add-slack-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    UI.clearFieldErrors(form);
+    const labelInput = document.getElementById("sc-label");
+    const urlInput = document.getElementById("sc-url");
+    const label = labelInput.value.trim();
+    const url = urlInput.value.trim();
+    let valid = true;
+    if (!label) {
+      UI.fieldError(labelInput, "Give the channel a name.");
+      valid = false;
+    } else if (slackChannels.some((c) => c.label.toLowerCase() === label.toLowerCase())) {
+      UI.fieldError(labelInput, "A channel with this name already exists.");
+      valid = false;
+    }
+    if (!/^https:\/\/.+/.test(url)) {
+      UI.fieldError(urlInput, "Enter the https:// webhook URL Slack gave you.");
+      valid = false;
+    }
+    if (!valid) return;
+    try {
+      const created = await API.createSlackChannel({ label, url });
+      slackChannels.push(created);
+      slackChannels.sort((a, b) => a.label.localeCompare(b.label));
+      labelInput.value = "";
+      urlInput.value = "";
+      UI.toast("Channel added — use Send test to check it.", "success");
+      renderSlack();
     } catch (err) {
       UI.toast(err.message);
     }

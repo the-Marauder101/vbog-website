@@ -1626,3 +1626,58 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
   background: rgba(245, 158, 11, 0.08);
 }
 .hidden-cols-pill.has-flagged:hover { border-color: #B45309; color: #B45309; }
+
+/* ---------- Daily Slack reports ---------- */
+/* Fields that belong together on one line in the report modal */
+.form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.form-row .form-group { flex: 1 1 160px; min-width: 0; }
+
+.day-chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 4px 0; }
+.day-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.day-chip:hover { border-color: #B9C2CE; }
+.day-chip input { accent-color: var(--accent); cursor: inherit; }
+.day-chip:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(0, 180, 216, 0.07);
+  color: var(--primary);
+}
+
+/* The preview shows the exact text the database would post — monospace so the
+   line breaks and spacing read the way Slack will render them. */
+.report-preview {
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow-y: auto;
+  color: var(--text);
+}
+
+/* Relative bar in the "last two weeks" table — a sparkline without a library */
+.run-bar {
+  display: block;
+  height: 8px;
+  min-width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), #7C3AED);
+  opacity: 0.75;
+}

@@ -1,10 +1,11 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 77 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// 85 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
 // @mentions, roles/external scoping, tags, webhooks, client tags, status reorder +
 // transition mapping, sub-client status inheritance, hideable status columns,
-// the HR Stage Date and its filter, HR SLA flags, the task change log, cleanup.
+// the HR Stage Date and its filter, HR SLA flags, the task change log,
+// the Slack channel registry and daily reports, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
 // the end; count assertions are scoped to the test project so live data is
 // never touched or asserted against.
@@ -186,6 +187,13 @@ async function expectToast(substr) {
   for (const m of leftoverMembers) await rest(`team_members?id=eq.${m.id}`, { method: "DELETE" });
   const leftoverHooks = await rest(`webhooks?label=eq.e2e%20hook&select=id`);
   for (const w of leftoverHooks) await rest(`webhooks?id=eq.${w.id}`, { method: "DELETE" });
+  const leftoverReports = await rest(`daily_report_configs?label=like.E2E*&select=id`).catch(() => []);
+  for (const c of leftoverReports) {
+    await rest(`daily_report_runs?config_id=eq.${c.id}`, { method: "DELETE" }).catch(() => {});
+    await rest(`daily_report_configs?id=eq.${c.id}`, { method: "DELETE" }).catch(() => {});
+  }
+  const leftoverChannels = await rest(`slack_channels?label=like.E2E*&select=id`).catch(() => []);
+  for (const c of leftoverChannels) await rest(`slack_channels?id=eq.${c.id}`, { method: "DELETE" }).catch(() => {});
   const leftoverTags = await rest(`tags?name=eq.E2E%20Tag&select=id`);
   for (const t of leftoverTags) await rest(`tags?id=eq.${t.id}`, { method: "DELETE" });
   consoleErrors.length = 0;
@@ -1464,6 +1472,120 @@ async function expectToast(substr) {
     await rest(`projects?id=eq.${hrId}`, { method: "DELETE" });
     if ((await rest(`task_changelog?project_id=eq.${hrId}&select=id`)).length)
       throw new Error("change log did not cascade with the project");
+  });
+
+  // ---------- Daily Slack reports (sql/15) ----------
+  let chanId, cfgId;
+  await step("Slack registry: a channel is added once in Settings", async () => {
+    await page.goto(`${BASE}/settings.html`);
+    await page.locator("#slack-table").waitFor({ timeout: 10000 });
+    await page.waitForTimeout(500);
+    await page.fill("#sc-label", "E2E Channel");
+    await page.fill("#sc-url", "https://postman-echo.com/post");
+    await page.click("#add-slack-form button[type=submit]");
+    await expectToast("Channel added");
+    const rows = await rest("slack_channels?label=eq.E2E%20Channel&select=*");
+    if (rows.length !== 1) throw new Error(`expected 1 channel, got ${rows.length}`);
+    chanId = rows[0].id;
+  });
+
+  await step("Slack registry: a non-https URL is refused", async () => {
+    await page.fill("#sc-label", "E2E Bad");
+    await page.fill("#sc-url", "ftp://nope");
+    await page.click("#add-slack-form button[type=submit]");
+    await page.waitForTimeout(400);
+    if (!(await page.locator(".field-error").count())) throw new Error("no inline error");
+    if ((await rest("slack_channels?label=eq.E2E%20Bad&select=id")).length)
+      throw new Error("an invalid URL was stored");
+    await page.fill("#sc-label", "");
+    await page.fill("#sc-url", "");
+  });
+
+  await step("Daily report: created from the board, channel picked from the registry", async () => {
+    await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    await page.click("#reports-btn");
+    await page.locator("#reports-modal.open").waitFor({ timeout: 5000 });
+    const opts = await page.$$eval("#rp-channel option", (e) => e.map((x) => x.textContent));
+    if (!opts.some((o) => o.includes("E2E Channel")))
+      throw new Error(`registry not offered: ${opts.join(", ")}`);
+    await page.fill("#rp-label", "E2E Report");
+    await page.fill("#rp-time", "07:30");
+    await page.click("#report-save");
+    await expectToast("Report added");
+    const rows = await rest(`daily_report_configs?project_id=eq.${projectId}&select=*`);
+    if (rows.length !== 1) throw new Error(`expected 1 config, got ${rows.length}`);
+    cfgId = rows[0].id;
+    if (!rows[0].channel_id) throw new Error("channel not linked");
+  });
+
+  await step("Daily report: a report with nothing in it is refused", async () => {
+    await page.click("[data-rp-edit]");
+    await page.waitForTimeout(300);
+    for (const id of ["#rp-added", "#rp-moved", "#rp-snapshot"]) {
+      if (await page.isChecked(id)) await page.click(id);
+    }
+    await page.click("#report-save");
+    await expectToast("at least one thing to include");
+    await page.click("#report-form-reset");
+  });
+
+  await step("Daily report: Send test posts, records a 'test' run, keeps the real send pending", async () => {
+    // Created after its send time, so the trigger rightly claimed today —
+    // clear it so this asserts what it says: a TEST never advances last_sent_on.
+    await rest(`daily_report_configs?id=eq.${cfgId}`, {
+      method: "PATCH",
+      body: { last_sent_on: null },
+    });
+    await page.click("[data-rp-test]");
+    await expectToast("Test sent");
+    await page.waitForTimeout(1500);
+    const runs = await rest(`daily_report_runs?config_id=eq.${cfgId}&select=status`);
+    if (runs.length !== 1 || runs[0].status !== "test")
+      throw new Error(`runs = ${JSON.stringify(runs)}`);
+    const cfg = (await rest(`daily_report_configs?id=eq.${cfgId}&select=last_sent_on`))[0];
+    if (cfg.last_sent_on !== null)
+      throw new Error(`a test must not advance last_sent_on (got ${cfg.last_sent_on})`);
+  });
+
+  await step("Daily report: the same day cannot be sent twice", async () => {
+    const today = (await rest("rpc/daily_report_preview", {
+      method: "POST",
+      body: { p_config_id: cfgId },
+    })) ? isoDaysFromNow(0) : isoDaysFromNow(0);
+    const send = () =>
+      rest("rpc/send_daily_report", {
+        method: "POST",
+        body: { p_config_id: cfgId, p_local_date: today, p_test: false },
+      });
+    await send();
+    let refused = false;
+    try {
+      await send();
+    } catch (e) {
+      refused = /duplicate key|already exists/i.test(e.message);
+    }
+    if (!refused) throw new Error("a second send for the same day was allowed");
+    const sent = await rest(`daily_report_runs?config_id=eq.${cfgId}&status=eq.sent&select=id`);
+    if (sent.length !== 1) throw new Error(`expected exactly 1 sent run, got ${sent.length}`);
+  });
+
+  await step("Slack registry: a channel in use cannot be deleted", async () => {
+    let refused = false;
+    try {
+      await rest(`slack_channels?id=eq.${chanId}`, { method: "DELETE" });
+    } catch (e) {
+      refused = /foreign key|violates/i.test(e.message);
+    }
+    if (!refused) throw new Error("a channel with a live report was deleted");
+  });
+
+  await step("Cleanup: reports, runs and the channel", async () => {
+    await rest(`daily_report_runs?config_id=eq.${cfgId}`, { method: "DELETE" }).catch(() => {});
+    await rest(`daily_report_configs?id=eq.${cfgId}`, { method: "DELETE" });
+    await rest(`slack_channels?id=eq.${chanId}`, { method: "DELETE" });
+    if ((await rest("slack_channels?label=eq.E2E%20Channel&select=id")).length)
+      throw new Error("channel not removed");
   });
 
   // ---------- cleanup ----------
