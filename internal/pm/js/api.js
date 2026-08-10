@@ -268,8 +268,17 @@ const API = {
   sendTestReport(id) {
     return sbFetch("rpc/send_test_report", { method: "POST", body: { p_config_id: id } });
   },
-  previewReport(id) {
-    return sbFetch("rpc/daily_report_preview", { method: "POST", body: { p_config_id: id } });
+  // p_template previews an edit before it is saved; omit it for the stored one.
+  previewReport(id, template) {
+    return sbFetch("rpc/daily_report_preview", {
+      method: "POST",
+      body: { p_config_id: id, p_template: template ?? null },
+    });
+  },
+  // The default message text lives in the database, so the editor prefills
+  // exactly what an untouched report sends.
+  getDefaultReportTemplate() {
+    return sbFetch("rpc/daily_report_default_template", { method: "POST", body: {} });
   },
   // The stored trend series — feeds the "last N days" table in the modal.
   getReportRuns(projectId, limit = 14) {

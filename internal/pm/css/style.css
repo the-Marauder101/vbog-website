@@ -1699,3 +1699,15 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
 .setup-steps ol { margin: 10px 0 0 18px; font-size: 13.5px; color: var(--muted); line-height: 1.7; }
 .setup-steps p { margin: 10px 0 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
 .setup-steps code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+
+/* The report message editor — monospace so placeholders and line breaks line
+   up with what Slack will actually render. */
+.template-input {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  resize: vertical;
+}
+.setup-steps ul { margin: 8px 0 0 18px; font-size: 13px; color: var(--muted); line-height: 1.8; }
+.setup-steps ul code { font-size: 12px; }

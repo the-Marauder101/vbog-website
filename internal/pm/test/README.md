@@ -27,7 +27,7 @@ SUPA_MGMT_TOKEN=<your-supabase-personal-access-token> node internal/pm/test/e2e.
 - `VYOM_CHROMIUM` points at a pre-installed Chromium binary if the
   playwright-managed download isn't available (e.g. sandboxed environments).
 
-Expected output ends with `==== 85/85 passed ====` and exit code 0.
+Expected output ends with `==== 88/88 passed ====` and exit code 0.
 (The sub-client status-inheritance steps need `sql/12_status_inheritance.sql`
 applied to the live database first; the hidden-column, Stage Date and change-log
 steps need `sql/14_hidden_statuses_changelog.sql`.)

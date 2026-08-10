@@ -5,8 +5,9 @@
 > (so you don't hit them again). The README covers *what Vyom does*; this file
 > covers *how it's built*.
 
-Last updated: v19 (August 2026) — daily Slack reports + a central Slack channel
-registry, and the app's first scheduled job (pg_cron). Previously: v18 (July 2026) — hideable status columns, the HR **Stage Date**
+Last updated: v20 (August 2026) — the report message is editable from inside the app
+and reports can be scoped to named people. Previously: v19 (daily Slack reports, the
+Slack channel registry, the app's first pg_cron job) and v18 (July 2026) — hideable status columns, the HR **Stage Date**
 (no due dates on candidate cards), and a database-written **change log** for every
 task; plus the v16 client tags and the v14 status reordering, guided transition
 mapping, and sub-client status inheritance.
@@ -79,7 +80,7 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 | `api_keys` | Native inbound API keys (sql/10) | `project_id` FK (a key writes to ONE project), `key` unique (`vyom_…`, DB-generated), `label`, `active`, `last_used_at` |
 | `hr_roles` / `hr_sla_rules` | HR roles summary card + SLA deadlines (sql/13) | both `project_id` FK, cascade on project delete |
 | `slack_channels` | Registry of Slack incoming-webhook URLs (sql/15) — `label` unique, `url`, `active`. The ONLY place a Slack URL is stored; everything references a channel by id |
-| `daily_report_configs` | One scheduled report per row, scoped to a project (sql/15) — channel, scope (hiring/ops/both), send time + timezone, days, content toggles, `last_sent_on` |
+| `daily_report_configs` | One scheduled report per row, scoped to a project (sql/15) — channel, scope (hiring/ops/both), send time + timezone, days, content toggles, `last_sent_on`; plus `template` and `member_ids` (sql/16) |
 | `daily_report_runs` | Every run's numbers — the trend series (sql/15). Writes revoked from `anon` |
 | `task_changelog` | Every task change, one row per changed FIELD (sql/14) | `task_id` (**ON DELETE SET NULL** — history outlives the task), `task_title`/`actor_name` snapshots, `actor_id`, `action` (`created`\|`updated`\|`deleted`), `field`, `old_value`, `new_value`. **Written only by a trigger**; INSERT/UPDATE/DELETE/TRUNCATE are revoked from `anon` — see §12 |
 
@@ -252,7 +253,7 @@ adding tests.** Highlights:
 - Drive the custom dropdowns via their `.dd-btn`/`.dd-item` elements (native selects
   are hidden). Assert outcomes in the DB via `sbFetch` inside the page.
 - Keep the suite green: every new feature ships with tests (see `test/README.md`
-  for the current expected pass count — **85** as of v19).
+  for the current expected pass count — **88** as of v20).
 
 ## 10. Hideable status columns (v18)
 
@@ -383,8 +384,23 @@ next to SLA Rules; nobody touches Supabase.
   `ops_statuses`.
 - **`run_due_daily_reports` is REVOKEd from `anon`** — the publishable key ships in
   `config.js`, and this would otherwise be a "send to everyone" button. Don't grant it.
+- **The message text is data, not code** (sql/16). `daily_report_configs.template` holds
+  a string with `{placeholders}`; `daily_report_text()` computes each block and pours it
+  in. **NULL means "use the default"** — the editor stores NULL when the text is
+  untouched, so a report that was never customised still follows the default if it
+  changes. Each placeholder expands to a whole block *including its heading*, so a block
+  with nothing to say vanishes with its blank line rather than leaving an orphan heading;
+  runs of blank lines are collapsed afterwards. The default lives in
+  `daily_report_default_template()` — in the database, so the editor prefills exactly
+  what an untouched report sends. Adding a placeholder = one `replace()` there and one
+  line in `PLACEHOLDERS` in `reports.js`.
+- **`member_ids` scopes a report to named people** (sql/16); empty = everyone. Filtering
+  is on `actor_id`, and the selected names ride along in the metrics as `selected` so the
+  renderer can list somebody who did **nothing, at zero** — a report meant to show
+  progress has to be able to show its absence.
 - Rendering is a pure function (`daily_report_text`), so Send test, the modal preview and
-  the real 19:00 send are byte-for-byte identical. `daily_report_reconcile()` runs hourly
+  the real 19:00 send are byte-for-byte identical. `daily_report_preview()` takes an
+  optional `p_template`, so the modal previews an edit before it is saved. `daily_report_reconcile()` runs hourly
   and flips a run to `failed` when `net._http_response` shows Slack rejected it — pg_net
   is fire-and-forget, so without it a revoked webhook would look like success forever.
 
