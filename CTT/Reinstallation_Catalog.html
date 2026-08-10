@@ -1517,7 +1517,7 @@ function recalc() {
         const u0 = unitStates[0];
         const s = sizes[u0.sizeIdx] || sizes[0];
         const custom = (u0.customHeaterPrice != null && u0.customHeaterPrice !== "");
-        const tbd = (!custom && s.price == null) ? " \u00b7 price TBD" : (custom ? " \u00b7 custom price" : "");
+        const tbd = (!custom && s.price == null) ? " \u00b7 price TBD" : "";
         html += lineHTML("Water Heater", `${PRICING.brand} ${s.label} \u00b7 ${orientLabel} \u00d7 ${qty}${tbd}`, heaterTotal);
         html += lineHTML("Installation", `${locLabel} \u00b7 ${qty} unit${qty > 1 ? "s" : ""} @ ${fmt(installUnitPrice(s))}`, installTotal);
       } else {
@@ -1525,7 +1525,7 @@ function recalc() {
           const u = unitStates[i];
           const s = sizes[u.sizeIdx] || sizes[0];
           const custom = (u.customHeaterPrice != null && u.customHeaterPrice !== "");
-          const tbd = (!custom && s.price == null) ? " \u00b7 price TBD" : (custom ? " \u00b7 custom price" : "");
+          const tbd = (!custom && s.price == null) ? " \u00b7 price TBD" : "";
           html += lineHTML(`Water Heater (Unit ${i + 1})`, `${PRICING.brand} ${s.label} \u00b7 ${orientLabel}${tbd}`, heaterUnitPrice(u, s));
           html += lineHTML(`Installation (Unit ${i + 1})`, `${locLabel} \u00b7 ${fmt(installUnitPrice(s))} / unit`, installUnitPrice(s));
         }
