@@ -1681,3 +1681,21 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
   background: linear-gradient(90deg, var(--accent), #7C3AED);
   opacity: 0.75;
 }
+
+/* Collapsible "how to" inside a settings card — present when needed, out of the
+   way once you've done it once. */
+.setup-steps { margin: -8px 0 16px; }
+.setup-steps summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--accent);
+  list-style: none;
+}
+.setup-steps summary::-webkit-details-marker { display: none; }
+.setup-steps summary::before { content: "▸ "; display: inline-block; transition: transform 0.15s ease; }
+.setup-steps[open] summary::before { content: "▾ "; }
+.setup-steps summary:hover { text-decoration: underline; }
+.setup-steps ol { margin: 10px 0 0 18px; font-size: 13.5px; color: var(--muted); line-height: 1.7; }
+.setup-steps p { margin: 10px 0 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.setup-steps code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }

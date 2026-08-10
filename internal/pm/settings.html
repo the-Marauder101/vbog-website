@@ -96,9 +96,23 @@
       <p class="form-hint" style="margin: -6px 0 16px;">
         Add a Slack channel once here, then point daily reports (and anything else that posts to Slack)
         at it by name — the URL is never typed twice, and rotating it updates everything at once.
-        In Slack: <strong>Apps → Incoming Webhooks → Add to Slack</strong>, pick the channel, and copy the
-        Webhook URL it gives you.
       </p>
+      <details class="setup-steps">
+        <summary>How to get a Slack webhook URL</summary>
+        <ol>
+          <li>Go to <a href="https://api.slack.com/apps" target="_blank" rel="noopener">api.slack.com/apps</a>
+              and choose <strong>Create New App → From scratch</strong>. Name it “Vyom” and pick your workspace.</li>
+          <li>In the left sidebar open <strong>Incoming Webhooks</strong> and turn
+              <strong>Activate Incoming Webhooks</strong> on.</li>
+          <li>Scroll down, click <strong>Add New Webhook to Workspace</strong>, pick the channel, and Allow.</li>
+          <li>Copy the URL it shows (<code>https://hooks.slack.com/services/…</code>) and paste it above.</li>
+        </ol>
+        <p>
+          One URL posts to one channel — for a second channel, click <strong>Add New Webhook to Workspace</strong>
+          again in the same app. Treat the URL like a password: anyone with it can post to that channel.
+          To revoke one, delete it in that same Slack screen and paste the replacement here.
+        </p>
+      </details>
       <form id="add-slack-form" class="inline-form" novalidate>
         <div class="form-group" style="flex: 0 0 200px;">
           <input type="text" id="sc-label" placeholder="Name (e.g. #hiring-updates)" autocomplete="off">

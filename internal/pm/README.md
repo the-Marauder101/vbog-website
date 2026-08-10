@@ -157,12 +157,20 @@ to run and nothing to remember — it sends itself.
 
 **Set it up once:**
 
-1. **Settings → Slack channels.** In Slack, go to *Apps → Incoming Webhooks → Add to
-   Slack*, pick the channel, and copy the Webhook URL. Paste it in Vyom with a name like
-   `#hiring-updates`, then hit **Send test** to confirm it lands. You only ever do this
-   once per channel — every report picks from this list, and if a URL is ever rotated you
-   change it here and everything follows.
-2. **Open a board → 📊 Daily Report.** Choose the channel, what the report covers
+1. **Create the webhook in Slack.** Go to [api.slack.com/apps](https://api.slack.com/apps)
+   → *Create New App → From scratch*, name it “Vyom” and pick your workspace. Open
+   **Incoming Webhooks** in the sidebar, switch **Activate Incoming Webhooks** on, then
+   **Add New Webhook to Workspace** at the bottom, choose the channel, and Allow. Copy the
+   URL it gives you (`https://hooks.slack.com/services/…`).
+
+   One URL posts to exactly one channel — for a second channel click *Add New Webhook to
+   Workspace* again in the same app. Treat the URL like a password; anyone holding it can
+   post to that channel.
+2. **Settings → Slack channels.** Paste the URL with a name like `#hiring-updates`, then
+   hit **Send test** to confirm it lands. You only do this once per channel — every report
+   picks from this list, and if a URL is ever rotated you change it here and everything
+   follows.
+3. **Open a board → 📊 Daily Report.** Choose the channel, what the report covers
    (Hiring, Ops, or both), the send time and timezone, and which days. **Preview** shows
    the exact message; **Send test** posts it to the channel right now.
 
