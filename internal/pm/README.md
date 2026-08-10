@@ -174,6 +174,30 @@ to run and nothing to remember — it sends itself.
    (Hiring, Ops, or both), the send time and timezone, and which days. **Preview** shows
    the exact message; **Send test** posts it to the channel right now.
 
+**Choose who it covers.** Leave everyone selected (the default) or pick specific people —
+only their work is counted, and **anyone you pick who did nothing still appears, at zero**.
+That's the point: a report that only ever shows activity can't show the lack of it.
+
+**Edit the message itself.** The wording lives in the report, not in the code. The Message
+box holds the text that gets posted, with tags that fill themselves in:
+
+```
+:wave: Good evening team — *{project}* wrap-up for {date}
+
+{summary} across {people} people
+
+{added}
+
+{vs_yesterday}
+```
+
+Available tags: `{project}` `{date}` `{timezone}` `{summary}` `{added_total}`
+`{moved_total}` `{people}` `{added}` `{moved}` `{pipeline}` `{clients}` `{vs_yesterday}`.
+Slack formatting works — `*bold*`, `_italic_`, `:emoji:`. A tag with nothing to report
+disappears along with its blank line, so a quiet day never leaves an empty heading behind.
+**Preview** shows the result before you save, and **Reset to the default message** puts the
+stock wording back.
+
 **What you can turn on or off:** cards added (by person, by stage) · cards moved
 (from → to) · the pipeline snapshot · a breakdown by client tag · whether Zapier/API/
 automation activity counts as work (off by default, so the numbers mean *people*) ·

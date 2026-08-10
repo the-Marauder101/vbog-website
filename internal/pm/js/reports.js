@@ -15,8 +15,10 @@
 
 const Reports = (() => {
   let project = null;
+  let members = [];
   let configs = [];
   let channels = [];
+  let defaultTemplate = "";
   let runs = [];
   let editing = null; // config being edited, null = creating
   let deleteArmedFor = null;
@@ -30,8 +32,26 @@ const Reports = (() => {
     "America/Los_Angeles", "Australia/Sydney", "UTC",
   ];
 
-  async function init(proj) {
+  // What a template can contain. Kept beside the SQL that substitutes them —
+  // adding one means a line here and a `replace()` in daily_report_text.
+  const PLACEHOLDERS = [
+    ["{project}", "the project name"],
+    ["{date}", "the day being reported, e.g. Mon 10 Aug 2026"],
+    ["{timezone}", "the report's timezone"],
+    ["{summary}", "Added 14 · Moved 6"],
+    ["{added_total}", "just the number added"],
+    ["{moved_total}", "just the number moved"],
+    ["{people}", "how many people were active"],
+    ["{added}", "the per-person added breakdown, with its heading"],
+    ["{moved}", "the per-person moved breakdown, with its heading"],
+    ["{pipeline}", "how many cards sit in each stage"],
+    ["{clients}", "the client-tag breakdown"],
+    ["{vs_yesterday}", "the comparison line against yesterday"],
+  ];
+
+  async function init(proj, mems) {
     project = proj;
+    members = (mems || []).filter((m) => m.active);
     const btn = document.getElementById("reports-btn");
     if (!btn || !Auth.isAdmin()) return;
     btn.hidden = false;
@@ -42,15 +62,22 @@ const Reports = (() => {
     );
     document.getElementById("report-form-reset").addEventListener("click", () => fillForm(null));
     document.getElementById("report-preview-btn").addEventListener("click", onPreview);
+    document.getElementById("rp-template-reset").addEventListener("click", () => {
+      document.getElementById("rp-template").value = defaultTemplate;
+    });
+    document.getElementById("rp-placeholders").innerHTML = PLACEHOLDERS.map(
+      ([tag, what]) => `<li><code>${UI.esc(tag)}</code> — ${UI.esc(what)}</li>`
+    ).join("");
   }
 
   async function open() {
     document.getElementById("report-project-name").textContent = project.name;
     try {
-      [configs, channels, runs] = await Promise.all([
+      [configs, channels, runs, defaultTemplate] = await Promise.all([
         API.getReportConfigs(project.id),
         API.getSlackChannels(),
         API.getReportRuns(project.id).catch(() => []),
+        API.getDefaultReportTemplate().catch(() => ""),
       ]);
     } catch (e) {
       UI.toast(
@@ -236,6 +263,21 @@ const Reports = (() => {
         }> ${d}</label>`
     ).join("");
 
+    // Empty selection = everyone, which is why nothing is checked by default.
+    const picked = cfg?.member_ids || [];
+    document.getElementById("rp-members").innerHTML = members.length
+      ? members
+          .map(
+            (m) =>
+              `<label class="day-chip"><input type="checkbox" data-member="${m.id}" ${
+                picked.includes(m.id) ? "checked" : ""
+              }> ${UI.esc(m.name)}</label>`
+          )
+          .join("")
+      : '<span class="form-hint" style="margin:0;">No active members.</span>';
+
+    document.getElementById("rp-template").value = cfg?.template || defaultTemplate;
+
     for (const [id, key, dflt] of [
       ["rp-added", "include_added", true],
       ["rp-moved", "include_moved", true],
@@ -253,8 +295,16 @@ const Reports = (() => {
     const days = [...document.querySelectorAll("#rp-days input:checked")].map((el) =>
       Number(el.dataset.day)
     );
+    const memberIds = [...document.querySelectorAll("#rp-members input:checked")].map(
+      (el) => el.dataset.member
+    );
+    // Store NULL rather than a copy of the default, so a report that was never
+    // customised keeps following the default if it ever changes.
+    const tpl = document.getElementById("rp-template").value.trim();
     return {
       project_id: project.id,
+      member_ids: memberIds,
+      template: tpl && tpl !== defaultTemplate.trim() ? tpl : null,
       channel_id: document.getElementById("rp-channel").value || null,
       label: document.getElementById("rp-label").value.trim(),
       scope: document.getElementById("rp-scope").value,
@@ -282,7 +332,9 @@ const Reports = (() => {
     host.hidden = false;
     host.textContent = "Building…";
     try {
-      const r = await API.previewReport(editing.id);
+      // Preview the template as currently typed, not as last saved — otherwise
+      // you'd have to commit an edit to find out what it looks like.
+      const r = await API.previewReport(editing.id, document.getElementById("rp-template").value);
       const res = Array.isArray(r) ? r[0] : r;
       host.textContent = res?.text || "(empty)";
     } catch (e) {

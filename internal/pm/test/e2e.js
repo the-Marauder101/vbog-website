@@ -1,11 +1,11 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 85 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// 88 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
 // @mentions, roles/external scoping, tags, webhooks, client tags, status reorder +
 // transition mapping, sub-client status inheritance, hideable status columns,
 // the HR Stage Date and its filter, HR SLA flags, the task change log,
-// the Slack channel registry and daily reports, cleanup.
+// the Slack channel registry, daily reports and their editable message, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
 // the end; count assertions are scoped to the test project so live data is
 // never touched or asserted against.
@@ -17,8 +17,12 @@ const PROJECT_NAME = "E2E Test Project";
 
 const results = [];
 let page, context, browser;
+let adminUser = null; // captured at login; used to un-poison a failed step
 const consoleErrors = [];
 
+// A step that bails before its own cleanup used to leave the session logged in
+// as whoever it switched to, so every later step ran as a non-admin and failed
+// for the wrong reason. One root failure should stay one failure.
 async function step(name, fn) {
   try {
     await fn();
@@ -29,6 +33,14 @@ async function step(name, fn) {
     console.log("FAIL:", name, "--", e.message.split("\n").slice(0, 12).join(" | ").slice(0, 900));
     try {
       await page.screenshot({ path: `${SCRATCH}/fail-${results.length}.png` });
+    } catch (_) {}
+    // Put the session back to admin. Most steps assume it, and a step that
+    // switched user then threw would otherwise poison everything after it.
+    try {
+      await page.evaluate(
+        (u) => localStorage.setItem("vyom_user", JSON.stringify(u)),
+        adminUser
+      );
     } catch (_) {}
   }
 }
@@ -154,6 +166,7 @@ async function expectToast(substr) {
       (u) => localStorage.setItem("vyom_user", JSON.stringify({ id: u.id, name: u.name, user_role: u.user_role })),
       rows[0]
     );
+    if (rows[0].user_role === "admin") adminUser = { id: rows[0].id, name: rows[0].name, user_role: rows[0].user_role };
     return rows[0];
   }
 
@@ -1122,6 +1135,9 @@ async function expectToast(substr) {
     if (!/for everyone/i.test(await page.textContent("#cols-scope-note")))
       throw new Error("admin should be told the change is project-wide");
     await page.click(`#cols-list input[data-col-status="${target}"]`);
+    // The toggle PATCHes the project asynchronously; assert the DB only after
+    // it has had a chance to land, or this races and reads the old value.
+    await page.waitForTimeout(800);
     await page.click("#cols-close");
     if ((await colTitles()).includes(target)) throw new Error(`${target} still rendered`);
     const pill = page.locator("#hidden-cols-pill");
@@ -1189,6 +1205,7 @@ async function expectToast(substr) {
     if (!/only you/i.test(await page.textContent("#cols-scope-note")))
       throw new Error("member should be told the change is personal");
     await page.click(`#cols-list input[data-col-status="${target}"]`);
+    await page.waitForTimeout(500);
     await page.click("#cols-close");
     if ((await colTitles()).includes(target)) throw new Error("personal hide had no effect");
     const row = (await rest(`projects?id=eq.${projectId}&select=hidden_statuses`))[0];
@@ -1276,7 +1293,10 @@ async function expectToast(substr) {
     await page.fill("#t-due", isoDaysFromNow(5));
     await page.click("#task-save");
     await expectToast("Task created");
-    const row = (await rest(`tasks?project_id=eq.${hrId}&title=eq.E2E%20Ops%20Task&select=due_date,fields`))[0];
+    await page.waitForTimeout(600);
+    const rows = await rest(`tasks?project_id=eq.${hrId}&title=eq.E2E%20Ops%20Task&select=due_date,fields`);
+    if (!rows.length) throw new Error("the ops task was not saved");
+    const row = rows[0];
     if (row.due_date !== isoDaysFromNow(5)) throw new Error(`ops due_date = ${row.due_date}`);
     if (row.fields.hr_category !== "ops") throw new Error("ops card not tagged hr_category=ops");
   });
@@ -1568,6 +1588,68 @@ async function expectToast(substr) {
     if (!refused) throw new Error("a second send for the same day was allowed");
     const sent = await rest(`daily_report_runs?config_id=eq.${cfgId}&status=eq.sent&select=id`);
     if (sent.length !== 1) throw new Error(`expected exactly 1 sent run, got ${sent.length}`);
+  });
+
+  await step("Daily report: the message is editable, and an untouched default stays NULL", async () => {
+    await page.click(`[data-rp-edit="${cfgId}"]`);
+    await page.waitForTimeout(400);
+    const tpl = await page.inputValue("#rp-template");
+    if (!tpl.includes("{project}") || !tpl.includes("{added}"))
+      throw new Error(`editor not prefilled with the default: ${tpl.slice(0, 60)}`);
+    // Saving an untouched default must store NULL, so the report keeps
+    // following the default if it ever changes.
+    await page.click("#report-save");
+    await page.waitForTimeout(800);
+    let row = (await rest(`daily_report_configs?id=eq.${cfgId}&select=template`))[0];
+    if (row.template !== null) throw new Error(`expected NULL, got ${JSON.stringify(row.template)}`);
+    // Now customise it
+    await page.click(`[data-rp-edit="${cfgId}"]`);
+    await page.waitForTimeout(300);
+    await page.fill("#rp-template", "CUSTOM {project} — {summary}");
+    await page.click("#report-save");
+    await page.waitForTimeout(800);
+    row = (await rest(`daily_report_configs?id=eq.${cfgId}&select=template`))[0];
+    if (!String(row.template).startsWith("CUSTOM")) throw new Error(`template not saved: ${row.template}`);
+  });
+
+  await step("Daily report: preview renders the custom message, unsaved edits included", async () => {
+    await page.click(`[data-rp-edit="${cfgId}"]`);
+    await page.waitForTimeout(300);
+    await page.click("#report-preview-btn");
+    await page.locator("#report-preview").waitFor({ state: "visible", timeout: 8000 });
+    await page.waitForTimeout(2500);
+    let text = await page.textContent("#report-preview");
+    if (!text.startsWith("CUSTOM")) throw new Error(`saved template not used: ${text.slice(0, 60)}`);
+    // An edit that has NOT been saved must still preview
+    await page.fill("#rp-template", "UNSAVED {project}");
+    await page.click("#report-preview-btn");
+    await page.waitForTimeout(2500);
+    text = await page.textContent("#report-preview");
+    if (!text.startsWith("UNSAVED")) throw new Error(`unsaved edit not previewed: ${text.slice(0, 60)}`);
+    const row = (await rest(`daily_report_configs?id=eq.${cfgId}&select=template`))[0];
+    if (!String(row.template).startsWith("CUSTOM"))
+      throw new Error("previewing must not save the edit");
+    await page.click("#rp-template-reset");
+    await page.click("#report-save");
+    await page.waitForTimeout(700);
+  });
+
+  await step("Daily report: picking people filters the numbers and shows their zeroes", async () => {
+    // depeshId created the e2e tasks; pick somebody who did NOT.
+    const other = (await rest("team_members?user_role=eq.member&active=eq.true&select=id,name&limit=1"))[0];
+    await rest(`daily_report_configs?id=eq.${cfgId}`, {
+      method: "PATCH",
+      body: { member_ids: [other.id] },
+    });
+    const preview = await rest("rpc/daily_report_preview", {
+      method: "POST",
+      body: { p_config_id: cfgId, p_template: null },
+    });
+    const text = (Array.isArray(preview) ? preview[0] : preview).text;
+    if (!text.includes(`${other.name}`))
+      throw new Error(`a selected person with no activity must still be listed: ${text}`);
+    if (!/— 0/.test(text)) throw new Error(`expected a zero line for them: ${text}`);
+    await rest(`daily_report_configs?id=eq.${cfgId}`, { method: "PATCH", body: { member_ids: [] } });
   });
 
   await step("Slack registry: a channel in use cannot be deleted", async () => {

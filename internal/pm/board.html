@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=19">
+  <link rel="stylesheet" href="css/style.css?v=20">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -283,6 +283,14 @@
           <div class="day-chips" id="rp-days"></div>
         </div>
         <div class="form-group">
+          <label>Report on</label>
+          <div class="day-chips" id="rp-members"></div>
+          <div class="form-hint">
+            Nobody selected = everyone who touched the board. Pick people and only their work is
+            counted — and anyone you pick who did nothing still appears, at zero.
+          </div>
+        </div>
+        <div class="form-group">
           <label>Include</label>
           <div class="feature-toggles">
             <label class="toggle-label"><input type="checkbox" id="rp-added" checked> Cards added — by person, by stage</label>
@@ -294,6 +302,26 @@
             <label class="toggle-label"><input type="checkbox" id="rp-active" checked> Active</label>
           </div>
           <div class="form-hint">Sent within five minutes of the chosen time.</div>
+        </div>
+        <div class="form-group">
+          <label for="rp-template">Message</label>
+          <textarea id="rp-template" rows="9" spellcheck="false" class="template-input"></textarea>
+          <details class="setup-steps">
+            <summary>What you can put in the message</summary>
+            <p>
+              Anything you type appears as-is; the tags below are replaced with the real numbers.
+              Slack formatting works: <code>*bold*</code>, <code>_italic_</code>, and emoji like
+              <code>:wave:</code>.
+            </p>
+            <ul id="rp-placeholders"></ul>
+            <p>
+              A tag with nothing to report disappears along with its blank line, so a quiet day never
+              leaves an empty heading behind.
+            </p>
+          </details>
+          <div class="form-hint">
+            <button type="button" class="btn-link" id="rp-template-reset" style="padding:0;">Reset to the default message</button>
+          </div>
         </div>
         <pre class="report-preview" id="report-preview" hidden></pre>
         <div class="modal-actions">
@@ -354,17 +382,17 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=19"></script>
-  <script src="js/supabase.js?v=19"></script>
-  <script src="js/api.js?v=19"></script>
-  <script src="js/ui.js?v=19"></script>
-  <script src="js/auth.js?v=19"></script>
-  <script src="js/inbox.js?v=19"></script>
-  <script src="js/automations.js?v=19"></script>
-  <script src="js/changelog.js?v=19"></script>
-  <script src="js/reports.js?v=19"></script>
-  <script src="js/hr-roles.js?v=19"></script>
-  <script src="js/hr-sla.js?v=19"></script>
-  <script src="js/board.js?v=19"></script>
+  <script src="js/config.js?v=20"></script>
+  <script src="js/supabase.js?v=20"></script>
+  <script src="js/api.js?v=20"></script>
+  <script src="js/ui.js?v=20"></script>
+  <script src="js/auth.js?v=20"></script>
+  <script src="js/inbox.js?v=20"></script>
+  <script src="js/automations.js?v=20"></script>
+  <script src="js/changelog.js?v=20"></script>
+  <script src="js/reports.js?v=20"></script>
+  <script src="js/hr-roles.js?v=20"></script>
+  <script src="js/hr-sla.js?v=20"></script>
+  <script src="js/board.js?v=20"></script>
 </body>
 </html>
