@@ -127,6 +127,20 @@
     <h1 id="req-title"></h1>
     <p class="muted" id="req-meta"></p>
     <div id="req-conflicts"></div>
+
+    <!-- What the client actually told us, and a way to correct it. A client
+         fills the intake once, from memory, and gets a number in the wrong
+         unit; until now the only repair was a second intake link and a second
+         requirement. -->
+    <div class="region" style="margin-top:26px">
+      <div class="region-head">
+        <h2>What the client told us</h2>
+        <button class="btn-quiet btn-small" id="btn-edit-intake">Edit</button>
+      </div>
+      <div id="intake-view"></div>
+      <div id="intake-edit" hidden></div>
+    </div>
+
     <div class="region" style="margin-top:26px">
       <div class="region-head">
         <h2>Ranked candidates</h2>

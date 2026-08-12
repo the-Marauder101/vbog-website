@@ -276,6 +276,11 @@ main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
   display: grid; grid-template-columns: 16px 1fr; gap: 10px;
   font-size: 14px; line-height: 1.5;
 }
+/* An evidence line carries whatever the data says, and some of it arrives as one
+   unbroken token — a stored hard-filter object, a URL, a long option key. Without
+   this the grid track refuses to shrink below the token and the whole page scrolls
+   sideways on a phone. Found at 380px by the QA, in the intake panel. */
+.evidence li > * { min-width: 0; overflow-wrap: anywhere; }
 .evidence .glyph {
   font-family: var(--mono); font-size: 12px;
   color: var(--muted); line-height: 1.6; text-align: center;
@@ -338,6 +343,16 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 /* input + button, which is every .row on these three pages: the field takes
    the space, the button takes what it needs. It used to be a 1fr 1fr grid,
    which stretched "Create intake link" to half the panel. */
+/* A compact grid of stated facts — the asked-not-tested fields. Two columns on
+   a desk, one on a phone, because a recruiter fills these in while on a call. */
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 16px; }
+.fields > label { display: block; }
+.fields > label > span:first-child {
+  display: block; font-weight: 600; font-size: 13px; color: var(--ink-2); margin-bottom: 4px;
+}
+.fields .opts { display: flex; gap: 8px; flex-wrap: wrap; }
+.fields .opts .opt { flex: 1 1 auto; padding: 8px 10px; font-size: 13px; }
+
 .row { display: flex; gap: 10px; flex-wrap: wrap; }
 .row > input, .row > select, .row > textarea { flex: 1 1 220px; width: auto; }
 .row > button, .row > .btn { flex: 0 0 auto; }

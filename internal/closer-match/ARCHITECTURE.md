@@ -1357,6 +1357,132 @@ email creates the account — and is then refused entry by `whoami()`, because
 signing up grants nothing until an admin adds a staff row. Both paths are in the
 QA, and the second one matters more: it is the path a stranger takes.
 
+## 7z. Every shortlist said nobody was eligible, and the reason was an empty object
+
+Found by reading the live data rather than the code. Fifteen shortlist rows
+across three real clients, every one of them ineligible, every one for the same
+two reasons:
+
+```
+language: en, hi below fluent
+work mode: cannot do remote
+```
+
+Five people do not share two disqualifications. **`candidates.direct_fields` was
+null for every real candidate**, because nothing in the system has ever written
+it. The column has existed since `sql/01`. The golden-case fixtures set it. No
+surface, anywhere, collects it. §9.1 has been comparing a client's stated
+requirements against `{}` since the day it was written, and the engine faithfully
+reported what that comparison produced.
+
+### The second bug is the one worth keeping
+
+With an empty object, four of the six filters silently **passed** and two
+**failed** — not by design, by SQL semantics:
+
+```sql
+(null)::numeric > 350000   →  NULL  →  `if NULL then` never fires
+```
+
+Salary, notice period, experience and location said *fine*. Language and work
+mode — written as `not (... = any(...))` — said *no*. The same absence of the
+same data produced approval four times and rejection twice, inside one function,
+silently.
+
+> **Unknown is not a value. A filter that cannot run has not passed.**
+
+A check now has three outcomes and the third is visible: `fails` for a real
+mismatch, `unknown` for a check that could not be run, and `hard_filter_pass`
+meaning *confirmed eligible* rather than *nothing objected*. A recruiter reading
+"work mode not recorded" goes and asks. A recruiter reading "cannot do remote"
+goes and apologises to somebody who never said any such thing.
+
+This is the same shape as §7o (*an empty result is not a denial*) and §7w (*an
+empty result is not a result*), arriving a third time from a third direction.
+Absence keeps getting treated as a value, and every time it does, something lies.
+
+### What the fixtures were standing on
+
+Twelve of the thirteen golden-case fixtures had no `direct_fields` at all. They
+passed the one fixture requirement that states hard filters **by exactly the same
+accident** — null comparisons yielding NULL. Making unknown visible would have
+turned them all ineligible. The suite caught that its own fixtures depended on
+undefined behaviour; they now state their eligibility explicitly.
+
+### Four more things the QA found, each smaller and each real
+
+1. **The upsert had two halves and I patched one.** `hard_filter_unknown` was
+   added to the INSERT column list. The rows already existed, so every re-match
+   took the `ON CONFLICT DO UPDATE` path and quietly kept a NULL. The engine was
+   computing the value correctly and throwing it away.
+
+2. **A derived value that anyone may also supply is not derived.** The browser
+   built `hard_filters` and so did the intake form — two dialects of one rule.
+   Saving an unchanged intake wrote back the payload's own stale copy, which
+   still keyed `"en, hi"` as a single language, **resurrecting the bug this
+   migration had just repaired.** The server now derives it from the answers,
+   always, and ignores whatever the caller sent under that key. The browser copy
+   is deleted rather than kept in sync.
+
+3. **Fixture requirements were ranking real candidates.** Golden case 1a went red
+   the moment a real candidate had their eligibility facts recorded: they passed
+   the fixture requirement's filters and displaced the frame-split fixture from
+   rank 3 to rank 4. `v_console_clean` already kept fixtures out of real
+   shortlists; nothing kept real people out of fixture ones. **Live data could
+   turn the regression suite red by being entered correctly.** A test that the
+   product's normal use can break is not a test.
+
+4. **An upsert never removes.** Narrowing who gets ranked left everyone
+   previously ranked sitting there — 24 stale rows — so the fix looked applied
+   while the old rows kept deciding the answer.
+
+### And the field that taught the mistake
+
+The intake asked *"Which language must they be fluent in?"* with the help text
+*"e.g. en, hi"* — and then stored that whole string as one language key.
+`languages->>'en, hi'` matches nothing, so the check could never pass on any of
+the three live clients. The client did exactly what the field asked. The code
+obeyed. Neither was wrong on its own.
+
+Same class, one field over: salary is labelled **₹/year** and one client entered
+a monthly figure. Nothing caught it, and the effect is invisible and total —
+every candidate expecting a normal salary falls outside a ₹25,000–35,000 band and
+the shortlist reads as though nobody is suitable. **A label is not a validation.**
+Both sides of that comparison now refuse an implausible annual figure and say
+what the monthly equivalent would be.
+
+### What was built
+
+- `hard_filter_check()` — three outcomes; `hard_filter_fails()` kept as a
+  delegating wrapper so nothing that called it breaks
+- `set_candidate_direct_fields()` — validated, and re-ranks every open shortlist,
+  because eligibility just changed
+- `get_client_intake()` / `update_client_intake()` — see and correct what a client
+  told us, re-deriving the target profile because the profile is computed from
+  those answers. Editing them without recomputing it would leave a requirement
+  whose stated inputs no longer generate its own targets, which is the worst kind
+  of wrong: everything still looks consistent.
+- `derive_hard_filters()` — one derivation, server-side
+- `v_missing_direct_fields` — who is blocked on a fact nobody asked for
+- A facts panel on the candidate, kept visibly apart from the nine scores. A score
+  is measured and cannot be argued with; a fact is stated, and if it is wrong you
+  change it. One panel for both would blur that line.
+
+The forced-rank answers are shown in the intake editor but not editable — typing
+into a box would lose the constraint that makes a forced rank mean anything.
+
+### The tests had been documenting the bug
+
+No assertion had ever looked at the eligibility line. Every test signed in,
+opened a shortlist, and checked the ranking — which was right. Underneath it the
+page accused five people of things they were never asked, in every run, and the
+suite stayed green.
+
+Three of them also pinned live rows by id or by value — a candidate called
+`test`, a specific `80.2%`, `needs 75, 25 short`, `rank 1 of 1`. Deleting that
+candidate, which is ordinary housekeeping, aborted two suites outright. **A test
+that names a row cannot outlive the row.** They assert shape now.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

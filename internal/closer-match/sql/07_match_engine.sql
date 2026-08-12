@@ -146,8 +146,11 @@ declare
   v_dim text; v_w numeric; v_req_lvl numeric; v_cand numeric;
   v_reasons jsonb; v_concerns jsonb;
   v_fails text[];
+  v_unknown text[];   -- checks that could not be run at all — see sql/29
+  v_check jsonb;
   v_n int := 0;
   v_delta numeric;
+  v_is_fixture boolean;
 begin
   select * into v_req from requirements where id = p_requirement_id;
   if v_req.id is null then
@@ -163,12 +166,35 @@ begin
   select (payload->>'comp_band')::numeric into v_client_comp
   from client_intake where id = v_tp.intake_id;
 
+  -- A fixture requirement ranks fixture candidates and nothing else.
+  --
+  -- This was found by golden case 1a failing after a real candidate had their
+  -- eligibility facts recorded: they then passed the fixture requirement's hard
+  -- filters and displaced the frame-split fixture from rank 3 to rank 4. The
+  -- assertion was correct and the fixture was correct — the two worlds were
+  -- simply not separated in this direction. `v_console_clean` already keeps
+  -- fixtures out of real shortlists; nothing kept real people out of fixture
+  -- ones, so **live data could break the regression suite by being entered.**
+  -- A test that the product's normal use can turn red is not a test.
+  select cl.business_name like 'ZZ_FIXTURE%' into v_is_fixture
+  from clients cl where cl.id = v_req.client_id;
+
+  -- An upsert never removes. Narrowing who is ranked leaves everyone previously
+  -- ranked still sitting there, so the rows have to be cleared explicitly —
+  -- otherwise the fix looks applied and the old rows keep deciding the answer.
+  delete from matches m
+  using candidates cand
+  where m.requirement_id = p_requirement_id
+    and cand.id = m.candidate_id
+    and (cand.full_name like 'ZZ_FIXTURE%') <> v_is_fixture;
+
   -- Latest profile per candidate.
   for c in
     select distinct on (p.candidate_id)
            p.candidate_id, p.scores, p.flags, cand.direct_fields
     from candidate_profile p
     join candidates cand on cand.id = p.candidate_id
+    where (cand.full_name like 'ZZ_FIXTURE%') = v_is_fixture
     order by p.candidate_id, p.computed_at desc
   loop
     -- ── §9.2.1 CLS_effective — where the ticket band and cycle enter ────────
@@ -229,19 +255,23 @@ begin
     v_f := 1 - (v_f_num / nullif(v_f_den, 0));
 
     -- ── §9.1 Hard filters ──────────────────────────────────────────────────
-    v_fails := hard_filter_fails(coalesce(c.direct_fields, '{}'::jsonb), v_req.hard_filters);
+    -- Three outcomes, not two. A check with no candidate data to read has not
+    -- passed and has not failed; it is unknown, and it says so. See sql/29.
+    v_check   := hard_filter_check(coalesce(c.direct_fields, '{}'::jsonb), v_req.hard_filters);
+    v_fails   := coalesce(array(select jsonb_array_elements_text(v_check->'fails')), '{}');
+    v_unknown := coalesce(array(select jsonb_array_elements_text(v_check->'unknown')), '{}');
 
     insert into matches (
       requirement_id, candidate_id, cls_effective, quality_score, fit_score,
-      composite, confidence_multiplier, hard_filter_pass, hard_filter_fails,
+      composite, confidence_multiplier, hard_filter_pass, hard_filter_fails, hard_filter_unknown,
       rationale, attrition_risk_flag, frame_split_flag, computed_at
     ) values (
       p_requirement_id, c.candidate_id, round(v_cls_eff, 2),
       round(v_q, 4), round(v_f, 4),
       round((v_wq * v_q + v_wf * v_f) * v_conf_mult, 4),
       v_conf_mult,
-      array_length(v_fails, 1) is null,
-      v_fails,
+      array_length(v_fails, 1) is null and array_length(v_unknown, 1) is null,
+      v_fails, v_unknown,
       jsonb_build_object(
         'reasons',  v_reasons,
         'concerns', v_concerns,
@@ -266,6 +296,11 @@ begin
       confidence_multiplier = excluded.confidence_multiplier,
       hard_filter_pass = excluded.hard_filter_pass,
       hard_filter_fails = excluded.hard_filter_fails,
+      -- Every column added to the INSERT must be added here too. This one was
+      -- missed on the first pass: the rows already existed, so every re-match
+      -- took the UPDATE path and quietly kept a NULL. An upsert has two halves
+      -- and only one of them is obvious.
+      hard_filter_unknown = excluded.hard_filter_unknown,
       rationale = excluded.rationale,
       attrition_risk_flag = excluded.attrition_risk_flag,
       frame_split_flag = excluded.frame_split_flag,
@@ -385,7 +420,12 @@ select
   ) as cross_client_line,
 
   -- §9.4 requires this be visible wherever the number is.
-  'Weights are expert-set, not learned from outcomes.' as weights_disclaimer
+  'Weights are expert-set, not learned from outcomes.' as weights_disclaimer,
+
+  -- Appended rather than placed beside hard_filter_fails where it belongs:
+  -- CREATE OR REPLACE VIEW can only add columns at the end, and v_console has
+  -- two dependent views that dropping it would take with it. See sql/29.
+  r.hard_filter_unknown
 from ranked r;
 
 comment on view v_console is

@@ -237,6 +237,149 @@ el("btn-new-intake").addEventListener("click", async () => {
   } finally { b.disabled = false; }
 });
 
+// ═══ THE CLIENT'S OWN ANSWERS ══════════════════════════════════════════════
+// Requested directly, and it fixes a real class of error rather than just being
+// convenient: one of the three live clients entered a monthly salary into a box
+// labelled per year, which silently disqualifies every candidate against it. A
+// client fills the intake once, from memory. There has to be a way to correct it
+// that is not "send another link and open a second requirement".
+//
+// Editing re-derives the target profile, because the profile is COMPUTED from
+// these answers. Leaving it alone would produce a requirement whose stated
+// inputs no longer generate its own targets — the worst kind of wrong, since
+// everything still looks consistent.
+
+const INTAKE_LABELS = {
+  role_title: "Role title", ticket_size: "Typical deal value (₹)",
+  cycle_days: "Days from first contact to close", leads_per_day: "Leads a closer gets a day",
+  cold_outbound_pct: "Cold outbound (%)", followup_rate_pct: "Deals needing follow-up (%)",
+  buyer_response: "How their buyer responds", buyer_is_senior: "Buyer is senior",
+  has_crm: "They have a CRM", refund_policy_exists: "A refund policy exists",
+  comp_band: "Comp band", salary_min: "Fixed pay, from (₹/year)",
+  salary_max: "Fixed pay, up to (₹/year)",
+  expected_days_to_first_close: "Expected days to first close",
+  hf_language: "Languages required (comma-separated)", hf_locations: "Cities (comma-separated)",
+  hf_work_mode: "Work mode", hf_join_by_days: "Days they can wait for a joiner",
+  hf_min_years: "Minimum years of experience", notes: "Notes",
+};
+// top3/bottom3 are the forced-rank answers and the whole basis of the target
+// profile. They are shown, never edited here — re-ranking them by typing into a
+// box would lose the constraint that makes a forced rank mean anything.
+const INTAKE_READONLY = ["top3", "bottom3", "benchmark_source", "hard_filters"];
+
+let INTAKE = null;
+
+async function loadClientIntake(requirementId) {
+  el("intake-edit").hidden = true;
+  el("btn-edit-intake").textContent = "Edit";
+  try {
+    INTAKE = await sbRpc("get_client_intake", { p_requirement_id: requirementId });
+  } catch (e) {
+    el("intake-view").innerHTML = `<div class="notice"><span class="label">Could not load the intake</span>${esc(e.message)}</div>`;
+    return;
+  }
+  const p = (INTAKE && INTAKE.payload) || null;
+  if (!p) {
+    el("intake-view").innerHTML =
+      `<div class="empty"><h3>No intake on file</h3><p class="muted">This requirement was
+       not created from a completed intake form.</p></div>`;
+    el("btn-edit-intake").hidden = true;
+    return;
+  }
+  el("btn-edit-intake").hidden = false;
+
+  const hf = INTAKE.hard_filters || {};
+  el("intake-view").innerHTML = `
+    <p class="small muted">Submitted ${onDate(INTAKE.submitted_at)} · intake confidence
+       <strong>${esc(INTAKE.confidence || "—")}</strong></p>
+    <div class="panel">
+      <div class="fields">
+        ${Object.keys(INTAKE_LABELS).filter((k) => p[k] !== undefined && p[k] !== "" && p[k] !== null)
+          .map((k) => `<label><span>${esc(INTAKE_LABELS[k])}</span>
+            <input type="text" readonly value="${esc(String(p[k]))}"></label>`).join("")}
+      </div>
+      <ul class="evidence" style="margin-top:14px">
+        <li><span class="glyph">+</span><span><strong>Most like this role</strong> —
+          ${(p.top3 || []).map(esc).join(" · ") || "—"}</span></li>
+        <li><span class="glyph mono">−</span><span><strong>Least like this role</strong> —
+          ${(p.bottom3 || []).map(esc).join(" · ") || "—"}</span></li>
+        <li><span class="glyph mono">=</span><span><strong>Hard filters as stored</strong> —
+          ${esc(JSON.stringify(hf))}</span></li>
+      </ul>
+    </div>`;
+}
+
+function intakeEditor() {
+  const p = INTAKE.payload || {};
+  el("intake-edit").innerHTML = `
+    <div class="notice"><span class="label">Editing changes the shortlist</span>
+      The target profile is derived from these answers, so saving recomputes it and
+      re-ranks every candidate against this role. The forced-rank answers are shown
+      but not editable — re-ranking them by typing would lose the constraint that
+      makes a forced rank mean anything. Re-issue an intake link for that.</div>
+    <div class="panel">
+      <div class="fields">
+        ${Object.keys(INTAKE_LABELS).map((k) => `
+          <label><span>${esc(INTAKE_LABELS[k])}</span>
+            <input type="${typeof p[k] === "number" || /_(pct|days|size|min|max|years)$/.test(k)
+              ? "number" : "text"}" data-ik="${esc(k)}"
+              value="${esc(p[k] === undefined || p[k] === null ? "" : String(p[k]))}"></label>`).join("")}
+      </div>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn-primary btn-small" id="btn-save-intake">Save and re-rank</button>
+        <button class="btn-quiet btn-small" id="btn-cancel-intake">Cancel</button>
+        <span class="savestate" id="intake-state"></span>
+      </div>
+    </div>`;
+
+  el("btn-cancel-intake").addEventListener("click", () => {
+    el("intake-edit").hidden = true; el("btn-edit-intake").textContent = "Edit";
+  });
+
+  el("btn-save-intake").addEventListener("click", async () => {
+    const slot = el("intake-state"), btn = el("btn-save-intake");
+    const payload = { ...INTAKE.payload };
+    document.querySelectorAll("[data-ik]").forEach((i) => {
+      const k = i.dataset.ik, v = i.value.trim();
+      if (v === "") { delete payload[k]; return; }
+      payload[k] = i.type === "number" ? Number(v) : v;
+    });
+
+    // hard_filters is DERIVED, and the server derives it — see
+    // derive_hard_filters in sql/29. Computing it here as well would give two
+    // dialects of one rule, and the QA caught exactly that: a browser that sent
+    // the payload's own stale copy put the "en, hi" bug straight back.
+    delete payload.hard_filters;
+
+    const yearly = Number(payload.salary_max || payload.salary_min || 0);
+    if (yearly && yearly < 100000 &&
+        !confirm(`₹${yearly.toLocaleString("en-IN")} a year is below a plausible annual ` +
+                 `salary — this is the box a client already filled in monthly.\n\n` +
+                 `OK to save as typed, Cancel to fix it.`)) return;
+
+    btn.disabled = true;
+    slot.textContent = "Recomputing the target profile and re-ranking…"; delete slot.dataset.state;
+    try {
+      const r = await sbRpc("update_client_intake",
+        { p_requirement_id: INTAKE.requirement_id, p_payload: payload });
+      slot.textContent = `Saved — ${r.changed.length} field${r.changed.length === 1 ? "" : "s"} changed, ` +
+                         `${r.candidates_ranked} candidate${r.candidates_ranked === 1 ? "" : "s"} re-ranked`;
+      slot.dataset.state = "saved";
+      await loadRequirement(INTAKE.requirement_id);
+    } catch (e) {
+      slot.textContent = e.message; slot.dataset.state = "error"; btn.disabled = false;
+    }
+  });
+}
+
+const editIntakeBtn = el("btn-edit-intake");
+if (editIntakeBtn) editIntakeBtn.addEventListener("click", () => {
+  const open = !el("intake-edit").hidden;
+  if (open) { el("intake-edit").hidden = true; editIntakeBtn.textContent = "Edit"; return; }
+  intakeEditor();
+  el("intake-edit").hidden = false; editIntakeBtn.textContent = "Close";
+});
+
 // ═══ ONE REQUIREMENT ═══════════════════════════════════════════════════════
 
 async function loadRequirement(id) {
@@ -272,6 +415,9 @@ async function loadRequirement(id) {
     btn.addEventListener("click", () => sendSupplement(btn, id)));
   el("req-list").querySelectorAll("[data-place]").forEach((btn) =>
     btn.addEventListener("click", () => markPlaced(btn, id)));
+  el("req-list").querySelectorAll("[data-fillcand]").forEach((a) =>
+    a.addEventListener("click", (e) => { e.preventDefault(); openCandidate(a.dataset.fillcand); }));
+  await loadClientIntake(id);
   view("req");
 }
 
@@ -296,10 +442,18 @@ function candidateRow(r, reqId) {
         effective closing ${Math.round(r.cls_effective)}
       </p>
 
-      ${!r.hard_filter_pass ? `
+      ${(r.hard_filter_fails || []).length ? `
         <div class="callout plain">
           <span class="label">Outside the stated filters — overridable</span>
           ${(r.hard_filter_fails || []).map(esc).join(" · ")}
+        </div>` : ""}
+
+      ${(r.hard_filter_unknown || []).length ? `
+        <div class="callout plain">
+          <span class="label">Cannot check — we never asked</span>
+          ${(r.hard_filter_unknown || []).map(esc).join(" · ")}.
+          <a href="#" data-fillcand="${esc(r.candidate_id)}">Record it now</a> and the
+          shortlist re-ranks.
         </div>` : ""}
 
       <ul class="evidence">
@@ -855,6 +1009,114 @@ function targetLine(d, t) {
   return `${who}: ${bit}`;
 }
 
+// ═══ THE FACTS WE ASK FOR RATHER THAN MEASURE ══════════════════════════════
+// §7.5's asked-not-tested fields. Nothing has ever written them, so every hard
+// filter in the system has been comparing a client's requirements against an
+// empty object — which is why fifteen shortlist rows all claimed the same two
+// disqualifications. See sql/29.
+//
+// These sit apart from the nine scores on purpose. A score is measured and the
+// candidate cannot argue with it; a fact is stated, and if it is wrong you
+// change it. Keeping them in one panel would blur that line.
+
+const WORK_MODES = ["onsite", "hybrid", "remote"];
+const FLUENCY = ["", "basic", "conversational", "fluent", "native"];
+
+function directFieldsHtml(c) {
+  const f = c.direct_fields || {};
+  const langs = f.languages || {};
+  const known = Object.keys(langs).length ? Object.keys(langs) : ["en", "hi"];
+  const modes = f.work_mode || [];
+
+  return `
+  <div class="region" id="df-region">
+    <div class="region-head"><h2>What we asked them</h2>
+      <span class="count mono">${Object.keys(f).length}</span></div>
+    <div class="notice"><span class="label">Stated, not measured</span>
+      These are the facts the hard filters compare against — languages, where they
+      can work, money, notice. Nothing here touches a score, and nothing here is
+      assessed. Until it is recorded, a filter that needs it cannot run, and the
+      shortlist says so rather than guessing.</div>
+
+    <div class="panel">
+      <div class="fields">
+        ${known.map((l) => `
+          <label><span>Fluency in ${esc(l)}</span>
+            <select data-df-lang="${esc(l)}">
+              ${FLUENCY.map((v) => `<option value="${v}"${
+                (langs[l] || "") === v ? " selected" : ""}>${v || "not recorded"}</option>`).join("")}
+            </select></label>`).join("")}
+
+        <label><span>Can work</span>
+          <span class="opts">${WORK_MODES.map((m) => `
+            <label class="opt"><input type="checkbox" data-df-mode="${m}"${
+              modes.includes(m) ? " checked" : ""}> ${m}</label>`).join("")}</span></label>
+
+        <label><span>Based in</span>
+          <input type="text" data-df="location" value="${esc(f.location || "")}"
+                 placeholder="City"></label>
+        <label><span>Salary expectation (₹ per year)</span>
+          <input type="number" data-df="salary_expectation" value="${f.salary_expectation ?? ""}"
+                 placeholder="Annual, not monthly"></label>
+        <label><span>Notice period (days)</span>
+          <input type="number" data-df="notice_days" value="${f.notice_days ?? ""}"></label>
+        <label><span>Years of closing experience</span>
+          <input type="number" step="0.5" data-df="years_experience" value="${f.years_experience ?? ""}"></label>
+      </div>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn-primary btn-small" id="df-save">Save and re-rank</button>
+        <span class="savestate" id="df-state"></span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bindDirectFields(candidateId) {
+  const btn = el("df-save");
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    const slot = el("df-state");
+    const fields = {};
+
+    const langs = {};
+    document.querySelectorAll("[data-df-lang]").forEach((s) => {
+      if (s.value) langs[s.dataset.dfLang] = s.value;
+    });
+    if (Object.keys(langs).length) fields.languages = langs;
+
+    const modes = [...document.querySelectorAll("[data-df-mode]")]
+      .filter((c) => c.checked).map((c) => c.dataset.dfMode);
+    if (modes.length) fields.work_mode = modes;
+
+    document.querySelectorAll("[data-df]").forEach((i) => {
+      const v = i.value.trim();
+      if (!v) return;
+      fields[i.dataset.df] = i.type === "number" ? Number(v) : v;
+    });
+
+    // A monthly figure typed into an annual box is the same mistake a client
+    // made on the other side of this comparison, and it silently disqualifies
+    // people. Ask rather than assume — but only ask, never correct.
+    if (fields.salary_expectation && fields.salary_expectation < 60000 &&
+        !confirm(`₹${fields.salary_expectation.toLocaleString("en-IN")} a year is ` +
+                 `below a plausible annual salary. Did you mean per month?\n\n` +
+                 `OK to save it as typed, Cancel to go back and fix it.`)) return;
+
+    btn.disabled = true;
+    slot.textContent = "Saving and re-ranking…"; delete slot.dataset.state;
+    try {
+      const r = await sbRpc("set_candidate_direct_fields",
+        { p_candidate_id: candidateId, p_fields: fields });
+      slot.textContent = `Saved — ${r.requirements_rematched} shortlist${
+        r.requirements_rematched === 1 ? "" : "s"} recomputed`;
+      slot.dataset.state = "saved";
+      await openCandidate(candidateId);
+    } catch (e) {
+      slot.textContent = e.message; slot.dataset.state = "error"; btn.disabled = false;
+    }
+  });
+}
+
 async function openCandidate(id) {
   view("loading");
   let d;
@@ -894,8 +1156,10 @@ async function openCandidate(id) {
             data-cdreq="${esc(r.requirement_id)}">${esc(r.business_name)} — ${esc(r.title)}</a></span>
           <span class="meta small">rank ${r.rank} of ${r.of} · quality ${r.quality_pct}% ·
             fit ${r.fit_pct}% · confidence ${esc(r.confidence || "—")}
-            ${r.hard_filter_pass ? "" : ` · <strong>outside the stated filters</strong>:
-              ${(r.hard_filter_fails || []).map(esc).join(" · ")}`}</span>
+            ${(r.hard_filter_fails || []).length ? ` · <strong>outside the stated filters</strong>:
+              ${(r.hard_filter_fails || []).map(esc).join(" · ")}` : ""}
+            ${(r.hard_filter_unknown || []).length ? ` · <strong>cannot check</strong>:
+              ${(r.hard_filter_unknown || []).map(esc).join(" · ")}` : ""}</span>
           <span class="figures"><span class="figure">${r.composite_pct}</span
             ><span class="figure-unit">%</span><br><span class="mono muted">match</span></span>
         </div>`).join("")}
@@ -945,7 +1209,7 @@ async function openCandidate(id) {
       </div>`;
   }).join("");
 
-  el("cd-body").innerHTML = rolesHtml + flagsHtml + `
+  el("cd-body").innerHTML = rolesHtml + flagsHtml + directFieldsHtml(c) + `
     <div class="region">
       <div class="region-head"><h2>The nine, against what each role asks for</h2>
         <span class="count mono">${(d.dimensions || []).length}</span></div>
@@ -955,6 +1219,7 @@ async function openCandidate(id) {
 
   el("cd-body").querySelectorAll("[data-cdreq]").forEach((x) =>
     x.addEventListener("click", (e) => { e.preventDefault(); loadRequirement(x.dataset.cdreq); }));
+  bindDirectFields(id);
 
   view("cand");
 }
