@@ -173,6 +173,7 @@ begin
           'cls_effective', v.cls_effective,
           'hard_filter_pass', v.hard_filter_pass,
           'hard_filter_fails', v.hard_filter_fails,
+          'hard_filter_unknown', v.hard_filter_unknown,   -- see sql/29
           'confidence', v.confidence,
           'cross_client_line', v.cross_client_line
         ) as r

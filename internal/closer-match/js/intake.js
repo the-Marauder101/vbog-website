@@ -129,8 +129,9 @@ const STEPS = [
         ${radio("hf_work_mode", [["", "Doesn't matter", ""], ["onsite", "On-site", ""],
                                  ["hybrid", "Hybrid", ""], ["remote", "Remote", ""]], true)}
       </div>
-      ${field("hf_language", "text", "Which language must they be fluent in?",
-              "e.g. en, hi. Leave blank to skip. We check spoken fluency live in the interview, not on a form.")}
+      ${field("hf_language", "text", "Which languages must they be fluent in?",
+              "e.g. en, hi — each one is checked separately. Leave blank to skip. " +
+              "We check spoken fluency live in the interview, not on a form.")}
       ${field("hf_join_by_days", "number", "How many days can you wait for them to join?",
               "Leave blank if flexible. A candidate a fortnight over this still shows up, marked as a near-miss.")}
       ${field("hf_min_years", "number", "Minimum years of closing experience", "Leave blank if none.")}
@@ -295,6 +296,17 @@ function validateStep() {
   const missing = need.filter((k) => S.d[k] === undefined || String(S.d[k]).trim() === "");
   if (missing.length) return "Please answer every question on this step before continuing.";
   if (S.step === 3 && (S.d.top3 || []).length !== 3) return "Please pick exactly three.";
+
+  // One live client typed a monthly figure into a box labelled ₹/year. Nothing
+  // caught it, and the effect is invisible and total: every candidate expecting
+  // a normal salary falls outside the band and the shortlist reads as though
+  // nobody is suitable. A label is not a validation.
+  const sal = Number(S.d.salary_max || S.d.salary_min || 0);
+  if (S.step === 4 && sal > 0 && sal < 100000) {
+    return `₹${sal.toLocaleString("en-IN")} a year is below India's minimum wage — ` +
+           `this box is annual, not monthly. If you meant ₹${sal.toLocaleString("en-IN")} ` +
+           `a month, please enter ₹${(sal * 12).toLocaleString("en-IN")}.`;
+  }
   return null;
 }
 
@@ -318,8 +330,14 @@ el("btn-next").addEventListener("click", async () => {
   if (S.d.hf_locations && S.d.hf_locations.trim())
     hf.locations = S.d.hf_locations.split(",").map((x) => x.trim()).filter(Boolean);
   if (S.d.hf_work_mode) hf.work_mode = S.d.hf_work_mode;
+  // The help text says "e.g. en, hi" and this used to store that whole string as
+  // ONE language key. `languages->>'en, hi'` matches nothing, so the check could
+  // never pass — on all three live clients. The field taught the mistake and the
+  // code obeyed it. Split, exactly as locations above already did.
   if (S.d.hf_language && S.d.hf_language.trim())
-    hf.languages_required = [{ lang: S.d.hf_language.trim().toLowerCase(), min: "fluent" }];
+    hf.languages_required = S.d.hf_language.split(",")
+      .map((x) => x.trim().toLowerCase()).filter(Boolean)
+      .map((lang) => ({ lang, min: "fluent" }));
   if (S.d.hf_join_by_days) hf.join_by_days = Number(S.d.hf_join_by_days);
   if (S.d.hf_min_years) hf.min_years_experience = Number(S.d.hf_min_years);
   if (S.d.salary_min) hf.salary_min = Number(S.d.salary_min);
