@@ -810,11 +810,21 @@ const DIMS = [
   ["DSC", "dsc"], ["CCH", "cch"], ["INT", "int"], ["MOT", "mot"], ["STY", "sty"],
 ];
 
-function scoreStrip(scores) {
+// The two bipolar dimensions get their side printed under the number. Without
+// it, `sty 0` sits beside seven dimensions where 0 genuinely is bad and reads as
+// a failing grade — when it actually means "task-direct on all five items".
+// Truncated to the first word of the pole label so the cell stays a cell; the
+// title attribute and the detail page carry the full phrase.
+function scoreStrip(scores, sides) {
   if (!scores) return "";
-  return `<div class="strip mono">${DIMS.map(([k, label]) =>
-    scores[k] === undefined ? "" :
-    `<span><em>${label}</em>${scores[k]}</span>`).join("")}
+  return `<div class="strip mono">${DIMS.map(([k, label]) => {
+    if (scores[k] === undefined) return "";
+    const side = sides && sides[k];
+    if (!side) return `<span><em>${label}</em>${scores[k]}</span>`;
+    const short = side.label.replace(/^(fully|leans) /, "").split(/[ \/]/)[0].toLowerCase();
+    return `<span class="pole" title="${esc(side.label)} — ${esc(side.note)}"
+      ><em>${label}</em>${scores[k]}<i>${esc(short)}</i></span>`;
+  }).join("")}
     <a href="#" class="strip-key mono" data-dict>what these mean →</a></div>`;
 }
 
@@ -866,7 +876,7 @@ async function loadQueue() {
           </div>
           ${c.best_pct != null ? `<p class="small muted" style="margin:4px 0 0">${queueStatus(c)}</p>` : ""}
           ${roleLines(c.roles)}
-          ${scoreStrip(c.scores)}
+          ${scoreStrip(c.scores, c.sides)}
           <div class="actions" style="margin-top:10px">
             <button class="btn-quiet btn-small" data-cand-rename="${esc(c.id)}"
               data-name="${esc(c.full_name)}">Rename</button>
@@ -1189,14 +1199,17 @@ async function openCandidate(id) {
         <div class="cand-head">
           <span class="cand-name">${esc(dim.name)}</span>
           <span class="chip">${esc(dim.code)}</span>
-          ${dim.kind === "bipolar" ? `<span class="chip">no better pole</span>` : ""}
+          ${dim.side ? `<span class="chip">${esc(dim.side.label)}</span>` : ""}
           <span class="spacer"></span>
           <span class="figure">${score}</span>
         </div>
         ${scoreBar(score, targets, dim.kind === "bipolar")}
         ${dim.kind === "bipolar"
-          ? `<div class="poles small muted"><span>${esc(dim.pole_0 || "0")}</span>
-             <span>${esc(dim.pole_100 || "100")}</span></div>` : ""}
+          ? `<div class="poles small muted"><span>0 · ${esc(dim.pole_0 || "")}</span>
+             <span>${esc(dim.pole_100 || "")} · 100</span></div>
+             ${dim.side ? `<p class="small muted" style="margin:6px 0 0">
+               <strong>${score} means ${esc(dim.side.label)}.</strong>
+               ${esc(dim.side.note)}</p>` : ""}` : ""}
         <p class="small muted" style="margin:8px 0 0">${esc(dim.definition || "")}</p>
         ${targets.length
           ? `<ul class="evidence" style="margin-top:10px">

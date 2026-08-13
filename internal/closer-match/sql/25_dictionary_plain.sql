@@ -304,7 +304,10 @@ begin
       'Every unipolar dimension is 0–100, rescaled from four scenario items '
       'scored −1 to +2. 50 is not a pass mark — it is the middle of the scale. '
       'What counts as enough is set per role by the client''s own intake answers, '
-      'never by a fixed threshold.',
+      'never by a fixed threshold. The last two are different: they have no better '
+      'end, so 0 is not a low score, it is one side. Both are built from five '
+      'either/or questions, so they can only land on 0, 20, 40, 60, 80 or 100 — '
+      'read them as a lean, not a measurement, and expect people to bunch up.',
     'caveat',
       'These weights are expert-set, not learned from outcomes. Until roughly a '
       'hundred placements have been followed up, treat every number here as a '

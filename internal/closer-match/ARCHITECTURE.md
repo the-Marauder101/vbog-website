@@ -1483,6 +1483,160 @@ Three of them also pinned live rows by id or by value — a candidate called
 candidate, which is ordinary housekeeping, aborted two suites outright. **A test
 that names a row cannot outlive the row.** They assert shape now.
 
+## 7aa. Which side of the scale, and a shuffle that was not shuffling
+
+Two requests. Checking the first uncovered that the second was already half-built
+and quietly broken.
+
+### The side, because a bare number lies about two of the nine
+
+`STY 0` does not mean "no interpersonal skill". It means *task-direct on all five
+items* — brisk, to the point, respects the buyer's time. Printed as a bare `0`
+beside seven dimensions where 0 genuinely is bad, it reads as a failing grade.
+
+The dictionary explained this at length. **Nobody reads a dictionary while
+scanning a list.** So the side now travels with the number everywhere the number
+appears, from one definition — `bipolar_side()` — and only ever for the two
+dimensions that have no better end. The queue strip shows `STY 40 / TASK-DIRECT`;
+the detail page says *"40 means leans Task-direct. Neither end is better. Which
+one fits depends on the role."*
+
+### "Can we randomise options?" — they already were, and it did nothing
+
+`order by md5(o.option_key || v_session::text)`. That seed omits the **item**, so:
+
+> **Every one of the 44 questions received the identical permutation.** For a
+> given candidate, position 1 was always option `c`, on every single question.
+
+Displayed position and option letter were therefore perfectly correlated. Which
+matters because the `straightline` flag reads `position_shown`, and its own
+comment says it does so *"because option order is randomised per session — a
+candidate clicking always the second one is the pattern worth catching, and
+option_key would miss it entirely."*
+
+It could not catch that pattern. It was detecting "picked the same letter",
+described as something stronger, and it had been for months. The flag's
+explanation on the candidate page said the same thing to the recruiter reading it.
+
+**A safeguard that cannot fail is not a safeguard. This one could not succeed
+either.** Fixed by putting the item in the seed. The distinction the flag was
+written to make became real for the first time.
+
+### The ordered scales should never have been shuffled
+
+The shuffle applied to every format, including the behavioural-frequency items,
+whose options are a **scale**:
+
+```
+Five or more days · Three to four days · One to two days · None
+```
+
+Presented to every candidate so far as *One to two days · Five or more days ·
+None · Three to four*. A scale out of order is not neutral: it is harder to read,
+it invites mis-clicks, and every mis-click lands on a different score. Three real
+dimensions take one of these items each, so this has been adding noise to RES,
+DRV and DSC for every candidate who has ever taken the test.
+
+**Shuffle what is unordered; never shuffle a scale.** SJT options and either/or
+pairs are unordered and get shuffled. Frequency scales and True/False keep their
+authored order — the second because True/False flipping between items reads as a
+bug to the person taking the test, and three items would add little signal.
+
+### The algorithm that was asked for, and the half of it that cannot exist
+
+*"someone random tapping will most likely give the most random answers which I
+think we can flag by using some algo coded inside"*
+
+Half right, and the wrong half matters. **Random answers cannot be detected from
+the answers.** A genuinely mixed candidate and a random tapper produce the same
+spread, and nothing in the bank separates them. Doing that needs reversed item
+pairs — two items asking the same thing in opposite directions, where agreeing
+with both is incoherent. That is item-writing, not code.
+
+What *is* detectable, and only becomes detectable once the shuffle varies per
+item, is **position**. Four options in an independent order per item means chance
+gives any one position about a quarter of the picks. Somebody tapping the second
+row lands on a different answer every time — their content looks random, their
+position does not. `position_bias()` measures that and reports the share, the
+chance rate and the ratio, rather than asserting a verdict.
+
+### And it must refuse to measure the past
+
+Sessions answered before the fix saw one permutation across all items, so their
+stored `position_shown` is the option letter under another name. Run over them,
+the new measure produces a confident number measuring the wrong thing — one real
+candidate reads as 2.08x chance, entirely explained by his picking one letter
+often. So the scheme is stamped on the session (`order_scheme`) and the old ones
+are excluded by name. **A measure that cannot distinguish itself from the thing it
+replaced must say so, not average over both.**
+
+## 7ab. "Granted to authenticated" was never a restriction
+
+Found by a QA assertion that expected two new helper functions to refuse an
+anonymous caller. They returned HTTP 200.
+
+**Postgres grants EXECUTE on every new function to PUBLIC by default, and `anon`
+is a member of PUBLIC.** So
+
+```sql
+grant execute on function position_bias(uuid) to authenticated;
+```
+
+adds a privilege that was already there and restricts nothing. Every
+`SECURITY DEFINER` function in the schema — sixty-odd of them — has been callable
+with the publishable key since the day it was written. That key ships in
+`js/config.js` and sits in every browser that opens the tool.
+
+### Why nothing leaked
+
+Luck, backed by one good habit. Almost every sensitive function opens with
+`is_staff()`, `staff_role()` or a token lookup and refuses before touching a row.
+
+> **The GRANT was decorative and the in-body guard was doing all the work.
+> Wherever the guard was missing, there was nothing underneath it.**
+
+### Where the guard was missing
+
+`purge_expired_candidates()`. `SECURITY DEFINER`, no caller check of any kind, and
+its body is `DELETE FROM candidates`. Meant for pg_cron at 02:30 and nothing else.
+Reachable from the open internet by anyone holding the publishable key.
+
+It would have deleted nothing today, because it only removes rows whose
+`last_activity_at` is over 24 months old and this system is three weeks old.
+**That is the retention window saving us, not the design.** In two years the same
+call is a data-loss incident and the code would not have changed.
+
+Also unguarded, and far smaller: `position_bias()`, `bipolar_side()`,
+`bipolar_sides()`, `key_fingerprint()` — all mine, all leaking internals rather
+than identity.
+
+### The fix, in the shape §7n and §7q already established
+
+This is the third instance of one pattern: a Postgres default that is permissive,
+a fix that reads as sufficient, and nothing that keeps it true.
+
+1. **Revoke** the PUBLIC default across the schema.
+2. **Grant back from a named allowlist** — `anon_callable`, one row per function
+   an account-less surface legitimately calls, each with a sentence saying why.
+   Sixteen of them: the candidate surface, the client intake, the invited keyer.
+3. **Make the database enforce it** — an event trigger on `CREATE FUNCTION` plus
+   `alter default privileges`, so a function added next month cannot reopen the
+   hole by existing.
+4. **Audit it** — `v_function_grant_audit`, which must always be empty, and which
+   flags a body with no caller check as the more serious case.
+
+The audit caught the fix's own blind spot on the first run: `enforce_function_grants`
+is itself a function in `public`, created after the revoke sweep and before the
+trigger that would have closed it, so it inherited the default. That is the best
+argument available for writing the audit rather than trusting the sweep.
+
+### A side effect worth noting
+
+Staff-only RPCs are now refused at the **grant** layer — HTTP 401 *permission
+denied for function* — instead of inside the body with 400 *staff only*. Strictly
+better: the function never runs. Three QA suites failed on the wording, having
+pinned which layer did the catching. They assert either now.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

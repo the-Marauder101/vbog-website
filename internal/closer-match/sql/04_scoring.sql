@@ -54,6 +54,7 @@ declare
   v_seconds     numeric;
   v_median      numeric;
   v_run         int;
+  v_bias        jsonb;
   v_mot         numeric;
   v_sty         numeric;
   v_profile     candidate_profile;
@@ -183,9 +184,10 @@ begin
   end if;
 
   -- straightline: same displayed option position for >= 6 consecutive items.
-  -- Uses position_shown, not option_key, because option order is randomised
-  -- per session — a candidate clicking "always the second one" is the pattern
-  -- worth catching, and option_key would miss it entirely.
+  -- Uses position_shown, not option_key. That distinction only became real in
+  -- sql/30: the shuffle seed had omitted the item, so every question in a session
+  -- received the identical permutation and position was a rename of option_key.
+  -- The comment claimed the stronger reading for months before the code earned it.
   with ordered as (
     select position_shown,
            row_number() over (order by answered_at, item_id) as n
@@ -201,6 +203,20 @@ begin
 
   if v_run >= param('flags','straightline_run') then
     v_flags := array_append(v_flags, 'straightline');
+  end if;
+
+  -- position_bias: chose the same screen position far more often than chance,
+  -- across items whose order was genuinely reordered for this session. This is
+  -- the one thing a shuffle buys you — a tapper's ANSWERS look random, because
+  -- the same row holds a different answer each time, but their POSITION does not.
+  -- Random-looking answers on their own prove nothing: a genuinely mixed
+  -- candidate produces the same spread, and telling the two apart needs reversed
+  -- item pairs the bank does not have yet.
+  v_bias := position_bias(p_session_id);
+  if (v_bias->>'measurable')::boolean
+     and (v_bias->>'times_chance')::numeric >= param('flags','position_bias_ratio')
+     and (v_bias->>'share')::numeric >= param('flags','position_bias_min_share') then
+    v_flags := array_append(v_flags, 'position_bias');
   end if;
 
   -- careless: MOT and STY both at 0 or both at 100.

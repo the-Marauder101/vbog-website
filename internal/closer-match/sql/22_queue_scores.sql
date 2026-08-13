@@ -64,7 +64,13 @@ select cand.id, cand.full_name, cand.created_at, cand.last_activity_at,
         from v_console_clean v
         join requirements req on req.id = v.requirement_id
         where v.candidate_id = cand.id and req.status = 'open'
-          and v.business_name not like 'ZZ_FIXTURE%')            as best_pct
+          and v.business_name not like 'ZZ_FIXTURE%')            as best_pct,
+
+       -- For the two dimensions where a bare number reads as a grade it is not,
+       -- which side of the scale it sits on (sql/30). Appended rather than placed
+       -- beside `scores` where it belongs: CREATE OR REPLACE VIEW can only add
+       -- columns at the end, and this view has dependents.
+       bipolar_sides(p.scores)                                   as sides
 
 from candidates cand
 left join lateral (

@@ -103,6 +103,10 @@ begin
           'pole_0', dim.pole_0_label,
           'pole_100', dim.pole_100_label,
           'score', (v_prof.scores->>dim.code)::numeric,
+          -- Which end of the scale, in words. Only ever non-null for the two
+          -- dimensions with no better end, so a surface can render it blindly
+          -- and get nothing where nothing applies. See sql/30.
+          'side', bipolar_side(dim.code, (v_prof.scores->>dim.code)::numeric),
           'sort', case dim.code
                     when 'CLS_C' then '1' when 'CLS_F' then '2' when 'RES' then '3'
                     when 'DRV'   then '4' when 'DSC'   then '5' when 'CCH' then '6'
@@ -197,9 +201,17 @@ begin
           'Finished well under the running median time. Could be a fast reader, '
           'could be clicking through. The role-play in Step 4 settles it.'
         when 'straightline' then
-          'Picked the same screen position six or more times in a row. Option order '
-          'is randomised per person, so this is a pattern in the clicking rather '
-          'than in the answers.'
+          'Picked the same screen position six or more times in a row. For '
+          'assessments taken from 13 Aug 2026 each question has its own option '
+          'order, so this is a pattern in the clicking rather than in the answers. '
+          'Before that date every question shared one order, so it may equally mean '
+          'they kept choosing the same answer — which can be honest.'
+        when 'position_bias' then
+          'Chose the same screen position far more often than chance, across '
+          'questions whose options were shuffled independently. The answers behind '
+          'those taps look random precisely because the same row held a different '
+          'answer each time. Worth re-testing: this is the one pattern a shuffle '
+          'can catch that reading the answers cannot.'
         when 'careless' then
           'Both bipolar dimensions pinned to the same extreme, which is close to '
           'impossible to mean. Worth re-testing before reading anything else here.'
