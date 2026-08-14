@@ -142,32 +142,13 @@ alter view v_unmatched_audit set (security_invoker = true);
 -- `eligible_reqs` counted every passing match a candidate had ever had,
 -- including roles that have since closed and fixture roles. "3 eligible
 -- requirements" pointing at two closed roles is worse than no number.
-create or replace view v_candidate_queue as
-select cand.id, cand.full_name, cand.created_at, cand.last_activity_at,
-       p.computed_at as profiled_at, p.flags,
-       s.completed_at is not null as assessment_complete,
-       (select count(*) from matches m
-          join requirements req on req.id = m.requirement_id
-          join clients cl on cl.id = req.client_id
-        where m.candidate_id = cand.id and m.hard_filter_pass
-          and req.status = 'open'
-          and cl.business_name not like 'ZZ_FIXTURE%')          as eligible_reqs,
-       -- Separating "nothing is open" from "open, and they failed every filter"
-       -- is the difference between a queue that is waiting and one that is stuck.
-       (select count(*) from requirements req
-          join clients cl on cl.id = req.client_id
-        where req.status = 'open' and req.target_profile_id is not null
-          and cl.business_name not like 'ZZ_FIXTURE%')           as open_reqs
-from candidates cand
-left join lateral (
-  select * from candidate_profile where candidate_id = cand.id order by computed_at desc limit 1
-) p on true
-left join lateral (
-  select * from assessment_sessions where candidate_id = cand.id order by started_at desc limit 1
-) s on true
-where cand.full_name not like 'ZZ_FIXTURE%';
+-- ── v_candidate_queue lives in sql/33 ──────────────────────────────────────────
+-- It used to be redefined here. Four files defined `v_candidate_queue` and two
+-- defined `v_console_clean`, so the live schema depended on which migration ran
+-- most recently — re-applying this file silently reverted later fixes. Both are
+-- now defined once, in the highest-numbered migration, so numeric order puts
+-- them last and no earlier file can undo them. Edit them there. See sql/33.
 
-grant select on v_candidate_queue to authenticated;
 alter view v_candidate_queue set (security_invoker = true);
 
 do $$

@@ -1019,6 +1019,60 @@ function targetLine(d, t) {
   return `${who}: ${bit}`;
 }
 
+// ═══ HOW THEY ANSWERED, NOT WHAT THEY ANSWERED ═════════════════════════════
+// The evidence behind the flags. A chip saying "flat scoring" is an accusation
+// unless you can see the number it came from and the number chance would give.
+// Shown for everybody, flagged or not, because the interesting reading is often
+// the near-miss — and because a measure you can only see when it fires is a
+// measure you cannot calibrate.
+function patternHtml(d) {
+  const p = d.pattern, pos = d.position;
+  if (!p || !p.answers) return "";
+  const pct = (x) => x == null ? "—" : `${Math.round(x * 100)}%`;
+  const sc = p.scoring || {}, sp = p.speed || {}, rh = p.rhythm || {};
+
+  return `
+  <div class="region">
+    <div class="region-head"><h2>How they answered</h2>
+      <span class="count mono">${p.answers}</span></div>
+    <div class="notice"><span class="label">Not a score, and not a verdict</span>
+      Nothing here changes a number or excludes anybody. It is the shape of the
+      response trail: whether the answers look like someone reading the questions.
+      Each line shows what they did next to what chance alone would produce.</div>
+    <div class="panel">
+      <ul class="evidence">
+        <li><span class="glyph mono">≡</span><span>
+          <strong>Same screen position</strong> — ${pos && pos.measurable
+            ? `chose position ${pos.position} on <strong>${pct(pos.share)}</strong> of
+               ${pos.answers} shuffled answers, against <strong>${pct(pos.chance)}</strong>
+               by chance. That is ${pos.times_chance}× chance.`
+            : `not measurable. ${esc((pos && pos.why) || "")}`}</span></li>
+
+        <li><span class="glyph mono">~</span><span>
+          <strong>Repeating rhythm</strong> — their longest repeating cycle of
+          positions covers <strong>${rh.covering}</strong> answers${
+            rh.cycle ? ` (a cycle of ${rh.cycle})` : ""}.
+          A pure guesser reaches 7 on average and 14 at the 99.9th percentile, so
+          this is flagged from <strong>${rh.threshold}</strong>.</span></li>
+
+        <li><span class="glyph mono">${sc.share >= 0.85 ? "!" : "="}</span><span>
+          <strong>Same-scoring answer</strong> — ${sc.scenario_answers
+            ? `picked options worth ${sc.top_score} on <strong>${pct(sc.share)}</strong>
+               of ${sc.scenario_answers} scenarios: ${esc(sc.reads_as || "")}.
+               ${sc.top_score >= 2 ? `That can mean a strong closer or somebody reading
+                 what the test wants — the interview settles it, not this page.` : ""}`
+            : "no scenario answers to read."}</span></li>
+
+        <li><span class="glyph mono">${sp.share >= 0.25 ? "!" : "="}</span><span>
+          <strong>Time per answer</strong> — <strong>${sp.under_threshold}</strong>
+          of ${sp.timed} answers came in under ${sp.seconds} seconds
+          (${pct(sp.share)}). Under three seconds is less time than the question
+          takes to read.</span></li>
+      </ul>
+    </div>
+  </div>`;
+}
+
 // ═══ THE FACTS WE ASK FOR RATHER THAN MEASURE ══════════════════════════════
 // §7.5's asked-not-tested fields. Nothing has ever written them, so every hard
 // filter in the system has been comparing a client's requirements against an
@@ -1222,7 +1276,7 @@ async function openCandidate(id) {
       </div>`;
   }).join("");
 
-  el("cd-body").innerHTML = rolesHtml + flagsHtml + directFieldsHtml(c) + `
+  el("cd-body").innerHTML = rolesHtml + flagsHtml + patternHtml(d) + directFieldsHtml(c) + `
     <div class="region">
       <div class="region-head"><h2>The nine, against what each role asks for</h2>
         <span class="count mono">${(d.dimensions || []).length}</span></div>

@@ -411,21 +411,13 @@ grant select on v_missing_direct_fields to authenticated;
 -- with it. CREATE OR REPLACE keeps the dependency intact — at the price of only
 -- being allowed to ADD columns, and only at the end. Hence the new column
 -- sitting apart from the two it belongs beside.
-create or replace view v_console_clean as
-select
-  row_number() over (
-    partition by requirement_id
-    order by hard_filter_pass desc, composite_pct desc, candidate_id
-  ) as engine_rank,
-  requirement_id, requirement_title, business_name, candidate_id, full_name,
-  composite_pct, quality_pct, fit_pct, cls_effective, confidence, benchmark_source,
-  hard_filter_pass, hard_filter_fails, flags, attrition_risk_flag, frame_split_flag,
-  top_reasons, top_concerns, frame_split_note, cross_client_line, weights_disclaimer,
-  hard_filter_unknown
-from v_console
-where full_name not like 'ZZ_FIXTURE%' and full_name not like 'ZZ_E2E%';
+-- ── v_console_clean lives in sql/33 ──────────────────────────────────────────
+-- It used to be redefined here. Four files defined `v_candidate_queue` and two
+-- defined `v_console_clean`, so the live schema depended on which migration ran
+-- most recently — re-applying this file silently reverted later fixes. Both are
+-- now defined once, in the highest-numbered migration, so numeric order puts
+-- them last and no earlier file can undo them. Edit them there. See sql/33.
 
-grant select on v_console_clean to authenticated;
 
 -- ── Rematch everything, so the console stops lying immediately ─────────────
 do $$

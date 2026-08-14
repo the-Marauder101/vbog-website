@@ -1637,6 +1637,127 @@ denied for function* — instead of inside the body with 400 *staff only*. Stric
 better: the function never runs. Three QA suites failed on the wording, having
 pinned which layer did the catching. They assert either now.
 
+## 7ac. Flagging the patterns a shuffle does not hide
+
+*"lets flag that, for example: candidate just presses the same option (like
+option c) across many questions, or some pattern like that."*
+
+Pressing "option c" stopped being possible in §7aa. Candidates never see the
+letters, and each question now has its own order, so `c` is somewhere different
+every time. There is nothing to aim for.
+
+The behaviour is real; the handle on it moved. **A careless candidate is
+consistent in something, and after a shuffle the something is no longer the
+answer.** Four things survive, and all four are now measured:
+
+| | what it catches | already there? |
+|---|---|---|
+| `straightline` | the same screen position, consecutively | yes |
+| `position_bias` | the same screen position, overall, against chance | yes |
+| **`zigzag`** | a repeating *cycle* — 1,2,1,2 — which straightline cannot see | new |
+| **`flat_scoring`** | options carrying the same score, over and over | new |
+| **`rushed`** | answers given faster than the question can be read | new |
+
+`zigzag` matters because `straightline` only catches the laziest possible
+pattern. In 1,2,1,2,1,2 no two consecutive picks match, so a run-length check
+sees nothing at all.
+
+`flat_scoring` is the one content-side pattern a shuffle cannot disguise: the
+option keyed +2 moves around the screen but it is still the option keyed +2. It
+reports *which* value dominates, because "+2 on 90% of items" and "−1 on 90%"
+need opposite responses — strong closer versus not trying — and the system does
+not get to decide which.
+
+### The threshold I guessed, and what happened
+
+The first version set the zigzag threshold to 8. **It fired on six of eight real
+candidates.**
+
+So it was measured instead of guessed. Simulating 4,000 random answerers over a
+session shaped like the real one, the longest repeating cycle a pure guesser
+produces is:
+
+```
+median 7 · p90 9 · p99 12 · p99.9 14 · max seen 16
+```
+
+A threshold of 8 sat *below the median of pure chance.* It was not detecting a
+pattern; it was detecting that sequences exist.
+
+> **A threshold nobody derived is a threshold nobody can defend, and it will
+> usually be set where the noise lives.**
+
+15 puts a flag past the 99.9th percentile of chance. The highest any real
+candidate reaches is 11; a synthetic tapper alternating through the whole test
+scores 44.
+
+### What cannot be built, and why it is worth saying
+
+Random *answers* cannot be detected from the answers. A genuinely mixed candidate
+and a random tapper produce the same spread, and nothing in the bank separates
+them. Doing that needs reversed item pairs — two items asking the same thing in
+opposite directions, where agreeing with both is incoherent. That is item-writing,
+not code, and it belongs in the same sitting as the twelve split scenario items.
+
+### Testing a detector against people who do not have the pattern proves nothing
+
+The real candidates were all the first version had to go on, and it passed
+against them just as well when it fired on everybody. So qa20 builds three
+synthetic candidates who answer in known ways — a position tapper, a rhythm
+tapper, a rusher — and requires each flag to fire on its own case **and stay
+quiet on the others.** A detector that only ever sees negatives cannot tell you
+whether it is broken in the direction of never firing.
+
+Every flag here surfaces and none of them rejects: qa20 asserts a flagged
+candidate is still ranked. There is no reject path in this system and a flag must
+not become one by the back door.
+
+## 7ad. Four files defined one view
+
+Found by breaking it. Adding a column to `v_candidate_queue` meant re-applying
+`sql/22`, which silently reverted the fix `sql/23` had made to the same view
+three migrations later. Nothing errored. The view went back in time.
+
+```
+v_candidate_queue  — sql/11, sql/20, sql/22, sql/23
+v_console_clean    — sql/12, sql/15, sql/29
+v_requirements     — sql/11, sql/12, sql/15
+```
+
+**Whichever file ran last won.** The live schema depended not on what the
+migrations say but on the order somebody happened to run them in — and
+re-applying an earlier file, which this project has done repeatedly and for good
+reasons, quietly undid later work.
+
+> **Two definitions of one thing is not redundancy, it is a race — and the loser
+> is whichever one you did not run most recently.**
+
+The same argument as the one against a second `final_keys` table in §7x, and the
+same shape as §7q, where a security fix decayed on every re-apply. It bit here in
+the mildest available way: `assessment_complete` reverted from "any session
+finished" to "the newest session finished", which is precisely the bug sql/23
+exists to fix. Next time it could be an RLS predicate.
+
+All three are now defined once, in `sql/33` — the highest-numbered file, so
+numeric order puts it last on a fresh database and no earlier migration can
+revert it. The old definitions are deleted, not commented out, so there is
+nothing left to accidentally re-run. `sql/33` asserts that each of the later
+fixes is still present in the definition it ships.
+
+A related inconsistency fell out of the same read: the queue excluded
+`ZZ_FIXTURE` rows but not `ZZ_E2E` ones, while the shortlist excluded both. So a
+test candidate appeared in the queue carrying no roles at all — a row that reads
+as a real person the engine has ignored. Two views with two ideas of what counts
+as a test row will eventually show you one of them.
+
+### And the test that only tidied up when it passed
+
+qa20 deleted its synthetic candidates at the end of a successful run. The one
+time it aborted, three of them stayed in the live queue and broke a *different*
+suite on the next run. Cleanup now runs on the failure path too, and the suite
+asserts it worked. **A test that only tidies up when it passes tidies up exactly
+when it did not need to.**
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

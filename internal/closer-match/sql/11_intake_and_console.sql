@@ -172,18 +172,10 @@ grant execute on function submit_intake(text, jsonb)        to anon;
 -- ═══ CONSOLE READ SURFACE ══════════════════════════════════════════════════
 -- One row per open requirement, with everything the list view needs.
 
-create or replace view v_requirements as
-select r.id, r.title, r.status, r.ticket_size, r.cycle_days, r.roleplay_pack, r.opened_at,
-       c.business_name, c.id as client_id,
-       tp.confidence, tp.benchmark_source, tp.required_levels, tp.bipolar_targets,
-       tp.cls_blend, tp.benchmark_conflicts,
-       (select count(*) from matches m where m.requirement_id = r.id and m.hard_filter_pass) as eligible,
-       (select count(*) from matches m where m.requirement_id = r.id) as assessed,
-       (select round(max(m.composite) * 100, 1) from matches m
-          where m.requirement_id = r.id and m.hard_filter_pass) as best_pct
-from requirements r
-join clients c on c.id = r.client_id
-left join client_target_profile tp on tp.id = r.target_profile_id;
+-- ── v_requirements lives in sql/33 ─────────────────────────────────────────
+-- Three files defined it and only the last excluded test rows from its counts.
+-- Defined once now, in the highest-numbered migration. Edit it there.
+
 
 -- Recruiter decision logging. §14.5 depends entirely on this being written, so
 -- it is a single call the console can make from the shortlist row.
@@ -210,21 +202,13 @@ begin
 end $$;
 
 -- Candidates without a requirement yet — the queue the console opens on.
-create or replace view v_candidate_queue as
-select cand.id, cand.full_name, cand.created_at, cand.last_activity_at,
-       p.computed_at as profiled_at, p.flags,
-       s.completed_at is not null as assessment_complete,
-       (select count(*) from matches m where m.candidate_id = cand.id and m.hard_filter_pass) as eligible_reqs
-from candidates cand
-left join lateral (
-  select * from candidate_profile where candidate_id = cand.id order by computed_at desc limit 1
-) p on true
-left join lateral (
-  select * from assessment_sessions where candidate_id = cand.id order by started_at desc limit 1
-) s on true
-where cand.full_name not like 'ZZ_FIXTURE%';
+-- ── v_candidate_queue lives in sql/33 ──────────────────────────────────────────
+-- It used to be redefined here. Four files defined `v_candidate_queue` and two
+-- defined `v_console_clean`, so the live schema depended on which migration ran
+-- most recently — re-applying this file silently reverted later fixes. Both are
+-- now defined once, in the highest-numbered migration, so numeric order puts
+-- them last and no earlier file can undo them. Edit them there. See sql/33.
 
-grant select on v_requirements, v_console, v_candidate_queue to authenticated;
 grant execute on function log_decision(uuid, uuid, boolean, text) to authenticated;
 grant execute on function create_client_intake_link(text, int)    to authenticated;
 grant execute on function issue_assessment_token(uuid, int)       to authenticated;

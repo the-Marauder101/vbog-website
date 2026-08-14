@@ -212,10 +212,34 @@ begin
           'those taps look random precisely because the same row held a different '
           'answer each time. Worth re-testing: this is the one pattern a shuffle '
           'can catch that reading the answers cannot.'
+        when 'zigzag' then
+          'Answered in a repeating rhythm — the same cycle of screen positions '
+          'over a long stretch, which straightline cannot see because no two '
+          'consecutive picks match. The threshold is set past the 99.9th '
+          'percentile of what a pure guesser produces, so this is not chance. '
+          'Re-test before reading anything else here.'
+        when 'flat_scoring' then
+          'Chose options carrying the same score on 85% or more of the scenario '
+          'items. If that score is the best-keyed one this is ambiguous — it can '
+          'mean a strong closer, or somebody reading what the test wants rather '
+          'than what the situation needs. If it is the worst-keyed one, they were '
+          'not trying. The panel below says which.'
+        when 'rushed' then
+          'A quarter or more of their answers came in under three seconds, which '
+          'is less time than the question takes to read. Different from '
+          'fast_completion: that compares the whole session to a median, so '
+          'reading six items properly and tapping through the rest averages away.'
         when 'careless' then
           'Both bipolar dimensions pinned to the same extreme, which is close to '
           'impossible to mean. Worth re-testing before reading anything else here.'
         else 'No description recorded for this flag.' end as m)),
+
+    -- The evidence behind the flags, so a chip can be argued with. A flag that
+    -- cannot be checked is an accusation.
+    'pattern', case when v_session.id is null then null
+                    else response_pattern(v_session.id) end,
+    'position', case when v_session.id is null then null
+                     else position_bias(v_session.id) end,
 
     'disclaimer',
       'These weights are expert-set, not learned from outcomes. Every number here '

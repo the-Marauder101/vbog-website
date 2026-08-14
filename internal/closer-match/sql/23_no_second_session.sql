@@ -127,50 +127,13 @@ grant execute on function start_assessment(text) to anon;
 -- Defence in depth: even with the fix above, "has this person finished" should
 -- be a question about whether ANY session completed, not about whichever one
 -- happens to be newest.
-create or replace view v_candidate_queue as
-select cand.id, cand.full_name, cand.created_at, cand.last_activity_at,
-       p.computed_at as profiled_at, p.flags,
-       exists (select 1 from assessment_sessions s2
-                where s2.candidate_id = cand.id and s2.completed_at is not null)
-                                                                as assessment_complete,
-       (select count(*) from matches m
-          join requirements req on req.id = m.requirement_id
-          join clients cl on cl.id = req.client_id
-        where m.candidate_id = cand.id and m.hard_filter_pass
-          and req.status = 'open'
-          and cl.business_name not like 'ZZ_FIXTURE%')          as eligible_reqs,
-       (select count(*) from requirements req
-          join clients cl on cl.id = req.client_id
-        where req.status = 'open' and req.target_profile_id is not null
-          and cl.business_name not like 'ZZ_FIXTURE%')           as open_reqs,
-       p.scores,
-       (select coalesce(jsonb_agg(jsonb_build_object(
-                 'requirement_id', v.requirement_id,
-                 'title', v.requirement_title,
-                 'business_name', v.business_name,
-                 'pct', v.composite_pct,
-                 'rank', v.engine_rank,
-                 'of', (select count(*) from v_console_clean v2
-                         where v2.requirement_id = v.requirement_id),
-                 'pass', v.hard_filter_pass,
-                 'fails', v.hard_filter_fails)
-               order by v.composite_pct desc), '[]'::jsonb)
-        from v_console_clean v
-        join requirements req on req.id = v.requirement_id
-        where v.candidate_id = cand.id and req.status = 'open'
-          and v.business_name not like 'ZZ_FIXTURE%')            as roles,
-       (select max(v.composite_pct)
-        from v_console_clean v
-        join requirements req on req.id = v.requirement_id
-        where v.candidate_id = cand.id and req.status = 'open'
-          and v.business_name not like 'ZZ_FIXTURE%')            as best_pct
-from candidates cand
-left join lateral (
-  select * from candidate_profile where candidate_id = cand.id order by computed_at desc limit 1
-) p on true
-where cand.full_name not like 'ZZ_FIXTURE%';
+-- ── v_candidate_queue lives in sql/33 ──────────────────────────────────────────
+-- It used to be redefined here. Four files defined `v_candidate_queue` and two
+-- defined `v_console_clean`, so the live schema depended on which migration ran
+-- most recently — re-applying this file silently reverted later fixes. Both are
+-- now defined once, in the highest-numbered migration, so numeric order puts
+-- them last and no earlier file can undo them. Edit them there. See sql/33.
 
-grant select on v_candidate_queue to authenticated;
 alter view v_candidate_queue set (security_invoker = true);
 
 -- ── Clean up the sessions this already created ─────────────────────────────

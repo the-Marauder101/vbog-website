@@ -7,25 +7,17 @@
 -- v_candidate_queue filtered ZZ_FIXTURE rows; v_requirements did not, so seven
 -- test requirements appeared in the real console. Fixtures must never be
 -- visible in an operational view — a recruiter cannot tell them apart.
-create or replace view v_requirements as
-select r.id, r.title, r.status, r.ticket_size, r.cycle_days, r.roleplay_pack, r.opened_at,
-       c.business_name, c.id as client_id,
-       tp.confidence, tp.benchmark_source, tp.required_levels, tp.bipolar_targets,
-       tp.cls_blend, tp.benchmark_conflicts,
-       (select count(*) from matches m where m.requirement_id = r.id and m.hard_filter_pass) as eligible,
-       (select count(*) from matches m where m.requirement_id = r.id) as assessed,
-       (select round(max(m.composite) * 100, 1) from matches m
-          where m.requirement_id = r.id and m.hard_filter_pass) as best_pct
-from requirements r
-join clients c on c.id = r.client_id
-left join client_target_profile tp on tp.id = r.target_profile_id
-where c.business_name not like 'ZZ_FIXTURE%';
+-- ── v_requirements lives in sql/33 ─────────────────────────────────────────
+-- Three files defined it and only the last excluded test rows from its counts.
+-- Defined once now, in the highest-numbered migration. Edit it there.
 
-create or replace view v_console_clean as
-select * from v_console
-where full_name not like 'ZZ_FIXTURE%' and full_name not like 'ZZ_E2E%';
 
-grant select on v_console_clean to authenticated;
+-- ── v_console_clean lives in sql/33 ────────────────────────────────────────
+-- It used to be redefined here. Several files defined it, so the live schema
+-- depended on which migration ran most recently and re-applying an earlier one
+-- silently reverted later work. Defined once now, in the highest-numbered
+-- migration. Edit it there. See sql/33.
+
 
 -- ═══ §13 BLIND RE-KEYING ═══════════════════════════════════════════════════
 -- Three experts key all 28 SJT items independently, WITHOUT seeing the existing
