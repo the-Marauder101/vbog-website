@@ -14,22 +14,12 @@
 -- and engine_rank has to be computed here rather than inherited.
 -- ═══════════════════════════════════════════════════════════════════════════
 
-drop view if exists v_console_clean;
+-- ── v_console_clean lives in sql/33 ────────────────────────────────────────
+-- It used to be redefined here. Several files defined it, so the live schema
+-- depended on which migration ran most recently and re-applying an earlier one
+-- silently reverted later work. Defined once now, in the highest-numbered
+-- migration. Edit it there. See sql/33.
 
-create view v_console_clean as
-select
-  row_number() over (
-    partition by requirement_id
-    order by hard_filter_pass desc, composite_pct desc, candidate_id
-  ) as engine_rank,
-  requirement_id, requirement_title, business_name, candidate_id, full_name,
-  composite_pct, quality_pct, fit_pct, cls_effective, confidence, benchmark_source,
-  hard_filter_pass, hard_filter_fails, flags, attrition_risk_flag, frame_split_flag,
-  top_reasons, top_concerns, frame_split_note, cross_client_line, weights_disclaimer
-from v_console
-where full_name not like 'ZZ_FIXTURE%' and full_name not like 'ZZ_E2E%';
-
-grant select on v_console_clean to authenticated;
 
 do $$
 declare v_bad int;
@@ -52,27 +42,10 @@ end $$;
 -- shows, which is the only number a recruiter can act on.
 -- ═══════════════════════════════════════════════════════════════════════════
 
-create or replace view v_requirements as
-select r.id, r.title, r.status, r.ticket_size, r.cycle_days, r.roleplay_pack, r.opened_at,
-       c.business_name, c.id as client_id,
-       tp.confidence, tp.benchmark_source, tp.required_levels, tp.bipolar_targets,
-       tp.cls_blend, tp.benchmark_conflicts,
-       (select count(*) from matches m
-          join candidates cd on cd.id = m.candidate_id
-        where m.requirement_id = r.id and m.hard_filter_pass
-          and cd.full_name not like 'ZZ_FIXTURE%' and cd.full_name not like 'ZZ_E2E%') as eligible,
-       (select count(*) from matches m
-          join candidates cd on cd.id = m.candidate_id
-        where m.requirement_id = r.id
-          and cd.full_name not like 'ZZ_FIXTURE%' and cd.full_name not like 'ZZ_E2E%') as assessed,
-       (select round(max(m.composite) * 100, 1) from matches m
-          join candidates cd on cd.id = m.candidate_id
-        where m.requirement_id = r.id and m.hard_filter_pass
-          and cd.full_name not like 'ZZ_FIXTURE%' and cd.full_name not like 'ZZ_E2E%') as best_pct
-from requirements r
-join clients c on c.id = r.client_id
-left join client_target_profile tp on tp.id = r.target_profile_id
-where c.business_name not like 'ZZ_FIXTURE%';
+-- ── v_requirements lives in sql/33 ─────────────────────────────────────────
+-- Three files defined it and only the last excluded test rows from its counts.
+-- Defined once now, in the highest-numbered migration. Edit it there.
+
 
 do $$
 declare v_bad int;

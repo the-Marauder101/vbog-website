@@ -571,7 +571,14 @@ button, .btn {
 }
 .poles {
   display: flex; justify-content: space-between; margin-top: 6px;
-  font-size: 12px;
+  font-size: 12px; gap: 12px;
+}
+/* A strip cell for one of the two dimensions with no better end. The side sits
+   under the number so `0` cannot be read as a failing grade at a glance. */
+.strip span.pole { min-width: 66px; }
+.strip span.pole i {
+  font-style: normal; font-size: 9px; letter-spacing: .06em;
+  color: var(--muted); margin-top: 2px; text-transform: uppercase;
 }
 
 /* ── Sign-in ──────────────────────────────────────────────────────────────

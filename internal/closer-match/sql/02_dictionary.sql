@@ -155,6 +155,11 @@ insert into dimension_params (param_group, param_key, param_value, note) values
   ('flags','sd_high_count',            3, 'all three SD absolutes endorsed True'),
   ('flags','fast_completion_ratio',  0.60, 'under 60% of the running median session time'),
   ('flags','straightline_run',          6, 'same option position for >= 6 consecutive items'),
+  -- Two conditions, both required. The ratio alone fires on small samples where
+  -- landing on one row twice too often is ordinary luck; the absolute share alone
+  -- fires on two-option items where half is exactly chance. See sql/30.
+  ('flags','position_bias_ratio',      2.0, 'same screen position chosen >= 2x the chance rate'),
+  ('flags','position_bias_min_share', 0.55, 'and on at least 55% of reordered answers'),
   ('flags','frame_split_delta',        25, '|CLS_C - CLS_F| >= 25 -> frame_split_flag');
 
 -- ── §9.3 Fit and attrition ─────────────────────────────────────────────────
