@@ -153,6 +153,55 @@ const UI = {
     }
   },
 
+  // All Tasks mixes both kinds of task in one list, so its date filter offers
+  // both vocabularies and matches each row against the date it actually SHOWS.
+  // Before this existed the filter only understood due dates, so on an HR-heavy
+  // workspace "No due date" listed hundreds of rows that visibly had a date and
+  // "Due today" was always empty.
+  mixedDateFilterOptions: [
+    ["all", "All dates"],
+    ["overdue", "Overdue"],
+    ["today", "Due today"],
+    ["week", "Due next 7 days"],
+    ["month", "Due next 30 days"],
+    ["none", "No due date"],
+    ["stage_today", "Entered stage today"],
+    ["stage_week", "Entered stage in last 7 days"],
+    ["stage7", "In stage 7+ days"],
+    ["stage14", "In stage 14+ days"],
+    ["custom", "Custom range…"],
+  ],
+
+  // `task` carries its own project, so each row is judged on the date it shows.
+  matchesMixedDateFilter(task, key, range, stageMode) {
+    const stage = stageMode ?? UI.stageDateMode(task.projects, task);
+    const iso = stage ? UI.stageDateIso(task) : task.due_date;
+    switch (key) {
+      // The two vocabularies are exclusive on purpose. A deadline question can
+      // only be asked of a card that HAS a deadline — including "No due date",
+      // which would otherwise list every HR card while each one visibly shows
+      // a Stage Date, which is exactly the contradiction this replaced.
+      case "overdue":
+      case "today":
+      case "week":
+      case "month":
+      case "none":
+        return stage ? false : UI.matchesDateFilter(task.due_date, key, range);
+      case "stage_today":  return stage && iso === UI.todayIso();
+      case "stage_week":   return stage && !!iso && iso >= UI.todayIso(-7);
+      case "stage7":       return stage && !!iso && iso <= UI.todayIso(-7);
+      case "stage14":      return stage && !!iso && iso <= UI.todayIso(-14);
+      case "custom": {
+        if (!range || (!range.from && !range.to)) return true;
+        if (!iso) return false;
+        if (range.from && iso < range.from) return false;
+        if (range.to && iso > range.to) return false;
+        return true;
+      }
+      default: return true;
+    }
+  },
+
   // Due-date filter presets shared by the board and All Tasks views
   dateFilterOptions: [
     ["all", "All dates"],

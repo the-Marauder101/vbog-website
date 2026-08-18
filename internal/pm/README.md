@@ -227,6 +227,30 @@ Reports are admin-managed, and each project can have more than one — e.g. hiri
 channel and Ops to another. The modal also shows the **last two weeks** of numbers, so
 day-over-day movement is visible without leaving Vyom.
 
+## HR client tracker
+
+HR boards get a second table beside the Roles Summary — switch with the tabs on the card.
+One row per client, one column per date they pass through, so "how long did that client
+actually take" stops being something you reconstruct from memory.
+
+Out of the box: Client · Signed On · Requirement Received · Profiles Shared · Interviews
+Started · Delivered · **Days to Deliver** · Notes.
+
+**Columns are yours to design.** "+ Column" asks for a name and a **type**:
+
+| Type | What it gives you |
+|---|---|
+| Text | a plain box |
+| Date | a real date picker |
+| Number | a numeric box |
+| **Elapsed days** | the days between two of your date columns, worked out for you |
+
+Elapsed columns are marked *auto* and can't be typed into — they're calculated, so they
+can never disagree with the dates behind them, and they colour themselves (fast / ordinary
+/ slow) so a table of clients reads at a glance. Leave the end date blank and the column
+tells you which date it's waiting for. Removing a date column that an elapsed column
+measures from is refused rather than quietly breaking it.
+
 ## Automations (per-project rules)
 
 Open any board as an admin → **⚡ Automations**. Rules are scoped to that project

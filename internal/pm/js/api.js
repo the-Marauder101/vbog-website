@@ -221,6 +221,20 @@ const API = {
     return sbFetch(`hr_roles?id=eq.${id}`, { method: "DELETE" });
   },
 
+  // ---- HR client tracker (sql/17 — one row per client, typed columns) ----
+  getHrClients(projectId) {
+    return sbFetch(`hr_clients?project_id=eq.${projectId}&select=*&order=sort_order.asc`);
+  },
+  createHrClient(fields) {
+    return sbFetch("hr_clients", { method: "POST", body: fields }).then((r) => r[0]);
+  },
+  updateHrClient(id, fields) {
+    return sbFetch(`hr_clients?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
+  },
+  deleteHrClient(id) {
+    return sbFetch(`hr_clients?id=eq.${id}`, { method: "DELETE" });
+  },
+
   // ---- HR SLA rules (per-project deadline config) ----
   getSlaRules(projectId) {
     return sbFetch(`hr_sla_rules?project_id=eq.${projectId}&select=*&order=created_at.asc`);

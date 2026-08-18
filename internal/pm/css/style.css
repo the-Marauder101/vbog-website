@@ -1711,3 +1711,44 @@ a.subclient-tag:hover { background: rgba(124, 58, 237, 0.18); }
 }
 .setup-steps ul { margin: 8px 0 0 18px; font-size: 13px; color: var(--muted); line-height: 1.8; }
 .setup-steps ul code { font-size: 12px; }
+
+/* ---------- HR tables: Roles Summary / Client Tracker share one card ---------- */
+.hr-table-tabs { display: flex; gap: 4px; }
+.hr-table-tab {
+  padding: 5px 14px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.hr-table-tab:hover { background: var(--bg); color: var(--text); }
+.hr-table-tab.active { background: rgba(0, 180, 216, 0.10); color: var(--primary); border-color: rgba(0, 180, 216, 0.35); }
+
+/* An "auto" column is computed, so it is marked as not-editable at a glance */
+.hr-roles-table th .col-type {
+  margin-left: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  border: 1px solid rgba(0, 180, 216, 0.4);
+  border-radius: 999px;
+  padding: 0 5px;
+  vertical-align: 1px;
+}
+.dur-cell { white-space: nowrap; }
+.dur-chip {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+/* Fast, ordinary, slow, and impossible — an elapsed time reads as a verdict */
+.dur-good { background: rgba(21, 128, 61, 0.10); color: #15803D; }
+.dur-mid  { background: rgba(245, 158, 11, 0.12); color: #B45309; }
+.dur-slow { background: rgba(220, 38, 38, 0.09); color: var(--danger); }
+.dur-bad  { background: rgba(220, 38, 38, 0.16); color: var(--danger); }
+.dur-pending { color: #C3CAD5; font-weight: 600; cursor: help; }
