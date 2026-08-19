@@ -5,7 +5,8 @@
 > (so you don't hit them again). The README covers *what Vyom does*; this file
 > covers *how it's built*.
 
-Last updated: v20 (August 2026) — the report message is editable from inside the app
+Last updated: v21 (August 2026) — the HR client tracker, and a date filter on All
+Tasks that understands both due dates and Stage Dates. Previously: v20 (August 2026) — the report message is editable from inside the app
 and reports can be scoped to named people. Previously: v19 (daily Slack reports, the
 Slack channel registry, the app's first pg_cron job) and v18 (July 2026) — hideable status columns, the HR **Stage Date**
 (no due dates on candidate cards), and a database-written **change log** for every
@@ -48,6 +49,7 @@ Browser ── sbFetch() ──> https://<project>.supabase.co/rest/v1/<table>?<
 | `js/auth.js` | Login state (localStorage), page guards, role checks, nav user chip |
 | `js/inbox.js` | Bell + slide-in inbox panel (notifications + My Tasks) |
 | `js/reports.js` | The per-project daily Slack report: admin button, config modal, preview, test send (§13) |
+| `js/hr-clients.js` | The HR client tracker: typed columns, computed elapsed-day columns (§15) |
 | `js/changelog.js` | The change log: per-task History in the task modal + the board's project-wide History modal (read-only — §12) |
 | `js/dashboard.js` | Page logic for `vyom.html` |
 | `js/board.js` | Page logic for `board.html` (drag-drop, task modal, @mentions) |
@@ -82,6 +84,7 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 | `slack_channels` | Registry of Slack incoming-webhook URLs (sql/15) — `label` unique, `url`, `active`. The ONLY place a Slack URL is stored; everything references a channel by id |
 | `daily_report_configs` | One scheduled report per row, scoped to a project (sql/15) — channel, scope (hiring/ops/both), send time + timezone, days, content toggles, `last_sent_on`; plus `template` and `member_ids` (sql/16) |
 | `daily_report_runs` | Every run's numbers — the trend series (sql/15). Writes revoked from `anon` |
+| `hr_clients` | Client tracker rows (sql/17) — `values` jsonb keyed by column key; definitions in `projects.hr_client_columns` with a per-column TYPE |
 | `task_changelog` | Every task change, one row per changed FIELD (sql/14) | `task_id` (**ON DELETE SET NULL** — history outlives the task), `task_title`/`actor_name` snapshots, `actor_id`, `action` (`created`\|`updated`\|`deleted`), `field`, `old_value`, `new_value`. **Written only by a trigger**; INSERT/UPDATE/DELETE/TRUNCATE are revoked from `anon` — see §12 |
 
 Also: `task_details` **view** (sql/04) joins human-readable names — used by webhook
@@ -253,7 +256,7 @@ adding tests.** Highlights:
 - Drive the custom dropdowns via their `.dd-btn`/`.dd-item` elements (native selects
   are hidden). Assert outcomes in the DB via `sbFetch` inside the page.
 - Keep the suite green: every new feature ships with tests (see `test/README.md`
-  for the current expected pass count — **88** as of v20).
+  for the current expected pass count — **91** as of v21).
 
 ## 10. Hideable status columns (v18)
 
@@ -297,6 +300,12 @@ sql/13 trigger, falling back to `created_at`.
   as cards are saved — the change log records each one. Sorting flips to
   oldest-in-stage first, which matches what the SLA flags are for. My Tasks still
   groups by due date, so stage-dated cards land under "No due date".
+- **All Tasks mixes both kinds of card**, so its filter offers both vocabularies and
+  judges each row on the date it actually shows (`UI.mixedDateFilterOptions` /
+  `matchesMixedDateFilter`). The two are **exclusive on purpose**: a deadline question is
+  never asked of a Stage-Dated card, *including* "No due date" — which previously listed
+  every HR card while each one visibly showed a date. Measured on live data: "No due
+  date" returned 240 rows that all showed dates, and "Due today" was always empty.
 - **The board's date filter is not removed in this mode — it is re-vocabularised.**
   `fillDateFilter()` swaps `UI.dateFilterOptions` for `UI.stageFilterOptions`
   ("Entered today", "In stage 7+ days", …) and `renderBoard()` matches with
@@ -404,7 +413,28 @@ next to SLA Rules; nobody touches Supabase.
   and flips a run to `failed` when `net._http_response` shows Slack rejected it — pg_net
   is fire-and-forget, so without it a revoked webhook would look like success forever.
 
-## 14. Roadmap notes for the next builder
+## 15. The HR client tracker (v21)
+
+A second table on HR boards, sharing one card with the Roles Summary via tabs. One row
+per client, tracking the dates a client passes through — signed, requirement received,
+profiles shared, delivered.
+
+- **Columns carry a TYPE** (`text | date | number | duration`), which is the whole
+  reason this isn't just more columns on `hr_roles`: that card is text-only, so a date
+  there is a string nobody can subtract.
+- **`duration` columns are COMPUTED, never stored** — `{type:'duration', from, to}`
+  measures between two date columns at render time, so an elapsed figure can't drift out
+  of sync with the dates behind it. A duration with a missing end names the date it's
+  waiting on rather than showing a bare dash.
+- Removing a date column that a duration measures from is **refused**, or the duration
+  would silently stop computing.
+- Definitions live in `projects.hr_client_columns`, values in `hr_clients.values` keyed
+  by column key — so a new column is a config change, never a migration. Same shape as
+  `hr_roles`, so the inline-edit pattern is shared.
+- Gated by `features.clients_card` (HR defaults ON, per `UI.hasFeature`). The card only
+  shows tabs when a project has **both** tables; with one it shows no tabs at all.
+
+## 16. Roadmap notes for the next builder
 
 Deliberately not built yet, in rough priority order — the schema anticipates them:
 

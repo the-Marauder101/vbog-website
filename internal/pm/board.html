@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20">
+  <link rel="stylesheet" href="css/style.css?v=21">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -69,16 +69,74 @@
       <button class="board-tab" data-tab="ops">Ops</button>
     </div>
 
-    <!-- Roles summary card (HR projects with roles_card feature) -->
+    <!-- HR tables: Roles Summary and the Client Tracker share one card, one
+         visible at a time, so a board never carries two big tables at once. -->
     <div id="hr-roles-card" class="hr-roles-card" hidden>
       <div class="hr-roles-header">
-        <h3>Roles Summary</h3>
-        <div class="hr-roles-actions">
+        <div class="hr-table-tabs" id="hr-table-tabs">
+          <button type="button" class="hr-table-tab active" data-table="roles">Roles Summary</button>
+          <button type="button" class="hr-table-tab" data-table="clients">Client Tracker</button>
+        </div>
+        <div class="hr-roles-actions" id="hr-roles-actions">
           <button class="btn btn-secondary" id="hr-roles-add-col" style="padding:5px 10px;font-size:12px;">+ Column</button>
           <button class="btn btn-primary" id="hr-roles-add-row" style="padding:5px 10px;font-size:12px;">+ Add Role</button>
         </div>
+        <div class="hr-roles-actions" id="hr-clients-actions" hidden>
+          <button class="btn btn-secondary" id="hr-clients-add-col" style="padding:5px 10px;font-size:12px;">+ Column</button>
+          <button class="btn btn-primary" id="hr-clients-add-row" style="padding:5px 10px;font-size:12px;">+ Add Client</button>
+        </div>
       </div>
-      <div class="hr-roles-body" id="hr-roles-table-wrap"></div>
+      <div class="hr-roles-body" id="hr-roles-panel">
+        <div id="hr-roles-table-wrap"></div>
+      </div>
+      <div class="hr-roles-body" id="hr-clients-panel" hidden>
+        <div id="hr-clients-table-wrap"></div>
+        <div class="form-hint" style="margin-top:10px;">
+          One row per client, with the dates they passed through. Columns marked <em>auto</em> work out the
+          elapsed days between two date columns, so they can never disagree with the dates behind them.
+        </div>
+      </div>
+    </div>
+
+    <!-- Add a column to the client tracker (a type, and for elapsed columns the
+         two dates to measure between, is more than a prompt can carry) -->
+    <div class="modal-overlay" id="hr-client-col-modal">
+      <div class="modal" style="max-width: 460px;">
+        <h2>Add a column</h2>
+        <form id="hr-client-col-form" novalidate>
+          <div class="form-group">
+            <label for="hc-col-name">Column name *</label>
+            <input type="text" id="hc-col-name" autocomplete="off" placeholder="e.g. Contract Signed">
+          </div>
+          <div class="form-group">
+            <label for="hc-col-type">Type</label>
+            <select id="hc-col-type"></select>
+            <div class="form-hint">
+              <strong>Date</strong> gives a real date picker, which is what lets <strong>Elapsed days</strong>
+              measure between two of them.
+            </div>
+          </div>
+          <div class="form-row" id="hc-col-range" hidden>
+            <div class="form-group">
+              <label for="hc-col-from">From</label>
+              <select id="hc-col-from"></select>
+            </div>
+            <div class="form-group">
+              <label for="hc-col-to">To</label>
+              <select id="hc-col-to"></select>
+            </div>
+          </div>
+          <div class="warn-box" id="hc-col-dur-warn" hidden>
+            Elapsed columns measure between two date columns — add a second date column first.
+          </div>
+          <div class="modal-actions">
+            <div class="right">
+              <button type="button" class="btn btn-secondary" id="hr-client-col-cancel">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="hr-client-col-save">Add Column</button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
 
     <div class="board-wrap">
@@ -382,17 +440,18 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=20"></script>
-  <script src="js/supabase.js?v=20"></script>
-  <script src="js/api.js?v=20"></script>
-  <script src="js/ui.js?v=20"></script>
-  <script src="js/auth.js?v=20"></script>
-  <script src="js/inbox.js?v=20"></script>
-  <script src="js/automations.js?v=20"></script>
-  <script src="js/changelog.js?v=20"></script>
-  <script src="js/reports.js?v=20"></script>
-  <script src="js/hr-roles.js?v=20"></script>
-  <script src="js/hr-sla.js?v=20"></script>
-  <script src="js/board.js?v=20"></script>
+  <script src="js/config.js?v=21"></script>
+  <script src="js/supabase.js?v=21"></script>
+  <script src="js/api.js?v=21"></script>
+  <script src="js/ui.js?v=21"></script>
+  <script src="js/auth.js?v=21"></script>
+  <script src="js/inbox.js?v=21"></script>
+  <script src="js/automations.js?v=21"></script>
+  <script src="js/changelog.js?v=21"></script>
+  <script src="js/reports.js?v=21"></script>
+  <script src="js/hr-roles.js?v=21"></script>
+  <script src="js/hr-clients.js?v=21"></script>
+  <script src="js/hr-sla.js?v=21"></script>
+  <script src="js/board.js?v=21"></script>
 </body>
 </html>

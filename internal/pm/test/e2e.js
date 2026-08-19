@@ -1,11 +1,12 @@
 // e2e.js — Vyom's end-to-end test suite (how-to: test/README.md; docs: ../ARCHITECTURE.md §9)
 //
 // Drives the real UI with Playwright against the LIVE Supabase backend.
-// 88 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
+// 91 checks: login gate, projects/boards/tasks, filters, inbox + toggles,
 // @mentions, roles/external scoping, tags, webhooks, client tags, status reorder +
 // transition mapping, sub-client status inheritance, hideable status columns,
 // the HR Stage Date and its filter, HR SLA flags, the task change log,
-// the Slack channel registry, daily reports and their editable message, cleanup.
+// the Slack channel registry, daily reports and their editable message,
+// the HR client tracker, cleanup.
 // All test data is namespaced ("E2E ...") — pre-cleaned at start, deleted at
 // the end; count assertions are scoped to the test project so live data is
 // never touched or asserted against.
@@ -1410,6 +1411,56 @@ async function expectToast(substr) {
     if (val !== "all") throw new Error(`expected the stale14 choice to reset, got "${val}"`);
     await page.click('.board-tab[data-tab="hiring"]');
     await page.waitForTimeout(300);
+  });
+
+  // ---------- HR client tracker (sql/17) ----------
+  await step("Client tracker: tabbed beside Roles Summary, with typed columns", async () => {
+    // Tabs only appear when a project has BOTH tables — with one, the card
+    // shows it directly rather than a single pointless tab. Turn both on so
+    // this exercises the two-table case.
+    await rest(`projects?id=eq.${hrId}`, {
+      method: "PATCH",
+      body: { features: { board_tabs: true, roles_card: true, sla: true, auto_date: true, clients_card: true } },
+    });
+    await page.goto(`${BASE}/board.html?project=${hrId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    if (!(await page.locator("#hr-table-tabs").isVisible()))
+      throw new Error("the HR table tabs are missing");
+    await page.click('.hr-table-tab[data-table="clients"]');
+    await page.waitForTimeout(400);
+    if (!(await page.locator("#hr-clients-panel").isVisible())) throw new Error("client panel not shown");
+    if (!(await page.locator("#hr-roles-panel").isHidden())) throw new Error("roles panel still visible");
+    if (!(await page.locator("#hr-clients-add-row").isVisible())) throw new Error("Add Client missing");
+  });
+
+  await step("Client tracker: an elapsed column computes from two dates", async () => {
+    await page.click("#hr-clients-add-row");
+    await page.waitForTimeout(900);
+    const setCell = async (key, val) => {
+      await page.click(`#hr-clients-table-wrap td[data-col-key="${key}"]`);
+      await page.fill(`#hr-clients-table-wrap td[data-col-key="${key}"] input`, val);
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(700);
+    };
+    await setCell("client_name", "E2E Client");
+    await setCell("signed_on", "2026-06-01");
+    await setCell("delivered_on", "2026-06-21");
+    const dur = (await page.textContent("#hr-clients-table-wrap .dur-cell")).trim();
+    if (!/20 days/.test(dur)) throw new Error(`expected "20 days", got "${dur}"`);
+    // …and it is stored as data, not as a computed value
+    const rows = await rest(`hr_clients?project_id=eq.${hrId}&select=values`);
+    if (rows[0].values.days_to_deliver !== undefined)
+      throw new Error("a computed column must never be stored");
+  });
+
+  await step("Client tracker: a date column an elapsed column needs cannot be removed", async () => {
+    await page.click('#hr-clients-table-wrap th .col-remove-btn[data-col-key="signed_on"]');
+    await page.waitForTimeout(400);
+    await expectToast("measured from this column");
+    const heads = await page.$$eval("#hr-clients-table-wrap th", (e) =>
+      e.map((x) => x.textContent.replace("×", "").trim())
+    );
+    if (!heads.some((h) => h.startsWith("Signed On"))) throw new Error("the column was removed anyway");
   });
 
   // ---------- Change log (sql/14) ----------

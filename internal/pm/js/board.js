@@ -109,6 +109,8 @@
       // HR features
       if (hasFeature("board_tabs")) initBoardTabs();
       if (hasFeature("roles_card") && typeof HrRoles !== "undefined") HrRoles.init(project);
+      if (hasFeature("clients_card") && typeof HrClients !== "undefined") HrClients.init(project);
+      if (hasFeature("roles_card") || hasFeature("clients_card")) initHrTableTabs();
       // Awaited on purpose: SLA rules have to be in memory before the first
       // renderBoard(), or no card is flagged until something re-renders.
       if (hasFeature("sla") && typeof HrSla !== "undefined") await HrSla.init(project, members);
@@ -207,10 +209,9 @@
         // be rebuilt for the tab we just moved to.
         fillDateFilter();
         // Show/hide roles card on tab switch
-        if (typeof HrRoles !== "undefined") {
-          if (activeTab === "hiring" && hasFeature("roles_card")) HrRoles.show();
-          else HrRoles.hide();
-        }
+        // The HR tables belong to the hiring side of the board only.
+        const card = document.getElementById("hr-roles-card");
+        if (card) card.hidden = activeTab !== "hiring" || !(hasFeature("roles_card") || hasFeature("clients_card"));
         renderBoard();
       });
     });
@@ -321,6 +322,36 @@
     }
     renderColumnsList();
     renderBoard();
+  }
+
+  // Roles Summary and the Client Tracker share one card. Only the tabs the
+  // project actually has are shown, so a board with one of them shows no tabs
+  // at all rather than a single pointless one.
+  function initHrTableTabs() {
+    const card = document.getElementById("hr-roles-card");
+    const tabs = document.getElementById("hr-table-tabs");
+    if (!card || !tabs) return;
+    card.hidden = false;
+    const has = { roles: hasFeature("roles_card"), clients: hasFeature("clients_card") };
+    tabs.querySelectorAll(".hr-table-tab").forEach((btn) => {
+      btn.hidden = !has[btn.dataset.table];
+      btn.addEventListener("click", () => showHrTable(btn.dataset.table));
+    });
+    tabs.hidden = !(has.roles && has.clients);
+    showHrTable(has.roles ? "roles" : "clients");
+  }
+
+  function showHrTable(which) {
+    for (const [name, panel, actions] of [
+      ["roles", "hr-roles-panel", "hr-roles-actions"],
+      ["clients", "hr-clients-panel", "hr-clients-actions"],
+    ]) {
+      document.getElementById(panel).hidden = name !== which;
+      document.getElementById(actions).hidden = name !== which;
+    }
+    document
+      .querySelectorAll("#hr-table-tabs .hr-table-tab")
+      .forEach((b) => b.classList.toggle("active", b.dataset.table === which));
   }
 
   function memberName(id) {

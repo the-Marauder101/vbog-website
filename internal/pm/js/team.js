@@ -67,7 +67,9 @@
       `<option value="">All clients</option><option value="none">No client</option>` +
       clientNames.map((n) => `<option value="${UI.esc(n)}">${UI.esc(n)}</option>`).join("");
 
-    document.getElementById("filter-due").innerHTML = UI.dateFilterOptions
+    // Both vocabularies: this list mixes cards that have due dates with HR
+    // cards that have Stage Dates, and the filter has to speak to both.
+    document.getElementById("filter-due").innerHTML = UI.mixedDateFilterOptions
       .map(([v, label]) => `<option value="${v}">${label}</option>`)
       .join("");
 
@@ -130,7 +132,7 @@
       if (filters.assignee && filters.assignee !== "none" && t.assignee_id !== filters.assignee) return false;
       if (filters.client === "none" && t.fields?.client) return false;
       if (filters.client && filters.client !== "none" && t.fields?.client !== filters.client) return false;
-      if (!UI.matchesDateFilter(t.due_date, filters.due, { from: filters.from, to: filters.to })) return false;
+      if (!UI.matchesMixedDateFilter(t, filters.due, { from: filters.from, to: filters.to })) return false;
       if (q && !t.title.toLowerCase().includes(q)) return false;
       return true;
     });
