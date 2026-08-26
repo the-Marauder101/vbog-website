@@ -2,7 +2,8 @@
 
 `e2e.js` drives the real UI (Playwright + Chromium) against the **live Supabase
 backend**. It creates namespaced test data ("E2E Test Project", "E2E Temp",
-"E2E External", "E2E Tag", "E2E Sub Client"), pre-cleans leftovers from crashed
+"E2E External", "E2E Tag", "E2E Sub Client", "E2E Channel", "E2E Report",
+"E2E Acme Corp"), pre-cleans leftovers from crashed
 runs, and deletes
 everything at the end — your real projects and tasks are never touched.
 
@@ -27,10 +28,17 @@ SUPA_MGMT_TOKEN=<your-supabase-personal-access-token> node internal/pm/test/e2e.
 - `VYOM_CHROMIUM` points at a pre-installed Chromium binary if the
   playwright-managed download isn't available (e.g. sandboxed environments).
 
-Expected output ends with `==== 91/91 passed ====` and exit code 0.
+Expected output ends with `==== 101/101 passed ====` and exit code 0.
 (The sub-client status-inheritance steps need `sql/12_status_inheritance.sql`
 applied to the live database first; the hidden-column, Stage Date and change-log
-steps need `sql/14_hidden_statuses_changelog.sql`.)
+steps need `sql/14_hidden_statuses_changelog.sql`; the daily-report steps need
+`sql/15`–`sql/16`, the client-tracker steps `sql/17`, and the client-registry and
+report-type steps `sql/18_report_types_clients.sql`.)
+
+**Run one copy at a time.** The suite talks to the live database, and its pre-clean
+deletes anything named `E2E*` — so a second concurrent run wipes the first one's
+fixtures mid-flight and both collapse into failures that have nothing to do with the
+code.
 
 ## Conventions when adding tests
 
