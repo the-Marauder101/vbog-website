@@ -42,7 +42,9 @@ async function step(name, fn) {
     try {
       await page.evaluate(
         (u) => {
-          localStorage.setItem("vyom_user", JSON.stringify(u));
+          // A null here would WRITE "null" and log the suite out — the restore
+          // would poison every later step instead of un-poisoning this one.
+          if (u) localStorage.setItem("vyom_user", JSON.stringify(u));
           document.querySelectorAll(".modal-overlay.open").forEach((m) => m.classList.remove("open"));
         },
         adminUser
@@ -209,6 +211,11 @@ async function expectToast(substr) {
     if (!(await page.locator('.nav-right a[href="settings.html"]').count()))
       throw new Error("admin should see Settings link");
     if (!(await page.locator(".inbox-bell").count())) throw new Error("inbox bell missing");
+    // Capture the session here, not only in become(): the first become() is
+    // far down the suite, so without this any earlier failure had nothing to
+    // restore to.
+    adminUser = await page.evaluate(() => JSON.parse(localStorage.getItem("vyom_user")));
+    if (!adminUser?.id) throw new Error("login did not store a usable session");
   });
 
   // ---------- Pre-clean any leftovers from previous runs ----------
