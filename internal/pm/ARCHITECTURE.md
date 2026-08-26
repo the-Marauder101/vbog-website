@@ -5,7 +5,9 @@
 > (so you don't hit them again). The README covers *what Vyom does*; this file
 > covers *how it's built*.
 
-Last updated: v22 (August 2026) — **report types** (activity / movement / status) with
+Last updated: v23 (August 2026) — the client registry becomes the **hub**: the HR client
+tracker picks from it, clients carry an owner and contact details, and renaming one moves
+every card, tracker row and report filter at once (§19). Previously: v22 (August 2026) — **report types** (activity / movement / status) with
 status, client and per-card detail filters, and the **client registry** that turns the
 task modal's Client field into a real dropdown (§17). Previously: v21 (August 2026) — the HR client tracker, and a date filter on All
 Tasks that understands both due dates and Stage Dates. Previously: v20 (August 2026) — the report message is editable from inside the app
@@ -51,14 +53,14 @@ Browser ── sbFetch() ──> https://<project>.supabase.co/rest/v1/<table>?<
 | `js/auth.js` | Login state (localStorage), page guards, role checks, nav user chip |
 | `js/inbox.js` | Bell + slide-in inbox panel (notifications + My Tasks) |
 | `js/reports.js` | The per-project Slack report: admin button, config modal, report type + filters, preview, test send (§13, §17) |
-| `js/hr-clients.js` | The HR client tracker: typed columns, computed elapsed-day columns (§15) |
+| `js/hr-clients.js` | The HR client tracker: typed columns, computed elapsed-day columns, registry-backed `client` columns (§15, §19) |
 | `js/changelog.js` | The change log: per-task History in the task modal + the board's project-wide History modal (read-only — §12) |
 | `js/dashboard.js` | Page logic for `vyom.html` |
 | `js/board.js` | Page logic for `board.html` (drag-drop, task modal, @mentions) |
 | `js/team.js` | Page logic for `team.html` |
 | `js/settings.js` | Page logic for `settings.html` |
 | `css/style.css` | All styles, one file, sectioned with `/* ---------- */` headers |
-| `sql/01…18_*.sql` | Migrations, numbered, idempotent — the full schema history |
+| `sql/01…19_*.sql` | Migrations, numbered, idempotent — the full schema history |
 | `img/vyom.svg` | The logo (also the favicon). Same SVG is inlined in each page's nav |
 
 **Script load order matters** (each page loads, in order):
@@ -79,7 +81,7 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 | `project_members` | Which projects an **external** user can see | composite PK (`project_id`,`member_id`), both cascade on delete |
 | `notifications` | Inbox rows | `member_id` recipient, `kind` (see §6), `actor_id`, `task_id`/`project_id` (cascade — deleting a task cleans its notifications), `message`, `read`, `data jsonb` for future payloads |
 | `tags` | Central tag registry | `name` unique — the *only* place tags are created, which is what prevents duplicates |
-| `clients` | Central client registry (sql/18) | `name` unique, `active`. Feeds every Client dropdown. Cards still store the **name** in `tasks.fields.client`, not an id — see §17 |
+| `clients` | Central client registry (sql/18) | `name` unique, `active`. Feeds every Client dropdown. Cards still store the **name** in `tasks.fields.client`, not an id — see §17. Plus `owner_id` FK, `contact_name`, `contact_email`, `rate`, `notes` (sql/19 — §19) |
 | `webhooks` | Zapier fan-out targets | `url`, `project_id` (NULL = all projects), `events jsonb`, `active` |
 | `automations` | Per-project rules (sql/09) | `project_id` FK (rules NEVER cross projects), `trigger_type`, `conditions jsonb`, `action_type`, `action_config jsonb`, `active` |
 | `api_keys` | Native inbound API keys (sql/10) | `project_id` FK (a key writes to ONE project), `key` unique (`vyom_…`, DB-generated), `label`, `active`, `last_used_at` |
@@ -87,7 +89,7 @@ Run `sql/*.sql` **in numeric order** on a fresh project (SQL Editor). All are id
 | `slack_channels` | Registry of Slack incoming-webhook URLs (sql/15) — `label` unique, `url`, `active`. The ONLY place a Slack URL is stored; everything references a channel by id |
 | `daily_report_configs` | One scheduled report per row, scoped to a project (sql/15) — channel, scope (hiring/ops/both), send time + timezone, days, content toggles, `last_sent_on`; plus `template` and `member_ids` (sql/16); plus `report_type`, `filter_statuses`, `filter_from_statuses`, `filter_clients`, `detail_fields`, `max_cards` (sql/18 — §17) |
 | `daily_report_runs` | Every run's numbers — the trend series (sql/15). Writes revoked from `anon` |
-| `hr_clients` | Client tracker rows (sql/17) — `values` jsonb keyed by column key; definitions in `projects.hr_client_columns` with a per-column TYPE |
+| `hr_clients` | Client tracker rows (sql/17) — `values` jsonb keyed by column key; definitions in `projects.hr_client_columns` with a per-column TYPE (`text`\|`client`\|`date`\|`number`\|`duration` — `client` added in sql/19, §19) |
 | `task_changelog` | Every task change, one row per changed FIELD (sql/14) | `task_id` (**ON DELETE SET NULL** — history outlives the task), `task_title`/`actor_name` snapshots, `actor_id`, `action` (`created`\|`updated`\|`deleted`), `field`, `old_value`, `new_value`. **Written only by a trigger**; INSERT/UPDATE/DELETE/TRUNCATE are revoked from `anon` — see §12 |
 
 Also: `task_details` **view** (sql/04) joins human-readable names — used by webhook
@@ -265,7 +267,7 @@ adding tests.** Highlights:
   earlier step in the same block already raised a similar toast: toast matching is
   case-insensitive substring, so a stale toast can satisfy the wait immediately.
 - Keep the suite green: every new feature ships with tests (see `test/README.md`
-  for the current expected pass count — **101** as of v22).
+  for the current expected pass count — **105** as of v23).
 
 ## 10. Hideable status columns (v18)
 
@@ -515,7 +517,39 @@ Settings, and it is now the only source for the task modal's Client dropdown.
   Wiring the tracker's rows to this registry is an obvious next step, deliberately not
   taken here.
 
-## 18. Roadmap notes for the next builder
+## 19. The client registry as a hub (v23)
+
+sql/18 made `clients` the source of the Client dropdown on cards. sql/19 makes it the
+place a client actually *is*.
+
+- **A `client` column type on the HR tracker.** The tracker's typed columns (§15) gain a
+  fifth type beside text/date/number/duration. It stores exactly what a `text` column
+  stored — the client NAME — so no tracker row changed meaning; the cell is now a
+  dropdown off the registry. The migration seeds the registry from any name already
+  typed into a tracker cell *before* converting the column, or converting would strand a
+  value nobody could pick. A name the registry doesn't know still renders, flagged, and
+  stays selectable on the row that has it.
+- **Clients carry information**: `owner_id` (who at VBOG runs the account, `ON DELETE SET
+  NULL` like `tasks.assignee_id`), `contact_name`, `contact_email`, `rate`, `notes`.
+  Real columns, not jsonb — this is one global table with a fixed shape, unlike the
+  per-project tracker where the columns are the configurable part.
+- **`rename_client()` is what makes storing the name safe.** Cards, tracker rows and
+  report `filter_clients` all key on the name, so a rename has to move all of them in ONE
+  transaction — there must be no window where half the app points at a name that no
+  longer exists. It returns what it touched so the UI can say "renamed on 41 cards".
+  **Never PATCH `clients.name` directly**; that is the one write that would leave the
+  data inconsistent.
+- **`client_overview`** is a plain view joining each client to its card count, tracker
+  rows and project count. Not materialised: the numbers are small, and a stale count is
+  worse than a slightly slower Settings page. Note it is a VIEW — writes still go to
+  `clients`.
+- **Still not done, on purpose: `tasks.fields.client` does not become an id.** Every
+  filter, report and webhook payload keys on the name; an id would be a migration across
+  all of them, and the one thing it buys — rename safety — `rename_client()` already
+  buys. Revisit only if clients need to be referenced by objects too varied for a name
+  to identify.
+
+## 20. Roadmap notes for the next builder
 
 Deliberately not built yet, in rough priority order — the schema anticipates them:
 
@@ -534,10 +568,10 @@ Deliberately not built yet, in rough priority order — the schema anticipates t
 6. **Mobile layout**: CSS is desktop-first (≥1024px); the board needs a rethink.
 7. Sub-tasks, reporting, time tracking — nothing blocks them. `task_changelog` is
    the natural source for cycle-time reporting (time per stage per candidate).
-8. **Per-client information**, now that `clients` exists (§17): a client row is the
-   obvious home for an owner, an SLA, a contact, or a rate. The HR client tracker
-   (§15) should point its rows at this registry rather than keeping its own names —
-   two lists of clients is one too many, and the tracker's names are still free text.
+8. **A client page.** The registry now holds the facts (§19) and `client_overview` has
+   the counts; what's missing is one screen per client pulling its cards, its tracker
+   dates and its stage timings together. `filter_clients` already scopes reports, so the
+   data side is done.
 9. **Weekly / monthly reports.** `report_type` and the scheduler already carry the
    shape; what's missing is a window wider than "today" (`daily_report_runs` has the
    history, so a week-on-week comparison needs no backfill).

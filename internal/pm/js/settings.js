@@ -34,7 +34,6 @@
   let slackAvailable = true; // false until sql/15_daily_reports.sql has been run
   let slackDeleteArmedFor = null;
   let clients = [];
-  let clientUsage = {}; // name -> how many cards carry it
   let clientsAvailable = true; // false until sql/18_report_types_clients.sql has been run
   let clientDeleteArmedFor = null;
 
@@ -65,7 +64,7 @@
       }
       // And the client registry (sql/18), same isolation.
       try {
-        [clients, clientUsage] = await Promise.all([API.getClients(), API.getClientUsage()]);
+        clients = await API.getClientOverview();
       } catch (_) {
         clientsAvailable = false;
       }
@@ -360,12 +359,24 @@
   // payloads all key on it. This list only decides what can be picked, which is
   // what keeps one client from existing under three spellings.
 
+  // Which client rows have their detail panel open. Kept out of the data so a
+  // re-render never collapses the row somebody is in the middle of filling in.
+  const clientExpanded = new Set();
+
+  // Every per-client field except the name, which is a rename (see below).
+  const CLIENT_FIELDS = [
+    ["contact_name", "Contact", "text", "Who you speak to"],
+    ["contact_email", "Contact email", "email", "name@client.com"],
+    ["rate", "Rate", "text", "e.g. 8.33% or ₹50,000 / hire"],
+    ["notes", "Notes", "text", "Anything worth remembering"],
+  ];
+
   function renderClients() {
     const host = document.getElementById("clients-table");
     if (!host) return;
     if (!clientsAvailable) {
       host.innerHTML =
-        '<div class="form-hint">Clients need the <code>18_report_types_clients.sql</code> migration — run it in Supabase, then reload.</div>';
+        '<div class="form-hint">Clients need the <code>18_report_types_clients.sql</code> and <code>19_client_hub.sql</code> migrations — run them in Supabase, then reload.</div>';
       return;
     }
     if (!clients.length) {
@@ -373,37 +384,147 @@
         '<div class="form-hint">No clients yet — add your first one above. Cards can still be saved without one.</div>';
       return;
     }
+    const owners = members.filter((m) => m.active || clients.some((c) => c.owner_id === m.id));
     host.innerHTML = `
       <table class="data-table">
-        <thead><tr><th>Client</th><th style="width:90px;">Cards</th><th style="width:90px;">Active</th><th style="width:110px;"></th></tr></thead>
+        <thead><tr>
+          <th>Client</th><th style="width:150px;">Owner</th>
+          <th style="width:70px;">Cards</th><th style="width:80px;">Active</th><th style="width:140px;"></th>
+        </tr></thead>
         <tbody>
           ${clients
             .map((c) => {
-              const used = clientUsage[c.name] || 0;
+              const used = c.card_count || 0;
+              const open = clientExpanded.has(c.id);
+              const detail = CLIENT_FIELDS.map(
+                ([key, label, type, ph]) => `
+                  <div class="form-group" style="margin:0;">
+                    <label for="cl-${key}-${c.id}">${label}</label>
+                    <input type="${type}" id="cl-${key}-${c.id}" data-client-field="${key}"
+                           data-client-id="${c.id}" autocomplete="off"
+                           placeholder="${UI.esc(ph)}" value="${UI.esc(c[key] || "")}">
+                  </div>`
+              ).join("");
               return `
                 <tr class="${c.active ? "" : "inactive-row"}">
-                  <td style="font-weight:600;">${UI.esc(c.name)}</td>
-                  <td style="color:var(--muted);">${used}</td>
+                  <td>
+                    <input type="text" class="login-code-input" style="font-weight:600;"
+                           data-client-rename="${c.id}" value="${UI.esc(c.name)}" autocomplete="off">
+                  </td>
+                  <td>
+                    <select data-client-owner="${c.id}">
+                      <option value="">Unassigned</option>
+                      ${owners
+                        .map(
+                          (m) =>
+                            `<option value="${m.id}"${m.id === c.owner_id ? " selected" : ""}>${UI.esc(m.name)}${m.active ? "" : " (inactive)"}</option>`
+                        )
+                        .join("")}
+                    </select>
+                  </td>
+                  <td style="color:var(--muted);" title="${used} card${used === 1 ? "" : "s"} across ${c.project_count || 0} project${c.project_count === 1 ? "" : "s"}${c.tracker_rows ? `, ${c.tracker_rows} tracker row${c.tracker_rows === 1 ? "" : "s"}` : ""}">${used}</td>
                   <td>
                     <label class="switch">
                       <input type="checkbox" data-client-active="${c.id}" ${c.active ? "checked" : ""}>
                       <span class="slider"></span>
                     </label>
                   </td>
-                  <td style="text-align:right;">
+                  <td style="text-align:right;white-space:nowrap;">
+                    <button class="btn btn-secondary" data-client-toggle="${c.id}" style="padding:4px 8px;font-size:12px;">${open ? "Hide" : "Details"}</button>
                     ${
-                      used
-                        ? `<span class="form-hint" style="margin:0;" title="Pause it instead — deleting would orphan ${used} card${used === 1 ? "" : "s"}">In use</span>`
+                      used || c.tracker_rows
+                        ? `<span class="form-hint" style="margin:0 0 0 4px;" title="Pause it instead — deleting would orphan ${used} card${used === 1 ? "" : "s"}">In use</span>`
                         : `<button class="btn btn-danger" data-client-delete="${c.id}" style="padding:4px 8px;font-size:12px;">${
                             clientDeleteArmedFor === c.id ? "Confirm" : "Delete"
                           }</button>`
                     }
+                  </td>
+                </tr>
+                <tr ${open ? "" : "hidden"}>
+                  <td colspan="5" style="background:var(--bg, #F7F9FC);">
+                    <div class="form-row" style="margin:0;">${detail}</div>
                   </td>
                 </tr>`;
             })
             .join("")}
         </tbody>
       </table>`;
+
+    host.querySelectorAll("[data-client-toggle]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.clientToggle;
+        clientExpanded.has(id) ? clientExpanded.delete(id) : clientExpanded.add(id);
+        renderClients();
+      });
+    });
+
+    // The detail fields: saved on blur, same as the Login ID column above.
+    host.querySelectorAll("[data-client-field]").forEach((input) => {
+      const save = async () => {
+        const c = clients.find((x) => x.id === input.dataset.clientId);
+        const key = input.dataset.clientField;
+        const val = input.value.trim() || null;
+        if (!c || val === (c[key] || null)) return;
+        try {
+          await API.updateClient(c.id, { [key]: val });
+          c[key] = val;
+        } catch (e) {
+          input.value = c[key] || "";
+          UI.toast(e.message);
+        }
+      };
+      input.addEventListener("blur", save);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); });
+    });
+
+    host.querySelectorAll("[data-client-owner]").forEach((sel) => {
+      UI.enhanceSelect(sel);
+      sel.addEventListener("change", async () => {
+        const c = clients.find((x) => x.id === sel.dataset.clientOwner);
+        const prev = c.owner_id;
+        try {
+          await API.updateClient(c.id, { owner_id: sel.value || null });
+          c.owner_id = sel.value || null;
+        } catch (e) {
+          sel.value = prev || "";
+          UI.syncSelect(sel);
+          UI.toast(e.message);
+        }
+      });
+    });
+
+    // Renaming is NOT a PATCH: cards, tracker rows and report filters all store
+    // the name, so it goes through rename_client() which moves every one of
+    // them in a single transaction (sql/19).
+    host.querySelectorAll("[data-client-rename]").forEach((input) => {
+      const save = async () => {
+        const c = clients.find((x) => x.id === input.dataset.clientRename);
+        const name = input.value.trim();
+        if (!c || name === c.name) return;
+        if (!name) {
+          input.value = c.name;
+          return;
+        }
+        try {
+          const r = await API.renameClient(c.id, name);
+          const res = Array.isArray(r) ? r[0] : r;
+          c.name = name;
+          const moved = (res?.tasks || 0) + (res?.tracker || 0);
+          UI.toast(
+            moved
+              ? `Renamed to “${name}” on ${moved} card${moved === 1 ? "" : "s"}.`
+              : `Renamed to “${name}”.`,
+            "success"
+          );
+          renderClients();
+        } catch (e) {
+          input.value = c.name;
+          UI.toast(/already exists/i.test(e.message) ? `A client named “${name}” already exists.` : e.message);
+        }
+      };
+      input.addEventListener("blur", save);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); });
+    });
 
     host.querySelectorAll("[data-client-active]").forEach((box) => {
       box.addEventListener("change", async () => {
@@ -430,6 +551,7 @@
         try {
           await API.deleteClient(id);
           clients = clients.filter((c) => c.id !== id);
+          clientExpanded.delete(id);
           clientDeleteArmedFor = null;
           UI.toast("Client deleted.", "success");
           renderClients();
@@ -458,7 +580,9 @@
     }
     try {
       const created = await API.createClient(name);
-      clients.push(created);
+      // createClient returns the raw row; the list holds client_overview rows,
+      // so give the new one the counts it would have had (all zero).
+      clients.push({ ...created, card_count: 0, tracker_rows: 0, project_count: 0 });
       clients.sort((a, b) => a.name.localeCompare(b.name));
       input.value = "";
       UI.toast(`Client “${created.name}” added.`, "success");

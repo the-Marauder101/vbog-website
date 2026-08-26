@@ -28,12 +28,13 @@ SUPA_MGMT_TOKEN=<your-supabase-personal-access-token> node internal/pm/test/e2e.
 - `VYOM_CHROMIUM` points at a pre-installed Chromium binary if the
   playwright-managed download isn't available (e.g. sandboxed environments).
 
-Expected output ends with `==== 101/101 passed ====` and exit code 0.
+Expected output ends with `==== 105/105 passed ====` and exit code 0.
 (The sub-client status-inheritance steps need `sql/12_status_inheritance.sql`
 applied to the live database first; the hidden-column, Stage Date and change-log
 steps need `sql/14_hidden_statuses_changelog.sql`; the daily-report steps need
 `sql/15`–`sql/16`, the client-tracker steps `sql/17`, and the client-registry and
-report-type steps `sql/18_report_types_clients.sql`.)
+report-type steps `sql/18_report_types_clients.sql`; the client rename and
+tracker-dropdown steps need `sql/19_client_hub.sql`.)
 
 **Run one copy at a time.** The suite talks to the live database, and its pre-clean
 deletes anything named `E2E*` — so a second concurrent run wipes the first one's

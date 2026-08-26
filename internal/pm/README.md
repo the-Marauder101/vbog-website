@@ -36,7 +36,7 @@ an access level, and (for externals) a list of granted projects.
 ## Database
 
 Supabase project `mejebezwvyfkhufkgkej` — already set up. To rebuild on a fresh
-project, run the files in `sql/` in numeric order (01→18) in the SQL Editor; all are
+project, run the files in `sql/` in numeric order (01→19) in the SQL Editor; all are
 idempotent. Schema details in ARCHITECTURE.md §3.
 
 If the frontend shows "Database not set up", the migrations haven't been run.
@@ -76,10 +76,10 @@ on the dashboard and their tasks are **excluded from All Tasks and its counts by
 default** — flip "Include sub-client tasks" in the All Tasks filter bar to see them
 (the choice is remembered per browser).
 
-**Don't need a whole child project?** Use the task-level **Client** tag instead:
-open any task and fill the Client field (it suggests names already used in that
-project). The board and All Tasks each get a Client filter, and tagged tasks show
-a teal client chip. Sub-client projects remain the right tool when a client needs
+**Don't need a whole child project?** Use the task-level **Client** instead:
+open any task and pick from the Client dropdown (the list is managed in
+Settings → Clients). The board and All Tasks each get a Client filter, and tagged
+tasks show a teal client chip. Sub-client projects remain the right tool when a client needs
 their own board, statuses, or external access.
 
 Sub-clients can either **inherit the parent's status columns** (the default — the
@@ -283,8 +283,19 @@ every filter and report was concerned.
 - Everything already in use was added to the list automatically, so nothing changed on
   existing cards.
 
-Not the same thing as the **HR client tracker** below — that tracks the dates one client
-passes through on an HR board. This is simply the list of client names.
+**What a client can hold.** Hit **Details** on any client for its contact, contact email,
+rate and notes — one place for the things that otherwise live in someone's head. **Owner**
+is who at VBOG runs the account. The **Cards** number shows how much work is filed under
+that client (hover for the project and tracker counts too).
+
+**Renaming is safe.** Change the name in Settings and it is applied to every card, every
+client-tracker row and every report filter in one go — you'll get "Renamed to X on 21
+cards". Nothing is left pointing at the old spelling. It refuses a name another client
+already has, including a different capitalisation of it.
+
+The **HR client tracker** below now picks from this same list, so a client can't be
+"Newmetech" on a card and "NewMeTech" in the tracker. A tracker row holding a name the
+list doesn't know is flagged with a small **?** — add it in Settings and the two line up.
 
 ## HR client tracker
 

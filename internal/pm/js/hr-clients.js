@@ -10,6 +10,11 @@
 // they are COMPUTED from two date columns at render time, never stored, so an
 // elapsed time can't drift out of sync with the dates behind it.
 //
+// A `client` column (sql/19) is a dropdown off the central registry rather than
+// free text. It stores the same thing a text column did — the NAME — so no row
+// changed meaning; what changed is that a client can no longer arrive here
+// spelled differently from the way it is spelled on the cards.
+//
 // Column definitions live in projects.hr_client_columns; row values live in
 // hr_clients.values, keyed by column key — so adding a column is a config
 // change, never a migration.
@@ -22,7 +27,7 @@ const HrClients = (() => {
   let deleteArmedFor = null;
 
   const DEFAULT_COLUMNS = [
-    { key: "client_name", label: "Client", type: "text" },
+    { key: "client_name", label: "Client", type: "client" },
     { key: "signed_on", label: "Signed On", type: "date" },
     { key: "requirement_on", label: "Requirement Received", type: "date" },
     { key: "first_profiles_on", label: "Profiles Shared", type: "date" },
@@ -32,7 +37,18 @@ const HrClients = (() => {
     { key: "notes", label: "Notes", type: "text" },
   ];
 
-  const TYPE_LABELS = { text: "Text", date: "Date", number: "Number", duration: "Elapsed days" };
+  const TYPE_LABELS = {
+    text: "Text",
+    client: "Client (from the registry)",
+    date: "Date",
+    number: "Number",
+    duration: "Elapsed days",
+  };
+
+  // The registry, for `client` columns. Empty is survivable: the cell falls
+  // back to plain text, so a board never loses its Client column waiting on a
+  // migration or an empty Settings list.
+  let clients = [];
 
   async function init(proj) {
     project = proj;
@@ -40,7 +56,10 @@ const HrClients = (() => {
     const card = document.getElementById("hr-clients-panel");
     if (!card) return;
     try {
-      rows = await API.getHrClients(project.id);
+      [rows, clients] = await Promise.all([
+        API.getHrClients(project.id),
+        API.getClients().catch(() => []),
+      ]);
     } catch (e) {
       card.innerHTML = /does not exist|relation|schema cache/i.test(e.message)
         ? '<div class="form-hint">The client tracker needs the 17_hr_client_tracker.sql migration — run it in Supabase first.</div>'
@@ -77,10 +96,27 @@ const HrClients = (() => {
     return `<span class="dur-chip ${cls}">${d} day${Math.abs(d) === 1 ? "" : "s"}</span>`;
   }
 
+  // What a `client` cell can offer: the active registry, plus whatever this
+  // row already holds. A name typed before the column became a dropdown (or a
+  // client since paused) stays selectable — converting a column must never
+  // silently blank the cell it converted.
+  function clientOptions(current) {
+    const names = clients.filter((c) => c.active).map((c) => c.name);
+    if (current && !names.includes(current)) names.push(current);
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+  }
+
+  const inRegistry = (name) => clients.some((c) => c.name === name);
+
   function cellDisplay(row, col) {
     const raw = row.values?.[col.key] ?? "";
     if (col.type === "duration") return durationCell(row, col);
     if (col.type === "date") return raw ? UI.esc(UI.fmtDate(String(raw).slice(0, 10))) : "";
+    // Flag a name the registry doesn't know: it won't group with the cards
+    // carrying the "same" client, which is the exact problem worth seeing.
+    if (col.type === "client" && raw && clients.length && !inRegistry(raw)) {
+      return `${UI.esc(raw)} <span class="col-type" title="Not in the client list — add it in Settings so cards and this table group together">?</span>`;
+    }
     return UI.esc(raw);
   }
 
@@ -149,12 +185,29 @@ const HrClients = (() => {
     td.classList.add("editing");
     const raw = row.values?.[colKey] ?? "";
     td.innerHTML = "";
-    const input = document.createElement("input");
+
+    // A client cell is a picker, not a text box — that is the whole point of
+    // the type. With an empty registry it degrades to text rather than
+    // offering a dropdown with nothing in it.
+    const asPicker = type === "client" && (clients.length > 0 || raw);
+    const input = document.createElement(asPicker ? "select" : "input");
     input.className = "cell-edit-input";
-    input.type = type === "date" ? "date" : type === "number" ? "number" : "text";
-    input.value = type === "date" ? String(raw).slice(0, 10) : raw;
+    if (asPicker) {
+      input.innerHTML =
+        `<option value="">— none —</option>` +
+        clientOptions(raw)
+          .map((n) => `<option value="${UI.esc(n)}"${n === raw ? " selected" : ""}>${UI.esc(n)}</option>`)
+          .join("");
+      input.value = raw;
+    } else {
+      input.type = type === "date" ? "date" : type === "number" ? "number" : "text";
+      input.value = type === "date" ? String(raw).slice(0, 10) : raw;
+    }
     td.appendChild(input);
     input.focus();
+    // Commit on pick: a select has no meaningful "typing", so waiting for blur
+    // just leaves the row looking unsaved.
+    if (asPicker) input.addEventListener("change", () => commitEdit());
 
     input.addEventListener("blur", () => commitEdit());
     input.addEventListener("keydown", (e) => {
@@ -172,7 +225,7 @@ const HrClients = (() => {
   async function commitEdit() {
     if (!editingCell) return;
     const td = editingCell;
-    const input = td.querySelector("input");
+    const input = td.querySelector("input, select");
     if (!input) return;
     const rowId = td.dataset.rowId;
     const colKey = td.dataset.colKey;
