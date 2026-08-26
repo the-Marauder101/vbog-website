@@ -626,13 +626,13 @@ async function expectToast(substr) {
     await page.fill("#m-role", "QA");
     await page.click('#add-member-form button[type="submit"]');
     await expectToast("Member added");
-    await page.locator("tr", { hasText: "E2E Temp" }).waitFor({ timeout: 5000 });
+    await page.locator("#members-table tr", { hasText: "E2E Temp" }).waitFor({ timeout: 5000 });
   });
 
   await step("Delete blocked while member has tasks; allowed after unassigning", async () => {
     const tempId = (await rest("team_members?name=eq.E2E%20Temp&select=id"))[0].id;
     await rest(`tasks?id=eq.${zapTaskId}`, { method: "PATCH", body: { assignee_id: tempId } });
-    const row = page.locator("tr", { hasText: "E2E Temp" });
+    const row = page.locator("#members-table tr", { hasText: "E2E Temp" });
     await row.locator("[data-delete]").click();
     await expectToast("has tasks assigned");
     await rest(`tasks?id=eq.${zapTaskId}`, { method: "PATCH", body: { assignee_id: depeshId } });
@@ -640,11 +640,11 @@ async function expectToast(substr) {
     await row.locator("[data-delete]", { hasText: "Confirm" }).click(); // confirm
     await expectToast("Member deleted");
     await page.waitForTimeout(300);
-    if (await page.locator("tr", { hasText: "E2E Temp" }).count()) throw new Error("row still present");
+    if (await page.locator("#members-table tr", { hasText: "E2E Temp" }).count()) throw new Error("row still present");
   });
 
   await step("Deactivate toggle hides member from assignee dropdown", async () => {
-    const row = page.locator("tr", { hasText: "Rihen" });
+    const row = page.locator("#members-table tr", { hasText: "Rihen" });
     await row.locator('.switch .slider').click();
     await expectToast("deactivated");
     await page.goto(`${BASE}/board.html?project=${projectId}`);
@@ -654,7 +654,7 @@ async function expectToast(substr) {
     if (labels.some((l) => l.trim() === "Rihen")) throw new Error("inactive member still in dropdown");
     await page.click("#task-cancel");
     await page.goto(`${BASE}/settings.html`);
-    await page.locator("tr", { hasText: "Rihen" }).locator('.switch .slider').click();
+    await page.locator("#members-table tr", { hasText: "Rihen" }).locator('.switch .slider').click();
     await expectToast("activated");
   });
 
@@ -838,7 +838,7 @@ async function expectToast(substr) {
     await choose("m-access", { label: "External" });
     await page.click('#add-member-form button[type="submit"]');
     await expectToast("External user added");
-    const row = page.locator("tr", { hasText: "E2E External" });
+    const row = page.locator("#members-table tr", { hasText: "E2E External" });
     await row.waitFor({ timeout: 5000 });
     extId = (await rest("team_members?login_code=eq.e2e-ext&select=id"))[0].id;
     const accessBtn = row.locator("[data-access]");
@@ -894,7 +894,7 @@ async function expectToast(substr) {
   await step("Roles: login ID can be changed inline from Settings", async () => {
     await become("depesh");
     await page.goto(`${BASE}/settings.html`);
-    const row = page.locator("tr", { hasText: "E2E External" });
+    const row = page.locator("#members-table tr", { hasText: "E2E External" });
     await row.waitFor({ timeout: 8000 });
     const input = row.locator(".login-code-input");
     await input.fill("e2e-ext-2");
@@ -909,7 +909,7 @@ async function expectToast(substr) {
   });
 
   await step("Roles: delete external user (access rows cascade)", async () => {
-    const row = page.locator("tr", { hasText: "E2E External" });
+    const row = page.locator("#members-table tr", { hasText: "E2E External" });
     await row.locator("[data-delete]").click(); // arm
     await row.locator("[data-delete]", { hasText: "Confirm" }).click();
     await expectToast("Member deleted");

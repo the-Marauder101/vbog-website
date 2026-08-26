@@ -51,5 +51,9 @@ code.
   page) — not through UI state alone.
 - Scope every count assertion to the E2E project; live user data must never
   affect a test result.
+- **Scope row locators to their table** (`#members-table tr`, not `tr`). Settings
+  now renders several tables, and the Clients table's Owner dropdown contains
+  every member name — so a page-wide `tr` filtered by a person's name matches
+  client rows too.
 - Clean up any rows you create, and add matching pre-clean lines at the top so
   a crashed run can't poison the next one.
