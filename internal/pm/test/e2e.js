@@ -494,16 +494,24 @@ async function expectToast(substr) {
     await page
       .locator("#add-client-form button[type=submit]:not([disabled])")
       .waitFor({ timeout: 15000 });
-    await page.click("[data-client-toggle]");
+    // Scope to OUR client's row: the registry also holds real ones, and the
+    // first Details button on the page belongs to whichever sorts first.
     const id = (await rest("clients?name=eq.E2E%20Acme%20Corp&select=id"))[0].id;
+    await page.click(`[data-client-toggle="${id}"]`);
     await page.fill(`#cl-contact_name-${id}`, "E2E Contact");
     await page.fill(`#cl-rate-${id}`, "8.33%");
-    await page.click("#clients-table");           // blur commits, like the Login ID column
-    const rows = await waitForRows(
-      "clients?name=eq.E2E%20Acme%20Corp&contact_name=eq.E2E%20Contact&select=rate"
-    );
-    if (rows.length !== 1) throw new Error("contact details not saved");
-    if (rows[0].rate !== "8.33%") throw new Error(`rate = ${rows[0].rate}`);
+    // Blur is what commits, same as the Login ID column above.
+    await page.$eval(`#cl-rate-${id}`, (el) => el.blur());
+    // Each field saves on its own blur, so poll until the LAST one lands —
+    // keying the wait on the first would let the assertion start mid-flight.
+    let row = null;
+    for (let i = 0; i < 15; i++) {
+      row = (await rest("clients?name=eq.E2E%20Acme%20Corp&select=contact_name,rate"))[0];
+      if (row?.contact_name && row?.rate) break;
+      await page.waitForTimeout(300);
+    }
+    if (row?.contact_name !== "E2E Contact") throw new Error(`contact = ${row?.contact_name}`);
+    if (row?.rate !== "8.33%") throw new Error(`rate = ${row?.rate}`);
   });
 
   await step("Client registry: renaming moves every card that used the old name", async () => {
