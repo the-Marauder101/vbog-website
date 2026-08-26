@@ -20,9 +20,9 @@ manager for the whole team, replacing Asana. Lives at **https://v-bog.com/intern
 |---|---|
 | `login.html` | Sign-in gate — enter your Login ID. Stays signed in per device; Logout in the nav. |
 | `vyom.html` (index.html redirects here) | Dashboard — project cards with task/overdue counts, type badge (Internal/Client), tag chips, and a tag filter. Create/edit/archive projects with **custom status columns per project** — drag the chips to reorder columns; removing a column that still has tasks walks you through moving them (no task is ever stranded). |
-| `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop, task modal with **@mentions** in notes and a **Client** tag (label a task with the end client it's for — lighter than a sub-client project). Filters: assignee, client, due date (presets + custom range). **Columns** hides/shows status columns; **History** shows every recorded change to the project's tasks. |
+| `board.html?project=<id>` | Kanban board — one column per status, drag-and-drop, task modal with **@mentions** in notes and a **Client** picked from the central list (label a task with the end client it's for — lighter than a sub-client project). Filters: assignee, client, due date (presets + custom range). **Columns** hides/shows status columns; **History** shows every recorded change to the project's tasks. |
 | `team.html` | All Tasks — master list across every project. Filter by project, assignee, client, due date, or title search. |
-| `settings.html` | **Admin only.** Users & access (add users, roles, login IDs, per-project access for externals), the central **tag registry**, **Slack channels**, and Zapier integrations. |
+| `settings.html` | **Admin only.** Users & access (add users, roles, login IDs, per-project access for externals), the central **tag registry**, the **client registry** (the list every card's Client dropdown picks from), **Slack channels**, and Zapier integrations. |
 
 Every page also has the **Inbox** (bell icon): notifications (task assignments,
 @mentions — each with a read/unread toggle) and My Tasks (your open work grouped by
@@ -36,7 +36,7 @@ an access level, and (for externals) a list of granted projects.
 ## Database
 
 Supabase project `mejebezwvyfkhufkgkej` — already set up. To rebuild on a fresh
-project, run the files in `sql/` in numeric order (01→14) in the SQL Editor; all are
+project, run the files in `sql/` in numeric order (01→18) in the SQL Editor; all are
 idempotent. Schema details in ARCHITECTURE.md §3.
 
 If the frontend shows "Database not set up", the migrations haven't been run.
@@ -192,7 +192,8 @@ box holds the text that gets posted, with tags that fill themselves in:
 ```
 
 Available tags: `{project}` `{date}` `{timezone}` `{summary}` `{added_total}`
-`{moved_total}` `{people}` `{added}` `{moved}` `{pipeline}` `{clients}` `{vs_yesterday}`.
+`{moved_total}` `{people}` `{added}` `{moved}` `{pipeline}` `{clients}` `{vs_yesterday}`
+`{cards}` `{card_total}` `{status_list}`.
 Slack formatting works — `*bold*`, `_italic_`, `:emoji:`. A tag with nothing to report
 disappears along with its blank line, so a quiet day never leaves an empty heading behind.
 **Preview** shows the result before you save, and **Reset to the default message** puts the
@@ -226,6 +227,64 @@ vs yesterday — added 9 (+5), moved 6 (+5)
 Reports are admin-managed, and each project can have more than one — e.g. hiring to one
 channel and Ops to another. The modal also shows the **last two weeks** of numbers, so
 day-over-day movement is visible without leaving Vyom.
+
+### Three kinds of report
+
+The **Report type** dropdown at the top of the form changes what the report is *about*,
+not just how it reads. Counts answer "how much"; the other two answer "which".
+
+| Type | What it posts | Use it for |
+|---|---|---|
+| **Activity** | Counts per person, per stage — the original digest | "What did the team get through today?" |
+| **Movement** | A line per card that changed status today, with the move it made | "Show me everything that reached R3 today" |
+| **Status** | A line per card sitting in the statuses you choose, right now | "Who is still stuck in New Candidates?" |
+
+Movement and status reports unlock three filters:
+
+- **Moved out of / Moved into** (movement) or **In status** (status) — pick the columns
+  you care about. Nothing picked on a movement report means any move; a status report
+  needs at least one column, or it would just be the whole board.
+- **Clients** — narrow to one or more clients. Nothing picked means all of them.
+- **Show on each card** — what gets printed beside every card: **Client**, Assignee,
+  Days in stage, Who moved it, Current status, Email, Date. This is how a report says
+  *which client* a card belongs to rather than only how many moved.
+- **Most cards to list** caps the message (Slack has a length limit). If the cap bites,
+  the message says "…and 12 more" rather than quietly stopping.
+
+Each type comes with its own default wording, and switching type swaps it in — unless
+you've edited the message, in which case your text is left alone. **Preview** always
+shows the form as it stands right now, including changes you haven't saved.
+
+A movement report looks like:
+
+```
+GetClosers — Movement · Wed 26 Aug 2026
+
+7 card(s) moved
+
+• Gowthamraj V — New Candidates → R1 cleared · Newmetech · Sarika · by Sarika
+• CHANDRIKA SHARMA — New Candidates → R1 Rejected · MDP · Sarika · by Sarika
+…and 5 more
+```
+
+## Clients
+
+Every card's **Client** field is a dropdown, filled from one central list in
+**Settings → Clients**. It used to be a free-text box, which meant the same client could
+arrive as “Newmetech”, “NewMeTech” and “newmetech” — three different clients as far as
+every filter and report was concerned.
+
+- **Add a client** in Settings and it appears in the dropdown on every board.
+- **Pause a client** to take it out of the dropdown without touching a single existing
+  card. Cards already filed under it keep their client, and still show it when you open
+  them — pausing only stops *new* cards being filed there.
+- **Delete** is offered only once no card uses the name. For a client with history,
+  pause it instead.
+- Everything already in use was added to the list automatically, so nothing changed on
+  existing cards.
+
+Not the same thing as the **HR client tracker** below — that tracks the dates one client
+passes through on an HR board. This is simply the list of client names.
 
 ## HR client tracker
 

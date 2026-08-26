@@ -5,7 +5,10 @@
 //    externals (project_members table), activate/deactivate, guarded delete.
 // 2. Project tags: the central registry feeding every tag dropdown — deleting
 //    a tag also strips it from projects that use it.
-// 3. Zapier: outgoing webhooks table + incoming setup-snippet generator.
+// 3. Clients: the registry every card's Client dropdown picks from (sql/18) —
+//    pause takes a name out of new picks without touching existing cards.
+// 4. Slack channels: the one place a Slack webhook URL is ever typed.
+// 5. Zapier: outgoing webhooks table + incoming setup-snippet generator.
 // NOTE: the add-form submit buttons start disabled in the HTML and are enabled
 // after load() — a fast submit used to race the initial fetch and get wiped.
 
@@ -30,6 +33,10 @@
   let slackChannels = [];
   let slackAvailable = true; // false until sql/15_daily_reports.sql has been run
   let slackDeleteArmedFor = null;
+  let clients = [];
+  let clientUsage = {}; // name -> how many cards carry it
+  let clientsAvailable = true; // false until sql/18_report_types_clients.sql has been run
+  let clientDeleteArmedFor = null;
 
   const ROLE_LABELS = { admin: "Admin", member: "Member", external: "External" };
 
@@ -56,8 +63,15 @@
       } catch (_) {
         slackAvailable = false;
       }
+      // And the client registry (sql/18), same isolation.
+      try {
+        [clients, clientUsage] = await Promise.all([API.getClients(), API.getClientUsage()]);
+      } catch (_) {
+        clientsAvailable = false;
+      }
       render();
       renderTags();
+      renderClients();
       renderSlack();
       initIntegrations();
       initApiKeys();
@@ -335,6 +349,120 @@
       input.value = "";
       UI.toast(`Tag “${created.name}” added.`, "success");
       renderTags();
+    } catch (err) {
+      UI.toast(err.message);
+    }
+  });
+
+  // ================= Clients =================
+  // The registry behind every card's Client dropdown. Cards still store the
+  // NAME (tasks.fields.client), not an id — filters, reports and webhook
+  // payloads all key on it. This list only decides what can be picked, which is
+  // what keeps one client from existing under three spellings.
+
+  function renderClients() {
+    const host = document.getElementById("clients-table");
+    if (!host) return;
+    if (!clientsAvailable) {
+      host.innerHTML =
+        '<div class="form-hint">Clients need the <code>18_report_types_clients.sql</code> migration — run it in Supabase, then reload.</div>';
+      return;
+    }
+    if (!clients.length) {
+      host.innerHTML =
+        '<div class="form-hint">No clients yet — add your first one above. Cards can still be saved without one.</div>';
+      return;
+    }
+    host.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Client</th><th style="width:90px;">Cards</th><th style="width:90px;">Active</th><th style="width:110px;"></th></tr></thead>
+        <tbody>
+          ${clients
+            .map((c) => {
+              const used = clientUsage[c.name] || 0;
+              return `
+                <tr class="${c.active ? "" : "inactive-row"}">
+                  <td style="font-weight:600;">${UI.esc(c.name)}</td>
+                  <td style="color:var(--muted);">${used}</td>
+                  <td>
+                    <label class="switch">
+                      <input type="checkbox" data-client-active="${c.id}" ${c.active ? "checked" : ""}>
+                      <span class="slider"></span>
+                    </label>
+                  </td>
+                  <td style="text-align:right;">
+                    ${
+                      used
+                        ? `<span class="form-hint" style="margin:0;" title="Pause it instead — deleting would orphan ${used} card${used === 1 ? "" : "s"}">In use</span>`
+                        : `<button class="btn btn-danger" data-client-delete="${c.id}" style="padding:4px 8px;font-size:12px;">${
+                            clientDeleteArmedFor === c.id ? "Confirm" : "Delete"
+                          }</button>`
+                    }
+                  </td>
+                </tr>`;
+            })
+            .join("")}
+        </tbody>
+      </table>`;
+
+    host.querySelectorAll("[data-client-active]").forEach((box) => {
+      box.addEventListener("change", async () => {
+        const c = clients.find((x) => x.id === box.dataset.clientActive);
+        try {
+          await API.updateClient(c.id, { active: box.checked });
+          c.active = box.checked;
+          renderClients();
+        } catch (e) {
+          box.checked = !box.checked;
+          UI.toast(e.message);
+        }
+      });
+    });
+
+    host.querySelectorAll("[data-client-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.clientDelete;
+        if (clientDeleteArmedFor !== id) {
+          clientDeleteArmedFor = id;
+          renderClients();
+          return;
+        }
+        try {
+          await API.deleteClient(id);
+          clients = clients.filter((c) => c.id !== id);
+          clientDeleteArmedFor = null;
+          UI.toast("Client deleted.", "success");
+          renderClients();
+        } catch (e) {
+          UI.toast(e.message);
+        }
+      });
+    });
+  }
+
+  document.getElementById("add-client-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("client-name");
+    UI.clearFieldErrors(e.target);
+    const name = input.value.trim();
+    if (!name) {
+      UI.fieldError(input, "Client name is required.");
+      return;
+    }
+    // Case-insensitive, because near-duplicates are the exact thing this
+    // registry exists to prevent — the DB's UNIQUE is case-sensitive.
+    const clash = clients.find((c) => c.name.toLowerCase() === name.toLowerCase());
+    if (clash) {
+      UI.fieldError(input, `Already on the list as “${clash.name}”.`);
+      return;
+    }
+    try {
+      const created = await API.createClient(name);
+      clients.push(created);
+      clients.sort((a, b) => a.name.localeCompare(b.name));
+      input.value = "";
+      UI.toast(`Client “${created.name}” added.`, "success");
+      renderClients();
     } catch (err) {
       UI.toast(err.message);
     }

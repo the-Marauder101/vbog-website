@@ -37,9 +37,14 @@ async function step(name, fn) {
     } catch (_) {}
     // Put the session back to admin. Most steps assume it, and a step that
     // switched user then threw would otherwise poison everything after it.
+    // Same reasoning for a modal left open: it covers the board, so every
+    // later step would fail looking for cards it can't click.
     try {
       await page.evaluate(
-        (u) => localStorage.setItem("vyom_user", JSON.stringify(u)),
+        (u) => {
+          localStorage.setItem("vyom_user", JSON.stringify(u));
+          document.querySelectorAll(".modal-overlay.open").forEach((m) => m.classList.remove("open"));
+        },
         adminUser
       );
     } catch (_) {}
@@ -103,6 +108,19 @@ async function choose(selectId, opt) {
     ? wrap.locator(".dd-item", { hasText: opt.label }).first()
     : wrap.locator(`.dd-item[data-value="${opt.value}"]`);
   await item.click();
+}
+
+// Poll until a REST query returns `n` rows. Toasts are a fragile assertion for
+// "the write landed" — they auto-dismiss, and a click that fires the instant a
+// page finishes loading can miss the window. The row itself cannot lie.
+async function waitForRows(path, n = 1, tries = 15) {
+  let rows = [];
+  for (let i = 0; i < tries; i++) {
+    rows = await rest(path).catch(() => []);
+    if (rows.length === n) return rows;
+    await page.waitForTimeout(300);
+  }
+  return rows;
 }
 
 async function expectToast(substr) {
@@ -208,6 +226,8 @@ async function expectToast(substr) {
   }
   const leftoverChannels = await rest(`slack_channels?label=like.E2E*&select=id`).catch(() => []);
   for (const c of leftoverChannels) await rest(`slack_channels?id=eq.${c.id}`, { method: "DELETE" }).catch(() => {});
+  const leftoverClients = await rest(`clients?name=like.E2E*&select=id`).catch(() => []);
+  for (const c of leftoverClients) await rest(`clients?id=eq.${c.id}`, { method: "DELETE" }).catch(() => {});
   const leftoverTags = await rest(`tags?name=eq.E2E%20Tag&select=id`);
   for (const t of leftoverTags) await rest(`tags?id=eq.${t.id}`, { method: "DELETE" });
   consoleErrors.length = 0;
@@ -311,6 +331,9 @@ async function expectToast(substr) {
 
   await step("Edit task: fields load, save updates card in place", async () => {
     await page.locator(".task-card", { hasText: "Overdue e2e task" }).click();
+    // Read the fields only once the modal is actually open — otherwise a click
+    // that lands mid-render reads the previous (empty) state of the inputs.
+    await page.locator("#task-modal.open").waitFor({ timeout: 8000 });
     const notes = await page.inputValue("#t-notes");
     if (!notes.includes("Notes body")) throw new Error("notes not loaded in modal");
     await page.fill("#t-title", "Overdue e2e task (edited)");
@@ -389,13 +412,41 @@ async function expectToast(substr) {
     if ((await page.locator(".task-card").count()) !== 3) throw new Error("clear failed");
   });
 
-  // ---------- client tags (tasks.fields.client) ----------
+  // ---------- clients (registry in Settings -> tasks.fields.client) ----------
+  await step("Client registry: a client is added once in Settings", async () => {
+    await page.goto(`${BASE}/settings.html`);
+    // Wait for the submit button to be ENABLED, not for the table: #clients-table
+    // is static markup that is visible long before load() has fetched anything,
+    // and the buttons start disabled precisely so a fast submit can't race it.
+    await page
+      .locator("#add-client-form button[type=submit]:not([disabled])")
+      .waitFor({ timeout: 15000 });
+    await page.fill("#client-name", "E2E Acme Corp");
+    await page.click("#add-client-form button[type=submit]");
+    const rows = await waitForRows("clients?name=eq.E2E%20Acme%20Corp&select=*");
+    if (rows.length !== 1) throw new Error(`expected 1 client, got ${rows.length}`);
+    if (!rows[0].active) throw new Error("a new client should start active");
+  });
+
+  await step("Client registry: a near-duplicate spelling is refused", async () => {
+    await page.fill("#client-name", "e2e acme corp");
+    await page.click("#add-client-form button[type=submit]");
+    await page.waitForTimeout(400);
+    if (!(await page.locator(".field-error").count())) throw new Error("no inline error");
+    if ((await rest("clients?name=eq.e2e%20acme%20corp&select=id")).length)
+      throw new Error("a case-variant duplicate was stored");
+    await page.fill("#client-name", "");
+  });
+
   await step("Client tag: set on a task; chip shows; board filter narrows", async () => {
+    await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
     // The client filter starts hidden — no task in this project has a client yet
     if (!(await page.locator('.dd:has(#filter-client)').first().isHidden()))
       throw new Error("client filter visible with no client tags");
     await page.locator(".task-card", { hasText: "Future e2e task" }).click();
-    await page.fill("#t-client", "E2E Acme Corp");
+    // A dropdown off the registry, not free text — that is the v18 change.
+    await choose("t-client", { label: "E2E Acme Corp" });
     await page.click("#task-save");
     await expectToast("Task updated");
     const card = page.locator(".task-card", { hasText: "Future e2e task" });
@@ -409,13 +460,33 @@ async function expectToast(substr) {
     if ((await page.locator(".task-card").count()) !== 2) throw new Error("'No client' filter count wrong");
     await page.click("#filter-clear");
     if ((await page.locator(".task-card").count()) !== 3) throw new Error("clear did not reset client filter");
-    // datalist suggests the existing name in the task modal
+    // The card dropdown is fed by the registry, and "No client" stays available
     await page.locator(".add-task-btn").first().click();
-    const suggestions = await page.evaluate(() =>
-      [...document.querySelectorAll("#t-client-list option")].map((o) => o.value)
-    );
-    if (!suggestions.includes("E2E Acme Corp")) throw new Error("datalist suggestion missing");
+    const opts = await page.$$eval("#t-client option", (e) => e.map((o) => o.value));
+    if (!opts.includes("E2E Acme Corp")) throw new Error(`registry not offered: ${opts.join(", ")}`);
+    if (opts[0] !== "") throw new Error("a card must still be saveable with no client");
     await page.click("#task-cancel");
+  });
+
+  await step("Client registry: pausing one takes it out of the card dropdown", async () => {
+    const c = (await rest("clients?name=eq.E2E%20Acme%20Corp&select=id"))[0];
+    await rest(`clients?id=eq.${c.id}`, { method: "PATCH", body: { active: false } });
+    await page.reload();
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    // A new card can no longer be filed under it...
+    await page.locator(".add-task-btn").first().click();
+    let opts = await page.$$eval("#t-client option", (e) => e.map((o) => o.value));
+    if (opts.includes("E2E Acme Corp")) throw new Error("a paused client is still offered");
+    await page.click("#task-cancel");
+    // ...but the card that already uses it keeps it, rather than silently
+    // blanking the field the next time somebody opens the card.
+    await page.locator(".task-card", { hasText: "Future e2e task" }).click();
+    opts = await page.$$eval("#t-client option", (e) => e.map((o) => o.value));
+    if (!opts.includes("E2E Acme Corp")) throw new Error("an existing card lost its client");
+    if ((await page.$eval("#t-client", (e) => e.value)) !== "E2E Acme Corp")
+      throw new Error("the card's own client was not selected");
+    await page.click("#task-cancel");
+    await rest(`clients?id=eq.${c.id}`, { method: "PATCH", body: { active: true } });
   });
 
   await step("Client tag: All Tasks filter + chip", async () => {
@@ -1106,7 +1177,11 @@ async function expectToast(substr) {
       throw new Error(`remap text = ${await remap.innerText()}`);
     await choose("remap-sel-0", { label: "Done" });
     await page.click("#project-save");
-    await expectToast("project updated");
+    // Wait for the modal to CLOSE, not for a toast: the earlier save in this
+    // same step also toasts "Project updated", and toast matching is
+    // case-insensitive, so a still-visible stale toast let the assertions below
+    // run before the second save had landed.
+    await page.locator("#project-modal.open").waitFor({ state: "hidden", timeout: 8000 });
     await page.waitForTimeout(400);
     const rows = await rest(`tasks?id=eq.${subTaskId}&select=status`);
     if (rows[0].status !== "Done") throw new Error(`status = ${rows[0].status}`);
@@ -1192,8 +1267,16 @@ async function expectToast(substr) {
     const titles = await colTitles();
     for (const s of statuses) if (!titles.includes(s)) throw new Error(`${s} missing: ${titles}`);
     if (!(await page.locator("#hidden-cols-pill").isHidden())) throw new Error("pill still visible");
-    const row = (await rest(`projects?id=eq.${projectId}&select=hidden_statuses`))[0];
-    if (JSON.stringify(row.hidden_statuses) !== "[]") throw new Error("project set not cleared");
+    // Poll rather than assert once: the step above toggles several columns in
+    // quick succession and each one PATCHes, so a fixed wait can read the row
+    // while an earlier PATCH is still in flight behind the "Show all" one.
+    let hidden = null;
+    for (let i = 0; i < 10; i++) {
+      hidden = (await rest(`projects?id=eq.${projectId}&select=hidden_statuses`))[0].hidden_statuses;
+      if (JSON.stringify(hidden) === "[]") break;
+      await page.waitForTimeout(300);
+    }
+    if (JSON.stringify(hidden) !== "[]") throw new Error(`project set not cleared: ${JSON.stringify(hidden)}`);
   });
 
   await step("Columns: a non-admin's hide is local and never touches the project", async () => {
@@ -1549,13 +1632,13 @@ async function expectToast(substr) {
   let chanId, cfgId;
   await step("Slack registry: a channel is added once in Settings", async () => {
     await page.goto(`${BASE}/settings.html`);
-    await page.locator("#slack-table").waitFor({ timeout: 10000 });
-    await page.waitForTimeout(500);
+    await page
+      .locator("#add-slack-form button[type=submit]:not([disabled])")
+      .waitFor({ timeout: 15000 });
     await page.fill("#sc-label", "E2E Channel");
     await page.fill("#sc-url", "https://postman-echo.com/post");
     await page.click("#add-slack-form button[type=submit]");
-    await expectToast("Channel added");
-    const rows = await rest("slack_channels?label=eq.E2E%20Channel&select=*");
+    const rows = await waitForRows("slack_channels?label=eq.E2E%20Channel&select=*");
     if (rows.length !== 1) throw new Error(`expected 1 channel, got ${rows.length}`);
     chanId = rows[0].id;
   });
@@ -1703,6 +1786,106 @@ async function expectToast(substr) {
     await rest(`daily_report_configs?id=eq.${cfgId}`, { method: "PATCH", body: { member_ids: [] } });
   });
 
+  // ---------- report types, filters and card detail (sql/18) ----------
+  await step("Report type: switching to Movement swaps in that type's default message", async () => {
+    await page.goto(`${BASE}/board.html?project=${projectId}`);
+    await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
+    await page.click("#reports-btn");
+    await page.locator("#reports-modal.open").waitFor({ timeout: 5000 });
+    await page.click("[data-rp-edit]");
+    await page.waitForTimeout(300);
+    // The status pickers stay out of the way until a type actually uses them
+    if (!(await page.locator("#rp-filter-block").isHidden()))
+      throw new Error("an activity report should not show status filters");
+    await choose("rp-type", { value: "movement" });
+    await page.waitForTimeout(200);
+    if (await page.locator("#rp-filter-block").isHidden())
+      throw new Error("movement report has no status filters");
+    const tpl = await page.inputValue("#rp-template");
+    if (!tpl.includes("{cards}")) throw new Error(`movement default missing {cards}: ${tpl}`);
+  });
+
+  await step("Report type: an edited message survives a type change", async () => {
+    await page.fill("#rp-template", "MINE {cards}");
+    await choose("rp-type", { value: "snapshot" });
+    await page.waitForTimeout(200);
+    if (!(await page.inputValue("#rp-template")).startsWith("MINE"))
+      throw new Error("a typed message was overwritten by the type dropdown");
+    await choose("rp-type", { value: "movement" });
+    await page.waitForTimeout(200);
+  });
+
+  await step("Report type: a status report with no status picked is refused", async () => {
+    await choose("rp-type", { value: "snapshot" });
+    await page.waitForTimeout(200);
+    await page.click("#report-save");
+    await expectToast("at least one status");
+    await choose("rp-type", { value: "movement" });
+    await page.waitForTimeout(200);
+  });
+
+  await step("Report type: movement filters, detail fields and cap are saved", async () => {
+    await page.locator('#rp-statuses input[data-status="Doing"]').check();
+    await page.locator('#rp-details input[data-detail="client"]').check();
+    await page.locator('#rp-details input[data-detail="actor"]').check();
+    await page.fill("#rp-max", "5");
+    await page.click("#report-save");
+    await expectToast("Report updated");
+    await page.waitForTimeout(400);
+    const row = (await rest(`daily_report_configs?id=eq.${cfgId}&select=*`))[0];
+    if (row.report_type !== "movement") throw new Error(`report_type = ${row.report_type}`);
+    if (!row.filter_statuses.includes("Doing"))
+      throw new Error(`filter_statuses = ${JSON.stringify(row.filter_statuses)}`);
+    if (!row.detail_fields.includes("client")) throw new Error("detail_fields not saved");
+    if (row.max_cards !== 5) throw new Error(`max_cards = ${row.max_cards}`);
+    if (row.template !== "MINE {cards}") throw new Error(`template = ${row.template}`);
+  });
+
+  await step("Report type: a movement report lists the cards that moved, not just counts", async () => {
+    const r = await rest("rpc/daily_report_preview", {
+      method: "POST",
+      body: { p_config_id: cfgId },
+    });
+    const text = (Array.isArray(r) ? r[0] : r).text;
+    // "Overdue e2e task" was dragged Backlog -> Doing earlier in this run.
+    if (!text.includes("Overdue e2e task")) throw new Error(`card not listed: ${text}`);
+    if (!text.includes("Doing")) throw new Error(`the move itself is missing: ${text}`);
+  });
+
+  await step("Report type: a status filter that matched nothing says so", async () => {
+    const r = await rest("rpc/daily_report_preview", {
+      method: "POST",
+      body: { p_config_id: cfgId, p_statuses: ["Review"] },
+    });
+    const text = (Array.isArray(r) ? r[0] : r).text;
+    if (text.includes("Overdue e2e task"))
+      throw new Error(`an unsaved status filter was ignored by preview: ${text}`);
+    if (!/No cards moved/i.test(text)) throw new Error(`no empty-state line: ${text}`);
+  });
+
+  await step("Report type: a status report carries the client name onto each card", async () => {
+    // Wherever the client-tagged card ended up, a status report on that column
+    // has to name the client — that is the "send a report with the details"
+    // ask, and the reason the Client field became a registry dropdown.
+    const tagged = (
+      await rest(`tasks?project_id=eq.${projectId}&fields->>client=eq.E2E%20Acme%20Corp&select=status`)
+    )[0];
+    if (!tagged) throw new Error("the client-tagged task is gone");
+    const r = await rest("rpc/daily_report_preview", {
+      method: "POST",
+      body: {
+        p_config_id: cfgId,
+        p_template: "{card_total} in {status_list}\n{cards}",
+        p_report_type: "snapshot",
+        p_statuses: [tagged.status],
+        p_detail_fields: ["client"],
+      },
+    });
+    const text = (Array.isArray(r) ? r[0] : r).text;
+    if (!text.includes("E2E Acme Corp")) throw new Error(`client detail missing: ${text}`);
+    if (!text.includes(tagged.status)) throw new Error(`{status_list} not substituted: ${text}`);
+  });
+
   await step("Slack registry: a channel in use cannot be deleted", async () => {
     let refused = false;
     try {
@@ -1713,12 +1896,15 @@ async function expectToast(substr) {
     if (!refused) throw new Error("a channel with a live report was deleted");
   });
 
-  await step("Cleanup: reports, runs and the channel", async () => {
+  await step("Cleanup: reports, runs, the channel and the client", async () => {
     await rest(`daily_report_runs?config_id=eq.${cfgId}`, { method: "DELETE" }).catch(() => {});
     await rest(`daily_report_configs?id=eq.${cfgId}`, { method: "DELETE" });
     await rest(`slack_channels?id=eq.${chanId}`, { method: "DELETE" });
     if ((await rest("slack_channels?label=eq.E2E%20Channel&select=id")).length)
       throw new Error("channel not removed");
+    await rest("clients?name=like.E2E*", { method: "DELETE" }).catch(() => {});
+    if ((await rest("clients?name=like.E2E*&select=id").catch(() => [])).length)
+      throw new Error("client not removed");
   });
 
   // ---------- cleanup ----------

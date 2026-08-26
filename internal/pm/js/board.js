@@ -54,6 +54,7 @@
         API.getProject(projectId),
         API.getTasks(projectId),
         API.getMembers(),
+        loadClientRegistry(),
       ]);
       if (!project) {
         document.getElementById("board-title").textContent = "Project not found";
@@ -377,12 +378,37 @@
     });
   }
 
-  // ---- Client tags (stored in tasks.fields.client — no extra table) ----
-  // Distinct client names used in this project, for the filter + datalist
+  // ---- Clients ----
+  // Cards STORE the client name in tasks.fields.client (no id, no join) — that
+  // is what every filter, report and webhook payload already keys on. What
+  // changed in v22 (sql/18) is where the name comes FROM: the registry rather
+  // than whatever was typed, so "Newmetech" and "NewMeTech" stop being two
+  // clients. The registry is managed in Settings, like tags and Slack channels.
+  let clientRegistry = [];
+
+  // Distinct client names used in this project — the filter's options, and the
+  // fallback for the card dropdown if sql/18 has not been applied yet.
   function clientNames() {
     return [...new Set(tasks.map((t) => t.fields?.client).filter(Boolean))].sort((a, b) =>
       a.localeCompare(b)
     );
+  }
+
+  // What the card's Client dropdown offers: the active registry, plus this
+  // card's own value even if that client was since retired — editing an old
+  // card must never silently blank a field you didn't touch.
+  function clientOptions(current) {
+    const names = clientRegistry.length
+      ? clientRegistry.filter((c) => c.active).map((c) => c.name)
+      : clientNames();
+    if (current && !names.includes(current)) names.push(current);
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+  }
+
+  async function loadClientRegistry() {
+    // Degrades to the names already on the board if the migration is missing,
+    // so a board never loses its Client field waiting on a migration.
+    clientRegistry = await API.getClients().catch(() => []);
   }
 
   // (Re)build the client filter's options. Called at load and after every
@@ -825,11 +851,21 @@
     document.getElementById("task-save").textContent = task ? "Save Changes" : "Create Task";
     document.getElementById("t-title").value = task ? task.title : "";
     document.getElementById("t-notes").value = task ? task.notes || "" : "";
-    document.getElementById("t-client").value = task ? task.fields?.client || "" : "";
-    // Suggest client names already used in this project (free text still allowed)
-    document.getElementById("t-client-list").innerHTML = clientNames()
-      .map((n) => `<option value="${UI.esc(n)}"></option>`)
-      .join("");
+    // Client: a real dropdown off the registry, not free text. New clients are
+    // added in Settings — that is the whole point of having a registry.
+    const clientSel = document.getElementById("t-client");
+    const curClient = task ? task.fields?.client || "" : "";
+    const opts = clientOptions(curClient);
+    clientSel.innerHTML =
+      `<option value="">No client</option>` +
+      opts
+        .map((n) => `<option value="${UI.esc(n)}" ${n === curClient ? "selected" : ""}>${UI.esc(n)}</option>`)
+        .join("");
+    clientSel.value = curClient;
+    UI.enhanceSelect(clientSel);
+    const clientHint = document.getElementById("t-client-hint");
+    clientHint.hidden = opts.length > 0;
+    clientHint.textContent = "No clients yet — add them in Settings.";
     document.getElementById("t-email").value = task ? task.fields?.email || "" : "";
 
     // Due date vs Stage Date: exactly one of the two groups is ever shown.

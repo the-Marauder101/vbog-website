@@ -9,6 +9,11 @@
 // Everything else about the message is configurable: scope (hiring/ops/both),
 // send time and timezone, which days, and which blocks appear.
 //
+// v22 adds the report TYPE (§17): activity (counts), movement (the cards that
+// moved) or snapshot (the cards in a status right now), with status/client
+// filters and a per-card detail picker. Counts answer "how much"; the other two
+// answer "which", which is what a report usually needs to be actionable.
+//
 // Sending itself is entirely in the database (sql/15): a pg_cron job asks every
 // five minutes which reports are due in their own timezone. This file never
 // sends anything — it configures, previews, and fires test sends.
@@ -18,12 +23,42 @@ const Reports = (() => {
   let members = [];
   let configs = [];
   let channels = [];
-  let defaultTemplate = "";
+  let clients = [];
+  let defaults = {}; // report_type -> the built-in message for it
   let runs = [];
   let editing = null; // config being edited, null = creating
   let deleteArmedFor = null;
 
   const SCOPE_LABELS = { hiring: "Hiring", ops: "Ops", both: "Hiring + Ops" };
+
+  // The three questions a report can answer. Activity is what shipped first —
+  // "what did the team do today". The other two exist because counts alone
+  // can't say WHICH cards, and that is usually the question worth asking.
+  const TYPES = {
+    activity: {
+      label: "Activity — who added and moved what",
+      hint: "Counts per person, per stage. The original daily digest.",
+    },
+    movement: {
+      label: "Movement — the cards that moved today",
+      hint: "Lists each card that changed status in the window, with the move it made.",
+    },
+    snapshot: {
+      label: "Status — the cards sitting in a status right now",
+      hint: "A point-in-time list. Ignores the time window: it reports what is there when it sends.",
+    },
+  };
+
+  // What each card can carry in a movement or status report.
+  const DETAIL_FIELDS = [
+    ["client", "Client"],
+    ["assignee", "Assignee"],
+    ["days", "Days in stage"],
+    ["actor", "Who moved it"],
+    ["status", "Current status"],
+    ["email", "Email"],
+    ["time", "Date"],
+  ];
   const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]; // ISO 1–7
   // A short list beats a free-form timezone box; the DB accepts any IANA name
   // if one is ever needed beyond these.
@@ -47,7 +82,22 @@ const Reports = (() => {
     ["{pipeline}", "how many cards sit in each stage"],
     ["{clients}", "the client-tag breakdown"],
     ["{vs_yesterday}", "the comparison line against yesterday"],
+    ["{cards}", "the card list — movement and status reports only"],
+    ["{card_total}", "how many cards matched, before the listing cap"],
+    ["{status_list}", "the statuses the report was filtered to"],
   ];
+
+  // Statuses the pickers offer. A "both" report can filter on either side of the
+  // board, so the two lists are merged and de-duplicated rather than chosen
+  // between — a status name is unique enough to stand on its own.
+  function projectStatuses() {
+    const scope = document.getElementById("rp-scope")?.value || "both";
+    const hiring = project?.statuses || [];
+    const ops = project?.ops_statuses || [];
+    const list =
+      scope === "ops" ? ops : scope === "hiring" ? hiring : [...hiring, ...ops];
+    return [...new Set(list)];
+  }
 
   async function init(proj, mems) {
     project = proj;
@@ -63,7 +113,13 @@ const Reports = (() => {
     document.getElementById("report-form-reset").addEventListener("click", () => fillForm(null));
     document.getElementById("report-preview-btn").addEventListener("click", onPreview);
     document.getElementById("rp-template-reset").addEventListener("click", () => {
-      document.getElementById("rp-template").value = defaultTemplate;
+      document.getElementById("rp-template").value = currentDefault();
+    });
+    document.getElementById("rp-type").addEventListener("change", onTypeChange);
+    // Changing the scope changes which statuses exist to filter on, and any
+    // already-picked status from the other side of the board stops applying.
+    document.getElementById("rp-scope").addEventListener("change", () => {
+      renderStatusPickers(readStatusPicks());
     });
     document.getElementById("rp-placeholders").innerHTML = PLACEHOLDERS.map(
       ([tag, what]) => `<li><code>${UI.esc(tag)}</code> — ${UI.esc(what)}</li>`
@@ -73,16 +129,20 @@ const Reports = (() => {
   async function open() {
     document.getElementById("report-project-name").textContent = project.name;
     try {
-      [configs, channels, runs, defaultTemplate] = await Promise.all([
+      const tplTypes = Object.keys(TYPES);
+      let tpls;
+      [configs, channels, runs, clients, ...tpls] = await Promise.all([
         API.getReportConfigs(project.id),
         API.getSlackChannels(),
         API.getReportRuns(project.id).catch(() => []),
-        API.getDefaultReportTemplate().catch(() => ""),
+        API.getClients().catch(() => []),
+        ...tplTypes.map((t) => API.getDefaultReportTemplate(t).catch(() => "")),
       ]);
+      defaults = Object.fromEntries(tplTypes.map((t, i) => [t, tpls[i] || ""]));
     } catch (e) {
       UI.toast(
         /does not exist|relation|schema cache/i.test(e.message)
-          ? "Daily reports need the 15_daily_reports.sql migration — run it in Supabase first."
+          ? "Daily reports need the 15–18 SQL migrations — run them in Supabase first."
           : e.message
       );
       return;
@@ -117,6 +177,13 @@ const Reports = (() => {
                   <td>
                     <span style="font-weight:600;">${UI.esc(c.label)}</span>
                     <span class="status-chip" style="margin-left:6px;">${UI.esc(SCOPE_LABELS[c.scope] || c.scope)}</span>
+                    ${
+                      c.report_type && c.report_type !== "activity"
+                        ? `<span class="status-chip" style="margin-left:4px;">${UI.esc(
+                            c.report_type === "movement" ? "Movement" : "Status"
+                          )}</span>`
+                        : ""
+                    }
                     ${c.last_error ? `<div class="field-error" style="margin-top:4px;">${UI.esc(c.last_error)}</div>` : ""}
                   </td>
                   <td style="color:var(--muted);">${UI.esc(channelName(c.channel_id))}</td>
@@ -213,6 +280,64 @@ const Reports = (() => {
       </table>`;
   }
 
+  const currentType = () => document.getElementById("rp-type").value || "activity";
+  const currentDefault = () => defaults[currentType()] || defaults.activity || "";
+
+  const chips = (host, items, picked, attr) => {
+    document.getElementById(host).innerHTML = items.length
+      ? items
+          .map(
+            ([val, label]) =>
+              `<label class="day-chip"><input type="checkbox" data-${attr}="${UI.esc(val)}" ${
+                picked.includes(val) ? "checked" : ""
+              }> ${UI.esc(label)}</label>`
+          )
+          .join("")
+      : '<span class="form-hint" style="margin:0;">Nothing to pick yet.</span>';
+  };
+
+  const readChips = (host, attr) =>
+    [...document.querySelectorAll(`#${host} input:checked`)].map((el) => el.dataset[attr]);
+
+  const readStatusPicks = () => ({
+    to: readChips("rp-statuses", "status"),
+    from: readChips("rp-from-statuses", "status"),
+  });
+
+  // Re-rendered whenever the scope changes, keeping any pick that still exists.
+  function renderStatusPickers(picks) {
+    const opts = projectStatuses().map((s) => [s, s]);
+    const keep = (list) => (list || []).filter((s) => opts.some(([v]) => v === s));
+    chips("rp-statuses", opts, keep(picks?.to), "status");
+    chips("rp-from-statuses", opts, keep(picks?.from), "status");
+  }
+
+  // Switching type re-labels the pickers and — only if the message is still the
+  // untouched default — swaps in the default written for the new type. An edited
+  // message is never overwritten; losing typed wording to a dropdown would be
+  // its own bug.
+  function onTypeChange() {
+    const type = currentType();
+    const box = document.getElementById("rp-template");
+    const untouched = Object.values(defaults).some((d) => d && box.value.trim() === d.trim());
+    if (untouched || !box.value.trim()) box.value = currentDefault();
+    applyTypeUi(type);
+  }
+
+  function applyTypeUi(type) {
+    document.getElementById("rp-type-hint").textContent = TYPES[type]?.hint || "";
+    document.getElementById("rp-filter-block").hidden = type === "activity";
+    document.getElementById("rp-include-note").hidden = type === "activity";
+    // A snapshot has no "from" — it isn't looking at movement at all.
+    document.getElementById("rp-from-group").hidden = type !== "movement";
+    document.getElementById("rp-status-label").textContent =
+      type === "movement" ? "Moved into" : "In status";
+    document.getElementById("rp-status-hint").textContent =
+      type === "movement"
+        ? "Nothing selected = any destination."
+        : "Nothing selected = every status on the board.";
+  }
+
   function fillForm(cfg) {
     editing = cfg || null;
     deleteArmedFor = null;
@@ -245,6 +370,24 @@ const Reports = (() => {
       .join("");
     UI.enhanceSelect(scopeSel);
 
+    const typeSel = document.getElementById("rp-type");
+    const type = cfg?.report_type || "activity";
+    typeSel.innerHTML = Object.entries(TYPES)
+      .map(([v, t]) => `<option value="${v}" ${v === type ? "selected" : ""}>${UI.esc(t.label)}</option>`)
+      .join("");
+    UI.enhanceSelect(typeSel);
+
+    renderStatusPickers({ to: cfg?.filter_statuses, from: cfg?.filter_from_statuses });
+    chips(
+      "rp-client-filter",
+      clients.filter((c) => c.active || (cfg?.filter_clients || []).includes(c.name)).map((c) => [c.name, c.name]),
+      cfg?.filter_clients || [],
+      "client"
+    );
+    chips("rp-details", DETAIL_FIELDS, cfg?.detail_fields || ["client", "assignee"], "detail");
+    document.getElementById("rp-max").value = cfg?.max_cards ?? 40;
+    applyTypeUi(type);
+
     const tzSel = document.getElementById("rp-timezone");
     const tz = cfg?.timezone || "Asia/Kolkata";
     const tzList = TIMEZONES.includes(tz) ? TIMEZONES : [tz, ...TIMEZONES];
@@ -276,7 +419,7 @@ const Reports = (() => {
           .join("")
       : '<span class="form-hint" style="margin:0;">No active members.</span>';
 
-    document.getElementById("rp-template").value = cfg?.template || defaultTemplate;
+    document.getElementById("rp-template").value = cfg?.template || currentDefault();
 
     for (const [id, key, dflt] of [
       ["rp-added", "include_added", true],
@@ -301,13 +444,22 @@ const Reports = (() => {
     // Store NULL rather than a copy of the default, so a report that was never
     // customised keeps following the default if it ever changes.
     const tpl = document.getElementById("rp-template").value.trim();
+    const picks = readStatusPicks();
     return {
       project_id: project.id,
       member_ids: memberIds,
-      template: tpl && tpl !== defaultTemplate.trim() ? tpl : null,
+      template: tpl && tpl !== currentDefault().trim() ? tpl : null,
       channel_id: document.getElementById("rp-channel").value || null,
       label: document.getElementById("rp-label").value.trim(),
       scope: document.getElementById("rp-scope").value,
+      report_type: currentType(),
+      filter_statuses: picks.to,
+      // A snapshot has no source status; sending one would silently narrow the
+      // report the moment somebody switched the type back to movement.
+      filter_from_statuses: currentType() === "movement" ? picks.from : [],
+      filter_clients: readChips("rp-client-filter", "client"),
+      detail_fields: readChips("rp-details", "detail"),
+      max_cards: Math.min(200, Math.max(1, Number(document.getElementById("rp-max").value) || 40)),
       send_time: document.getElementById("rp-time").value,
       timezone: document.getElementById("rp-timezone").value,
       days_of_week: days,
@@ -332,9 +484,14 @@ const Reports = (() => {
     host.hidden = false;
     host.textContent = "Building…";
     try {
-      // Preview the template as currently typed, not as last saved — otherwise
-      // you'd have to commit an edit to find out what it looks like.
-      const r = await API.previewReport(editing.id, document.getElementById("rp-template").value);
+      // Preview the whole form as currently typed, not as last saved — the type
+      // and its filters included, otherwise you'd have to commit an edit to find
+      // out what it looks like.
+      const r = await API.previewReport(
+        editing.id,
+        document.getElementById("rp-template").value,
+        readForm()
+      );
       const res = Array.isArray(r) ? r[0] : r;
       host.textContent = res?.text || "(empty)";
     } catch (e) {
@@ -361,8 +518,19 @@ const Reports = (() => {
       UI.toast("Pick at least one day of the week.");
       valid = false;
     }
-    if (!fields.include_added && !fields.include_moved && !fields.include_snapshot) {
+    // Only the activity report is built entirely out of these blocks; the other
+    // two carry a card list, so an all-unchecked movement report is still fine.
+    if (
+      fields.report_type === "activity" &&
+      !fields.include_added &&
+      !fields.include_moved &&
+      !fields.include_snapshot
+    ) {
       UI.toast("Pick at least one thing to include, or the message would be empty.");
+      valid = false;
+    }
+    if (fields.report_type === "snapshot" && !fields.filter_statuses.length) {
+      UI.toast("Pick at least one status — a status report over every status is just the board.");
       valid = false;
     }
     if (!valid) return;

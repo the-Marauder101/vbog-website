@@ -282,23 +282,66 @@ const API = {
   sendTestReport(id) {
     return sbFetch("rpc/send_test_report", { method: "POST", body: { p_config_id: id } });
   },
-  // p_template previews an edit before it is saved; omit it for the stored one.
-  previewReport(id, template) {
+  // Preview renders the config as it is CURRENTLY TYPED, not as last saved —
+  // otherwise changing the report type or a status filter would preview the old
+  // one until you committed the edit. `draft` is the same shape readForm()
+  // produces; anything omitted falls back to the stored value.
+  previewReport(id, template, draft) {
     return sbFetch("rpc/daily_report_preview", {
       method: "POST",
-      body: { p_config_id: id, p_template: template ?? null },
+      body: {
+        p_config_id: id,
+        p_template: template ?? null,
+        p_report_type: draft?.report_type ?? null,
+        p_statuses: draft?.filter_statuses ?? null,
+        p_from_statuses: draft?.filter_from_statuses ?? null,
+        p_clients: draft?.filter_clients ?? null,
+        p_detail_fields: draft?.detail_fields ?? null,
+        p_max_cards: draft?.max_cards ?? null,
+      },
     });
   },
   // The default message text lives in the database, so the editor prefills
-  // exactly what an untouched report sends.
-  getDefaultReportTemplate() {
-    return sbFetch("rpc/daily_report_default_template", { method: "POST", body: {} });
+  // exactly what an untouched report sends. One default per report type.
+  getDefaultReportTemplate(type = "activity") {
+    return sbFetch("rpc/daily_report_default_template", {
+      method: "POST",
+      body: { p_type: type },
+    });
   },
   // The stored trend series — feeds the "last N days" table in the modal.
   getReportRuns(projectId, limit = 14) {
     return sbFetch(
       `daily_report_runs?project_id=eq.${projectId}&status=neq.test&select=*` +
         `&order=local_date.desc&limit=${limit}`
+    );
+  },
+
+  // ---- clients (central registry feeding every Client dropdown) ----
+  // Cards still STORE the client name in tasks.fields.client, not an id — every
+  // filter, report and webhook payload already keys on the name. The registry
+  // exists to stop the same client being typed three different ways.
+  getClients() {
+    return sbFetch("clients?select=*&order=name.asc");
+  },
+  createClient(name) {
+    return sbFetch("clients", { method: "POST", body: { name } }).then((r) => r[0]);
+  },
+  updateClient(id, fields) {
+    return sbFetch(`clients?id=eq.${id}`, { method: "PATCH", body: fields }).then((r) => r[0]);
+  },
+  deleteClient(id) {
+    return sbFetch(`clients?id=eq.${id}`, { method: "DELETE" });
+  },
+  // Just the client tag off every task — Settings needs the usage count, and
+  // pulling whole task rows for it would be a much heavier read.
+  getClientUsage() {
+    return sbFetch("tasks?select=fields->>client").then((rows) =>
+      rows.reduce((acc, r) => {
+        const n = r.client;
+        if (n) acc[n] = (acc[n] || 0) + 1;
+        return acc;
+      }, {})
     );
   },
 

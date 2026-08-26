@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/style.css?v=22">
 </head>
 <body>
   <div id="offline-banner" hidden>You appear to be offline</div>
@@ -35,7 +35,7 @@
     <div class="page-header">
       <div>
         <h1>Settings</h1>
-        <div class="sub">Users &amp; access, project tags, integrations &amp; the Vyom API</div>
+        <div class="sub">Users &amp; access, tags &amp; clients, integrations &amp; the Vyom API</div>
       </div>
     </div>
 
@@ -89,6 +89,26 @@
         <button type="submit" class="btn btn-primary" disabled>Add Tag</button>
       </form>
       <div id="tags-table" style="margin-top: 14px;"></div>
+    </div>
+
+    <div class="settings-card">
+      <h2>Clients</h2>
+      <p class="form-hint" style="margin: -6px 0 16px;">
+        The list every card's <strong>Client</strong> dropdown picks from. Keeping it central is what stops
+        the same client arriving as “Newmetech”, “NewMeTech” and “newmetech” — three clients as far as
+        filters and reports are concerned. The number shows how many cards use each one.
+      </p>
+      <form id="add-client-form" class="inline-form" novalidate>
+        <div class="form-group" style="flex: 0 0 260px;">
+          <input type="text" id="client-name" placeholder="New client (e.g. Acme Corp)" autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-primary" disabled>Add Client</button>
+      </form>
+      <div id="clients-table" style="margin-top: 14px;"></div>
+      <div class="form-hint" style="margin-top: 12px;">
+        Pausing a client keeps every existing card exactly as it is but takes the name out of the dropdown,
+        so nothing new gets filed under it. Deleting is only offered once no card uses it.
+      </div>
     </div>
 
     <div class="settings-card">
@@ -191,12 +211,12 @@
     </div>
   </main>
 
-  <script src="js/config.js?v=21"></script>
-  <script src="js/supabase.js?v=21"></script>
-  <script src="js/api.js?v=21"></script>
-  <script src="js/ui.js?v=21"></script>
-  <script src="js/auth.js?v=21"></script>
-  <script src="js/inbox.js?v=21"></script>
-  <script src="js/settings.js?v=21"></script>
+  <script src="js/config.js?v=22"></script>
+  <script src="js/supabase.js?v=22"></script>
+  <script src="js/api.js?v=22"></script>
+  <script src="js/ui.js?v=22"></script>
+  <script src="js/auth.js?v=22"></script>
+  <script src="js/inbox.js?v=22"></script>
+  <script src="js/settings.js?v=22"></script>
 </body>
 </html>
