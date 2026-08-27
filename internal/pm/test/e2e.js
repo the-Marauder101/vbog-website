@@ -42,7 +42,9 @@ async function step(name, fn) {
     try {
       await page.evaluate(
         (u) => {
-          localStorage.setItem("vyom_user", JSON.stringify(u));
+          // A null here would WRITE "null" and log the suite out — the restore
+          // would poison every later step instead of un-poisoning this one.
+          if (u) localStorage.setItem("vyom_user", JSON.stringify(u));
           document.querySelectorAll(".modal-overlay.open").forEach((m) => m.classList.remove("open"));
         },
         adminUser
@@ -209,6 +211,11 @@ async function expectToast(substr) {
     if (!(await page.locator('.nav-right a[href="settings.html"]').count()))
       throw new Error("admin should see Settings link");
     if (!(await page.locator(".inbox-bell").count())) throw new Error("inbox bell missing");
+    // Capture the session here, not only in become(): the first become() is
+    // far down the suite, so without this any earlier failure had nothing to
+    // restore to.
+    adminUser = await page.evaluate(() => JSON.parse(localStorage.getItem("vyom_user")));
+    if (!adminUser?.id) throw new Error("login did not store a usable session");
   });
 
   // ---------- Pre-clean any leftovers from previous runs ----------
@@ -489,6 +496,74 @@ async function expectToast(substr) {
     await rest(`clients?id=eq.${c.id}`, { method: "PATCH", body: { active: true } });
   });
 
+  await step("Client registry: owner and contact details are stored on the client", async () => {
+    await page.goto(`${BASE}/settings.html`);
+    await page
+      .locator("#add-client-form button[type=submit]:not([disabled])")
+      .waitFor({ timeout: 15000 });
+    // Scope to OUR client's row: the registry also holds real ones, and the
+    // first Details button on the page belongs to whichever sorts first.
+    const id = (await rest("clients?name=eq.E2E%20Acme%20Corp&select=id"))[0].id;
+    await page.click(`[data-client-toggle="${id}"]`);
+    await page.fill(`#cl-contact_name-${id}`, "E2E Contact");
+    await page.fill(`#cl-rate-${id}`, "8.33%");
+    // Blur is what commits, same as the Login ID column above.
+    await page.$eval(`#cl-rate-${id}`, (el) => el.blur());
+    // Each field saves on its own blur, so poll until the LAST one lands —
+    // keying the wait on the first would let the assertion start mid-flight.
+    let row = null;
+    for (let i = 0; i < 15; i++) {
+      row = (await rest("clients?name=eq.E2E%20Acme%20Corp&select=contact_name,rate"))[0];
+      if (row?.contact_name && row?.rate) break;
+      await page.waitForTimeout(300);
+    }
+    if (row?.contact_name !== "E2E Contact") throw new Error(`contact = ${row?.contact_name}`);
+    if (row?.rate !== "8.33%") throw new Error(`rate = ${row?.rate}`);
+  });
+
+  await step("Client registry: renaming moves every card that used the old name", async () => {
+    const id = (await rest("clients?name=eq.E2E%20Acme%20Corp&select=id"))[0].id;
+    const before = await rest(
+      `tasks?project_id=eq.${projectId}&fields->>client=eq.E2E%20Acme%20Corp&select=id`
+    );
+    if (!before.length) throw new Error("no card carries the client to begin with");
+    const r = await rest("rpc/rename_client", {
+      method: "POST",
+      body: { p_client_id: id, p_new_name: "E2E Renamed Corp" },
+    });
+    const res = Array.isArray(r) ? r[0] : r;
+    if (res.tasks !== before.length) throw new Error(`renamed ${res.tasks}, expected ${before.length}`);
+    // The card must follow the rename, not be left pointing at a dead name.
+    const after = await rest(
+      `tasks?project_id=eq.${projectId}&fields->>client=eq.E2E%20Renamed%20Corp&select=id`
+    );
+    if (after.length !== before.length) throw new Error("cards did not follow the rename");
+    if ((await rest(`tasks?project_id=eq.${projectId}&fields->>client=eq.E2E%20Acme%20Corp&select=id`)).length)
+      throw new Error("a card kept the old name");
+    await rest("rpc/rename_client", {
+      method: "POST",
+      body: { p_client_id: id, p_new_name: "E2E Acme Corp" },
+    });
+  });
+
+  await step("Client registry: a rename onto an existing name is refused", async () => {
+    const id = (await rest("clients?name=eq.E2E%20Acme%20Corp&select=id"))[0].id;
+    const other = (await rest("clients?name=neq.E2E%20Acme%20Corp&select=name&limit=1"))[0];
+    let refused = false;
+    try {
+      await rest("rpc/rename_client", {
+        method: "POST",
+        // Different case on purpose: near-duplicates are what the guard is for.
+        body: { p_client_id: id, p_new_name: other.name.toUpperCase() },
+      });
+    } catch (e) {
+      refused = /already exists/i.test(e.message);
+    }
+    if (!refused) throw new Error("a duplicate name was allowed");
+    const still = await rest("clients?name=eq.E2E%20Acme%20Corp&select=id");
+    if (still.length !== 1) throw new Error("the client was renamed anyway");
+  });
+
   await step("Client tag: All Tasks filter + chip", async () => {
     await page.goto(`${BASE}/team.html`);
     await page.locator("tr.clickable").first().waitFor({ timeout: 8000 });
@@ -551,13 +626,13 @@ async function expectToast(substr) {
     await page.fill("#m-role", "QA");
     await page.click('#add-member-form button[type="submit"]');
     await expectToast("Member added");
-    await page.locator("tr", { hasText: "E2E Temp" }).waitFor({ timeout: 5000 });
+    await page.locator("#members-table tr", { hasText: "E2E Temp" }).waitFor({ timeout: 5000 });
   });
 
   await step("Delete blocked while member has tasks; allowed after unassigning", async () => {
     const tempId = (await rest("team_members?name=eq.E2E%20Temp&select=id"))[0].id;
     await rest(`tasks?id=eq.${zapTaskId}`, { method: "PATCH", body: { assignee_id: tempId } });
-    const row = page.locator("tr", { hasText: "E2E Temp" });
+    const row = page.locator("#members-table tr", { hasText: "E2E Temp" });
     await row.locator("[data-delete]").click();
     await expectToast("has tasks assigned");
     await rest(`tasks?id=eq.${zapTaskId}`, { method: "PATCH", body: { assignee_id: depeshId } });
@@ -565,11 +640,11 @@ async function expectToast(substr) {
     await row.locator("[data-delete]", { hasText: "Confirm" }).click(); // confirm
     await expectToast("Member deleted");
     await page.waitForTimeout(300);
-    if (await page.locator("tr", { hasText: "E2E Temp" }).count()) throw new Error("row still present");
+    if (await page.locator("#members-table tr", { hasText: "E2E Temp" }).count()) throw new Error("row still present");
   });
 
   await step("Deactivate toggle hides member from assignee dropdown", async () => {
-    const row = page.locator("tr", { hasText: "Rihen" });
+    const row = page.locator("#members-table tr", { hasText: "Rihen" });
     await row.locator('.switch .slider').click();
     await expectToast("deactivated");
     await page.goto(`${BASE}/board.html?project=${projectId}`);
@@ -579,7 +654,7 @@ async function expectToast(substr) {
     if (labels.some((l) => l.trim() === "Rihen")) throw new Error("inactive member still in dropdown");
     await page.click("#task-cancel");
     await page.goto(`${BASE}/settings.html`);
-    await page.locator("tr", { hasText: "Rihen" }).locator('.switch .slider').click();
+    await page.locator("#members-table tr", { hasText: "Rihen" }).locator('.switch .slider').click();
     await expectToast("activated");
   });
 
@@ -763,7 +838,7 @@ async function expectToast(substr) {
     await choose("m-access", { label: "External" });
     await page.click('#add-member-form button[type="submit"]');
     await expectToast("External user added");
-    const row = page.locator("tr", { hasText: "E2E External" });
+    const row = page.locator("#members-table tr", { hasText: "E2E External" });
     await row.waitFor({ timeout: 5000 });
     extId = (await rest("team_members?login_code=eq.e2e-ext&select=id"))[0].id;
     const accessBtn = row.locator("[data-access]");
@@ -819,7 +894,7 @@ async function expectToast(substr) {
   await step("Roles: login ID can be changed inline from Settings", async () => {
     await become("depesh");
     await page.goto(`${BASE}/settings.html`);
-    const row = page.locator("tr", { hasText: "E2E External" });
+    const row = page.locator("#members-table tr", { hasText: "E2E External" });
     await row.waitFor({ timeout: 8000 });
     const input = row.locator(".login-code-input");
     await input.fill("e2e-ext-2");
@@ -834,7 +909,7 @@ async function expectToast(substr) {
   });
 
   await step("Roles: delete external user (access rows cascade)", async () => {
-    const row = page.locator("tr", { hasText: "E2E External" });
+    const row = page.locator("#members-table tr", { hasText: "E2E External" });
     await row.locator("[data-delete]").click(); // arm
     await row.locator("[data-delete]", { hasText: "Confirm" }).click();
     await expectToast("Member deleted");
@@ -1525,7 +1600,14 @@ async function expectToast(substr) {
       await page.keyboard.press("Enter");
       await page.waitForTimeout(700);
     };
-    await setCell("client_name", "E2E Client");
+    // client_name is a `client` column (sql/19) — a registry dropdown, not a
+    // text box, so it is picked rather than typed.
+    await page.click('#hr-clients-table-wrap td[data-col-key="client_name"]');
+    await page.selectOption(
+      '#hr-clients-table-wrap td[data-col-key="client_name"] select',
+      "E2E Acme Corp"
+    );
+    await page.waitForTimeout(700);
     await setCell("signed_on", "2026-06-01");
     await setCell("delivered_on", "2026-06-21");
     const dur = (await page.textContent("#hr-clients-table-wrap .dur-cell")).trim();
@@ -1534,6 +1616,24 @@ async function expectToast(substr) {
     const rows = await rest(`hr_clients?project_id=eq.${hrId}&select=values`);
     if (rows[0].values.days_to_deliver !== undefined)
       throw new Error("a computed column must never be stored");
+    // A client column stores the NAME, exactly as a text column did — that is
+    // what keeps tracker rows groupable with the cards carrying that client.
+    if (rows[0].values.client_name !== "E2E Acme Corp")
+      throw new Error(`client_name = ${rows[0].values.client_name}`);
+  });
+
+  await step("Client tracker: the Client column offers the registry, not free text", async () => {
+    await page.click('#hr-clients-table-wrap td[data-col-key="client_name"]');
+    const cell = '#hr-clients-table-wrap td[data-col-key="client_name"]';
+    if (await page.locator(`${cell} input`).count())
+      throw new Error("the Client cell is still a free-text box");
+    const opts = await page.$$eval(`${cell} select option`, (e) => e.map((o) => o.value));
+    if (!opts.includes("E2E Acme Corp")) throw new Error(`registry not offered: ${opts.join(", ")}`);
+    if (opts[0] !== "") throw new Error("a tracker row must be saveable with no client");
+    // Re-pick the same value to close the editor: a no-op commit, which avoids
+    // depending on Escape reaching a focused native select.
+    await page.selectOption(`${cell} select`, "E2E Acme Corp");
+    await page.waitForTimeout(400);
   });
 
   await step("Client tracker: a date column an elapsed column needs cannot be removed", async () => {

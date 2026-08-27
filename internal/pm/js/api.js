@@ -333,16 +333,19 @@ const API = {
   deleteClient(id) {
     return sbFetch(`clients?id=eq.${id}`, { method: "DELETE" });
   },
-  // Just the client tag off every task — Settings needs the usage count, and
-  // pulling whole task rows for it would be a much heavier read.
-  getClientUsage() {
-    return sbFetch("tasks?select=fields->>client").then((rows) =>
-      rows.reduce((acc, r) => {
-        const n = r.client;
-        if (n) acc[n] = (acc[n] || 0) + 1;
-        return acc;
-      }, {})
-    );
+  // The registry plus what each client actually touches — cards, tracker rows,
+  // projects — counted in the database (sql/19) rather than by pulling every
+  // task into the browser to tally it.
+  getClientOverview() {
+    return sbFetch("client_overview?select=*&order=name.asc");
+  },
+  // Renaming has to be one transaction across cards, tracker rows and report
+  // filters — they all store the NAME (sql/19). Never PATCH clients.name.
+  renameClient(id, name) {
+    return sbFetch("rpc/rename_client", {
+      method: "POST",
+      body: { p_client_id: id, p_new_name: name },
+    });
   },
 
   // ---- tags (central registry feeding all tag dropdowns) ----
