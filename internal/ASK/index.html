@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ASK · Get Closers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+<style>
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+:root {
+  --stone:    #141416;
+  --ink:      #17171A;
+  --ink-2:    #45454C;
+  --muted:    #6A6A72;
+  --paper:    #F6F4F1;
+  --surface:  #FFFFFF;
+  --raised:   #EFEBE5;
+  --line:     #E3DED7;
+  --line-2:   #C8C0B5;
+  --streak:   #FF4D00;
+  --streak-t: #C43C00;
+  --streak-w: rgba(255,77,0,.07);
+  --danger:   #C0261D;
+  --success:  #0F7A52;
+  --ref:      #4A3580;
+  --ref-soft: #EFE9FA;
+  --ref-t:    #3B2A6A;
+  --radius:   3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stone:    #EDEBE8;
+    --ink:      #EDEBE8;
+    --ink-2:    #A8A49E;
+    --muted:    #706C67;
+    --paper:    #131211;
+    --surface:  #1B1917;
+    --raised:   #242220;
+    --line:     #2A2825;
+    --line-2:   #3A3733;
+    --streak:   #FF6A2B;
+    --streak-t: #FF6A2B;
+    --streak-w: rgba(255,106,43,.09);
+    --danger:   #E5534B;
+    --success:  #3DAA78;
+    --ref:      #9B82D4;
+    --ref-soft: #221A3A;
+    --ref-t:    #C4ADFF;
+  }
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Masthead ────────────────────────────────────────────────────────────── */
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.masthead-in {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: var(--ink);
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: 17px;
+  letter-spacing: -0.03em;
+  position: relative;
+}
+.brand::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--streak);
+  border-radius: 0;
+}
+.brand .dot { color: var(--streak); }
+
+.masthead-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.spacer { flex: 1; }
+.progress-track { height: 2px; background: var(--line); }
+.progress-fill  { height: 100%; background: var(--streak); width: 0%; transition: width .3s ease; }
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+.screen { display: none; padding: 48px 0 100px; }
+.screen.active { display: block; }
+
+/* ── Region headings ─────────────────────────────────────────────────────── */
+.region-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.region-head h2 {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.region-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ── Start screen ────────────────────────────────────────────────────────── */
+.start-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.start-title {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: clamp(32px, 5vw, 46px);
+  letter-spacing: -0.038em;
+  line-height: 1.05;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.start-sub {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 540px;
+  margin-bottom: 40px;
+}
+
+/* ── Fields ──────────────────────────────────────────────────────────────── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  transition: border-color .13s, box-shadow .13s;
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--stone);
+  box-shadow: inset 3px 0 0 var(--streak);
+}
+
+/* ── Mode options ────────────────────────────────────────────────────────── */
+.mode-wrap { margin-top: 32px; margin-bottom: 32px; }
+.mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+
+.mode-opt {
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  transition: border-color .13s;
+}
+.mode-opt::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  border-radius: var(--radius) 0 0 var(--radius);
+  transition: background .13s;
+}
+.mode-opt:hover { border-color: var(--stone); }
+.mode-opt.sel {
+  border-color: var(--stone);
+  box-shadow: inset 0 0 0 1px var(--stone);
+}
+.mode-opt.sel::before { background: var(--streak); }
+
+.mode-opt-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.mode-opt-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.mode-opt-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .07em;
+}
+.mode-opt-desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+/* ── Legend ──────────────────────────────────────────────────────────────── */
+.legend-panel {
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.legend-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  margin-bottom: 8px;
+}
+.legend-row:last-child { margin-bottom: 0; }
+
+.sc-chip {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .07em;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--line-2);
+}
+.sc-0 { background: #FBE9E7; color: var(--danger); border-color: #E8C6C4; }
+.sc-1 { background: #FDF3E3; color: #8C5800;       border-color: #E5D0A8; }
+.sc-2 { background: #FDF3E3; color: #8C5800;       border-color: #E5D0A8; }
+.sc-3 { background: var(--streak-w); color: var(--streak-t); border-color: rgba(255,77,0,.2); }
+
+.ref-panel {
+  background: var(--ref-soft);
+  border: 1px solid rgba(74,53,128,.2);
+  border-left: 3px solid var(--ref);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  color: var(--ref-t);
+  line-height: 1.6;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  transition: transform .1s ease;
+  text-decoration: none;
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: var(--stone);
+  color: #fff;
+  box-shadow: inset 0 -2px 0 var(--streak);
+}
+.btn-primary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: inset 0 -2px 0 var(--streak), 2px 2px 0 var(--line-2);
+}
+
+.btn-quiet {
+  background: var(--surface);
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
+}
+.btn-quiet:hover { border-color: var(--stone); color: var(--ink); }
+
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 32px; }
+
+/* ── Question screen ─────────────────────────────────────────────────────── */
+.q-crumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.crumb-sec {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.crumb-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--line-2); }
+.crumb-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .07em;
+  color: var(--muted);
+}
+
+.badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  border: 1px solid;
+}
+.badge-pri {
+  background: var(--streak-w);
+  color: var(--streak-t);
+  border-color: rgba(255,77,0,.2);
+}
+.badge-ref {
+  background: var(--ref-soft);
+  color: var(--ref);
+  border-color: rgba(74,53,128,.2);
+}
+
+.attr-name {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  margin-bottom: 18px;
+}
+
+/* Tag row */
+.tagset {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.tagcol { flex: 1; min-width: 180px; }
+.tagcol-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.tag {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-2);
+  background: var(--raised);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.tag.k {
+  border-color: rgba(255,77,0,.2);
+  background: var(--streak-w);
+  color: var(--streak-t);
+}
+
+/* Ref box */
+.refbox {
+  border-left: 3px solid var(--ref);
+  background: var(--ref-soft);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--ref-t);
+  line-height: 1.55;
+}
+
+.q-text {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  margin-bottom: 7px;
+}
+.q-hint {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 26px;
+}
+
+.opt-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/* Options */
+.opts { display: flex; flex-direction: column; gap: 6px; }
+.opt {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  text-align: left;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  padding: 13px 15px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  transition: border-color .12s, background .12s;
+}
+.opt::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  border-radius: var(--radius) 0 0 var(--radius);
+  transition: background .12s;
+}
+.opt:hover { border-color: var(--stone); background: var(--raised); }
+.opt:hover::before { background: var(--line-2); }
+.opt.picked { border-color: var(--stone); background: var(--raised); }
+.opt.picked::before { background: var(--streak); }
+.opt:active { transform: translateY(1px); }
+
+.opt-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  border: 1px solid var(--line-2);
+}
+.opt-body { flex: 1; }
+.opt-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; color: var(--ink); }
+.opt-desc  { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+/* Notes */
+.notes-wrap { margin-top: 24px; }
+.notes-wrap label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.notes-wrap textarea {
+  width: 100%;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  color: var(--ink);
+  resize: vertical;
+  line-height: 1.5;
+  transition: border-color .13s, box-shadow .13s;
+}
+.notes-wrap textarea:focus {
+  outline: none;
+  border-color: var(--stone);
+  box-shadow: inset 3px 0 0 var(--streak);
+}
+
+.navrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  gap: 10px;
+}
+.navrow .btn { padding: 9px 16px; font-size: 13px; }
+
+/* ── Results screen ──────────────────────────────────────────────────────── */
+.res-head { margin-bottom: 32px; }
+.res-title {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: 36px;
+  letter-spacing: -0.038em;
+  margin-bottom: 6px;
+}
+.res-meta { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* Total strip */
+.total-strip {
+  background: var(--stone);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 26px 28px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+.total-strip::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--streak);
+}
+.total-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 8px;
+}
+.total-num {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: 52px;
+  letter-spacing: -0.04em;
+  line-height: .9;
+}
+.total-den { font-size: 16px; color: rgba(255,255,255,.45); font-weight: 500; }
+.total-pct { text-align: right; }
+.pct-num {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: 32px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* Priority panel */
+.pri-panel {
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  padding: 0 20px;
+  margin-bottom: 28px;
+}
+.pri-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pri-row:last-child { border-bottom: none; }
+.pri-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.pri-sub  { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.pri-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* Score table */
+table.sheet {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+table.sheet th {
+  background: var(--raised);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-2);
+}
+table.sheet th.num { text-align: right; }
+table.sheet td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  font-size: 13.5px;
+}
+table.sheet tr:last-child td { border-bottom: none; }
+table.sheet td.num {
+  text-align: right;
+  font-family: 'DM Mono', monospace;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.row-attr { font-weight: 600; font-size: 13.5px; color: var(--ink); }
+.row-tags { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+
+.sec-row td {
+  background: var(--stone);
+  color: rgba(255,255,255,.55);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+}
+
+.bar {
+  display: inline-block;
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-2);
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.bar i { display: block; height: 100%; border-radius: 2px; }
+
+.pending {
+  color: var(--ref);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .07em;
+}
+
+/* Priority chip in table */
+.pri-chip {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--radius);
+  background: var(--streak-w);
+  color: var(--streak-t);
+  border: 1px solid rgba(255,77,0,.2);
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+/* Notes out */
+.notes-out { margin-top: 32px; }
+.note-card {
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--line-2);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 13px 15px;
+  margin-bottom: 8px;
+}
+.note-attr {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.note-body { font-size: 13.5px; line-height: 1.55; color: var(--ink); }
+
+.res-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 36px; }
+
+/* R1 note */
+.mode-note {
+  border-left: 3px solid var(--line-2);
+  background: var(--raised);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 15px;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+/* ── Print ───────────────────────────────────────────────────────────────── */
+@media print {
+  .masthead, .res-actions, .navrow, .no-print { display: none !important; }
+  body { background: #fff; }
+  .screen { padding: 0; }
+  .total-strip { background: #fff; color: #000; border: 2px solid #000; }
+  .total-strip::after { display: none; }
+  .total-den, .total-label { color: #555; }
+  table.sheet { border: 1px solid #aaa; }
+  .sec-row td { background: #eee; color: #000; }
+  .wrap { max-width: 100%; padding: 0; }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .grid2, .mode-grid { grid-template-columns: 1fr; }
+  .tagset { flex-direction: column; gap: 14px; }
+  .total-strip { flex-direction: column; align-items: flex-start; }
+  .total-pct { text-align: left; }
+  .wrap { padding: 0 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Masthead ─────────────────────────────────────────────────────────── -->
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="index.html">ask<span class="dot">.</span></a>
+    <div class="masthead-meta" id="topmeta">Business Closer · Scorecard</div>
+    <span class="spacer"></span>
+    <a class="btn btn-quiet" href="../closer-match/nikash.html" style="font-size:13px;padding:7px 13px;">← Nikash</a>
+  </div>
+</header>
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- ── Start ────────────────────────────────────────────────────────────── -->
+<section class="screen active" id="screen-start">
+  <div class="wrap">
+    <p class="start-eyebrow">Get Closers · ASK Scorecard</p>
+    <h1 class="start-title">Business Closer<br>Interview Scorecard</h1>
+    <p class="start-sub">14 attributes. 42 questions. Ask the question, listen to the answer, pick the option that matches what you heard. Score is calculated for you at the end.</p>
+
+    <div class="region-head"><h2>Candidate details</h2></div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Candidate Name</label>
+        <input type="text" id="candName" placeholder="Full name" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Interviewer</label>
+        <input type="text" id="intName" placeholder="Your name" autocomplete="off">
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Client / Role</label>
+        <input type="text" id="clientName" placeholder="e.g. TAGR — Closing Associate" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="intDate">
+      </div>
+    </div>
+
+    <div class="mode-wrap">
+      <div class="region-head"><h2>Interview round</h2></div>
+      <div class="mode-grid">
+        <button class="mode-opt" id="mode-r1" onclick="setMode('r1')">
+          <div class="mode-opt-top">
+            <span class="mode-opt-name">R1 — Screen</span>
+            <span class="mode-opt-count">15 q's</span>
+          </div>
+          <div class="mode-opt-desc">The five priority attributes only. Can they sell, do they own their numbers, will they stay. Fits a 20–25 minute call.</div>
+        </button>
+        <button class="mode-opt sel" id="mode-r2" onclick="setMode('r2')">
+          <div class="mode-opt-top">
+            <span class="mode-opt-name">R2 — Full</span>
+            <span class="mode-opt-count">42 q's</span>
+          </div>
+          <div class="mode-opt-desc">All 14 attributes. Behavioural validation and client fit. Run this once they've cleared R1.</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="region-head"><h2>Scoring key</h2></div>
+    <div class="legend-panel">
+      <div class="legend-row"><span class="sc-chip sc-0">0</span><div><strong>No.</strong> The answer shows they don't have it. Blank, generic, or a red flag.</div></div>
+      <div class="legend-row"><span class="sc-chip sc-1">1</span><div><strong>Weak.</strong> Something there, but thin. Mostly rehearsed or borrowed language.</div></div>
+      <div class="legend-row"><span class="sc-chip sc-2">2</span><div><strong>Partial.</strong> Real substance, but incomplete or not fully evidenced.</div></div>
+      <div class="legend-row"><span class="sc-chip sc-3">3</span><div><strong>Yes.</strong> Specific, lived, instinctive. They've clearly done this.</div></div>
+    </div>
+
+    <div class="ref-panel" style="margin-top:14px">
+      <strong>Reference check questions</strong> — Two questions are marked <strong>REF CHECK</strong>. Skip them during the live interview and come back once you've spoken to the candidate's previous manager. The scorecard stays flagged as incomplete until they're filled in.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="start()">Begin interview →</button>
+      <button class="btn btn-quiet" onclick="loadJSON()">Load saved scorecard</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFile(event)">
+    </div>
+  </div>
+</section>
+
+<!-- ── Question ──────────────────────────────────────────────────────────── -->
+<section class="screen" id="screen-q">
+  <div class="wrap">
+    <div class="q-crumb">
+      <span class="crumb-sec" id="crumbSec"></span>
+      <span class="crumb-dot"></span>
+      <span class="crumb-count" id="crumbCount"></span>
+      <span id="crumbBadges"></span>
+    </div>
+
+    <h2 class="attr-name" id="attrName"></h2>
+
+    <div class="tagset">
+      <div class="tagcol">
+        <div class="tagcol-label">Skills</div>
+        <div class="tags" id="skillTags"></div>
+      </div>
+      <div class="tagcol">
+        <div class="tagcol-label">Knowledge</div>
+        <div class="tags" id="knowTags"></div>
+      </div>
+    </div>
+
+    <div id="refNote"></div>
+
+    <div class="q-text" id="qText"></div>
+    <div class="q-hint" id="qHint"></div>
+
+    <div class="opt-label">Score the answer</div>
+    <div class="opts" id="opts"></div>
+
+    <div class="notes-wrap">
+      <label>Notes (optional)</label>
+      <textarea id="qNotes" placeholder="Anything worth recording — exact phrasing, hesitation, follow-up needed."></textarea>
+    </div>
+
+    <div class="navrow">
+      <button class="btn btn-quiet" onclick="prevQ()">← Back</button>
+      <button class="btn btn-quiet" onclick="skipQ()" id="skipBtn">Skip for now →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── Results ───────────────────────────────────────────────────────────── -->
+<section class="screen" id="screen-res">
+  <div class="wrap">
+    <div class="res-head">
+      <h2 class="res-title">Scorecard</h2>
+      <div class="res-meta" id="resMeta"></div>
+    </div>
+
+    <div class="total-strip">
+      <div>
+        <div class="total-label">Total Score</div>
+        <div><span class="total-num" id="totalNum">0</span><span class="total-den" id="totalDen"> / 126</span></div>
+      </div>
+      <div class="total-pct">
+        <div class="total-label">Percentage</div>
+        <div class="pct-num" id="pctNum">0%</div>
+      </div>
+    </div>
+
+    <div class="region-head"><h2>Priority attributes — read these first</h2></div>
+    <div class="pri-panel" id="priRows"></div>
+
+    <div class="region-head" style="margin-top:28px"><h2>Full breakdown</h2></div>
+    <table class="sheet" id="sheetTable"></table>
+    <div id="r1Note"></div>
+
+    <div class="notes-out" id="notesOut"></div>
+
+    <div class="res-actions no-print">
+      <button class="btn btn-primary" onclick="window.print()">Download PDF</button>
+      <button class="btn btn-quiet" onclick="saveJSON()">Export JSON</button>
+      <button class="btn btn-quiet" onclick="backToQs()">← Back to questions</button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ── Data ─────────────────────────────────────────────────────────────────── */
+const SECTIONS = {
+  sell:"Can they actually sell?",
+  sustain:"Can they sustain it?",
+  who:"Who are they underneath?"
+};
+
+const ATTRS = [
+  {
+    id:"dialing", sec:"sell", name:"Dialing Discipline", priority:false,
+    skills:["Call volume management","Daily target setting","Speed to lead","Rejection recovery"],
+    knowledge:["Sales floor norms","Lead lifecycle stages","Inbound lead psychology"],
+    questions:[
+      {
+        q:"What was your actual dial count on a normal day in your last role — and how many of those connected?",
+        hint:"Anyone who has genuinely done volume knows both numbers without thinking. The connect rate is the harder one to fake.",
+        opts:[
+          {t:"Doesn't know", d:"Can't give a number, or answers \"as many as it takes.\" Has not tracked this."},
+          {t:"Round number only", d:"Gives a suspiciously clean figure with no connect rate behind it."},
+          {t:"Knows dials, vague on connects", d:"Solid dial number, approximate connect rate, can't explain what moved it."},
+          {t:"Knows both cold", d:"Specific on both, and can explain what changed the connect rate — time of day, lead source, list age."}
+        ]
+      },
+      {
+        q:"A warm lead comes in at 6pm. Your shift ends at 7. What do you do — and why?",
+        hint:"Tests whether they understand speed-to-lead decay, or just work to a clock.",
+        opts:[
+          {t:"Calls tomorrow", d:"Would leave it for the next morning. No sense that the lead is decaying."},
+          {t:"Calls now, no reason", d:"Says they'd call immediately but can't explain why it matters."},
+          {t:"Understands urgency", d:"Calls now, knows warm leads go cold fast, but talks about it generally."},
+          {t:"Knows the decay curve", d:"Calls immediately and can articulate how sharply contact rates drop by the hour or day."}
+        ]
+      },
+      {
+        q:"You've had 12 rejections in a row this morning. What happens to your next call?",
+        hint:"Anyone claiming it has zero effect either hasn't done the volume or isn't being honest. The tell is a real reset mechanism.",
+        opts:[
+          {t:"\"Doesn't affect me\"", d:"Claims total immunity. Either untrue or they haven't done real volume."},
+          {t:"Admits it, no fix", d:"Honest that it lands, but has no way of resetting."},
+          {t:"Vague reset", d:"Mentions taking a break or refocusing, but nothing concrete."},
+          {t:"Specific routine", d:"Honest about the effect and names an actual reset — a walk, a call review, a scripted first line."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"discovery", sec:"sell", name:"Discovery & Diagnosis", priority:true,
+    skills:["Situation questioning","Gap identification","Active listening","Motivation uncovering"],
+    knowledge:["Discovery frameworks","Buyer motivation types","Pain-to-aspiration mapping"],
+    questions:[
+      {
+        q:"How do you know within the first 3–5 minutes of a call whether this lead is going to close or not? What are you picking up on?",
+        hint:"Only someone who has done hundreds of calls has an instinct here they can put into words. This is the single best filter on the sheet.",
+        opts:[
+          {t:"No read", d:"\"You can never really tell\" or \"I stay positive on every call.\" No signals named."},
+          {t:"One vague signal", d:"Mentions tone or interest level, nothing beyond that."},
+          {t:"Real signals, no action", d:"Names two or three genuine signals but can't say what they do differently."},
+          {t:"Reads and adapts", d:"Specific signals — response latency, whether they ask questions back, how they answer the first open question — plus what they change because of it."}
+        ]
+      },
+      {
+        q:"What's the one question you ask on every single discovery call, no matter what — and why that one?",
+        hint:"Experienced closers have a signature question and clear reasoning for it. Freshers give a generic opener.",
+        opts:[
+          {t:"No such question", d:"Doesn't have one, or offers \"what are you looking for?\""},
+          {t:"Has one, thin reason", d:"Names a question but the reasoning is surface-level."},
+          {t:"Good question, partial reason", d:"Solid question, explains roughly what it gives them."},
+          {t:"Question plus reasoning", d:"Specific question and a clear account of what it unlocks — budget, urgency, decision authority, or real motivation."}
+        ]
+      },
+      {
+        q:"When a prospect tells you their problem, how do you know they're telling you the real one?",
+        hint:"The stated problem is rarely the actual one. This tests whether they probe past the first answer.",
+        opts:[
+          {t:"Takes it at face value", d:"Assumes the stated problem is the real problem."},
+          {t:"Says they dig, no method", d:"Claims to go deeper but can't describe how."},
+          {t:"Has a probe", d:"Describes one technique for going a layer down."},
+          {t:"Layered probing", d:"Clear method — asking what they've already tried, what happens if nothing changes, why now — and knows what a real answer sounds like."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"objection", sec:"sell", name:"Objection Handling", priority:true,
+    skills:["Objection acknowledgement","Value reframing","Price defence","Stall management"],
+    knowledge:["Common objection types","Price psychology","Trust-based reframing"],
+    questions:[
+      {
+        q:"What's the difference between a prospect who genuinely needs to think about it and one who's already decided no but is being polite?",
+        hint:"Anyone who has closed at volume can tell these apart instantly and treats them completely differently.",
+        opts:[
+          {t:"No distinction", d:"Treats both the same, or says you can't tell."},
+          {t:"Senses a difference", d:"Knows there's a difference but can't articulate the signals."},
+          {t:"Names the signals", d:"Describes how the two sound different but handles them similarly."},
+          {t:"Different signals, different play", d:"Clear behavioural distinctions and a genuinely different response to each."}
+        ]
+      },
+      {
+        q:"[Role-play] \"₹45,000 is too expensive for me right now.\" — Respond exactly as you would on a live call.",
+        hint:"Watch the first three seconds. Caving, apologising, or jumping straight to a payment plan are all tells.",
+        opts:[
+          {t:"Caves", d:"Offers a discount, apologises for the price, or gets visibly uncomfortable."},
+          {t:"Jumps to EMI", d:"Goes straight to payment plans without exploring what \"expensive\" means."},
+          {t:"Acknowledges, partial reframe", d:"Handles it calmly, reframes value, but doesn't dig into the objection."},
+          {t:"Probes then reframes", d:"Acknowledges, asks what expensive means relative to what, reframes against cost of inaction, holds price."}
+        ]
+      },
+      {
+        q:"Which objection do you lose most deals to — and what have you changed about how you handle it?",
+        hint:"Everyone loses to something. Claiming otherwise means they aren't tracking or aren't honest.",
+        opts:[
+          {t:"\"I don't lose deals\"", d:"Deflects the premise. Not tracking losses, or not honest."},
+          {t:"Names one, no change", d:"Identifies an objection but hasn't done anything about it."},
+          {t:"Named, vague fix", d:"Names it and describes a general improvement."},
+          {t:"Named, specific iteration", d:"Specific objection, specific change they made to how they handle it, and what happened after."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"closing", sec:"sell", name:"Closing Ability", priority:true,
+    skills:["Trial closing","Commitment asking","Urgency creation","Decision guiding"],
+    knowledge:["High-ticket close psychology","Buying signal recognition","Decision triggers"],
+    questions:[
+      {
+        q:"At what point in a call do you know you've lost the deal — and what do you do in that moment?",
+        hint:"Most interviewers never ask this. A closer who has done volume knows the exact moment a deal dies and has a recovery move.",
+        opts:[
+          {t:"Never gives up", d:"\"I never think I've lost it.\" Sounds positive, means they can't read a call."},
+          {t:"Knows after", d:"Only realises the deal died in hindsight."},
+          {t:"Reads it live", d:"Can name the moment but has no recovery move."},
+          {t:"Reads it and acts", d:"Names the specific moment and has a real move — calling out the shift, resetting to discovery, asking directly what changed."}
+        ]
+      },
+      {
+        q:"What are the exact words you use to ask for the payment? Say it to me the way you'd say it on a call.",
+        hint:"Make them actually say it out loud. Hedging, over-explaining, or never quite asking are all visible here.",
+        opts:[
+          {t:"Never actually asks", d:"Trails off, describes the ask instead of making it, or waits for the prospect to offer."},
+          {t:"Hedged", d:"Asks but apologetically — \"if you're comfortable\", \"no pressure at all\"."},
+          {t:"Clear but padded", d:"Direct enough, but wrapped in unnecessary explanation."},
+          {t:"Clean and direct", d:"Says it plainly and confidently, then stops talking."}
+        ]
+      },
+      {
+        q:"After you ask for the close, how long do you stay silent?",
+        hint:"Holding silence after the ask is a discipline most average closers cannot manage. The answer reveals real call experience.",
+        opts:[
+          {t:"Doesn't get it", d:"Doesn't understand the question, or fills the silence straight away."},
+          {t:"Knows but can't hold it", d:"Knows silence matters, admits they talk through it."},
+          {t:"Holds briefly", d:"Waits a moment, but breaks before the prospect does."},
+          {t:"Holds it fully", d:"Understands the discipline, has held it, and can explain why the first to speak usually concedes."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"followup", sec:"sustain", name:"Follow-Up Discipline", priority:false,
+    skills:["Cadence management","Multi-touch sequencing","Pipeline prioritisation","Lead reactivation"],
+    knowledge:["Follow-up timing norms","Multi-touch frameworks","Lead decay patterns"],
+    questions:[
+      {
+        q:"A prospect says \"let me think about it\" and ends the call. Walk me through every touch you make over the next 14 days — timing and channel.",
+        hint:"Every JD across all nine clients flags follow-up. Ask for the actual sequence, not the intention.",
+        opts:[
+          {t:"No sequence", d:"\"I'd call in a few days.\" No structure at all."},
+          {t:"Two or three touches", d:"A few follow-ups, no timing logic or channel variation."},
+          {t:"Has a cadence", d:"Real sequence with timing, but the same message each time."},
+          {t:"Structured multi-touch", d:"Specific sequence across channels with distinct timing, and a reason behind the spacing."}
+        ]
+      },
+      {
+        q:"What do you say in follow-up #4 that you didn't say in #1, #2 or #3?",
+        hint:"Repeating \"just checking in\" four times is not follow-up. Each touch should carry a different angle.",
+        opts:[
+          {t:"Same message", d:"\"Just checking in\" every time."},
+          {t:"Minor variation", d:"Slightly different wording, same substance."},
+          {t:"Some new angles", d:"A couple of touches carry new information."},
+          {t:"Every touch distinct", d:"Each one has its own angle — new proof, a different objection addressed, a changed frame, a clean break-up message."}
+        ]
+      },
+      {
+        q:"How many touches before you mark a lead dead — and what makes you decide that?",
+        hint:"There's no correct number. The reasoning is what matters. Stopping at two or three usually signals conflict avoidance.",
+        opts:[
+          {t:"Two or three", d:"Stops early, often citing not wanting to annoy people."},
+          {t:"Number, no reason", d:"Gives a figure with no logic behind it."},
+          {t:"Reasonable number", d:"A sensible count with rough reasoning."},
+          {t:"Criteria-based", d:"Doesn't work purely to a count — decides on signals, and persists well beyond the average."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"crm", sec:"sustain", name:"CRM Discipline", priority:false,
+    skills:["Real-time updating","Pipeline stage management","Activity logging","Data accuracy"],
+    knowledge:["CRM platform basics","Pipeline stage logic","Data hygiene"],
+    questions:[
+      {
+        q:"When in the day do you update your CRM — before the call, during, or after? Be specific.",
+        hint:"A habit check, not a knowledge check. Batching at end of day is where leads get lost.",
+        opts:[
+          {t:"End of day or later", d:"\"When I get time.\" Batches it, or does it inconsistently."},
+          {t:"After, but batched", d:"Updates after calls, but in clusters rather than immediately."},
+          {t:"After each call", d:"Updates immediately, mostly consistent."},
+          {t:"Immediate, non-negotiable", d:"Straight after every call without exception, and can explain why the delay costs deals."}
+        ]
+      },
+      {
+        q:"If I opened your CRM from your last role and looked at a call note from three weeks ago, what would I find in it?",
+        hint:"This is the question that separates people who log activity from people who log intelligence.",
+        opts:[
+          {t:"Nothing useful", d:"Empty, or just \"called, not interested.\""},
+          {t:"Bare minimum", d:"Status only. No context."},
+          {t:"Decent notes", d:"Objection and next step captured."},
+          {t:"Rich and usable", d:"Objection raised, exact wording, personal context, agreed next step and date. Someone else could pick up the call cold."}
+        ]
+      },
+      {
+        q:"What happens to a lead in your pipeline that hasn't been touched in 3 weeks?",
+        hint:"Tests whether they have a system or whether leads quietly rot in the pipeline.",
+        opts:[
+          {t:"Nothing", d:"It just sits there. No process."},
+          {t:"Eventually revisits", d:"Says they'd get to it at some point."},
+          {t:"Has a habit", d:"Reviews stale leads periodically, informally."},
+          {t:"Systematic", d:"Defined reactivation sequence, stage change, or a scheduled sweep. Nothing goes stale unnoticed."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"target", sec:"sustain", name:"Target Orientation", priority:false,
+    skills:["Personal KPI tracking","Revenue forecasting","Performance self-review","Gap closing"],
+    knowledge:["Revenue KPI structure","Conversion benchmarks","Performance diagnostics"],
+    questions:[
+      {
+        q:"It's the 20th of the month and you're at 40% of target. What do you do differently for the next 10 days?",
+        hint:"\"Work harder\" is the wrong answer. You're looking for someone who does the pipeline maths backwards from the gap.",
+        opts:[
+          {t:"Work harder", d:"More calls, more effort. No maths, no prioritisation."},
+          {t:"Tactical tweak", d:"Some adjustment, but no sense of what the gap actually requires."},
+          {t:"Partial maths", d:"Works out roughly how many closes are needed."},
+          {t:"Works backwards", d:"Calculates conversations needed at their close rate, identifies which leads to prioritise, and changes their day accordingly."}
+        ]
+      },
+      {
+        q:"What was your close rate, average deal size, and monthly revenue in your last role?",
+        hint:"Three numbers. A professional closer has all three. Team numbers instead of personal ones is a flag.",
+        opts:[
+          {t:"None of them", d:"Can't answer, or only quotes team figures."},
+          {t:"One of three", d:"Knows one number, approximately."},
+          {t:"Two of three", d:"Solid on two, vague on the third."},
+          {t:"All three, plus trend", d:"All three specifically, and knows how they moved over time and why."}
+        ]
+      },
+      {
+        q:"How do you know on the 5th of the month whether you're going to hit target or not?",
+        hint:"Real target-driven closers forecast from leading indicators. Others find out on the 30th.",
+        opts:[
+          {t:"Finds out at month end", d:"No forward view at all."},
+          {t:"Gut feel", d:"Rough instinct, no numbers behind it."},
+          {t:"Tracks pipeline", d:"Watches pipeline volume but doesn't convert it to a forecast."},
+          {t:"Forecasts properly", d:"Knows required pipeline coverage and tracks leading indicators to call the month early."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"ownership", sec:"who", name:"Ownership", priority:true,
+    skills:["Self-diagnosis","Independent structuring","Result accountability"],
+    knowledge:["Self-management principles","Performance causality"],
+    questions:[
+      {
+        q:"When did you last notice your own numbers slipping before your manager brought it up — and what did you actually do that week?",
+        hint:"The tell is not whether they take responsibility. It's whether they caught it first. If a manager always flagged it, that's a 0 regardless of how well they frame the rest.",
+        opts:[
+          {t:"Manager always flagged it", d:"Only ever course-corrected after being told."},
+          {t:"Noticed late", d:"Spotted it eventually, but around the same time as the manager."},
+          {t:"Caught it, needed help", d:"Noticed first but needed someone else to diagnose the cause."},
+          {t:"Caught and corrected alone", d:"Spotted it early, diagnosed the specific cause themselves, and changed something concrete that week."}
+        ]
+      },
+      {
+        q:"What did you track about your own performance that nobody asked you to track?",
+        hint:"Owners build their own instruments. This is one of the cleanest ownership signals available.",
+        opts:[
+          {t:"Nothing", d:"Only tracked what the company required."},
+          {t:"One thing, loosely", d:"Kept a rough personal note on something."},
+          {t:"Real self-tracking", d:"Tracked something of their own with a clear purpose."},
+          {t:"Built their own system", d:"Specific self-built tracking, a clear reason for it, and evidence they acted on what it showed."}
+        ]
+      },
+      {
+        q:"Tell me about a month you missed target. Whose fault was it?",
+        hint:"Blunt on purpose. Listen for where the cause lands.",
+        opts:[
+          {t:"External", d:"Leads, product, market, pricing, manager. Never them."},
+          {t:"Hedged", d:"Splits it — some external, some theirs, without committing."},
+          {t:"Owns it broadly", d:"Takes responsibility but stays general about what they got wrong."},
+          {t:"Owns the specific", d:"Names the exact thing they did or failed to do, without prompting."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"eq", sec:"who", name:"Emotional Intelligence", priority:false,
+    skills:["Emotional state reading","Energy matching","Stakeholder management","Hesitation surfacing"],
+    knowledge:["Emotional buying triggers","Stakeholder dynamics","Family decision patterns"],
+    questions:[
+      {
+        q:"Mid-call the prospect says \"I need to discuss this with my wife.\" What do you do in the next 60 seconds?",
+        hint:"Extremely common across EdTech, health and coaching. Passive acceptance here loses the deal.",
+        opts:[
+          {t:"Accepts and exits", d:"\"Sure, I'll follow up.\" Loses the room."},
+          {t:"Pushes back weakly", d:"Tries to keep going but with no stakeholder strategy."},
+          {t:"Explores a little", d:"Asks a question or two about the spouse's likely concerns."},
+          {t:"Works the stakeholder", d:"Finds out who actually decides, surfaces what her objection would be, and either gets her on the call or arms the prospect to handle it."}
+        ]
+      },
+      {
+        q:"Have you ever chosen not to close someone you probably could have? What happened?",
+        hint:"Closers with real EQ and integrity have this story and tell it without hesitation. \"I always close\" is not a strength.",
+        opts:[
+          {t:"\"I always close\"", d:"Rejects the premise. Aggression, not integrity."},
+          {t:"Vague hypothetical", d:"Says they would, but has no actual instance."},
+          {t:"Has an example", d:"Real story, reasoning is thin."},
+          {t:"Specific and clear", d:"Concrete situation, clear reasoning about fit, no regret about the decision."}
+        ]
+      },
+      {
+        q:"Tell me about a call where the prospect agreed with everything but you knew they weren't going to buy. What were you picking up on?",
+        hint:"Over-agreement is one of the most reliable false signals in high-ticket sales. Only experienced closers name it unprompted.",
+        opts:[
+          {t:"Doesn't happen", d:"Can't recall an instance, or takes agreement at face value."},
+          {t:"General sense", d:"Vague feeling, no named signals."},
+          {t:"Names one signal", d:"Identifies something specific, but limited."},
+          {t:"Reads the pattern", d:"Names it clearly — no questions asked back, agreeing too fast, deflecting on specifics — and what they did about it."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"coach", sec:"who", name:"Coachability", priority:false,
+    skills:["Feedback reception","Behaviour adaptation","Self-review practice"],
+    knowledge:["Call review process","Feedback implementation"],
+    questions:[
+      {
+        q:"What's the last piece of feedback you got on your calls that stung? What did you do with it?",
+        hint:"Real coachability needs a specific memory plus a specific action. \"I'm always open to feedback\" with no example is a 0.",
+        opts:[
+          {t:"No example", d:"Can't recall any hard feedback, or claims never to have received it."},
+          {t:"Recalls, no action", d:"Remembers the feedback but nothing changed."},
+          {t:"Acted on it", d:"Specific feedback and a general change in response."},
+          {t:"Feedback → change → result", d:"Names the feedback, the exact change, and what happened to their numbers after."}
+        ]
+      },
+      {
+        q:"When did you last listen back to a recording of your own call — and what did you find?",
+        hint:"Self-review is voluntary. Doing it unprompted is a strong signal.",
+        opts:[
+          {t:"Never", d:"Has not done this, or only when forced."},
+          {t:"When required", d:"Only in formal review sessions."},
+          {t:"Occasionally", d:"Does it sometimes, has a rough takeaway."},
+          {t:"Regular habit", d:"Reviews their own calls by choice and can name something specific they caught and fixed."}
+        ]
+      },
+      {
+        q:"If I told you tomorrow that your discovery is the weakest part of your call — what happens next in this conversation?",
+        hint:"Watch the immediate reaction, not the words. Defensiveness shows up in the first sentence.",
+        opts:[
+          {t:"Defends", d:"Justifies, explains why that's not accurate, or pushes back before hearing more."},
+          {t:"Accepts flatly", d:"Takes it politely with no curiosity or follow-up."},
+          {t:"Asks a question", d:"Accepts and asks something, but doesn't drive toward a fix."},
+          {t:"Goes after it", d:"Wants the specific calls, asks for examples, moves straight to what to change."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"pressure", sec:"who", name:"Confidence Under Pressure", priority:false,
+    skills:["Frame holding","In-call recovery","Composure under challenge"],
+    knowledge:["Value vs price framing","High-ticket sale dynamics"],
+    questions:[
+      {
+        q:"[Role-play] \"Honestly, I've been burned by programs like this before. Why should I trust you?\" — Respond live.",
+        hint:"Deliver it with some edge. Watch whether they get defensive, oversell, or stay calm and turn it into discovery.",
+        opts:[
+          {t:"Defensive or oversells", d:"Argues, over-explains, or starts making promises to compensate."},
+          {t:"Rattled but recovers", d:"Visibly thrown, gets there eventually."},
+          {t:"Composed, scripted", d:"Calm and reasonable, but clearly a rehearsed line."},
+          {t:"Calm and curious", d:"Acknowledges without flinching, doesn't oversell, turns it into a question about what went wrong last time."}
+        ]
+      },
+      {
+        q:"Tell me about the most aggressive prospect you've handled. What did they do, and what did you say?",
+        hint:"Everyone who has done volume has one of these. No example usually means low call exposure.",
+        opts:[
+          {t:"No example", d:"Can't recall one, or avoids these calls."},
+          {t:"Lost the frame", d:"Has an example but conceded or ended the call badly."},
+          {t:"Held, no technique", d:"Stayed composed but can't say how."},
+          {t:"Held with intent", d:"Kept control, names the specific technique, and can say what happened to the deal."}
+        ]
+      },
+      {
+        q:"When a prospect goes cold mid-call, what do you do?",
+        hint:"The good answer usually involves naming the shift out loud rather than pushing through it.",
+        opts:[
+          {t:"Keeps pitching", d:"Doesn't notice, or carries on regardless."},
+          {t:"Notices, no move", d:"Registers the change but has no response."},
+          {t:"Slows down", d:"Adjusts pace or backs off slightly."},
+          {t:"Re-anchors", d:"Calls the shift out directly, asks what changed, and resets the call rather than pushing."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"intent", sec:"who", name:"Genuine Intent", priority:false,
+    skills:["Role-specific research","Honest self-assessment","Two-way evaluation"],
+    knowledge:["Role-specific knowledge","Market awareness"],
+    questions:[
+      {
+        q:"What would make you turn this offer down, even if it came through?",
+        hint:"This is the desperation filter. \"Nothing, I really want this\" is the answer you're screening against — it's the profile that deflates after the offer.",
+        opts:[
+          {t:"\"Nothing\"", d:"Can't name a single condition. Wants the offer more than the role."},
+          {t:"Generic", d:"Salary or location only. No thought about fit."},
+          {t:"One real condition", d:"Names something genuine about how they work."},
+          {t:"Honest and specific", d:"Clear, considered condition that reveals what they actually need to perform. Comfortable saying it out loud."}
+        ]
+      },
+      {
+        q:"What specifically about this role made you apply — not sales in general, this role?",
+        hint:"Genuine candidates researched. Desperate candidates applied everywhere and can't distinguish this one.",
+        opts:[
+          {t:"Generic", d:"\"I love sales\", \"great opportunity\", \"want to grow.\" Could be any job."},
+          {t:"Surface detail", d:"Repeats something from the JD without engaging with it."},
+          {t:"Some specificity", d:"Names a real aspect — the domain, the ticket size, the lead structure."},
+          {t:"Clearly researched", d:"Specific to this client type or offer, and connects it to how they work best."}
+        ]
+      },
+      {
+        q:"What do you want to know about this role that I haven't told you?",
+        hint:"Save for the end. Confident candidates evaluate you back and ask questions with edge. Softballs designed to sound interested are the flag.",
+        opts:[
+          {t:"No questions", d:"Nothing to ask, or purely polite noises."},
+          {t:"Softballs", d:"\"What does success look like?\" — designed to sound engaged, not to learn anything."},
+          {t:"Reasonable questions", d:"Fair questions about the role, no real edge."},
+          {t:"Pointed", d:"Asks about lead quality, realistic close rates, ramp expectations, or why the last person left. Pushes back a little."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"consistency", sec:"who", name:"Post-Hire Consistency", priority:false,
+    skills:["Motivation self-management","Standard maintenance","Routine discipline"],
+    knowledge:["Personal motivation patterns","Performance consistency drivers"],
+    questions:[
+      {
+        q:"How does your energy in month 1 of a new job compare to month 4? Be honest.",
+        hint:"\"I'm exactly the same always\" is either no self-awareness or a rehearsed answer. Honest admission plus a management strategy is what you want.",
+        opts:[
+          {t:"\"Always the same\"", d:"Claims perfect consistency. No self-awareness, or performing."},
+          {t:"Admits a dip, no plan", d:"Honest that it changes, has no way of handling it."},
+          {t:"Aware, loose plan", d:"Recognises the pattern and has a rough approach."},
+          {t:"Honest and managed", d:"Candid about the dip and names a specific way they manage through it."}
+        ]
+      },
+      {
+        q:"What does a bad day look like for you at work — specifically — and what do you actually do about it?",
+        hint:"Performed candidates describe a polished version of struggle. Real ones describe something specific and unglamorous.",
+        opts:[
+          {t:"\"I don't have bad days\"", d:"Denies them, or \"I just push through\" with nothing behind it."},
+          {t:"Vague", d:"Describes a bad day generically, coping mechanism is a platitude."},
+          {t:"Specific day, loose fix", d:"Real description of a bad day, rough approach to it."},
+          {t:"Specific and real", d:"Concrete, unpolished description plus an actual routine they use to reset."}
+        ]
+      },
+      {
+        q:"How did their output and energy in month 1 compare to month 4 of working with you?",
+        hint:"Put this to the previous manager, not the candidate. The gap between month 1 and month 4 is the tell that catches the interview-face problem.",
+        ref:true,
+        opts:[
+          {t:"Clear drop-off", d:"Manager describes a visible decline once the candidate settled in."},
+          {t:"Noticeable dip", d:"Some falling away, or the manager hedges heavily."},
+          {t:"Mostly steady", d:"Broadly consistent with minor variation."},
+          {t:"Steady or improving", d:"Output held or grew over time. Manager is unhesitating about it."}
+        ]
+      }
+    ]
+  },
+  {
+    id:"longevity", sec:"who", name:"Longevity", priority:true,
+    skills:["Resilience through dips","Commitment history","Long-term thinking"],
+    knowledge:["Sales performance cycles","Career commitment patterns"],
+    questions:[
+      {
+        q:"Walk me through your last three roles — how long at each, and why did you leave each one?",
+        hint:"Look for the pattern, not the reasons. Short tenures with consistently external explanations is the profile that quits on you in month three.",
+        opts:[
+          {t:"Serial short stints", d:"Multiple exits under 12 months, every reason external — bad leads, bad manager, bad company."},
+          {t:"Short, mixed reasons", d:"Short tenures, but some reasons are fair."},
+          {t:"Mixed tenure", d:"At least one decent stint alongside shorter ones."},
+          {t:"Real commitment history", d:"At least one 18+ month stint, and can describe what they actually built in that time."}
+        ]
+      },
+      {
+        q:"Tell me about your worst 2–3 months in a sales role. What did you do during that stretch?",
+        hint:"This is where quitters reveal themselves. Listen for whether they pushed through or started applying elsewhere.",
+        opts:[
+          {t:"Left or never had one", d:"Started looking elsewhere, or claims they've never had a bad stretch."},
+          {t:"Stayed passively", d:"Waited it out, did nothing differently."},
+          {t:"Stayed and tried", d:"Stuck with it, made some effort to change things."},
+          {t:"Fought through it", d:"Stayed, took specific action, and can describe exactly how they came out the other side."}
+        ]
+      },
+      {
+        q:"Would you rehire them? And did they ever indicate they were looking elsewhere?",
+        hint:"Put this to the previous manager. Hesitation on the rehire question tells you more than the answer itself.",
+        ref:true,
+        opts:[
+          {t:"No", d:"Wouldn't rehire, or confirms the candidate was actively looking while employed."},
+          {t:"Hedges", d:"Noticeable hesitation, or qualifies the answer heavily."},
+          {t:"Qualified yes", d:"Would rehire with some caveats."},
+          {t:"Unhesitating yes", d:"Clear yes, no flight signals during their time there."}
+        ]
+      }
+    ]
+  }
+];
+
+/* ── State ────────────────────────────────────────────────────────────────── */
+let MODE = 'r2';
+let SCOPE = [];
+let FLAT  = [];
+
+function buildScope(){
+  SCOPE = ATTRS.map((a,ai)=>({a,ai}))
+               .filter(x => MODE==='r2' ? true : x.a.priority)
+               .map(x=>x.ai);
+  FLAT = [];
+  SCOPE.forEach(ai=>{
+    ATTRS[ai].questions.forEach((q,qi)=>{ FLAT.push({attrIdx:ai, qIdx:qi, attr:ATTRS[ai], q:q}); });
+  });
+}
+
+function setMode(m){
+  MODE = m;
+  document.getElementById('mode-r1').classList.toggle('sel', m==='r1');
+  document.getElementById('mode-r2').classList.toggle('sel', m==='r2');
+}
+
+let idx = 0;
+const scores = {};
+const notes  = {};
+const meta   = {};
+
+/* ── Init ─────────────────────────────────────────────────────────────────── */
+document.getElementById('intDate').valueAsDate = new Date();
+
+function start(){
+  meta.candidate   = document.getElementById('candName').value.trim()   || 'Unnamed candidate';
+  meta.interviewer = document.getElementById('intName').value.trim()    || '—';
+  meta.client      = document.getElementById('clientName').value.trim() || '—';
+  meta.date        = document.getElementById('intDate').value           || '';
+  meta.round       = MODE.toUpperCase();
+  buildScope();
+  document.getElementById('topmeta').textContent = meta.candidate + '  ·  ' + meta.round;
+  idx = 0;
+  show('screen-q');
+  render();
+}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+/* ── Render question ──────────────────────────────────────────────────────── */
+function render(){
+  const item = FLAT[idx];
+  const a = item.attr, q = item.q;
+  const key = item.attrIdx+'-'+item.qIdx;
+
+  document.getElementById('progressFill').style.width = (idx/FLAT.length*100)+'%';
+
+  document.getElementById('crumbSec').textContent = SECTIONS[a.sec];
+  const posInScope = SCOPE.indexOf(item.attrIdx)+1;
+  document.getElementById('crumbCount').textContent =
+    'Attr '+posInScope+'/'+SCOPE.length+'  ·  Q'+(item.qIdx+1)+'/3  ·  '+(idx+1)+' of '+FLAT.length;
+
+  let badges = '';
+  if(a.priority) badges += '<span class="badge badge-pri">Priority</span> ';
+  if(q.ref)      badges += '<span class="badge badge-ref">Ref check</span>';
+  document.getElementById('crumbBadges').innerHTML = badges;
+
+  document.getElementById('attrName').textContent = a.name;
+
+  document.getElementById('skillTags').innerHTML =
+    a.skills.map(s=>'<span class="tag">'+s+'</span>').join('');
+  document.getElementById('knowTags').innerHTML =
+    a.knowledge.map(s=>'<span class="tag k">'+s+'</span>').join('');
+
+  document.getElementById('refNote').innerHTML = q.ref
+    ? '<div class="refbox"><strong>Reference check question.</strong> Do not ask the candidate. Put this to their previous manager, then come back and score it.</div>'
+    : '';
+
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('qHint').textContent = q.hint;
+
+  const chosen = scores[key];
+  document.getElementById('opts').innerHTML = q.opts.map((o,i)=>
+    '<button class="opt'+(chosen===i?' picked':'')+'" onclick="pick('+i+')">'+
+      '<span class="opt-num sc-'+i+'">'+i+'</span>'+
+      '<span class="opt-body"><span class="opt-title">'+o.t+'</span>'+
+      '<span class="opt-desc">'+o.d+'</span></span>'+
+    '</button>'
+  ).join('');
+
+  const ta = document.getElementById('qNotes');
+  ta.value = notes[key] || '';
+  ta.oninput = ()=>{ notes[key] = ta.value; };
+
+  document.getElementById('skipBtn').textContent =
+    idx === FLAT.length-1 ? 'Finish →' : 'Skip for now →';
+}
+
+function pick(v){
+  const item = FLAT[idx];
+  scores[item.attrIdx+'-'+item.qIdx] = v;
+  document.querySelectorAll('#opts .opt').forEach((el,i)=>
+    el.classList.toggle('picked', i===v));
+  setTimeout(nextQ, 160);
+}
+
+function nextQ(){ if(idx < FLAT.length-1){ idx++; render(); } else { results(); } }
+function prevQ(){ if(idx>0){ idx--; render(); } else { show('screen-start'); } }
+function skipQ(){ nextQ(); }
+function backToQs(){ show('screen-q'); render(); }
+
+/* ── Results ──────────────────────────────────────────────────────────────── */
+function attrScore(ai){
+  const a = ATTRS[ai];
+  let got=0, max=0, missing=0;
+  a.questions.forEach((q,qi)=>{
+    const v = scores[ai+'-'+qi];
+    max += 3;
+    if(v===undefined) missing++;
+    else got += v;
+  });
+  return {got, max, missing};
+}
+
+function results(){
+  document.getElementById('progressFill').style.width = '100%';
+
+  let total=0, totalMax=0, refMissing=0;
+  SCOPE.forEach(ai=>{ const s=attrScore(ai); total+=s.got; totalMax+=s.max; });
+  FLAT.forEach(f=>{ if(f.q.ref && scores[f.attrIdx+'-'+f.qIdx]===undefined) refMissing++; });
+
+  const roundLabel = MODE==='r1' ? 'R1 — Screen' : 'R2 — Full';
+  document.getElementById('resMeta').innerHTML =
+    '<strong>'+escapeHtml(meta.candidate)+'</strong> · '+escapeHtml(meta.client)+' · '+roundLabel+
+    ' · Interviewed by '+escapeHtml(meta.interviewer)+
+    (meta.date? ' · '+meta.date : '')+
+    (refMissing? ' <span class="pending">· '+refMissing+' ref question'+(refMissing>1?'s':'')+' outstanding</span>' : '');
+
+  document.getElementById('totalNum').textContent = total;
+  document.getElementById('totalDen').textContent = ' / '+totalMax;
+  document.getElementById('pctNum').textContent = Math.round(total/totalMax*100)+'%';
+
+  const pri = SCOPE.map(ai=>({a:ATTRS[ai],ai})).filter(x=>x.a.priority);
+  document.getElementById('priRows').innerHTML = pri.map(x=>{
+    const s = attrScore(x.ai);
+    return '<div class="pri-row">'+
+      '<div><div class="pri-name">'+x.a.name+'</div>'+
+      '<div class="pri-sub">'+x.a.skills.slice(0,3).join(' · ')+'</div></div>'+
+      '<div class="pri-score">'+s.got+' / '+s.max+
+      (s.missing?' <span class="pending">('+s.missing+' unscored)</span>':'')+'</div></div>';
+  }).join('');
+
+  let html = '<thead><tr><th>Attribute</th><th>Skills &amp; Knowledge</th><th class="num">Score</th></tr></thead><tbody>';
+  let lastSec = null;
+  SCOPE.forEach(ai=>{
+    const a = ATTRS[ai];
+    if(a.sec !== lastSec){
+      html += '<tr class="sec-row"><td colspan="3">'+SECTIONS[a.sec]+'</td></tr>';
+      lastSec = a.sec;
+    }
+    const s = attrScore(ai);
+    const pctv = s.max ? (s.got/s.max) : 0;
+    const col = pctv>=.75 ? 'var(--success)' : pctv>=.45 ? '#8C5800' : 'var(--danger)';
+    html += '<tr>'+
+      '<td><div class="row-attr">'+a.name+(a.priority?'<span class="pri-chip">Priority</span>':'')+'</div></td>'+
+      '<td><div class="row-tags"><strong>S:</strong> '+a.skills.join(', ')+'<br><strong>K:</strong> '+a.knowledge.join(', ')+'</div></td>'+
+      '<td class="num"><span class="bar"><i style="width:'+(pctv*100)+'%;background:'+col+'"></i></span>'+
+        s.got+'/'+s.max+(s.missing?'<br><span class="pending">'+s.missing+' unscored</span>':'')+'</td>'+
+    '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('sheetTable').innerHTML = html;
+
+  const r1n = document.getElementById('r1Note');
+  if(r1n) r1n.innerHTML = MODE==='r1'
+    ? '<div class="mode-note"><strong>R1 screen only.</strong> The remaining nine attributes — dialing, follow-up, CRM, target orientation, emotional intelligence, coachability, pressure, intent, and post-hire consistency — are assessed in R2.</div>'
+    : '';
+
+  const noteKeys = Object.keys(notes).filter(k=>notes[k]&&notes[k].trim());
+  if(noteKeys.length){
+    document.getElementById('notesOut').innerHTML =
+      '<div class="region-head" style="margin-top:28px"><h2>Interviewer notes</h2></div>'+
+      noteKeys.map(k=>{
+        const [ai,qi] = k.split('-').map(Number);
+        return '<div class="note-card"><div class="note-attr">'+ATTRS[ai].name+' · Q'+(qi+1)+'</div>'+
+               '<div class="note-body">'+escapeHtml(notes[k])+'</div></div>';
+      }).join('');
+  } else {
+    document.getElementById('notesOut').innerHTML = '';
+  }
+
+  show('screen-res');
+}
+
+function escapeHtml(s){
+  if(!s) return '';
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ── Export / Import ──────────────────────────────────────────────────────── */
+function saveJSON(){
+  const out = {
+    version:1, role:"Business Closer", round:MODE.toUpperCase(),
+    meta:meta, generatedAt:new Date().toISOString(),
+    attributes: SCOPE.map(ai=>{
+      const a = ATTRS[ai], s = attrScore(ai);
+      return {
+        id:a.id, name:a.name, section:SECTIONS[a.sec], priority:a.priority,
+        skills:a.skills, knowledge:a.knowledge,
+        score:s.got, max:s.max, unscored:s.missing,
+        questions:a.questions.map((q,qi)=>({
+          question:q.q, referenceCheck:!!q.ref,
+          score: scores[ai+'-'+qi] ?? null,
+          notes: notes[ai+'-'+qi] || ""
+        }))
+      };
+    }),
+    total: SCOPE.reduce((t,ai)=>t+attrScore(ai).got, 0),
+    maxTotal: FLAT.length*3
+  };
+  const blob = new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = (meta.candidate||'candidate').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+
+               '-'+MODE+'-ask-scorecard.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function loadJSON(){ document.getElementById('fileInput').click(); }
+
+function handleFile(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const d = JSON.parse(r.result);
+      Object.assign(meta, d.meta||{});
+      MODE = (d.round||'R2').toLowerCase()==='r1' ? 'r1' : 'r2';
+      setMode(MODE);
+      buildScope();
+      document.getElementById('candName').value   = meta.candidate   || '';
+      document.getElementById('intName').value    = meta.interviewer || '';
+      document.getElementById('clientName').value = meta.client      || '';
+      if(meta.date) document.getElementById('intDate').value = meta.date;
+      (d.attributes||[]).forEach(ad=>{
+        const ai = ATTRS.findIndex(x=>x.id===ad.id);
+        if(ai<0) return;
+        (ad.questions||[]).forEach((qd,qi)=>{
+          if(qd.score!==null && qd.score!==undefined) scores[ai+'-'+qi]=qd.score;
+          if(qd.notes) notes[ai+'-'+qi]=qd.notes;
+        });
+      });
+      document.getElementById('topmeta').textContent =
+        (meta.candidate||'Business Closer')+'  ·  '+MODE.toUpperCase();
+      results();
+    }catch(err){ alert('Could not read that file.'); }
+  };
+  r.readAsText(f);
+}
+
+/* keyboard: 0–3 score, arrows navigate */
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('screen-q').classList.contains('active')) return;
+  if(document.activeElement.tagName==='TEXTAREA') return;
+  if(['0','1','2','3'].includes(e.key)) pick(Number(e.key));
+  if(e.key==='ArrowRight') nextQ();
+  if(e.key==='ArrowLeft')  prevQ();
+});
+</script>
+</body>
+</html>
