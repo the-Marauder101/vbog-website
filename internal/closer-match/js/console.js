@@ -993,9 +993,15 @@ async function loadQueue() {
           ${roleLines(c.roles)}
           ${c.ask ? `<p class="small muted" style="margin:6px 0 0">
             <span class="chip">ASK ${esc(c.ask.round.toUpperCase())} ${c.ask.pct}%</span>
-            ${c.ask.total} of ${c.ask.max_total} · ${onDate(c.ask.on)}</p>` : ""}
+            ${c.ask.total} of ${c.ask.max_total} · ${onDate(c.ask.on)}</p>`
+          // Somebody whose job today is running interviews should not have to
+          // open a candidate and scroll to find the button. The row says the
+          // interview has not happened, and offers to start it.
+          : `<p class="small muted" style="margin:6px 0 0">
+            <span class="chip">no ASK interview yet</span></p>`}
           ${scoreStrip(c.scores, c.sides)}
           <div class="actions" style="margin-top:10px">
+            ${askRunLinks(c.id)}
             <button class="btn-quiet btn-small" data-cand-rename="${esc(c.id)}"
               data-name="${esc(c.full_name)}">Rename</button>
             <button class="btn-quiet btn-small" data-cand-del="${esc(c.id)}"
@@ -1432,9 +1438,30 @@ async function openCandidate(id) {
     c.consent_at ? `consented ${onDate(c.consent_at)}` : null,
   ].filter(Boolean).map(esc).join(" · ");
 
+  // ── A candidate with no questionnaire scores is not an empty page ─────────
+  // ASK runs at R1 and R2. The questionnaire is the step AFTER. So a candidate
+  // being interviewed has no profile — that is not an edge case, it is the
+  // normal state of every candidate ASK exists for.
+  //
+  // This branch used to render one notice and `return`, and everything below it,
+  // including the ASK region and its "Run R2 interview" link, never appeared. The
+  // feature was reachable only for candidates who had already finished the step
+  // that comes after it. See sql/39.
+  //
+  // What still cannot be shown here is anything score-derived: the nine
+  // dimensions, the match against open roles, the response-pattern flags. Those
+  // genuinely do not exist yet, and the notice says so. What CAN be shown is the
+  // interview and the stated facts — both of which are how a candidate at this
+  // stage is actually worked on.
   if (!d.scored) {
-    el("cd-body").innerHTML = `<div class="notice"><span class="label">Nothing to show yet</span>${esc(d.reason)}</div>`;
+    el("cd-body").innerHTML = `
+      <div class="notice">
+        <span class="label">No questionnaire scores yet</span>${esc(d.reason)}
+      </div>
+      ${askHtml(d, c)}
+      ${directFieldsHtml(c)}`;
     el("cd-disclaimer").textContent = "";
+    bindDirectFields(id);
     return view("cand");
   }
 

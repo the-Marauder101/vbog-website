@@ -2011,6 +2011,67 @@ it would have been one line to explain forever.
 
 > **An audit that names its tables cannot outlive the schema.**
 
+### 7ak. ASK shipped unreachable, and 237 green assertions said otherwise
+
+Depesh could not find the R2 interview. Not a discoverability problem — it was
+not there.
+
+The ASK region lives on the candidate detail page, and `js/console.js` did this:
+
+```js
+if (!d.scored) {
+  el("cd-body").innerHTML = `<div class="notice">Nothing to show yet…</div>`;
+  return view("cand");        // ← the ASK region is rendered below this line
+}
+```
+
+Which would be fine if the questionnaire came first. It does not:
+
+```
+LinkedIn → CV screen → R1 phone → R2 interview → QUESTIONNAIRE → R3 → R4
+                       ▲          ▲
+                       └──────────┴── ASK runs HERE
+```
+
+A candidate being interviewed has no `candidate_profile` row. That is not an
+edge case — **it is the normal state of every candidate ASK exists for.** So the
+feature was reachable only for candidates who had already completed the step that
+comes after it. `get_candidate_detail()` compounded it: sql/21 appended the `ask`
+and `ask_overlap` keys to the scored return only, so the unscored branch did not
+carry them either.
+
+**The tests passed the whole time.** `test/regression.js` asserts the candidate
+page has an ASK region, and it opens a candidate chosen like this:
+
+```js
+.find(r => r.querySelector(".strip") && …)   // a row WITH scores
+```
+
+Deliberately a scored candidate, so the nine-dimension assertions in the same
+block would have something to read. Every ASK assertion in the suite therefore
+ran against the one state where ASK already worked. Six suites, 237 assertions,
+all green, and the headline feature could not be used.
+
+> **A test that only ever exercises the state where the feature works is not
+> testing the feature, it is testing the state.**
+
+That is a sharper version of the same mistake as the default password: it looks
+green. Green is a claim about what was checked, never about what was built.
+
+The fix is three parts. sql/39 puts the ASK keys on both branches of
+`get_candidate_detail`. `js/console.js` renders the ASK region and the stated
+facts on the unscored branch instead of returning early — while still showing no
+dimension, match or flag it does not have, because those genuinely do not exist
+yet. And the queue row now carries the run links and an explicit *no ASK
+interview yet*, so somebody whose job today is running interviews does not have
+to open a candidate and scroll to find the button.
+
+Ten assertions were added to `test/assess.js`, which already had an unscored
+candidate sitting in front of it and never looked at the page. Before merging
+them the console fix was reverted and the suite re-run: **five of the ten went
+red.** A new test that has never failed is a new test that proves nothing, and it
+costs one minute to find out which kind you have written.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

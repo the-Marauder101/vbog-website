@@ -49,6 +49,60 @@ suite("ASSESS SUITE", 8101, async ({ p, base, E, P, check, errs }) => {
   token = typeof tok.body === "string" ? tok.body.replace(/^"|"$/g, "") : tok.body;
   check("and issue an assessment link", typeof token === "string" && token.length > 8, `HTTP ${tok.status}`);
 
+  // ══ THE CANDIDATE PAGE BEFORE THERE ARE ANY SCORES ═══════════════════════
+  // The state this suite's own candidate is in right now — created, no
+  // questionnaire — is the normal state of every candidate at R1 and R2, because
+  // ASK runs BEFORE the questionnaire in the pipeline it serves.
+  //
+  // This was not tested, and the feature was broken in it. `regression.js`
+  // asserts the ASK region exists on the candidate page, but it deliberately
+  // opens a row that has a score strip so its nine-dimension assertions have
+  // something to read. Every ASK assertion therefore ran against the one state
+  // where ASK already worked, while the console returned early on `!d.scored`
+  // and never rendered the region for anybody else. See sql/39.
+  const detailUnscored = await rpc(p, "get_candidate_detail", { p_candidate_id: candId });
+  check("an unscored candidate's detail still carries the ASK keys",
+        detailUnscored.body && detailUnscored.body.scored === false &&
+        Array.isArray(detailUnscored.body.ask) && "ask_overlap" in detailUnscored.body,
+        `scored=${(detailUnscored.body || {}).scored} ask=${JSON.stringify((detailUnscored.body || {}).ask)}`);
+  check("and still says why there are no scores",
+        !!(detailUnscored.body || {}).reason, (detailUnscored.body || {}).reason);
+
+  await p.click("#nav-queue");
+  await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(1500);
+  await p.click(`#queue-list [data-cand="${candId}"]`);
+  await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(900);
+  const unscoredPage = flat(await p.textContent("#cd-body"));
+
+  check("THE CANDIDATE PAGE OFFERS THE R2 INTERVIEW BEFORE ANY QUESTIONNAIRE",
+        /ASK interview/.test(unscoredPage) &&
+        (await p.$$(`#cd-body a[href*="ask.html"][href*="round=r2"]`)).length > 0,
+        unscoredPage.slice(0, 130));
+  check("and the R1 phone screen too",
+        (await p.$$(`#cd-body a[href*="ask.html"][href*="round=r1"]`)).length > 0, "");
+  check("it explains what the two rounds are, to somebody running one for the first time",
+        /15-question phone screen/.test(unscoredPage) && /full 42/.test(unscoredPage), "");
+  check("the page is honest that there are no questionnaire scores",
+        /No questionnaire scores yet/.test(unscoredPage) &&
+        /not opened their assessment link/.test(unscoredPage), "");
+  check("and shows no dimension, match or flag it does not have",
+        (await p.$$("#cd-body .dim")).length === 0 &&
+        !/Against the open roles/.test(unscoredPage), "");
+  check("the stated facts are still editable at this stage",
+        (await p.$$("#df-region [data-df]")).length >= 4,
+        `${(await p.$$("#df-region [data-df]")).length} fields`);
+
+  // The queue row itself, so an interviewer does not have to open a candidate.
+  await p.click("#nav-queue");
+  await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(1200);
+  check("and the queue row itself offers to start an interview",
+        (await p.$$(`#queue-list a[href*="ask.html"][href*="round=r2"]`)).length > 0, "");
+  check("with the row saying no interview has happened yet",
+        /no ASK interview yet/.test(flat(await p.textContent("#queue-list"))), "");
+
   // ══ THE CONSENT GATE ═════════════════════════════════════════════════════
   // Nothing about a person is collected before they have agreed to it. The gate
   // is in the database, not in the page, so that closing the page and calling
