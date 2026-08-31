@@ -39,7 +39,7 @@ function view(name) {
 // still "Requirements", because that is where you came from and where Back goes.
 const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue", cand: "nav-queue",
                  health: "nav-health", place: "nav-place", supp: "nav-supp",
-                 guide: "nav-guide", dict: "nav-dict" };
+                 guide: "nav-guide", dict: "nav-dict", team: "nav-team" };
 
 function markNav(name) {
   Object.values(NAV_OF).forEach((id) => el(id) && el(id).removeAttribute("aria-current"));
@@ -136,6 +136,121 @@ el("btn-signup").addEventListener("click", async () => {
     b.disabled = false; b.textContent = "Create account";
   }
 });
+
+// ═══ TEAM ══════════════════════════════════════════════════════════════════
+// Adding a colleague was a SQL insert until this existed, which made every
+// delegation — handing R1 to the team, handing R2 to the team — wait on somebody
+// opening a database console. See sql/34.
+//
+// The refusals that matter (you cannot remove your own access; you cannot remove
+// the last admin) are enforced in the database, not here. A confirm() dialog is a
+// suggestion, and the failure mode is being locked out of the screen that would
+// let you back in.
+
+const ROLE_MEANS = {
+  admin: "the whole pipeline, plus keying rounds, re-keys and retention",
+  recruiter: "candidate links, client intake, shortlists, interviews, placements",
+  psych: "same access as a recruiter",
+  keyer: "invited to key items — not a console account",
+};
+
+async function loadTeam() {
+  view("loading");
+  let rows;
+  try { rows = await sbRpc("list_staff"); }
+  catch (e) {
+    el("team-list").innerHTML = `<div class="notice notice-error">${esc(e.message)}</div>`;
+    return view("team");
+  }
+
+  const me = rows.find((r) => r.is_you);
+  const admin = me && me.role === "admin" && me.active;
+  el("team-add-region").hidden = !admin;
+
+  el("team-count").textContent = `${rows.filter((r) => r.active && r.role !== "keyer").length}`;
+  el("team-list").innerHTML = rows.map((r) => `
+    <div class="cand${r.active ? "" : " excluded"}" style="grid-template-columns:1fr">
+      <div>
+        <div class="cand-head">
+          <span class="cand-name">${esc(r.full_name || r.email)}</span>
+          <span class="chip">${esc(r.role)}</span>
+          ${r.is_you ? `<span class="chip">you</span>` : ""}
+          ${!r.linked && r.active && r.role !== "keyer"
+            ? `<span class="chip warn">has not signed up yet</span>` : ""}
+          <span class="spacer"></span>
+          <span class="small muted mono">${esc(r.email)}</span>
+        </div>
+        <p class="small muted" style="margin:4px 0 0">
+          ${esc(r.state)} · ${esc(ROLE_MEANS[r.role] || "")}</p>
+        ${admin && r.role !== "keyer" ? `
+          <div class="actions" style="margin-top:10px">
+            ${r.active ? `
+              <select data-role-for="${esc(r.id)}" style="width:auto">
+                ${["admin", "recruiter", "psych"].map((x) =>
+                  `<option value="${x}"${x === r.role ? " selected" : ""}>${x}</option>`).join("")}
+              </select>
+              ${r.is_you ? "" :
+                `<button class="btn-quiet btn-small" data-off="${esc(r.id)}"
+                   data-name="${esc(r.full_name || r.email)}">Remove access</button>`}`
+              : `<button class="btn-quiet btn-small" data-on="${esc(r.id)}">Restore access</button>`}
+            <span class="savestate" data-tslot="${esc(r.id)}"></span>
+          </div>` : ""}
+      </div>
+    </div>`).join("");
+
+  el("team-list").querySelectorAll("[data-role-for]").forEach((sel) =>
+    sel.addEventListener("change", async () => {
+      const id = sel.dataset.roleFor, slot = document.querySelector(`[data-tslot="${id}"]`);
+      slot.textContent = "Saving…"; delete slot.dataset.state;
+      try { await sbRpc("set_staff_role", { p_id: id, p_role: sel.value }); await loadTeam(); }
+      catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+    }));
+
+  el("team-list").querySelectorAll("[data-off]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const id = b.dataset.off, slot = document.querySelector(`[data-tslot="${id}"]`);
+      if (!confirm(
+        `Remove ${b.dataset.name}'s access?\n\n` +
+        `Their name stays on every decision, key and placement they recorded — the ` +
+        `row is deactivated, never deleted, so the record does not quietly change.`)) return;
+      slot.textContent = "Saving…"; delete slot.dataset.state;
+      try { await sbRpc("set_staff_active", { p_id: id, p_active: false }); await loadTeam(); }
+      catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+    }));
+
+  el("team-list").querySelectorAll("[data-on]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const id = b.dataset.on, slot = document.querySelector(`[data-tslot="${id}"]`);
+      slot.textContent = "Saving…"; delete slot.dataset.state;
+      try { await sbRpc("set_staff_active", { p_id: id, p_active: true }); await loadTeam(); }
+      catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+    }));
+
+  view("team");
+}
+
+const addStaffBtn = el("btn-add-staff");
+if (addStaffBtn) addStaffBtn.addEventListener("click", async () => {
+  const slot = el("team-state");
+  addStaffBtn.disabled = true;
+  slot.textContent = "Adding…"; delete slot.dataset.state;
+  try {
+    const r = await sbRpc("add_staff", {
+      p_email: el("team-email").value.trim(),
+      p_name: el("team-name").value.trim(),
+      p_role: el("team-role").value,
+    });
+    el("team-email").value = ""; el("team-name").value = "";
+    await loadTeam();
+    el("team-state").textContent = r.message;
+    el("team-state").dataset.state = "saved";
+  } catch (e) {
+    slot.textContent = e.message; slot.dataset.state = "error";
+  } finally { addStaffBtn.disabled = false; }
+});
+
+const navTeam = el("nav-team");
+if (navTeam) navTeam.addEventListener("click", (e) => { e.preventDefault(); loadTeam(); });
 
 el("nav-signout").addEventListener("click", (e) => { e.preventDefault(); sbSignOut(); view("signin"); });
 
@@ -876,6 +991,9 @@ async function loadQueue() {
           </div>
           ${c.best_pct != null ? `<p class="small muted" style="margin:4px 0 0">${queueStatus(c)}</p>` : ""}
           ${roleLines(c.roles)}
+          ${c.ask ? `<p class="small muted" style="margin:6px 0 0">
+            <span class="chip">ASK ${esc(c.ask.round.toUpperCase())} ${c.ask.pct}%</span>
+            ${c.ask.total} of ${c.ask.max_total} · ${onDate(c.ask.on)}</p>` : ""}
           ${scoreStrip(c.scores, c.sides)}
           <div class="actions" style="margin-top:10px">
             <button class="btn-quiet btn-small" data-cand-rename="${esc(c.id)}"
@@ -1017,6 +1135,119 @@ function targetLine(d, t) {
             effective ${t.cls_effective}`;
   }
   return `${who}: ${bit}`;
+}
+
+// ═══ ASK — THE INTERVIEW, BESIDE THE QUESTIONNAIRE ═════════════════════════
+// Two independent readings of the same person, shown next to each other and
+// never added together. The questionnaire measures fit against one client's
+// stated needs; ASK measures whether they can sell at all. Averaging them makes
+// one number that looks objective while carrying an interviewer's judgement
+// inside it, and throws away the only thing neither can produce alone: the
+// disagreement between them.
+
+const ASK_SECTIONS = {
+  sell: "Can they actually sell?",
+  sustain: "Can they sustain it?",
+  who: "Who are they underneath?",
+};
+
+function askRunLinks(id) {
+  return `<a class="btn-quiet btn-small" href="ask.html?cand=${esc(id)}&round=r1">Run R1 screen</a>
+          <a class="btn-quiet btn-small" href="ask.html?cand=${esc(id)}&round=r2">Run R2 interview</a>`;
+}
+
+function askHtml(d, c) {
+  const cards = (d.ask || []).filter((x) => x.submitted_at);
+  const open = (d.ask || []).find((x) => !x.submitted_at);
+
+  if (!cards.length) {
+    return `
+    <div class="region">
+      <div class="region-head"><h2>ASK interview</h2><span class="count mono">0</span></div>
+      <div class="empty">
+        <h3>Not interviewed yet</h3>
+        <p class="muted">${open
+          ? `An unfinished ${esc(open.round.toUpperCase())} is open — starting again resumes it.`
+          : `R1 is a 15-question phone screen. R2 is the full 42. Both are scored
+             against written anchors, so two interviewers reading the same answer
+             land in the same place.`}</p>
+        <div class="actions" style="margin-top:12px">${askRunLinks(c.id)}</div>
+      </div>
+    </div>`;
+  }
+
+  const latest = cards[0];
+  const attrs = latest.attributes || [];
+  const pri = attrs.filter((a) => a.priority);
+  const secs = latest.sections || {};
+  const gaps = ((d.ask_overlap && d.ask_overlap.rows) || []);
+  const flagged = gaps.filter((g) => g.flagged);
+
+  const line = (a) => `<span class="mono">${esc(a.name)}</span> ${a.score}/${a.max}`;
+
+  return `
+  <div class="region">
+    <div class="region-head"><h2>ASK interview</h2>
+      <span class="count mono">${latest.round.toUpperCase()}</span></div>
+
+    <div class="panel">
+      <div class="cand-head">
+        <span class="cand-name">${latest.round === "r1" ? "R1 — screen" : "R2 — full"}</span>
+        ${latest.outstanding_refs
+          ? `<span class="chip warn">${latest.outstanding_refs} reference question${
+              latest.outstanding_refs > 1 ? "s" : ""} outstanding</span>` : ""}
+        <span class="spacer"></span>
+        <span><span class="figure">${latest.pct}</span><span class="figure-unit">%</span></span>
+      </div>
+      <p class="small muted" style="margin:4px 0 0">
+        ${latest.total} of ${latest.max_total} ·
+        run by ${esc(latest.interviewer || "somebody since removed")} ·
+        ${onDate(latest.conducted_on)}${
+          latest.client_context ? ` · for ${esc(latest.client_context)}` : ""}
+      </p>
+
+      ${pri.length ? `<ul class="evidence" style="margin-top:12px">
+        <li><span class="glyph mono">★</span><span><strong>Priority attributes</strong> —
+          ${pri.map(line).join(" · ")}</span></li>
+        ${Object.keys(secs).length ? `<li><span class="glyph mono">=</span><span><strong>By section</strong> —
+          ${Object.entries(secs).map(([k, v]) =>
+            `${esc(ASK_SECTIONS[k] || k)} ${v.score}/${v.max}`).join(" · ")}</span></li>` : ""}
+      </ul>` : ""}
+
+      <div class="actions" style="margin-top:14px">
+        ${askRunLinks(c.id)}
+        ${cards.length > 1
+          ? `<span class="small muted">${cards.length} scorecards on file</span>` : ""}
+      </div>
+    </div>
+
+    ${gaps.length ? `
+      <div class="notice" style="margin-top:14px">
+        <span class="label">Where the interview and the questionnaire disagree</span>
+        Both measure some of the same traits, by completely different means. Agreement
+        is reassurance; a large gap means one of them is wrong, and it is worth knowing
+        which. Nothing here changes either number.
+      </div>
+      <div class="panel">
+        <ul class="evidence">
+          ${gaps.map((g) => `
+            <li><span class="glyph mono">${g.flagged ? "!" : "="}</span><span>
+              <strong>${esc(g.attribute)}</strong> — ASK <strong>${g.ask_pct}%</strong>
+              (${g.ask_score}/${g.ask_max}) vs ${esc(g.dimension)}
+              <strong>${g.questionnaire}</strong>. ${g.gap} points apart${
+                g.flagged ? " — <strong>worth asking about</strong>" : ""}.
+              <span class="muted">${esc(g.note || "")}</span>
+            </span></li>`).join("")}
+        </ul>
+        <p class="small muted" style="margin:10px 0 0">
+          Called out above ${d.ask_overlap.threshold} points.
+          ${esc(d.ask_overlap.threshold_note || "")}
+        </p>
+      </div>` : `
+      <p class="small muted" style="margin-top:10px">No overlap to compare — this
+        candidate has no questionnaire scores yet, or the interview covered none of
+        the attributes that map onto them.</p>`}
+  </div>`;
 }
 
 // ═══ HOW THEY ANSWERED, NOT WHAT THEY ANSWERED ═════════════════════════════
@@ -1276,7 +1507,7 @@ async function openCandidate(id) {
       </div>`;
   }).join("");
 
-  el("cd-body").innerHTML = rolesHtml + flagsHtml + patternHtml(d) + directFieldsHtml(c) + `
+  el("cd-body").innerHTML = rolesHtml + askHtml(d, c) + flagsHtml + patternHtml(d) + directFieldsHtml(c) + `
     <div class="region">
       <div class="region-head"><h2>The nine, against what each role asks for</h2>
         <span class="count mono">${(d.dimensions || []).length}</span></div>
