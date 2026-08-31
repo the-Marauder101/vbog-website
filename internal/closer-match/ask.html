@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ASK scorecard · Nikash</title>
+<link rel="icon" href="img/nikash.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+<link rel="stylesheet" href="css/nikash.css">
+</head>
+<body>
+
+<!--
+  ASK — the R2 interview.  ask.html?cand=<candidate_id>&round=r1|r2
+
+  This is the "advance" track: any candidate worth taking forward gets a call,
+  and this is what gets asked on it. R1 is the 15-question phone screen (the five
+  priority attributes); R2 is all 42.
+
+  Ported from internal/ASK/index.html, which was a standalone file with no
+  database. What is preserved exactly: the questions, the hints, the four
+  behavioural anchors per question, the keyboard scoring, one question per
+  screen. What is new: it is attached to a candidate, attributed to whoever ran
+  it, and autosaved per answer so a dropped call loses nothing.
+
+  It does NOT feed the match score. ASK and the questionnaire are two independent
+  readings of the same person, and averaging them would destroy the disagreement
+  between them — which is the most useful thing they produce. See sql/35.
+-->
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="nikash.html"><img class="brand-mark" src="img/nikash.svg" alt="" width="28" height="28"><span>nikash<span class="dot">.</span></span></a>
+    <span class="brand-sub mono">ASK scorecard</span>
+    <span class="spacer"></span>
+    <span class="savestate" id="savestate"></span>
+    <nav><a href="nikash.html">← Console</a></nav>
+  </div>
+</header>
+
+<main>
+  <section class="screen" id="v-gate" hidden>
+    <h1>Sign in first</h1>
+    <p class="muted">Open <a href="nikash.html">the console</a>, sign in, then reopen this scorecard.</p>
+  </section>
+
+  <section class="screen" id="v-error" hidden>
+    <h1>Couldn't open this scorecard</h1>
+    <div class="notice notice-error" id="error-text"></div>
+  </section>
+
+  <!-- ── 1. Who, and which round ──────────────────────────────────────── -->
+  <section class="screen narrow" id="v-start" hidden>
+    <h1 id="start-title">ASK</h1>
+    <p class="muted" id="start-sub"></p>
+
+    <div class="panel">
+      <div class="fields">
+        <label><span>Which client is this for?</span>
+          <input type="text" id="start-client" placeholder="Optional — helps when reading it back later"></label>
+      </div>
+      <p class="small muted" style="margin:12px 0 0" id="start-scope"></p>
+    </div>
+
+    <div class="notice" id="start-resume" hidden></div>
+
+    <div class="actions" style="margin-top:18px">
+      <button class="btn-primary" id="btn-begin">Start</button>
+      <a class="btn-quiet btn-small" id="btn-switch" href="#"></a>
+    </div>
+  </section>
+
+  <!-- ── 2. One question at a time ────────────────────────────────────── -->
+  <section class="screen" id="v-q" hidden>
+    <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+    <p class="small muted" id="q-where"></p>
+
+    <h1 id="q-prompt"></h1>
+    <div class="callout plain" id="q-hint"></div>
+
+    <div id="q-options"></div>
+
+    <label class="field" style="margin-top:16px">
+      <span class="q">Notes <span class="muted">(optional)</span></span>
+      <textarea id="q-note" placeholder="What they actually said — the bit you'd quote back later."></textarea>
+    </label>
+
+    <div class="actions" style="margin-top:16px">
+      <button class="btn-quiet btn-small" id="btn-prev">← Back</button>
+      <button class="btn-quiet btn-small" id="btn-skip">Skip for now</button>
+      <span class="spacer"></span>
+      <button class="btn-primary btn-small" id="btn-next">Next →</button>
+    </div>
+    <p class="small muted" style="margin-top:12px">Press <strong>0</strong>–<strong>3</strong> to score,
+       <strong>←</strong> / <strong>→</strong> to move.</p>
+  </section>
+
+  <!-- ── 3. What it came to ───────────────────────────────────────────── -->
+  <section class="screen" id="v-result" hidden>
+    <h1>Scorecard</h1>
+    <p class="muted" id="res-meta"></p>
+
+    <div class="panel" style="margin-bottom:18px">
+      <div class="cand-head">
+        <span class="cand-name">Total</span>
+        <span class="spacer"></span>
+        <span><span class="figure" id="res-total"></span><span class="figure-unit" id="res-den"></span></span>
+        <span style="margin-left:16px"><span class="figure" id="res-pct"></span><span class="figure-unit">%</span></span>
+      </div>
+      <p class="small muted" style="margin:10px 0 0">This is an interview score. It sits
+        beside the questionnaire, and never inside it — neither number is adjusted
+        by the other.</p>
+    </div>
+
+    <div class="notice" id="res-refs" hidden></div>
+
+    <div class="region" id="res-pri-region">
+      <div class="region-head"><h2>Priority attributes</h2>
+        <span class="count mono" id="res-pri-count"></span></div>
+      <p class="small muted">Read these first. They are the five that make up an R1 screen.</p>
+      <div id="res-pri"></div>
+    </div>
+
+    <div class="region">
+      <div class="region-head"><h2>Every attribute</h2>
+        <span class="count mono" id="res-all-count"></span></div>
+      <div id="res-all"></div>
+    </div>
+
+    <div class="region" id="res-notes-region" hidden>
+      <div class="region-head"><h2>What they said</h2></div>
+      <div id="res-notes"></div>
+    </div>
+
+    <div class="actions" style="margin-top:18px">
+      <button class="btn-quiet btn-small" id="btn-back-qs">← Back to the questions</button>
+      <button class="btn-primary btn-small" id="btn-submit">Submit scorecard</button>
+      <a class="btn-quiet btn-small" id="btn-to-cand" href="#">Open the candidate →</a>
+      <span class="savestate" id="submit-state"></span>
+    </div>
+  </section>
+
+  <section class="screen" id="v-loading"><p class="muted">Loading…</p></section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/ask.js"></script>
+</body>
+</html>

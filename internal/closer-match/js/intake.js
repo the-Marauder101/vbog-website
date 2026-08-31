@@ -324,26 +324,17 @@ el("btn-next").addEventListener("click", async () => {
 
   if (S.step < STEPS.length - 1) { S.step++; renderStep(); return; }
 
-  // Assemble hard filters only from answers the client actually gave. An empty
-  // field must mean "no constraint", never a filter that silently excludes.
-  const hf = {};
-  if (S.d.hf_locations && S.d.hf_locations.trim())
-    hf.locations = S.d.hf_locations.split(",").map((x) => x.trim()).filter(Boolean);
-  if (S.d.hf_work_mode) hf.work_mode = S.d.hf_work_mode;
-  // The help text says "e.g. en, hi" and this used to store that whole string as
-  // ONE language key. `languages->>'en, hi'` matches nothing, so the check could
-  // never pass — on all three live clients. The field taught the mistake and the
-  // code obeyed it. Split, exactly as locations above already did.
-  if (S.d.hf_language && S.d.hf_language.trim())
-    hf.languages_required = S.d.hf_language.split(",")
-      .map((x) => x.trim().toLowerCase()).filter(Boolean)
-      .map((lang) => ({ lang, min: "fluent" }));
-  if (S.d.hf_join_by_days) hf.join_by_days = Number(S.d.hf_join_by_days);
-  if (S.d.hf_min_years) hf.min_years_experience = Number(S.d.hf_min_years);
-  if (S.d.salary_min) hf.salary_min = Number(S.d.salary_min);
-  if (S.d.salary_max) hf.salary_max = Number(S.d.salary_max);
-
-  const payload = { ...S.d, hard_filters: hf, benchmark_source: "none" };
+  // Hard filters are NOT assembled here. This file used to build them in
+  // JavaScript and post them, while `derive_hard_filters()` built the same thing
+  // in SQL for the edit path — two definitions of one derivation, kept in step by
+  // hand. The "en, hi" language-splitting bug had to be fixed in both, separately.
+  //
+  // sql/37 made `submit_intake` derive them server-side and ignore any copy the
+  // caller sends, so posting one from here would be posting something that is
+  // thrown away. The answers themselves are what the server needs; it does the
+  // rest. An empty field still means "no constraint" — that rule lives in
+  // derive_hard_filters() now, which is the only place that knows it.
+  const payload = { ...S.d, benchmark_source: "none" };
 
   const b = el("btn-next"); b.disabled = true; b.textContent = "Submitting…";
   try {

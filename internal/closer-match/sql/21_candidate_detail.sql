@@ -241,6 +241,13 @@ begin
     'position', case when v_session.id is null then null
                      else position_bias(v_session.id) end,
 
+    -- ── ASK, the interview, sitting beside the questionnaire ─────────────
+    -- Two independent readings of the same person. Deliberately NOT merged into
+    -- `dimensions` or into any composite: see sql/35. The overlap block reports
+    -- where the two disagree, which is the thing neither can produce alone.
+    'ask', get_candidate_ask(p_candidate_id),
+    'ask_overlap', get_ask_overlap(p_candidate_id),
+
     'disclaimer',
       'These weights are expert-set, not learned from outcomes. Every number here '
       'is read against a role''s stated requirement — on its own it is not a verdict, '

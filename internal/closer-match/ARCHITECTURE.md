@@ -1758,6 +1758,259 @@ suite on the next run. Cleanup now runs on the failure path too, and the suite
 asserts it worked. **A test that only tidies up when it passes tidies up exactly
 when it did not need to.**
 
+## 7ae. ASK moves in, and why it sits beside the score rather than in it
+
+ASK is the R2 interview — 14 attributes, 42 questions, each answer scored 0–3
+against a written behavioural anchor, with the five priority attributes forming a
+15-question R1 phone screen. It existed and worked before this change, as one
+self-contained HTML file with no database and results downloaded as JSON.
+
+Enough for one person. Not enough for a team, which was the whole point:
+
+- no record of who interviewed whom, so a colleague's judgement could not be
+  reviewed, coached or compared
+- the result lived in a file on whoever ran the call
+- nothing sat next to the candidate's questionnaire scores
+- the wording could only be changed by editing code
+
+### The instrument did not change
+
+Every question, hint and anchor was extracted **programmatically** from
+`internal/ASK/index.html` rather than retyped. The wording *is* the instrument —
+"Knows both cold: specific on both, and can explain what changed the connect
+rate" is what does the measuring, and a transcription slip is a silent change to
+what is being measured. The extractor asserted 14 attributes, 5 priority, 42
+questions, 168 anchors, 2 reference; `sql/35` asserts the same counts again, plus
+that every question carries a clean 0–3 anchor set and that no anchor is blank.
+
+### It does not touch the match score
+
+`compute_matches()`, `matches.composite` and `candidate_profile.scores` are
+untouched by ASK and by everything downstream of it. This is the same argument as
+§7x against a second `final_keys` table and as §12/§18 on keeping the three
+predictors apart:
+
+> **Two measurements of one person are worth more apart than averaged. Blend them
+> and you can never find out which one was right.**
+
+The questionnaire measures fit against one client's stated needs. ASK measures
+whether they can sell at all. Averaging produces a number that looks objective
+while carrying an interviewer's judgement inside it, and destroys the only
+experiment worth running.
+
+`test/ask.js` captures every match composite and every profile score before an
+ASK scorecard is submitted and requires them byte-identical afterwards. A promise
+like that is worth nothing unless something checks it.
+
+### The overlap is the payoff
+
+Nine ASK attributes map onto questionnaire dimensions; five — Discovery,
+Ownership, Emotional Intelligence, Post-Hire Consistency, Longevity — map onto
+nothing, which is ASK reaching past what the test measures. `sql/36` asserts that
+at least four stay unmapped, so nobody can quietly map ASK onto the questionnaire
+wholesale and turn an independent reading into a second opinion about the same
+thing.
+
+Where they overlap, the gap is reported. On the first real scorecard: ASK
+Coachability 44% against a questionnaire CCH of 92 — 48 points apart. That means
+one of the two is wrong, and knowing which is worth more than either number.
+
+**On the threshold.** §7ac derived the zigzag cut-off by simulating 4,000 random
+answerers, because there was a chance model to simulate. There is no chance model
+for two different instruments, measured on different days, by different means. So
+the gap is always shown, the threshold is a stated guess in `dimension_params`
+labelled provisional wherever it appears, and `v_ask_calibration` reports how far
+off it is from being knowable (1 of 40 candidates, `can_be_set_from_data: false`).
+The fix for an underivable threshold is to say so, not to pick one that looks
+derived.
+
+### Editable questions need a snapshot, not a version table
+
+The bank is editable in place, so `ask_scores` snapshots the prompt and the chosen
+anchor's label at the moment an answer is recorded. Without that, a scorecard from
+March would silently re-read itself against May's wording — a score whose question
+has changed underneath it is not a record of anything. The QA rewords a question
+and requires both that the frozen total does not move and that the stored answer
+still reads against the wording it was scored against.
+
+Totals are frozen on submit for the same reason, following `sql/13`. A CHECK
+enforces that all four frozen columns are set together, because a half-frozen
+scorecard is a number nobody can date.
+
+The two reference questions — put to the candidate's previous manager, not the
+candidate — do not block submitting. The scorecard reads as incomplete until they
+land, and `score_ask_reference()` is the only edit a submitted scorecard accepts.
+
+## 7af. Adding a colleague required a database console
+
+Asked plainly: *"how do I add a new staff member to be able to sign into Nikash
+and generate links, send to candidates and conduct client onboarding?"*
+
+The honest answer was: open the Supabase SQL editor and write an INSERT. That is
+a poor answer for a tool with a console, and it was a hard blocker on everything
+above — R2 cannot be handed to the team until the team can sign in.
+
+`sql/34` adds `list_staff` / `add_staff` / `set_staff_role` / `set_staff_active`
+and a Team screen. The flow is: add them by email, they create their own login
+with that address, `link_staff_account()` binds the two. No invitation to accept
+and no password anybody else ever knows.
+
+The part worth recording is the lockout. Every mutation is admin-only, so a
+console that can remove admins can remove its last one — and then nobody can add
+anybody, including themselves, and the only way back is the SQL editor this
+screen exists to avoid.
+
+> **A screen that can lock everyone out of itself has to refuse the last step,
+> not warn about it.**
+
+So you cannot deactivate yourself, and you cannot deactivate or demote the last
+active admin. Both are enforced in the database, because a `confirm()` dialog is
+a suggestion. `v_staff_lockout_audit` must always be empty.
+
+Removal deactivates rather than deletes: `staff` is referenced with
+`on delete set null` from decisions, keys and placements, so deleting a row would
+null those out and quietly rewrite the record of who did what.
+
+## 7ag. The tests were the only part never version-controlled
+
+Eight QA suites — roughly 230 assertions accumulated across the whole build —
+lived in an ephemeral scratchpad directory. The container was recycled mid-session
+and every one of them is gone.
+
+> **A test that is not in the repository is not a test, it is a memory.**
+
+They were what caught the RLS bypass, the reverted view, the ordered scales being
+shuffled, the threshold set below the noise floor. Losing them costs more than
+losing any single feature would have, and the reason they were lost is that they
+were treated as working files rather than as part of the system.
+
+They are not reconstructed here — writing 230 assertions from memory would
+produce something that passes without meaning it. What replaces them:
+
+- `test/regression.js` — a broad pass over every staff surface: each screen
+  loads, the candidate page has all five of its regions, no dimension shows a
+  bare number, the audits are empty, nothing score-bearing is reachable without
+  a session, and nothing overflows at 380px.
+- `test/ask.js` — the deep suite on the newest feature, including the
+  before/after comparison that proves ASK moves no match score.
+
+Both live in the repository and run with `node test/<file>.js` from
+`internal/closer-match/`.
+
+Both **require** `NIKASH_QA_EMAIL` and `NIKASH_QA_PASSWORD` and exit 2 without
+them. The first draft had a default — a real staff email and a real password, on
+a real project, in a file about to be pushed to a repository. A default
+credential is a live credential; the convenience of not typing it is worth less
+than the account it hands out. `test/ask.js` additionally needs an **admin**
+login, because it drives the add-staff form and that form only renders for
+admins; a recruiter login fails there as a thirty-second timeout on an invisible
+input, which looks like a broken test rather than the wrong role, so the file
+says so at the top.
+
+The standing QA account has been deleted from the project along with its
+`auth.users` row. Create one through the Team panel when you want to run the
+suites, and remove it afterwards — the suites clean up their own fixtures, but
+they cannot clean up the account you signed them in with.
+
+### 7ah. Two suites was not "fully tested", and saying so was not enough
+
+The honest accounting above — 90 assertions replacing roughly 230, with the
+keying surface, the client intake and the candidate assessment covered only by a
+smoke test — was accurate and was not sufficient. This is a live tool. The gap
+got closed rather than documented.
+
+Six suites now, **237 assertions**, run together with `node test/all.js`:
+
+| suite | what it holds down |
+|---|---|
+| `security` | the three rules, from outside the building |
+| `assess` | the candidate journey, by the door a candidate actually uses |
+| `intake` | the client's half, and the shortlist it produces |
+| `ask` | the interview scorecard, and that it moves no match score |
+| `keying` | the scoring key — mutates the live bank and puts it back |
+| `regression` | every staff surface still loads and still says what it should |
+
+Four things came out of writing them that are worth keeping.
+
+**The candidate suite drives the candidate's own door.** It uses the publishable
+key and a token, with no session, because that is exactly what a candidate has.
+A test that reaches this flow through a staff session proves nothing about it. It
+found nothing wrong, which is the correct outcome and is only worth anything
+because the route was real.
+
+**The keying suite mutates live data, so the restore is the test.** There is no
+fixture item bank; `apply_rekey` really does swap two score keys and really does
+recompute every affected profile. So the suite snapshots `key_fingerprint()` and
+every real candidate's scores, applies, asserts the change happened, undoes, and
+requires both back byte-identical — with the restore in the cleanup block, which
+runs on the failure path too. If it aborts mid-apply the bank still comes back.
+
+**A test built on what I remembered failed twelve times for one reason.** The
+first run of the assessment suite reported twelve red assertions. All twelve came
+from one line: `save_response` returns HTTP 204, and the helper treated anything
+but 200 as failure, so the answer loop broke after one save and everything
+downstream cascaded. Three further failures were assertions written against a
+shape I had assumed — a flat `scores` map where the function returns a
+`dimensions` array, poles on all nine dimensions where poles are a bipolar-only
+idea, a `v_key_drift_audit` I asserted should be empty when it is a *grouping*
+and one row marked current is the healthy state.
+
+> **A failing test is a claim about the system or a claim about my memory of it,
+> and the second is more likely.** Read the definition before believing the red.
+
+**And it found a real one.** See §7ai.
+
+### 7ai. `submit_intake` was still trusting the caller
+
+sql/29 moved the hard-filter derivation into the database because the browser and
+the server each had a copy, and saving an unchanged intake wrote the stale browser
+copy back over a fix that was already in. `update_client_intake` was changed to
+call `derive_hard_filters()` and to ignore whatever the caller sent.
+
+**`submit_intake` was not.** It still read `coalesce(p_payload->'hard_filters',
+'{}')` — the caller's copy — while `js/intake.js` went on building that object in
+JavaScript and posting it. The live tool was not wrong, because the two copies
+happened to agree. That is not a property anybody was maintaining.
+
+The test found it by doing the obvious thing a second surface would do: calling
+`submit_intake` with the client's answers and no `hard_filters` key. The
+requirement came back with **no hard filters at all**. Not wrong ones — absent
+ones, so every candidate passes location, language, work mode, salary and notice
+period, because none of them are being asked about.
+
+> **A shortlist that has silently stopped filtering looks exactly like a
+> shortlist that found everybody suitable.**
+
+sql/37 makes `submit_intake` derive server-side and ignore any copy the caller
+sends, and the browser's derivation is deleted. `derive_hard_filters()` is now the
+only thing that turns intake answers into hard filters, on both paths. §7ab's rule
+reached the last place it had not been applied: *two definitions of one thing is a
+race.*
+
+### 7aj. The audits named their tables
+
+`v_rls_bypass_audit` and `v_c10_audit` both checked a hardcoded list of table
+names. Everything on those lists was genuinely covered. The problem was everything
+that was not: sql/35 added five ASK tables carrying interviewer judgements of
+named people, and neither audit knew they existed. They were correct — the
+migration enabled and forced RLS in a loop — but nothing was checking, and nothing
+would have said so.
+
+sql/38 inverts the rule. Both audits now cover **every** table in `public`, and
+exclusion requires a row in `rls_exempt` with a written reason, the way
+`anon_callable` already works for functions. A table added next year is protected
+by default and shows up the moment it is created. Two new arms were added at the
+same time — a table with RLS forced but no policy at all, which is safe but almost
+always means a forgotten policy and a quietly broken feature — and the migration
+provokes each arm inside a rolled-back subtransaction to prove it fires, because
+an audit nobody has watched fire is an audit nobody knows is wired up.
+
+`anon_callable` itself was the one real table in the schema with RLS off. It
+carries nothing sensitive, which is why it was never noticed. One line to close;
+it would have been one line to explain forever.
+
+> **An audit that names its tables cannot outlive the schema.**
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

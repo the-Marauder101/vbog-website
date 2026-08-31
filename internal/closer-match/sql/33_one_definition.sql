@@ -47,8 +47,17 @@ select
   composite_pct, quality_pct, fit_pct, cls_effective, confidence, benchmark_source,
   hard_filter_pass, hard_filter_fails, flags, attrition_risk_flag, frame_split_flag,
   top_reasons, top_concerns, frame_split_note, cross_client_line, weights_disclaimer,
-  hard_filter_unknown
+  hard_filter_unknown,
+  -- ASK travels with the candidate, not with the requirement — it is a reading of
+  -- whether they can sell at all, not of their fit to this client. Shown beside
+  -- the match percentage and never folded into it (sql/35).
+  ask.round as ask_round,
+  ask.pct   as ask_pct
 from v_console
+left join lateral (
+  select round, pct from ask_scorecards
+  where candidate_id = v_console.candidate_id and submitted_at is not null
+  order by submitted_at desc limit 1) ask on true
 where full_name not like 'ZZ_FIXTURE%' and full_name not like 'ZZ_E2E%';
 
 grant select on v_console_clean to authenticated;
@@ -133,7 +142,18 @@ select cand.id, cand.full_name, cand.created_at, cand.last_activity_at,
         where v.candidate_id = cand.id and req.status = 'open'
           and v.business_name not like 'ZZ_FIXTURE%')            as best_pct,
 
-       bipolar_sides(p.scores)                                   as sides
+       bipolar_sides(p.scores)                                   as sides,
+
+       -- The latest submitted ASK scorecard, for the chip on the row. Appended
+       -- rather than placed beside `scores`: CREATE OR REPLACE VIEW can only add
+       -- columns at the end, and this view has dependents.
+       (select jsonb_build_object(
+                 'round', a.round, 'pct', a.pct,
+                 'total', a.total, 'max_total', a.max_total,
+                 'on', a.conducted_on)
+        from ask_scorecards a
+        where a.candidate_id = cand.id and a.submitted_at is not null
+        order by a.submitted_at desc limit 1)                     as ask
 
 from candidates cand
 left join lateral (

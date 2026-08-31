@@ -44,6 +44,7 @@
       <a href="keying.html">Keying</a>
       <a href="#" id="nav-dict">Dictionary</a>
       <a href="#" id="nav-guide">How it works</a>
+      <a href="#" id="nav-team">Team</a>
       <a href="#" id="nav-signout" class="muted">Sign out</a>
     </nav>
   </div>
@@ -252,6 +253,47 @@
     <p class="muted">These are the checks that decide whether the assessment is
        measuring anything. Most need n=30 completed assessments to mean much.</p>
     <div id="health-body"></div>
+  </section>
+
+  <!-- ── Team ─────────────────────────────────────────────────────────────
+       Adding a colleague used to mean opening the Supabase SQL editor, which is
+       a poor answer for a tool that has a console — and a hard blocker on handing
+       any round to somebody else. -->
+  <section class="screen" id="v-team" hidden>
+    <h1>Team</h1>
+    <p class="muted">Who can sign in, and what each of them can do.</p>
+
+    <div class="region" id="team-add-region">
+      <div class="region-head"><h2>Add someone</h2></div>
+      <div class="notice"><span class="label">How it works</span>
+        Add them here, then send them the link. They create their own login with
+        the same email address and are let straight in — there is no invitation to
+        accept and no password for you to set or know.</div>
+      <div class="panel">
+        <div class="fields">
+          <label><span>Name</span>
+            <input type="text" id="team-name" placeholder="It gets logged against every decision they make"></label>
+          <label><span>Work email</span>
+            <input type="email" id="team-email" placeholder="them@v-bog.com"></label>
+          <label><span>Role</span>
+            <select id="team-role">
+              <option value="recruiter">Recruiter — the whole pipeline</option>
+              <option value="admin">Admin — also the item bank and re-keys</option>
+              <option value="psych">Psych — same access as recruiter</option>
+            </select></label>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="btn-primary btn-small" id="btn-add-staff">Add</button>
+          <span class="savestate" id="team-state"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="region">
+      <div class="region-head"><h2>Who has access</h2>
+        <span class="count mono" id="team-count"></span></div>
+      <div id="team-list"></div>
+    </div>
   </section>
 
   <section class="screen" id="v-loading">

@@ -687,3 +687,44 @@ button, .btn {
      BE the stone, so it keeps its ink ground in both schemes. */
   .stone-card { background: #1E1B19; }
 }
+
+/* ── ASK scorecard ─────────────────────────────────────────────────────────
+   The staff console had no one-question-at-a-time surface before ASK. These are
+   the pieces that surface needs, and nothing else uses them. The candidate-facing
+   assess.css has similar shapes in a different palette; they are deliberately not
+   shared, because the two audiences are not the same and a change made for a
+   candidate should never silently move a staff screen. */
+.progress {
+  height: 2px; background: var(--line);
+  margin: 0 0 20px; border-radius: 2px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; width: 0; background: var(--streak);
+  transition: width 0.25s ease;
+}
+
+/* One anchor. The score sits in its own column so the four read as a scale
+   rather than as four unrelated choices — which is what makes picking the
+   description that fits easier than inventing a number. */
+.option {
+  display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start;
+  margin-top: 8px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
+}
+.option:hover { border-color: var(--line-2); background: var(--raised); }
+.option.selected {
+  border-color: var(--stone); box-shadow: inset 3px 0 0 var(--streak);
+  background: var(--surface);
+}
+.option .opt-score {
+  font-size: 15px; color: var(--muted); text-align: center;
+  line-height: 1.5; font-variant-numeric: tabular-nums;
+}
+.option.selected .opt-score { color: var(--ink); font-weight: 600; }
+.option .text { font-size: 14px; line-height: 1.5; min-width: 0; }
+.option .text em {
+  font-style: normal; display: block; color: var(--muted);
+  font-size: 13px; margin-top: 3px;
+}
