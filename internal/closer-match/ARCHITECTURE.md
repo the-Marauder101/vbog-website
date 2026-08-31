@@ -1758,6 +1758,160 @@ suite on the next run. Cleanup now runs on the failure path too, and the suite
 asserts it worked. **A test that only tidies up when it passes tidies up exactly
 when it did not need to.**
 
+## 7ae. ASK moves in, and why it sits beside the score rather than in it
+
+ASK is the R2 interview — 14 attributes, 42 questions, each answer scored 0–3
+against a written behavioural anchor, with the five priority attributes forming a
+15-question R1 phone screen. It existed and worked before this change, as one
+self-contained HTML file with no database and results downloaded as JSON.
+
+Enough for one person. Not enough for a team, which was the whole point:
+
+- no record of who interviewed whom, so a colleague's judgement could not be
+  reviewed, coached or compared
+- the result lived in a file on whoever ran the call
+- nothing sat next to the candidate's questionnaire scores
+- the wording could only be changed by editing code
+
+### The instrument did not change
+
+Every question, hint and anchor was extracted **programmatically** from
+`internal/ASK/index.html` rather than retyped. The wording *is* the instrument —
+"Knows both cold: specific on both, and can explain what changed the connect
+rate" is what does the measuring, and a transcription slip is a silent change to
+what is being measured. The extractor asserted 14 attributes, 5 priority, 42
+questions, 168 anchors, 2 reference; `sql/35` asserts the same counts again, plus
+that every question carries a clean 0–3 anchor set and that no anchor is blank.
+
+### It does not touch the match score
+
+`compute_matches()`, `matches.composite` and `candidate_profile.scores` are
+untouched by ASK and by everything downstream of it. This is the same argument as
+§7x against a second `final_keys` table and as §12/§18 on keeping the three
+predictors apart:
+
+> **Two measurements of one person are worth more apart than averaged. Blend them
+> and you can never find out which one was right.**
+
+The questionnaire measures fit against one client's stated needs. ASK measures
+whether they can sell at all. Averaging produces a number that looks objective
+while carrying an interviewer's judgement inside it, and destroys the only
+experiment worth running.
+
+`test/ask.js` captures every match composite and every profile score before an
+ASK scorecard is submitted and requires them byte-identical afterwards. A promise
+like that is worth nothing unless something checks it.
+
+### The overlap is the payoff
+
+Nine ASK attributes map onto questionnaire dimensions; five — Discovery,
+Ownership, Emotional Intelligence, Post-Hire Consistency, Longevity — map onto
+nothing, which is ASK reaching past what the test measures. `sql/36` asserts that
+at least four stay unmapped, so nobody can quietly map ASK onto the questionnaire
+wholesale and turn an independent reading into a second opinion about the same
+thing.
+
+Where they overlap, the gap is reported. On the first real scorecard: ASK
+Coachability 44% against a questionnaire CCH of 92 — 48 points apart. That means
+one of the two is wrong, and knowing which is worth more than either number.
+
+**On the threshold.** §7ac derived the zigzag cut-off by simulating 4,000 random
+answerers, because there was a chance model to simulate. There is no chance model
+for two different instruments, measured on different days, by different means. So
+the gap is always shown, the threshold is a stated guess in `dimension_params`
+labelled provisional wherever it appears, and `v_ask_calibration` reports how far
+off it is from being knowable (1 of 40 candidates, `can_be_set_from_data: false`).
+The fix for an underivable threshold is to say so, not to pick one that looks
+derived.
+
+### Editable questions need a snapshot, not a version table
+
+The bank is editable in place, so `ask_scores` snapshots the prompt and the chosen
+anchor's label at the moment an answer is recorded. Without that, a scorecard from
+March would silently re-read itself against May's wording — a score whose question
+has changed underneath it is not a record of anything. The QA rewords a question
+and requires both that the frozen total does not move and that the stored answer
+still reads against the wording it was scored against.
+
+Totals are frozen on submit for the same reason, following `sql/13`. A CHECK
+enforces that all four frozen columns are set together, because a half-frozen
+scorecard is a number nobody can date.
+
+The two reference questions — put to the candidate's previous manager, not the
+candidate — do not block submitting. The scorecard reads as incomplete until they
+land, and `score_ask_reference()` is the only edit a submitted scorecard accepts.
+
+## 7af. Adding a colleague required a database console
+
+Asked plainly: *"how do I add a new staff member to be able to sign into Nikash
+and generate links, send to candidates and conduct client onboarding?"*
+
+The honest answer was: open the Supabase SQL editor and write an INSERT. That is
+a poor answer for a tool with a console, and it was a hard blocker on everything
+above — R2 cannot be handed to the team until the team can sign in.
+
+`sql/34` adds `list_staff` / `add_staff` / `set_staff_role` / `set_staff_active`
+and a Team screen. The flow is: add them by email, they create their own login
+with that address, `link_staff_account()` binds the two. No invitation to accept
+and no password anybody else ever knows.
+
+The part worth recording is the lockout. Every mutation is admin-only, so a
+console that can remove admins can remove its last one — and then nobody can add
+anybody, including themselves, and the only way back is the SQL editor this
+screen exists to avoid.
+
+> **A screen that can lock everyone out of itself has to refuse the last step,
+> not warn about it.**
+
+So you cannot deactivate yourself, and you cannot deactivate or demote the last
+active admin. Both are enforced in the database, because a `confirm()` dialog is
+a suggestion. `v_staff_lockout_audit` must always be empty.
+
+Removal deactivates rather than deletes: `staff` is referenced with
+`on delete set null` from decisions, keys and placements, so deleting a row would
+null those out and quietly rewrite the record of who did what.
+
+## 7ag. The tests were the only part never version-controlled
+
+Eight QA suites — roughly 230 assertions accumulated across the whole build —
+lived in an ephemeral scratchpad directory. The container was recycled mid-session
+and every one of them is gone.
+
+> **A test that is not in the repository is not a test, it is a memory.**
+
+They were what caught the RLS bypass, the reverted view, the ordered scales being
+shuffled, the threshold set below the noise floor. Losing them costs more than
+losing any single feature would have, and the reason they were lost is that they
+were treated as working files rather than as part of the system.
+
+They are not reconstructed here — writing 230 assertions from memory would
+produce something that passes without meaning it. What replaces them:
+
+- `test/regression.js` — a broad pass over every staff surface: each screen
+  loads, the candidate page has all five of its regions, no dimension shows a
+  bare number, the audits are empty, nothing score-bearing is reachable without
+  a session, and nothing overflows at 380px.
+- `test/ask.js` — the deep suite on the newest feature, including the
+  before/after comparison that proves ASK moves no match score.
+
+Both live in the repository and run with `node test/<file>.js` from
+`internal/closer-match/`.
+
+Both **require** `NIKASH_QA_EMAIL` and `NIKASH_QA_PASSWORD` and exit 2 without
+them. The first draft had a default — a real staff email and a real password, on
+a real project, in a file about to be pushed to a repository. A default
+credential is a live credential; the convenience of not typing it is worth less
+than the account it hands out. `test/ask.js` additionally needs an **admin**
+login, because it drives the add-staff form and that form only renders for
+admins; a recruiter login fails there as a thirty-second timeout on an invisible
+input, which looks like a broken test rather than the wrong role, so the file
+says so at the top.
+
+The standing QA account has been deleted from the project along with its
+`auth.users` row. Create one through the Team panel when you want to run the
+suites, and remove it afterwards — the suites clean up their own fixtures, but
+they cannot clean up the account you signed them in with.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
