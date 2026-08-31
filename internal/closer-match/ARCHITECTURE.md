@@ -1912,6 +1912,105 @@ The standing QA account has been deleted from the project along with its
 suites, and remove it afterwards — the suites clean up their own fixtures, but
 they cannot clean up the account you signed them in with.
 
+### 7ah. Two suites was not "fully tested", and saying so was not enough
+
+The honest accounting above — 90 assertions replacing roughly 230, with the
+keying surface, the client intake and the candidate assessment covered only by a
+smoke test — was accurate and was not sufficient. This is a live tool. The gap
+got closed rather than documented.
+
+Six suites now, **237 assertions**, run together with `node test/all.js`:
+
+| suite | what it holds down |
+|---|---|
+| `security` | the three rules, from outside the building |
+| `assess` | the candidate journey, by the door a candidate actually uses |
+| `intake` | the client's half, and the shortlist it produces |
+| `ask` | the interview scorecard, and that it moves no match score |
+| `keying` | the scoring key — mutates the live bank and puts it back |
+| `regression` | every staff surface still loads and still says what it should |
+
+Four things came out of writing them that are worth keeping.
+
+**The candidate suite drives the candidate's own door.** It uses the publishable
+key and a token, with no session, because that is exactly what a candidate has.
+A test that reaches this flow through a staff session proves nothing about it. It
+found nothing wrong, which is the correct outcome and is only worth anything
+because the route was real.
+
+**The keying suite mutates live data, so the restore is the test.** There is no
+fixture item bank; `apply_rekey` really does swap two score keys and really does
+recompute every affected profile. So the suite snapshots `key_fingerprint()` and
+every real candidate's scores, applies, asserts the change happened, undoes, and
+requires both back byte-identical — with the restore in the cleanup block, which
+runs on the failure path too. If it aborts mid-apply the bank still comes back.
+
+**A test built on what I remembered failed twelve times for one reason.** The
+first run of the assessment suite reported twelve red assertions. All twelve came
+from one line: `save_response` returns HTTP 204, and the helper treated anything
+but 200 as failure, so the answer loop broke after one save and everything
+downstream cascaded. Three further failures were assertions written against a
+shape I had assumed — a flat `scores` map where the function returns a
+`dimensions` array, poles on all nine dimensions where poles are a bipolar-only
+idea, a `v_key_drift_audit` I asserted should be empty when it is a *grouping*
+and one row marked current is the healthy state.
+
+> **A failing test is a claim about the system or a claim about my memory of it,
+> and the second is more likely.** Read the definition before believing the red.
+
+**And it found a real one.** See §7ai.
+
+### 7ai. `submit_intake` was still trusting the caller
+
+sql/29 moved the hard-filter derivation into the database because the browser and
+the server each had a copy, and saving an unchanged intake wrote the stale browser
+copy back over a fix that was already in. `update_client_intake` was changed to
+call `derive_hard_filters()` and to ignore whatever the caller sent.
+
+**`submit_intake` was not.** It still read `coalesce(p_payload->'hard_filters',
+'{}')` — the caller's copy — while `js/intake.js` went on building that object in
+JavaScript and posting it. The live tool was not wrong, because the two copies
+happened to agree. That is not a property anybody was maintaining.
+
+The test found it by doing the obvious thing a second surface would do: calling
+`submit_intake` with the client's answers and no `hard_filters` key. The
+requirement came back with **no hard filters at all**. Not wrong ones — absent
+ones, so every candidate passes location, language, work mode, salary and notice
+period, because none of them are being asked about.
+
+> **A shortlist that has silently stopped filtering looks exactly like a
+> shortlist that found everybody suitable.**
+
+sql/37 makes `submit_intake` derive server-side and ignore any copy the caller
+sends, and the browser's derivation is deleted. `derive_hard_filters()` is now the
+only thing that turns intake answers into hard filters, on both paths. §7ab's rule
+reached the last place it had not been applied: *two definitions of one thing is a
+race.*
+
+### 7aj. The audits named their tables
+
+`v_rls_bypass_audit` and `v_c10_audit` both checked a hardcoded list of table
+names. Everything on those lists was genuinely covered. The problem was everything
+that was not: sql/35 added five ASK tables carrying interviewer judgements of
+named people, and neither audit knew they existed. They were correct — the
+migration enabled and forced RLS in a loop — but nothing was checking, and nothing
+would have said so.
+
+sql/38 inverts the rule. Both audits now cover **every** table in `public`, and
+exclusion requires a row in `rls_exempt` with a written reason, the way
+`anon_callable` already works for functions. A table added next year is protected
+by default and shows up the moment it is created. Two new arms were added at the
+same time — a table with RLS forced but no policy at all, which is safe but almost
+always means a forgotten policy and a quietly broken feature — and the migration
+provokes each arm inside a rolled-back subtransaction to prove it fires, because
+an audit nobody has watched fire is an audit nobody knows is wired up.
+
+`anon_callable` itself was the one real table in the schema with RLS off. It
+carries nothing sensitive, which is why it was never noticed. One line to close;
+it would have been one line to explain forever.
+
+> **An audit that names its tables cannot outlive the schema.**
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

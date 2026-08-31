@@ -11,38 +11,15 @@
 //
 // The rest drives the real surface: run an R2 in a browser, drop out halfway,
 // come back, finish, submit, and read it on the candidate page.
-const { chromium } = require("/opt/node22/lib/node_modules/playwright");
-const http = require("http"), fs = require("fs"), path = require("path");
-const ROOT = path.resolve(__dirname, "..");
-// No default credentials — see the note in regression.js. This suite needs an
-// ADMIN login, not just any staff login: it exercises the add-staff form, and
-// that form is only rendered for admins. A recruiter login fails here with a
-// 30s timeout on an invisible #team-name, which reads like a broken test rather
-// than the wrong role, so it is worth saying out loud.
-const E = process.env.NIKASH_QA_EMAIL, P = process.env.NIKASH_QA_PASSWORD;
-if (!E || !P) { console.error("Set NIKASH_QA_EMAIL and NIKASH_QA_PASSWORD (a staff login)."); process.exit(2); }
-const T = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml" };
-const server = http.createServer((q, r) => { const u = q.url.split("?")[0];
-  const f = path.join(ROOT, u === "/" ? "index.html" : u);
-  if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); }
-  r.writeHead(200, { "Content-Type": T[path.extname(f)] || "text/plain" }); r.end(fs.readFileSync(f)); });
-const results = []; const check = (n, p, d) => results.push({ name: n, pass: !!p, detail: String(d == null ? "" : d) });
-const refused = (s, t) => s >= 400 && /staff only|permission denied for function/.test(t || "");
-async function route(page) { await page.route(/supabase\.co|fonts\.googleapis|fonts\.gstatic|api\.fontshare/, async r => {
-  try { const q = r.request(); const res = await fetch(q.url(), { method: q.method(), headers: q.headers(), body: q.postData() || undefined });
-  r.fulfill({ status: res.status, headers: { "content-type": res.headers.get("content-type") || "application/json", "access-control-allow-origin": "*" }, body: Buffer.from(await res.arrayBuffer()) }); } catch (e) { r.abort(); } }); }
-const PORT = 8098;
-const B = `http://127.0.0.1:${PORT}`;
-const rest = (p, q) => p.evaluate(async (q) => (await (await fetch(`${SUPABASE_URL}/rest/v1/${q}`,
-  { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` } })).json()), q);
-const rpc = (p, fn, args) => p.evaluate(async ([fn, args]) => {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, { method: "POST",
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}`,
-      "Content-Type": "application/json" }, body: JSON.stringify(args || {}) });
-  const t = await r.text(); try { return { status: r.status, body: JSON.parse(t) }; } catch { return { status: r.status, body: t }; }
-}, [fn, args]);
+const { suite, rest, rpc, flat } = require("./harness");
 
-let PAGE = null;
+// The server, browser, Supabase route handler, credential check and sign-in all
+// live in ./harness.js. This suite needs an ADMIN login, not just any staff
+// login: it drives the add-staff form, which is only rendered for admins. A
+// recruiter login fails here as a 30s timeout on an invisible #team-name, which
+// reads like a broken test rather than the wrong role.
+const refused = (s, t) => s >= 400 && /staff only|permission denied for function/.test(t || "");
+
 async function cleanup(p) {
   try {
     await p.evaluate(async () => {
@@ -55,12 +32,8 @@ async function cleanup(p) {
   } catch (_) { /* best effort — never mask the original failure */ }
 }
 
-(async () => {
-  await new Promise(r => server.listen(PORT, r));
-  const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
-  const ctx = await b.newContext({ viewport: { width: 1360, height: 1200 } });
-  const p = await ctx.newPage(); PAGE = p; await route(p);
-  const errs = []; p.on("pageerror", e => errs.push(e.message)); p.on("dialog", d => d.accept());
+suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
+  const B = base;
 
   await p.goto(`${B}/nikash.html`, { waitUntil: "domcontentloaded" });
   await p.waitForSelector("#v-signin:not([hidden])", { timeout: 20000 });
@@ -372,17 +345,12 @@ async function cleanup(p) {
   check("every audit is empty", Object.values(audits).every(n => n === 0), JSON.stringify(audits));
   check("no JS errors", errs.length === 0, errs.join(" | "));
 
+}, async ({ p, check }) => {
+  // Cleanup runs on the failure path too — the harness puts it in a `finally`.
+  // An earlier version of this suite deleted its fixtures only after the last
+  // assertion passed, so one aborted run left three synthetic candidates behind
+  // and broke a different suite on the next pass.
   await cleanup(p);
   const left = await rest(p, "ask_scorecards?select=id&client_context=like.ZZ_QA*");
   check("the test cleans up after itself", left.length === 0, `${left.length} left behind`);
-
-  console.log(JSON.stringify(results, null, 1));
-  const bad = results.filter(r => !r.pass);
-  console.error(`${results.length - bad.length}/${results.length} passed`);
-  await b.close(); server.close();
-  process.exit(bad.length ? 1 : 0);
-})().catch(async e => {
-  if (PAGE) await cleanup(PAGE);
-  console.log(JSON.stringify(results, null, 1));
-  console.error("ASK SUITE ABORTED:", e.message); process.exit(1);
 });
