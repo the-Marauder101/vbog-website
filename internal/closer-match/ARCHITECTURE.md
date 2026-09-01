@@ -2072,6 +2072,69 @@ them the console fix was reverted and the suite re-run: **five of the ten went
 red.** A new test that has never failed is a new test that proves nothing, and it
 costs one minute to find out which kind you have written.
 
+### 7al. The reference check had no door, and it was diluting the score
+
+Two of the 42 ASK questions go to the candidate's **previous manager**, not the
+candidate: `consistency-3` and `longevity-3`. They land days later, on a
+different call, with a different person, or never.
+
+The design already half-knew this. `submit_ask` excluded them from its
+completeness check, so an interview could be submitted with them outstanding, and
+`score_ask_reference()` existed to score one afterwards and fold it back into the
+total. **Nothing in the frontend had ever called that function.** The plumbing
+was built and no tap was fitted — the same failure as §7ak, found the same way:
+by somebody trying to use the tool and asking where it was.
+
+Meanwhile the questions sat *inline in the interview* with a note saying "leave
+this unscored for now", which is a question you scroll past and then forget
+exists.
+
+**And the score was diluted.** Only visible in live data. The first real
+submitted scorecard:
+
+```
+Shobha Pathak · R2 · 40 answered · total 38 · max_total 126 · 30.2%
+```
+
+126 is 42 × 3. The denominator counted all forty-two questions, including the two
+nobody had asked. 38/120 is 31.7%. The gap is small and it is always in the same
+direction: every scorecard understates until the references land, and references
+often never land.
+
+> **A percentage has to describe what was actually measured.** A question that was
+> never asked belongs in neither the numerator nor the denominator.
+
+sql/40 makes the rule *in scope = was asked of the candidate, or is a reference
+that has been scored*, so scoring a reference later adds it to numerator and
+denominator at the same moment. `get_ask_references()` serves the small payload a
+reference call needs, and `ask.html?mode=ref&card=…` is a second mode on the same
+question screen rather than a second interview surface — one screen, a different
+source and a different save call, because two surfaces would drift.
+
+Three smaller things came out of it.
+
+**The `ask_frozen_together` CHECK earned its keep.** The first draft of the new
+`submit_ask` stamped `submitted_at` and then called the recompute to fill the
+totals — two statements, and between them a submitted scorecard existed with no
+total, which is exactly the state that constraint forbids. It refused. The stamp
+and the totals now go in one UPDATE. A constraint that only ever passes is a
+constraint nobody has tested; this one caught a real mistake the same day.
+
+**"43/43 passed" was printed under an abort.** The harness put the count on the
+line after the abort notice, and 43/43 is what a person reading the tail takes
+away — while eight assertions after the abort never ran. The count now carries
+*"RUN DID NOT FINISH"* on the same line. Third time in this file that a green
+number has meant less than it looked like.
+
+**The ASK suite was leaving a scorecard on a real candidate.** It runs against the
+first scored candidate in the queue — a real person — and cleaned up by matching
+`client_context like 'ZZ_QA*'`. The scorecards opened by the new discard checks
+never had that marker, so one survived a run, and the next run resumed it and
+reported "7 saved after 6 answers". It now tracks every scorecard it opens by id.
+
+> **A suite that runs against real data has to clean up by what it created, not
+> by what it remembered to label.**
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
