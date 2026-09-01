@@ -154,7 +154,13 @@ async function suite(name, port, body, cleanup) {
     console.log(JSON.stringify(results, null, 1));
     const bad = results.filter(r => !r.pass);
     if (aborted) console.error(`${name} ABORTED: ${aborted.message}`);
-    console.error(`${results.length - bad.length}/${results.length} passed`);
+    // The abort marker goes on the SAME line as the count. An earlier run of the
+    // ASK suite printed "43/43 passed" underneath its own abort notice, and
+    // 43/43 is what a person reading the tail of the output takes away — even
+    // though eight assertions after the abort never ran at all. A count of what
+    // was checked is not a result unless it says whether the run finished.
+    console.error(`${results.length - bad.length}/${results.length} passed` +
+                  (aborted ? "  — RUN DID NOT FINISH, assertions after the abort never ran" : ""));
     await b.close().catch(() => {});
     server.close();
     process.exit(aborted || bad.length ? 1 : 0);

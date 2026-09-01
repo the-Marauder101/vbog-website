@@ -24,6 +24,18 @@ const P = new URLSearchParams(location.search);
 const CAND = P.get("cand");
 const ROUND = (P.get("round") || "r2").toLowerCase() === "r1" ? "r1" : "r2";
 
+// ── TWO MODES, ONE SCREEN ──────────────────────────────────────────────────
+// `interview` is the call with the candidate. `reference` is the call with their
+// previous manager, which happens days later or not at all, and which used to
+// have nowhere to go: score_ask_reference() existed in the database from the
+// start and nothing ever called it. See sql/40.
+//
+// The two share everything that matters — one question per screen, the four
+// anchors, notes, keyboard entry — so reference mode is a different source and a
+// different save call, not a second interview surface. Two surfaces would drift.
+const MODE = P.get("mode") === "ref" ? "reference" : "interview";
+const CARD = P.get("card");          // reference mode addresses a scorecard directly
+
 const S = {
   scorecard: null,
   candidate: "",
@@ -31,6 +43,7 @@ const S = {
   answers: {},     // question_id -> { score, note }
   i: 0,
   bank: null,
+  refs: null,      // reference mode: the get_ask_references payload
 };
 
 function view(name) {
@@ -56,7 +69,14 @@ function setSave(text, state) {
 function flatten(bank) {
   const flat = [];
   (bank.attributes || []).forEach((a) => {
-    (a.questions || []).forEach((q) => flat.push({ attr: a, q }));
+    (a.questions || []).forEach((q) => {
+      // The two reference questions are put to the previous manager, not to the
+      // person on the call. They used to sit inline in the interview with a note
+      // saying "leave this unscored for now", which is a question you scroll past
+      // forty times and then forget exists. They have their own flow now.
+      if (q.is_reference) return;
+      flat.push({ attr: a, q });
+    });
   });
   return flat;
 }
@@ -88,13 +108,12 @@ function render() {
     : "";
   el("q-hint").hidden = !q.hint;
 
-  // A reference question is put to the previous manager, not the person on the
-  // call. Saying so on the screen stops it being asked at the wrong moment.
-  const refNote = q.is_reference
+  // In reference mode every question is one for the previous manager, and saying
+  // so on each screen is what stops it being read out to the wrong person.
+  const refNote = MODE === "reference"
     ? `<div class="notice"><span class="label">Ask their previous manager, not the candidate</span>
-       This one is for the reference call. Leave it unscored for now — it does not
-       block submitting, and the scorecard stays marked incomplete until it is
-       answered.</div>`
+       This is the reference call for ${esc(S.candidate)}. Each answer is saved and
+       added to their ASK total the moment you score it — there is nothing to submit.</div>`
     : "";
 
   el("q-options").innerHTML = refNote + (q.options || []).map((o) => `
@@ -128,6 +147,22 @@ async function persist(questionId) {
   if (!a || a.score === undefined || a.score === null) return;
   setSave("Saving…");
   try {
+    if (MODE === "reference") {
+      // A reference lands on a scorecard that is usually already submitted, so it
+      // cannot go through save_ask_score — that refuses to touch a finished one,
+      // correctly. score_ask_reference is the one door that opens, and it returns
+      // the recomputed total, which is worth showing immediately: the whole point
+      // is that the number moves.
+      const r = await sbRpc("score_ask_reference", {
+        p_scorecard: S.scorecard,
+        p_question: questionId,
+        p_score: a.score,
+        p_note: a.note,
+      });
+      S.latest = r;
+      setSave(`Saved — now ${r.total} of ${r.max_total} (${r.pct}%)`, "saved");
+      return;
+    }
     await sbRpc("save_ask_score", {
       p_scorecard: S.scorecard,
       p_question: questionId,
@@ -162,19 +197,22 @@ async function move(delta) {
 function tally() {
   const per = {};
   S.flat.forEach(({ attr, q }) => {
-    const t = (per[attr.id] ||= { attr, score: 0, max: 0, unscored: 0, refsMissing: 0 });
+    const t = (per[attr.id] ||= { attr, score: 0, max: 0, unscored: 0 });
     t.max += 3;
     const a = S.answers[q.id];
     if (a && a.score !== undefined && a.score !== null) t.score += a.score;
-    else { t.unscored++; if (q.is_reference) t.refsMissing++; }
+    else t.unscored++;
   });
   const rows = Object.values(per);
+  // `S.flat` no longer contains the reference questions in either mode, so this
+  // counts only what was actually asked on this call — which is the same rule
+  // recompute_ask_totals() applies in the database. The two have to agree or the
+  // preview on screen and the frozen record disagree by two questions.
   return {
     rows,
     total: rows.reduce((n, r) => n + r.score, 0),
     max: rows.reduce((n, r) => n + r.max, 0),
-    unscored: rows.reduce((n, r) => n + r.unscored - r.refsMissing, 0),
-    refsMissing: rows.reduce((n, r) => n + r.refsMissing, 0),
+    unscored: rows.reduce((n, r) => n + r.unscored, 0),
   };
 }
 
@@ -202,14 +240,35 @@ function results() {
   el("res-den").textContent = " / " + t.max;
   el("res-pct").textContent = pct;
 
-  el("res-refs").hidden = t.refsMissing === 0;
-  if (t.refsMissing) {
-    el("res-refs").innerHTML =
-      `<span class="label">${t.refsMissing} reference question${t.refsMissing > 1 ? "s" : ""} outstanding</span>
-       These go to their previous manager, not the candidate. You can submit now —
-       the scorecard will read as incomplete until they are scored, and the total
-       updates when they are.`;
+  // Reference mode has no submit and no preview: every answer is already live on
+  // the scorecard, so the screen reports where the real total stands.
+  if (MODE === "reference") {
+    const done = Object.keys(S.answers).length;
+    const live = S.latest;
+    el("res-refs").hidden = false;
+    el("res-refs").innerHTML = live
+      ? `<span class="label">Recorded — ${esc(S.candidate)} is now ${live.total} of ${live.max_total} (${live.pct}%)</span>
+         ${live.outstanding_refs
+           ? `${live.outstanding_refs} reference question${live.outstanding_refs > 1 ? "s" : ""} still to ask. Come back to this link when you have it.`
+           : `Both reference questions are in. The scorecard is complete.`}`
+      : `<span class="label">Nothing recorded yet</span>
+         Score the ${S.flat.length} question${S.flat.length > 1 ? "s" : ""} above as the call goes.
+         Each one saves and updates the total immediately.`;
+    el("btn-submit").hidden = true;
+    el("submit-state").textContent = `${done} of ${S.flat.length} reference questions scored`;
+    return;
   }
+
+  el("res-refs").hidden = false;
+  el("res-refs").innerHTML = S.outstandingRefs
+    ? `<span class="label">The reference questions are a separate call</span>
+       ${S.outstandingRefs} question${S.outstandingRefs > 1 ? "s" : ""} go to their previous
+       manager, not the candidate, and they are not asked here. They are counted neither
+       for nor against — this percentage describes the interview that actually happened.
+       Record them from ${esc(S.candidate)}'s page whenever that call comes, and the
+       total updates then.`
+    : `<span class="label">The reference questions are already in</span>
+       Both have been scored, so this scorecard is complete.`;
 
   const pri = t.rows.filter((r) => r.attr.priority);
   el("res-pri-region").hidden = pri.length === 0;
@@ -281,6 +340,16 @@ el("btn-submit").addEventListener("click", async () => {
 
 el("btn-begin").addEventListener("click", async () => {
   const b = el("btn-begin"); b.disabled = true;
+
+  // Reference mode has nothing to start: the scorecard exists, the answers are
+  // already loaded, and each score is written on the spot. Just show question one.
+  if (MODE === "reference") {
+    const firstUnanswered = S.flat.findIndex(({ q }) => !(q.id in S.answers));
+    S.i = firstUnanswered === -1 ? 0 : firstUnanswered;
+    b.disabled = false;
+    return render();
+  }
+
   try {
     const started = await sbRpc("start_ask", {
       p_candidate_id: CAND, p_round: ROUND,
@@ -304,7 +373,12 @@ el("btn-begin").addEventListener("click", async () => {
 
 (async () => {
   view("loading");
-  if (!CAND) return fail("This link has no candidate on it. Open the scorecard from a candidate's page.");
+  if (MODE === "reference" && !CARD) {
+    return fail("This reference link has no scorecard on it. Open it from the candidate's page.");
+  }
+  if (MODE === "interview" && !CAND) {
+    return fail("This link has no candidate on it. Open the scorecard from a candidate's page.");
+  }
   if (!sbRestoreToken()) return view("gate");
 
   let me;
@@ -313,10 +387,63 @@ el("btn-begin").addEventListener("click", async () => {
     return fail((me && me.reason) || "This account is not a staff account.");
   }
 
+  // ── REFERENCE MODE ───────────────────────────────────────────────────────
+  // A much smaller boot: one call, two questions, no bank and no start_ask —
+  // the scorecard already exists and is usually already submitted.
+  if (MODE === "reference") {
+    try {
+      const r = await sbRpc("get_ask_references", { p_scorecard: CARD });
+      S.refs = r;
+      S.scorecard = r.scorecard_id;
+      S.candidate = r.candidate || "this candidate";
+      S.bank = { sections: {} };
+      S.flat = (r.questions || []).map((q) => ({
+        attr: { id: q.id, name: q.attribute, section: "", priority: false }, q,
+      }));
+      if (!S.flat.length) {
+        return fail("This round has no reference questions.");
+      }
+      (r.questions || []).forEach((q) => {
+        if (q.scored) S.answers[q.id] = { score: q.score, note: q.note || null };
+      });
+
+      el("start-title").textContent = `Reference call · ${S.candidate}`;
+      el("start-sub").textContent =
+        "For their previous manager — not the candidate.";
+      el("start-scope").innerHTML =
+        `<strong>${S.flat.length} question${S.flat.length > 1 ? "s" : ""}</strong>, scored 0–3 against the ` +
+        `same written anchors as the interview. Each one saves and joins ` +
+        `${esc(S.candidate)}'s ASK total the moment you score it — there is nothing to ` +
+        `submit, and you can close this and come back.` +
+        (r.pct != null
+          ? ` They currently stand at <strong>${r.total} of ${r.max_total} (${r.pct}%)</strong> ` +
+            `from the interview alone.`
+          : "");
+
+      const already = (r.questions || []).filter((q) => q.scored).length;
+      if (already) {
+        el("start-resume").hidden = false;
+        el("start-resume").innerHTML =
+          `<span class="label">${already} of ${S.flat.length} already recorded</span>
+           Scoring one again replaces the previous answer and the total updates.`;
+      }
+      el("btn-begin").textContent = "Start the reference call →";
+      return view("start");
+    } catch (e) {
+      return fail(e.message);
+    }
+  }
+
   try {
     S.bank = await sbRpc("get_ask_bank", { p_round: ROUND });
     S.flat = flatten(S.bank);
     if (!S.flat.length) return fail("The ASK question bank is empty.");
+
+    // How many reference questions are in scope for this round but not asked
+    // here. The results screen says so rather than leaving a reader to wonder
+    // why the denominator is 120 and not 126.
+    S.outstandingRefs = (S.bank.attributes || [])
+      .flatMap((a) => a.questions || []).filter((q) => q.is_reference).length;
 
     // Peek at the scorecard state without creating one, so the start screen can
     // say whether this is a fresh run or a resume.

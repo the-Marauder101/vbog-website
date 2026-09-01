@@ -20,7 +20,27 @@ const { suite, rest, rpc, flat } = require("./harness");
 // reads like a broken test rather than the wrong role.
 const refused = (s, t) => s >= 400 && /staff only|permission denied for function/.test(t || "");
 
-async function cleanup(p) {
+// Every scorecard this suite opens, by id.
+//
+// THIS SUITE WRITES TO A REAL CANDIDATE'S RECORD — the first scored one in the
+// queue — because the disagreement checks need real questionnaire scores to read
+// against. So two rules, both learned the hard way:
+//
+//   1. Every scorecard it opens gets `client_context: "ZZ_QA context"`, and its
+//      ids are tracked here. Cleanup identifies its own work by what it WROTE.
+//      One card opened by the discard checks had no marker, survived a run, and
+//      the next run resumed it and reported "7 saved after 6 answers".
+//
+//   2. Cleanup NEVER deletes by elimination. Not "every open scorecard except
+//      this one" — only rows it can positively identify as its own. While
+//      investigating a leak I ran exactly that kind of scoped-by-negation delete
+//      by hand and came within one query of destroying a real submitted
+//      interview that happened to be open at the time.
+//
+// > A cleanup that deletes what it cannot account for is not cleanup.
+const MADE = [];
+
+async function cleanup(p, ids = []) {
   try {
     await p.evaluate(async () => {
       const h = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` };
@@ -29,6 +49,14 @@ async function cleanup(p) {
       const st = await (await fetch(`${SUPABASE_URL}/rest/v1/staff?select=id&email=like.zz-qa-%2A`, { headers: h })).json();
       for (const s of st) await fetch(`${SUPABASE_URL}/rest/v1/staff?id=eq.${s.id}`, { method: "DELETE", headers: h });
     });
+    // And every scorecard this run opened by id, marker or not.
+    for (const id of ids) {
+      await p.evaluate(async (id) => {
+        const h = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` };
+        await fetch(`${SUPABASE_URL}/rest/v1/ask_scores?scorecard_id=eq.${id}`, { method: "DELETE", headers: h });
+        await fetch(`${SUPABASE_URL}/rest/v1/ask_scorecards?id=eq.${id}`, { method: "DELETE", headers: h });
+      }, id);
+    }
   } catch (_) { /* best effort — never mask the original failure */ }
 }
 
@@ -146,8 +174,10 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   await p.goto(`${B}/ask.html?cand=${target.id}&round=r2`, { waitUntil: "domcontentloaded" });
   await p.waitForSelector("#v-start:not([hidden])", { timeout: 20000 });
   const startTxt = (await p.textContent("#v-start")).replace(/\s+/g, " ");
+  // "40 questions", because that is how many go to the candidate. The bank still
+  // holds 42; the other two are the reference call and have their own flow.
   check("the start screen says what the round is and how it is scored",
-        /All fourteen attributes/.test(startTxt) && /42 questions/.test(startTxt) &&
+        /All fourteen attributes/.test(startTxt) && /40 questions/.test(startTxt) &&
         /scored 0–3 against a written anchor/.test(startTxt), startTxt.slice(0, 110));
 
   await p.fill("#start-client", "ZZ_QA context");
@@ -184,8 +214,11 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   await p.click("#btn-begin");
   await p.waitForSelector("#v-q:not([hidden])", { timeout: 20000 });
   const whereNow = (await p.textContent("#q-where")).replace(/\s+/g, " ");
+  // 40, not 42: the two reference questions are no longer in the interview flow.
+  // They used to sit inline with a note saying "leave this unscored for now",
+  // which is a question you scroll past and then forget exists. sql/40.
   check("and it resumes at the first unanswered question, not at the top",
-        /7 of 42/.test(whereNow) && (await p.textContent("#q-prompt")) !== firstPrompt,
+        /7 of 40/.test(whereNow) && (await p.textContent("#q-prompt")) !== firstPrompt,
         whereNow.slice(0, 60));
 
   // ══ 6. FINISH IT ═════════════════════════════════════════════════════════
@@ -207,8 +240,16 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
 
   const frozen = (await rest(p, `ask_scorecards?select=total,max_total,pct,attributes&id=eq.${card}`))[0];
   check("the total is frozen on the scorecard, not recomputed on read",
-        frozen.total != null && frozen.max_total === 126 && frozen.attributes != null,
+        frozen.total != null && frozen.attributes != null,
         `${frozen.total} of ${frozen.max_total} (${frozen.pct}%)`);
+
+  // 120, not 126. The denominator counts the forty questions that were actually
+  // put to the candidate — not the two reference questions nobody has asked yet.
+  // This assertion said 126 until live data showed what that does: Shobha Pathak's
+  // first real R2 read 30.2% when 31.7% of it had been measured, and every
+  // scorecard would have understated in the same direction forever. See sql/40.
+  check("AN UNASKED REFERENCE QUESTION IS IN NEITHER THE TOTAL NOR THE MAXIMUM",
+        frozen.max_total === 120, `max_total ${frozen.max_total}, expected 120`);
 
   const locked = await rpc(p, "save_ask_score", { p_scorecard: card, p_question: bankQs[0].id, p_score: 0 });
   check("a submitted scorecard refuses further edits",
@@ -238,14 +279,168 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   check("a reference answer can land after submitting and updates the total",
         late.status === 200 && late.body.total > frozen.total,
         `${frozen.total} → ${late.body.total}`);
+  check("and it joins the denominator at the same moment it joins the total",
+        late.body.max_total === frozen.max_total + 3,
+        `${frozen.max_total} → ${late.body.max_total}`);
+  check("one reference is still outstanding, and it says so",
+        late.body.outstanding_refs === 1, `${late.body.outstanding_refs}`);
+  const storedLate = (await rest(p, `ask_scorecards?select=total,max_total,pct&id=eq.${card}`))[0];
+  check("and the stored scorecard agrees with what the call returned",
+        storedLate.max_total === late.body.max_total && storedLate.total === late.body.total,
+        JSON.stringify(storedLate));
+
   const notRef = await rpc(p, "score_ask_reference", { p_scorecard: card, p_question: bankQs.find(q => !q.ref).id, p_score: 3 });
   check("but an ordinary question cannot be reopened that way",
         notRef.status >= 400 && /Only the reference questions/.test(JSON.stringify(notRef.body)),
         JSON.stringify(notRef.body).slice(0, 90));
 
+  // ══ 8b. THE REFERENCE CALL HAS A SURFACE ═════════════════════════════════
+  // score_ask_reference existed from the first migration and nothing called it.
+  // A function with no caller is a promise, not a feature — the same failure as
+  // §7ak, and it is only caught by driving the page a person would actually open.
+  const refPayload = await rpc(p, "get_ask_references", { p_scorecard: card });
+  check("the reference call gets its own small payload",
+        refPayload.status === 200 && (refPayload.body.questions || []).length === 2,
+        `${((refPayload.body || {}).questions || []).length} questions`);
+  check("carrying the anchors, the candidate and where the score stands",
+        (refPayload.body.questions || []).every(q => (q.options || []).length === 4) &&
+        !!refPayload.body.candidate && refPayload.body.max_total != null,
+        `${refPayload.body.candidate} · ${refPayload.body.total}/${refPayload.body.max_total}`);
+  check("and it knows which of them has already been answered",
+        (refPayload.body.questions || []).filter(q => q.scored).length === 1,
+        `${(refPayload.body.questions || []).filter(q => q.scored).length} of 2 scored`);
+
+  // The SAME page, not a new one. sessionStorage is per browsing context, so a
+  // freshly opened tab has no staff token and ask.html correctly shows the
+  // sign-in gate — which looks exactly like the page failing to load. The first
+  // version of this block opened a new tab and timed out on #v-start for that
+  // reason and no other.
+  const rp = p;
+  const rerrs = errs;
+  await rp.goto(`${B}/ask.html?mode=ref&card=${card}`, { waitUntil: "domcontentloaded" });
+  await rp.waitForSelector("#v-start:not([hidden]), #v-error:not([hidden])", { timeout: 25000 });
+  check("the reference link opens on its own start screen",
+        await rp.isVisible("#v-start"),
+        flat(await rp.textContent("#v-error").catch(() => "")).slice(0, 100));
+  const refStart = flat(await rp.textContent("#v-start"));
+  check("which says it is for the previous manager, not the candidate",
+        /previous manager/i.test(refStart) && /not the candidate/i.test(refStart),
+        refStart.slice(0, 120));
+  check("and that there is nothing to submit",
+        /nothing to submit/i.test(refStart), "");
+
+  await rp.click("#btn-begin");
+  await rp.waitForSelector("#v-q:not([hidden])", { timeout: 20000 });
+  await rp.waitForTimeout(500);
+  const refQScreen = flat(await rp.textContent("#v-q"));
+  check("the question screen warns again on every question",
+        /Ask their previous manager, not the candidate/i.test(refQScreen), "");
+  check("it shows only the reference questions",
+        /1 of 2|2 of 2/.test(refQScreen), (refQScreen.match(/\d of \d/) || [""])[0]);
+
+  const beforeUi = (await rest(p, `ask_scorecards?select=total,max_total&id=eq.${card}`))[0];
+  await rp.click("#q-options [data-score='3']");
+  await rp.waitForFunction(() => /Saved|error/i.test(
+    document.getElementById("savestate").textContent), { timeout: 20000 });
+  const savedMsg = flat(await rp.textContent("#savestate"));
+  check("SCORING A REFERENCE FROM THE PAGE UPDATES THE TOTAL IMMEDIATELY",
+        /Saved — now \d+ of \d+/.test(savedMsg), savedMsg);
+  const afterUi = (await rest(p, `ask_scorecards?select=total,max_total&id=eq.${card}`))[0];
+  check("and the database agrees with what the page said",
+        afterUi.max_total > beforeUi.max_total, `${beforeUi.max_total} → ${afterUi.max_total}`);
+  check("no JS errors on the reference surface", rerrs.length === 0, rerrs.join(" | "));
+
+  // ══ 8bb. READING A FINISHED INTERVIEW BACK ═══════════════════════════════
+  // get_ask_scorecard() existed from the first ASK migration with no caller, so a
+  // submitted interview could be totalled but not read question by question —
+  // which is exactly what a second person needs in order to disagree with a
+  // colleague's judgement. Third dead function in a row (§7am).
+  const readback = await rpc(p, "get_ask_scorecard", { p_scorecard: card });
+  check("a submitted scorecard can be read back in full",
+        readback.status === 200 && (readback.body.answers || []).length >= 40,
+        `${((readback.body || {}).answers || []).length} answers`);
+  check("and every answer carries the anchor that was chosen",
+        (readback.body.answers || []).every(a => a.chose && a.question),
+        `${(readback.body.answers || []).filter(a => !a.chose).length} without an anchor`);
+
+  await p.goto(`${B}/nikash.html`, { waitUntil: "domcontentloaded" });
+  await p.waitForSelector("#v-reqs:not([hidden])", { timeout: 25000 });
+  await p.click("#nav-queue");
+  await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(1500);
+  await p.click(`#queue-list [data-cand="${target.id}"]`);
+  await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(1100);
+  check("the candidate page offers to read the full scorecard",
+        (await p.$$("#cd-body [data-ask-open]")).length > 0, "");
+
+  await p.click("#cd-body [data-ask-open]");
+  await p.waitForSelector("#v-ask:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(700);
+  const sc = flat(await p.textContent("#sc-body"));
+  check("THE SCORECARD REVIEW SCREEN SHOWS WHAT WAS ASKED AND WHAT WAS SAID",
+        /What was asked, and what was said/.test(sc), sc.slice(0, 120));
+  check("it lists every scored question, not just the totals",
+        (await p.$$("#sc-body .evidence li")).length >= 40,
+        `${(await p.$$("#sc-body .evidence li")).length} rows`);
+  check("grouped by attribute, with each attribute's own score",
+        (await p.$$("#sc-body .panel")).length >= 10,
+        `${(await p.$$("#sc-body .panel")).length} attribute blocks`);
+  check("the header says who ran it, when, and what it came to",
+        /run by /.test(flat(await p.textContent("#sc-meta"))) &&
+        /%/.test(flat(await p.textContent("#sc-meta"))),
+        flat(await p.textContent("#sc-meta")).slice(0, 110));
+  check("and it repeats that ASK does not enter the match score",
+        /does not enter the match score/.test(flat(await p.textContent("#sc-disclaimer"))), "");
+  check("Back returns to the candidate, not to the queue",
+        await p.isVisible("#btn-back-cand"), "");
+  await p.click("#btn-back-cand");
+  await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
+  check("and it actually goes there", await p.isVisible("#v-cand"), "");
+
+  // ══ 8c. AN EMPTY RE-RUN CAN BE THROWN AWAY ═══════════════════════════════
+  // A "Run R2 again" click straight after submitting opens a blank scorecard,
+  // which then becomes the card Run R2 resumes — so the next person sees an empty
+  // interview instead of the finished one. Seen in live data, fourteen seconds
+  // apart.
+  const dup = await rpc(p, "start_ask",
+    { p_candidate_id: target.id, p_round: "r2", p_client_context: "ZZ_QA context" });
+  const dupId = dup.body.scorecard_id;
+  MADE.push(dupId);
+  check("running the round again opens a new scorecard, not the submitted one",
+        dupId !== card, `${dupId}`);
+  const discard = await rpc(p, "discard_ask", { p_scorecard: dupId });
+  check("an empty re-run can be discarded", discard.status === 200, JSON.stringify(discard.body));
+  check("and it is gone",
+        (await rest(p, `ask_scorecards?select=id&id=eq.${dupId}`)).length === 0, "");
+
+  const dup2 = (await rpc(p, "start_ask",
+    { p_candidate_id: target.id, p_round: "r2", p_client_context: "ZZ_QA context" })).body.scorecard_id;
+  MADE.push(dup2);
+  await rpc(p, "save_ask_score", { p_scorecard: dup2, p_question: bankQs.find(q => !q.ref).id, p_score: 1 });
+  const refuse = await rpc(p, "discard_ask", { p_scorecard: dup2 });
+  check("but one with an answer on it is not thrown away",
+        refuse.status >= 400 && /answer\(s\) on it/.test(JSON.stringify(refuse.body)),
+        JSON.stringify(refuse.body).slice(0, 100));
+  const refuseSubmitted = await rpc(p, "discard_ask", { p_scorecard: card });
+  check("and neither is a submitted one",
+        refuseSubmitted.status >= 400 && /is a record and is not thrown away/.test(JSON.stringify(refuseSubmitted.body)),
+        JSON.stringify(refuseSubmitted.body).slice(0, 100));
+
+  // Clear the one the refusal check deliberately made undiscardable, so the next
+  // run does not resume it. The refusal is the assertion; the row is litter.
+  await p.evaluate(async (id) => {
+    const h = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` };
+    await fetch(`${SUPABASE_URL}/rest/v1/ask_scores?scorecard_id=eq.${id}`, { method: "DELETE", headers: h });
+  }, dup2);
+  const nowGone = await rpc(p, "discard_ask", { p_scorecard: dup2 });
+  check("and once its answer is removed it can be discarded after all",
+        nowGone.status === 200, JSON.stringify(nowGone.body).slice(0, 90));
+
   // ══ 9. A REWORDING MUST NOT MOVE A FINISHED SCORECARD ════════════════════
   const victim = bankQs.find(q => !q.ref).id;
   const originalPrompt = allQs.find(q => q.id === victim).prompt;
+  const beforeReword = (await rest(p, `ask_scorecards?select=total,max_total&id=eq.${card}`))[0];
   await p.evaluate(async ([id, txt]) => {
     await fetch(`${SUPABASE_URL}/rest/v1/ask_questions?id=eq.${id}`, { method: "PATCH",
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}`,
@@ -253,8 +448,13 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   }, [victim, "ZZ_QA reworded prompt"]);
 
   const afterEdit = (await rest(p, `ask_scorecards?select=total&id=eq.${card}`))[0];
+  // Read the baseline immediately before the reword, not from a variable captured
+  // twenty assertions earlier — the reference scored through the UI in between
+  // legitimately moved the total, and comparing against the stale figure made a
+  // correct system look broken. The claim is "a reword moves nothing", so the
+  // baseline has to be the moment before the reword.
   check("rewording a question does not move a finished scorecard's total",
-        afterEdit.total === late.body.total, `${late.body.total} → ${afterEdit.total}`);
+        afterEdit.total === beforeReword.total, `${beforeReword.total} → ${afterEdit.total}`);
   const stored = (await rest(p, `ask_scores?select=question_text&scorecard_id=eq.${card}&question_id=eq.${victim}`))[0];
   check("and the answer still reads against the wording it was scored against",
         stored.question_text === originalPrompt,
@@ -289,8 +489,15 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         /ASK interview/.test(cd) && /R2 — full/.test(cd) && /Priority attributes/.test(cd), "");
   check("with who ran it and when",
         /run by /.test(cd), (cd.match(/run by [^·]{0,40}/) || [""])[0]);
-  check("and the outstanding reference question is called out",
-        /reference question/.test(cd), (cd.match(/\d+ reference question[^<]{0,20}/) || [""])[0]);
+  // Both references have been scored by this point — one through the RPC at step
+  // 8, one through the reference surface at 8b — so the page must now say the
+  // scorecard is complete rather than still nagging about an outstanding call.
+  // Asserting "it mentions a reference question" would pass on either state and
+  // therefore tests nothing.
+  check("and with both references in, the page stops asking for them",
+        /reference questions are already in/.test(cd) &&
+        !/reference call has not happened/.test(cd),
+        (cd.match(/reference[^·]{0,60}/) || [""])[0]);
   check("the disagreement block explains what a gap means",
         /Where the interview and the questionnaire disagree/.test(cd) &&
         /one of them is wrong/.test(cd), "");
@@ -350,7 +557,13 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   // An earlier version of this suite deleted its fixtures only after the last
   // assertion passed, so one aborted run left three synthetic candidates behind
   // and broke a different suite on the next pass.
-  await cleanup(p);
+  await cleanup(p, MADE);
   const left = await rest(p, "ask_scorecards?select=id&client_context=like.ZZ_QA*");
-  check("the test cleans up after itself", left.length === 0, `${left.length} left behind`);
+  const strays = [];
+  for (const id of MADE) {
+    if ((await rest(p, `ask_scorecards?select=id&id=eq.${id}`)).length) strays.push(id);
+  }
+  check("the test cleans up after itself, including on a real candidate's record",
+        left.length === 0 && strays.length === 0,
+        `${left.length} marked, ${strays.length} tracked left behind`);
 });

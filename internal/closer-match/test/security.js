@@ -109,6 +109,98 @@ suite("SECURITY SUITE", 8104, async ({ p, base, E, P, check, errs }) => {
   check("but the consent notice is public, because it has to be",
         (await anonRpc(p, "get_consent_notice", {})) === 200, "");
 
+  // ══ A FUNCTION WITH NO CALLER IS A PROMISE, NOT A FEATURE ════════════════
+  // Three times in a row a feature was "built" and could not be used, because a
+  // database function was written and nothing in the browser ever called it:
+  //   · get_candidate_detail's ask keys, unreachable for unscored candidates (§7ak)
+  //   · score_ask_reference — the reference call had no door (§7al)
+  //   · get_ask_scorecard — a submitted interview could be totalled but not read
+  //
+  // Each was found by Depesh trying to use the tool and asking where it was. That
+  // is the most expensive way to find it and the only one available, because no
+  // test looked. This does.
+  //
+  // It enumerates the staff-facing functions FROM THE DATABASE and greps the
+  // shipped JavaScript for each name, so a function added next year is covered
+  // without anybody remembering this file. Exemptions are listed with a reason —
+  // some functions are genuinely internal, called only from other SQL.
+  const INTERNAL_ONLY = {
+    is_staff: "a guard called from inside almost every other function",
+    staff_role: "a guard, not a surface — called from inside other functions",
+    my_client_id: "a guard used inside the client-scoped RLS policies",
+    recompute_ask_totals: "the shared arithmetic behind submit_ask and score_ask_reference",
+    get_ask_overlap: "reached through get_candidate_detail's payload, not called directly",
+    purge_candidate: "called by purge_expired_candidates and by the delete control's RPC",
+    purge_expired_candidates: "the retention sweep — run on a schedule, not from a screen",
+    import_ask_json: "a one-off importer for scorecards from the standalone tool",
+    compute_matches: "called by finish_assessment and submit_intake",
+    compute_candidate_profile: "called by finish_assessment",
+    compute_target_profile: "called by submit_intake",
+    run_golden_cases: "the regression fixture suite — called by the test suites",
+    key_fingerprint: "read through the keying report and the audits",
+    hard_filter_check: "called by the match engine",
+    hard_filter_fails: "a wrapper kept for compatibility, called by the engine",
+    derive_hard_filters: "called by submit_intake and update_client_intake",
+    response_pattern: "called by compute_candidate_profile",
+    item_display_order: "called by start_assessment and save_response",
+    bipolar_side: "called by get_candidate_detail",
+    bipolar_sides: "called by the queue and shortlist views",
+    position_bias: "called by compute_candidate_profile",
+    format_is_shufflable: "a pure helper called by item_display_order",
+    param: "reads dimension_params for every function that needs a threshold",
+    fluency_rank: "called by hard_filter_check",
+    keying_token_expert: "called by the by-token keying functions",
+    enforce_function_grants: "an event trigger",
+    bump_ask_bank_revision: "a table trigger",
+  };
+
+  // NOT the same list, deliberately. These are not internal by design — they are
+  // features that were written and never finished, and lumping them in with the
+  // guards and triggers above would bury that. Kept short and asserted short, so
+  // it cannot quietly become the place unreachable work goes to die.
+  const UNFINISHED = {
+    mark_benchmark: "Nothing sets a benchmark candidate, so nothing reads one. " +
+      "Either the console grows a control or the feature goes — Depesh's call.",
+    score_supplement: "A candidate can submit a supplement but nobody can score it. " +
+      "Same decision: finish it or remove it.",
+  };
+
+  const staffFns = await rest(p, "v_staff_function_callers?select=proname,exempt_reason");
+  if (Array.isArray(staffFns) && staffFns.length) {
+    const js = require("fs").readdirSync(require("path").join(__dirname, "..", "js"))
+      .filter(f => f.endsWith(".js"))
+      .map(f => require("fs").readFileSync(require("path").join(__dirname, "..", "js", f), "utf8"))
+      .join("\n");
+    const orphans = staffFns
+      .map(r => r.proname)
+      .filter(n => !INTERNAL_ONLY[n] && !UNFINISHED[n])
+      .filter(n => !new RegExp(`["']${n}["']`).test(js));
+    check("EVERY STAFF FUNCTION HAS SOMETHING IN THE BROWSER THAT CALLS IT",
+          orphans.length === 0,
+          orphans.length
+            ? `unreachable: ${orphans.join(", ")} — wire it up, or list it in INTERNAL_ONLY / UNFINISHED with a reason`
+            : `${staffFns.length} functions, ${Object.keys(INTERNAL_ONLY).length} internal, ${Object.keys(UNFINISHED).length} unfinished`);
+    check("and every exemption says why it is one",
+          Object.values(INTERNAL_ONLY).every(v => v && v.length > 12) &&
+          Object.values(UNFINISHED).every(v => v && v.length > 12),
+          `${Object.keys(INTERNAL_ONLY).length} internal, ${Object.keys(UNFINISHED).length} unfinished`);
+    // The half-built list has to stay embarrassing. If it grows past a handful it
+    // has stopped being a record of two loose ends and become a dumping ground.
+    check("the unfinished list is short enough to still be a to-do list",
+          Object.keys(UNFINISHED).length <= 4,
+          Object.keys(UNFINISHED).join(", ") || "none");
+    // And anything on it must genuinely be unreachable — an entry that has since
+    // been wired up should be deleted, not left claiming to be unfinished.
+    const staleUnfinished = Object.keys(UNFINISHED)
+      .filter(n => new RegExp(`["']${n}["']`).test(js));
+    check("nothing on the unfinished list has quietly been finished",
+          staleUnfinished.length === 0,
+          staleUnfinished.join(", ") || "still unreachable, as listed");
+  } else {
+    check("the staff-function list is readable so orphans can be found", false,
+          JSON.stringify(staffFns).slice(0, 140));
+  }
+
   // ══ R2 — ASSESSED BLIND ══════════════════════════════════════════════════
   // The candidate's own surface is served by three token RPCs. None of them may
   // name a client, a role, or a requirement — a candidate who knows which job

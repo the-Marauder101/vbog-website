@@ -2072,6 +2072,119 @@ them the console fix was reverted and the suite re-run: **five of the ten went
 red.** A new test that has never failed is a new test that proves nothing, and it
 costs one minute to find out which kind you have written.
 
+### 7al. The reference check had no door, and it was diluting the score
+
+Two of the 42 ASK questions go to the candidate's **previous manager**, not the
+candidate: `consistency-3` and `longevity-3`. They land days later, on a
+different call, with a different person, or never.
+
+The design already half-knew this. `submit_ask` excluded them from its
+completeness check, so an interview could be submitted with them outstanding, and
+`score_ask_reference()` existed to score one afterwards and fold it back into the
+total. **Nothing in the frontend had ever called that function.** The plumbing
+was built and no tap was fitted — the same failure as §7ak, found the same way:
+by somebody trying to use the tool and asking where it was.
+
+Meanwhile the questions sat *inline in the interview* with a note saying "leave
+this unscored for now", which is a question you scroll past and then forget
+exists.
+
+**And the score was diluted.** Only visible in live data. The first real
+submitted scorecard:
+
+```
+Shobha Pathak · R2 · 40 answered · total 38 · max_total 126 · 30.2%
+```
+
+126 is 42 × 3. The denominator counted all forty-two questions, including the two
+nobody had asked. 38/120 is 31.7%. The gap is small and it is always in the same
+direction: every scorecard understates until the references land, and references
+often never land.
+
+> **A percentage has to describe what was actually measured.** A question that was
+> never asked belongs in neither the numerator nor the denominator.
+
+sql/40 makes the rule *in scope = was asked of the candidate, or is a reference
+that has been scored*, so scoring a reference later adds it to numerator and
+denominator at the same moment. `get_ask_references()` serves the small payload a
+reference call needs, and `ask.html?mode=ref&card=…` is a second mode on the same
+question screen rather than a second interview surface — one screen, a different
+source and a different save call, because two surfaces would drift.
+
+Three smaller things came out of it.
+
+**The `ask_frozen_together` CHECK earned its keep.** The first draft of the new
+`submit_ask` stamped `submitted_at` and then called the recompute to fill the
+totals — two statements, and between them a submitted scorecard existed with no
+total, which is exactly the state that constraint forbids. It refused. The stamp
+and the totals now go in one UPDATE. A constraint that only ever passes is a
+constraint nobody has tested; this one caught a real mistake the same day.
+
+**"43/43 passed" was printed under an abort.** The harness put the count on the
+line after the abort notice, and 43/43 is what a person reading the tail takes
+away — while eight assertions after the abort never ran. The count now carries
+*"RUN DID NOT FINISH"* on the same line. Third time in this file that a green
+number has meant less than it looked like.
+
+**The ASK suite was leaving a scorecard on a real candidate.** It runs against the
+first scored candidate in the queue — a real person — and cleaned up by matching
+`client_context like 'ZZ_QA*'`. The scorecards opened by the new discard checks
+never had that marker, so one survived a run, and the next run resumed it and
+reported "7 saved after 6 answers". It now tracks every scorecard it opens by id.
+
+> **A suite that runs against real data has to clean up by what it created, not
+> by what it remembered to label.**
+
+### 7am. Three dead functions in a row, and the check that should have existed
+
+*"Can I not review the scorecards for R2? I can't see it."*
+
+`get_ask_scorecard()` had existed since the first ASK migration, returns every
+answer with the anchor chosen and the note left, and **nothing had ever called
+it.** A submitted interview could be totalled but not read — which is precisely
+what a second person needs in order to disagree with a colleague's judgement,
+and the whole reason the team runs R2 instead of one person.
+
+That was the third in a row:
+
+| | what was unreachable | how it was found |
+|---|---|---|
+| §7ak | the ASK region, for every candidate ASK is for | *"I can't see the R2 ASK thing"* |
+| §7al | `score_ask_reference` — the reference call had no door | *"can I come back to this?"* |
+| §7am | `get_ask_scorecard` — a finished interview could not be read | *"can I not review the scorecards?"* |
+
+Every one found by Depesh trying to use the tool. That is the most expensive way
+to find it, and it was the only way available, because nothing checked. Every SQL
+assertion in this schema tests what the database does when it is called. **None of
+them tested whether anything calls.**
+
+> **A migration asserting its own invariants proves the function works. It says
+> nothing about whether the function is reachable.**
+
+So sql/41 adds `v_staff_function_callers` — every function guarded by `is_staff()`
+or `staff_role()`, which is the definition of "something a member of staff is
+meant to be able to do" — and `test/security.js` greps the shipped JavaScript for
+each name and fails on any that nothing calls. It has to be split that way
+because SQL cannot read the repository.
+
+Running it for the first time found a **fourth**: `undo_rekey`. The confirm dialog
+before applying a re-key says, in as many words, *"it is recorded against your
+name, and it can be undone."* It could, in the database. Nothing on any screen
+called it. A promise in a dialog with no code behind it is worse than no promise —
+it is the reason somebody presses the button. The keying screen now lists the
+applied re-keys with an Undo on each.
+
+Two exemption lists, deliberately not one:
+
+- **`INTERNAL_ONLY`** — guards, triggers and helpers called only from other SQL.
+  27 of them, each with a reason.
+- **`UNFINISHED`** — `mark_benchmark` and `score_supplement`: features that were
+  written and never finished. Nothing sets a benchmark candidate, and a candidate
+  can submit a supplement that nobody can score. Kept separate so they are not
+  buried among the triggers, asserted to stay at four or fewer so the list cannot
+  become where unreachable work goes to die, and asserted still-unreachable so an
+  entry that gets wired up is deleted rather than left lying.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

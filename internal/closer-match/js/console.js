@@ -38,6 +38,9 @@ function view(name) {
 // needs and the hook the streak under the active item hangs off. A shortlist is
 // still "Requirements", because that is where you came from and where Back goes.
 const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue", cand: "nav-queue",
+                 // A scorecard is still "Candidates" — it belongs to a person, and
+                 // that is where Back goes.
+                 ask: "nav-queue",
                  health: "nav-health", place: "nav-place", supp: "nav-supp",
                  guide: "nav-guide", dict: "nav-dict", team: "nav-team" };
 
@@ -1157,6 +1160,15 @@ const ASK_SECTIONS = {
   who: "Who are they underneath?",
 };
 
+// The reference call is its own flow, on its own link. Both reference questions
+// are put to the candidate's previous manager, days later or never, and the score
+// they carry joins the total the moment it is recorded (sql/40).
+function askRefLink(cardId, outstanding) {
+  if (!cardId || !outstanding) return "";
+  return `<a class="btn-quiet btn-small" href="ask.html?mode=ref&card=${esc(cardId)}"
+    >Record reference check (${outstanding})</a>`;
+}
+
 function askRunLinks(id) {
   return `<a class="btn-quiet btn-small" href="ask.html?cand=${esc(id)}&round=r1">Run R1 screen</a>
           <a class="btn-quiet btn-small" href="ask.html?cand=${esc(id)}&round=r2">Run R2 interview</a>`;
@@ -1182,6 +1194,23 @@ function askHtml(d, c) {
     </div>`;
   }
 
+  // A submitted interview AND an open one at the same time. Live data showed how
+  // this happens: "Run R2 again" on the results screen, pressed fourteen seconds
+  // after submitting, opens an empty scorecard — and that empty one is then the
+  // card Run R2 resumes, so the next person sees a blank interview instead of the
+  // finished one. Say it plainly and offer to throw the empty one away.
+  const strayOpen = open ? `
+    <div class="notice" style="margin-top:14px">
+      <span class="label">There is also an unfinished ${esc(open.round.toUpperCase())} open</span>
+      Pressing Run ${esc(open.round.toUpperCase())} resumes that one rather than showing the
+      submitted interview below. If it was opened by accident, discard it.
+      <div class="actions" style="margin-top:10px">
+        <button class="btn-quiet btn-small" data-ask-discard="${esc(open.id)}"
+          >Discard the unfinished ${esc(open.round.toUpperCase())}</button>
+        <span class="savestate" data-askslot="${esc(open.id)}"></span>
+      </div>
+    </div>` : "";
+
   const latest = cards[0];
   const attrs = latest.attributes || [];
   const pri = attrs.filter((a) => a.priority);
@@ -1195,6 +1224,7 @@ function askHtml(d, c) {
   <div class="region">
     <div class="region-head"><h2>ASK interview</h2>
       <span class="count mono">${latest.round.toUpperCase()}</span></div>
+    ${strayOpen}
 
     <div class="panel">
       <div class="cand-head">
@@ -1220,12 +1250,46 @@ function askHtml(d, c) {
             `${esc(ASK_SECTIONS[k] || k)} ${v.score}/${v.max}`).join(" · ")}</span></li>` : ""}
       </ul>` : ""}
 
+      ${latest.outstanding_refs ? `
+        <div class="notice" style="margin-top:12px">
+          <span class="label">The reference call has not happened yet</span>
+          ${latest.outstanding_refs} question${latest.outstanding_refs > 1 ? "s" : ""}
+          go to their previous manager, not to them. Those are counted neither for nor
+          against — the ${latest.pct}% above describes the interview that happened. Record
+          them whenever the call comes and the total updates then.
+        </div>`
+      // Saying nothing when they are all in leaves a reader unable to tell a
+      // complete scorecard from one where nobody has checked. Both states get a
+      // sentence.
+      : `<div class="notice plain" style="margin-top:12px">
+          <span class="label">The reference questions are already in</span>
+          Both were put to their previous manager and scored, so this ${latest.pct}%
+          covers the interview and the reference call together.
+        </div>`}
+
       <div class="actions" style="margin-top:14px">
+        <button class="btn-quiet btn-small" data-ask-open="${esc(latest.id)}"
+          >Read the full scorecard</button>
+        ${askRefLink(latest.id, latest.outstanding_refs)}
         ${askRunLinks(c.id)}
-        ${cards.length > 1
-          ? `<span class="small muted">${cards.length} scorecards on file</span>` : ""}
       </div>
     </div>
+
+    ${cards.length > 1 ? `
+      <div class="panel" style="margin-top:12px">
+        <div class="region-head"><h2 class="small">Earlier interviews</h2>
+          <span class="count mono">${cards.length - 1}</span></div>
+        ${cards.slice(1).map((k) => `
+          <div class="req">
+            <span class="title">${esc(String(k.round).toUpperCase())} · ${onDate(k.submitted_at)}</span>
+            <span class="meta small">run by ${esc(k.interviewer || "somebody since removed")}${
+              k.client_context ? ` · for ${esc(k.client_context)}` : ""}</span>
+            <span class="figures"><span class="figure">${k.pct}</span
+              ><span class="figure-unit">%</span></span>
+            <span class="actions"><button class="btn-quiet btn-small"
+              data-ask-open="${esc(k.id)}">Read it</button></span>
+          </div>`).join("")}
+      </div>` : ""}
 
     ${gaps.length ? `
       <div class="notice" style="margin-top:14px">
@@ -1462,6 +1526,7 @@ async function openCandidate(id) {
       ${directFieldsHtml(c)}`;
     el("cd-disclaimer").textContent = "";
     bindDirectFields(id);
+    bindAskDiscard(id);
     return view("cand");
   }
 
@@ -1545,8 +1610,140 @@ async function openCandidate(id) {
   el("cd-body").querySelectorAll("[data-cdreq]").forEach((x) =>
     x.addEventListener("click", (e) => { e.preventDefault(); loadRequirement(x.dataset.cdreq); }));
   bindDirectFields(id);
+  bindAskDiscard(id);
 
   view("cand");
+}
+
+// ═══ READING A FINISHED INTERVIEW BACK ═════════════════════════════════════
+//
+// get_ask_scorecard() has existed since the first ASK migration and nothing has
+// ever called it, so a submitted interview could be totalled but not read. The
+// totals say how it went; this says what was actually said, which is the thing a
+// second person needs in order to disagree with a colleague's judgement.
+//
+// Every answer shows the wording it was SCORED AGAINST, from the snapshot on the
+// row — never re-joined to the live bank. A question reworded in May must not
+// silently change what a March scorecard appears to have asked.
+let ASK_BACK_TO = null;
+
+async function loadScorecard(cardId, candidateId) {
+  ASK_BACK_TO = candidateId || null;
+  view("loading");
+  let d;
+  try { d = await sbRpc("get_ask_scorecard", { p_scorecard: cardId }); }
+  catch (e) {
+    el("sc-name").textContent = "Could not load this scorecard";
+    el("sc-meta").textContent = e.message;
+    el("sc-body").innerHTML = ""; el("sc-disclaimer").textContent = "";
+    return view("ask");
+  }
+
+  const answers = d.answers || [];
+  const attrs = d.attributes || [];
+  const byAttr = {};
+  answers.forEach((a) => (byAttr[a.attribute] ||= []).push(a));
+
+  el("sc-name").textContent = `${d.candidate} — ASK ${String(d.round).toUpperCase()}`;
+  el("sc-meta").textContent = [
+    d.submitted_at ? `submitted ${onDate(d.submitted_at)}` : "not submitted yet",
+    d.interviewer ? `run by ${d.interviewer}` : "interviewer since removed",
+    d.conducted_on ? onDate(d.conducted_on) : null,
+    d.client_context ? `for ${d.client_context}` : null,
+    d.pct != null ? `${d.total} of ${d.max_total} · ${d.pct}%` : null,
+  ].filter(Boolean).join(" · ");
+
+  // One block per attribute, in the bank's own order, so a reader moving down the
+  // page moves through the interview in the order it was conducted.
+  const blocks = attrs.map((a) => {
+    const rows = byAttr[a.id] || [];
+    if (!rows.length) return "";
+    return `
+      <div class="panel" style="margin-bottom:14px">
+        <div class="cand-head">
+          <span class="cand-name">${esc(a.name)}</span>
+          ${a.priority ? `<span class="chip">priority</span>` : ""}
+          <span class="chip">${esc(ASK_SECTIONS[a.section] || a.section || "")}</span>
+          <span class="spacer"></span>
+          <span><span class="figure">${a.score}</span
+            ><span class="figure-unit">/${a.max}</span></span>
+        </div>
+        <ul class="evidence" style="margin-top:10px">
+          ${rows.map((r) => `
+            <li>
+              <span class="glyph mono">${r.score}</span>
+              <span>
+                ${esc(r.question)}
+                ${r.is_reference ? ` <span class="chip">reference call</span>` : ""}
+                <br><strong>${esc(r.chose)}</strong>
+                ${r.note ? `<br><em class="muted">${esc(r.note)}</em>` : ""}
+              </span>
+            </li>`).join("")}
+        </ul>
+      </div>`;
+  }).join("");
+
+  const unanswered = attrs.reduce((n, a) => n + (a.unscored || 0), 0);
+
+  el("sc-body").innerHTML = `
+    ${d.outstanding_refs ? `
+      <div class="notice">
+        <span class="label">${d.outstanding_refs} reference question${d.outstanding_refs > 1 ? "s" : ""} not asked yet</span>
+        Those go to their previous manager. They are counted neither for nor against,
+        so the ${d.pct}% describes the interview alone.
+        <div class="actions" style="margin-top:10px">${askRefLink(d.id, d.outstanding_refs)}</div>
+      </div>` : ""}
+    <div class="region">
+      <div class="region-head"><h2>What was asked, and what was said</h2>
+        <span class="count mono">${answers.length}</span></div>
+      <p class="muted small" style="margin-bottom:12px">
+        Each question shows the score, the anchor the interviewer picked, and any note
+        they left. The wording is the wording it was scored against — if a question has
+        been reworded since, this still reads as it was asked.
+      </p>
+      ${blocks || `<div class="empty"><h3>Nothing scored yet</h3>
+        <p class="muted">This scorecard was opened but no question has been answered.</p></div>`}
+    </div>
+    ${unanswered ? `<div class="notice"><span class="label">${unanswered} question${unanswered > 1 ? "s" : ""} unscored</span>
+      A blank is not a zero — it is counted in neither the total nor the maximum.</div>` : ""}`;
+
+  el("sc-disclaimer").textContent =
+    "ASK is a second, independent reading. It does not enter the match score, and " +
+    "nothing here excludes anybody.";
+
+  el("sc-body").querySelectorAll("[data-ask-ref]").forEach(() => {});
+  view("ask");
+}
+
+el("btn-back-cand").addEventListener("click", () => {
+  if (ASK_BACK_TO) return openCandidate(ASK_BACK_TO);
+  return loadQueue();
+});
+
+// Throwing away an empty re-run. The server refuses if anything was scored on it
+// and says how much, so the button does not need to know — and the confirm still
+// asks, because "discard" next to an interview is a word worth pausing on.
+function bindAskDiscard(id) {
+  el("cd-body").querySelectorAll("[data-ask-open]").forEach((b) =>
+    b.addEventListener("click", () => loadScorecard(b.dataset.askOpen, id)));
+
+  el("cd-body").querySelectorAll("[data-ask-discard]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const card = b.dataset.askDiscard;
+      const slot = el("cd-body").querySelector(`[data-askslot="${card}"]`);
+      if (!confirm("Discard this unfinished interview?\n\nOnly one that nothing was " +
+                   "scored on can be discarded — if anything was recorded the server " +
+                   "will refuse and say so.")) return;
+      b.disabled = true;
+      if (slot) { slot.textContent = "Discarding…"; delete slot.dataset.state; }
+      try {
+        await sbRpc("discard_ask", { p_scorecard: card });
+        await openCandidate(id);
+      } catch (e) {
+        if (slot) { slot.textContent = e.message; slot.dataset.state = "error"; }
+        b.disabled = false;
+      }
+    }));
 }
 
 el("btn-back-queue").addEventListener("click", loadQueue);
