@@ -18,6 +18,26 @@ shell from being mistaken for completed production behavior.
 | Client workspace | isolated dashboards and native CRM | V6 |
 | Settings | users, roles, taxonomies, templates, mappings | V1 onward |
 
+## V1 activated workflows
+
+- staff sign-in and access-not-configured state;
+- add client;
+- record placement from existing Nikash candidate and role;
+- start training;
+- add training checkpoint;
+- update training outcome and risk;
+- set closer target;
+- paste, preview, and save WhatsApp closer report;
+- copy report back to WhatsApp and mark shared;
+- add client check-in;
+- create and complete follow-up action;
+- live overview and attention queue.
+
+The following listed V1 ideas remain deliberately outside the activated UI:
+ending a placement and staff-role administration. They require additional
+business rules and are retained for a later V1.x/V2 approval rather than being
+implemented as ambiguous destructive controls.
+
 ## V0 modal
 
 ### Paste WhatsApp report

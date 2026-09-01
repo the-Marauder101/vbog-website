@@ -214,3 +214,65 @@ The next build is V1 Pravah Core. Before attaching production data:
 
 The V0 interface is a product interaction prototype, not a production data
 store. Its local storage can be cleared without affecting any source system.
+
+## 16. V1 implementation
+
+### 2026-09-02 — Pravah Core
+
+V1 converts the V0 interaction prototype into an authenticated operating
+surface while preserving the approved product boundaries.
+
+Implemented:
+
+- existing Nikash staff login reused for Pravah;
+- dedicated Pravah memberships and roles;
+- default-deny, forced Row Level Security on every Pravah table;
+- client operational profiles;
+- placement creation using shared Nikash candidates and requirements;
+- training start, checkpoints, status, readiness, roleplay, risk, and decision fields;
+- period targets;
+- structured closer performance reports;
+- WhatsApp text retained as report-source evidence;
+- client check-ins, health, root cause, actions, and deadlines;
+- attention queue;
+- audited create/update/complete/share actions;
+- live overview metrics;
+- point-and-click SQL setup and verification.
+
+### V1 authority detail
+
+Pravah does not copy candidate assessments or client requirements. It reads the
+existing Nikash records and creates/uses the placement handoff record with the
+prediction references frozen. Operational records are stored separately under
+the `pravah_` prefix.
+
+Vyom remains unchanged in V1. Candidate movement is not editable in Pravah.
+The Vyom event bridge remains V2.
+
+### V1 activation steps
+
+1. Merge the V1 pull request.
+2. In Supabase, open the existing Closer-Match project.
+3. Run `Get Closers/supabase/01_pravah_core.sql` in SQL Editor.
+4. Run `02_verify_pravah_core.sql` and confirm every expectation.
+5. Open Pravah and sign in with an approved Nikash staff account.
+6. Record the first real placement and validate the workflow before adding the
+   remaining live records.
+
+### Current limitations after V1
+
+- Vyom stages do not sync yet;
+- client and closer portals are not enabled yet;
+- no automatic Google Sheets or CRM import;
+- no WhatsApp Business API delivery;
+- KPI scorecards are scheduled for V3;
+- 3/6/12-month Nikash outcome automation begins in V2;
+- the logo remains a text mark pending final brand refinement.
+
+## 17. Current restart point after V1
+
+The next build is V2 Product Connections. Start by reading this PRD, then
+`INTEGRATIONS.md`, `VYOM_CHANGES.md`, and `NIKASH_CHANGES.md`. Build the event
+outbox, stable identity links, selected-candidate intake, Pravah milestone
+writeback, outcome checkpoints, and a human reconciliation queue. Do not add
+recruitment-stage editing to Pravah.

@@ -11,13 +11,29 @@
   <link rel="stylesheet" href="css/pravah.css">
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar" aria-label="Primary navigation">
-      <a class="brand" href="#overview" aria-label="Pravah overview">
-        <span class="brand-mark" aria-hidden="true">p.</span>
-        <span><strong>pravah</strong><small>by Get Closers</small></span>
-      </a>
+  <section class="auth-screen" id="auth-screen">
+    <div class="auth-brand"><span class="brand-mark">p.</span><strong>pravah</strong><small>by Get Closers</small></div>
+    <form class="auth-card" id="signin-form">
+      <p class="eyebrow">STAFF ACCESS</p><h1>Continue to Pravah</h1>
+      <p>Use the same approved staff account you use for Nikash.</p>
+      <label>Email<input name="email" type="email" autocomplete="username" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <p class="form-error" id="signin-error" role="alert"></p>
+      <button class="button button-primary" type="submit">Sign in</button>
+    </form>
+  </section>
 
+  <section class="auth-screen" id="access-screen" hidden>
+    <div class="auth-card access-card">
+      <p class="eyebrow">ACCESS NOT CONFIGURED</p><h1 id="access-title">Pravah is not ready for this account.</h1>
+      <p id="access-message">Ask an administrator to activate your Pravah membership.</p>
+      <button class="button button-secondary" type="button" data-signout>Sign out</button>
+    </div>
+  </section>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <aside class="sidebar" aria-label="Primary navigation">
+      <a class="brand" href="#overview" aria-label="Pravah overview"><span class="brand-mark" aria-hidden="true">p.</span><span><strong>pravah</strong><small>by Get Closers</small></span></a>
       <nav class="nav-list">
         <a class="nav-link active" href="#overview" data-view="overview"><span>01</span>Overview</a>
         <a class="nav-link" href="#training" data-view="training"><span>02</span>Training &amp; placements</a>
@@ -26,100 +42,78 @@
         <a class="nav-link" href="#reports" data-view="reports"><span>05</span>Reports</a>
         <a class="nav-link" href="#connections" data-view="connections"><span>06</span>Data &amp; connections</a>
       </nav>
-
-      <div class="sidebar-foot">
-        <span class="status-dot"></span>
-        <div><strong>V0 foundation</strong><small>Local prototype</small></div>
-      </div>
+      <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V1 core</strong><small id="sync-state">Connected</small></div></div>
     </aside>
 
     <main>
       <header class="topbar">
         <button class="mobile-nav" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
         <div class="crumb"><span>Get Closers</span> / <strong id="view-name">Overview</strong></div>
-        <button class="button button-primary" type="button" data-open-report>Paste WhatsApp report</button>
+        <div class="account-controls"><span id="account-name"></span><button class="text-button" type="button" data-signout>Sign out</button><button class="button button-primary" type="button" data-open-report>Add closer report</button></div>
       </header>
 
       <section class="view active" id="overview" data-title="Overview">
-        <div class="page-head">
-          <div><p class="eyebrow">OPERATING FLOW</p><h1>Placement to performance.</h1></div>
-          <p>One calm view of training, closer outcomes and client health—without replacing Vyom or Nikash.</p>
-        </div>
-
+        <div class="page-head"><div><p class="eyebrow">OPERATING FLOW</p><h1>Placement to performance.</h1></div><div class="page-actions"><button class="button button-secondary" type="button" data-form="client">Add client</button><button class="button button-primary" type="button" data-form="placement">Record placement</button></div></div>
         <div class="metric-grid" aria-label="Headline metrics">
-          <article class="metric"><span>Final-round pass</span><strong>—</strong><small>Awaiting live data</small></article>
-          <article class="metric"><span>Closers on target</span><strong>—</strong><small>Awaiting live data</small></article>
-          <article class="metric"><span>60-day retention</span><strong>—</strong><small>Awaiting live data</small></article>
-          <article class="metric"><span>Target achievement</span><strong>—</strong><small>Awaiting live data</small></article>
+          <article class="metric"><span>Active clients</span><strong id="metric-clients">—</strong><small>Operating portfolio</small></article>
+          <article class="metric"><span>Active closers</span><strong id="metric-closers">—</strong><small>Training or placed</small></article>
+          <article class="metric"><span>Training pass rate</span><strong id="metric-training">—</strong><small>Completed decisions</small></article>
+          <article class="metric"><span>Closers on target</span><strong id="metric-target">—</strong><small>Reports with targets</small></article>
         </div>
-
         <div class="split-grid">
-          <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">TODAY</p><h2>Attention queue</h2></div><span class="tag">V1</span></div>
-            <div class="empty-state"><span class="empty-glyph">↗</span><h3>No live operating records yet</h3><p>Incoming placements, at-risk closers and overdue client actions will appear here.</p></div>
-          </article>
-          <article class="panel flow-panel">
-            <div class="panel-head"><div><p class="eyebrow">PRODUCT FAMILY</p><h2>Clear ownership</h2></div></div>
-            <div class="product-flow">
-              <div><b>Vyom</b><span>Candidate movement</span></div><i>→</i>
-              <div class="current"><b>Pravah</b><span>Operating outcomes</span></div><i>→</i>
-              <div><b>Nikash</b><span>Prediction learning</span></div>
-            </div>
-            <p class="principle">Data travels both ways. Control stays with the product that owns it.</p>
-          </article>
+          <article class="panel"><div class="panel-head"><div><p class="eyebrow">TODAY</p><h2>Attention queue</h2></div><span class="tag" id="attention-count">0 open</span></div><div id="attention-list" class="data-list"></div></article>
+          <article class="panel flow-panel"><div class="panel-head"><div><p class="eyebrow">PRODUCT FAMILY</p><h2>Clear ownership</h2></div></div><div class="product-flow"><div><b>Vyom</b><span>Candidate movement</span></div><i>→</i><div class="current"><b>Pravah</b><span>Operating outcomes</span></div><i>→</i><div><b>Nikash</b><span>Prediction learning</span></div></div><p class="principle">Data travels both ways. Control stays with the product that owns it.</p></article>
         </div>
       </section>
 
       <section class="view" id="training" data-title="Training & placements">
-        <div class="page-head"><div><p class="eyebrow">POST-SELECTION</p><h1>Training &amp; placements</h1></div><p>Selected candidates enter from Vyom. Pravah owns readiness, placement and post-placement milestones.</p></div>
-        <div class="panel"><div class="panel-head"><h2>Incoming cohort</h2><span class="tag">V1</span></div><div class="empty-state"><span class="empty-glyph">10</span><h3>The ten-day journey will live here</h3><p>Training checkpoints, roleplay evidence, product readiness, risks and final decisions.</p></div></div>
+        <div class="page-head"><div><p class="eyebrow">POST-SELECTION</p><h1>Training &amp; placements</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-form="placement">Record placement</button></div></div>
+        <div class="panel table-panel"><div class="panel-head"><div><h2>Placement pipeline</h2><p>Pravah status with read-only Nikash candidate and client context.</p></div></div><div class="table-wrap"><table><thead><tr><th>Closer</th><th>Client / role</th><th>Joined</th><th>Training</th><th>Risk</th><th></th></tr></thead><tbody id="placement-rows"></tbody></table></div></div>
       </section>
 
       <section class="view" id="closers" data-title="Active closers">
-        <div class="page-head"><div><p class="eyebrow">PERFORMANCE</p><h1>Active closers</h1></div><p>Targets, actuals, coaching actions and retention—joined to the person, client and placement.</p></div>
-        <div class="panel"><div class="panel-head"><h2>Closer roster</h2><span class="tag">V1</span></div><div class="empty-state"><span class="empty-glyph">%</span><h3>No active closers connected</h3><p>Use reports to test the input flow. The live roster arrives with the V1 data model.</p><button class="button button-secondary" type="button" data-open-report>Paste first report</button></div></div>
+        <div class="page-head"><div><p class="eyebrow">PERFORMANCE</p><h1>Active closers</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-open-report>Add closer report</button></div></div>
+        <div class="panel table-panel"><div class="panel-head"><div><h2>Closer roster</h2><p>Targets, reported results and coaching signals.</p></div></div><div class="table-wrap"><table><thead><tr><th>Closer</th><th>Client</th><th>Training</th><th>Total sales</th><th>Cash collected</th><th></th></tr></thead><tbody id="closer-rows"></tbody></table></div></div>
       </section>
 
       <section class="view" id="clients" data-title="Clients">
-        <div class="page-head"><div><p class="eyebrow">CLIENT SUCCESS</p><h1>Clients</h1></div><p>Health, check-ins and actions now; secure client workspaces and revenue operations later.</p></div>
-        <div class="panel"><div class="panel-head"><h2>Client portfolio</h2><span class="tag">V1</span></div><div class="empty-state"><span class="empty-glyph">◌</span><h3>Tenant-ready by design</h3><p>Every live client record will be isolated by client ID and Row Level Security.</p></div></div>
+        <div class="page-head"><div><p class="eyebrow">CLIENT SUCCESS</p><h1>Clients</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-form="client">Add client</button></div></div>
+        <div class="client-grid" id="client-grid"></div>
       </section>
 
       <section class="view" id="reports" data-title="Reports">
-        <div class="page-head"><div><p class="eyebrow">WHATSAPP-FIRST</p><h1>Reports</h1></div><p>Turn the team's current text updates into structured records without forcing a new habit on day one.</p></div>
-        <div class="panel">
-          <div class="panel-head"><div><h2>Local report drafts</h2><p>Saved only in this browser during V0.</p></div><button class="button button-secondary" type="button" data-open-report>Add report</button></div>
-          <div id="report-list" class="report-list"></div>
-        </div>
+        <div class="page-head"><div><p class="eyebrow">WHATSAPP-FIRST</p><h1>Reports</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-open-report>Add report</button></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>Closer performance reports</h2><p>Structured once; reusable for dashboards and WhatsApp.</p></div></div><div id="report-list" class="report-list"></div></div>
       </section>
 
       <section class="view" id="connections" data-title="Data & connections">
-        <div class="page-head"><div><p class="eyebrow">DATA FLOW</p><h1>Data &amp; connections</h1></div><p>Visible connection health and reconciliation, without exposing a credential in browser code.</p></div>
+        <div class="page-head"><div><p class="eyebrow">DATA FLOW</p><h1>Data &amp; connections</h1></div><p>Connection health is visible without exposing integration credentials.</p></div>
         <div class="connection-grid">
+          <article class="connection-card"><div class="connection-icon">P</div><div><h2>Pravah Core</h2><p>Authenticated operational records</p></div><span class="connection-state active-state">Connected · V1</span></article>
+          <article class="connection-card"><div class="connection-icon">N</div><div><h2>Nikash</h2><p>Shared candidates, clients and predictions</p></div><span class="connection-state active-state">Shared data · V1</span></article>
           <article class="connection-card"><div class="connection-icon">V</div><div><h2>Vyom</h2><p>Recruitment stage and movement</p></div><span class="connection-state">Planned · V2</span></article>
-          <article class="connection-card"><div class="connection-icon">N</div><div><h2>Nikash</h2><p>Assessment and prediction evidence</p></div><span class="connection-state">Planned · V2</span></article>
-          <article class="connection-card"><div class="connection-icon">S</div><div><h2>Sheets / CSV</h2><p>Mapped client lead and result data</p></div><span class="connection-state">Planned · V5</span></article>
-          <article class="connection-card"><div class="connection-icon">W</div><div><h2>WhatsApp</h2><p>Paste, normalize and copy updates</p></div><span class="connection-state active-state">Prototype active</span></article>
+          <article class="connection-card"><div class="connection-icon">S</div><div><h2>Sheets / CRM</h2><p>Mapped client lead and result data</p></div><span class="connection-state">Planned · V5</span></article>
         </div>
       </section>
     </main>
   </div>
 
+  <div class="modal-backdrop" id="form-modal" hidden><section class="modal modal-compact" role="dialog" aria-modal="true" aria-labelledby="form-modal-title"><div class="modal-head"><div><p class="eyebrow" id="form-modal-eyebrow">PRAVAH</p><h2 id="form-modal-title">Add record</h2></div><button class="icon-button" type="button" data-close-form aria-label="Close">×</button></div><form id="dynamic-form" class="dynamic-form"></form></section></div>
+
   <div class="modal-backdrop" id="report-modal" hidden>
-    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div class="modal-head"><div><p class="eyebrow">QUICK CAPTURE</p><h2 id="modal-title">Paste WhatsApp report</h2></div><button class="icon-button" type="button" data-close-report aria-label="Close">×</button></div>
-      <div class="step-row" aria-label="Report steps"><span class="active">1 Paste</span><span>2 Review</span><span>3 Save</span></div>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+      <div class="modal-head"><div><p class="eyebrow">QUICK CAPTURE</p><h2 id="report-modal-title">Paste WhatsApp report</h2></div><button class="icon-button" type="button" data-close-report aria-label="Close">×</button></div>
+      <div class="step-row"><span class="active">1 Paste</span><span>2 Match closer</span><span>3 Save</span></div>
+      <div class="report-meta form-grid three"><label>Closer<select id="report-placement" required></select></label><label>Period start<input id="report-period-start" type="date" required></label><label>Period end<input id="report-period-end" type="date" required></label></div>
       <label class="field-label" for="report-input">Existing update</label>
-      <textarea id="report-input" rows="12" placeholder="Closer: Aisha\nClient: Acme\nDate: 01 Sep 2026\nCalls: 47\nConnected: 19\nSales: 2\nRevenue: 150000\nCash collected: 80000\nBlocker: More qualified leads needed\nNext step: Review follow-ups tomorrow"></textarea>
-      <p class="field-help">Use one “label: value” line per item. Common variations such as calls made, closed and cash are recognized.</p>
-      <div id="parse-message" class="parse-message" role="status" aria-live="polite"></div>
-      <div class="preview" id="report-preview" hidden></div>
-      <div class="modal-actions"><button class="button button-ghost" type="button" data-fill-example>Use example</button><div><button class="button button-secondary" type="button" data-preview-report>Preview</button><button class="button button-primary" type="button" data-save-report disabled>Save local draft</button></div></div>
+      <textarea id="report-input" rows="10" placeholder="Closer: Aisha\nClient: Acme\nCalls: 47\nConnected: 19\nSales: 2\nRevenue: 150000\nCash collected: 80000\nBlocker: More qualified leads needed\nNext step: Review follow-ups tomorrow"></textarea>
+      <p class="field-help">Use one “label: value” line per item. The original text remains attached for audit.</p>
+      <div id="parse-message" class="parse-message" role="status" aria-live="polite"></div><div class="preview" id="report-preview" hidden></div>
+      <div class="modal-actions"><button class="button button-ghost" type="button" data-fill-example>Use example</button><div><button class="button button-secondary" type="button" data-preview-report>Preview</button><button class="button button-primary" type="button" data-save-report disabled>Save report</button></div></div>
     </section>
   </div>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="js/report-parser.js"></script>
-  <script src="js/app.js"></script>
+  <div class="loading-bar" id="loading-bar" hidden></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/report-parser.js"></script><script src="js/app.js"></script>
 </body>
 </html>

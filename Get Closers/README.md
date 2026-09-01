@@ -12,18 +12,16 @@ truth. They must not become editable copies of the same workflow.
 
 ## Current build status
 
-**V0 — Foundation is implemented on the `pravah-v0-foundation` branch.**
+**V1 — Pravah Core is in review.**
 
-V0 establishes product contracts before live data or automation is added:
+V0 established the contracts. V1 adds:
 
-- architecture and ownership boundaries;
-- canonical identifiers and data dictionary;
-- security and client-isolation model;
-- Vyom and Nikash change specifications;
-- CEO Dashboard audit and migration direction;
-- versioned roadmap;
-- initial Pravah application shell;
-- living PRD and decision log.
+- existing staff authentication;
+- multi-client membership and Row Level Security;
+- client, placement, training, target, performance, check-in, and action flows;
+- WhatsApp-to-live-report normalization;
+- audited writes and verification queries;
+- point-and-click Supabase setup instructions.
 
 ## Start here
 
@@ -41,7 +39,6 @@ V0 establishes product contracts before live data or automation is added:
 
 ## Application
 
-The initial Pravah shell is in [pravah/](pravah/). It follows the repository's
-existing static-frontend approach so it can deploy with the current GitHub
-Pages workflow. Live persistence and authentication are intentionally deferred
-until the V0 data and security contracts are approved in code.
+The Pravah application is in [pravah/](pravah/). Database setup is in
+[supabase/](supabase/). It follows the existing static-frontend and GitHub Pages
+approach while using Supabase for authenticated persistence.

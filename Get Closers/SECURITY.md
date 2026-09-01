@@ -14,14 +14,15 @@
 
 | Role | Scope |
 |---|---|
-| gc_admin | All Get Closers data and configuration |
-| recruitment_manager | Recruitment context and candidate linking |
-| interviewer | Assigned interview evidence |
+| gc_admin | All Get Closers data and future configuration |
+| operations | Internal clients, placements, reports, and actions |
 | trainer | Assigned trainees and training decisions |
-| client_success | Assigned clients, closers, check-ins, and actions |
-| closer | Own profile, assigned leads, and own reports |
-| client_admin | Own client workspace and users |
+| client_success | Assigned clients, check-ins, and actions |
+| client_admin | Own client workspace and future user management |
 | client_viewer | Read-only own-client reporting |
+
+V1 activates internal staff roles. Client roles exist in the data contract but
+their portal is not enabled until V6.
 
 ## Client isolation
 
@@ -36,3 +37,13 @@
 Secrets are configured outside source code. The application provides a
 human-readable connection status, last sync, and error state without revealing
 the credential.
+
+## V1 enforcement
+
+- all nine `pravah_*` tables have enabled and forced RLS;
+- material browser writes use narrow security-definer functions;
+- direct insert/update/delete privileges are not granted to browser roles;
+- helper and trigger functions are revoked from PUBLIC;
+- every material V1 write adds an audit event;
+- existing staff membership is synchronized from approved Nikash staff;
+- a Supabase Auth account without a membership has no Pravah access.

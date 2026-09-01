@@ -28,6 +28,9 @@ the shell without returning to the original conversation.
 - WhatsApp full/short report generation;
 - basic overview dashboard.
 
+**Build status:** implemented in code. Production activation requires running
+the reviewed migration and verification queries in Supabase.
+
 ## V2 — Product Connections
 
 - Vyom integration outbox;
