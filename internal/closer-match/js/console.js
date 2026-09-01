@@ -42,7 +42,8 @@ const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue", cand: "n
                  // that is where Back goes.
                  ask: "nav-queue",
                  health: "nav-health", place: "nav-place", supp: "nav-supp",
-                 guide: "nav-guide", dict: "nav-dict", team: "nav-team" };
+                 guide: "nav-guide", dict: "nav-dict", team: "nav-team",
+                 questions: "nav-questions" };
 
 function markNav(name) {
   Object.values(NAV_OF).forEach((id) => el(id) && el(id).removeAttribute("aria-current"));
@@ -156,6 +157,226 @@ const ROLE_MEANS = {
   psych: "same access as a recruiter",
   keyer: "invited to key items — not a console account",
 };
+
+// ═══ THE QUESTIONS ═════════════════════════════════════════════════════════
+//
+// Editing the instrument from inside the tool. Three things this screen has to be
+// honest about, because all three are easy to get wrong quietly:
+//
+//   · a reword does NOT change any finished scorecard. Every recorded answer
+//     snapshots the wording it was scored against, so the count of past uses is
+//     shown next to each question — a question used forty times is one to reword
+//     carefully, not one the screen should let you change without saying so.
+//   · an anchor's SCORE is not editable. Four anchors, 0 to 3, is what makes one
+//     attribute total comparable to another. You change what a 2 reads like.
+//   · the priority toggles are the R1/R2 split, which is now also the length of
+//     Depesh's interview — so the screen shows both counts as they change.
+let Q_BANK = null;
+
+async function loadQuestions() {
+  view("loading");
+  try { Q_BANK = await sbRpc("get_ask_editor"); }
+  catch (e) {
+    el("q-summary").innerHTML = `<span class="label">Could not load the bank</span>${esc(e.message)}`;
+    el("q-editor").innerHTML = "";
+    return view("questions");
+  }
+  renderQuestions();
+  view("questions");
+}
+
+function questionCounts(b) {
+  const live = (b.attributes || []).filter((a) => a.active);
+  const qs = (only) => live.filter(only).reduce((n, a) =>
+    n + (a.questions || []).filter((q) => q.active && !q.is_reference).length, 0);
+  return {
+    r1: qs((a) => a.priority),
+    r2rest: qs((a) => !a.priority),
+    refs: live.reduce((n, a) =>
+      n + (a.questions || []).filter((q) => q.active && q.is_reference).length, 0),
+  };
+}
+
+function renderQuestions() {
+  const b = Q_BANK;
+  const c = questionCounts(b);
+  const mins = (n) => Math.round((n * 70) / 60);
+
+  // 70 seconds per question is measured, not assumed — v_ask_pacing reads it off
+  // the answer timestamps. Showing the minute cost next to the question count is
+  // the whole reason the R1 split is a decision anybody can make.
+  el("q-summary").innerHTML = `
+    <span class="label">What the two rounds cost right now</span>
+    <strong>R1 — ${c.r1} questions</strong>, about ${mins(c.r1)} minutes, run by whoever
+    does the phone screen. <strong>R2 — ${c.r2rest} questions</strong>, about
+    ${mins(c.r2rest)} minutes, because an R2 after a submitted R1 does not ask
+    again what R1 already scored. Plus ${c.refs} reference question${c.refs === 1 ? "" : "s"}
+    for their previous manager, on a separate call.
+    <br><br>
+    At about 70 seconds a question — measured from your own interviews, not
+    estimated — the whole bank in one sitting is ${mins(c.r1 + c.r2rest)} minutes.
+    Splitting it is what gets your part inside 30.
+    ${b.can_edit ? "" : `<br><br><strong>You are signed in as a recruiter, so this
+      screen is read-only.</strong> Changing the instrument is an admin action.`}`;
+
+  el("q-editor").innerHTML = (b.attributes || []).map((a) => {
+    const qs = (a.questions || []);
+    const liveQs = qs.filter((q) => q.active && !q.is_reference).length;
+    return `
+    <div class="region">
+      <div class="region-head">
+        <h2>${esc(a.name)}</h2>
+        <span class="count mono">${liveQs}</span>
+      </div>
+      <div class="panel" style="margin-bottom:12px">
+        <div class="cand-head">
+          <span class="chip">${esc(b.sections[a.section] || a.section)}</span>
+          ${a.priority ? `<span class="chip strong">in R1</span>` : `<span class="chip">R2 only</span>`}
+          ${a.active ? "" : `<span class="chip warn">not in use</span>`}
+          <span class="spacer"></span>
+          ${b.can_edit ? `
+            <button class="btn-quiet btn-small" data-attr-prio="${esc(a.id)}"
+              data-to="${a.priority ? "false" : "true"}"
+              >${a.priority ? "Move out of R1" : "Put in R1"}</button>
+            <button class="btn-quiet btn-small" data-attr-active="${esc(a.id)}"
+              data-to="${a.active ? "false" : "true"}"
+              >${a.active ? "Take out of use" : "Put back in use"}</button>` : ""}
+          <span class="savestate" data-aslot="${esc(a.id)}"></span>
+        </div>
+      </div>
+      ${qs.map((q) => `
+        <div class="panel dim" style="margin-bottom:10px">
+          <div class="cand-head">
+            <span class="cand-name mono">${esc(q.id)}</span>
+            ${q.is_reference ? `<span class="chip">reference call</span>` : ""}
+            ${q.active ? "" : `<span class="chip warn">not in use</span>`}
+            ${q.times_scored
+              ? `<span class="chip">scored ${q.times_scored}×</span>`
+              : `<span class="chip">never used</span>`}
+            <span class="spacer"></span>
+            ${b.can_edit ? `
+              <button class="btn-quiet btn-small" data-q-active="${esc(q.id)}"
+                data-to="${q.active ? "false" : "true"}"
+                >${q.active ? "Take out of use" : "Put back in use"}</button>` : ""}
+          </div>
+
+          <div class="field" style="margin:10px 0 0">
+            <label for="qp-${esc(q.id)}">The question, as it is asked</label>
+            <textarea id="qp-${esc(q.id)}" rows="2" data-qprompt="${esc(q.id)}"
+              ${b.can_edit ? "" : "readonly"}>${esc(q.prompt)}</textarea>
+          </div>
+          <div class="field" style="margin:8px 0 0">
+            <label for="qh-${esc(q.id)}">What the interviewer is listening for</label>
+            <span class="help">Never read out. It is what separates a scorecard
+              from a list of questions.</span>
+            <textarea id="qh-${esc(q.id)}" rows="2" data-qhint="${esc(q.id)}"
+              ${b.can_edit ? "" : "readonly"}>${esc(q.hint || "")}</textarea>
+          </div>
+          ${b.can_edit ? `
+            <div class="actions" style="margin-top:8px">
+              <button class="btn-quiet btn-small" data-qsave="${esc(q.id)}">Save the question</button>
+              <span class="savestate" data-qslot="${esc(q.id)}"></span>
+            </div>` : ""}
+
+          <p class="small muted" style="margin:14px 0 6px"><strong>The four anchors.</strong>
+            The score is fixed — you are rewriting what each one reads like.</p>
+          ${(q.options || []).map((o) => `
+            <div class="panel plain" style="margin-bottom:8px">
+              <div class="cand-head">
+                <span class="glyph mono">${o.score}</span>
+                <span class="spacer"></span>
+                ${b.can_edit ? `
+                  <button class="btn-quiet btn-small"
+                    data-osave="${esc(q.id)}" data-score="${o.score}">Save anchor</button>
+                  <span class="savestate" data-oslot="${esc(q.id)}-${o.score}"></span>` : ""}
+              </div>
+              <div class="field" style="margin:8px 0 0">
+                <label for="ol-${esc(q.id)}-${o.score}">Short label</label>
+                <input type="text" id="ol-${esc(q.id)}-${o.score}"
+                  data-olabel="${esc(q.id)}-${o.score}" value="${esc(o.label)}"
+                  ${b.can_edit ? "" : "readonly"}>
+              </div>
+              <div class="field" style="margin:8px 0 0">
+                <label for="od-${esc(q.id)}-${o.score}">The behaviour it describes</label>
+                <textarea id="od-${esc(q.id)}-${o.score}" rows="2"
+                  data-odesc="${esc(q.id)}-${o.score}"
+                  ${b.can_edit ? "" : "readonly"}>${esc(o.description)}</textarea>
+              </div>
+            </div>`).join("")}
+        </div>`).join("")}
+    </div>`;
+  }).join("");
+
+  if (Q_BANK.can_edit) bindQuestionEditor();
+}
+
+function bindQuestionEditor() {
+  const body = el("q-editor");
+  const say = (sel, text, state) => {
+    const s = body.querySelector(sel);
+    if (!s) return;
+    s.textContent = text;
+    if (state) s.dataset.state = state; else delete s.dataset.state;
+  };
+
+  body.querySelectorAll("[data-qsave]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const id = b.dataset.qsave;
+      b.disabled = true;
+      say(`[data-qslot="${id}"]`, "Saving…");
+      try {
+        const r = await sbRpc("update_ask_question", {
+          p_id: id,
+          p_prompt: body.querySelector(`[data-qprompt="${id}"]`).value,
+          p_hint: body.querySelector(`[data-qhint="${id}"]`).value,
+        });
+        // The note is the important half: it says the past is untouched, which is
+        // the question anybody rewording a used question actually has.
+        say(`[data-qslot="${id}"]`, r.note || "Saved", "saved");
+      } catch (e) { say(`[data-qslot="${id}"]`, e.message, "error"); }
+      finally { b.disabled = false; }
+    }));
+
+  body.querySelectorAll("[data-osave]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const id = b.dataset.osave, score = Number(b.dataset.score);
+      b.disabled = true;
+      say(`[data-oslot="${id}-${score}"]`, "Saving…");
+      try {
+        await sbRpc("update_ask_option", {
+          p_question: id, p_score: score,
+          p_label: body.querySelector(`[data-olabel="${id}-${score}"]`).value,
+          p_description: body.querySelector(`[data-odesc="${id}-${score}"]`).value,
+        });
+        say(`[data-oslot="${id}-${score}"]`, "Saved", "saved");
+      } catch (e) { say(`[data-oslot="${id}-${score}"]`, e.message, "error"); }
+      finally { b.disabled = false; }
+    }));
+
+  // The three toggles all reload, because each one changes the counts at the top
+  // and a stale header on this screen is a wrong interview length.
+  const toggle = (attr, fn, arg, slot) =>
+    body.querySelectorAll(`[${attr}]`).forEach((b) =>
+      b.addEventListener("click", async () => {
+        const id = b.getAttribute(attr), to = b.dataset.to === "true";
+        b.disabled = true;
+        say(slot(id), "Saving…");
+        try {
+          await sbRpc(fn, { ...arg(id, to) });
+          await loadQuestions();
+        } catch (e) { say(slot(id), e.message, "error"); b.disabled = false; }
+      }));
+
+  toggle("data-q-active", "set_ask_question_active",
+         (id, to) => ({ p_id: id, p_active: to }), (id) => `[data-qslot="${id}"]`);
+  toggle("data-attr-active", "set_ask_attribute_active",
+         (id, to) => ({ p_id: id, p_active: to }), (id) => `[data-aslot="${id}"]`);
+  toggle("data-attr-prio", "set_ask_attribute_priority",
+         (id, to) => ({ p_id: id, p_priority: to }), (id) => `[data-aslot="${id}"]`);
+}
+
+const navQuestions = el("nav-questions");
+if (navQuestions) navQuestions.addEventListener("click", (e) => { e.preventDefault(); loadQuestions(); });
 
 async function loadTeam() {
   view("loading");
@@ -1675,6 +1896,8 @@ async function loadScorecard(cardId, candidateId) {
               <span>
                 ${esc(r.question)}
                 ${r.is_reference ? ` <span class="chip">reference call</span>` : ""}
+                ${r.carried ? ` <span class="chip">from ${esc(r.carried_round || "R1")}${
+                  r.carried_by ? ` · ${esc(r.carried_by)}` : ""}</span>` : ""}
                 <br><strong>${esc(r.chose)}</strong>
                 ${r.note ? `<br><em class="muted">${esc(r.note)}</em>` : ""}
               </span>

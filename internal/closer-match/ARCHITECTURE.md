@@ -2185,6 +2185,96 @@ Two exemption lists, deliberately not one:
   become where unreachable work goes to die, and asserted still-unreachable so an
   entry that gets wired up is deleted rather than left lying.
 
+### 7an. The interview took an hour because R1 and R2 asked the same questions
+
+*"I do 30–40 min interviews, it takes me 50–60 mins to get these questions done."*
+
+Read off the answer timestamps of the first three real interviews, not estimated:
+
+| | questions | minutes | seconds each |
+|---|---|---|---|
+| Shobha Pathak | 40 | 42 | 65 |
+| Akshit Malik | 40 | 49 | 75 |
+| Gaurav Singh | 15 | 23 | 100 (first sitting) |
+
+About **70 seconds a question** — ask, listen to half a minute of answer, pick an
+anchor. That is not slow, it is what a behaviourally anchored question costs. So
+**40 × 70 s is 47 minutes and no interface change gets that under 40.** The
+arithmetic is the constraint, not the UI, and any answer that starts with "make
+the screen faster" is a wrong answer.
+
+The structural waste, visible only once somebody tried to run the pipeline as
+designed: R1 is the five priority attributes, 14 questions. R2 is all fourteen
+attributes, 40 questions — **including those same fourteen.** Run both and the
+candidate answers them twice, once to the team and once again to Depesh. Nobody
+had run an R1 yet, so nobody had noticed.
+
+sql/43 makes a fresh R2 inherit a **submitted** R1's answers, each row stamped
+`carried_from`:
+
+```
+R1   14 questions   ~17 min   team, on the phone
+R2   26 questions   ~30 min   the rest, and only the rest
+```
+
+Same forty questions, same coverage, nothing removed from the instrument. Three
+things fall out for free, which is why it is done by copying rows rather than by
+teaching every reader about two scorecards: the flow already resumes at the first
+unanswered question so the interviewer lands on the first thing they must ask;
+`recompute_ask_totals()` already sums rows so the R2 total covers all forty; and
+one scorecard stays one complete reading of a person, with `carried_from` keeping
+the provenance so the review screen credits whoever actually formed each
+judgement. Carried answers are shown when passed rather than hidden — an
+interviewer should be able to overrule a phone screen after twenty more minutes
+with the person.
+
+An **unsubmitted** R1 is not inherited. A half-finished screen is not a reading,
+and carrying it forward would freeze a judgement its author had not finished
+making.
+
+`v_ask_pacing` now reads the pace off the answer timestamps, so the next time this
+question comes up the answer is on a screen instead of in a transcript.
+
+### 7ao. Two things existed and could not be found or used
+
+*"Can we simply have it be editable inside of nikash? Similarly, I don't have a
+section to add new people to nikash?"*
+
+**The Team panel already existed** — built in sql/34, reachable from the nav,
+eighth of nine flat items. Its owner asked for it to be built a second time. That
+is not a discoverability quibble; it is the nav failing at its one job. Admin now
+sits behind its own separator with Team and Questions together, which cost one
+`<span>` and a CSS rule.
+
+**The question bank was "editable without a deploy"** — which was half a sentence.
+The other half, a screen, was never built, so editable meant editable by whoever
+has a SQL console. sql/42 adds the functions and `#v-questions` the screen: reword
+a question or an anchor, take one out of use, and choose which attributes make up
+R1 — which is now also the control that sets how long each round takes, so the
+screen shows both counts and both minute costs as they change.
+
+Three things the editor is deliberately strict about:
+
+- **An anchor's score is not editable.** Four anchors, 0 to 3, is what makes one
+  attribute total comparable to another. You change what a 2 reads like.
+- **Nothing scored is deletable**, only deactivable. Every answer snapshots its
+  wording, so a reword cannot move a finished scorecard — and the screen shows
+  how many times each question has been scored, because a question used forty
+  times is one to reword carefully rather than one to change quietly.
+- **Admin only.** A recruiter running interviews should not be able to move the
+  instrument they are being measured against mid-round.
+
+And the editor found a bug the moment it existed. `bump_ask_bank_revision()` did
+`update ask_bank_meta set bank_revision = bank_revision + 1;` with no WHERE —
+harmless in principle on a one-row table, but Supabase enables **safeupdate** for
+statements arriving through PostgREST, which rejects any WHERE-less UPDATE. So
+every edit failed, with an error about an UPDATE the caller never wrote on a table
+they had not heard of. It had never fired from a browser before because until
+sql/42 there was no way to edit the bank from one.
+
+> **Code is only correct in the contexts it has actually run in.** That trigger
+> was five migrations old and had passed every assertion ever written about it.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
