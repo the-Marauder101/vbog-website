@@ -2135,6 +2135,56 @@ reported "7 saved after 6 answers". It now tracks every scorecard it opens by id
 > **A suite that runs against real data has to clean up by what it created, not
 > by what it remembered to label.**
 
+### 7am. Three dead functions in a row, and the check that should have existed
+
+*"Can I not review the scorecards for R2? I can't see it."*
+
+`get_ask_scorecard()` had existed since the first ASK migration, returns every
+answer with the anchor chosen and the note left, and **nothing had ever called
+it.** A submitted interview could be totalled but not read — which is precisely
+what a second person needs in order to disagree with a colleague's judgement,
+and the whole reason the team runs R2 instead of one person.
+
+That was the third in a row:
+
+| | what was unreachable | how it was found |
+|---|---|---|
+| §7ak | the ASK region, for every candidate ASK is for | *"I can't see the R2 ASK thing"* |
+| §7al | `score_ask_reference` — the reference call had no door | *"can I come back to this?"* |
+| §7am | `get_ask_scorecard` — a finished interview could not be read | *"can I not review the scorecards?"* |
+
+Every one found by Depesh trying to use the tool. That is the most expensive way
+to find it, and it was the only way available, because nothing checked. Every SQL
+assertion in this schema tests what the database does when it is called. **None of
+them tested whether anything calls.**
+
+> **A migration asserting its own invariants proves the function works. It says
+> nothing about whether the function is reachable.**
+
+So sql/41 adds `v_staff_function_callers` — every function guarded by `is_staff()`
+or `staff_role()`, which is the definition of "something a member of staff is
+meant to be able to do" — and `test/security.js` greps the shipped JavaScript for
+each name and fails on any that nothing calls. It has to be split that way
+because SQL cannot read the repository.
+
+Running it for the first time found a **fourth**: `undo_rekey`. The confirm dialog
+before applying a re-key says, in as many words, *"it is recorded against your
+name, and it can be undone."* It could, in the database. Nothing on any screen
+called it. A promise in a dialog with no code behind it is worse than no promise —
+it is the reason somebody presses the button. The keying screen now lists the
+applied re-keys with an Undo on each.
+
+Two exemption lists, deliberately not one:
+
+- **`INTERNAL_ONLY`** — guards, triggers and helpers called only from other SQL.
+  27 of them, each with a reason.
+- **`UNFINISHED`** — `mark_benchmark` and `score_supplement`: features that were
+  written and never finished. Nothing sets a benchmark candidate, and a candidate
+  can submit a supplement that nobody can score. Kept separate so they are not
+  buried among the triggers, asserted to stay at four or fewer so the list cannot
+  become where unreachable work goes to die, and asserted still-unreachable so an
+  entry that gets wired up is deleted rather than left lying.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

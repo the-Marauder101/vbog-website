@@ -542,7 +542,61 @@ async function showAgreement() {
       } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; b.disabled = false; }
     }));
 
+  await showRekeys();
   view("agree");
+}
+
+// ═══ RE-KEYS APPLIED, AND UNDOING ONE ══════════════════════════════════════
+// undo_rekey() has existed since sql/24 and nothing called it, while the confirm
+// dialog before an apply told the reader "it can be undone". A promise in a
+// dialog with no code behind it is worse than no promise: it is the reason
+// somebody presses the button.
+async function showRekeys() {
+  const region = el("rekey-region");
+  if (!region) return;
+  let rows = [];
+  try {
+    rows = await sbFetch(
+      "key_changes?select=id,item_id,old_best,new_best,applied_at,note,n_experts" +
+      "&order=applied_at.desc&limit=25");
+  } catch (_) { rows = []; }
+
+  region.hidden = rows.length === 0;
+  if (!rows.length) return;
+  el("rekey-count").textContent = String(rows.length);
+
+  el("rekey-list").innerHTML = rows.map((r) => `
+    <div class="req">
+      <span class="title mono">${esc(r.item_id)}</span>
+      <span class="meta small">${esc(r.old_best)} → <strong>${esc(r.new_best)}</strong>
+        · ${new Date(r.applied_at).toLocaleDateString("en-IN",
+             { day: "numeric", month: "short", year: "numeric" })}${
+          r.n_experts != null ? ` · ${r.n_experts} expert${r.n_experts === 1 ? "" : "s"} chose it` : ""}
+        ${r.note ? ` · ${esc(r.note)}` : ""}</span>
+      <span class="actions">
+        <button class="btn-quiet btn-small" data-undo="${esc(r.id)}"
+          data-item="${esc(r.item_id)}" data-back="${esc(r.old_best)}">Undo</button>
+        <span class="savestate" data-undoslot="${esc(r.id)}"></span>
+      </span>
+    </div>`).join("");
+
+  el("rekey-list").querySelectorAll("[data-undo]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const slot = el("rekey-list").querySelector(`[data-undoslot="${b.dataset.undo}"]`);
+      if (!confirm(
+        `Put ${b.dataset.item} back to ${b.dataset.back} as the best answer?\n\n` +
+        `This recomputes every candidate profile and every open shortlist again, ` +
+        `the same way the re-key did. The item goes back to being an open question.`)) return;
+      b.disabled = true;
+      if (slot) { slot.textContent = "Undoing and recomputing…"; delete slot.dataset.state; }
+      try {
+        await sbRpc("undo_rekey", { p_change_id: b.dataset.undo });
+        await showAgreement();
+      } catch (e) {
+        if (slot) { slot.textContent = e.message; slot.dataset.state = "error"; }
+        b.disabled = false;
+      }
+    }));
 }
 
 const backRounds = el("btn-back-rounds");

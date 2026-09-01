@@ -20,12 +20,24 @@ const { suite, rest, rpc, flat } = require("./harness");
 // reads like a broken test rather than the wrong role.
 const refused = (s, t) => s >= 400 && /staff only|permission denied for function/.test(t || "");
 
-// Every scorecard this suite opens, by id. The suite runs against a REAL
-// candidate — the first scored one in the queue — so anything it leaves behind is
-// left on a real person's record. Cleanup used to match on `client_context like
-// ZZ_QA*`, which the scorecards opened by the discard checks never had: one of
-// them survived a run, and the next run resumed it and reported "7 saved after 6
-// answers". Track the ids instead of hoping for a marker.
+// Every scorecard this suite opens, by id.
+//
+// THIS SUITE WRITES TO A REAL CANDIDATE'S RECORD — the first scored one in the
+// queue — because the disagreement checks need real questionnaire scores to read
+// against. So two rules, both learned the hard way:
+//
+//   1. Every scorecard it opens gets `client_context: "ZZ_QA context"`, and its
+//      ids are tracked here. Cleanup identifies its own work by what it WROTE.
+//      One card opened by the discard checks had no marker, survived a run, and
+//      the next run resumed it and reported "7 saved after 6 answers".
+//
+//   2. Cleanup NEVER deletes by elimination. Not "every open scorecard except
+//      this one" — only rows it can positively identify as its own. While
+//      investigating a leak I ran exactly that kind of scoped-by-negation delete
+//      by hand and came within one query of destroying a real submitted
+//      interview that happened to be open at the time.
+//
+// > A cleanup that deletes what it cannot account for is not cleanup.
 const MADE = [];
 
 async function cleanup(p, ids = []) {
@@ -338,12 +350,61 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         afterUi.max_total > beforeUi.max_total, `${beforeUi.max_total} → ${afterUi.max_total}`);
   check("no JS errors on the reference surface", rerrs.length === 0, rerrs.join(" | "));
 
+  // ══ 8bb. READING A FINISHED INTERVIEW BACK ═══════════════════════════════
+  // get_ask_scorecard() existed from the first ASK migration with no caller, so a
+  // submitted interview could be totalled but not read question by question —
+  // which is exactly what a second person needs in order to disagree with a
+  // colleague's judgement. Third dead function in a row (§7am).
+  const readback = await rpc(p, "get_ask_scorecard", { p_scorecard: card });
+  check("a submitted scorecard can be read back in full",
+        readback.status === 200 && (readback.body.answers || []).length >= 40,
+        `${((readback.body || {}).answers || []).length} answers`);
+  check("and every answer carries the anchor that was chosen",
+        (readback.body.answers || []).every(a => a.chose && a.question),
+        `${(readback.body.answers || []).filter(a => !a.chose).length} without an anchor`);
+
+  await p.goto(`${B}/nikash.html`, { waitUntil: "domcontentloaded" });
+  await p.waitForSelector("#v-reqs:not([hidden])", { timeout: 25000 });
+  await p.click("#nav-queue");
+  await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(1500);
+  await p.click(`#queue-list [data-cand="${target.id}"]`);
+  await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(1100);
+  check("the candidate page offers to read the full scorecard",
+        (await p.$$("#cd-body [data-ask-open]")).length > 0, "");
+
+  await p.click("#cd-body [data-ask-open]");
+  await p.waitForSelector("#v-ask:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(700);
+  const sc = flat(await p.textContent("#sc-body"));
+  check("THE SCORECARD REVIEW SCREEN SHOWS WHAT WAS ASKED AND WHAT WAS SAID",
+        /What was asked, and what was said/.test(sc), sc.slice(0, 120));
+  check("it lists every scored question, not just the totals",
+        (await p.$$("#sc-body .evidence li")).length >= 40,
+        `${(await p.$$("#sc-body .evidence li")).length} rows`);
+  check("grouped by attribute, with each attribute's own score",
+        (await p.$$("#sc-body .panel")).length >= 10,
+        `${(await p.$$("#sc-body .panel")).length} attribute blocks`);
+  check("the header says who ran it, when, and what it came to",
+        /run by /.test(flat(await p.textContent("#sc-meta"))) &&
+        /%/.test(flat(await p.textContent("#sc-meta"))),
+        flat(await p.textContent("#sc-meta")).slice(0, 110));
+  check("and it repeats that ASK does not enter the match score",
+        /does not enter the match score/.test(flat(await p.textContent("#sc-disclaimer"))), "");
+  check("Back returns to the candidate, not to the queue",
+        await p.isVisible("#btn-back-cand"), "");
+  await p.click("#btn-back-cand");
+  await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
+  check("and it actually goes there", await p.isVisible("#v-cand"), "");
+
   // ══ 8c. AN EMPTY RE-RUN CAN BE THROWN AWAY ═══════════════════════════════
   // A "Run R2 again" click straight after submitting opens a blank scorecard,
   // which then becomes the card Run R2 resumes — so the next person sees an empty
   // interview instead of the finished one. Seen in live data, fourteen seconds
   // apart.
-  const dup = await rpc(p, "start_ask", { p_candidate_id: target.id, p_round: "r2" });
+  const dup = await rpc(p, "start_ask",
+    { p_candidate_id: target.id, p_round: "r2", p_client_context: "ZZ_QA context" });
   const dupId = dup.body.scorecard_id;
   MADE.push(dupId);
   check("running the round again opens a new scorecard, not the submitted one",
@@ -353,7 +414,8 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   check("and it is gone",
         (await rest(p, `ask_scorecards?select=id&id=eq.${dupId}`)).length === 0, "");
 
-  const dup2 = (await rpc(p, "start_ask", { p_candidate_id: target.id, p_round: "r2" })).body.scorecard_id;
+  const dup2 = (await rpc(p, "start_ask",
+    { p_candidate_id: target.id, p_round: "r2", p_client_context: "ZZ_QA context" })).body.scorecard_id;
   MADE.push(dup2);
   await rpc(p, "save_ask_score", { p_scorecard: dup2, p_question: bankQs.find(q => !q.ref).id, p_score: 1 });
   const refuse = await rpc(p, "discard_ask", { p_scorecard: dup2 });

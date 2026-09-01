@@ -167,6 +167,20 @@
       <div id="pending-list"></div>
     </div>
 
+    <!-- The confirm dialog before a re-key says "it can be undone". It could, in
+         the database — undo_rekey() has existed since sql/24 — but nothing on any
+         screen called it, so the sentence was a promise with nothing behind it.
+         This is the surface that makes it true. -->
+    <div class="region" id="rekey-region" hidden>
+      <div class="region-head"><h2>Re-keys applied</h2>
+        <span class="count mono" id="rekey-count"></span></div>
+      <div class="notice"><span class="label">Undoing one</span>
+        An undo puts the old key back and recomputes every profile and shortlist
+        again, exactly as the original re-key did. The item returns to being an open
+        question, which is what it becomes.</div>
+      <div id="rekey-list"></div>
+    </div>
+
     <div class="region" id="dispute-region" hidden>
       <div class="region-head"><h2>Needs a decision</h2>
         <span class="count mono" id="dispute-count"></span></div>
