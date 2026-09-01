@@ -56,3 +56,23 @@ milestones, rejected import rows, and failed outbound summaries.
 
 Resolving a conflict creates an audit record. It never rewrites source history
 without naming the source and actor.
+
+## 6. V1 physical model
+
+The shared Closer-Match project contains two types of record:
+
+| Record | Physical owner | Pravah behavior |
+|---|---|---|
+| candidates | Nikash | read-only context |
+| clients | shared client identity | reuse; add separate operational profile |
+| requirements | Nikash | read-only role context |
+| matches/interviews | Nikash | freeze references at placement |
+| placements | handoff contract | create once; never duplicate |
+| pravah_training | Pravah | operational authority |
+| pravah_targets/reports | Pravah | operational authority |
+| pravah_client_checkins/actions | Pravah | operational authority |
+| pravah_audit_events | Pravah | immutable activity evidence |
+
+The browser has select access needed for approved views. Material writes go
+through audited database functions. V1 adds no second assessment, candidate
+movement board, or client lead CRM.

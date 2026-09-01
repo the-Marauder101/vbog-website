@@ -65,3 +65,21 @@ The taxonomy remains configurable, but company-wide reporting starts with:
 10. Invalid
 
 Client-specific labels map into this taxonomy without being destroyed.
+
+## V1 physical mapping
+
+| Canonical concept | V1 table |
+|---|---|
+| Approved access | pravah_memberships |
+| Client operating state | pravah_client_profiles |
+| Placement handoff | placements (shared) |
+| Training lifecycle | pravah_training |
+| Training evidence | pravah_training_checkpoints |
+| Period target | pravah_targets |
+| Closer result | pravah_performance_reports |
+| Client health meeting | pravah_client_checkins |
+| Corrective/follow-up work | pravah_actions |
+| Material change history | pravah_audit_events |
+
+Client ID is derived from the placement on training, target, and report writes.
+The browser cannot choose a conflicting client relationship.

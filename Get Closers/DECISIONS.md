@@ -47,3 +47,20 @@ will not be reproduced.
 
 The final PRD must be sufficient to restart the project in another development
 or AI conversation.
+
+## D-011 — Existing approved staff authentication is reused
+
+V1 bootstraps Pravah access from active, linked Nikash staff accounts. A new
+Supabase Auth account alone never grants access.
+
+## D-012 — Shared handoff records, isolated operating records
+
+Candidates, clients, requirements, and frozen placement references are shared
+inside the Closer-Match project. Training, reports, check-ins, targets, actions,
+and audits use dedicated `pravah_` tables.
+
+## D-013 — Every operational write is auditable
+
+The browser calls narrow database functions for material writes. Hiding a
+button is not authorization, and direct browser writes are not the preferred
+operating path.
