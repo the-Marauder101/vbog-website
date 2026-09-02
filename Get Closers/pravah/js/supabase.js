@@ -50,6 +50,7 @@
     restore: restore, signOut: signOut,
     signIn: async function (email, password) { const data = await auth("token?grant_type=password", { email: email, password: password }); setSession(data); return data; },
     fetch: function (path, options) { return request(PRAVAH_SUPABASE_URL + "/rest/v1/" + path, options); },
-    rpc: function (name, args) { return request(PRAVAH_SUPABASE_URL + "/rest/v1/rpc/" + name, { method: "POST", body: args || {} }); }
+    rpc: function (name, args) { return request(PRAVAH_SUPABASE_URL + "/rest/v1/rpc/" + name, { method: "POST", body: args || {} }); },
+    invoke: function (name, body) { return request(PRAVAH_SUPABASE_URL + "/functions/v1/" + name, { method: "POST", body: body || {} }); }
   };
 })(window);

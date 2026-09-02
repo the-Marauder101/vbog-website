@@ -25,7 +25,7 @@ assert.equal(result.data.cash_collected, 80000);
 const message = whatsappMessage(result.data);
 assert.match(message, /Closer Update — Aisha/);
 assert.match(message, /Sales: 2/);
-assert.match(message, /Cash collected: 80,000/);
+assert.match(message, /Cash reported: 80,000 \(unverified\)/);
 
 const invalid = parseReport("hello world");
 assert.equal(invalid.valid, false);

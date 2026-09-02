@@ -83,3 +83,33 @@ Client-specific labels map into this taxonomy without being destroyed.
 
 Client ID is derived from the placement on training, target, and report writes.
 The browser cannot choose a conflicting client relationship.
+
+## V2A additions
+
+### Vyom client identity
+
+| Field | Meaning |
+|---|---|
+| source_system | `vyom` for this integration |
+| source_client_id | Stable UUID from Vyom's client registry |
+| source_name / source_name_normalized | Display name and comparison-only normalized form |
+| linked_client_id | Verified shared Nikash/Pravah client UUID |
+| status | new / linked / conflict / ignored |
+| source_payload / last_seen_at | Original current-state evidence and refresh time |
+
+### Closer report evidence
+
+- followups_completed / meetings_booked;
+- cash_collected: closer-reported, provisional amount retained for comparison;
+- verified_cash_collected: evidence-backed amount used by official KPIs;
+- cash_verification_status: unverified / pending / verified / rejected;
+- verification_source / verification_reference / verification_url;
+- verified_at / verified_by;
+- voided_at / voided_by / void_reason.
+
+### Follow-through and corrections
+
+- checkin_id links an action to the meeting that created it;
+- completion_note and cancellation_reason explain closure;
+- placement_state: active / ended / void;
+- archived_at and archive_reason preserve client history.

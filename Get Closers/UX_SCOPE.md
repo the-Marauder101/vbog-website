@@ -12,7 +12,7 @@ shell from being mistaken for completed production behavior.
 | Active closers | roster, targets, results, risks, recovery plans | V1 |
 | Clients | portfolio health, check-ins, issues, actions | V1 |
 | Reports | structured updates, WhatsApp output, history | prototype V0; live V1 |
-| Data & connections | source state, imports, reconciliation | shell V0; live V2/V5 |
+| Data & connections | Vyom client inbox, source state, imports, reconciliation | live V2A; expands V2B/V5 |
 | KPI scorecards | weighted KRAs, KPI evidence, thresholds | V3 |
 | Leads & revenue | leads, activity, pipeline, sales, payments | V4 |
 | Client workspace | isolated dashboards and native CRM | V6 |
@@ -70,6 +70,13 @@ States:
 
 ## V2 modals
 
+- Link/activate Vyom client
+- Edit client operating profile and notes
+- Archive client / delete unused client
+- Void report
+- End or void placement
+- Verify cash evidence
+- Update/complete/cancel action with closure note
 - Link candidate identity
 - Resolve integration conflict
 - Retry failed event

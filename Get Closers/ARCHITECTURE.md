@@ -12,6 +12,7 @@
 | Closer targets and results | Pravah | Read aggregate outcomes |
 | Client health and check-ins | Pravah | Read aggregate status |
 | Leads, deals, sales, and cash | Pravah | Receive source updates |
+| Client identity and recruitment account | Vyom | Link and read |
 
 No interface should provide an edit control for a field owned by another
 product.
@@ -39,6 +40,12 @@ Nikash scoring logic remains untouched.
 
 Vyom uses a separate Supabase project. Its exchange with Pravah therefore goes
 through an authenticated server-side integration.
+
+V2A implements the first server-side bridge as a Supabase Edge Function in the
+Pravah project. The browser sends the signed-in staff token to the function;
+the function verifies `pravah_context`, reads Vyom with a stored server secret,
+and writes only to the Pravah client inbox. No cross-project secret ships in
+GitHub Pages.
 
 ## 4. Integration reliability
 
@@ -76,3 +83,14 @@ The shared Closer-Match project contains two types of record:
 The browser has select access needed for approved views. Material writes go
 through audited database functions. V1 adds no second assessment, candidate
 movement board, or client lead CRM.
+
+## 7. V2A client identity model
+
+Vyom's `clients.id` and the shared Nikash/Pravah `clients.id` are different
+identifiers. `pravah_client_sync_inbox` stores the durable mapping. Normalized
+names are hints only. A staff member must activate a new record or link an
+existing one.
+
+Vyom also writes client mutations to `pravah_integration_outbox`. V2A refreshes
+current state on demand; V2B can consume the outbox incrementally without
+changing the identity contract.

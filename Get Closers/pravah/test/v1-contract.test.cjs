@@ -29,14 +29,18 @@ for (const table of [
 }
 
 for (const rpc of [
-  "pravah_context", "pravah_create_client", "pravah_create_placement",
-  "pravah_start_training", "pravah_update_training", "pravah_save_report",
+  "pravah_context", "pravah_create_placement",
+  "pravah_start_training", "pravah_update_training",
   "pravah_add_training_checkpoint",
-  "pravah_record_checkin", "pravah_create_action", "pravah_set_target",
-  "pravah_complete_action", "pravah_mark_report_shared", "pravah_dashboard"
+  "pravah_create_action", "pravah_set_target",
+  "pravah_mark_report_shared", "pravah_dashboard"
 ]) {
   assert.match(sql, new RegExp(`function ${rpc}\\(`), `missing RPC: ${rpc}`);
   assert.match(app, new RegExp(`["']${rpc}["']`), `RPC not used by application: ${rpc}`);
+}
+assert.match(sql, /function pravah_create_client\(/, "V1 migration remains reproducible");
+for (const retiredRpc of ["pravah_save_report", "pravah_record_checkin", "pravah_complete_action"]) {
+  assert.match(sql, new RegExp(`function ${retiredRpc}\\(`), `V1 migration lost: ${retiredRpc}`);
 }
 
 assert.match(sql, /force row level security/);

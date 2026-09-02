@@ -11,6 +11,13 @@ evidence. Pravah supplies observed outcomes so predictions can be validated.
 - read-only outcome timeline on the relevant prediction/candidate;
 - deep link to the Pravah placement, subject to role permissions.
 
+## V2A compatibility
+
+Nikash's existing `clients` rows are not renamed or automatically merged.
+Pravah's Vyom client inbox links a verified Vyom UUID to the correct shared
+Nikash/Pravah client UUID. A normalized-name suggestion is never sufficient to
+change assessment or requirement ownership.
+
 ## Outcome fields Pravah supplies
 
 - joined date and training result;

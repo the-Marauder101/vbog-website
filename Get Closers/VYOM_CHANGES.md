@@ -11,6 +11,16 @@ Vyom remains the only place where recruitment stages are moved.
 - integration outbox recording candidate and stage events;
 - delivery state, retry count, and last error for each event.
 
+## V2A implementation
+
+- the central `clients` registry is confirmed as the owner of client identity;
+- client create/update/delete events enter `pravah_integration_outbox`;
+- existing clients receive idempotent bootstrap events;
+- the outbox is unavailable to anonymous and ordinary authenticated browser
+  roles;
+- the HR client lifecycle table continues to reference the central registry
+  and is not treated as a second identity source.
+
 ## Events Vyom publishes
 
 - candidate observed;

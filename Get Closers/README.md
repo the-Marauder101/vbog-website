@@ -12,16 +12,18 @@ truth. They must not become editable copies of the same workflow.
 
 ## Current build status
 
-**V1 — Pravah Core is in review.**
+**V1 — Pravah Core is live. V2A — Operational Hardening and Client
+Foundation is in review.**
 
-V0 established the contracts. V1 adds:
+V2A responds to the first real operator test and adds:
 
-- existing staff authentication;
-- multi-client membership and Row Level Security;
-- client, placement, training, target, performance, check-in, and action flows;
-- WhatsApp-to-live-report normalization;
-- audited writes and verification queries;
-- point-and-click Supabase setup instructions.
+- Vyom-owned client identity with a verified Pravah linking inbox;
+- fixed-question closer reports and WhatsApp output;
+- reported versus evidence-verified cash;
+- client detail, notes, check-in history and linked actions;
+- archive, void and dependency-safe deletion controls;
+- admin versus staff controls, with client/closer roles kept dormant until
+  their restricted portal contracts ship.
 
 ## Start here
 
@@ -36,6 +38,7 @@ V0 established the contracts. V1 adds:
 9. [CEO_DASHBOARD_AUDIT.md](CEO_DASHBOARD_AUDIT.md) — workbook findings.
 10. [DECISIONS.md](DECISIONS.md) — durable decisions and their reasoning.
 11. [UX_SCOPE.md](UX_SCOPE.md) — versioned sections, modals, and interactions.
+12. [V2A_RUNBOOK.md](V2A_RUNBOOK.md) — deployment, smoke test and recovery.
 
 ## Application
 

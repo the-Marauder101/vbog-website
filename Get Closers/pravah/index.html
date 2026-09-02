@@ -40,20 +40,20 @@
         <a class="nav-link" href="#closers" data-view="closers"><span>03</span>Active closers</a>
         <a class="nav-link" href="#clients" data-view="clients"><span>04</span>Clients</a>
         <a class="nav-link" href="#reports" data-view="reports"><span>05</span>Reports</a>
-        <a class="nav-link" href="#connections" data-view="connections"><span>06</span>Data &amp; connections</a>
+        <a class="nav-link" href="#connections" data-view="connections" data-internal><span>06</span>Data &amp; connections</a>
       </nav>
-      <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V1 core</strong><small id="sync-state">Connected</small></div></div>
+      <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V2A operations</strong><small id="sync-state">Connected</small></div></div>
     </aside>
 
     <main>
       <header class="topbar">
         <button class="mobile-nav" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button>
         <div class="crumb"><span>Get Closers</span> / <strong id="view-name">Overview</strong></div>
-        <div class="account-controls"><span id="account-name"></span><button class="text-button" type="button" data-signout>Sign out</button><button class="button button-primary" type="button" data-open-report>Add closer report</button></div>
+        <div class="account-controls"><span id="account-name"></span><span class="role-chip" id="account-role"></span><button class="text-button" type="button" data-signout>Sign out</button><button class="button button-primary" type="button" data-open-report data-internal>Add closer report</button></div>
       </header>
 
       <section class="view active" id="overview" data-title="Overview">
-        <div class="page-head"><div><p class="eyebrow">OPERATING FLOW</p><h1>Placement to performance.</h1></div><div class="page-actions"><button class="button button-secondary" type="button" data-form="client">Add client</button><button class="button button-primary" type="button" data-form="placement">Record placement</button></div></div>
+        <div class="page-head"><div><p class="eyebrow">OPERATING FLOW</p><h1>Placement to performance.</h1></div><div class="page-actions" data-internal><button class="button button-secondary" type="button" data-sync-vyom>Refresh clients from Vyom</button><button class="button button-primary" type="button" data-form="placement">Record placement</button></div></div>
         <div class="metric-grid" aria-label="Headline metrics">
           <article class="metric"><span>Active clients</span><strong id="metric-clients">—</strong><small>Operating portfolio</small></article>
           <article class="metric"><span>Active closers</span><strong id="metric-closers">—</strong><small>Training or placed</small></article>
@@ -67,22 +67,23 @@
       </section>
 
       <section class="view" id="training" data-title="Training & placements">
-        <div class="page-head"><div><p class="eyebrow">POST-SELECTION</p><h1>Training &amp; placements</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-form="placement">Record placement</button></div></div>
+        <div class="page-head"><div><p class="eyebrow">POST-SELECTION</p><h1>Training &amp; placements</h1></div><div class="page-actions" data-internal><button class="button button-primary" type="button" data-form="placement">Record placement</button></div></div>
         <div class="panel table-panel"><div class="panel-head"><div><h2>Placement pipeline</h2><p>Pravah status with read-only Nikash candidate and client context.</p></div></div><div class="table-wrap"><table><thead><tr><th>Closer</th><th>Client / role</th><th>Joined</th><th>Training</th><th>Risk</th><th></th></tr></thead><tbody id="placement-rows"></tbody></table></div></div>
       </section>
 
       <section class="view" id="closers" data-title="Active closers">
-        <div class="page-head"><div><p class="eyebrow">PERFORMANCE</p><h1>Active closers</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-open-report>Add closer report</button></div></div>
-        <div class="panel table-panel"><div class="panel-head"><div><h2>Closer roster</h2><p>Targets, reported results and coaching signals.</p></div></div><div class="table-wrap"><table><thead><tr><th>Closer</th><th>Client</th><th>Training</th><th>Total sales</th><th>Cash collected</th><th></th></tr></thead><tbody id="closer-rows"></tbody></table></div></div>
+        <div class="page-head"><div><p class="eyebrow">PERFORMANCE</p><h1>Active closers</h1></div><div class="page-actions" data-internal><button class="button button-primary" type="button" data-open-report>Add closer report</button></div></div>
+        <div class="panel table-panel"><div class="panel-head"><div><h2>Closer roster</h2><p>Sales reported by closers remain separate from CRM-verified cash.</p></div></div><div class="table-wrap"><table><thead><tr><th>Closer</th><th>Client</th><th>Training</th><th>Total sales</th><th>Verified cash</th><th>Reported cash</th><th></th></tr></thead><tbody id="closer-rows"></tbody></table></div></div>
       </section>
 
       <section class="view" id="clients" data-title="Clients">
-        <div class="page-head"><div><p class="eyebrow">CLIENT SUCCESS</p><h1>Clients</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-form="client">Add client</button></div></div>
+        <div class="page-head"><div><p class="eyebrow">CLIENT SUCCESS</p><h1>Clients</h1></div><div class="page-actions" data-internal><button class="button button-primary" type="button" data-sync-vyom>Refresh from Vyom</button></div></div>
+        <p class="section-note" data-internal>Client identity comes from Vyom. Activate or link a verified client from Data &amp; connections; Pravah stores only its operating profile.</p>
         <div class="client-grid" id="client-grid"></div>
       </section>
 
       <section class="view" id="reports" data-title="Reports">
-        <div class="page-head"><div><p class="eyebrow">WHATSAPP-FIRST</p><h1>Reports</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-open-report>Add report</button></div></div>
+        <div class="page-head"><div><p class="eyebrow">STRUCTURED ONCE</p><h1>Reports</h1></div><div class="page-actions" data-internal><button class="button button-primary" type="button" data-open-report>Add report</button></div></div>
         <div class="panel"><div class="panel-head"><div><h2>Closer performance reports</h2><p>Structured once; reusable for dashboards and WhatsApp.</p></div></div><div id="report-list" class="report-list"></div></div>
       </section>
 
@@ -91,9 +92,10 @@
         <div class="connection-grid">
           <article class="connection-card"><div class="connection-icon">P</div><div><h2>Pravah Core</h2><p>Authenticated operational records</p></div><span class="connection-state active-state">Connected · V1</span></article>
           <article class="connection-card"><div class="connection-icon">N</div><div><h2>Nikash</h2><p>Shared candidates, clients and predictions</p></div><span class="connection-state active-state">Shared data · V1</span></article>
-          <article class="connection-card"><div class="connection-icon">V</div><div><h2>Vyom</h2><p>Recruitment stage and movement</p></div><span class="connection-state">Planned · V2</span></article>
+          <article class="connection-card"><div class="connection-icon">V</div><div><h2>Vyom</h2><p>Client identity linked; candidate events next</p></div><span class="connection-state active-state">Client link · V2A</span></article>
           <article class="connection-card"><div class="connection-icon">S</div><div><h2>Sheets / CRM</h2><p>Mapped client lead and result data</p></div><span class="connection-state">Planned · V5</span></article>
         </div>
+        <div class="panel table-panel connection-inbox"><div class="panel-head"><div><h2>Vyom client inbox</h2><p>Verify every identity before it becomes operational in Pravah.</p></div><button class="button button-secondary" type="button" data-sync-vyom>Refresh from Vyom</button></div><div class="table-wrap"><table><thead><tr><th>Vyom client</th><th>Suggested match</th><th>State</th><th></th></tr></thead><tbody id="sync-client-rows"></tbody></table></div></div>
       </section>
     </main>
   </div>
@@ -102,16 +104,18 @@
 
   <div class="modal-backdrop" id="report-modal" hidden>
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
-      <div class="modal-head"><div><p class="eyebrow">QUICK CAPTURE</p><h2 id="report-modal-title">Paste WhatsApp report</h2></div><button class="icon-button" type="button" data-close-report aria-label="Close">×</button></div>
-      <div class="step-row"><span class="active">1 Paste</span><span>2 Match closer</span><span>3 Save</span></div>
-      <div class="report-meta form-grid three"><label>Closer<select id="report-placement" required></select></label><label>Period start<input id="report-period-start" type="date" required></label><label>Period end<input id="report-period-end" type="date" required></label></div>
-      <label class="field-label" for="report-input">Existing update</label>
-      <textarea id="report-input" rows="10" placeholder="Closer: Aisha\nClient: Acme\nCalls: 47\nConnected: 19\nSales: 2\nRevenue: 150000\nCash collected: 80000\nBlocker: More qualified leads needed\nNext step: Review follow-ups tomorrow"></textarea>
-      <p class="field-help">Use one “label: value” line per item. The original text remains attached for audit.</p>
-      <div id="parse-message" class="parse-message" role="status" aria-live="polite"></div><div class="preview" id="report-preview" hidden></div>
-      <div class="modal-actions"><button class="button button-ghost" type="button" data-fill-example>Use example</button><div><button class="button button-secondary" type="button" data-preview-report>Preview</button><button class="button button-primary" type="button" data-save-report disabled>Save report</button></div></div>
+      <div class="modal-head"><div><p class="eyebrow">CLOSER UPDATE</p><h2 id="report-modal-title">Add structured report</h2></div><button class="icon-button" type="button" data-close-report aria-label="Close">×</button></div>
+      <form id="report-form" class="dynamic-form">
+        <div class="form-grid three"><label class="full">Closer and client<select name="placement_id" id="report-placement" required></select></label><label>Period start<input name="period_start" id="report-period-start" type="date" required></label><label>Period end<input name="period_end" id="report-period-end" type="date" required></label><label>Currency<input name="currency" value="INR" required></label></div>
+        <div class="form-section"><h3>Activity</h3><div class="form-grid three"><label>Calls attempted<input name="calls_attempted" type="number" min="0"></label><label>Calls connected<input name="connected_calls" type="number" min="0"></label><label>Follow-ups completed<input name="followups_completed" type="number" min="0"></label><label>Qualified opportunities<input name="qualified_opportunities" type="number" min="0"></label><label>Meetings booked<input name="meetings_booked" type="number" min="0"></label><label>Sales closed<input name="sales_count" type="number" min="0"></label></div></div>
+        <div class="form-section"><h3>Money</h3><div class="form-grid"><label>Revenue booked<input name="revenue_generated" type="number" min="0" step="0.01"></label><label>Cash reported by closer<input name="cash_reported" type="number" min="0" step="0.01"></label></div><p class="field-help inline-help">Reported cash is provisional. Official dashboards use only CRM/client-verified cash.</p></div>
+        <div class="form-section"><h3>Support and next steps</h3><div class="form-grid"><label class="full">What blocked progress?<textarea name="blocker" rows="3"></textarea></label><label class="full">What support is required?<textarea name="support_required" rows="3"></textarea></label><label class="full">Plan for the next period<textarea name="next_period_plan" rows="3"></textarea></label><label class="full">Additional notes or original WhatsApp message (optional)<textarea name="additional_notes" rows="3"></textarea></label></div></div>
+        <p class="form-error" data-report-error role="alert"></p><div class="form-footer"><button class="button button-ghost" type="button" data-close-report>Cancel</button><button class="button button-primary" type="submit">Save and generate WhatsApp update</button></div>
+      </form>
     </section>
   </div>
+
+  <div class="modal-backdrop" id="client-modal" hidden><section class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="client-modal-title"><div class="modal-head"><div><p class="eyebrow">CLIENT RECORD</p><h2 id="client-modal-title">Client</h2></div><button class="icon-button" type="button" data-close-client aria-label="Close">×</button></div><div id="client-detail"></div></section></div>
 
   <div class="loading-bar" id="loading-bar" hidden></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/report-parser.js"></script><script src="js/app.js"></script>
