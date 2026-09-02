@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pravah Performance">
-  <!-- Performance: ruled current lines — horizontal, evenly spaced,
-       like a scorecard's rows or a gauge's ticks. The water measures
-       itself. Green-to-teal palette. -->
+  <!-- Performance: the high-water mark — a bold upward peak/chevron
+       inside the pool, like water cresting against a gauge. You measure
+       the river by how high it rises. Green-to-teal palette. -->
   <defs>
     <linearGradient id="pg" x1="0.2" y1="0" x2="0.8" y2="1">
-      <stop offset="0" stop-color="#236f4d"/>
+      <stop offset="0" stop-color="#185c3d"/>
       <stop offset="0.5" stop-color="#1a8a6a"/>
       <stop offset="1" stop-color="#3bb88a"/>
     </linearGradient>
@@ -17,15 +17,11 @@
              C 2.8 13, 7.5 4.8, 14.5 3.8 Z"/>
     <path d="M 8.5 10 C 11.5 6.8, 16 6.5, 19.5 8.5"
           fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".13"/>
-    <!-- Ruled lines: even, horizontal — the current as measurement -->
-    <path fill="none" stroke="rgba(255,255,255,0.40)" stroke-width="1.8" stroke-linecap="round"
-          d="M 7.5 12 L 25 12"/>
-    <path fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="1.5" stroke-linecap="round"
-          d="M 7 16.5 L 26 16.5"/>
+    <!-- The peak: a bold chevron rising from the surface -->
+    <path fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"
+          d="M 9 21 L 16 10 L 23 21"/>
+    <!-- Water line beneath: the baseline the peak is measured against -->
     <path fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.2" stroke-linecap="round"
-          d="M 8.5 21 L 25 21"/>
-    <!-- Tick mark: a short vertical notch, like a gauge needle -->
-    <path fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.4" stroke-linecap="round"
-          d="M 18 10 L 18 14"/>
+          d="M 7.5 24 C 12 22.5, 20 25, 25 23"/>
   </g>
 </svg>

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pravah Closer Portal">
-  <!-- Closer Portal: a single bold stream — one current, not three.
-       Personal focus: your pipeline, your targets, your drive.
-       The water is fast and narrow. Violet-to-purple palette. -->
+  <!-- Closer Portal: the bolt — a single jagged stream cutting
+       through the pool. Personal energy, direct action, no detours.
+       The closer doesn't meander; they strike. Violet-to-purple. -->
   <defs>
     <linearGradient id="pg" x1="0.2" y1="0" x2="0.8" y2="1">
       <stop offset="0" stop-color="#5b21b6"/>
@@ -17,13 +17,8 @@
              C 2.8 13, 7.5 4.8, 14.5 3.8 Z"/>
     <path d="M 8.5 10 C 11.5 6.8, 16 6.5, 19.5 8.5"
           fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".13"/>
-    <!-- Single bold stream: personal, focused, fast -->
-    <path fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.8" stroke-linecap="round"
-          d="M 7.5 16 C 12 11, 20 21, 26 16"/>
-    <!-- Spray lines: energy at the edges of the stream -->
-    <path fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.8" stroke-linecap="round"
-          d="M 9 12.5 C 13 10, 19 14, 24 12"/>
-    <path fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.7" stroke-linecap="round"
-          d="M 10 21 C 14 19, 20 22.5, 24.5 20"/>
+    <!-- The bolt: a jagged stream, top-left to bottom-right -->
+    <path fill="rgba(255,255,255,0.50)"
+          d="M 12 8 L 18 14 L 13 15 L 21 25 L 19 24 L 15 17 L 20 16 L 12 8 Z"/>
   </g>
 </svg>
