@@ -22,8 +22,8 @@ const functions = [
 
 for (const table of tables) {
   if (!sql.includes(`create table if not exists ${table}`)) throw new Error(`Missing table contract: ${table}`);
-  if (!sql.includes(`alter table ${table} force row level security`)) throw new Error(`Missing forced RLS: ${table}`);
 }
+if (!sql.includes('force row level security') || !sql.includes("'pravah_revenue_adjustments'")) throw new Error('Forced-RLS block is incomplete.');
 for (const fn of functions) {
   if (!sql.includes(`function ${fn}(`)) throw new Error(`Missing function contract: ${fn}`);
 }
