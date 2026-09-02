@@ -41,6 +41,7 @@
         <a class="nav-link" href="#clients" data-view="clients"><span>04</span>Clients</a>
         <a class="nav-link" href="#reports" data-view="reports"><span>05</span>Reports</a>
         <a class="nav-link" href="#connections" data-view="connections" data-internal><span>06</span>Data &amp; connections</a>
+        <a class="nav-link" href="#portal" data-view="portal" data-admin><span>07</span>Portal access</a>
       </nav>
       <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V2A operations</strong><small id="sync-state">Connected</small></div></div>
     </aside>
@@ -99,6 +100,16 @@
         </div>
         <div class="panel table-panel connection-inbox"><div class="panel-head"><div><h2>Vyom client reconciliation</h2><p>The same client setup controls shown in Clients, with identity-matching context.</p></div><button class="button button-secondary" type="button" data-sync-vyom>Refresh from Vyom</button></div><div class="table-wrap"><table><thead><tr><th>Vyom client</th><th>Suggested match</th><th>State</th><th></th></tr></thead><tbody id="sync-client-rows"></tbody></table></div></div>
         <div class="panel table-panel connection-inbox"><div class="panel-head"><div><h2>Placed-candidate handoffs</h2><p>Move a candidate to “Placed - Handoff to Pravah” in Vyom. Verify the existing Nikash identity and client role here; Pravah never edits recruitment stages.</p></div><button class="button button-secondary" type="button" data-sync-vyom>Refresh from Vyom</button></div><div class="table-wrap"><table><thead><tr><th>Candidate</th><th>Client</th><th>Nikash identity</th><th>State</th><th></th></tr></thead><tbody id="candidate-sync-rows"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="portal" data-title="Portal access">
+        <div class="page-head"><div><p class="eyebrow">ACCESS CONTROL</p><h1>Client &amp; closer portals</h1></div><div class="page-actions"><button class="button button-secondary" type="button" data-form="invite-closer">Invite closer</button><button class="button button-primary" type="button" data-form="invite-client">Invite client user</button></div></div>
+        <p class="section-note">Invite client administrators and viewers to their isolated workspace. Closers see only their own placement data and targets.</p>
+        <div class="split-grid portal-grid">
+          <article class="panel table-panel"><div class="panel-head"><div><h2>Active portal memberships</h2><p>Client and closer users with active Pravah access.</p></div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Client</th><th>Role</th><th>Since</th><th></th></tr></thead><tbody id="portal-membership-rows"></tbody></table></div></article>
+          <article class="panel table-panel"><div class="panel-head"><div><h2>Pending invitations</h2><p>Sent but not yet accepted.</p></div></div><div class="table-wrap"><table><thead><tr><th>Email</th><th>Client</th><th>Role</th><th>Invited</th><th></th></tr></thead><tbody id="portal-invitation-rows"></tbody></table></div></article>
+        </div>
+        <div class="panel portal-links"><div class="panel-head"><div><h2>Portal URLs</h2><p>Share these links with invited users after they accept.</p></div></div><div class="portal-url-list"><div><strong>Client portal</strong><code id="client-portal-url"></code></div><div><strong>Closer portal</strong><code id="closer-portal-url"></code></div></div></div>
       </section>
     </main>
   </div>
