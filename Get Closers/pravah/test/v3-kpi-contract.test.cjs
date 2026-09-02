@@ -15,7 +15,7 @@ for (const fn of ['pravah_kpi_dashboard','pravah_finalize_scorecard','pravah_set
 for (const fn of ['pravah_kpi_staff_roster','pravah_record_selection_review','pravah_record_insight','pravah_record_intervention','pravah_review_intervention','pravah_set_company_target']) {
   if (!ops.includes(`function ${fn}`)) throw new Error(`Missing operations function: ${fn}`);
 }
-if (!ops.includes('alter table pravah_company_targets enable row level security')) throw new Error('Company targets must have RLS.');
+if (!ops.includes("'pravah_company_targets'") || !ops.includes("alter table %I enable row level security")) throw new Error('Company targets must have RLS.');
 if (!page.includes('pravah_kpi_dashboard')) throw new Error('Performance page is not wired to KPI dashboard.');
 if (!page.includes('pravah_record_selection_review')) throw new Error('Selection evidence form is missing.');
 if (!prd.includes('Candidate Selection Quality')) throw new Error('KRA definitions are missing.');

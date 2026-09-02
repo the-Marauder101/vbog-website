@@ -4,8 +4,8 @@ const root = path.resolve(__dirname, '..', '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const sql = read('supabase/11_v4_revenue_engine.sql') + '\n' + read('supabase/13_v4_revenue_operations.sql');
 const verify = read('supabase/12_verify_v4_revenue.sql');
-const html = read('revenue/index.html');
-const js = read('revenue/revenue.js');
+const html = read('pravah/revenue/index.html');
+const js = read('pravah/revenue/revenue.js');
 
 const tables = [
   'pravah_revenue_stages', 'pravah_revenue_leads', 'pravah_revenue_activities',
@@ -30,7 +30,7 @@ for (const fn of functions) {
 for (const stage of ['new','contacted','qualified','booked','proposal','negotiation','won','lost','nurture']) {
   if (!sql.includes(`'${stage}'`)) throw new Error(`Missing canonical stage: ${stage}`);
 }
-for (const marker of ['Customer / lead','Create opportunity','Record sale','Record payment','Revenue dashboard','Customers &amp; leads']) {
+for (const marker of ['Customer → revenue','Open opportunities','Record sale','Record payment','Revenue dashboard','Customers &amp; leads']) {
   if (!html.includes(marker)) throw new Error(`Missing UI marker: ${marker}`);
 }
 for (const marker of ['pravah_revenue_dashboard','pravah_revenue_create_lead','pravah_revenue_log_activity','pravah_revenue_record_sale','pravah_revenue_record_payment','pravah_revenue_verify_payment']) {

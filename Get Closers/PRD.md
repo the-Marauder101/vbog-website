@@ -424,3 +424,22 @@ The next batch after V2B is V3: the management scorecard and KRA/KPI engine.
 It should consume verified operational records from V1–V2B, not add parallel
 manual trackers. Client-portal and closer-portal activation remain later,
 purpose-built phases with restricted read models.
+
+## 20. V3 and V4 deployment status
+
+V3 and V4 are deployed in the existing Closer-Match project. V3 provides the
+KRA/KPI engine; V4 provides the canonical revenue model. Both retain forced RLS
+and staff-only write contracts. The remaining production gate is an approved
+staff acceptance test using genuine operating records, not manufactured data.
+
+## 21. V5 — Transition Layer
+
+V5 is the controlled bridge from Sheets, CSV exports and CRM exports into V4.
+Each import belongs to one canonical client and contains an immutable raw row,
+source key, mapping version, normalized preview, validation result and replay
+receipt. The first profile is CEO Dashboard / Callyzer plus Daily Update.
+
+Call Log IDs are activity source keys. Client number/name form the proposed lead
+identity. CRM status must have an explicit V4 stage mapping. Ambiguous identity,
+unknown stage or malformed rows enter a repair queue. Daily reported cash stays
+evidence only and never becomes verified cash without V4 payment evidence.
