@@ -70,15 +70,21 @@ the shell without returning to the original conversation.
 - pattern insight and intervention tracking;
 - company target configuration.
 
-**Build status:** implementation in review. Database and frontend are additive and have not been deployed until merge.
+**Build status:** PR #170 merged on 2026-09-02. Database deployment and live scorecard verification remain pending.
 
 ## V4 — Client Revenue Engine
 
-- canonical lead, activity, deal, sale, and payment records;
-- call-log ingestion;
-- lead-stage and closer comparisons;
-- sales, revenue, cash, and outstanding views;
-- CEO Dashboard rebuilt as live Pravah views.
+- canonical customer/lead records;
+- customer activities and call-log records;
+- canonical pipeline and deal stages;
+- sales and revenue records;
+- payment evidence and verified cash;
+- refunds, cancellations and write-offs;
+- client and closer revenue comparisons;
+- revenue, pipeline, outstanding and conversion views;
+- standalone customer-centric revenue workspace.
+
+**Build status:** implementation in review. Migration, verification SQL, RPC write contracts, frontend workspace, runbook, addendum and contract tests are included in the V4 PR.
 
 ## V5 — Transition Layer
 
@@ -89,6 +95,8 @@ the shell without returning to the original conversation.
 - saved mapping versions;
 - rejected-row repair;
 - import audit and replay.
+
+**Boundary:** V5 writes into the V4 canonical revenue model. It must not create a second CRM/revenue schema.
 
 ## V6 — Client and Closer Portal
 
@@ -109,5 +117,6 @@ the shell without returning to the original conversation.
 ## Release discipline
 
 Every version includes migrations and rollback notes, permission verification,
-automated tests, operator instructions, an updated PRD and decision log, no
-placeholder credentials, and no silent changes to another product's authority.
+automated tests, operator instructions, an updated PRD/addendum and decision
+log, no placeholder credentials, and no silent changes to another product's
+authority.
