@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Pravah V6 — client portal for Get Closers operations.">
+  <title>Pravah — Client Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/pravah.css">
+  <link rel="stylesheet" href="client.css">
+</head>
+<body>
+  <section class="auth-screen" id="auth-screen">
+    <div class="auth-brand"><span class="brand-mark">p.</span><strong>pravah</strong><small>by Get Closers</small></div>
+    <form class="auth-card" id="signin-form">
+      <p class="eyebrow">CLIENT PORTAL</p><h1>Client workspace.</h1>
+      <p>Sign in with your approved client account to access your operations data.</p>
+      <label>Email<input name="email" type="email" autocomplete="username" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <p class="form-error" id="signin-error" role="alert"></p>
+      <button class="button button-primary" type="submit">Sign in</button>
+    </form>
+  </section>
+
+  <section class="auth-screen" id="access-screen" hidden>
+    <div class="auth-card access-card"><p class="eyebrow">ACCESS</p><h1 id="access-title">Client portal unavailable.</h1><p id="access-message">Ask an administrator to activate your client account.</p><button class="button button-secondary" type="button" data-signout>Sign out</button></div>
+  </section>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <aside class="sidebar" aria-label="Client navigation">
+      <a class="brand" href="#dashboard" aria-label="Pravah client portal"><span class="brand-mark">p.</span><span><strong>pravah</strong><small>Client workspace</small></span></a>
+      <nav class="nav-list">
+        <a class="nav-link active" href="#dashboard" data-view="dashboard"><span>01</span>Dashboard</a>
+        <a class="nav-link" href="#closers" data-view="closers"><span>02</span>Closers</a>
+        <a class="nav-link" href="#revenue" data-view="revenue"><span>03</span>Revenue</a>
+        <a class="nav-link" href="#actions" data-view="actions"><span>04</span>Actions &amp; history</a>
+      </nav>
+      <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V6 client portal</strong><small id="sync-state">Connected</small></div></div>
+    </aside>
+
+    <main>
+      <header class="topbar"><button class="mobile-nav" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button><div class="crumb"><span>Get Closers</span> / <strong id="view-name">Dashboard</strong></div><div class="account-controls"><span id="account-name"></span><span class="role-chip" id="account-role"></span><button class="text-button" type="button" data-signout>Sign out</button></div></header>
+
+      <section class="view active" id="dashboard" data-title="Dashboard">
+        <div class="page-head"><div><p class="eyebrow">YOUR COMPANY</p><h1>Client dashboard.</h1></div><div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <div class="metric-grid client-metrics">
+          <article class="metric"><span>Active closers</span><strong id="metric-closers">--</strong><small>Currently assigned</small></article>
+          <article class="metric"><span>Booked revenue</span><strong id="metric-revenue">--</strong><small>Total sales booked</small></article>
+          <article class="metric"><span>Verified cash</span><strong id="metric-cash">--</strong><small>Evidence-backed payments</small></article>
+          <article class="metric"><span>Open actions</span><strong id="metric-actions">--</strong><small>Pending follow-through</small></article>
+        </div>
+        <div class="split-grid">
+          <article class="panel table-panel">
+            <div class="panel-head"><div><p class="eyebrow">TEAM</p><h2>Active closer roster</h2></div></div>
+            <div class="table-wrap"><table><thead><tr><th>Closer</th><th>Training status</th><th>Total sales</th><th>Verified cash</th></tr></thead><tbody id="roster-rows"></tbody></table></div>
+          </article>
+          <article class="panel table-panel">
+            <div class="panel-head"><div><p class="eyebrow">HEALTH</p><h2>Recent check-ins</h2></div></div>
+            <div class="table-wrap"><table><thead><tr><th>Date</th><th>Health</th><th>Summary</th></tr></thead><tbody id="recent-checkin-rows"></tbody></table></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="closers" data-title="Closers">
+        <div class="page-head"><div><p class="eyebrow">YOUR TEAM</p><h1>Assigned closers</h1></div><div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <article class="panel table-panel">
+          <div class="panel-head"><div><h2>Closer register</h2></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Closer</th><th>Joined</th><th>Training status</th><th>Total sales</th><th>Verified cash</th><th>Reported cash</th></tr></thead><tbody id="closer-rows"></tbody></table></div>
+        </article>
+        <article class="panel table-panel">
+          <div class="panel-head"><div><p class="eyebrow">PERFORMANCE</p><h2>Performance reports</h2></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Period</th><th>Closer</th><th>Calls</th><th>Sales</th><th>Cash</th></tr></thead><tbody id="report-rows"></tbody></table></div>
+        </article>
+      </section>
+
+      <section class="view" id="revenue" data-title="Revenue">
+        <div class="page-head"><div><p class="eyebrow">REVENUE</p><h1>Sales &amp; pipeline</h1></div><div class="page-actions" id="revenue-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <div class="metric-grid client-metrics">
+          <article class="metric"><span>Active leads</span><strong id="metric-leads">--</strong><small>Open customer records</small></article>
+          <article class="metric"><span>Open pipeline</span><strong id="metric-pipeline">--</strong><small>Current open deals</small></article>
+          <article class="metric"><span>Booked revenue</span><strong id="metric-rev-booked">--</strong><small>Sales in period</small></article>
+          <article class="metric"><span>Verified cash</span><strong id="metric-rev-cash">--</strong><small>Evidence-backed payments</small></article>
+        </div>
+        <article class="panel table-panel">
+          <div class="panel-head"><div><h2>Leads</h2></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Customer</th><th>Stage</th><th>Last activity</th></tr></thead><tbody id="lead-rows"></tbody></table></div>
+        </article>
+        <article class="panel table-panel">
+          <div class="panel-head"><div><h2>Recent sales</h2></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead><tbody id="sale-rows"></tbody></table></div>
+        </article>
+      </section>
+
+      <section class="view" id="actions" data-title="Actions & history">
+        <div class="page-head"><div><p class="eyebrow">FOLLOW-THROUGH</p><h1>Actions &amp; history</h1></div><div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <article class="panel table-panel">
+          <div class="panel-head"><div><h2>Open actions</h2></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Title</th><th>Priority</th><th>Due</th><th>Status</th><th>Owner</th></tr></thead><tbody id="action-rows"></tbody></table></div>
+        </article>
+        <article class="panel table-panel">
+          <div class="panel-head"><div><p class="eyebrow">HISTORY</p><h2>Check-in history</h2></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Date</th><th>Health</th><th>Summary</th><th>Material issue</th></tr></thead><tbody id="checkin-rows"></tbody></table></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modal" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><div><p class="eyebrow" id="modal-eyebrow">CLIENT</p><h2 id="modal-title">Add record</h2></div><button class="icon-button" type="button" data-close-modal aria-label="Close">×</button></div><form id="record-form" class="dynamic-form"></form></section></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="loading-bar" id="loading-bar" hidden></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

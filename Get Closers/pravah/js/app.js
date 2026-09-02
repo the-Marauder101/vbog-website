@@ -6,7 +6,7 @@
   const state = {
     context: null, dashboard: {}, clients: [], placements: [], reports: [],
     attention: [], candidates: [], requirements: [], checkins: [], actions: [], syncClients: [], catalogClients: [],
-    candidateSync: [], outcomeCheckpoints: []
+    candidateSync: [], outcomeCheckpoints: [], portalMemberships: [], portalInvitations: []
   };
   const byId = (id) => document.getElementById(id);
   const authScreen = byId("auth-screen");
@@ -80,12 +80,13 @@
       api.fetch("pravah_v_outcome_checkpoints?select=*&order=due_on.asc")
     ]);
     [state.dashboard, state.clients, state.placements, state.reports, state.attention, state.candidates, state.requirements, state.checkins, state.actions, state.syncClients, state.catalogClients, state.candidateSync, state.outcomeCheckpoints] = results;
+    if (isAdmin()) { try { const portal = await Promise.all([api.rpc("pravah_list_portal_memberships"), api.rpc("pravah_list_invitations")]); state.portalMemberships = portal[0] || []; state.portalInvitations = portal[1] || []; } catch (_) { state.portalMemberships = []; state.portalInvitations = []; } }
     renderAll();
   }
   async function refreshData(message) { setLoading(true); try { await loadData(); if (message) showToast(message); } catch (error) { showToast(error.message, true); } finally { setLoading(false); } }
   async function runWrite(work, message) { setLoading(true); try { const result = await work(); await loadData(); showToast(message); return result; } catch (error) { showToast(error.message, true); throw error; } finally { setLoading(false); } }
 
-  function renderAll() { renderMetrics(); renderAttention(); renderPlacements(); renderClients(); renderReports(); renderSyncClients(); renderCandidateSync(); renderOutcomes(); fillReportPlacements(); }
+  function renderAll() { renderMetrics(); renderAttention(); renderPlacements(); renderClients(); renderReports(); renderSyncClients(); renderCandidateSync(); renderOutcomes(); fillReportPlacements(); renderPortal(); }
   function renderMetrics() {
     const d = state.dashboard || {}; const vyomActive = state.syncClients.filter((row) => row.source_active && row.status !== "ignored").length;
     byId("metric-clients").textContent = vyomActive || d.active_clients || 0;
@@ -178,6 +179,25 @@
     }).join("");
   }
 
+  function renderPortal() {
+    const memberHost = byId("portal-membership-rows"); const inviteHost = byId("portal-invitation-rows");
+    if (!memberHost || !isAdmin()) return;
+    const baseUrl = window.location.href.replace(/\/[^/]*$/, "");
+    const clientUrl = byId("client-portal-url"); const closerUrl = byId("closer-portal-url");
+    if (clientUrl) clientUrl.textContent = baseUrl + "/client/";
+    if (closerUrl) closerUrl.textContent = baseUrl + "/closer/";
+    if (!state.portalMemberships.length) { memberHost.innerHTML = emptyRow(5, "No portal users activated yet."); }
+    else { memberHost.innerHTML = state.portalMemberships.map((m) => `<tr><td><strong>${esc(m.display_name || m.email)}</strong><small>${esc(m.email)}</small></td><td>${esc(m.business_name)}</td><td>${badge(m.role)}</td><td>${dateLabel(m.created_at)}</td><td class="row-actions">${isAdmin() ? `<button class="text-button danger-link" data-revoke-membership="${m.id}">Revoke</button>` : ""}</td></tr>`).join(""); }
+    if (!state.portalInvitations.length) { inviteHost.innerHTML = emptyRow(5, "No pending invitations."); }
+    else { inviteHost.innerHTML = state.portalInvitations.map((inv) => `<tr><td>${esc(inv.email)}</td><td>${esc(inv.business_name)}</td><td>${badge(inv.role)}</td><td>${dateLabel(inv.created_at)}</td><td class="row-actions"><button class="text-button" data-copy-invite="${esc(inv.token)}">Copy link</button><button class="text-button danger-link" data-revoke-invite="${inv.id}">Revoke</button></td></tr>`).join(""); }
+  }
+  async function revokeInvitation(id) { await runWrite(() => api.rpc("pravah_revoke_invitation", { p_invitation_id: id }), "Invitation revoked"); }
+  async function revokeMembership(id) { await runWrite(() => api.rpc("pravah_revoke_portal_membership", { p_membership_id: id }), "Portal access revoked"); }
+  async function copyInviteLink(token) {
+    const baseUrl = window.location.href.replace(/\/[^/]*$/, ""); const link = baseUrl + "/client/?invite=" + token;
+    try { await navigator.clipboard.writeText(link); showToast("Invitation link copied"); } catch (_) { showToast("Copy blocked by browser", true); }
+  }
+
   function fillReportPlacements(selected) { const select = byId("report-placement"); select.innerHTML = option("", "Choose closer and client") + state.placements.filter((p) => p.placement_state === "active").map((p) => option(p.placement_id, `${p.closer_name} · ${p.business_name}`, p.placement_id === selected)).join(""); }
   function openModal(modal) { lastFocus = document.activeElement; modal.hidden = false; document.body.style.overflow = "hidden"; }
   function closeModal(modal) { modal.hidden = true; document.body.style.overflow = ""; if (lastFocus) lastFocus.focus(); }
@@ -209,7 +229,8 @@
       target: ["PERFORMANCE", "Set target"], checkin: ["CLIENT SUCCESS", "Record client check-in"], action: ["OWNERSHIP", "Add action"], "action-update": ["OWNERSHIP", "Update action"],
       "client-profile": ["CLIENT RECORD", "Edit operating profile"], "verify-cash": ["EVIDENCE", "Verify cash collected"], "void-report": ["CORRECTION", "Void report"],
       "placement-state": ["PLACEMENT", "End or void placement"], "archive-client": ["CLIENT RECORD", "Archive client"], "delete-client": ["DANGER ZONE", "Delete unused client"], "link-client": ["IDENTITY", "Link Vyom client"],
-      "candidate-link": ["IDENTITY", "Link Vyom candidate"], "candidate-handoff": ["HANDOFF", "Complete placed-candidate handoff"], outcome: ["LONG-TERM OUTCOME", "Record Nikash checkpoint"]
+      "candidate-link": ["IDENTITY", "Link Vyom candidate"], "candidate-handoff": ["HANDOFF", "Complete placed-candidate handoff"], outcome: ["LONG-TERM OUTCOME", "Record Nikash checkpoint"],
+      "invite-client": ["PORTAL ACCESS", "Invite client user"], "invite-closer": ["PORTAL ACCESS", "Invite closer"]
     };
     byId("form-modal-eyebrow").textContent = headings[type][0]; byId("form-modal-title").textContent = headings[type][1]; dynamicForm.dataset.type = type; dynamicForm.dataset.id = id || "";
     if (type === "placement") {
@@ -240,6 +261,8 @@
     if (type === "candidate-link") { const row = state.candidateSync.find((x) => x.source_task_id === id) || {}; const candidates = option("", "Choose an existing Nikash candidate") + state.candidates.map((c) => option(c.id, c.full_name, c.id === row.suggested_candidate_id)).join(""); dynamicForm.innerHTML = formShell(`<div class="full record-context"><strong>Vyom: ${esc(row.source_name)}</strong><span>${esc(row.source_email || "No email recorded")} · verify the person, not just the spelling.</span></div>` + selectField("existing_candidate_id", "Nikash candidate", candidates, "required"), "Link verified candidate", "If the person is absent, create their assessment in Nikash first. Pravah does not create or score candidates."); }
     if (type === "candidate-handoff") { const row = state.candidateSync.find((x) => x.source_task_id === id) || {}; const requirements = option("", "Choose the linked client's role") + state.requirements.filter((r) => r.client_id === row.resolved_client_id).map((r) => option(r.id, r.title || "Untitled role")).join(""); dynamicForm.innerHTML = formShell(`<div class="full record-context"><strong>${esc(row.source_name)}</strong><span>${esc(row.resolved_client_name || row.source_client_name)} · verified Nikash identity</span></div>` + selectField("requirement_id", "Nikash client role", requirements, "required") + field("joined_on", "Actual joining date", "date", today(), "required"), "Create placement in Pravah", "This starts post-selection ownership in Pravah. Recruitment stages remain controlled in Vyom."); }
     if (type === "outcome") { const [placementId, checkpoint] = id.split("|"); const row = state.outcomeCheckpoints.find((x) => x.placement_id === placementId && x.checkpoint === checkpoint) || {}; dynamicForm.innerHTML = formShell(`<div class="full record-context"><strong>${esc(row.closer_name)} · ${esc(checkpoint.toUpperCase())}</strong><span>${esc(row.business_name)} · due ${dateLabel(row.due_on)}</span></div>` + selectField("retained", "Still retained?", option("true", "Yes", row.retained === true) + option("false", "No", row.retained === false), "required") + selectField("exit_type", "Exit type (if not retained)", option("", "Not applicable") + option("voluntary", "Voluntary", row.exit_type === "voluntary") + option("involuntary", "Involuntary", row.exit_type === "involuntary")) + textareaField("exit_reason", "Exit reason (required if not retained)", "", row.exit_reason) + field("days_to_first_close", "Days to first close", "number", row.days_to_first_close ?? row.suggested_days_to_first_close ?? "", 'min="0"') + field("quota_pct", "Quota achievement %", "number", row.quota_attainment_pct ?? "", 'min="0" step="0.1"') + field("satisfaction", "Client satisfaction (1–5)", "number", row.client_satisfaction ?? "", 'min="1" max="5"') + textareaField("notes", "Outcome notes", "", row.client_notes), "Save checkpoint to Pravah and Nikash", "These outcomes test whether Nikash's assessment and interviews predicted real performance."); }
+    if (type === "invite-client") { const clients = option("", "Choose client") + state.clients.filter((c) => c.status !== "ended").map((c) => option(c.id, c.business_name)).join(""); dynamicForm.innerHTML = formShell(selectField("client_id", "Client", clients, "required") + field("email", "Email address", "email", "", "required") + selectField("role", "Role", option("client_admin", "Client admin — can add leads and log activities") + option("client_viewer", "Client viewer — read-only dashboard"), "required"), "Send invitation", "The user will receive a portal link. They must accept and sign in with this email."); }
+    if (type === "invite-closer") { const placements = option("", "Choose placement") + state.placements.filter((p) => p.placement_state === "active").map((p) => option(p.placement_id, `${p.closer_name} · ${p.business_name}`)).join(""); dynamicForm.innerHTML = formShell(selectField("placement_id", "Placement", placements, "required") + field("email", "Closer email address", "email", "", "required"), "Send closer invitation", "The closer will see only their own placement data, reports, and targets."); }
     openModal(formModal);
   }
 
@@ -264,6 +287,8 @@
       if (type === "candidate-link") await api.rpc("pravah_link_vyom_candidate", { p_source_task_id: id, p_existing_candidate_id: values.existing_candidate_id });
       if (type === "candidate-handoff") await api.rpc("pravah_complete_candidate_handoff", { p_source_task_id: id, p_requirement_id: values.requirement_id, p_joined_on: values.joined_on });
       if (type === "outcome") { const [placementId, checkpoint] = id.split("|"); await api.rpc("pravah_record_outcome", { p_placement_id: placementId, p_checkpoint: checkpoint, p_retained: values.retained === "true", p_exit_type: valueOrNull(values.exit_type), p_exit_reason: valueOrNull(values.exit_reason), p_days_to_first_close: numberOrNull(values.days_to_first_close), p_quota_pct: numberOrNull(values.quota_pct), p_satisfaction: numberOrNull(values.satisfaction), p_notes: valueOrNull(values.notes) }); }
+      if (type === "invite-client") await api.rpc("pravah_create_invitation", { p_client_id: values.client_id, p_email: values.email.trim(), p_role: values.role, p_placement_id: null });
+      if (type === "invite-closer") { const placement = state.placements.find((p) => p.placement_id === values.placement_id); await api.rpc("pravah_create_invitation", { p_client_id: placement?.client_id, p_email: values.email.trim(), p_role: "closer", p_placement_id: values.placement_id }); }
       closeModal(formModal); await refreshData("Saved");
     } catch (error) { errorHost.textContent = error.message; } finally { submit.disabled = false; }
   }
@@ -290,8 +315,8 @@
   document.querySelectorAll("[data-close-client]").forEach((button) => button.addEventListener("click", () => closeModal(clientModal)));
   formModal.addEventListener("click", (event) => { if (event.target === formModal || event.target.closest("[data-close-form]")) closeModal(formModal); }); reportModal.addEventListener("click", (event) => { if (event.target === reportModal) closeModal(reportModal); }); clientModal.addEventListener("click", (event) => { if (event.target === clientModal) closeModal(clientModal); });
   document.addEventListener("click", (event) => {
-    const formButton = event.target.closest("[data-form]"); const reportButton = event.target.closest("[data-report-placement]"); const copyButton = event.target.closest("[data-copy-report]"); const sharedButton = event.target.closest("[data-shared-report]"); const clientButton = event.target.closest("[data-client-detail]"); const syncButton = event.target.closest("[data-sync-vyom]"); const linkButton = event.target.closest("[data-link-vyom]"); const ignoreButton = event.target.closest("[data-ignore-vyom]"); const candidateLink = event.target.closest("[data-link-candidate]"); const candidateIgnore = event.target.closest("[data-ignore-candidate]");
-    if (formButton) { if (!clientModal.hidden) closeModal(clientModal); openForm(formButton.dataset.form, formButton.dataset.id); } if (reportButton) openReport(reportButton.dataset.reportPlacement); if (copyButton) copyReport(copyButton.dataset.copyReport); if (sharedButton) markShared(sharedButton.dataset.sharedReport).catch(() => {}); if (clientButton) openClientDetail(clientButton.dataset.clientDetail); if (syncButton) refreshVyom().catch(() => {}); if (linkButton) linkVyom(linkButton.dataset.linkVyom, linkButton.dataset.existing).catch(() => {}); if (ignoreButton) ignoreVyom(ignoreButton.dataset.ignoreVyom).catch(() => {}); if (candidateLink) linkCandidate(candidateLink.dataset.linkCandidate, candidateLink.dataset.existing).catch(() => {}); if (candidateIgnore) ignoreCandidate(candidateIgnore.dataset.ignoreCandidate).catch(() => {}); if (event.target.closest("[data-open-report]")) openReport();
+    const formButton = event.target.closest("[data-form]"); const reportButton = event.target.closest("[data-report-placement]"); const copyButton = event.target.closest("[data-copy-report]"); const sharedButton = event.target.closest("[data-shared-report]"); const clientButton = event.target.closest("[data-client-detail]"); const syncButton = event.target.closest("[data-sync-vyom]"); const linkButton = event.target.closest("[data-link-vyom]"); const ignoreButton = event.target.closest("[data-ignore-vyom]"); const candidateLink = event.target.closest("[data-link-candidate]"); const candidateIgnore = event.target.closest("[data-ignore-candidate]"); const revokeMemb = event.target.closest("[data-revoke-membership]"); const revokeInv = event.target.closest("[data-revoke-invite]"); const copyInv = event.target.closest("[data-copy-invite]");
+    if (formButton) { if (!clientModal.hidden) closeModal(clientModal); openForm(formButton.dataset.form, formButton.dataset.id); } if (reportButton) openReport(reportButton.dataset.reportPlacement); if (copyButton) copyReport(copyButton.dataset.copyReport); if (sharedButton) markShared(sharedButton.dataset.sharedReport).catch(() => {}); if (clientButton) openClientDetail(clientButton.dataset.clientDetail); if (syncButton) refreshVyom().catch(() => {}); if (linkButton) linkVyom(linkButton.dataset.linkVyom, linkButton.dataset.existing).catch(() => {}); if (ignoreButton) ignoreVyom(ignoreButton.dataset.ignoreVyom).catch(() => {}); if (candidateLink) linkCandidate(candidateLink.dataset.linkCandidate, candidateLink.dataset.existing).catch(() => {}); if (candidateIgnore) ignoreCandidate(candidateIgnore.dataset.ignoreCandidate).catch(() => {}); if (event.target.closest("[data-open-report]")) openReport(); if (revokeMemb) revokeMembership(revokeMemb.dataset.revokeMembership).catch(() => {}); if (revokeInv) revokeInvitation(revokeInv.dataset.revokeInvite).catch(() => {}); if (copyInv) copyInviteLink(copyInv.dataset.copyInvite);
   });
   document.addEventListener("keydown", (event) => { if (event.key !== "Escape") return; if (!reportModal.hidden) closeModal(reportModal); if (!formModal.hidden) closeModal(formModal); if (!clientModal.hidden) closeModal(clientModal); });
   document.querySelector(".mobile-nav").addEventListener("click", (event) => { const sidebar = document.querySelector(".sidebar"); sidebar.classList.toggle("open"); event.currentTarget.setAttribute("aria-expanded", String(sidebar.classList.contains("open"))); });
