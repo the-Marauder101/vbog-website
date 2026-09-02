@@ -94,3 +94,23 @@ existing one.
 Vyom also writes client mutations to `pravah_integration_outbox`. V2A refreshes
 current state on demand; V2B can consume the outbox incrementally without
 changing the identity contract.
+
+## 8. V2B candidate and outcome model
+
+Vyom gains one explicit source stage: `Placed - Handoff to Pravah`. Offer
+letters, client rounds and BGV are not treated as placements. Moving a candidate
+card into the handoff stage publishes its stable task UUID, name, optional email
+and canonical Vyom client UUID. It does not create a placement by itself.
+
+`pravah_candidate_sync_inbox` retains that source identity. Staff verify the
+existing Nikash candidate, verify the previously linked client and choose the
+correct Nikash requirement plus actual joining date. Only then does Pravah use
+the shared placement contract.
+
+Training, placement and outcome changes enter `pravah_integration_events`.
+The staff-authenticated Edge Function delivers idempotent, non-editable milestone
+summaries to the source Vyom task. Full training and sales data stays in Pravah.
+
+Because Pravah and Nikash share the Closer-Match database, confirmed M3, M6 and
+M12 outcomes write directly to Nikash's existing `placement_outcomes` table.
+The frozen match and interview references remain unchanged.

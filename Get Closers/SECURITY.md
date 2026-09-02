@@ -59,3 +59,15 @@ the credential.
 - closer-reported cash is excluded from official cash KPIs until verified;
 - void/archive/delete operations require reasons and, where destructive,
   administrator access.
+
+## V2B enforcement
+
+- a Vyom offer/client-round stage cannot create a Pravah placement;
+- candidate names suggest a Nikash match but never link automatically;
+- candidate creation and assessment remain unavailable in Pravah;
+- client and requirement IDs are checked together before placement creation;
+- cross-project credentials remain inside the existing staff-authenticated Edge
+  Function;
+- Vyom receives a short milestone summary, not performance reports or scores;
+- event retries are idempotent and retain the last error;
+- client and closer portal permissions remain dormant.

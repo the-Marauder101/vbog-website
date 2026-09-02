@@ -107,3 +107,28 @@ An operator should not need to understand integration architecture to find a
 client. Every active Vyom client appears in Clients, including identities still
 awaiting Pravah setup. Link-existing and create-record actions are available on
 the client card; Data & connections retains the technical reconciliation view.
+
+## D-021 — Offer sent is not placement
+
+Vyom publishes a post-selection handoff only when a person deliberately moves
+the card to `Placed - Handoff to Pravah`. R3, R4, BGV and offer stages remain
+recruitment evidence and cannot silently create a placement.
+
+## D-022 — Candidate identity is human-linked
+
+Vyom currently has hundreds of cards while Nikash intentionally lacks contact
+data on existing candidates. A normalized name can suggest one candidate but a
+staff member must verify the link. Pravah never creates or assesses candidates.
+
+## D-023 — A handoff is not complete without the role
+
+Pravah requires the linked Vyom client, a matching Nikash requirement and the
+actual joining date before creating the placement. This prevents a candidate
+from being attached to a convenient but incorrect client role.
+
+## D-024 — Outcomes flow to prediction; milestones flow to workflow
+
+M3/M6/M12 outcomes write into Nikash's existing outcome model because they are
+prediction-validation evidence. Vyom receives only short, read-only training,
+placement and outcome summaries so it can close the recruitment loop without
+becoming a second performance tool.

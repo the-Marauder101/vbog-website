@@ -69,6 +69,7 @@
       <section class="view" id="training" data-title="Training & placements">
         <div class="page-head"><div><p class="eyebrow">POST-SELECTION</p><h1>Training &amp; placements</h1></div><div class="page-actions" data-internal><button class="button button-primary" type="button" data-form="placement">Record placement</button></div></div>
         <div class="panel table-panel"><div class="panel-head"><div><h2>Placement pipeline</h2><p>Pravah status with read-only Nikash candidate and client context.</p></div></div><div class="table-wrap"><table><thead><tr><th>Closer</th><th>Client / role</th><th>Joined</th><th>Training</th><th>Risk</th><th></th></tr></thead><tbody id="placement-rows"></tbody></table></div></div>
+        <div class="panel table-panel outcome-panel"><div class="panel-head"><div><h2>3 / 6 / 12-month outcomes</h2><p>Confirmed here once; available to Nikash immediately for prediction validation.</p></div></div><div class="table-wrap"><table><thead><tr><th>Closer</th><th>Checkpoint</th><th>Due</th><th>State</th><th>Outcome</th><th></th></tr></thead><tbody id="outcome-rows"></tbody></table></div></div>
       </section>
 
       <section class="view" id="closers" data-title="Active closers">
@@ -97,6 +98,7 @@
           <article class="connection-card"><div class="connection-icon">S</div><div><h2>Sheets / CRM</h2><p>Mapped client lead and result data</p></div><span class="connection-state">Planned · V5</span></article>
         </div>
         <div class="panel table-panel connection-inbox"><div class="panel-head"><div><h2>Vyom client reconciliation</h2><p>The same client setup controls shown in Clients, with identity-matching context.</p></div><button class="button button-secondary" type="button" data-sync-vyom>Refresh from Vyom</button></div><div class="table-wrap"><table><thead><tr><th>Vyom client</th><th>Suggested match</th><th>State</th><th></th></tr></thead><tbody id="sync-client-rows"></tbody></table></div></div>
+        <div class="panel table-panel connection-inbox"><div class="panel-head"><div><h2>Placed-candidate handoffs</h2><p>Move a candidate to “Placed - Handoff to Pravah” in Vyom. Verify the existing Nikash identity and client role here; Pravah never edits recruitment stages.</p></div><button class="button button-secondary" type="button" data-sync-vyom>Refresh from Vyom</button></div><div class="table-wrap"><table><thead><tr><th>Candidate</th><th>Client</th><th>Nikash identity</th><th>State</th><th></th></tr></thead><tbody id="candidate-sync-rows"></tbody></table></div></div>
       </section>
     </main>
   </div>

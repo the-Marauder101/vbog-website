@@ -645,6 +645,7 @@
     el.innerHTML = `
       <div class="task-title">${task.source === "zapier" || task.source === "api" ? `<span class="zapier-dot" title="Created via ${task.source === "api" ? "the Vyom API" : "Zapier / Google Sheets"}"></span>` : ""}${UI.esc(task.title)}${notesInd}</div>
       ${task.fields?.client ? `<div class="task-client"><span class="client-chip" title="Client">${UI.esc(task.fields.client)}</span></div>` : ""}
+      ${task.fields?.pravah_status ? `<div class="task-pravah"><span class="pravah-chip" title="Latest read-only status from Pravah">${UI.esc(task.fields.pravah_status)}</span></div>` : ""}
       <div class="task-meta">
         <span class="assignee">
           <span class="avatar ${assignee ? "" : "unassigned"}"${assignee ? ` style="background:${UI.avatarColor(assignee)}"` : ""}>${UI.esc(initials)}</span>
@@ -867,6 +868,12 @@
     clientHint.hidden = opts.length > 0;
     clientHint.textContent = "No clients yet — add them in Settings.";
     document.getElementById("t-email").value = task ? task.fields?.email || "" : "";
+    const pravahGroup = document.getElementById("t-pravah-group");
+    const pravahStatus = task?.fields?.pravah_status;
+    pravahGroup.hidden = !pravahStatus;
+    document.getElementById("t-pravah-status").textContent = pravahStatus || "";
+    document.getElementById("t-pravah-time").textContent = task?.fields?.pravah_status_at
+      ? `Updated ${UI.fmtDateTime(task.fields.pravah_status_at)}` : "";
 
     // Due date vs Stage Date: exactly one of the two groups is ever shown.
     const stage = stageMode(task);

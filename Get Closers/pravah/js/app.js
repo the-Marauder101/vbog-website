@@ -5,7 +5,8 @@
   const parser = window.PravahReportParser;
   const state = {
     context: null, dashboard: {}, clients: [], placements: [], reports: [],
-    attention: [], candidates: [], requirements: [], checkins: [], actions: [], syncClients: [], catalogClients: []
+    attention: [], candidates: [], requirements: [], checkins: [], actions: [], syncClients: [], catalogClients: [],
+    candidateSync: [], outcomeCheckpoints: []
   };
   const byId = (id) => document.getElementById(id);
   const authScreen = byId("auth-screen");
@@ -74,15 +75,17 @@
       api.fetch("pravah_v_attention?select=*&order=due_on.asc.nullslast&limit=50"), api.fetch("candidates?select=id,full_name&order=full_name"),
       api.fetch("requirements?select=id,title,client_id,clients(business_name)&status=eq.open&order=opened_at.desc"),
       api.fetch("pravah_v_checkins?select=*&order=occurred_at.desc&limit=200"), api.fetch("pravah_v_actions?select=*&order=created_at.desc&limit=300"),
-      api.fetch("pravah_v_client_sync_inbox?select=*&order=source_name"), api.fetch("clients?select=id,business_name&order=business_name")
+      api.fetch("pravah_v_client_sync_inbox?select=*&order=source_name"), api.fetch("clients?select=id,business_name&order=business_name"),
+      api.fetch("pravah_v_candidate_sync_inbox?select=*&order=status_changed_at.desc"),
+      api.fetch("pravah_v_outcome_checkpoints?select=*&order=due_on.asc")
     ]);
-    [state.dashboard, state.clients, state.placements, state.reports, state.attention, state.candidates, state.requirements, state.checkins, state.actions, state.syncClients, state.catalogClients] = results;
+    [state.dashboard, state.clients, state.placements, state.reports, state.attention, state.candidates, state.requirements, state.checkins, state.actions, state.syncClients, state.catalogClients, state.candidateSync, state.outcomeCheckpoints] = results;
     renderAll();
   }
   async function refreshData(message) { setLoading(true); try { await loadData(); if (message) showToast(message); } catch (error) { showToast(error.message, true); } finally { setLoading(false); } }
   async function runWrite(work, message) { setLoading(true); try { const result = await work(); await loadData(); showToast(message); return result; } catch (error) { showToast(error.message, true); throw error; } finally { setLoading(false); } }
 
-  function renderAll() { renderMetrics(); renderAttention(); renderPlacements(); renderClients(); renderReports(); renderSyncClients(); fillReportPlacements(); }
+  function renderAll() { renderMetrics(); renderAttention(); renderPlacements(); renderClients(); renderReports(); renderSyncClients(); renderCandidateSync(); renderOutcomes(); fillReportPlacements(); }
   function renderMetrics() {
     const d = state.dashboard || {}; const vyomActive = state.syncClients.filter((row) => row.source_active && row.status !== "ignored").length;
     byId("metric-clients").textContent = vyomActive || d.active_clients || 0;
@@ -146,6 +149,35 @@
     }).join("");
   }
 
+  function renderCandidateSync() {
+    const host = byId("candidate-sync-rows"); if (!host) return;
+    const visible = state.candidateSync.filter((row) => row.status !== "ignored");
+    if (!visible.length) { host.innerHTML = emptyRow(5, "No placed-candidate handoffs from Vyom yet."); return; }
+    host.innerHTML = visible.map((row) => {
+      let actions = "";
+      if (!row.linked_candidate_id) {
+        if (row.suggested_candidate_id) actions += `<button class="button button-secondary" data-link-candidate="${row.source_task_id}" data-existing="${row.suggested_candidate_id}">Link suggested</button>`;
+        actions += `<button class="text-button" data-form="candidate-link" data-id="${row.source_task_id}">Link existing candidate</button>`;
+      } else if (row.client_link_state === "ready" && !row.placement_id) {
+        actions += `<button class="button button-primary" data-form="candidate-handoff" data-id="${row.source_task_id}">Complete handoff</button>`;
+      } else if (!row.placement_id) {
+        actions += `<span class="action-hint">${row.client_link_state === "client_not_linked" ? "Link this client first" : "Add a client to the Vyom card"}</span>`;
+      }
+      if (isAdmin() && !row.placement_id) actions += `<button class="text-button danger-link" data-ignore-candidate="${row.source_task_id}">Ignore</button>`;
+      return `<tr><td><strong>${esc(row.source_name)}</strong><small>${esc(row.source_email || "No email on Vyom card")}</small></td><td>${esc(row.source_client_name || "Missing on Vyom card")}<small>${row.resolved_client_name ? `Linked to ${esc(row.resolved_client_name)}` : esc(row.client_link_state.replaceAll("_", " "))}</small></td><td>${esc(row.linked_candidate_name || row.suggested_candidate_name || "No unique name match")}</td><td>${badge(row.status)}</td><td class="row-actions">${actions}</td></tr>`;
+    }).join("");
+  }
+
+  function renderOutcomes() {
+    const host = byId("outcome-rows"); if (!host) return;
+    if (!state.outcomeCheckpoints.length) { host.innerHTML = emptyRow(6, "Outcome checkpoints appear when a placement is recorded."); return; }
+    host.innerHTML = state.outcomeCheckpoints.map((row) => {
+      const outcome = row.checkpoint_state === "recorded" ? (row.retained ? "Retained" : `Exited · ${row.exit_reason || "reason not recorded"}`) : "—";
+      const button = isInternal() ? `<button class="text-button" data-form="outcome" data-id="${row.placement_id}|${row.checkpoint}">${row.checkpoint_state === "recorded" ? "Update" : "Record"}</button>` : "";
+      return `<tr><td><strong>${esc(row.closer_name)}</strong><small>${esc(row.business_name)}</small></td><td class="mono">${esc(row.checkpoint.toUpperCase())}</td><td>${dateLabel(row.due_on)}${row.days_overdue ? `<small>${row.days_overdue} days overdue</small>` : ""}</td><td>${badge(row.checkpoint_state)}</td><td>${esc(outcome)}</td><td class="row-actions">${button}</td></tr>`;
+    }).join("");
+  }
+
   function fillReportPlacements(selected) { const select = byId("report-placement"); select.innerHTML = option("", "Choose closer and client") + state.placements.filter((p) => p.placement_state === "active").map((p) => option(p.placement_id, `${p.closer_name} · ${p.business_name}`, p.placement_id === selected)).join(""); }
   function openModal(modal) { lastFocus = document.activeElement; modal.hidden = false; document.body.style.overflow = "hidden"; }
   function closeModal(modal) { modal.hidden = true; document.body.style.overflow = ""; if (lastFocus) lastFocus.focus(); }
@@ -176,7 +208,8 @@
       placement: ["PLACEMENT", "Record placement"], training: ["TRAINING", "Start training"], checkpoint: ["TRAINING", "Add checkpoint"], "training-update": ["TRAINING", "Update training"],
       target: ["PERFORMANCE", "Set target"], checkin: ["CLIENT SUCCESS", "Record client check-in"], action: ["OWNERSHIP", "Add action"], "action-update": ["OWNERSHIP", "Update action"],
       "client-profile": ["CLIENT RECORD", "Edit operating profile"], "verify-cash": ["EVIDENCE", "Verify cash collected"], "void-report": ["CORRECTION", "Void report"],
-      "placement-state": ["PLACEMENT", "End or void placement"], "archive-client": ["CLIENT RECORD", "Archive client"], "delete-client": ["DANGER ZONE", "Delete unused client"], "link-client": ["IDENTITY", "Link Vyom client"]
+      "placement-state": ["PLACEMENT", "End or void placement"], "archive-client": ["CLIENT RECORD", "Archive client"], "delete-client": ["DANGER ZONE", "Delete unused client"], "link-client": ["IDENTITY", "Link Vyom client"],
+      "candidate-link": ["IDENTITY", "Link Vyom candidate"], "candidate-handoff": ["HANDOFF", "Complete placed-candidate handoff"], outcome: ["LONG-TERM OUTCOME", "Record Nikash checkpoint"]
     };
     byId("form-modal-eyebrow").textContent = headings[type][0]; byId("form-modal-title").textContent = headings[type][1]; dynamicForm.dataset.type = type; dynamicForm.dataset.id = id || "";
     if (type === "placement") {
@@ -204,6 +237,9 @@
     if (type === "archive-client") dynamicForm.innerHTML = formShell(textareaField("reason", "Archive reason", "required"), "Archive client", "The client and its history remain searchable.");
     if (type === "delete-client") dynamicForm.innerHTML = formShell(field("confirmation", "Type DELETE to confirm", "text", "", "required"), "Delete unused client", "Deletion works only when no role, placement, check-in, action or Vyom link exists.");
     if (type === "link-client") { const row = state.syncClients.find((x) => x.source_client_id === id) || {}; const clients = option("", "Choose an existing Pravah/Nikash client") + state.catalogClients.map((c) => option(c.id, c.business_name, c.id === row.suggested_client_id)).join(""); dynamicForm.innerHTML = formShell(`<div class="full record-context"><strong>Vyom: ${esc(row.source_name)}</strong><span>Verify the identity—names alone are not treated as proof.</span></div>` + selectField("existing_client_id", "Existing client", clients, "required"), "Link verified identity"); }
+    if (type === "candidate-link") { const row = state.candidateSync.find((x) => x.source_task_id === id) || {}; const candidates = option("", "Choose an existing Nikash candidate") + state.candidates.map((c) => option(c.id, c.full_name, c.id === row.suggested_candidate_id)).join(""); dynamicForm.innerHTML = formShell(`<div class="full record-context"><strong>Vyom: ${esc(row.source_name)}</strong><span>${esc(row.source_email || "No email recorded")} · verify the person, not just the spelling.</span></div>` + selectField("existing_candidate_id", "Nikash candidate", candidates, "required"), "Link verified candidate", "If the person is absent, create their assessment in Nikash first. Pravah does not create or score candidates."); }
+    if (type === "candidate-handoff") { const row = state.candidateSync.find((x) => x.source_task_id === id) || {}; const requirements = option("", "Choose the linked client's role") + state.requirements.filter((r) => r.client_id === row.resolved_client_id).map((r) => option(r.id, r.title || "Untitled role")).join(""); dynamicForm.innerHTML = formShell(`<div class="full record-context"><strong>${esc(row.source_name)}</strong><span>${esc(row.resolved_client_name || row.source_client_name)} · verified Nikash identity</span></div>` + selectField("requirement_id", "Nikash client role", requirements, "required") + field("joined_on", "Actual joining date", "date", today(), "required"), "Create placement in Pravah", "This starts post-selection ownership in Pravah. Recruitment stages remain controlled in Vyom."); }
+    if (type === "outcome") { const [placementId, checkpoint] = id.split("|"); const row = state.outcomeCheckpoints.find((x) => x.placement_id === placementId && x.checkpoint === checkpoint) || {}; dynamicForm.innerHTML = formShell(`<div class="full record-context"><strong>${esc(row.closer_name)} · ${esc(checkpoint.toUpperCase())}</strong><span>${esc(row.business_name)} · due ${dateLabel(row.due_on)}</span></div>` + selectField("retained", "Still retained?", option("true", "Yes", row.retained === true) + option("false", "No", row.retained === false), "required") + selectField("exit_type", "Exit type (if not retained)", option("", "Not applicable") + option("voluntary", "Voluntary", row.exit_type === "voluntary") + option("involuntary", "Involuntary", row.exit_type === "involuntary")) + textareaField("exit_reason", "Exit reason (required if not retained)", "", row.exit_reason) + field("days_to_first_close", "Days to first close", "number", row.days_to_first_close ?? row.suggested_days_to_first_close ?? "", 'min="0"') + field("quota_pct", "Quota achievement %", "number", row.quota_attainment_pct ?? "", 'min="0" step="0.1"') + field("satisfaction", "Client satisfaction (1–5)", "number", row.client_satisfaction ?? "", 'min="1" max="5"') + textareaField("notes", "Outcome notes", "", row.client_notes), "Save checkpoint to Pravah and Nikash", "These outcomes test whether Nikash's assessment and interviews predicted real performance."); }
     openModal(formModal);
   }
 
@@ -225,6 +261,9 @@
       if (type === "archive-client") await api.rpc("pravah_archive_client", { p_client_id: id, p_reason: values.reason });
       if (type === "delete-client") { if (values.confirmation !== "DELETE") throw new Error("Type DELETE exactly to confirm."); await api.rpc("pravah_delete_unused_client", { p_client_id: id }); }
       if (type === "link-client") await api.rpc("pravah_link_vyom_client", { p_source_client_id: id, p_existing_client_id: values.existing_client_id });
+      if (type === "candidate-link") await api.rpc("pravah_link_vyom_candidate", { p_source_task_id: id, p_existing_candidate_id: values.existing_candidate_id });
+      if (type === "candidate-handoff") await api.rpc("pravah_complete_candidate_handoff", { p_source_task_id: id, p_requirement_id: values.requirement_id, p_joined_on: values.joined_on });
+      if (type === "outcome") { const [placementId, checkpoint] = id.split("|"); await api.rpc("pravah_record_outcome", { p_placement_id: placementId, p_checkpoint: checkpoint, p_retained: values.retained === "true", p_exit_type: valueOrNull(values.exit_type), p_exit_reason: valueOrNull(values.exit_reason), p_days_to_first_close: numberOrNull(values.days_to_first_close), p_quota_pct: numberOrNull(values.quota_pct), p_satisfaction: numberOrNull(values.satisfaction), p_notes: valueOrNull(values.notes) }); }
       closeModal(formModal); await refreshData("Saved");
     } catch (error) { errorHost.textContent = error.message; } finally { submit.disabled = false; }
   }
@@ -238,6 +277,8 @@
   async function refreshVyom() { await runWrite(() => api.invoke("pravah-sync-vyom"), "Vyom client inbox refreshed"); }
   async function linkVyom(sourceId, existingId) { await runWrite(() => api.rpc("pravah_link_vyom_client", { p_source_client_id: sourceId, p_existing_client_id: existingId || null }), existingId ? "Client identity linked" : "Vyom client activated"); }
   async function ignoreVyom(sourceId) { await runWrite(() => api.rpc("pravah_ignore_vyom_client", { p_source_client_id: sourceId }), "Vyom client ignored"); }
+  async function linkCandidate(sourceId, existingId) { await runWrite(() => api.rpc("pravah_link_vyom_candidate", { p_source_task_id: sourceId, p_existing_candidate_id: existingId }), "Candidate identity linked"); }
+  async function ignoreCandidate(sourceId) { await runWrite(() => api.rpc("pravah_ignore_vyom_candidate", { p_source_task_id: sourceId }), "Candidate handoff ignored"); }
   async function copyReport(id) { const report = state.reports.find((item) => item.id === id); if (!report || report.voided_at) return; try { await navigator.clipboard.writeText(parser.whatsappMessage(report)); showToast("WhatsApp update copied"); } catch (_error) { showToast("Copy was blocked by this browser", true); } }
   async function markShared(id) { await runWrite(() => api.rpc("pravah_mark_report_shared", { p_report_id: id }), "Marked as shared"); }
   function signOut() { api.signOut(); window.location.hash = ""; showSignedOut(); }
@@ -249,8 +290,8 @@
   document.querySelectorAll("[data-close-client]").forEach((button) => button.addEventListener("click", () => closeModal(clientModal)));
   formModal.addEventListener("click", (event) => { if (event.target === formModal || event.target.closest("[data-close-form]")) closeModal(formModal); }); reportModal.addEventListener("click", (event) => { if (event.target === reportModal) closeModal(reportModal); }); clientModal.addEventListener("click", (event) => { if (event.target === clientModal) closeModal(clientModal); });
   document.addEventListener("click", (event) => {
-    const formButton = event.target.closest("[data-form]"); const reportButton = event.target.closest("[data-report-placement]"); const copyButton = event.target.closest("[data-copy-report]"); const sharedButton = event.target.closest("[data-shared-report]"); const clientButton = event.target.closest("[data-client-detail]"); const syncButton = event.target.closest("[data-sync-vyom]"); const linkButton = event.target.closest("[data-link-vyom]"); const ignoreButton = event.target.closest("[data-ignore-vyom]");
-    if (formButton) { if (!clientModal.hidden) closeModal(clientModal); openForm(formButton.dataset.form, formButton.dataset.id); } if (reportButton) openReport(reportButton.dataset.reportPlacement); if (copyButton) copyReport(copyButton.dataset.copyReport); if (sharedButton) markShared(sharedButton.dataset.sharedReport).catch(() => {}); if (clientButton) openClientDetail(clientButton.dataset.clientDetail); if (syncButton) refreshVyom().catch(() => {}); if (linkButton) linkVyom(linkButton.dataset.linkVyom, linkButton.dataset.existing).catch(() => {}); if (ignoreButton) ignoreVyom(ignoreButton.dataset.ignoreVyom).catch(() => {}); if (event.target.closest("[data-open-report]")) openReport();
+    const formButton = event.target.closest("[data-form]"); const reportButton = event.target.closest("[data-report-placement]"); const copyButton = event.target.closest("[data-copy-report]"); const sharedButton = event.target.closest("[data-shared-report]"); const clientButton = event.target.closest("[data-client-detail]"); const syncButton = event.target.closest("[data-sync-vyom]"); const linkButton = event.target.closest("[data-link-vyom]"); const ignoreButton = event.target.closest("[data-ignore-vyom]"); const candidateLink = event.target.closest("[data-link-candidate]"); const candidateIgnore = event.target.closest("[data-ignore-candidate]");
+    if (formButton) { if (!clientModal.hidden) closeModal(clientModal); openForm(formButton.dataset.form, formButton.dataset.id); } if (reportButton) openReport(reportButton.dataset.reportPlacement); if (copyButton) copyReport(copyButton.dataset.copyReport); if (sharedButton) markShared(sharedButton.dataset.sharedReport).catch(() => {}); if (clientButton) openClientDetail(clientButton.dataset.clientDetail); if (syncButton) refreshVyom().catch(() => {}); if (linkButton) linkVyom(linkButton.dataset.linkVyom, linkButton.dataset.existing).catch(() => {}); if (ignoreButton) ignoreVyom(ignoreButton.dataset.ignoreVyom).catch(() => {}); if (candidateLink) linkCandidate(candidateLink.dataset.linkCandidate, candidateLink.dataset.existing).catch(() => {}); if (candidateIgnore) ignoreCandidate(candidateIgnore.dataset.ignoreCandidate).catch(() => {}); if (event.target.closest("[data-open-report]")) openReport();
   });
   document.addEventListener("keydown", (event) => { if (event.key !== "Escape") return; if (!reportModal.hidden) closeModal(reportModal); if (!formModal.hidden) closeModal(formModal); if (!clientModal.hidden) closeModal(clientModal); });
   document.querySelector(".mobile-nav").addEventListener("click", (event) => { const sidebar = document.querySelector(".sidebar"); sidebar.classList.toggle("open"); event.currentTarget.setAttribute("aria-expanded", String(sidebar.classList.contains("open"))); });
