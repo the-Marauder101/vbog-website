@@ -55,17 +55,22 @@ the shell without returning to the original conversation.
 - Nikash outcome checkpoint expansion;
 - automatic Pravah-to-Nikash outcomes.
 
-**Build status:** implementation in review.
+**Build status:** merged and deployed on 2026-09-02. One real placed-candidate smoke test remains the operational validation gate.
 
 ## V3 — KRA/KPI System
 
 - six weighted KRAs;
-- thirteen scored KPIs;
-- targets and thresholds;
+- sixteen scored KPIs;
+- configurable targets and thresholds;
 - period scorecards;
 - evidence and commentary;
 - employee and management views;
-- report exports.
+- manager finalization and auditable overrides;
+- structured technical-round attribution;
+- pattern insight and intervention tracking;
+- company target configuration.
+
+**Build status:** implementation in review. Database and frontend are additive and have not been deployed until merge.
 
 ## V4 — Client Revenue Engine
 
@@ -97,7 +102,7 @@ the shell without returning to the original conversation.
 
 - scheduled source synchronization;
 - optional WhatsApp API/Zapier delivery;
-- pattern recognition and intervention tracking;
+- deeper pattern recognition and intervention intelligence;
 - assessment prediction validity;
 - client and closer risk signals.
 
