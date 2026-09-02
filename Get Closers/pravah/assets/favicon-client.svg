@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pravah Client Portal">
+  <!-- Client Portal: concentric ripples — a still pool where a drop
+       has landed. The read-only view: you observe the surface, you
+       don't stir it. Blue-to-sky palette. -->
+  <defs>
+    <linearGradient id="pg" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="0.5" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#60a5fa"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-7 16 16)">
+    <path fill="url(#pg)"
+          d="M 14.5 3.8 C 21 2.8, 28.2 7.5, 28.5 14.8
+             C 28.8 21.6, 24 27.8, 17.5 28.2
+             C 11.5 28.5, 5.8 24.6, 4.2 18.5
+             C 2.8 13, 7.5 4.8, 14.5 3.8 Z"/>
+    <path d="M 8.5 10 C 11.5 6.8, 16 6.5, 19.5 8.5"
+          fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".13"/>
+    <!-- Concentric ripples: a still pool, observed not stirred -->
+    <circle cx="16" cy="15.5" r="3" fill="none" stroke="rgba(255,255,255,0.38)" stroke-width="1.6"/>
+    <circle cx="16" cy="15.5" r="6.5" fill="none" stroke="rgba(255,255,255,0.24)" stroke-width="1.2"/>
+    <circle cx="16" cy="15.5" r="10" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.9"/>
+    <!-- Center dot: the drop that made the ripple -->
+    <circle cx="16" cy="15.5" r="1.2" fill="rgba(255,255,255,0.40)"/>
+  </g>
+</svg>

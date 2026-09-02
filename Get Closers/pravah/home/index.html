@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Pravah — choose your workspace.">
+  <title>Pravah — Home</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/pravah-mark.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f5f2ee; --surface: #fffdf9; --ink: #151416; --muted: #706b68;
+      --line: #d8d1ca; --orange: #ff4d00; --indigo: #696ff2; --plum: #5b2749;
+      --green: #236f4d; --radius: 3px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-height: 100vh; background: var(--ink); color: #fff; font-family: Inter, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+    /* ── Auth ─────────────────────────────────────────────────── */
+    .auth-screen { width: 100%; max-width: 400px; padding: 40px 24px; text-align: center; }
+    .auth-screen h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -.03em; }
+    .auth-screen p { color: #a9a4a7; font-size: 13px; margin: 0 0 28px; }
+    .auth-screen label { display: block; text-align: left; font-size: 12px; font-weight: 600; color: #a9a4a7; margin-bottom: 14px; }
+    .auth-screen input { display: block; width: 100%; margin-top: 5px; padding: 10px 12px; font: inherit; font-size: 14px; background: #242225; color: #fff; border: 1px solid #3a373a; border-radius: var(--radius); }
+    .auth-screen input:focus { outline: none; border-color: var(--indigo); }
+    .form-error { color: var(--orange); font-size: 12px; min-height: 18px; margin: 4px 0 12px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 20px; font: 600 13px Inter, sans-serif; border: none; border-radius: var(--radius); cursor: pointer; transition: background .15s; }
+    .btn-primary { background: var(--indigo); color: #fff; width: 100%; }
+    .btn-primary:hover { background: #5a60e0; }
+    .btn-secondary { background: #242225; color: #bdb8bb; border: 1px solid #3a373a; }
+    .btn-secondary:hover { background: #2f2c30; color: #fff; }
+    .btn:disabled { opacity: .5; cursor: default; }
+
+    /* ── Brand ────────────────────────────────────────────────── */
+    .brand-area { margin-bottom: 40px; text-align: center; }
+    .brand-mark { display: inline-block; width: 48px; height: 48px; background: url('../assets/pravah-mark.svg') center / contain no-repeat; margin-bottom: 12px; }
+    .brand-area strong { display: block; font-size: 26px; letter-spacing: -.04em; }
+    .brand-area small { display: block; color: #706c70; font-size: 11px; margin-top: 4px; }
+
+    /* ── Picker (Windows 10/11 style) ────────────────────────── */
+    .picker { width: 100%; max-width: 720px; padding: 0 24px; }
+    .picker-greeting { text-align: center; margin-bottom: 36px; }
+    .picker-greeting h1 { font-size: 24px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.03em; }
+    .picker-greeting p { color: #a9a4a7; font-size: 13px; margin: 0; }
+    .portal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .portal-card {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      padding: 32px 20px 28px; background: #1e1c1f; border: 1px solid #2e2b2f;
+      border-radius: 8px; cursor: pointer; text-decoration: none; color: #fff;
+      transition: background .15s, border-color .15s, transform .12s;
+    }
+    .portal-card:hover { background: #282628; border-color: #484548; transform: translateY(-2px); }
+    .portal-card:active { transform: translateY(0); }
+    .portal-avatar {
+      width: 64px; height: 64px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
+      overflow: hidden;
+    }
+    .portal-avatar img { width: 100%; height: 100%; object-fit: contain; }
+    .portal-card .portal-name { font-size: 15px; font-weight: 600; text-align: center; }
+    .portal-card .portal-desc { font-size: 12px; color: #a9a4a7; text-align: center; line-height: 1.5; }
+
+    /* Avatar colors per portal type */
+    .avatar-ops { background: linear-gradient(135deg, var(--plum), var(--indigo)); }
+    .avatar-perf { background: linear-gradient(135deg, var(--green), #3bb88a); }
+    .avatar-rev { background: linear-gradient(135deg, #b45309, var(--orange)); }
+    .avatar-client { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+    .avatar-closer { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+
+    .picker-footer { text-align: center; margin-top: 32px; }
+
+    /* ── Loading ──────────────────────────────────────────────── */
+    .loading { text-align: center; padding: 60px 24px; color: #a9a4a7; font-size: 13px; }
+    .loading::before { content: ''; display: block; width: 32px; height: 32px; margin: 0 auto 16px; border: 2px solid #3a373a; border-top-color: var(--indigo); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 500px) {
+      .portal-grid { grid-template-columns: 1fr; }
+      .portal-card { flex-direction: row; padding: 20px; gap: 16px; text-align: left; }
+      .portal-card .portal-name, .portal-card .portal-desc { text-align: left; }
+      .portal-avatar { width: 48px; height: 48px; font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Auth -->
+  <section class="auth-screen" id="auth-screen">
+    <div class="brand-area"><span class="brand-mark"></span><strong>pravah</strong><small>by Get Closers</small></div>
+    <form id="signin-form">
+      <h1>Sign in</h1>
+      <p>Use your Pravah account — the same one you use for any Get Closers tool.</p>
+      <label>Email<input name="email" type="email" autocomplete="username" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <p class="form-error" id="signin-error" role="alert"></p>
+      <button class="btn btn-primary" type="submit">Continue</button>
+    </form>
+  </section>
+
+  <!-- Loading -->
+  <div class="loading" id="loading" hidden>Loading your workspaces…</div>
+
+  <!-- Picker -->
+  <div class="picker" id="picker" hidden>
+    <div class="brand-area"><span class="brand-mark"></span><strong>pravah</strong><small>by Get Closers</small></div>
+    <div class="picker-greeting"><h1 id="greeting">Welcome back</h1><p>Choose a workspace to continue.</p></div>
+    <div class="portal-grid" id="portal-grid"></div>
+    <div class="picker-footer"><button class="btn btn-secondary" type="button" id="signout-btn">Sign out</button></div>
+  </div>
+
+  <!-- No access -->
+  <section class="auth-screen" id="no-access" hidden>
+    <div class="brand-area"><span class="brand-mark"></span><strong>pravah</strong><small>by Get Closers</small></div>
+    <h1>No workspaces available</h1>
+    <p>Your account exists but no Pravah access has been configured. Ask an administrator to add you.</p>
+    <button class="btn btn-secondary" type="button" id="signout-btn-2">Sign out</button>
+  </section>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script>
+  (function() {
+    'use strict';
+    var api = window.PravahApi;
+    var $ = function(id) { return document.getElementById(id); };
+
+    var PORTALS = {
+      ops:    { name: 'Pravah Operations',  desc: 'Placements, training, reports, clients, and the full operating flow.', href: '../', icon: '../assets/favicon-ops.svg' },
+      perf:   { name: 'Performance',        desc: 'KRA/KPI scorecard — measure what matters across six result areas.', href: '../performance/', icon: '../assets/favicon-perf.svg' },
+      rev:    { name: 'Revenue',            desc: 'Lead-to-cash pipeline — customers, deals, sales, and verified payments.', href: '../revenue/', icon: '../assets/favicon-rev.svg' },
+      client: { name: 'Client Portal',      desc: 'Your closers, revenue, and action history — read-only operations view.', href: '../client/', icon: '../assets/favicon-client.svg' },
+      closer: { name: 'Closer Portal',      desc: 'Your personal workspace — leads, pipeline, targets, and performance.', href: '../closer/', icon: '../assets/favicon-closer.svg' }
+    };
+
+    function show(id) {
+      ['auth-screen', 'loading', 'picker', 'no-access'].forEach(function(s) { $(s).hidden = s !== id; });
+    }
+
+    function renderCard(key, extra) {
+      var p = PORTALS[key];
+      var name = extra ? p.name + ' — ' + extra : p.name;
+      return '<a class="portal-card" href="' + p.href + '">' +
+        '<span class="portal-avatar"><img src="' + p.icon + '" alt="' + p.name + '"></span>' +
+        '<div><span class="portal-name">' + name + '</span>' +
+        '<span class="portal-desc">' + p.desc + '</span></div></a>';
+    }
+
+    function buildPicker(portals) {
+      var hasInternal = portals.some(function(p) { return p.is_internal; });
+      var externals = portals.filter(function(p) { return !p.is_internal; });
+      var displayName = portals[0]?.display_name || 'there';
+      $('greeting').textContent = 'Welcome, ' + displayName.split(' ')[0];
+
+      var html = '';
+
+      if (hasInternal) {
+        html += renderCard('ops');
+        html += renderCard('perf');
+        html += renderCard('rev');
+      }
+
+      externals.forEach(function(m) {
+        if (m.role === 'client_admin' || m.role === 'client_viewer') {
+          html += renderCard('client', m.client_name);
+        }
+        if (m.role === 'closer') {
+          html += renderCard('closer', m.client_name);
+        }
+      });
+
+      $('portal-grid').innerHTML = html;
+    }
+
+    async function loadPortals() {
+      show('loading');
+      try {
+        var portals = await api.rpc('pravah_my_portals');
+        if (!portals || !portals.length) { show('no-access'); return; }
+        var externals = portals.filter(function(p) { return !p.is_internal; });
+        var hasInternal = portals.some(function(p) { return p.is_internal; });
+        if (!hasInternal && externals.length === 1 && externals[0].role === 'closer') {
+          window.location.href = '../closer/';
+          return;
+        }
+        if (!hasInternal && externals.length === 1 && (externals[0].role === 'client_admin' || externals[0].role === 'client_viewer')) {
+          window.location.href = '../client/';
+          return;
+        }
+        buildPicker(portals);
+        show('picker');
+      } catch (e) {
+        show('no-access');
+      }
+    }
+
+    function signOut() { api.signOut(); show('auth-screen'); }
+
+    $('signin-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var err = $('signin-error');
+      var btn = e.currentTarget.querySelector('button');
+      var fd = new FormData(e.currentTarget);
+      btn.disabled = true; err.textContent = '';
+      try {
+        await api.signIn(fd.get('email'), fd.get('password'));
+        await loadPortals();
+      } catch (ex) { err.textContent = ex.message; }
+      finally { btn.disabled = false; }
+    });
+
+    $('signout-btn').addEventListener('click', signOut);
+    $('signout-btn-2').addEventListener('click', signOut);
+
+    if (api.restore()) loadPortals(); else show('auth-screen');
+  })();
+  </script>
+</body>
+</html>

@@ -21,7 +21,7 @@
   function fillSelect(id,items,placeholder,labelFn){const el=$(id);if(!el)return;el.innerHTML=`<option value="">${esc(placeholder)}</option>`+items.map(x=>`<option value="${esc(x.id||x.placement_id)}">${esc(labelFn(x))}</option>`).join('')}
   function formOptions(){
     fillSelect('client-filter',state.clients,'All clients',x=>x.business_name);
-    ['lead-client','activity-client','deal-client','sale-client','payment-client'].forEach(id=>fillSelect(id,state.clients,'Select client',x=>x.business_name));
+    ['lead-client','activity-client','deal-client','sale-client','payment-client','import-client'].forEach(id=>fillSelect(id,state.clients,'Select client',x=>x.business_name));
     ['lead-owner','activity-owner','deal-owner','sale-owner'].forEach(id=>fillSelect(id,state.placements,'Unassigned',x=>placementName(x.placement_id)));
     const stages=state.stages.map(s=>`<option value="${esc(s.code)}">${esc(s.label)}</option>`).join('');['lead-stage','deal-stage'].forEach(id=>{const el=$(id);if(el)el.innerHTML=stages});
     const leads=state.leads.map(l=>`<option value="${esc(l.id)}">${esc(l.full_name)} · ${esc(clientName(l.client_id))}</option>`).join('');['activity-lead','deal-lead','sale-lead'].forEach(id=>{const el=$(id);if(el)el.innerHTML='<option value="">No lead selected</option>'+leads});
@@ -80,7 +80,211 @@
   async function updateLead(id,stage){try{setLoading(true);await api.rpc('pravah_revenue_update_lead',{p_lead_id:id,p_stage:stage});await load();toast('Lead stage updated.')}catch(e){toast(e.message,true)}finally{setLoading(false)}}
   async function updateDeal(id,stage){try{setLoading(true);await api.rpc('pravah_revenue_update_deal',{p_deal_id:id,p_stage:stage});await load();toast('Deal stage updated.')}catch(e){toast(e.message,true)}finally{setLoading(false)}}
   async function verifyPayment(id){const note=prompt('Evidence note for this payment (optional):','Verified against client / CRM evidence');if(note===null)return;const url=prompt('Evidence URL (optional):','');try{setLoading(true);await api.rpc('pravah_revenue_verify_payment',{p_payment_id:id,p_evidence_url:url||null,p_evidence_note:note||null});await load();toast('Payment verified.')}catch(e){toast(e.message,true)}finally{setLoading(false)}}
-  document.addEventListener('click',e=>{const t=e.target;if(t.matches('[data-modal]'))openModal(t.dataset.modal);if(t.matches('[data-activity]')){const l=state.leads.find(x=>x.id===t.dataset.activity);openModal('activity',{lead:l.id,client:l.client_id})}if(t.matches('[data-deal-from-lead]')){const l=state.leads.find(x=>x.id===t.dataset.dealFromLead);openModal('deal',{lead:l.id,client:l.client_id})}if(t.matches('[data-close-modal]')||t===$('modal'))closeModal();if(t.matches('[data-refresh]'))load();if(t.matches('[data-apply]')){setLoading(true);applyDashboard(true).finally(()=>setLoading(false))}if(t.matches('[data-verify-payment]'))verifyPayment(t.dataset.verifyPayment);if(t.matches('[data-signout]')){api.signOut();showSignedOut()}});
+  /* ── CSV Import ── */
+  const importState={csvHeaders:[],csvRows:[],fieldMap:{},stageMap:{},profileId:null,batchId:null,mappingVersionId:null};
+  const TARGET_FIELDS=[
+    {key:'',label:'— skip —'},
+    {key:'full_name',label:'Customer name'},
+    {key:'contact_key',label:'Phone / contact key'},
+    {key:'email',label:'Email'},
+    {key:'crm_status',label:'CRM status'},
+    {key:'activity_type',label:'Activity type'},
+    {key:'occurred_at',label:'Date / occurred at'},
+    {key:'duration_seconds',label:'Duration (seconds)'},
+    {key:'note',label:'Notes'},
+    {key:'source_record_key',label:'Source record key'}
+  ];
+  const AUTO_MAP={'name':'full_name','full_name':'full_name','client_name':'full_name','customer':'full_name','customer_name':'full_name',
+    'phone':'contact_key','mobile':'contact_key','contact':'contact_key','contact_key':'contact_key','client_number':'contact_key','number':'contact_key',
+    'email':'email','email_id':'email','mail':'email',
+    'status':'crm_status','crm_status':'crm_status','stage':'crm_status','lead_status':'crm_status',
+    'type':'activity_type','activity_type':'activity_type','call_type':'activity_type','activity':'activity_type',
+    'date':'occurred_at','occurred_at':'occurred_at','call_date':'occurred_at','created_at':'occurred_at','timestamp':'occurred_at','datetime':'occurred_at',
+    'duration':'duration_seconds','duration_seconds':'duration_seconds','call_duration':'duration_seconds',
+    'notes':'note','note':'note','remarks':'note','comment':'note','comments':'note',
+    'source_record_key':'source_record_key','record_key':'source_record_key','id':'source_record_key','row_id':'source_record_key'};
+  function parseCsv(text){
+    const rows=[];let row=[],field='',inQuotes=false,i=0;
+    while(i<text.length){
+      const c=text[i];
+      if(inQuotes){
+        if(c==='"'&&text[i+1]==='"'){field+='"';i+=2}
+        else if(c==='"'){inQuotes=false;i++}
+        else{field+=c;i++}
+      }else{
+        if(c==='"'){inQuotes=true;i++}
+        else if(c===','){row.push(field.trim());field='';i++}
+        else if(c==='\n'||(c==='\r'&&text[i+1]==='\n')){row.push(field.trim());if(row.some(v=>v!==''))rows.push(row);row=[];field='';i+=c==='\r'?2:1}
+        else if(c==='\r'){row.push(field.trim());if(row.some(v=>v!==''))rows.push(row);row=[];field='';i++}
+        else{field+=c;i++}
+      }
+    }
+    row.push(field.trim());if(row.some(v=>v!==''))rows.push(row);
+    return rows;
+  }
+  function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0}return Math.abs(h).toString(36)}
+  function importSetStep(n){
+    [1,2,3].forEach(s=>{const el=$('import-step-'+s);if(el)el.hidden=s!==n});
+    document.querySelectorAll('.step-dot').forEach(d=>{const ds=Number(d.dataset.step);d.classList.toggle('active',ds===n);d.classList.toggle('done',ds<n)});
+  }
+  function importParseAndPreview(){
+    const fileInput=$('import-file');const textArea=$('import-csv');
+    if(fileInput.files&&fileInput.files.length>0){
+      const reader=new FileReader();
+      reader.onload=function(e){importProcessCsv(e.target.result)};
+      reader.readAsText(fileInput.files[0]);
+    }else if(textArea.value.trim()){
+      importProcessCsv(textArea.value);
+    }else{toast('Please select a CSV file or paste CSV data.',true);return}
+  }
+  function importProcessCsv(raw){
+    const parsed=parseCsv(raw);
+    if(parsed.length<2){toast('CSV must have a header row and at least one data row.',true);return}
+    importState.csvHeaders=parsed[0].map(h=>h.toLowerCase().replace(/[^a-z0-9_]/g,'_'));
+    importState.csvRows=parsed.slice(1);
+    importState.rawCsv=raw;
+    const thead=$('preview-head');const tbody=$('preview-body');
+    thead.innerHTML='<tr>'+importState.csvHeaders.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>';
+    tbody.innerHTML=importState.csvRows.slice(0,5).map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('');
+    if(importState.csvRows.length>5)tbody.innerHTML+='<tr><td colspan="'+importState.csvHeaders.length+'"><div class="table-empty">+'+(importState.csvRows.length-5)+' more rows</div></td></tr>';
+    const grid=$('field-mapping-grid');
+    grid.innerHTML=importState.csvHeaders.map((h,i)=>{
+      const guess=AUTO_MAP[h]||'';
+      return '<label>'+esc(parsed[0][i]||h)+'<select data-field-map="'+i+'">'+TARGET_FIELDS.map(f=>'<option value="'+esc(f.key)+'"'+(f.key===guess?' selected':'')+'>'+esc(f.label)+'</option>').join('')+'</select></label>';
+    }).join('');
+    const hasCrmStatus=importState.csvHeaders.some(h=>AUTO_MAP[h]==='crm_status');
+    const stageSection=$('stage-mapping-section');
+    if(hasCrmStatus){
+      const crmIdx=importState.csvHeaders.findIndex(h=>AUTO_MAP[h]==='crm_status');
+      const uniqueStatuses=[...new Set(importState.csvRows.map(r=>(r[crmIdx]||'').trim()).filter(Boolean))];
+      if(uniqueStatuses.length>0){
+        stageSection.hidden=false;
+        const stageOpts=state.stages.map(s=>'<option value="'+esc(s.code)+'">'+esc(s.label)+'</option>').join('');
+        $('stage-mapping-grid').innerHTML=uniqueStatuses.map(s=>'<label>'+esc(s)+'<select data-stage-map="'+esc(s)+'"><option value="">— unmapped —</option>'+stageOpts+'</select></label>').join('');
+      }else{stageSection.hidden=true}
+    }else{stageSection.hidden=true}
+    importSetStep(2);
+  }
+  function collectMappings(){
+    const fieldMap={};
+    document.querySelectorAll('[data-field-map]').forEach(sel=>{
+      const idx=Number(sel.dataset.fieldMap);const target=sel.value;
+      if(target)fieldMap[importState.csvHeaders[idx]]=target;
+    });
+    const stageMap={};
+    document.querySelectorAll('[data-stage-map]').forEach(sel=>{
+      if(sel.value)stageMap[sel.dataset.stageMap.toLowerCase()]=sel.value;
+    });
+    importState.fieldMap=fieldMap;importState.stageMap=stageMap;
+    return{fieldMap,stageMap};
+  }
+  function mapRow(row,headers,fieldMap){
+    const out={};
+    headers.forEach((h,i)=>{
+      const target=fieldMap[h];
+      if(target&&row[i]!==undefined&&row[i]!=='')out[target]=row[i];
+    });
+    return out;
+  }
+  function addProgressStep(id,label,status){
+    const el=document.createElement('div');el.className='progress-step'+(status==='active'?' active':status==='done'?' done':'');el.id='prog-'+id;
+    if(status==='active')el.innerHTML='<span class="spinner"></span> '+esc(label);
+    else if(status==='done')el.innerHTML='<span class="check">OK</span> '+esc(label);
+    else el.innerHTML='<span></span> '+esc(label);
+    $('import-progress').appendChild(el);
+  }
+  function updateProgressStep(id,label,status){
+    const el=$('prog-'+id);if(!el)return;
+    el.className='progress-step'+(status==='active'?' active':status==='done'?' done':'');
+    if(status==='active')el.innerHTML='<span class="spinner"></span> '+esc(label);
+    else if(status==='done')el.innerHTML='<span class="check">OK</span> '+esc(label);
+    else el.innerHTML='<span></span> '+esc(label);
+  }
+  async function importStageAndValidate(){
+    const {fieldMap,stageMap}=collectMappings();
+    const hasName=Object.values(fieldMap).includes('full_name');
+    const hasContact=Object.values(fieldMap).includes('contact_key');
+    if(!hasName){toast('Map at least one column to "Customer name".',true);return}
+    if(!hasContact){toast('Map at least one column to "Phone / contact key".',true);return}
+    const clientId=$('import-client').value;
+    const sourceSystem=$('import-source').value.trim();
+    const parserKey=$('import-parser').value;
+    if(!clientId){toast('Select a client first.',true);importSetStep(1);return}
+    if(!sourceSystem){toast('Enter a source system name.',true);importSetStep(1);return}
+    importSetStep(3);
+    $('import-progress').innerHTML='';
+    $('import-results').hidden=true;
+    $('import-actions').innerHTML='';
+    setLoading(true);
+    try{
+      addProgressStep('profile','Creating import profile...',  'active');
+      const profileName=sourceSystem+'_csv_'+new Date().toISOString().slice(0,10);
+      const profileId=await api.rpc('pravah_import_create_profile',{
+        p_client_id:clientId,p_source_system:sourceSystem,p_name:profileName,p_parser_key:parserKey,
+        p_field_mapping:fieldMap,p_stage_mapping:stageMap
+      });
+      importState.profileId=profileId;
+      updateProgressStep('profile','Import profile created ('+esc(profileName)+')','done');
+      const mvRows=await api.fetch('pravah_import_mapping_versions?profile_id=eq.'+profileId+'&active=eq.true&order=version_no.desc&limit=1');
+      if(!mvRows||mvRows.length===0)throw new Error('No active mapping version found for profile.');
+      importState.mappingVersionId=mvRows[0].id;
+      addProgressStep('stage','Staging '+importState.csvRows.length+' rows...','active');
+      const checksum=simpleHash(importState.rawCsv);
+      const hasRecordKey=Object.values(fieldMap).includes('source_record_key');
+      const mappedRows=importState.csvRows.map((row,i)=>{
+        const mapped=mapRow(row,importState.csvHeaders,fieldMap);
+        if(!hasRecordKey||!mapped.source_record_key){
+          const firstVal=row.find(v=>v&&v.trim())||String(i);
+          mapped.source_record_key='row_'+(i+1)+'_'+simpleHash(firstVal);
+        }
+        return mapped;
+      });
+      const batchId=await api.rpc('pravah_import_stage_rows',{
+        p_profile_id:profileId,p_mapping_version_id:importState.mappingVersionId,
+        p_source_filename:($('import-file').files&&$('import-file').files[0])?$('import-file').files[0].name:'pasted_csv',
+        p_source_checksum:checksum,p_rows:mappedRows
+      });
+      importState.batchId=batchId;
+      updateProgressStep('stage','Staged '+mappedRows.length+' rows','done');
+      addProgressStep('validate','Validating batch...','active');
+      const result=await api.rpc('pravah_import_validate_batch',{p_batch_id:batchId});
+      updateProgressStep('validate','Validation complete','done');
+      $('import-results').hidden=false;
+      $('import-total').textContent=importState.csvRows.length;
+      $('import-valid').textContent=result.valid_count;
+      $('import-repair').textContent=result.repair_count;
+      $('import-imported').textContent='0';
+      if(result.valid_count>0){
+        $('import-actions').innerHTML='<button class="button button-primary" id="import-replay" type="button">Import '+result.valid_count+' valid rows now</button>';
+      }
+      if(result.repair_count>0){
+        toast(result.repair_count+' rows need repair. Valid rows can still be imported.',true);
+      }else{
+        toast('All rows validated successfully.');
+      }
+    }catch(e){toast(e.message,true);addProgressStep('error','Error: '+e.message,'')}finally{setLoading(false)}
+  }
+  async function importReplay(){
+    if(!importState.batchId){toast('No batch to replay.',true);return}
+    setLoading(true);
+    try{
+      addProgressStep('replay','Importing valid rows...','active');
+      const result=await api.rpc('pravah_import_replay_batch',{p_batch_id:importState.batchId});
+      updateProgressStep('replay','Import complete','done');
+      $('import-imported').textContent=result.imported_count;
+      $('import-actions').innerHTML='';
+      toast('Imported '+result.imported_count+' rows'+(result.duplicate_count>0?', '+result.duplicate_count+' duplicates skipped':'')+'.');
+      await load();
+    }catch(e){toast(e.message,true);addProgressStep('replay-err','Error: '+e.message,'')}finally{setLoading(false)}
+  }
+  function importReset(){
+    importState.csvHeaders=[];importState.csvRows=[];importState.fieldMap={};importState.stageMap={};importState.profileId=null;importState.batchId=null;importState.mappingVersionId=null;importState.rawCsv='';
+    $('import-file').value='';$('import-csv').value='';$('import-progress').innerHTML='';$('import-results').hidden=true;$('import-actions').innerHTML='';
+    importSetStep(1);
+    fillSelect('import-client',state.clients,'Select client',x=>x.business_name);
+  }
+
+  document.addEventListener('click',e=>{const t=e.target;if(t.matches('[data-modal]'))openModal(t.dataset.modal);if(t.matches('[data-activity]')){const l=state.leads.find(x=>x.id===t.dataset.activity);openModal('activity',{lead:l.id,client:l.client_id})}if(t.matches('[data-deal-from-lead]')){const l=state.leads.find(x=>x.id===t.dataset.dealFromLead);openModal('deal',{lead:l.id,client:l.client_id})}if(t.matches('[data-close-modal]')||t===$('modal'))closeModal();if(t.matches('[data-refresh]'))load();if(t.matches('[data-apply]')){setLoading(true);applyDashboard(true).finally(()=>setLoading(false))}if(t.matches('[data-verify-payment]'))verifyPayment(t.dataset.verifyPayment);if(t.matches('[data-signout]')){api.signOut();showSignedOut()}if(t.id==='import-next-1')importParseAndPreview();if(t.id==='import-next-2')importStageAndValidate();if(t.id==='import-back-2'){importSetStep(1)}if(t.id==='import-back-3'){importReset()}if(t.id==='import-replay')importReplay()});
   document.addEventListener('change',e=>{const t=e.target;if(t.matches('[data-lead-stage]'))updateLead(t.dataset.leadStage,t.value);if(t.matches('[data-deal-stage]'))updateDeal(t.dataset.dealStage,t.value)});
   $('record-form').addEventListener('submit',e=>{e.preventDefault();submitModal()});
   $('signin-form').addEventListener('submit',async e=>{e.preventDefault();$('signin-error').textContent='';try{const f=new FormData(e.currentTarget);await api.signIn(f.get('email'),f.get('password'));await load()}catch(err){$('signin-error').textContent=err.message}});

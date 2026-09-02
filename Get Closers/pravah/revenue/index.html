@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Pravah V4 — customer-centric revenue operations for Get Closers.">
   <title>Pravah — Revenue</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon-rev.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,6 +37,7 @@
         <a class="nav-link" href="#leads" data-view="leads"><span>02</span>Customers &amp; leads</a>
         <a class="nav-link" href="#pipeline" data-view="pipeline"><span>03</span>Pipeline</a>
         <a class="nav-link" href="#sales" data-view="sales"><span>04</span>Sales &amp; cash</a>
+        <a class="nav-link" href="#import" data-view="import"><span>05</span>Import</a>
       </nav>
       <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V4 revenue engine</strong><small id="sync-state">Connected</small></div></div>
     </aside>
@@ -71,6 +73,58 @@
       <section class="view" id="sales" data-title="Sales & cash">
         <div class="page-head"><div><p class="eyebrow">MONEY</p><h1>Sales &amp; cash.</h1><p class="section-note">Revenue and cash are deliberately separate. Only verified payments count as official cash.</p></div><div class="page-actions"><button class="button button-primary" data-modal="sale">Record sale</button><button class="button button-secondary" data-modal="payment">Record payment</button></div></div>
         <div class="split-grid"><article class="panel table-panel"><div class="panel-head"><div><h2>Recent sales</h2></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Client</th><th>Closer</th><th>Net revenue</th><th>Status</th></tr></thead><tbody id="sale-rows"></tbody></table></div></article><article class="panel table-panel"><div class="panel-head"><div><h2>Payment evidence</h2></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Amount</th><th>Status</th><th>Evidence</th><th></th></tr></thead><tbody id="payment-rows"></tbody></table></div></article></div>
+      </section>
+
+      <section class="view" id="import" data-title="Import leads">
+        <div class="page-head"><div><p class="eyebrow">BULK OPERATIONS</p><h1>Import leads.</h1><p class="section-note">Upload a CSV file or paste CSV data to bulk-import leads and activities into the revenue engine.</p></div></div>
+        <div class="import-steps">
+          <div class="step-indicator">
+            <div class="step-dot active" data-step="1"><span>1</span><small>Setup</small></div>
+            <div class="step-line"></div>
+            <div class="step-dot" data-step="2"><span>2</span><small>Preview &amp; map</small></div>
+            <div class="step-line"></div>
+            <div class="step-dot" data-step="3"><span>3</span><small>Import</small></div>
+          </div>
+        </div>
+        <article class="panel import-panel" id="import-wizard">
+          <div id="import-step-1">
+            <div class="panel-head"><div><h2>Source setup</h2><p>Select the client and configure the import source.</p></div></div>
+            <div class="form-grid import-form">
+              <label>Client<select id="import-client" required></select></label>
+              <label>Source system<input id="import-source" placeholder="e.g. callyzer, zoho, sheets" required></label>
+              <label>Parser<select id="import-parser"><option value="csv_generic">CSV generic</option><option value="ceo_dashboard_callyzer">CEO Dashboard / Callyzer</option><option value="crm_generic">CRM generic</option></select></label>
+              <label class="full">CSV file<input id="import-file" type="file" accept=".csv,text/csv"></label>
+              <label class="full">Or paste CSV data<textarea id="import-csv" rows="6" placeholder="name,phone,status,type,date,duration,notes&#10;John Doe,9876543210,interested,call,2025-01-15,120,Follow up needed"></textarea></label>
+            </div>
+            <div class="form-footer"><button class="button button-primary" id="import-next-1" type="button">Parse &amp; preview</button></div>
+          </div>
+          <div id="import-step-2" hidden>
+            <div class="panel-head"><div><h2>Preview &amp; field mapping</h2><p>Map CSV columns to revenue fields. Auto-mapped columns are pre-selected.</p></div></div>
+            <div class="table-wrap"><table><thead id="preview-head"></thead><tbody id="preview-body"></tbody></table></div>
+            <h3 class="import-subhead">Field mapping</h3>
+            <div class="form-grid" id="field-mapping-grid"></div>
+            <div id="stage-mapping-section" hidden>
+              <h3 class="import-subhead">Stage mapping</h3>
+              <p class="helper">Map source CRM status values to canonical revenue stages.</p>
+              <div class="form-grid" id="stage-mapping-grid"></div>
+            </div>
+            <div class="form-footer"><button class="button button-secondary" id="import-back-2" type="button">Back</button><button class="button button-primary" id="import-next-2" type="button">Stage rows for import</button></div>
+          </div>
+          <div id="import-step-3" hidden>
+            <div class="panel-head"><div><h2>Import results</h2><p>Rows are staged, validated, and ready for import.</p></div></div>
+            <div id="import-progress" class="import-progress"></div>
+            <div id="import-results" hidden>
+              <div class="metric-grid import-metrics">
+                <article class="metric"><span>Total rows</span><strong id="import-total">0</strong></article>
+                <article class="metric"><span>Valid</span><strong id="import-valid">0</strong></article>
+                <article class="metric"><span>Need repair</span><strong id="import-repair">0</strong></article>
+                <article class="metric"><span>Imported</span><strong id="import-imported">0</strong></article>
+              </div>
+              <div class="form-footer" id="import-actions"></div>
+            </div>
+            <div class="form-footer"><button class="button button-secondary" id="import-back-3" type="button">Start over</button></div>
+          </div>
+        </article>
       </section>
     </main>
   </div>
