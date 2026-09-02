@@ -24,6 +24,7 @@ create table if not exists pravah_candidate_sync_inbox (
   linked_by                uuid,
   created_at               timestamptz not null default now(),
   updated_at               timestamptz not null default now(),
+  status_changed_at        timestamptz,
   unique (source_system, source_task_id)
 );
 

@@ -36,9 +36,10 @@ order is:
 
 1. run `internal/pm/sql/21_pravah_candidate_outbox.sql` in Vyom;
 2. run `05_v2b_candidate_outcomes.sql` in Closer-Match;
-3. run `06_verify_v2b.sql` in Closer-Match;
-4. deploy the updated `functions/pravah-sync-vyom` function;
-5. deploy the frontend and complete the smoke test.
+3. run the idempotent `07_v2b_candidate_status_time_fix.sql` hotfix;
+4. run `06_verify_v2b.sql` in Closer-Match;
+5. deploy the updated `functions/pravah-sync-vyom` function;
+6. deploy the frontend and complete the smoke test.
 
 The Vyom migration must precede the updated function because the function reads
 the new candidate handoff view and writes to the new milestone-receipt table.
