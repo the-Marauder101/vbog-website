@@ -312,8 +312,11 @@ an end/void flow with reason and effective date.
 are entered using fixed fields for activity, outcomes, money, blockers, support
 and the next-period plan.
 
-**Clients** opens a client detail workspace with operating status, health,
-Vyom-link status, notes, check-in timeline and action timeline.
+**Clients** is the complete Vyom-sourced operating directory. It shows active
+source clients even before Pravah setup, makes **Link existing** and **Create
+Pravah record** explicit on pending cards, and opens operational clients into
+their status, health, notes, check-in and action timelines. Data & connections
+keeps the more technical reconciliation table.
 
 **Reports** produces a WhatsApp-ready summary, shows cash verification state,
 supports evidence verification and permits admin voiding without erasure.
