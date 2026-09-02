@@ -15,6 +15,15 @@ V2A activates the client-identity subset first:
 4. A person links the suggested record or activates a new operating client.
 5. The mapping retains both UUIDs; names never become the durable join.
 
+V2B activates the candidate subset:
+
+1. An operator moves a GetClosers candidate card to `Placed - Handoff to Pravah`.
+2. Vyom publishes the task UUID and current client assignment.
+3. Pravah refreshes the candidate handoff inbox.
+4. Staff verify one existing Nikash candidate; names are suggestions only.
+5. Staff choose the linked client's Nikash requirement and actual joining date.
+6. Pravah creates or reuses the placement idempotently.
+
 ## 2. Pravah → Vyom
 
 Placement recorded, training started, training passed/extended/failed, closer
@@ -22,6 +31,9 @@ active, and placement ended.
 
 These appear as milestone summaries and deep links. They do not create a
 second recruitment workflow.
+
+V2B writes a read-only `pravah_status` namespace onto the source Vyom card and
+retains an idempotent receipt. Vyom never edits the underlying Pravah record.
 
 ## 3. Nikash → Pravah
 
@@ -43,6 +55,8 @@ second recruitment workflow.
 - 3/6/12-month outcome.
 
 Outcome writeback uses the existing prediction record frozen at placement.
+V2B records M3/M6/M12 through Pravah into the shared `placement_outcomes`
+table, preserving composite, interview and technical predictors separately.
 
 ## 5. Sheets and CRM sources
 

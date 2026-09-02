@@ -113,3 +113,27 @@ The browser cannot choose a conflicting client relationship.
 - completion_note and cancellation_reason explain closure;
 - placement_state: active / ended / void;
 - archived_at and archive_reason preserve client history.
+
+## V2B additions
+
+### Candidate handoff
+
+| Field | Meaning |
+|---|---|
+| source_task_id / source_project_id | Stable Vyom card and GetClosers board IDs |
+| source_name / source_email | Source display identity; never an automatic join |
+| source_client_id / source_client_name | Vyom registry identity and display context |
+| linked_candidate_id | Human-verified Nikash candidate UUID |
+| linked_client_id / linked_requirement_id | Verified shared client and role |
+| placement_id | Idempotent shared placement created after confirmation |
+| status | new / linked / conflict / ignored / placed |
+
+### Outcome and milestone exchange
+
+- checkpoint: m3 / m6 / m12;
+- retained / exit_type / exit_reason;
+- days_to_first_close / quota_attainment_pct;
+- client_satisfaction / client_notes;
+- source_system / confirmed_by / recorded_at;
+- destination / source_task_id / event_type / idempotency_key;
+- delivery status / attempt_count / last_error / delivered_at.

@@ -28,6 +28,14 @@ change assessment or requirement ownership.
 - exit date, type, and reason;
 - checkpoint period and evidence source.
 
+## V2B implementation
+
+Pravah does not copy candidates or predictions. Staff link the Vyom task UUID to
+one existing Nikash candidate and choose the correct requirement. Confirmed
+M3/M6/M12 results are written to the existing `placement_outcomes` table with
+`source_system = pravah` and the confirming actor. Nikash's existing Placements
+view immediately reflects the outcome count and predictor-validation dataset.
+
 ## Explicit exclusions
 
 - no candidate-stage management inside Nikash;

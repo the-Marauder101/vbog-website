@@ -43,6 +43,8 @@ the shell without returning to the original conversation.
 - admin and staff interface differences;
 - client/closer roles reserved but denied until restricted portals ship.
 
+**Build status:** merged, deployed and verified in production on 2026-09-02.
+
 ### V2B — Candidate and outcome connections
 
 - Vyom integration outbox;
@@ -52,6 +54,8 @@ the shell without returning to the original conversation.
 - reconciliation queue;
 - Nikash outcome checkpoint expansion;
 - automatic Pravah-to-Nikash outcomes.
+
+**Build status:** implementation in review.
 
 ## V3 — KRA/KPI System
 

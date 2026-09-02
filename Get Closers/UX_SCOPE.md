@@ -82,6 +82,11 @@ States:
 - Retry failed event
 - Review milestone writeback
 
+V2B activates **Link candidate identity**, **Complete candidate handoff**, and
+**Record outcome checkpoint**. The handoff is a short form: existing Nikash
+candidate, linked-client requirement and actual joining date. The outcome form
+captures retained/exit state, first-close timing, quota, satisfaction and notes.
+
 ## V3 modals
 
 - Configure KPI target and threshold

@@ -1153,6 +1153,9 @@ input, textarea, select { font-family: inherit; font-size: 14px; }
   white-space: nowrap;
 }
 .task-card .task-client { margin: -4px 0 8px; }
+.task-card .task-pravah { margin: -3px 0 8px; }
+.pravah-chip { display: inline-flex; align-items: center; border: 1px solid #ff4d00; color: #9d3305; background: #fff4ed; border-radius: 999px; padding: 3px 8px; font-size: 10px; font-weight: 700; }
+.pravah-status-box { border: 1px solid var(--border); border-left: 3px solid #ff4d00; border-radius: 6px; background: #fff9f4; padding: 10px 12px; font-weight: 700; }
 .tags-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag-chip.managed { font-size: 12.5px; padding: 4px 11px; }
 .tag-usage {

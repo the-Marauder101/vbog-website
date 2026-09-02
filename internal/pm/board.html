@@ -168,6 +168,12 @@
           <input type="email" id="t-email" autocomplete="off" placeholder="e.g. candidate@example.com (optional)">
           <div class="form-hint">Automations use this — e.g. a webhook rule emails this address when the task changes stage. Keeps notes free for actual notes.</div>
         </div>
+        <div class="form-group" id="t-pravah-group" hidden>
+          <label>Pravah status</label>
+          <div class="pravah-status-box" id="t-pravah-status"></div>
+          <div class="form-hint" id="t-pravah-time"></div>
+          <div class="form-hint">Read-only. Training and outcome updates are owned by Pravah.</div>
+        </div>
         <div class="form-group">
           <label for="t-status">Status</label>
           <select id="t-status"></select>

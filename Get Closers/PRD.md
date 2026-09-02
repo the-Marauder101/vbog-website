@@ -350,19 +350,77 @@ and refreshes the Pravah inbox. The GitHub Pages browser receives no secret.
 | closer | Not provisioned pending the closer workspace and own-record policies |
 | candidate | Remains in Vyom/Nikash; Pravah begins only after placement |
 
-## 18. Current restart point after V2A
+## 18. V2B — Candidate and Outcome Connections
 
-After merging V2A, deploy both reviewed migrations and the Edge Function, set
-its Vyom secrets, run `04_verify_v2a.sql`, and test one client link, one fixed
-report, one cash verification and one multi-action check-in.
+V2A is deployed. V2B closes the candidate lifecycle without turning Pravah into
+a second recruitment board or a second assessment product.
 
-The next code batch is V2B Candidate and Outcome Connections:
+### Product boundary
 
-1. stable candidate/card identity links;
-2. selected-candidate intake from Vyom;
-3. Pravah training/placement milestone writeback to Vyom;
-4. 3/6/12-month outcome checkpoints to Nikash;
-5. failed-event retry and human reconciliation.
+| Product | Owns | Receives from the other products |
+|---|---|---|
+| Vyom | recruitment workflow and candidate-card movement | read-only Pravah training, placement and outcome status |
+| Nikash | candidate assessment history and long-term prediction validation | confirmed 3/6/12-month placement outcomes |
+| Pravah | post-placement training, closer operations and client success | explicit placed-candidate handoffs and verified candidate identity |
 
-Do not add recruitment-stage editing to Pravah, assessment editing to Vyom, or
-activate client/closer accounts against general staff views.
+Pravah does not change recruitment stages. Nikash does not become a placement
+tracker. Vyom does not edit assessments or placement outcomes.
+
+### Handoff workflow
+
+1. Operations moves a genuinely joined candidate to **Placed - Handoff to
+   Pravah** in the GetClosers project in Vyom.
+2. The server-side sync adds the card to Pravah's candidate inbox.
+3. Pravah may suggest a Nikash candidate using normalized names, but a staff
+   member must explicitly verify the identity.
+4. The staff member selects the already-linked client requirement and records
+   the actual joining date.
+5. Pravah creates the placement through the canonical placement function and
+   marks the handoff complete. It never creates a Nikash candidate.
+6. Training and placement milestones are queued and written back to the source
+   Vyom card inside a read-only `pravah_status` namespace.
+
+If identity or client linkage is uncertain, the item stays reconcilable in the
+inbox. It is never silently matched using a name alone.
+
+### Long-term outcome workflow
+
+Pravah shows due and completed checkpoints at month 3, month 6 and month 12.
+Authorized staff record whether the closer is retained, target achievement,
+sales, cash collected, performance rating and notes. The canonical Nikash
+outcome procedure calculates actual success and predictor correctness, while
+Pravah adds source and confirmer audit metadata.
+
+The same integration-event queue writes a compact outcome summary to the
+source Vyom card. Failed deliveries remain visible and retry on the next sync;
+they are not treated as completed.
+
+### V2B access model
+
+- approved internal staff can review and complete candidate handoffs;
+- only internal staff can record long-term outcomes;
+- browser roles cannot read Vyom outbox or milestone-receipt tables;
+- the Vyom service key remains an Edge Function secret;
+- client, closer and candidate accounts remain denied from general staff views.
+
+### V2B release contents
+
+- Vyom explicit handoff state, candidate outbox and milestone receipts;
+- Pravah candidate inbox, human-verification and placement handoff procedures;
+- reliable outbound integration-event queue with retry metadata;
+- M3/M6/M12 outcome view and recording procedure backed by Nikash;
+- read-only Pravah status on Vyom cards;
+- Data & connections and Training & placements interface additions;
+- verification SQL, contract tests and an operator/deployment runbook.
+
+## 19. Current restart point after V2B
+
+Deploy V2B in the order documented in `V2B_RUNBOOK.md`: Vyom migration,
+Pravah/Nikash migration, verification, updated Edge Function, then frontend.
+Smoke-test one real placed candidate end to end. Do not manufacture production
+candidate, placement or outcome data merely to test the path.
+
+The next batch after V2B is V3: the management scorecard and KRA/KPI engine.
+It should consume verified operational records from V1–V2B, not add parallel
+manual trackers. Client-portal and closer-portal activation remain later,
+purpose-built phases with restricted read models.

@@ -36,6 +36,15 @@ Vyom remains the only place where recruitment stages are moved.
 - active/ended state;
 - latest Pravah milestone and link.
 
+## V2B implementation
+
+- adds `Placed - Handoff to Pravah` to the GetClosers hiring board;
+- publishes only cards deliberately moved into that stage;
+- retains source events in `pravah_candidate_outbox` with retries and stable IDs;
+- receives idempotent summaries in `pravah_milestone_receipts`;
+- displays the latest `pravah_status` on the candidate card and edit modal;
+- keeps that status read-only and leaves all recruitment-stage controls in Vyom.
+
 ## Explicit exclusions
 
 - no training workflow inside Vyom;

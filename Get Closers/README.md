@@ -12,8 +12,7 @@ truth. They must not become editable copies of the same workflow.
 
 ## Current build status
 
-**V1 — Pravah Core is live. V2A — Operational Hardening and Client
-Foundation is in review.**
+**V1 and V2A are live. V2B — Candidate and Outcome Connections is in review.**
 
 V2A responds to the first real operator test and adds:
 
@@ -24,6 +23,10 @@ V2A responds to the first real operator test and adds:
 - archive, void and dependency-safe deletion controls;
 - admin versus staff controls, with client/closer roles kept dormant until
   their restricted portal contracts ship.
+
+V2B adds the point-and-click placed-candidate handoff from Vyom, human-verified
+Nikash candidate linking, read-only Pravah milestones back on the Vyom card,
+and 3/6/12-month outcome capture into Nikash's existing validation model.
 
 ## Start here
 
@@ -39,6 +42,7 @@ V2A responds to the first real operator test and adds:
 10. [DECISIONS.md](DECISIONS.md) — durable decisions and their reasoning.
 11. [UX_SCOPE.md](UX_SCOPE.md) — versioned sections, modals, and interactions.
 12. [V2A_RUNBOOK.md](V2A_RUNBOOK.md) — deployment, smoke test and recovery.
+13. [V2B_RUNBOOK.md](V2B_RUNBOOK.md) — candidate handoff and outcome deployment.
 
 ## Application
 
