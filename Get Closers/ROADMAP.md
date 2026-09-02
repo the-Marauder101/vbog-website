@@ -70,7 +70,7 @@ the shell without returning to the original conversation.
 - pattern insight and intervention tracking;
 - company target configuration.
 
-**Build status:** PR #170 merged on 2026-09-02. Database deployment and live scorecard verification remain pending.
+**Build status:** merged and deployed on 2026-09-02. Live scorecard verification with an approved staff account remains pending.
 
 ## V4 — Client Revenue Engine
 
@@ -84,7 +84,7 @@ the shell without returning to the original conversation.
 - revenue, pipeline, outstanding and conversion views;
 - standalone customer-centric revenue workspace.
 
-**Build status:** implementation in review. Migration, verification SQL, RPC write contracts, frontend workspace, runbook, addendum and contract tests are included in the V4 PR.
+**Build status:** merged and deployed on 2026-09-02. One real lead-to-verified-payment acceptance test remains pending.
 
 ## V5 — Transition Layer
 
@@ -97,6 +97,8 @@ the shell without returning to the original conversation.
 - import audit and replay.
 
 **Boundary:** V5 writes into the V4 canonical revenue model. It must not create a second CRM/revenue schema.
+
+**Build status:** import foundation in review. The first profile supports CEO Dashboard / Callyzer call logs and preserves raw rows, mapping versions, validation repairs and idempotent replay.
 
 ## V6 — Client and Closer Portal
 
