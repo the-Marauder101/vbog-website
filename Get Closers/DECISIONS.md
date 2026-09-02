@@ -64,3 +64,39 @@ and audits use dedicated `pravah_` tables.
 The browser calls narrow database functions for material writes. Hiding a
 button is not authorization, and direct browser writes are not the preferred
 operating path.
+
+## D-014 — Vyom owns canonical client identity
+
+Clients are created, named, paused and maintained in Vyom's central registry.
+Pravah activates a linked operating profile only after a human verifies the
+identity. Free-text client creation in Pravah is retired.
+
+## D-015 — Names suggest; people verify
+
+Normalized client names may produce a suggested match, but they never create a
+link automatically. A verified link retains both system identifiers and an
+audit event. This prevents NMT/Newmetech-style silent duplicates.
+
+## D-016 — Closer reports are forms first
+
+Fixed questions are the production capture path. WhatsApp remains an output
+and optional source attachment, not an unvalidated schema. Example content is
+not saveable into production.
+
+## D-017 — Reported cash is not official cash
+
+Closer-reported cash remains provisional. KPI and target calculations use only
+cash carrying a verification source, timestamp and actor. CRM, Sheet, payment
+gateway or client confirmation can provide the evidence.
+
+## D-018 — Corrections preserve history
+
+Reports and placements are voided; active clients are archived; actions are
+completed or cancelled with a note. Permanent deletion is restricted to an
+unused client and an administrator.
+
+## D-019 — Client and closer roles remain dormant until safe
+
+Role names and tenant relationships may exist before portal delivery, but they
+do not authorize raw operational reads. Client and closer access activates only
+with purpose-built restricted views in the portal version.

@@ -269,10 +269,97 @@ The Vyom event bridge remains V2.
 - 3/6/12-month Nikash outcome automation begins in V2;
 - the logo remains a text mark pending final brand refinement.
 
-## 17. Current restart point after V1
+## 17. V2A implementation
 
-The next build is V2 Product Connections. Start by reading this PRD, then
-`INTEGRATIONS.md`, `VYOM_CHANGES.md`, and `NIKASH_CHANGES.md`. Build the event
-outbox, stable identity links, selected-candidate intake, Pravah milestone
-writeback, outcome checkpoints, and a human reconciliation queue. Do not add
-recruitment-stage editing to Pravah.
+### Why V2A exists
+
+The first live operator test proved the V1 persistence and security foundation,
+but exposed five workflow problems:
+
+1. a client typed in Pravah did not exist in Vyom and could create a duplicate;
+2. the WhatsApp label parser allowed example names to disagree with the linked
+   placement;
+3. reported cash looked authoritative despite having no CRM/payment evidence;
+4. check-in actions existed but were not visible as a client-owned workflow;
+5. mistakes lacked understandable archive, void and delete controls.
+
+### Approved product decisions
+
+- Vyom's central client registry owns canonical client identity.
+- Pravah removes free-text client creation and introduces a verified linking
+  inbox.
+- Fixed-question forms become the primary closer-report input.
+- WhatsApp becomes generated output and optional source evidence.
+- Reported cash and verified cash are stored and displayed separately.
+- Official target achievement uses verified cash only.
+- A client record contains notes, check-in history and traceable actions.
+- A check-in may create multiple actions with priority and due date.
+- Completing or cancelling an action requires explanatory evidence.
+- Reports and placements are voided; clients are archived; only unused clients
+  can be permanently deleted by an administrator.
+- Client and closer portal roles remain inaccessible until restricted read
+  contracts are implemented; a future role name is never treated as security.
+
+### V2A interface
+
+**Overview** retains portfolio KPIs and attention items. Staff can refresh the
+Vyom client catalogue and record a placement.
+
+**Training & placements** shows an explicit placement state and gives admins
+an end/void flow with reason and effective date.
+
+**Active closers** separates verified cash from closer-reported cash. Reports
+are entered using fixed fields for activity, outcomes, money, blockers, support
+and the next-period plan.
+
+**Clients** opens a client detail workspace with operating status, health,
+Vyom-link status, notes, check-in timeline and action timeline.
+
+**Reports** produces a WhatsApp-ready summary, shows cash verification state,
+supports evidence verification and permits admin voiding without erasure.
+
+**Data & connections** contains the Vyom client inbox. Normalized names show a
+suggested match, but staff must explicitly link or activate it.
+
+### V2A database and bridge
+
+The Closer-Match project receives:
+
+- `pravah_client_sync_inbox`;
+- `pravah_placement_states`;
+- client profile notes/archive fields;
+- report activity, verification and void fields;
+- linked action/check-in closure fields;
+- V2A views and audited RPCs.
+
+The Vyom project receives `pravah_integration_outbox` and a trigger for client
+create/update/delete events. A Supabase Edge Function in the Pravah project
+verifies the calling staff session, reads Vyom through stored server secrets,
+and refreshes the Pravah inbox. The GitHub Pages browser receives no secret.
+
+### Role state after V2A
+
+| Role | State |
+|---|---|
+| gc_admin | Active; all staff workflows and safeguarded corrections |
+| operations / trainer / client_success | Active; operational workflows without destructive admin controls |
+| client_admin / client_viewer | Reserved and denied pending client-safe portal views |
+| closer | Not provisioned pending the closer workspace and own-record policies |
+| candidate | Remains in Vyom/Nikash; Pravah begins only after placement |
+
+## 18. Current restart point after V2A
+
+After merging V2A, deploy both reviewed migrations and the Edge Function, set
+its Vyom secrets, run `04_verify_v2a.sql`, and test one client link, one fixed
+report, one cash verification and one multi-action check-in.
+
+The next code batch is V2B Candidate and Outcome Connections:
+
+1. stable candidate/card identity links;
+2. selected-candidate intake from Vyom;
+3. Pravah training/placement milestone writeback to Vyom;
+4. 3/6/12-month outcome checkpoints to Nikash;
+5. failed-event retry and human reconciliation.
+
+Do not add recruitment-stage editing to Pravah, assessment editing to Vyom, or
+activate client/closer accounts against general staff views.

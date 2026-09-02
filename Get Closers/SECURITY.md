@@ -47,3 +47,15 @@ the credential.
 - every material V1 write adds an audit event;
 - existing staff membership is synchronized from approved Nikash staff;
 - a Supabase Auth account without a membership has no Pravah access.
+
+## V2A enforcement
+
+- client and closer portal roles remain dormant and cannot read operational
+  records yet;
+- free-text Pravah client creation is revoked;
+- cross-project Vyom access occurs only inside a staff-authenticated Edge
+  Function using stored secrets;
+- client links require a human verification action;
+- closer-reported cash is excluded from official cash KPIs until verified;
+- void/archive/delete operations require reasons and, where destructive,
+  administrator access.

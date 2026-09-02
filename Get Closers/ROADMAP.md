@@ -28,10 +28,22 @@ the shell without returning to the original conversation.
 - WhatsApp full/short report generation;
 - basic overview dashboard.
 
-**Build status:** implemented in code. Production activation requires running
-the reviewed migration and verification queries in Supabase.
+**Build status:** merged and activated in production on 2026-09-02.
 
 ## V2 — Product Connections
+
+### V2A — Operational hardening and client foundation
+
+- Vyom client registry outbox and server-side refresh;
+- verified client identity linking and duplicate reconciliation;
+- structured closer report form and WhatsApp output;
+- reported versus verified cash evidence;
+- client detail, notes, check-ins and multi-action follow-through;
+- archive/void/dependency-safe delete controls;
+- admin and staff interface differences;
+- client/closer roles reserved but denied until restricted portals ship.
+
+### V2B — Candidate and outcome connections
 
 - Vyom integration outbox;
 - candidate identity linking;

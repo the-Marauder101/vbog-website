@@ -7,6 +7,14 @@ or withdrawn, and candidate-client assignment changed.
 
 Pravah stores the source event and updates read-only recruitment context.
 
+V2A activates the client-identity subset first:
+
+1. Vyom records client changes in an internal outbox.
+2. Staff click **Refresh from Vyom** in Pravah.
+3. A server-side function verifies the staff session and refreshes the inbox.
+4. A person links the suggested record or activates a new operating client.
+5. The mapping retains both UUIDs; names never become the durable join.
+
 ## 2. Pravah → Vyom
 
 Placement recorded, training started, training passed/extended/failed, closer
@@ -43,3 +51,6 @@ columns and stages, preview normalized records, repair rejected rows, commit an
 idempotent import, and retain the source plus mapping version.
 
 Automatic source polling is added only after the manual path is reliable.
+
+Cash from closer reports is never promoted to verified cash by an import. A
+source record must retain its CRM/Sheet/payment reference and pass validation.

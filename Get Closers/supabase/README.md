@@ -14,6 +14,21 @@ copied between databases.
 6. Confirm the verification results match the notes above each query.
 7. Sign into Pravah using an existing approved Nikash staff login.
 
+## V2A activation
+
+After V1 is active:
+
+1. Run `03_v2a_operational_hardening.sql` in the Closer-Match project.
+2. Run `04_verify_v2a.sql` and confirm every expectation.
+3. Run `internal/pm/sql/20_pravah_client_outbox.sql` in the Vyom project.
+4. Deploy `functions/pravah-sync-vyom` to the Closer-Match project.
+5. Configure `VYOM_SUPABASE_URL` and `VYOM_SERVICE_ROLE_KEY` as Edge Function
+   secrets. Never place either value in frontend code or GitHub.
+6. Open Data & connections in Pravah, refresh the inbox, and verify links.
+
+The project maintainer can perform steps 1–5 through the deployment tooling;
+operators only use the point-and-click refresh and link controls.
+
 The migration is idempotent and can be re-run. It does not contain sample
 clients, fake closers, passwords, secret keys, or destructive cleanup.
 

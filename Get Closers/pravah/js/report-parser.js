@@ -88,10 +88,13 @@
       [data.client_name, data.report_date].filter(Boolean).join(" · "),
       "",
       "Calls: " + (data.calls_attempted ?? "—") + " | Connected: " + (data.connected_calls ?? "—"),
-      "Sales: " + (data.sales_count ?? "—") + " | Revenue: " + formatCurrency(data.revenue_generated),
-      "Cash collected: " + formatCurrency(data.cash_collected)
+      "Follow-ups: " + (data.followups_completed ?? "—") + " | Qualified: " + (data.qualified_opportunities ?? "—"),
+      "Meetings: " + (data.meetings_booked ?? "—") + " | Sales: " + (data.sales_count ?? "—"),
+      "Revenue booked: " + formatCurrency(data.revenue_generated),
+      "Cash reported: " + formatCurrency(data.cash_collected) + " (" + String(data.cash_verification_status || "unverified").replaceAll("_", " ") + ")"
     ];
     if (data.blocker) lines.push("Blocker: " + data.blocker);
+    if (data.support_required) lines.push("Support needed: " + data.support_required);
     if (data.next_period_plan) lines.push("Next: " + data.next_period_plan);
     return lines.filter(function (line, index) { return line || index === 2; }).join("\n");
   }
