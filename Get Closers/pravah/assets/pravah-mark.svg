@@ -1,14 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pravah">
   <!-- PRAVAH — प्रवाह, the confluence.
 
-       The main mark is where all the portals' currents meet.
-       Five colored streams — plum (ops), green (perf), orange (rev),
-       blue (client), violet (closer) — converge into one body of water.
-       Each portal's favicon isolates its own current inside the same
-       water-body silhouette; the main mark holds them all.
+       The main mark holds all five portals. Not as five faint lines —
+       as five recognizable fragments of each portal's signature element,
+       each in its portal's color, layered inside the shared water body.
 
-       Same silhouette, same tilt, same highlight. The body gradient
-       stays plum-to-indigo: the house color. -->
+       · Ops white S-curve (the current)
+       · Performance green chevron (the peak)
+       · Revenue orange spiral hint (the funnel)
+       · Client blue lens arc (the eye)
+       · Closer violet bolt (the strike)
+
+       At 32px they blend into a rich, multi-colored river. At larger
+       sizes you start to pick out each element — the family reveals itself. -->
   <style>
     .rim { stroke: none; }
     @media (prefers-color-scheme: dark) {
@@ -28,23 +32,23 @@
              C 28.8 21.6, 24 27.8, 17.5 28.2
              C 11.5 28.5, 5.8 24.6, 4.2 18.5
              C 2.8 13, 7.5 4.8, 14.5 3.8 Z"/>
-    <!-- Surface highlight -->
+    <!-- Highlight -->
     <path d="M 8.5 10 C 11.5 6.8, 16 6.5, 19.5 8.5"
           fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".13"/>
-    <!-- Ops current: plum-white, the broadest — the operating flow -->
-    <path fill="none" stroke="rgba(255,255,255,0.40)" stroke-width="2" stroke-linecap="round"
-          d="M 8 13 C 12.5 8.5, 20 15, 25.5 12"/>
-    <!-- Perf current: green — measurement -->
-    <path fill="none" stroke="rgba(59,184,138,0.45)" stroke-width="1.4" stroke-linecap="round"
-          d="M 7.5 17 C 12 14, 20 19, 25.5 16.5"/>
-    <!-- Rev current: orange — the pipeline -->
-    <path fill="none" stroke="rgba(255,77,0,0.38)" stroke-width="1.2" stroke-linecap="round"
-          d="M 9 20.5 C 13 18, 19 22, 24.5 20"/>
-    <!-- Client ripple: blue — the observer -->
-    <path fill="none" stroke="rgba(96,165,250,0.30)" stroke-width="0.9" stroke-linecap="round"
-          d="M 11 24 C 14.5 22, 20 25, 23.5 23"/>
-    <!-- Closer stream: violet — personal drive -->
-    <path fill="none" stroke="rgba(167,139,250,0.25)" stroke-width="0.8" stroke-linecap="round"
-          d="M 13 26.5 C 16 25, 20 27, 22 25.5"/>
+    <!-- Ops: white S-curve — the main current -->
+    <path fill="none" stroke="rgba(255,255,255,0.44)" stroke-width="2" stroke-linecap="round"
+          d="M 8 13 C 12.5 9, 20 16, 25.5 12.5"/>
+    <!-- Performance: green chevron peak, small -->
+    <path fill="none" stroke="rgba(59,184,138,0.50)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+          d="M 8.5 20 L 12 15.5 L 15.5 20"/>
+    <!-- Revenue: orange spiral arc -->
+    <path fill="none" stroke="rgba(255,77,0,0.45)" stroke-width="1.4" stroke-linecap="round"
+          d="M 22 13 C 24 16, 22 20, 19 20.5 C 16.5 21, 15.5 19, 16.5 17.5"/>
+    <!-- Client: blue lens arc -->
+    <path fill="none" stroke="rgba(96,165,250,0.40)" stroke-width="1.2" stroke-linecap="round"
+          d="M 10 24 C 14 21, 20 21, 24 24"/>
+    <!-- Closer: violet bolt shard -->
+    <path fill="rgba(167,139,250,0.35)"
+          d="M 21.5 8.5 L 24 12 L 22 12.5 L 24.5 16 L 23.5 15.5 L 22.5 13 L 24 12.5 L 21.5 8.5 Z"/>
   </g>
 </svg>

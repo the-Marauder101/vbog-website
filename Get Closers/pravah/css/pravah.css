@@ -23,6 +23,7 @@ button { color: inherit; }
 .brand-mark { width: 38px; height: 38px; display: block; flex: 0 0 38px; border: 0; color: transparent; font-size: 0; background: url('../assets/pravah-mark.svg') center / contain no-repeat; }
 .brand strong, .brand small { display: block; }
 .brand strong { font-size: 18px; letter-spacing: -.03em; }
+.brand .dot { color: var(--orange); }
 .brand small { margin-top: 2px; color: #a9a4a7; font-size: 11px; }
 .nav-list { display: grid; gap: 4px; margin-top: 25px; }
 .nav-link { display: flex; align-items: center; gap: 12px; color: #bdb8bb; text-decoration: none; padding: 12px 10px; border: 1px solid transparent; font-size: 13px; }
@@ -163,6 +164,7 @@ textarea:focus { border-color: var(--indigo); box-shadow: 0 0 0 2px rgba(105,111
 .auth-screen { min-height: 100vh; display: grid; grid-template-columns: minmax(240px, .8fr) minmax(360px, 1.2fr); background: var(--ink); }
 .auth-brand { padding: 54px; color: #fff; display: flex; align-items: flex-start; gap: 13px; }
 .auth-brand strong { font-size: 1.3rem; letter-spacing: -.04em; }
+.auth-brand .dot { color: var(--orange); }
 .auth-brand small { color: #9c969a; margin-top: 5px; }
 .auth-card { align-self: stretch; background: var(--surface); padding: clamp(44px, 8vw, 110px); display: flex; flex-direction: column; justify-content: center; }
 .auth-card h1 { margin: 8px 0 10px; font-size: clamp(2.1rem, 4vw, 4rem); line-height: .98; letter-spacing: -.055em; }
