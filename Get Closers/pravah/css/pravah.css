@@ -20,7 +20,7 @@ button { color: inherit; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 250px 1fr; }
 .sidebar { position: sticky; top: 0; height: 100vh; padding: 26px 20px 20px; background: var(--ink); color: #fff; display: flex; flex-direction: column; }
 .brand { color: #fff; text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 0 8px 28px; border-bottom: 1px solid #383538; }
-.brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--orange); color: var(--orange); font: 500 18px "DM Mono", monospace; }
+.brand-mark { width: 38px; height: 38px; display: block; flex: 0 0 38px; border: 0; color: transparent; font-size: 0; background: url('../assets/pravah-mark.svg') center / contain no-repeat; }
 .brand strong, .brand small { display: block; }
 .brand strong { font-size: 18px; letter-spacing: -.03em; }
 .brand small { margin-top: 2px; color: #a9a4a7; font-size: 11px; }
@@ -169,9 +169,7 @@ textarea:focus { border-color: var(--indigo); box-shadow: 0 0 0 2px rgba(105,111
 .auth-card > p:not(.eyebrow):not(.form-error) { color: var(--muted); max-width: 440px; margin: 0 0 30px; font-size: .95rem; line-height: 1.65; }
 .auth-card label, .dynamic-form label, .report-meta label { display: grid; gap: 8px; color: var(--ink); font-size: .875rem; font-weight: 600; }
 .auth-card label { margin-bottom: 17px; max-width: 460px; }
-.auth-card input, .dynamic-form input, .dynamic-form select, .dynamic-form textarea, .report-meta input, .report-meta select {
-  width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: #faf8f4; color: var(--ink); font: 400 .9rem/1.4 Inter, sans-serif; outline: 0;
-}
+.auth-card input, .dynamic-form input, .dynamic-form select, .dynamic-form textarea, .report-meta input, .report-meta select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: #faf8f4; color: var(--ink); font: 400 .9rem/1.4 Inter, sans-serif; outline: 0; }
 .auth-card input:focus, .dynamic-form input:focus, .dynamic-form select:focus, .dynamic-form textarea:focus, .report-meta input:focus, .report-meta select:focus { border-color: var(--indigo); box-shadow: 0 0 0 2px rgba(105,111,242,.13); }
 .auth-card .button { margin-top: 7px; align-self: flex-start; min-width: 130px; }
 .access-card { grid-column: 1 / -1; align-items: flex-start; }
@@ -222,8 +220,6 @@ textarea:focus { border-color: var(--indigo); box-shadow: 0 0 0 2px rgba(105,111
 .timeline-item .text-button { margin-top: 8px; }
 .detail-empty { color: var(--muted); font-size: .78rem; }
 
-.table-panel { min-height: 0; }
-.table-wrap { width: 100%; overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: .83rem; }
 th { padding: 12px 17px; text-align: left; color: var(--muted); background: #f4f0eb; border-bottom: 1px solid var(--line); font: 500 .72rem "DM Mono", monospace; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
 td { padding: 17px; border-bottom: 1px solid var(--line); vertical-align: middle; }
