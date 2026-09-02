@@ -1,9 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
-<title id="title">Pravah mark</title>
-<desc id="desc">A flowing P ribbon with an upward arrow.</desc>
-<defs>
-  <linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#5b2cff"/><stop offset=".48" stop-color="#2d8cff"/><stop offset="1" stop-color="#11d4e8"/></linearGradient>
-</defs>
-<path d="M20 23h46c20 0 34 11 34 29 0 19-14 31-34 31H53l-16 17H20l20-22c5-5 9-8 15-8h12c10 0 16-6 16-18 0-11-6-17-17-17H45v14h25l-16 16H20z" fill="url(#g)"/>
-<path d="M26 97c0-13 5-23 16-32l24-21h-8l13-13 22 22-13 13v-8L54 82c-7 6-11 11-11 18v7H26z" fill="url(#g)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pravah">
+  <!-- PRAVAH — प्रवाह, the flow: a river eddy seen from above.
+
+       The mark is a body of moving water — an organic pool whose
+       current is visible on the surface.
+
+       · THE SHAPE IS NOT A CIRCLE. An irregular, slightly elongated
+         silhouette reads as a natural body of water. A perfect circle
+         reads as a button. Nikash taught us: irregular = physical object.
+       · THE CURRENT LINES TAPER. Three surface streaks of decreasing
+         weight and opacity — the upstream one boldest, the downstream
+         one faint. This is how current looks: strongest where it enters,
+         dissipating as it spreads.
+       · THE HIGHLIGHT IS UPSTREAM. Light catches the surface where the
+         current pushes water up against itself, exactly like the polished
+         edge on Nikash's stone.
+
+       Structural sibling to vyom.svg and nikash.svg — a world for व्योम,
+       a stone for निकष, a river for प्रवाह. Each VBOG tool is its own
+       name, drawn. Palette: plum (#5b2749) body, indigo (#696ff2) depths.
+       Tilted -7° for the same reason as Nikash's -8°. -->
+  <style>
+    .rim { stroke: none; }
+    @media (prefers-color-scheme: dark) {
+      .rim { stroke: #37373F; stroke-width: 0.8; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="pg" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#5b2749"/>
+      <stop offset="0.6" stop-color="#4a3070"/>
+      <stop offset="1" stop-color="#696ff2"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-7 16 16)">
+    <!-- Water body: organic shape, wider than tall, slightly irregular -->
+    <path class="rim" fill="url(#pg)"
+          d="M 14.5 3.8 C 21 2.8, 28.2 7.5, 28.5 14.8
+             C 28.8 21.6, 24 27.8, 17.5 28.2
+             C 11.5 28.5, 5.8 24.6, 4.2 18.5
+             C 2.8 13, 7.5 4.8, 14.5 3.8 Z"/>
+    <!-- Surface highlight: upstream bend -->
+    <path d="M 8.5 10 C 11.5 6.8, 16 6.5, 19.5 8.5"
+          fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" opacity=".13"/>
+    <!-- Current streak 1: bold, upstream -->
+    <path fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2.2" stroke-linecap="round"
+          d="M 8 14 C 12.5 9.5, 20 16, 25.5 13"/>
+    <!-- Current streak 2: medium -->
+    <path fill="none" stroke="rgba(255,255,255,0.26)" stroke-width="1.6" stroke-linecap="round"
+          d="M 7.5 19.5 C 12 15.5, 21 22, 26 19"/>
+    <!-- Current streak 3: thin, downstream -->
+    <path fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1" stroke-linecap="round"
+          d="M 10 24.5 C 14 21.5, 21 25.5, 25 23.5"/>
+  </g>
 </svg>

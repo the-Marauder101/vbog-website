@@ -42,8 +42,11 @@
         <a class="nav-link" href="#reports" data-view="reports"><span>05</span>Reports</a>
         <a class="nav-link" href="#connections" data-view="connections" data-internal><span>06</span>Data &amp; connections</a>
         <a class="nav-link" href="#portal" data-view="portal" data-admin><span>07</span>Portal access</a>
+        <a class="nav-link" href="#team" data-view="team" data-admin><span>08</span>Team</a>
+        <a class="nav-link" href="performance/" data-external data-internal><span>09</span>Performance</a>
+        <a class="nav-link" href="revenue/" data-external data-internal><span>10</span>Revenue</a>
       </nav>
-      <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V2A operations</strong><small id="sync-state">Connected</small></div></div>
+      <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V6 operations</strong><small id="sync-state">Connected</small></div></div>
     </aside>
 
     <main>
@@ -110,6 +113,12 @@
           <article class="panel table-panel"><div class="panel-head"><div><h2>Pending invitations</h2><p>Sent but not yet accepted.</p></div></div><div class="table-wrap"><table><thead><tr><th>Email</th><th>Client</th><th>Role</th><th>Invited</th><th></th></tr></thead><tbody id="portal-invitation-rows"></tbody></table></div></article>
         </div>
         <div class="panel portal-links"><div class="panel-head"><div><h2>Portal URLs</h2><p>Share these links with invited users after they accept.</p></div></div><div class="portal-url-list"><div><strong>Client portal</strong><code id="client-portal-url"></code></div><div><strong>Closer portal</strong><code id="closer-portal-url"></code></div></div></div>
+      </section>
+
+      <section class="view" id="team" data-title="Team">
+        <div class="page-head"><div><p class="eyebrow">ADMINISTRATION</p><h1>Team</h1></div><div class="page-actions"><button class="button button-primary" type="button" data-form="add-staff">Add staff member</button></div></div>
+        <p class="section-note">Manage internal Pravah staff. People must create a Supabase account first (sign in once), then you can add them here and assign a role.</p>
+        <div class="panel table-panel"><div class="panel-head"><div><h2>Internal staff</h2><p>Active and inactive Pravah team members.</p></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Since</th><th></th></tr></thead><tbody id="team-rows"></tbody></table></div></div>
       </section>
     </main>
   </div>
