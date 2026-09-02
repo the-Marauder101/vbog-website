@@ -175,7 +175,7 @@ begin
           v_errors:=v_errors || jsonb_build_array(jsonb_build_object('field','crm_status','message','No approved mapping to a canonical revenue stage.'));
         end if;
       end if;
-      v_normalized:=v_normalized || jsonb_build_object('lead_key','lead:'||coalesce(r.raw_payload->>'contact_key',r.raw_payload->>'client_number'),'full_name',coalesce(r.raw_payload->>'full_name',r.raw_payload->>'client_name),'phone',coalesce(r.raw_payload->>'phone',r.raw_payload->>'client_number),'stage',v_stage,'activity_type',coalesce(r.raw_payload->>'activity_type','call'),'occurred_at',coalesce(r.raw_payload->>'occurred_at',r.raw_payload->>'call_at',now()::text),'duration_seconds',nullif(r.raw_payload->>'duration_seconds',''),'outcome',r.raw_payload->>'crm_status','notes',r.raw_payload->>'note');
+      v_normalized:=v_normalized || jsonb_build_object('lead_key','lead:'||coalesce(r.raw_payload->>'contact_key',r.raw_payload->>'client_number'),'full_name',coalesce(r.raw_payload->>'full_name',r.raw_payload->>'client_name'),'phone',coalesce(r.raw_payload->>'phone',r.raw_payload->>'client_number'),'stage',v_stage,'activity_type',coalesce(r.raw_payload->>'activity_type','call'),'occurred_at',coalesce(r.raw_payload->>'occurred_at',r.raw_payload->>'call_at',now()::text),'duration_seconds',nullif(r.raw_payload->>'duration_seconds',''),'outcome',r.raw_payload->>'crm_status','notes',r.raw_payload->>'note');
     end if;
     v_status:=case when jsonb_array_length(v_errors)=0 then 'valid' else 'needs_repair' end;
     update pravah_import_rows set normalized_payload=v_normalized,validation_errors=v_errors,status=v_status,validated_at=now() where id=r.id;
