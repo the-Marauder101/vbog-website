@@ -108,6 +108,17 @@ function render() {
     : "";
   el("q-hint").hidden = !q.hint;
 
+  // An answer carried in from the R1 phone screen. Shown, not hidden: the
+  // interviewer should be able to see what the screen concluded and to overrule
+  // it after twenty more minutes with the person. Scoring it again just replaces
+  // it, and the row stops being carried.
+  const carriedNote = answered && answered.carried
+    ? `<div class="notice"><span class="label">Already scored on the R1 phone screen${
+        S.carried && S.carried.by ? ` by ${esc(S.carried.by)}` : ""}</span>
+       You are not being asked this again — it is here so you can see it, and
+       overrule it if what you have heard since says otherwise.</div>`
+    : "";
+
   // In reference mode every question is one for the previous manager, and saying
   // so on each screen is what stops it being read out to the wrong person.
   const refNote = MODE === "reference"
@@ -116,7 +127,7 @@ function render() {
        added to their ASK total the moment you score it — there is nothing to submit.</div>`
     : "";
 
-  el("q-options").innerHTML = refNote + (q.options || []).map((o) => `
+  el("q-options").innerHTML = carriedNote + refNote + (q.options || []).map((o) => `
     <label class="option${answered && answered.score === o.score ? " selected" : ""}"
            data-score="${o.score}">
       <span class="opt-score mono">${o.score}</span>
@@ -358,9 +369,14 @@ el("btn-begin").addEventListener("click", async () => {
     S.scorecard = started.scorecard_id;
     S.answers = {};
     Object.entries(started.answered || {}).forEach(([k, v]) => (S.answers[k] = v));
+    S.carried = started.carried || null;
 
     // Resume where they stopped, not at question one. A dropped call resumed from
     // the top is how an interviewer ends up re-asking things.
+    //
+    // This is also what makes the R1 carry-forward free: the questions R1 already
+    // answered arrive pre-scored, so "first unanswered" lands on the first
+    // question this interview actually has to ask. Nothing is skipped past.
     const firstUnanswered = S.flat.findIndex(({ q }) => !(q.id in S.answers));
     S.i = firstUnanswered === -1 ? 0 : firstUnanswered;
     render();
@@ -466,19 +482,43 @@ el("btn-begin").addEventListener("click", async () => {
       `matches what they actually said, rather than forming an impression and ` +
       `giving it a number.`;
 
+    // A submitted R1 shortens this interview by however many questions it already
+    // covered, and that number is the difference between a 47-minute call and a
+    // 30-minute one. It is shown WHETHER OR NOT there is an open scorecard: an
+    // interviewer resuming after a dropped call needs to know how much is left
+    // just as much as one starting fresh. The first version made it an `else if`
+    // after the resume branch, so the moment a scorecard existed the message
+    // disappeared — which is every case except the very first click.
+    const notes = [];
+
     if (open) {
-      el("start-resume").hidden = false;
-      el("start-resume").innerHTML =
+      notes.push(
         `<span class="label">Picking up where you left off</span>
          An unfinished ${ROUND.toUpperCase()} for ${esc(S.candidate)} is already open. Starting
-         will resume it at the first unanswered question.`;
+         will resume it at the first unanswered question.`);
     } else if (done.length) {
-      el("start-resume").hidden = false;
-      el("start-resume").innerHTML =
+      notes.push(
         `<span class="label">${esc(S.candidate)} already has a submitted ${ROUND.toUpperCase()}</span>
          Scored ${done[0].total} of ${done[0].max_total} (${done[0].pct}%). Starting begins a
-         second, separate scorecard — the first one is kept.`;
+         second, separate scorecard — the first one is kept.`);
     }
+
+    if (ROUND === "r2" && (existing || []).some((c) => c.round === "r1" && c.submitted_at)) {
+      const covered = (S.bank.attributes || [])
+        .filter((a) => a.priority)
+        .reduce((n, a) => n + (a.questions || []).filter((q) => !q.is_reference).length, 0);
+      const left = S.flat.length - covered;
+      notes.push(
+        `<span class="label">The R1 screen is already done, so this is shorter</span>
+         ${covered} question${covered === 1 ? "" : "s"} were answered on the phone screen
+         and carry straight over — you will not be asked them again. That leaves
+         <strong>${left} to ask</strong>, about ${Math.round((left * 70) / 60)} minutes.
+         The carried answers are shown as you pass them, and you can overrule any
+         of them.`);
+    }
+
+    el("start-resume").hidden = notes.length === 0;
+    el("start-resume").innerHTML = notes.join("<br><br>");
 
     const other = ROUND === "r1" ? "r2" : "r1";
     el("btn-switch").textContent =

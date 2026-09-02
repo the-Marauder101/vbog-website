@@ -176,6 +176,15 @@ a:hover { color: var(--streak-t); text-decoration: underline; text-decoration-th
   height: 2px; background: var(--streak);
 }
 
+/* The line before Admin. A nine-item flat nav hid the Team panel well enough
+   that its owner asked for it to be built a second time; grouping is cheaper
+   than a redesign. Collapses to nothing when the nav wraps, so it never leaves a
+   stray rule floating on its own line. */
+.masthead nav .nav-sep {
+  width: 1px; align-self: stretch; margin: 8px 9px;
+  background: var(--line);
+}
+
 main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
 .narrow { max-width: 660px; }
 

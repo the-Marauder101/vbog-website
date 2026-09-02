@@ -11,7 +11,7 @@
 //
 // The rest drives the real surface: run an R2 in a browser, drop out halfway,
 // come back, finish, submit, and read it on the candidate page.
-const { suite, rest, rpc, flat } = require("./harness");
+const { suite, rest, rpc, insert, flat } = require("./harness");
 
 // The server, browser, Supabase route handler, credential check and sign-in all
 // live in ./harness.js. This suite needs an ADMIN login, not just any staff
@@ -49,6 +49,19 @@ async function cleanup(p, ids = []) {
       const st = await (await fetch(`${SUPABASE_URL}/rest/v1/staff?select=id&email=like.zz-qa-%2A`, { headers: h })).json();
       for (const s of st) await fetch(`${SUPABASE_URL}/rest/v1/staff?id=eq.${s.id}`, { method: "DELETE", headers: h });
     });
+    // Fixture candidates the carry-forward block created. purge_candidate
+    // cascades their scorecards, so this must run before the id sweep below.
+    await p.evaluate(async () => {
+      const h = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}`,
+                  "Content-Type": "application/json" };
+      const found = await (await fetch(
+        `${SUPABASE_URL}/rest/v1/candidates?select=id&full_name=like.ZZ_QA%20*`, { headers: h })).json();
+      for (const c of (Array.isArray(found) ? found : [])) {
+        await fetch(`${SUPABASE_URL}/rest/v1/rpc/purge_candidate`, {
+          method: "POST", headers: h, body: JSON.stringify({ p_candidate_id: c.id }) });
+      }
+    });
+
     // And every scorecard this run opened by id, marker or not.
     for (const id of ids) {
       await p.evaluate(async (id) => {
@@ -350,6 +363,104 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         afterUi.max_total > beforeUi.max_total, `${beforeUi.max_total} → ${afterUi.max_total}`);
   check("no JS errors on the reference surface", rerrs.length === 0, rerrs.join(" | "));
 
+  // ══ 8a. THE QUESTION EDITOR ══════════════════════════════════════════════
+  // "Editable without a deploy" meant "editable by whoever has a SQL console"
+  // until sql/42. What the screen must be honest about is that a reword does not
+  // move a finished scorecard, and that an anchor's score is not editable at all.
+  await p.goto(`${B}/nikash.html`, { waitUntil: "domcontentloaded" });
+  await p.waitForSelector("#v-reqs:not([hidden])", { timeout: 25000 });
+  check("Admin sits behind its own separator in the nav",
+        (await p.$$(".masthead nav .nav-sep")).length === 1 &&
+        await p.isVisible("#nav-questions") && await p.isVisible("#nav-team"),
+        "");
+
+  await p.click("#nav-questions");
+  await p.waitForSelector("#v-questions:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(900);
+  const qs = flat(await p.textContent("#v-questions"));
+  check("the questions screen loads the whole bank",
+        (await p.$$("#q-editor .region")).length === 14,
+        `${(await p.$$("#q-editor .region")).length} attributes`);
+  check("and says what each round costs in questions and minutes",
+        /R1 — \d+ questions/.test(qs) && /R2 — \d+ questions/.test(qs) && /minutes/.test(qs),
+        (qs.match(/R1 — \d+ questions[^.]{0,60}/) || [""])[0]);
+  check("with the 70 seconds stated as measured, not assumed",
+        /measured from your own interviews, not\s*estimated/.test(qs), "");
+  check("every question shows how many times it has been scored",
+        /scored \d+×|never used/.test(qs), (qs.match(/scored \d+×/) || ["never used"])[0]);
+  check("and the anchors say the score is fixed",
+        /The score is fixed/.test(qs), "");
+
+  // Editing, and the thing that must remain true afterwards.
+  const editQ = allQs.find(q => !q.is_reference).id;
+  const originalText = allQs.find(q => q.id === editQ).prompt;
+  const beforeEdit = (await rest(p, `ask_scorecards?select=total,max_total,pct&id=eq.${card}`))[0];
+  const savedEdit = await rpc(p, "update_ask_question",
+    { p_id: editQ, p_prompt: "ZZ_QA edited from the screen", p_hint: "ZZ_QA hint" });
+  check("an admin can reword a question from the screen",
+        savedEdit.status === 200 && savedEdit.body.saved === true,
+        JSON.stringify(savedEdit.body).slice(0, 110));
+  check("and is told the past is untouched, with the count",
+        savedEdit.body.already_scored > 0 && /keep the wording they were scored/.test(savedEdit.body.note || ""),
+        `${savedEdit.body.already_scored} past answers`);
+  const afterEditCard = (await rest(p, `ask_scorecards?select=total,max_total,pct&id=eq.${card}`))[0];
+  check("REWORDING MOVES NO FINISHED SCORECARD",
+        JSON.stringify(afterEditCard) === JSON.stringify(beforeEdit),
+        `${beforeEdit.pct}% → ${afterEditCard.pct}%`);
+  const keptWording = (await rest(p,
+    `ask_scores?select=question_text&scorecard_id=eq.${card}&question_id=eq.${editQ}`))[0];
+  check("and the recorded answer still reads as it was asked",
+        keptWording.question_text === originalText,
+        `"${(keptWording.question_text || "").slice(0, 40)}…"`);
+  await rpc(p, "update_ask_question", { p_id: editQ, p_prompt: originalText,
+    p_hint: allQs.find(q => q.id === editQ).hint });
+
+  // The structural refusals.
+  const badScore = await rpc(p, "update_ask_option",
+    { p_question: editQ, p_score: 7, p_label: "x", p_description: "y" });
+  check("an anchor cannot be given a score outside 0-3",
+        badScore.status >= 400 && /0, 1, 2 or 3/.test(JSON.stringify(badScore.body)),
+        JSON.stringify(badScore.body).slice(0, 90));
+  const blankAnchor = await rpc(p, "update_ask_option",
+    { p_question: editQ, p_score: 1, p_label: "", p_description: "y" });
+  check("and cannot be left blank",
+        blankAnchor.status >= 400 && /short label/.test(JSON.stringify(blankAnchor.body)),
+        JSON.stringify(blankAnchor.body).slice(0, 90));
+
+  // R1 composition, on a fixture attribute so no live attribute is disturbed.
+  const prioNow = await rest(p, "ask_attributes?select=id&priority=is.true&active=is.true");
+  const flip = await rpc(p, "set_ask_attribute_priority",
+    { p_id: prioNow[0].id, p_priority: false });
+  check("moving an attribute out of R1 reports both new lengths",
+        flip.status === 200 && flip.body.r1_questions >= 0 && flip.body.r2_remaining_questions > 0,
+        `R1 ${flip.body.r1_questions}q, R2 ${flip.body.r2_remaining_questions}q`);
+  await rpc(p, "set_ask_attribute_priority", { p_id: prioNow[0].id, p_priority: true });
+
+  const emptyR1 = await p.evaluate(async (ids) => {
+    // Clear every priority flag but the last, then try the last one.
+    const H = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}`,
+                "Content-Type": "application/json" };
+    for (const id of ids.slice(1)) {
+      await fetch(`${SUPABASE_URL}/rest/v1/rpc/set_ask_attribute_priority`, { method: "POST",
+        headers: H, body: JSON.stringify({ p_id: id, p_priority: false }) });
+    }
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/set_ask_attribute_priority`, { method: "POST",
+      headers: H, body: JSON.stringify({ p_id: ids[0], p_priority: false }) });
+    const t = await r.text();
+    for (const id of ids) {
+      await fetch(`${SUPABASE_URL}/rest/v1/rpc/set_ask_attribute_priority`, { method: "POST",
+        headers: H, body: JSON.stringify({ p_id: id, p_priority: true }) });
+    }
+    return { status: r.status, body: t };
+  }, prioNow.map(a => a.id));
+  check("R1 cannot be emptied — the phone screen has to ask about something",
+        emptyR1.status >= 400 && /no attributes left/.test(emptyR1.body),
+        emptyR1.body.slice(0, 90));
+  const restored = await rest(p, "ask_attributes?select=id&priority=is.true&active=is.true");
+  check("and the R1 composition is exactly as it was before the probe",
+        restored.length === prioNow.length,
+        `${prioNow.length} → ${restored.length} priority attributes`);
+
   // ══ 8bb. READING A FINISHED INTERVIEW BACK ═══════════════════════════════
   // get_ask_scorecard() existed from the first ASK migration with no caller, so a
   // submitted interview could be totalled but not read question by question —
@@ -397,6 +508,127 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   await p.click("#btn-back-cand");
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   check("and it actually goes there", await p.isVisible("#v-cand"), "");
+
+  // ══ 8bc. R1 CARRIES INTO R2 ══════════════════════════════════════════════
+  // The whole point: measured at ~70 s a question, 40 questions is 47 minutes and
+  // no interface change gets that under 40. R1 and R2 overlapped completely — the
+  // candidate answered the same 14 questions twice — so R2 now inherits them.
+  // Driven on a fixture candidate, because it needs a full R1 of its own.
+  const cf = await insert(p, "candidates", {
+    full_name: `ZZ_QA Carry ${Date.now()}`, contact: {},
+    consent_version: "pending", consent_at: new Date().toISOString() });
+  const cfId = cf.body[0].id;
+
+  const prioQs = r2.attributes.filter(a => a.priority)
+    .flatMap(a => a.questions).filter(q => !q.is_reference);
+  const restQs = r2.attributes.filter(a => !a.priority)
+    .flatMap(a => a.questions).filter(q => !q.is_reference);
+
+  const r1card = (await rpc(p, "start_ask", { p_candidate_id: cfId, p_round: "r1",
+    p_client_context: "ZZ_QA context" })).body.scorecard_id;
+  MADE.push(r1card);
+  for (const q of prioQs) {
+    await rpc(p, "save_ask_score", { p_scorecard: r1card, p_question: q.id, p_score: 3 });
+  }
+  const r1done = await rpc(p, "submit_ask", { p_scorecard: r1card });
+  check("an R1 phone screen can be run and submitted",
+        r1done.status === 200 && r1done.body.submitted === true,
+        `${r1done.body.total}/${r1done.body.max_total}`);
+
+  const r2start = await rpc(p, "start_ask", { p_candidate_id: cfId, p_round: "r2",
+    p_client_context: "ZZ_QA context" });
+  const r2card = r2start.body.scorecard_id;
+  MADE.push(r2card);
+
+  check("R2 CARRIES THE R1 ANSWERS FORWARD INSTEAD OF ASKING AGAIN",
+        r2start.body.carried.count === prioQs.length,
+        `${r2start.body.carried.count} carried, expected ${prioQs.length}`);
+  check("and tells the interviewer how many are actually left to ask",
+        r2start.body.carried.remaining === restQs.length,
+        `${r2start.body.carried.remaining} to ask, expected ${restQs.length}`);
+  check("and who ran the screen it inherited",
+        !!r2start.body.carried.by, r2start.body.carried.by || "nobody named");
+
+  const carriedRows = await rest(p,
+    `ask_scores?select=question_id,carried_from&scorecard_id=eq.${r2card}&carried_from=not.is.null`);
+  check("every carried answer keeps its provenance",
+        carriedRows.length === prioQs.length && carriedRows.every(r => r.carried_from === r1card),
+        `${carriedRows.length} rows stamped`);
+
+  // On screen: the interviewer lands on the first question they must ask.
+  await p.goto(`${B}/ask.html?cand=${cfId}&round=r2`, { waitUntil: "domcontentloaded" });
+  await p.waitForSelector("#v-start:not([hidden])", { timeout: 25000 });
+  const cfStart = flat(await p.textContent("#v-start"));
+  check("the start screen says the interview is shorter, and by how much",
+        /R1 screen is already done, so this is shorter/.test(cfStart) &&
+        new RegExp(`${restQs.length} to ask`).test(cfStart),
+        // The whole panel on failure, not an empty capture group — an assertion
+        // that reports "" when it fails tells you nothing about why.
+        cfStart.slice(0, 260));
+  await p.click("#btn-begin");
+  await p.waitForSelector("#v-q:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(500);
+  // NOT "question 15 of 40": the priority attributes are not first in the bank's
+  // sort order — Dialing Discipline is, and it is R2-only. So the right assertion
+  // is that the question it opens on is one this call actually has to ask, and
+  // that the carried ones are already counted as scored.
+  const landed = flat(await p.textContent("#q-where"));
+  const landedPrompt = await p.textContent("#q-prompt");
+  check("and it opens on a question this call actually has to ask",
+        restQs.some(q => q.prompt === landedPrompt),
+        `landed on "${String(landedPrompt).slice(0, 45)}…"`);
+  check("with the carried answers already counted as scored",
+        new RegExp(`${prioQs.length} scored`).test(landed),
+        landed.slice(0, 80));
+
+  // The carried ones are visible when passed, not hidden. Stepping FORWARD to
+  // find one, not back: the flow opens on the first unanswered question, which is
+  // index 0 here because the first attribute in the bank is R2-only — so Back is
+  // correctly disabled and clicking it hangs on a locator that never enables.
+  let sawCarried = false;
+  for (let n = 0; n < 45 && !sawCarried; n++) {
+    if (/Already scored on the R1 phone screen/.test(flat(await p.textContent("#q-options")))) {
+      sawCarried = true; break;
+    }
+    await p.click("#btn-next");
+    await p.waitForTimeout(120);
+    if (await p.isVisible("#v-result")) break;
+  }
+  check("passing a carried answer shows where it came from",
+        sawCarried && /Already scored on the R1 phone screen/.test(flat(await p.textContent("#q-options"))),
+        sawCarried ? "" : "walked the whole round without seeing one");
+  check("and says it can be overruled",
+        /overrule it/.test(flat(await p.textContent("#q-options"))), "");
+
+  // Finish it and check the total covers all forty, not twenty-six.
+  for (const q of restQs) {
+    await rpc(p, "save_ask_score", { p_scorecard: r2card, p_question: q.id, p_score: 1 });
+  }
+  const r2done = await rpc(p, "submit_ask", { p_scorecard: r2card });
+  check("THE R2 TOTAL COVERS THE WHOLE BANK, NOT JUST WHAT R2 ASKED",
+        r2done.body.max_total === (prioQs.length + restQs.length) * 3,
+        `${r2done.body.max_total}, expected ${(prioQs.length + restQs.length) * 3}`);
+  check("and the carried scores are in the numerator",
+        r2done.body.total === prioQs.length * 3 + restQs.length * 1,
+        `${r2done.body.total}, expected ${prioQs.length * 3 + restQs.length * 1}`);
+
+  const cfReview = await rpc(p, "get_ask_scorecard", { p_scorecard: r2card });
+  check("the review screen credits whoever actually scored each answer",
+        (cfReview.body.answers || []).filter(a => a.carried && a.carried_by).length === prioQs.length,
+        `${(cfReview.body.answers || []).filter(a => a.carried).length} marked as carried`);
+
+  // A candidate with no R1 gets the whole bank, and a half-finished R1 is not a
+  // reading and must not be inherited.
+  const noR1 = await insert(p, "candidates", {
+    full_name: `ZZ_QA NoR1 ${Date.now()}`, contact: {},
+    consent_version: "pending", consent_at: new Date().toISOString() });
+  const noR1start = await rpc(p, "start_ask",
+    { p_candidate_id: noR1.body[0].id, p_round: "r2", p_client_context: "ZZ_QA context" });
+  MADE.push(noR1start.body.scorecard_id);
+  check("a candidate with no R1 is still asked the whole bank",
+        noR1start.body.carried.count === 0 &&
+        noR1start.body.carried.remaining === prioQs.length + restQs.length,
+        `${noR1start.body.carried.remaining} to ask`);
 
   // ══ 8c. AN EMPTY RE-RUN CAN BE THROWN AWAY ═══════════════════════════════
   // A "Run R2 again" click straight after submitting opens a blank scorecard,

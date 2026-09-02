@@ -44,7 +44,12 @@
       <a href="keying.html">Keying</a>
       <a href="#" id="nav-dict">Dictionary</a>
       <a href="#" id="nav-guide">How it works</a>
+      <!-- Admin sits behind its own separator. "Team" was the eighth of nine
+           flat items and Depesh could not find it — the panel had existed since
+           sql/34. Two admin screens in a row, set apart, is the difference. -->
+      <span class="nav-sep" aria-hidden="true"></span>
       <a href="#" id="nav-team">Team</a>
+      <a href="#" id="nav-questions">Questions</a>
       <a href="#" id="nav-signout" class="muted">Sign out</a>
     </nav>
   </div>
@@ -270,6 +275,18 @@
        Adding a colleague used to mean opening the Supabase SQL editor, which is
        a poor answer for a tool that has a console — and a hard blocker on handing
        any round to somebody else. -->
+  <!-- The ASK question bank, editable. It went into the database (sql/35) so the
+       wording could change without a deploy; until sql/42 that meant "editable by
+       whoever has a SQL console", which is one person. -->
+  <section class="screen" id="v-questions" hidden>
+    <h1>Questions</h1>
+    <p class="muted">The ASK interview, as it is asked. Reword a question or an
+       anchor, take one out of use, and choose which attributes make up the R1
+       phone screen.</p>
+    <div class="callout" id="q-summary" style="margin-bottom:8px"></div>
+    <div id="q-editor"></div>
+  </section>
+
   <section class="screen" id="v-team" hidden>
     <h1>Team</h1>
     <p class="muted">Who can sign in, and what each of them can do.</p>
