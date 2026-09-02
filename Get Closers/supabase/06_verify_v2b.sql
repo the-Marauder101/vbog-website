@@ -19,3 +19,7 @@ select column_name from information_schema.columns
 where table_schema = 'public' and table_name = 'placement_outcomes'
   and column_name in ('source_system','confirmed_by')
 order by column_name;
+
+select column_name from information_schema.columns
+where table_schema = 'public' and table_name = 'pravah_candidate_sync_inbox'
+  and column_name = 'status_changed_at';

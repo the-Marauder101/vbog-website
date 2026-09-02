@@ -20,11 +20,14 @@ card. Long-term outcomes remain canonical in Nikash's shared database.
    `internal/pm/sql/21_pravah_candidate_outbox.sql`.
 2. In the **Closer-Match / Pravah / Nikash** Supabase project, run
    `Get Closers/supabase/05_v2b_candidate_outcomes.sql`.
-3. In that same project, run `Get Closers/supabase/06_verify_v2b.sql` and confirm
+3. Run `Get Closers/supabase/07_v2b_candidate_status_time_fix.sql`. It is
+   idempotent and also repairs installations where the original V2B migration
+   was applied before the timestamp column was added.
+4. In that same project, run `Get Closers/supabase/06_verify_v2b.sql` and confirm
    the expected objects, grants and policies.
-4. Deploy the updated `Get Closers/supabase/functions/pravah-sync-vyom`
+5. Deploy the updated `Get Closers/supabase/functions/pravah-sync-vyom`
    function to the Closer-Match project.
-5. Deploy the Vyom and Pravah frontend files.
+6. Deploy the Vyom and Pravah frontend files.
 
 This order is mandatory: the updated function reads and writes V2B objects in
 both projects.
