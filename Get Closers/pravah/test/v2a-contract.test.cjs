@@ -10,7 +10,7 @@ const sql = fs.readFileSync(path.join(root, "supabase/03_v2a_operational_hardeni
 const vyomSql = fs.readFileSync(path.resolve(root, "../internal/pm/sql/20_pravah_client_outbox.sql"), "utf8");
 const edge = fs.readFileSync(path.join(root, "supabase/functions/pravah-sync-vyom/index.ts"), "utf8");
 
-for (const id of ["report-form", "client-modal", "client-detail", "sync-client-rows"]) {
+for (const id of ["report-form", "client-modal", "client-detail", "sync-client-rows", "client-directory-summary", "metric-clients-caption"]) {
   assert.match(html, new RegExp(`id=["']${id}["']`), `missing V2A interface: ${id}`);
 }
 for (const field of [
@@ -23,6 +23,11 @@ assert.doesNotMatch(html, /data-form=["']client["']/);
 assert.doesNotMatch(html, /data-fill-example|Use example|Paste WhatsApp report/);
 assert.match(html, /Cash reported by closer/);
 assert.match(html, /CRM-verified cash|client-verified cash/);
+assert.match(app, /active in Vyom/);
+assert.match(app, />Link existing</);
+assert.match(app, />Create Pravah record</);
+assert.doesNotMatch(app, />Choose existing</);
+assert.doesNotMatch(app, />Activate new</);
 
 for (const table of ["pravah_client_sync_inbox", "pravah_placement_states"]) {
   assert.match(sql, new RegExp(`create table if not exists ${table}\\b`));

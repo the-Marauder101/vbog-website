@@ -100,3 +100,10 @@ unused client and an administrator.
 Role names and tenant relationships may exist before portal delivery, but they
 do not authorize raw operational reads. Client and closer access activates only
 with purpose-built restricted views in the portal version.
+
+## D-020 — The Clients page is the operating directory
+
+An operator should not need to understand integration architecture to find a
+client. Every active Vyom client appears in Clients, including identities still
+awaiting Pravah setup. Link-existing and create-record actions are available on
+the client card; Data & connections retains the technical reconciliation view.

@@ -84,7 +84,10 @@
 
   function renderAll() { renderMetrics(); renderAttention(); renderPlacements(); renderClients(); renderReports(); renderSyncClients(); fillReportPlacements(); }
   function renderMetrics() {
-    const d = state.dashboard || {}; byId("metric-clients").textContent = d.active_clients ?? 0; byId("metric-closers").textContent = d.active_closers ?? 0;
+    const d = state.dashboard || {}; const vyomActive = state.syncClients.filter((row) => row.source_active && row.status !== "ignored").length;
+    byId("metric-clients").textContent = vyomActive || d.active_clients || 0;
+    byId("metric-clients-caption").textContent = vyomActive ? `${d.active_clients || 0} operational in Pravah` : "Active in Vyom";
+    byId("metric-closers").textContent = d.active_closers ?? 0;
     byId("metric-training").textContent = d.training_pass_rate == null ? "—" : d.training_pass_rate + "%"; byId("metric-target").textContent = d.closers_on_target == null ? "—" : d.closers_on_target + "%";
   }
   function renderAttention() {
@@ -110,8 +113,16 @@
   }
   function renderClients() {
     const host = byId("client-grid");
-    if (!state.clients.length) { host.innerHTML = '<div class="panel"><div class="empty-state"><span class="empty-glyph">C</span><h3>No active Pravah clients</h3><p>Refresh the Vyom client inbox, then verify and activate the correct client.</p><button class="button button-primary" data-sync-vyom data-internal>Refresh from Vyom</button></div></div>'; return; }
-    host.innerHTML = state.clients.map((client) => `<article class="client-card"><div class="client-card-head"><div><p class="eyebrow">${esc(client.status)}</p><h2>${esc(client.business_name)}</h2><small class="source-line">${client.vyom_link_status === "linked" ? "Verified Vyom identity" : "Needs Vyom link"}</small></div>${badge(client.health)}</div><div class="client-stats"><div><strong>${esc(client.active_closers)}</strong><span>Active closers</span></div><div><strong>${esc(client.open_actions)}</strong><span>Open actions</span></div><div><strong>${client.last_checkin_at ? dateLabel(client.last_checkin_at) : "—"}</strong><span>Last check-in</span></div></div><div class="client-actions"><button class="button button-secondary" data-client-detail="${client.id}">Open client</button>${isInternal() ? `<button class="button button-ghost" data-form="checkin" data-id="${client.id}">Add check-in</button>` : ""}</div></article>`).join("");
+    const summary = byId("client-directory-summary");
+    const activeSource = state.syncClients.filter((row) => row.source_active && row.status !== "ignored");
+    const pending = activeSource.filter((row) => row.status !== "linked");
+    const paused = state.syncClients.filter((row) => !row.source_active && row.status !== "ignored");
+    const operational = state.clients.filter((client) => !client.archived_at);
+    summary.innerHTML = `<span><strong>${activeSource.length}</strong> active in Vyom</span><span><strong>${operational.length}</strong> operational in Pravah</span><span><strong>${pending.length}</strong> awaiting setup</span>${paused.length ? `<span><strong>${paused.length}</strong> paused in Vyom</span>` : ""}`;
+    const pendingCards = pending.map((row) => `<article class="client-card client-card-pending"><div class="client-card-head"><div><p class="eyebrow">AWAITING SETUP</p><h2>${esc(row.source_name)}</h2><small class="source-line">Active client from Vyom</small></div>${badge(row.status)}</div><div class="pending-match"><span>${row.suggested_client_id ? "Possible existing match" : "Identity check required"}</span><strong>${esc(row.suggested_client_name || "No exact name match")}</strong><small>Names are suggestions only. Verify the company before linking.</small></div><div class="client-actions" data-internal>${row.suggested_client_id ? `<button class="button button-secondary" data-link-vyom="${row.source_client_id}" data-existing="${row.suggested_client_id}">Link suggested record</button>` : ""}<button class="button button-secondary" data-form="link-client" data-id="${row.source_client_id}">Link existing</button><button class="button button-primary" data-link-vyom="${row.source_client_id}">Create Pravah record</button></div></article>`).join("");
+    const operationalCards = operational.map((client) => `<article class="client-card"><div class="client-card-head"><div><p class="eyebrow">${esc(client.status)}</p><h2>${esc(client.business_name)}</h2><small class="source-line">${client.vyom_link_status === "linked" ? "Verified Vyom identity" : "Pravah record · Vyom link pending"}</small></div>${badge(client.health)}</div><div class="client-stats"><div><strong>${esc(client.active_closers)}</strong><span>Active closers</span></div><div><strong>${esc(client.open_actions)}</strong><span>Open actions</span></div><div><strong>${client.last_checkin_at ? dateLabel(client.last_checkin_at) : "—"}</strong><span>Last check-in</span></div></div><div class="client-actions"><button class="button button-secondary" data-client-detail="${client.id}">Open client</button>${isInternal() ? `<button class="button button-ghost" data-form="checkin" data-id="${client.id}">Add check-in</button>` : ""}</div></article>`).join("");
+    if (!pendingCards && !operationalCards) { host.innerHTML = '<div class="panel"><div class="empty-state"><span class="empty-glyph">C</span><h3>No clients received from Vyom</h3><p>Refresh the source catalogue to load active clients.</p><button class="button button-primary" data-sync-vyom data-internal>Refresh from Vyom</button></div></div>'; return; }
+    host.innerHTML = pendingCards + operationalCards;
   }
   function renderReports() {
     const host = byId("report-list"); if (!state.reports.length) { host.innerHTML = '<div class="report-empty">No reports yet.</div>'; return; }
@@ -126,8 +137,9 @@
     host.innerHTML = visible.map((row) => {
       let action = "";
       if (row.status !== "linked") {
-        action += row.suggested_client_id ? `<button class="button button-secondary" data-link-vyom="${row.source_client_id}" data-existing="${row.suggested_client_id}">Verify suggested link</button>` : `<button class="button button-secondary" data-link-vyom="${row.source_client_id}">Activate new</button>`;
-        action += `<button class="text-button" data-form="link-client" data-id="${row.source_client_id}">Choose existing</button>`;
+        action += row.suggested_client_id ? `<button class="button button-secondary" data-link-vyom="${row.source_client_id}" data-existing="${row.suggested_client_id}">Link suggested record</button>` : "";
+        action += `<button class="text-button" data-form="link-client" data-id="${row.source_client_id}">Link existing</button>`;
+        action += `<button class="text-button" data-link-vyom="${row.source_client_id}">Create Pravah record</button>`;
         if (isAdmin()) action += `<button class="text-button danger-link" data-ignore-vyom="${row.source_client_id}">Ignore</button>`;
       }
       return `<tr><td><strong>${esc(row.source_name)}</strong><small>${row.source_active ? "Active in Vyom" : "Paused in Vyom"}</small></td><td>${esc(row.suggested_client_name || "No exact match")}</td><td>${badge(row.status)}</td><td class="row-actions">${action}</td></tr>`;

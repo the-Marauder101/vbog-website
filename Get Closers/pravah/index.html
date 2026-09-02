@@ -55,7 +55,7 @@
       <section class="view active" id="overview" data-title="Overview">
         <div class="page-head"><div><p class="eyebrow">OPERATING FLOW</p><h1>Placement to performance.</h1></div><div class="page-actions" data-internal><button class="button button-secondary" type="button" data-sync-vyom>Refresh clients from Vyom</button><button class="button button-primary" type="button" data-form="placement">Record placement</button></div></div>
         <div class="metric-grid" aria-label="Headline metrics">
-          <article class="metric"><span>Active clients</span><strong id="metric-clients">—</strong><small>Operating portfolio</small></article>
+          <article class="metric"><span>Active clients</span><strong id="metric-clients">—</strong><small id="metric-clients-caption">Active in Vyom</small></article>
           <article class="metric"><span>Active closers</span><strong id="metric-closers">—</strong><small>Training or placed</small></article>
           <article class="metric"><span>Training pass rate</span><strong id="metric-training">—</strong><small>Completed decisions</small></article>
           <article class="metric"><span>Closers on target</span><strong id="metric-target">—</strong><small>Reports with targets</small></article>
@@ -78,7 +78,8 @@
 
       <section class="view" id="clients" data-title="Clients">
         <div class="page-head"><div><p class="eyebrow">CLIENT SUCCESS</p><h1>Clients</h1></div><div class="page-actions" data-internal><button class="button button-primary" type="button" data-sync-vyom>Refresh from Vyom</button></div></div>
-        <p class="section-note" data-internal>Client identity comes from Vyom. Activate or link a verified client from Data &amp; connections; Pravah stores only its operating profile.</p>
+        <p class="section-note" data-internal>Every active Vyom client appears here. Clients awaiting setup can be linked to an existing Nikash/Pravah record or given a new Pravah operating record without leaving this page.</p>
+        <div class="client-directory-summary" id="client-directory-summary" aria-live="polite"></div>
         <div class="client-grid" id="client-grid"></div>
       </section>
 
@@ -95,7 +96,7 @@
           <article class="connection-card"><div class="connection-icon">V</div><div><h2>Vyom</h2><p>Client identity linked; candidate events next</p></div><span class="connection-state active-state">Client link · V2A</span></article>
           <article class="connection-card"><div class="connection-icon">S</div><div><h2>Sheets / CRM</h2><p>Mapped client lead and result data</p></div><span class="connection-state">Planned · V5</span></article>
         </div>
-        <div class="panel table-panel connection-inbox"><div class="panel-head"><div><h2>Vyom client inbox</h2><p>Verify every identity before it becomes operational in Pravah.</p></div><button class="button button-secondary" type="button" data-sync-vyom>Refresh from Vyom</button></div><div class="table-wrap"><table><thead><tr><th>Vyom client</th><th>Suggested match</th><th>State</th><th></th></tr></thead><tbody id="sync-client-rows"></tbody></table></div></div>
+        <div class="panel table-panel connection-inbox"><div class="panel-head"><div><h2>Vyom client reconciliation</h2><p>The same client setup controls shown in Clients, with identity-matching context.</p></div><button class="button button-secondary" type="button" data-sync-vyom>Refresh from Vyom</button></div><div class="table-wrap"><table><thead><tr><th>Vyom client</th><th>Suggested match</th><th>State</th><th></th></tr></thead><tbody id="sync-client-rows"></tbody></table></div></div>
       </section>
     </main>
   </div>

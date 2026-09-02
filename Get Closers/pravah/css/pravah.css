@@ -248,6 +248,13 @@ td small { margin-top: 4px; color: var(--muted); font-size: .75rem; }
 .empty-state.compact { min-height: 250px; }
 
 .client-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.client-directory-summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 18px; }
+.client-directory-summary span { display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--muted); font-size: 12px; }
+.client-directory-summary strong { color: var(--ink); font-family: var(--mono); font-size: 14px; }
+.client-card-pending { border-style: dashed; background: color-mix(in srgb, var(--paper) 94%, var(--orange)); }
+.pending-match { display: grid; gap: 4px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.pending-match span, .pending-match small { color: var(--muted); font-size: 12px; }
+.pending-match strong { font-size: 14px; }
 .client-card { background: var(--surface); border: 1px solid var(--line); }
 .client-card-head { padding: 21px; display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; border-bottom: 1px solid var(--line); }
 .client-card h2 { margin: 5px 0 0; font-size: 1.05rem; letter-spacing: -.03em; }
