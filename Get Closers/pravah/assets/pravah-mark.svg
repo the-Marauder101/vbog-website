@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+<title id="title">Pravah mark</title>
+<desc id="desc">A flowing P ribbon with an upward arrow.</desc>
+<defs>
+  <linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#5b2cff"/><stop offset=".48" stop-color="#2d8cff"/><stop offset="1" stop-color="#11d4e8"/></linearGradient>
+</defs>
+<path d="M20 23h46c20 0 34 11 34 29 0 19-14 31-34 31H53l-16 17H20l20-22c5-5 9-8 15-8h12c10 0 16-6 16-18 0-11-6-17-17-17H45v14h25l-16 16H20z" fill="url(#g)"/>
+<path d="M26 97c0-13 5-23 16-32l24-21h-8l13-13 22 22-13 13v-8L54 82c-7 6-11 11-11 18v7H26z" fill="url(#g)"/>
+</svg>
