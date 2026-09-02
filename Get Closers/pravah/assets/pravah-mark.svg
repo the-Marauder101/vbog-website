@@ -1,24 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pravah">
-  <!-- PRAVAH — प्रवाह, the flow: a river eddy seen from above.
+  <!-- PRAVAH — प्रवाह, the confluence.
 
-       The mark is a body of moving water — an organic pool whose
-       current is visible on the surface.
+       The main mark is where all the portals' currents meet.
+       Five colored streams — plum (ops), green (perf), orange (rev),
+       blue (client), violet (closer) — converge into one body of water.
+       Each portal's favicon isolates its own current inside the same
+       water-body silhouette; the main mark holds them all.
 
-       · THE SHAPE IS NOT A CIRCLE. An irregular, slightly elongated
-         silhouette reads as a natural body of water. A perfect circle
-         reads as a button. Nikash taught us: irregular = physical object.
-       · THE CURRENT LINES TAPER. Three surface streaks of decreasing
-         weight and opacity — the upstream one boldest, the downstream
-         one faint. This is how current looks: strongest where it enters,
-         dissipating as it spreads.
-       · THE HIGHLIGHT IS UPSTREAM. Light catches the surface where the
-         current pushes water up against itself, exactly like the polished
-         edge on Nikash's stone.
-
-       Structural sibling to vyom.svg and nikash.svg — a world for व्योम,
-       a stone for निकष, a river for प्रवाह. Each VBOG tool is its own
-       name, drawn. Palette: plum (#5b2749) body, indigo (#696ff2) depths.
-       Tilted -7° for the same reason as Nikash's -8°. -->
+       Same silhouette, same tilt, same highlight. The body gradient
+       stays plum-to-indigo: the house color. -->
   <style>
     .rim { stroke: none; }
     @media (prefers-color-scheme: dark) {
@@ -33,23 +23,28 @@
     </linearGradient>
   </defs>
   <g transform="rotate(-7 16 16)">
-    <!-- Water body: organic shape, wider than tall, slightly irregular -->
     <path class="rim" fill="url(#pg)"
           d="M 14.5 3.8 C 21 2.8, 28.2 7.5, 28.5 14.8
              C 28.8 21.6, 24 27.8, 17.5 28.2
              C 11.5 28.5, 5.8 24.6, 4.2 18.5
              C 2.8 13, 7.5 4.8, 14.5 3.8 Z"/>
-    <!-- Surface highlight: upstream bend -->
+    <!-- Surface highlight -->
     <path d="M 8.5 10 C 11.5 6.8, 16 6.5, 19.5 8.5"
-          fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" opacity=".13"/>
-    <!-- Current streak 1: bold, upstream -->
-    <path fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2.2" stroke-linecap="round"
-          d="M 8 14 C 12.5 9.5, 20 16, 25.5 13"/>
-    <!-- Current streak 2: medium -->
-    <path fill="none" stroke="rgba(255,255,255,0.26)" stroke-width="1.6" stroke-linecap="round"
-          d="M 7.5 19.5 C 12 15.5, 21 22, 26 19"/>
-    <!-- Current streak 3: thin, downstream -->
-    <path fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1" stroke-linecap="round"
-          d="M 10 24.5 C 14 21.5, 21 25.5, 25 23.5"/>
+          fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".13"/>
+    <!-- Ops current: plum-white, the broadest — the operating flow -->
+    <path fill="none" stroke="rgba(255,255,255,0.40)" stroke-width="2" stroke-linecap="round"
+          d="M 8 13 C 12.5 8.5, 20 15, 25.5 12"/>
+    <!-- Perf current: green — measurement -->
+    <path fill="none" stroke="rgba(59,184,138,0.45)" stroke-width="1.4" stroke-linecap="round"
+          d="M 7.5 17 C 12 14, 20 19, 25.5 16.5"/>
+    <!-- Rev current: orange — the pipeline -->
+    <path fill="none" stroke="rgba(255,77,0,0.38)" stroke-width="1.2" stroke-linecap="round"
+          d="M 9 20.5 C 13 18, 19 22, 24.5 20"/>
+    <!-- Client ripple: blue — the observer -->
+    <path fill="none" stroke="rgba(96,165,250,0.30)" stroke-width="0.9" stroke-linecap="round"
+          d="M 11 24 C 14.5 22, 20 25, 23.5 23"/>
+    <!-- Closer stream: violet — personal drive -->
+    <path fill="none" stroke="rgba(167,139,250,0.25)" stroke-width="0.8" stroke-linecap="round"
+          d="M 13 26.5 C 16 25, 20 27, 22 25.5"/>
   </g>
 </svg>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Pravah — choose your workspace.">
   <title>Pravah — Home</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/pravah-mark.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -55,9 +56,10 @@
     .portal-card:active { transform: translateY(0); }
     .portal-avatar {
       width: 64px; height: 64px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; font-size: 24px; font-weight: 700;
-      letter-spacing: -.02em; flex-shrink: 0;
+      align-items: center; justify-content: center; flex-shrink: 0;
+      overflow: hidden;
     }
+    .portal-avatar img { width: 100%; height: 100%; object-fit: contain; }
     .portal-card .portal-name { font-size: 15px; font-weight: 600; text-align: center; }
     .portal-card .portal-desc { font-size: 12px; color: #a9a4a7; text-align: center; line-height: 1.5; }
 
@@ -126,11 +128,11 @@
     var $ = function(id) { return document.getElementById(id); };
 
     var PORTALS = {
-      ops:    { name: 'Pravah Operations',  desc: 'Placements, training, reports, clients, and the full operating flow.', href: '../', avatar: 'P', avatarClass: 'avatar-ops' },
-      perf:   { name: 'Performance',        desc: 'KRA/KPI scorecard — measure what matters across six result areas.', href: '../performance/', avatar: 'K', avatarClass: 'avatar-perf' },
-      rev:    { name: 'Revenue',            desc: 'Lead-to-cash pipeline — customers, deals, sales, and verified payments.', href: '../revenue/', avatar: 'R', avatarClass: 'avatar-rev' },
-      client: { name: 'Client Portal',      desc: 'Your closers, revenue, and action history — read-only operations view.', href: '../client/', avatar: 'C', avatarClass: 'avatar-client' },
-      closer: { name: 'Closer Portal',      desc: 'Your personal workspace — leads, pipeline, targets, and performance.', href: '../closer/', avatar: 'M', avatarClass: 'avatar-closer' }
+      ops:    { name: 'Pravah Operations',  desc: 'Placements, training, reports, clients, and the full operating flow.', href: '../', icon: '../assets/favicon-ops.svg' },
+      perf:   { name: 'Performance',        desc: 'KRA/KPI scorecard — measure what matters across six result areas.', href: '../performance/', icon: '../assets/favicon-perf.svg' },
+      rev:    { name: 'Revenue',            desc: 'Lead-to-cash pipeline — customers, deals, sales, and verified payments.', href: '../revenue/', icon: '../assets/favicon-rev.svg' },
+      client: { name: 'Client Portal',      desc: 'Your closers, revenue, and action history — read-only operations view.', href: '../client/', icon: '../assets/favicon-client.svg' },
+      closer: { name: 'Closer Portal',      desc: 'Your personal workspace — leads, pipeline, targets, and performance.', href: '../closer/', icon: '../assets/favicon-closer.svg' }
     };
 
     function show(id) {
@@ -141,7 +143,7 @@
       var p = PORTALS[key];
       var name = extra ? p.name + ' — ' + extra : p.name;
       return '<a class="portal-card" href="' + p.href + '">' +
-        '<span class="portal-avatar ' + p.avatarClass + '">' + p.avatar + '</span>' +
+        '<span class="portal-avatar"><img src="' + p.icon + '" alt="' + p.name + '"></span>' +
         '<div><span class="portal-name">' + name + '</span>' +
         '<span class="portal-desc">' + p.desc + '</span></div></a>';
     }
