@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Pravah V4 — customer-centric revenue operations for Get Closers.">
+  <title>Pravah — Revenue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/pravah.css">
+  <link rel="stylesheet" href="revenue.css">
+</head>
+<body>
+  <section class="auth-screen" id="auth-screen">
+    <div class="auth-brand"><span class="brand-mark">p.</span><strong>pravah</strong><small>by Get Closers</small></div>
+    <form class="auth-card" id="signin-form">
+      <p class="eyebrow">REVENUE OPERATIONS</p><h1>Customer → revenue.</h1>
+      <p>Use the same approved staff account as the main Pravah workspace.</p>
+      <label>Email<input name="email" type="email" autocomplete="username" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <p class="form-error" id="signin-error" role="alert"></p>
+      <button class="button button-primary" type="submit">Sign in</button>
+    </form>
+  </section>
+
+  <section class="auth-screen" id="access-screen" hidden>
+    <div class="auth-card access-card"><p class="eyebrow">ACCESS</p><h1 id="access-title">Revenue workspace unavailable.</h1><p id="access-message">Ask an administrator to activate your Pravah membership.</p><button class="button button-secondary" type="button" data-signout>Sign out</button></div>
+  </section>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <aside class="sidebar" aria-label="Revenue navigation">
+      <a class="brand" href="#dashboard" aria-label="Pravah revenue"><span class="brand-mark">p.</span><span><strong>pravah</strong><small>Revenue engine</small></span></a>
+      <nav class="nav-list">
+        <a class="nav-link active" href="#dashboard" data-view="dashboard"><span>01</span>Revenue dashboard</a>
+        <a class="nav-link" href="#leads" data-view="leads"><span>02</span>Customers &amp; leads</a>
+        <a class="nav-link" href="#pipeline" data-view="pipeline"><span>03</span>Pipeline</a>
+        <a class="nav-link" href="#sales" data-view="sales"><span>04</span>Sales &amp; cash</a>
+      </nav>
+      <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V4 revenue engine</strong><small id="sync-state">Connected</small></div></div>
+    </aside>
+
+    <main>
+      <header class="topbar"><button class="mobile-nav" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button><div class="crumb"><span>Get Closers</span> / <strong id="view-name">Revenue dashboard</strong></div><div class="account-controls"><span id="account-name"></span><span class="role-chip" id="account-role"></span><button class="text-button" type="button" data-signout>Sign out</button></div></header>
+
+      <section class="view active" id="dashboard" data-title="Revenue dashboard">
+        <div class="page-head"><div><p class="eyebrow">CUSTOMER → REVENUE</p><h1>Revenue engine.</h1><p class="section-note">One normalized operating view from lead to call to sale to verified cash.</p></div><div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button><button class="button button-primary" data-modal="lead">Add lead</button></div></div>
+        <div class="revenue-filters panel"><div class="filter-grid"><label>From<input id="period-start" type="date"></label><label>To<input id="period-end" type="date"></label><label>Client<select id="client-filter"><option value="">All clients</option></select></label><button class="button button-primary filter-button" data-apply>Apply</button></div></div>
+        <div class="metric-grid revenue-metrics">
+          <article class="metric"><span>Active leads</span><strong id="metric-leads">—</strong><small>Open customer records</small></article>
+          <article class="metric"><span>Open pipeline</span><strong id="metric-pipeline">—</strong><small>Current open deals</small></article>
+          <article class="metric"><span>Booked revenue</span><strong id="metric-revenue">—</strong><small>Sales in selected period</small></article>
+          <article class="metric"><span>Verified cash</span><strong id="metric-cash">—</strong><small>Evidence-backed payments</small></article>
+          <article class="metric"><span>Outstanding</span><strong id="metric-outstanding">—</strong><small>Net sale balance</small></article>
+          <article class="metric"><span>Conversion</span><strong id="metric-conversion">—</strong><small>Won / closed deals</small></article>
+        </div>
+        <div class="split-grid revenue-split"><article class="panel"><div class="panel-head"><div><p class="eyebrow">PIPELINE</p><h2>Funnel</h2></div></div><div id="funnel" class="funnel"></div></article><article class="panel"><div class="panel-head"><div><p class="eyebrow">PORTFOLIO</p><h2>Client revenue</h2></div></div><div class="table-wrap"><table><thead><tr><th>Client</th><th>Leads</th><th>Sales</th><th>Revenue</th><th>Cash</th><th>Pipeline</th></tr></thead><tbody id="client-rows"></tbody></table></div></article></div>
+        <article class="panel table-panel"><div class="panel-head"><div><p class="eyebrow">PEOPLE</p><h2>Closer performance</h2><p>Revenue is attributed to the placement/closer relationship, while cash remains payment-evidence based.</p></div></div><div class="table-wrap"><table><thead><tr><th>Closer</th><th>Client</th><th>Leads</th><th>Sales</th><th>Revenue</th><th>Cash</th></tr></thead><tbody id="closer-rows"></tbody></table></div></article>
+      </section>
+
+      <section class="view" id="leads" data-title="Customers & leads">
+        <div class="page-head"><div><p class="eyebrow">CUSTOMER RECORD</p><h1>Customers &amp; leads</h1></div><div class="page-actions"><button class="button button-primary" data-modal="lead">Add lead</button><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <article class="panel table-panel"><div class="panel-head"><div><h2>Lead register</h2><p>Canonical lead records. External Sheet/CRM identity is preserved with source keys for the V5 mapping layer.</p></div></div><div class="table-wrap"><table><thead><tr><th>Customer</th><th>Client</th><th>Stage</th><th>Owner</th><th>Source</th><th>Last activity</th><th></th></tr></thead><tbody id="lead-rows"></tbody></table></div></article>
+      </section>
+
+      <section class="view" id="pipeline" data-title="Pipeline">
+        <div class="page-head"><div><p class="eyebrow">DEALS</p><h1>Pipeline.</h1></div><div class="page-actions"><button class="button button-primary" data-modal="deal">Create deal</button><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <article class="panel table-panel"><div class="panel-head"><div><h2>Open opportunities</h2><p>Deal value is pipeline, not booked revenue. A sale closes the deal and creates the revenue record.</p></div></div><div class="table-wrap"><table><thead><tr><th>Deal</th><th>Customer</th><th>Client</th><th>Stage</th><th>Owner</th><th>Value</th><th>Expected close</th></tr></thead><tbody id="deal-rows"></tbody></table></div></article>
+      </section>
+
+      <section class="view" id="sales" data-title="Sales & cash">
+        <div class="page-head"><div><p class="eyebrow">MONEY</p><h1>Sales &amp; cash.</h1><p class="section-note">Revenue and cash are deliberately separate. Only verified payments count as official cash.</p></div><div class="page-actions"><button class="button button-primary" data-modal="sale">Record sale</button><button class="button button-secondary" data-modal="payment">Record payment</button></div></div>
+        <div class="split-grid"><article class="panel table-panel"><div class="panel-head"><div><h2>Recent sales</h2></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Client</th><th>Closer</th><th>Net revenue</th><th>Status</th></tr></thead><tbody id="sale-rows"></tbody></table></div></article><article class="panel table-panel"><div class="panel-head"><div><h2>Payment evidence</h2></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Amount</th><th>Status</th><th>Evidence</th><th></th></tr></thead><tbody id="payment-rows"></tbody></table></div></article></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modal" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><div><p class="eyebrow" id="modal-eyebrow">REVENUE</p><h2 id="modal-title">Add record</h2></div><button class="icon-button" type="button" data-close-modal aria-label="Close">×</button></div><form id="record-form" class="dynamic-form"></form></section></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="loading-bar" id="loading-bar" hidden></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="revenue.js"></script>
+</body>
+</html>
