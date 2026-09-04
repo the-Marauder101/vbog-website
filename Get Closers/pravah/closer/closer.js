@@ -132,6 +132,7 @@
     try{
       if(type==='activity'){
         await api.rpc('pravah_revenue_log_activity',{
+          p_client_id:state.context.client_id,
           p_lead_id:$('activity-lead').value,
           p_activity_type:$('activity-type').value,
           p_occurred_at:new Date($('activity-date').value).toISOString(),
@@ -142,7 +143,9 @@
       }
       if(type==='deal'){
         await api.rpc('pravah_revenue_create_deal',{
+          p_client_id:state.context.client_id,
           p_lead_id:$('deal-lead').value,
+          p_placement_id:state.context.placement_id,
           p_title:$('deal-title').value,
           p_value:Number($('deal-value').value||0),
           p_currency:$('deal-currency').value||'INR',
