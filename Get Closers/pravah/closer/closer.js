@@ -34,7 +34,7 @@
         api.fetch('pravah_revenue_stages?select=*&active=eq.true&order=sort_order'),
         api.fetch('pravah_revenue_leads?select=*&order=created_at.desc&limit=250'),
         api.fetch('pravah_revenue_deals?select=*&order=created_at.desc&limit=250'),
-        api.fetch('pravah_v_placements?select=*&order=created_at.desc&limit=10'),
+        api.fetch('pravah_v_placements?select=*&order=joined_on.desc&limit=10'),
         api.fetch('pravah_v_reports?select=*&order=period_start.desc&limit=50'),
         api.fetch('pravah_targets?select=*&order=period_start.desc&limit=50')
       ]);
@@ -58,14 +58,16 @@
   function renderDashboard(){
     const d=state.dashboard||{};
     $('metric-sales').textContent=d.total_sales??0;
-    $('metric-cash').textContent=money(d.verified_cash);
-    $('metric-target').textContent=money(d.current_target);
-    $('metric-achievement').textContent=pct(d.target_achievement);
+    $('metric-cash').textContent=money(d.total_cash);
+    const firstTarget=Array.isArray(d.current_targets)&&d.current_targets[0];
+    $('metric-target').textContent=firstTarget?money(firstTarget.target_value):'—';
+    const achv=firstTarget&&firstTarget.target_value&&d.total_revenue?((Number(d.total_revenue)/Number(firstTarget.target_value))*100):null;
+    $('metric-achievement').textContent=pct(achv);
 
     // Placement info
     const p=state.placements[0];
     if(p){
-      $('placement-info').innerHTML=`<div class="placement-detail"><div class="detail-row"><span class="detail-label">Client</span><span class="detail-value">${esc(p.business_name||p.client_name||'—')}</span></div><div class="detail-row"><span class="detail-label">Joined</span><span class="detail-value">${dateLabel(p.joined_on||p.start_date||p.created_at)}</span></div><div class="detail-row"><span class="detail-label">Training</span><span class="detail-value">${badge(p.training_status||p.placement_state||'active')}</span></div><div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${badge(p.placement_state||'active')}</span></div></div>`;
+      $('placement-info').innerHTML=`<div class="placement-detail"><div class="detail-row"><span class="detail-label">Client</span><span class="detail-value">${esc(p.business_name||'—')}</span></div><div class="detail-row"><span class="detail-label">Joined</span><span class="detail-value">${dateLabel(p.joined_on)}</span></div><div class="detail-row"><span class="detail-label">Training</span><span class="detail-value">${badge(p.training_status||'active')}</span></div><div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${badge(p.placement_state||'active')}</span></div></div>`;
     }else{
       $('placement-info').innerHTML='<div class="table-empty">No active placement found.</div>';
     }
@@ -73,7 +75,7 @@
     // Recent reports
     const reports=state.reports.slice(0,5);
     if(reports.length){
-      $('report-list').innerHTML=reports.map(r=>`<div class="data-item"><div><strong>${esc(r.period_label||r.period_start||'—')}</strong><span>${dateLabel(r.period_start)} — ${dateLabel(r.period_end)}</span></div><div><span class="mono">${esc(r.total_calls??r.calls??'—')} calls</span><span class="mono">${esc(r.sales??'—')} sales</span><span class="mono">${money(r.cash||r.verified_cash)}</span></div></div>`).join('');
+      $('report-list').innerHTML=reports.map(r=>`<div class="data-item"><div><strong>${dateLabel(r.period_start)} — ${dateLabel(r.period_end)}</strong></div><div><span class="mono">${esc(r.calls_attempted??'—')} calls</span><span class="mono">${esc(r.sales_count??'—')} sales</span><span class="mono">${money(r.cash_collected||r.verified_cash_collected)}</span></div></div>`).join('');
     }else{
       $('report-list').innerHTML='<div class="table-empty">No performance reports yet.</div>';
     }
@@ -89,15 +91,14 @@
 
   function renderTargets(){
     // Active targets
-    const active=(state.targets||[]).filter(t=>t.status==='active'||!t.status);
+    const active=state.targets||[];
     $('target-rows').innerHTML=active.map(t=>{
-      const achv=t.target_value&&t.current_value?((Number(t.current_value)/Number(t.target_value))*100):null;
-      return `<tr><td>${esc(t.period_label||t.period_start||'—')}</td><td>${esc(t.target_type||t.type||'—')}</td><td class="mono">${money(t.target_value)}</td><td class="mono">${money(t.current_value)}</td><td class="mono">${pct(achv)}</td></tr>`;
+      return `<tr><td>${dateLabel(t.period_start)} — ${dateLabel(t.period_end)}</td><td>${esc(t.target_unit||'—')}</td><td class="mono">${money(t.target_value)}</td><td class="mono">—</td><td class="mono">—</td></tr>`;
     }).join('')||'<tr><td colspan="5"><div class="table-empty">No active targets.</div></td></tr>';
 
     // Performance history from reports
     const history=state.reports||[];
-    $('history-rows').innerHTML=history.map(r=>`<tr><td>${esc(r.period_label||r.period_start||'—')}</td><td class="mono">${esc(r.total_calls??r.calls??'—')}</td><td class="mono">${esc(r.connected_calls??r.connected??'—')}</td><td class="mono">${esc(r.sales??'—')}</td><td class="mono">${money(r.revenue||r.booked_revenue)}</td><td class="mono">${money(r.cash||r.verified_cash)}</td></tr>`).join('')||'<tr><td colspan="6"><div class="table-empty">No performance history yet.</div></td></tr>';
+    $('history-rows').innerHTML=history.map(r=>`<tr><td>${dateLabel(r.period_start)} — ${dateLabel(r.period_end)}</td><td class="mono">${esc(r.calls_attempted??'—')}</td><td class="mono">${esc(r.connected_calls??'—')}</td><td class="mono">${esc(r.sales_count??'—')}</td><td class="mono">${money(r.revenue_generated)}</td><td class="mono">${money(r.verified_cash_collected||r.cash_collected)}</td></tr>`).join('')||'<tr><td colspan="6"><div class="table-empty">No performance history yet.</div></td></tr>';
   }
 
   /* --- Modals --- */
