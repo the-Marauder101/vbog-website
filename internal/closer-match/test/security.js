@@ -72,15 +72,31 @@ suite("SECURITY SUITE", 8104, async ({ p, base, E, P, check, errs }) => {
         open.length === 0, open.map(([f, s]) => `${f}=${s}`).join(", ") || `${named.length} refused`);
 
   // ══ R1 — EVERY TABLE, NOT A LIST OF THEM ═════════════════════════════════
-  const bypass = await rest(p, "v_rls_bypass_audit?select=*");
+  // Scoped to `ours`. A second system — 34 pravah_* tables — shares this Supabase
+  // project, and the audits cover every table in it. This repo can be held to its
+  // own tables; a neighbour's rows are a finding to report, not a suite failure
+  // this repo can clear. See sql/45.
+  const bypass = await rest(p, "v_rls_bypass_audit?select=*&ours=is.true");
   check("no view runs as owner, no table is missing forced RLS, anon holds nothing",
         Array.isArray(bypass) && bypass.length === 0,
         (bypass || []).map(b => `${b.object}: ${b.problem}`).join("; ") || "clean");
 
-  const c10 = await rest(p, "v_c10_audit?select=*");
-  check("every policy in the schema names who it trusts",
+  const c10 = await rest(p, "v_c10_audit?select=*&ours=is.true");
+  check("every policy on a table we own names who it trusts",
         Array.isArray(c10) && c10.length === 0,
         (c10 || []).map(x => `${x.table_name}.${x.policy_name}`).join("; ") || "clean");
+
+  // And the neighbour, reported rather than ignored. Every outside policy that
+  // reaches a Nikash table must at least be scoped to a person.
+  const foreign = await rest(p, "v_foreign_policy_audit?select=*");
+  check("every outside policy on our tables is scoped to a person",
+        Array.isArray(foreign) && foreign.every(f => f.scoped_to_a_person),
+        foreign.map(f => `${f.nikash_table}.${f.policy_name}${f.scoped_to_a_person ? "" : " OPEN"}`).join("; ") || "none");
+  check("AND NO OUTSIDE POLICY REACHES A SCORE-BEARING TABLE",
+        Array.isArray(foreign) &&
+        !foreign.some(f => ["candidate_profile", "matches", "ask_scores", "ask_scorecards",
+                            "candidate_responses", "interview_ratings"].includes(f.nikash_table)),
+        foreign.map(f => f.nikash_table).join(", ") || "none");
 
   const exempt = await rest(p, "rls_exempt?select=table_name,why");
   check("the RLS exemptions are few, and each one is justified in writing",
@@ -290,7 +306,7 @@ suite("SECURITY SUITE", 8104, async ({ p, base, E, P, check, errs }) => {
   const probe = await rpc(p, "run_golden_cases", {});
   check("the view-security event trigger is still in place",
         probe.status === 200 &&
-        (await rest(p, "v_rls_bypass_audit?select=*")).length === 0, "");
+        (await rest(p, "v_rls_bypass_audit?select=*&ours=is.true")).length === 0, "");
 
   check("no JS errors", errs.length === 0, errs.join(" | "));
 }, async ({ p, check }) => {

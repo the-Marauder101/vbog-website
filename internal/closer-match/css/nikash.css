@@ -185,6 +185,23 @@ a:hover { color: var(--streak-t); text-decoration: underline; text-decoration-th
   background: var(--line);
 }
 
+/* The three readings of a candidate, side by side: R1, R2, questionnaire. They
+   are deliberately never combined into one number, so they get equal weight and
+   equal width rather than one headline and two footnotes. Wraps to a column on a
+   phone, where three columns would each be too narrow to read. */
+.readings { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 680px) { .readings { grid-template-columns: 1fr; gap: 14px; } }
+.reading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.reading .label {
+  display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--muted); text-transform: uppercase;
+}
+.reading .figure { font-size: 30px; line-height: 1.1; }
+/* A reading that has not happened shows no number at all. A dash styled like a
+   score reads as a score of nothing, which is not the same as "not run". */
+.reading.empty .label { color: var(--muted); }
+.reading .small { overflow-wrap: anywhere; }
+
 main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
 .narrow { max-width: 660px; }
 

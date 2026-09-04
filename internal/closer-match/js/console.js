@@ -186,14 +186,18 @@ async function loadQuestions() {
 }
 
 function questionCounts(b) {
-  const live = (b.attributes || []).filter((a) => a.active);
-  const qs = (only) => live.filter(only).reduce((n, a) =>
-    n + (a.questions || []).filter((q) => q.active && !q.is_reference).length, 0);
+  // Counted from the QUESTION's in_r1 flag, not the attribute's priority.
+  // sql/44 moved R1 to a per-question set so it could be eight questions rather
+  // than every question on five attributes; counting the old way here would show
+  // an interview length the interview does not have.
+  const live = (b.attributes || []).filter((a) => a.active)
+    .flatMap((a) => (a.questions || []).filter((q) => q.active));
+  const asked = live.filter((q) => !q.is_reference);
   return {
-    r1: qs((a) => a.priority),
-    r2rest: qs((a) => !a.priority),
-    refs: live.reduce((n, a) =>
-      n + (a.questions || []).filter((q) => q.active && q.is_reference).length, 0),
+    r1: asked.filter((q) => q.in_r1).length,
+    r2all: asked.length,
+    r2rest: asked.filter((q) => !q.in_r1).length,
+    refs: live.filter((q) => q.is_reference).length,
   };
 }
 
@@ -208,14 +212,16 @@ function renderQuestions() {
   el("q-summary").innerHTML = `
     <span class="label">What the two rounds cost right now</span>
     <strong>R1 — ${c.r1} questions</strong>, about ${mins(c.r1)} minutes, run by whoever
-    does the phone screen. <strong>R2 — ${c.r2rest} questions</strong>, about
-    ${mins(c.r2rest)} minutes, because an R2 after a submitted R1 does not ask
-    again what R1 already scored. Plus ${c.refs} reference question${c.refs === 1 ? "" : "s"}
+    does the phone screen.
+    <strong>R2 after a submitted R1 — ${c.r2rest} questions</strong>, about
+    ${mins(c.r2rest)} minutes, because it does not ask again what R1 already scored.
+    <strong>R2 with no R1 behind it — ${c.r2all} questions</strong>, about
+    ${mins(c.r2all)} minutes. Plus ${c.refs} reference question${c.refs === 1 ? "" : "s"}
     for their previous manager, on a separate call.
     <br><br>
     At about 70 seconds a question — measured from your own interviews, not
-    estimated — the whole bank in one sitting is ${mins(c.r1 + c.r2rest)} minutes.
-    Splitting it is what gets your part inside 30.
+    estimated — running the whole bank in one sitting is ${mins(c.r2all)} minutes.
+    Running R1 first is what gets your part to ${mins(c.r2rest)}.
     ${b.can_edit ? "" : `<br><br><strong>You are signed in as a recruiter, so this
       screen is read-only.</strong> Changing the instrument is an admin action.`}`;
 
@@ -231,13 +237,13 @@ function renderQuestions() {
       <div class="panel" style="margin-bottom:12px">
         <div class="cand-head">
           <span class="chip">${esc(b.sections[a.section] || a.section)}</span>
-          ${a.priority ? `<span class="chip strong">in R1</span>` : `<span class="chip">R2 only</span>`}
+          ${a.priority ? `<span class="chip">surfaced first</span>` : ""}
           ${a.active ? "" : `<span class="chip warn">not in use</span>`}
           <span class="spacer"></span>
           ${b.can_edit ? `
             <button class="btn-quiet btn-small" data-attr-prio="${esc(a.id)}"
               data-to="${a.priority ? "false" : "true"}"
-              >${a.priority ? "Move out of R1" : "Put in R1"}</button>
+              >${a.priority ? "Stop surfacing first" : "Surface first in results"}</button>
             <button class="btn-quiet btn-small" data-attr-active="${esc(a.id)}"
               data-to="${a.active ? "false" : "true"}"
               >${a.active ? "Take out of use" : "Put back in use"}</button>` : ""}
@@ -249,11 +255,16 @@ function renderQuestions() {
           <div class="cand-head">
             <span class="cand-name mono">${esc(q.id)}</span>
             ${q.is_reference ? `<span class="chip">reference call</span>` : ""}
+            ${q.in_r1 ? `<span class="chip strong">R1</span>` : ""}
             ${q.active ? "" : `<span class="chip warn">not in use</span>`}
             ${q.times_scored
               ? `<span class="chip">scored ${q.times_scored}×</span>`
               : `<span class="chip">never used</span>`}
             <span class="spacer"></span>
+            ${b.can_edit && !q.is_reference ? `
+              <button class="btn-quiet btn-small" data-q-r1="${esc(q.id)}"
+                data-to="${q.in_r1 ? "false" : "true"}"
+                >${q.in_r1 ? "Drop from R1" : "Add to R1"}</button>` : ""}
             ${b.can_edit ? `
               <button class="btn-quiet btn-small" data-q-active="${esc(q.id)}"
                 data-to="${q.active ? "false" : "true"}"
@@ -369,6 +380,8 @@ function bindQuestionEditor() {
 
   toggle("data-q-active", "set_ask_question_active",
          (id, to) => ({ p_id: id, p_active: to }), (id) => `[data-qslot="${id}"]`);
+  toggle("data-q-r1", "set_ask_question_in_r1",
+         (id, to) => ({ p_id: id, p_in_r1: to }), (id) => `[data-qslot="${id}"]`);
   toggle("data-attr-active", "set_ask_attribute_active",
          (id, to) => ({ p_id: id, p_active: to }), (id) => `[data-aslot="${id}"]`);
   toggle("data-attr-prio", "set_ask_attribute_priority",
@@ -1395,6 +1408,102 @@ function askRunLinks(id) {
           <a class="btn-quiet btn-small" href="ask.html?cand=${esc(id)}&round=r2">Run R2 interview</a>`;
 }
 
+// ═══ THE THREE READINGS, AND THE ROLES, AT THE TOP ═════════════════════════
+//
+// A candidate is read three separate ways — the R1 screen, the R2 interview, and
+// the questionnaire — and until now you had to scroll to find each one, or open
+// a different screen. They are independent on purpose (§7ae) and they are more
+// useful side by side than apart: two readings that agree is reassurance, two
+// that diverge is the most informative thing this system produces.
+//
+// The match percentages sit in the same block, because "who is this person" and
+// "which of my open roles do they fit" is one question asked twice.
+function headlineHtml(d, c) {
+  const cards = (d.ask || []).filter((x) => x.submitted_at);
+  const r1 = cards.find((x) => x.round === "r1");
+  const r2 = cards.find((x) => x.round === "r2");
+  const roles = d.roles || [];
+
+  const reading = (label, card, note) => {
+    if (card) {
+      return `<div class="reading">
+        <span class="label">${label}</span>
+        <span class="figure">${card.pct}</span><span class="figure-unit">%</span>
+        <span class="small muted">${card.total} of ${card.max_total}${
+          card.interviewer ? ` · ${esc(card.interviewer)}` : ""}${
+          card.submitted_at ? ` · ${onDate(card.submitted_at)}` : ""}${
+          card.outstanding_refs ? ` · ${card.outstanding_refs} ref outstanding` : ""}</span>
+      </div>`;
+    }
+    return `<div class="reading empty">
+      <span class="label">${label}</span>
+      <span class="small muted">${note}</span>
+    </div>`;
+  };
+
+  // The questionnaire has no single percentage and must not be given one — it is
+  // nine dimensions against a role, not a mark out of a hundred. What it has is a
+  // best match, which is the number that actually means something.
+  const best = roles.length ? roles[0] : null;
+
+  return `
+  <div class="region">
+    <div class="region-head"><h2>Where this candidate stands</h2>
+      <span class="count mono">${[r1, r2, d.scored].filter(Boolean).length} of 3</span></div>
+    <div class="panel">
+      <div class="readings">
+        ${reading("R1 — phone screen", r1,
+          (d.ask || []).some((x) => x.round === "r1")
+            ? "started, not submitted" : "not run")}
+        ${reading("R2 — full interview", r2,
+          (d.ask || []).some((x) => x.round === "r2")
+            ? "started, not submitted" : "not run")}
+        ${d.scored
+          ? `<div class="reading">
+              <span class="label">Questionnaire</span>
+              <span class="figure">${best ? best.composite_pct : "—"}</span
+                ><span class="figure-unit">%</span>
+              <span class="small muted">${best
+                ? `best match · ${esc(best.business_name)} — ${esc(best.title)}`
+                : "scored, but no open role to match against"}</span>
+            </div>`
+          : `<div class="reading empty">
+              <span class="label">Questionnaire</span>
+              <span class="small muted">${esc(d.reason || "not taken")}</span>
+            </div>`}
+      </div>
+      <p class="small muted" style="margin:12px 0 0">
+        Three independent readings. They are deliberately not combined into one
+        number — where two of them disagree is worth more than either on its own.
+      </p>
+    </div>
+  </div>
+
+  ${roles.length ? `
+    <div class="region">
+      <div class="region-head"><h2>Against the open roles</h2>
+        <span class="count mono">${roles.length}</span></div>
+      ${roles.map((r) => `
+        <div class="req">
+          <span class="title"><a href="#req-${esc(r.requirement_id)}"
+            data-cdreq="${esc(r.requirement_id)}">${esc(r.business_name)} — ${esc(r.title)}</a></span>
+          <span class="meta small">rank ${r.rank} of ${r.of} · quality ${r.quality_pct}% ·
+            fit ${r.fit_pct}% · confidence ${esc(r.confidence || "—")}
+            ${(r.hard_filter_fails || []).length ? ` · <strong>outside the stated filters</strong>:
+              ${(r.hard_filter_fails || []).map(esc).join(" · ")}` : ""}
+            ${(r.hard_filter_unknown || []).length ? ` · <strong>cannot check</strong>:
+              ${(r.hard_filter_unknown || []).map(esc).join(" · ")}` : ""}</span>
+          <span class="figures"><span class="figure">${r.composite_pct}</span
+            ><span class="figure-unit">%</span><br><span class="mono muted">match</span></span>
+        </div>`).join("")}
+    </div>`
+  : d.scored
+    ? `<div class="notice"><span class="label">No open role to match against</span>
+        They are scored, but every requirement is closed or has no target profile,
+        so there is nothing to rank them for.</div>`
+    : ""}`;
+}
+
 function askHtml(d, c) {
   const cards = (d.ask || []).filter((x) => x.submitted_at);
   const open = (d.ask || []).find((x) => !x.submitted_at);
@@ -1742,9 +1851,7 @@ async function openCandidate(id) {
     el("cd-body").innerHTML = `
       <div class="notice">
         <span class="label">No questionnaire scores yet</span>${esc(d.reason)}
-      </div>
-      ${askHtml(d, c)}
-      ${directFieldsHtml(c)}`;
+      </div>` + headlineHtml(d, c) + askHtml(d, c) + directFieldsHtml(c);
     el("cd-disclaimer").textContent = "";
     bindDirectFields(id);
     bindAskDiscard(id);
@@ -1753,30 +1860,6 @@ async function openCandidate(id) {
 
   // Where they stand, before any dimension is shown — the number that matters
   // is the one against a role, not the nine underneath it.
-  const roles = d.roles || [];
-  const rolesHtml = roles.length ? `
-    <div class="region">
-      <div class="region-head"><h2>Against the open roles</h2>
-        <span class="count mono">${roles.length}</span></div>
-      ${roles.map((r) => `
-        <div class="req">
-          <span class="title"><a href="#req-${esc(r.requirement_id)}"
-            data-cdreq="${esc(r.requirement_id)}">${esc(r.business_name)} — ${esc(r.title)}</a></span>
-          <span class="meta small">rank ${r.rank} of ${r.of} · quality ${r.quality_pct}% ·
-            fit ${r.fit_pct}% · confidence ${esc(r.confidence || "—")}
-            ${(r.hard_filter_fails || []).length ? ` · <strong>outside the stated filters</strong>:
-              ${(r.hard_filter_fails || []).map(esc).join(" · ")}` : ""}
-            ${(r.hard_filter_unknown || []).length ? ` · <strong>cannot check</strong>:
-              ${(r.hard_filter_unknown || []).map(esc).join(" · ")}` : ""}</span>
-          <span class="figures"><span class="figure">${r.composite_pct}</span
-            ><span class="figure-unit">%</span><br><span class="mono muted">match</span></span>
-        </div>`).join("")}
-    </div>` : `
-    <div class="callout"><span class="label">No open role to read these against</span>
-      Nine numbers on their own are not an assessment — 72 on Resilience is strong for
-      one desk and short for another. The scores below are shown for completeness;
-      they mean something once a client opens a role and the engine has a required
-      level to compare each one to.</div>`;
 
   const flagsHtml = (d.flags || []).length ? `
     <div class="region">
@@ -1820,7 +1903,7 @@ async function openCandidate(id) {
       </div>`;
   }).join("");
 
-  el("cd-body").innerHTML = rolesHtml + askHtml(d, c) + flagsHtml + patternHtml(d) + directFieldsHtml(c) + `
+  el("cd-body").innerHTML = headlineHtml(d, c) + askHtml(d, c) + flagsHtml + patternHtml(d) + directFieldsHtml(c) + `
     <div class="region">
       <div class="region-head"><h2>The nine, against what each role asks for</h2>
         <span class="count mono">${(d.dimensions || []).length}</span></div>

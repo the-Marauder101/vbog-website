@@ -150,12 +150,23 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   const r2 = (await rpc(p, "get_ask_bank", { p_round: "r2" })).body;
   const count = (bank) => (bank.attributes || []).reduce((n, a) => n + a.questions.length, 0);
 
-  check("R1 serves the 15-question screen", count(r1) === 15 && r1.attributes.length === 5,
+  // R1 is now a set of QUESTIONS, not a set of attributes (sql/44): eight chosen
+  // for how much they separate candidates, spread across eight attributes rather
+  // than covering five exhaustively.
+  check("R1 serves the eight-question screen", count(r1) === 8,
         `${count(r1)} questions across ${r1.attributes.length} attributes`);
-  check("R2 serves all 42", count(r2) === 42 && r2.attributes.length === 14,
-        `${count(r2)} questions across ${r2.attributes.length} attributes`);
-  check("R1 is exactly the priority attributes",
-        r1.attributes.every(a => a.priority), "");
+  // count() includes the two reference questions, which are served to the bank
+  // reader but never asked on the call — 37 asked + 2 reference.
+  const asked = (bank) => (bank.attributes || [])
+    .flatMap(a => a.questions).filter(q => !q.is_reference).length;
+  check("R2 serves the whole live bank", asked(r2) === 37 && count(r2) === 39,
+        `${asked(r2)} asked + ${count(r2) - asked(r2)} reference`);
+  check("every R1 question is flagged as one, and no reference question is",
+        r1.attributes.flatMap(a => a.questions).every(q => q.in_r1 && !q.is_reference),
+        "");
+  check("and R1 is a strict subset of R2",
+        r1.attributes.flatMap(a => a.questions).every(q =>
+          r2.attributes.flatMap(a => a.questions).some(x => x.id === q.id)), "");
 
   const allQs = r2.attributes.flatMap(a => a.questions);
   check("every question carries four anchors scored 0-3",
@@ -172,7 +183,22 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         allQs.filter(q => q.is_reference).length === 2,
         allQs.filter(q => q.is_reference).map(q => q.id).join(", "));
   check("and the interviewer hints came across",
-        allQs.filter(q => q.hint).length === 42, `${allQs.filter(q => q.hint).length} of 42`);
+        allQs.filter(q => q.hint).length === allQs.length,
+        `${allQs.filter(q => q.hint).length} of ${allQs.length}`);
+
+  // The question Depesh asks in 48 of 90 recorded interviews, finally in the bank.
+  const obj4 = allQs.find(q => q.id === "objection-4");
+  check("the top-five-objections question is in the bank",
+        !!obj4 && /top five objections/i.test(obj4.prompt || ""),
+        obj4 ? obj4.prompt.slice(0, 70) : "missing");
+  check("with four anchors written from what real answers look like",
+        obj4 && obj4.options.length === 4 &&
+        obj4.options.map(o => o.score).join() === "0,1,2,3" &&
+        obj4.options.every(o => o.label && o.description.length > 40),
+        obj4 ? obj4.options.map(o => o.label).join(" | ") : "");
+  check("and a hint that tells the interviewer what is not an objection",
+        obj4 && /not interested/.test(obj4.hint || "") && /rejection/i.test(obj4.hint || ""),
+        "");
 
   // ══ 3. THE LOAD-BEARING CLAIM: ASK DOES NOT MOVE A MATCH SCORE ═══════════
   const target = (await rest(p, "v_candidate_queue?select=id,full_name&scores=not.is.null&limit=1"))[0];
@@ -187,10 +213,11 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   await p.goto(`${B}/ask.html?cand=${target.id}&round=r2`, { waitUntil: "domcontentloaded" });
   await p.waitForSelector("#v-start:not([hidden])", { timeout: 20000 });
   const startTxt = (await p.textContent("#v-start")).replace(/\s+/g, " ");
-  // "40 questions", because that is how many go to the candidate. The bank still
-  // holds 42; the other two are the reference call and have their own flow.
+  // 37: the live bank after sql/44 took four low-discrimination questions out of
+  // use. The two reference questions are not in this count — they have their own
+  // flow — and the R1 eight are a subset of these, not extra.
   check("the start screen says what the round is and how it is scored",
-        /All fourteen attributes/.test(startTxt) && /40 questions/.test(startTxt) &&
+        /All fourteen attributes/.test(startTxt) && /37 questions/.test(startTxt) &&
         /scored 0–3 against a written anchor/.test(startTxt), startTxt.slice(0, 110));
 
   await p.fill("#start-client", "ZZ_QA context");
@@ -227,11 +254,10 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   await p.click("#btn-begin");
   await p.waitForSelector("#v-q:not([hidden])", { timeout: 20000 });
   const whereNow = (await p.textContent("#q-where")).replace(/\s+/g, " ");
-  // 40, not 42: the two reference questions are no longer in the interview flow.
-  // They used to sit inline with a note saying "leave this unscored for now",
-  // which is a question you scroll past and then forget exists. sql/40.
+  // 37, not 39: the reference questions are not in the interview flow (sql/40),
+  // and sql/44 deactivated four more that overlapped something else.
   check("and it resumes at the first unanswered question, not at the top",
-        /7 of 40/.test(whereNow) && (await p.textContent("#q-prompt")) !== firstPrompt,
+        /7 of 37/.test(whereNow) && (await p.textContent("#q-prompt")) !== firstPrompt,
         whereNow.slice(0, 60));
 
   // ══ 6. FINISH IT ═════════════════════════════════════════════════════════
@@ -262,7 +288,7 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   // first real R2 read 30.2% when 31.7% of it had been measured, and every
   // scorecard would have understated in the same direction forever. See sql/40.
   check("AN UNASKED REFERENCE QUESTION IS IN NEITHER THE TOTAL NOR THE MAXIMUM",
-        frozen.max_total === 120, `max_total ${frozen.max_total}, expected 120`);
+        frozen.max_total === 111, `max_total ${frozen.max_total}, expected 111 (37 asked × 3)`);
 
   const locked = await rpc(p, "save_ask_score", { p_scorecard: card, p_question: bankQs[0].id, p_score: 0 });
   check("a submitted scorecard refuses further edits",
@@ -382,8 +408,10 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         (await p.$$("#q-editor .region")).length === 14,
         `${(await p.$$("#q-editor .region")).length} attributes`);
   check("and says what each round costs in questions and minutes",
-        /R1 — \d+ questions/.test(qs) && /R2 — \d+ questions/.test(qs) && /minutes/.test(qs),
-        (qs.match(/R1 — \d+ questions[^.]{0,60}/) || [""])[0]);
+        /R1 — \d+ questions/.test(qs) &&
+        /R2 after a submitted R1 — \d+ questions/.test(qs) &&
+        /R2 with no R1 behind it — \d+ questions/.test(qs) && /minutes/.test(qs),
+        qs.slice(0, 200));
   check("with the 70 seconds stated as measured, not assumed",
         /measured from your own interviews, not\s*estimated/.test(qs), "");
   check("every question shows how many times it has been scored",
@@ -468,7 +496,7 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   // colleague's judgement. Third dead function in a row (§7am).
   const readback = await rpc(p, "get_ask_scorecard", { p_scorecard: card });
   check("a submitted scorecard can be read back in full",
-        readback.status === 200 && (readback.body.answers || []).length >= 40,
+        readback.status === 200 && (readback.body.answers || []).length >= 37,
         `${((readback.body || {}).answers || []).length} answers`);
   check("and every answer carries the anchor that was chosen",
         (readback.body.answers || []).every(a => a.chose && a.question),
@@ -492,7 +520,7 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   check("THE SCORECARD REVIEW SCREEN SHOWS WHAT WAS ASKED AND WHAT WAS SAID",
         /What was asked, and what was said/.test(sc), sc.slice(0, 120));
   check("it lists every scored question, not just the totals",
-        (await p.$$("#sc-body .evidence li")).length >= 40,
+        (await p.$$("#sc-body .evidence li")).length >= 37,
         `${(await p.$$("#sc-body .evidence li")).length} rows`);
   check("grouped by attribute, with each attribute's own score",
         (await p.$$("#sc-body .panel")).length >= 10,
@@ -519,10 +547,12 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
     consent_version: "pending", consent_at: new Date().toISOString() });
   const cfId = cf.body[0].id;
 
-  const prioQs = r2.attributes.filter(a => a.priority)
-    .flatMap(a => a.questions).filter(q => !q.is_reference);
-  const restQs = r2.attributes.filter(a => !a.priority)
-    .flatMap(a => a.questions).filter(q => !q.is_reference);
+  // Split by the QUESTION's in_r1 flag, not the attribute's priority. sql/44
+  // moved R1 to a per-question set, and carry-forward now copies whatever the R1
+  // actually scored rather than every question on a "priority" attribute.
+  const allR2 = r2.attributes.flatMap(a => a.questions).filter(q => !q.is_reference);
+  const prioQs = allR2.filter(q => q.in_r1);
+  const restQs = allR2.filter(q => !q.in_r1);
 
   const r1card = (await rpc(p, "start_ask", { p_candidate_id: cfId, p_round: "r1",
     p_client_context: "ZZ_QA context" })).body.scorecard_id;
@@ -775,9 +805,13 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         JSON.stringify({ start: anon.start.s, list: anon.staff.s, add: anon.add.s }));
 
   const audits = await p.evaluate(async () => {
-    const g = async (v) => (await (await fetch(`${SUPABASE_URL}/rest/v1/${v}?select=*`,
+    const g = async (v) => (await (await fetch(
+      `${SUPABASE_URL}/rest/v1/${v}${v.includes("?") ? "&" : "?"}select=*`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` } })).json()).length;
-    return { bypass: await g("v_rls_bypass_audit"), c10: await g("v_c10_audit"),
+    // Scoped to tables this repo owns — a second system shares the project and
+    // its rows are reported by v_foreign_policy_audit, not failed here (sql/45).
+    return { bypass: await g("v_rls_bypass_audit?ours=is.true"),
+             c10: await g("v_c10_audit?ours=is.true"),
              empty: await g("v_empty_profile_audit"), fn: await g("v_function_grant_audit"),
              lockout: await g("v_staff_lockout_audit") };
   });

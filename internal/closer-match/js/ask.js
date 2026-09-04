@@ -504,9 +504,12 @@ el("btn-begin").addEventListener("click", async () => {
     }
 
     if (ROUND === "r2" && (existing || []).some((c) => c.round === "r1" && c.submitted_at)) {
+      // Counted from the QUESTION's in_r1 flag. sql/44 moved R1 off attribute
+      // priority, and counting the old way here quietly showed the wrong number
+      // of carried questions — which is the one number this panel exists for.
       const covered = (S.bank.attributes || [])
-        .filter((a) => a.priority)
-        .reduce((n, a) => n + (a.questions || []).filter((q) => !q.is_reference).length, 0);
+        .flatMap((a) => a.questions || [])
+        .filter((q) => q.in_r1 && !q.is_reference).length;
       const left = S.flat.length - covered;
       notes.push(
         `<span class="label">The R1 screen is already done, so this is shorter</span>
