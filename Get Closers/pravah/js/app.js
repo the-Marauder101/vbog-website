@@ -321,7 +321,7 @@
   async function markShared(id) { await runWrite(() => api.rpc("pravah_mark_report_shared", { p_report_id: id }), "Marked as shared"); }
   function signOut() { api.signOut(); window.location.hash = ""; showSignedOut(); }
 
-  byId("signin-form").addEventListener("submit", async (event) => { event.preventDefault(); const errorHost = byId("signin-error"); const button = event.currentTarget.querySelector("button"); const values = new FormData(event.currentTarget); button.disabled = true; errorHost.textContent = ""; try { await api.signIn(values.get("email"), values.get("password")); await loadApp(); } catch (error) { errorHost.textContent = error.message; } finally { button.disabled = false; } });
+  byId("signin-form").addEventListener("submit", async (event) => { event.preventDefault(); const errorHost = byId("signin-error"); const button = event.currentTarget.querySelector("button"); const values = new FormData(event.currentTarget); button.disabled = true; errorHost.textContent = ""; try { await api.signIn(values.get("email"), values.get("password")); window.location.href = "home/"; } catch (error) { errorHost.textContent = error.message; } finally { button.disabled = false; } });
   byId("report-form").addEventListener("submit", saveReport); dynamicForm.addEventListener("submit", submitDynamicForm);
   document.querySelectorAll("[data-signout]").forEach((button) => button.addEventListener("click", signOut));
   document.querySelectorAll("[data-close-report]").forEach((button) => button.addEventListener("click", () => closeModal(reportModal)));

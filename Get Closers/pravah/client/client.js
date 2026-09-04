@@ -106,7 +106,7 @@
   /* --- Event delegation --- */
   document.addEventListener('click',e=>{const t=e.target;if(t.matches('[data-modal]')&&isAdmin())openModal(t.dataset.modal);if(t.matches('[data-close-modal]')||t===$('modal'))closeModal();if(t.matches('[data-refresh]'))load();if(t.matches('[data-signout]')){api.signOut();showSignedOut()}});
   $('record-form').addEventListener('submit',e=>{e.preventDefault();submitModal()});
-  $('signin-form').addEventListener('submit',async e=>{e.preventDefault();$('signin-error').textContent='';try{const f=new FormData(e.currentTarget);await api.signIn(f.get('email'),f.get('password'));await load()}catch(err){$('signin-error').textContent=err.message}});
+  $('signin-form').addEventListener('submit',async e=>{e.preventDefault();$('signin-error').textContent='';try{const f=new FormData(e.currentTarget);await api.signIn(f.get('email'),f.get('password'));window.location.href='../home/'}catch(err){$('signin-error').textContent=err.message}});
   document.querySelector('.mobile-nav').addEventListener('click',()=>{const open=document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.mobile-nav').setAttribute('aria-expanded',String(open))});
   window.addEventListener('hashchange',()=>showView(location.hash.slice(1)||'dashboard'));
   if(api.restore())load();else showSignedOut();

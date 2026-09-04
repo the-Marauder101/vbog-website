@@ -174,10 +174,31 @@
       $('portal-grid').innerHTML = html;
     }
 
+    function portalsFromContext(ctx) {
+      var list = [];
+      if (ctx.is_internal) {
+        list.push({ is_internal: true, display_name: ctx.display_name || '' });
+      }
+      if (ctx.is_closer) {
+        list.push({ is_internal: false, role: 'closer', display_name: ctx.display_name || '', client_name: ctx.client_name || '' });
+      }
+      if (ctx.is_client_admin) {
+        list.push({ is_internal: false, role: 'client_admin', display_name: ctx.display_name || '', client_name: ctx.client_name || '' });
+      }
+      return list;
+    }
+
     async function loadPortals() {
       show('loading');
       try {
-        var portals = await api.rpc('pravah_my_portals');
+        var portals;
+        try {
+          portals = await api.rpc('pravah_my_portals');
+        } catch (_) {
+          var ctx = await api.rpc('pravah_context');
+          if (!ctx || !ctx.authorized) { show('no-access'); return; }
+          portals = portalsFromContext(ctx);
+        }
         if (!portals || !portals.length) { show('no-access'); return; }
         var externals = portals.filter(function(p) { return !p.is_internal; });
         var hasInternal = portals.some(function(p) { return p.is_internal; });
