@@ -31,7 +31,7 @@
     showApp();
     const r=await Promise.all([
       api.rpc('pravah_client_portal'),
-      api.fetch('pravah_v_placements?select=placement_id,closer_name,business_name,training_status,joined_at,total_sales,verified_cash,reported_cash&order=closer_name'),
+      api.fetch('pravah_v_placements?select=placement_id,closer_name,business_name,training_status,joined_on,total_sales,verified_cash,reported_cash&order=closer_name'),
       api.fetch('pravah_v_reports?select=*&order=period_end.desc&limit=100'),
       api.fetch('pravah_v_checkins?select=*&order=occurred_at.desc&limit=100'),
       api.fetch('pravah_v_actions?select=*&order=due_on.asc&limit=200'),
@@ -48,8 +48,8 @@
   function renderDashboard(){
     const d=state.dashboard||{};
     $('metric-closers').textContent=d.active_closers??0;
-    $('metric-revenue').textContent=money(d.booked_revenue);
-    $('metric-cash').textContent=money(d.verified_cash);
+    $('metric-revenue').textContent=money(d.total_revenue);
+    $('metric-cash').textContent=money(d.total_cash);
     $('metric-actions').textContent=d.open_actions??0;
     $('roster-rows').innerHTML=state.placements.map(p=>`<tr><td><strong>${esc(p.closer_name)}</strong></td><td>${badge(p.training_status)}</td><td class="mono">${esc(p.total_sales??0)}</td><td class="mono">${money(p.verified_cash)}</td></tr>`).join('')||'<tr><td colspan="4"><div class="table-empty">No closers assigned yet.</div></td></tr>';
     const recent=state.checkins.slice(0,5);
@@ -57,21 +57,21 @@
   }
 
   function renderClosers(){
-    $('closer-rows').innerHTML=state.placements.map(p=>`<tr><td><strong>${esc(p.closer_name)}</strong></td><td>${dateLabel(p.joined_at)}</td><td>${badge(p.training_status)}</td><td class="mono">${esc(p.total_sales??0)}</td><td class="mono">${money(p.verified_cash)}</td><td class="mono">${money(p.reported_cash)}</td></tr>`).join('')||'<tr><td colspan="6"><div class="table-empty">No closers assigned yet.</div></td></tr>';
+    $('closer-rows').innerHTML=state.placements.map(p=>`<tr><td><strong>${esc(p.closer_name)}</strong></td><td>${dateLabel(p.joined_on)}</td><td>${badge(p.training_status)}</td><td class="mono">${esc(p.total_sales??0)}</td><td class="mono">${money(p.verified_cash)}</td><td class="mono">${money(p.reported_cash)}</td></tr>`).join('')||'<tr><td colspan="6"><div class="table-empty">No closers assigned yet.</div></td></tr>';
   }
 
   function renderReports(){
-    $('report-rows').innerHTML=state.reports.map(r=>`<tr><td>${dateLabel(r.period_start)} - ${dateLabel(r.period_end)}</td><td>${esc(r.closer_name)}</td><td class="mono">${esc(r.total_calls??0)}</td><td class="mono">${esc(r.total_sales??0)}</td><td class="mono">${money(r.total_cash)}</td></tr>`).join('')||'<tr><td colspan="5"><div class="table-empty">No performance reports yet.</div></td></tr>';
+    $('report-rows').innerHTML=state.reports.map(r=>`<tr><td>${dateLabel(r.period_start)} - ${dateLabel(r.period_end)}</td><td>${esc(r.closer_name)}</td><td class="mono">${esc(r.calls_attempted??0)}</td><td class="mono">${esc(r.sales_count??0)}</td><td class="mono">${money(r.cash_collected)}</td></tr>`).join('')||'<tr><td colspan="5"><div class="table-empty">No performance reports yet.</div></td></tr>';
   }
 
   function renderRevenue(){
     const d=state.dashboard||{};
     $('metric-leads').textContent=d.active_leads??state.leads.length;
-    $('metric-pipeline').textContent=money(d.open_pipeline);
-    $('metric-rev-booked').textContent=money(d.booked_revenue);
-    $('metric-rev-cash').textContent=money(d.verified_cash);
+    $('metric-pipeline').textContent=d.open_deals??0;
+    $('metric-rev-booked').textContent=money(d.total_revenue);
+    $('metric-rev-cash').textContent=money(d.total_cash);
     $('lead-rows').innerHTML=state.leads.map(l=>`<tr><td><div class="customer-name"><strong>${esc(l.full_name)}</strong><small>${esc(l.email||l.phone||'No contact detail')}</small></div></td><td>${badge(stageLabel(l.stage))}</td><td>${dateLabel(l.last_activity_at)}</td></tr>`).join('')||'<tr><td colspan="3"><div class="table-empty">No leads yet.</div></td></tr>';
-    $('sale-rows').innerHTML=state.sales.slice(0,100).map(s=>`<tr><td>${dateLabel(s.sale_date)}</td><td>${esc(s.customer_name||s.lead_id||'--')}</td><td class="mono">${money(s.net_amount,s.currency)}</td><td>${badge(s.status)}</td></tr>`).join('')||'<tr><td colspan="4"><div class="table-empty">No sales recorded.</div></td></tr>';
+    $('sale-rows').innerHTML=state.sales.slice(0,100).map(s=>`<tr><td>${dateLabel(s.sale_date)}</td><td>${esc(s.lead_id||'--')}</td><td class="mono">${money(s.net_amount,s.currency)}</td><td>${badge(s.status)}</td></tr>`).join('')||'<tr><td colspan="4"><div class="table-empty">No sales recorded.</div></td></tr>';
   }
 
   function renderActions(){
