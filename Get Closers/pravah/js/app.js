@@ -61,6 +61,7 @@
     try {
       const context = await api.rpc("pravah_context");
       if (!context?.authorized) { showAccess("Your login works, but this Pravah workspace is not active.", "Staff access is approved through Nikash. Client and closer portals will be activated only after their restricted views are ready."); return; }
+      if (!context.is_internal) { window.location.href = "home/"; return; }
       state.context = context; showApp(); await loadData(); showView(window.location.hash.slice(1));
     } catch (error) {
       if (["PGRST202", "42883", "PGRST205"].includes(error.code)) showAccess("Pravah needs its V2A database setup.", "Run the reviewed Pravah migrations, then refresh.");

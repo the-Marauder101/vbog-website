@@ -32,6 +32,7 @@
   async function load(){setLoading(true);try{
     state.context=await api.rpc('pravah_context');
     if(!state.context?.authorized){showAccess('Revenue workspace unavailable.','Staff access is approved through Nikash. Client and closer portals remain restricted until V6.');return}
+    if(!state.context.is_internal){window.location.href='../home/';return}
     showApp();
     const r=await Promise.all([
       api.fetch('clients?select=id,business_name&order=business_name'),
