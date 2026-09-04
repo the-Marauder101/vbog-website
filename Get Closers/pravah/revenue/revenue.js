@@ -32,6 +32,7 @@
   async function load(){setLoading(true);try{
     state.context=await api.rpc('pravah_context');
     if(!state.context?.authorized){showAccess('Revenue workspace unavailable.','Staff access is approved through Nikash. Client and closer portals remain restricted until V6.');return}
+    if(!state.context.is_internal){window.location.href='../home/';return}
     showApp();
     const r=await Promise.all([
       api.fetch('clients?select=id,business_name&order=business_name'),
@@ -287,7 +288,7 @@
   document.addEventListener('click',e=>{const t=e.target;if(t.matches('[data-modal]'))openModal(t.dataset.modal);if(t.matches('[data-activity]')){const l=state.leads.find(x=>x.id===t.dataset.activity);openModal('activity',{lead:l.id,client:l.client_id})}if(t.matches('[data-deal-from-lead]')){const l=state.leads.find(x=>x.id===t.dataset.dealFromLead);openModal('deal',{lead:l.id,client:l.client_id})}if(t.matches('[data-close-modal]')||t===$('modal'))closeModal();if(t.matches('[data-refresh]'))load();if(t.matches('[data-apply]')){setLoading(true);applyDashboard(true).finally(()=>setLoading(false))}if(t.matches('[data-verify-payment]'))verifyPayment(t.dataset.verifyPayment);if(t.matches('[data-signout]')){api.signOut();showSignedOut()}if(t.id==='import-next-1')importParseAndPreview();if(t.id==='import-next-2')importStageAndValidate();if(t.id==='import-back-2'){importSetStep(1)}if(t.id==='import-back-3'){importReset()}if(t.id==='import-replay')importReplay()});
   document.addEventListener('change',e=>{const t=e.target;if(t.matches('[data-lead-stage]'))updateLead(t.dataset.leadStage,t.value);if(t.matches('[data-deal-stage]'))updateDeal(t.dataset.dealStage,t.value)});
   $('record-form').addEventListener('submit',e=>{e.preventDefault();submitModal()});
-  $('signin-form').addEventListener('submit',async e=>{e.preventDefault();$('signin-error').textContent='';try{const f=new FormData(e.currentTarget);await api.signIn(f.get('email'),f.get('password'));await load()}catch(err){$('signin-error').textContent=err.message}});
+  $('signin-form').addEventListener('submit',async e=>{e.preventDefault();$('signin-error').textContent='';try{const f=new FormData(e.currentTarget);await api.signIn(f.get('email'),f.get('password'));window.location.href='../home/'}catch(err){$('signin-error').textContent=err.message}});
   document.querySelector('.mobile-nav').addEventListener('click',()=>{const open=document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.mobile-nav').setAttribute('aria-expanded',String(open))});
   window.addEventListener('hashchange',()=>showView(location.hash.slice(1)||'dashboard'));
   if(api.restore())load();else showSignedOut();

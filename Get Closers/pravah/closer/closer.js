@@ -188,7 +188,7 @@
     try{
       const f=new FormData(e.currentTarget);
       await api.signIn(f.get('email'),f.get('password'));
-      await load();
+      window.location.href='../home/';
     }catch(err){$('signin-error').textContent=err.message}
   });
 

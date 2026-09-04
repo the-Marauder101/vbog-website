@@ -61,6 +61,7 @@
     try {
       const context = await api.rpc("pravah_context");
       if (!context?.authorized) { showAccess("Your login works, but this Pravah workspace is not active.", "Staff access is approved through Nikash. Client and closer portals will be activated only after their restricted views are ready."); return; }
+      if (!context.is_internal) { window.location.href = "home/"; return; }
       state.context = context; showApp(); await loadData(); showView(window.location.hash.slice(1));
     } catch (error) {
       if (["PGRST202", "42883", "PGRST205"].includes(error.code)) showAccess("Pravah needs its V2A database setup.", "Run the reviewed Pravah migrations, then refresh.");
@@ -321,7 +322,7 @@
   async function markShared(id) { await runWrite(() => api.rpc("pravah_mark_report_shared", { p_report_id: id }), "Marked as shared"); }
   function signOut() { api.signOut(); window.location.hash = ""; showSignedOut(); }
 
-  byId("signin-form").addEventListener("submit", async (event) => { event.preventDefault(); const errorHost = byId("signin-error"); const button = event.currentTarget.querySelector("button"); const values = new FormData(event.currentTarget); button.disabled = true; errorHost.textContent = ""; try { await api.signIn(values.get("email"), values.get("password")); await loadApp(); } catch (error) { errorHost.textContent = error.message; } finally { button.disabled = false; } });
+  byId("signin-form").addEventListener("submit", async (event) => { event.preventDefault(); const errorHost = byId("signin-error"); const button = event.currentTarget.querySelector("button"); const values = new FormData(event.currentTarget); button.disabled = true; errorHost.textContent = ""; try { await api.signIn(values.get("email"), values.get("password")); window.location.href = "home/"; } catch (error) { errorHost.textContent = error.message; } finally { button.disabled = false; } });
   byId("report-form").addEventListener("submit", saveReport); dynamicForm.addEventListener("submit", submitDynamicForm);
   document.querySelectorAll("[data-signout]").forEach((button) => button.addEventListener("click", signOut));
   document.querySelectorAll("[data-close-report]").forEach((button) => button.addEventListener("click", () => closeModal(reportModal)));
