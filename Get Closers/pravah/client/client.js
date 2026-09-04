@@ -33,8 +33,8 @@
       api.rpc('pravah_client_portal'),
       api.fetch('pravah_v_placements?select=placement_id,closer_name,business_name,training_status,joined_at,total_sales,verified_cash,reported_cash&order=closer_name'),
       api.fetch('pravah_v_reports?select=*&order=period_end.desc&limit=100'),
-      api.fetch('pravah_v_checkins?select=*&order=checkin_date.desc&limit=100'),
-      api.fetch('pravah_v_actions?select=*&order=due_date.asc&limit=200'),
+      api.fetch('pravah_v_checkins?select=*&order=occurred_at.desc&limit=100'),
+      api.fetch('pravah_v_actions?select=*&order=due_on.asc&limit=200'),
       api.fetch('pravah_revenue_leads?select=*&order=created_at.desc&limit=250'),
       api.fetch('pravah_revenue_sales?select=*&order=sale_date.desc&limit=250'),
       api.fetch('pravah_revenue_stages?select=*&active=eq.true&order=sort_order')
@@ -53,7 +53,7 @@
     $('metric-actions').textContent=d.open_actions??0;
     $('roster-rows').innerHTML=state.placements.map(p=>`<tr><td><strong>${esc(p.closer_name)}</strong></td><td>${badge(p.training_status)}</td><td class="mono">${esc(p.total_sales??0)}</td><td class="mono">${money(p.verified_cash)}</td></tr>`).join('')||'<tr><td colspan="4"><div class="table-empty">No closers assigned yet.</div></td></tr>';
     const recent=state.checkins.slice(0,5);
-    $('recent-checkin-rows').innerHTML=recent.map(c=>`<tr><td>${dateLabel(c.checkin_date)}</td><td>${badge(c.health)}</td><td>${esc(c.summary)}</td></tr>`).join('')||'<tr><td colspan="3"><div class="table-empty">No check-ins recorded.</div></td></tr>';
+    $('recent-checkin-rows').innerHTML=recent.map(c=>`<tr><td>${dateLabel(c.occurred_at)}</td><td>${badge(c.health)}</td><td>${esc(c.summary)}</td></tr>`).join('')||'<tr><td colspan="3"><div class="table-empty">No check-ins recorded.</div></td></tr>';
   }
 
   function renderClosers(){
@@ -76,11 +76,11 @@
 
   function renderActions(){
     const open=state.actions.filter(a=>a.status!=='done'&&a.status!=='closed');
-    $('action-rows').innerHTML=open.map(a=>`<tr><td><strong>${esc(a.title)}</strong></td><td>${badge(a.priority)}</td><td>${dateLabel(a.due_date)}</td><td>${badge(a.status)}</td><td>${esc(a.owner_name||'--')}</td></tr>`).join('')||'<tr><td colspan="5"><div class="table-empty">No open actions.</div></td></tr>';
+    $('action-rows').innerHTML=open.map(a=>`<tr><td><strong>${esc(a.title)}</strong></td><td>${badge(a.priority)}</td><td>${dateLabel(a.due_on)}</td><td>${badge(a.status)}</td><td>${esc(a.owner_name||'--')}</td></tr>`).join('')||'<tr><td colspan="5"><div class="table-empty">No open actions.</div></td></tr>';
   }
 
   function renderCheckins(){
-    $('checkin-rows').innerHTML=state.checkins.map(c=>`<tr><td>${dateLabel(c.checkin_date)}</td><td>${badge(c.health)}</td><td>${esc(c.summary)}</td><td>${c.material_issue?esc(c.material_issue):'--'}</td></tr>`).join('')||'<tr><td colspan="4"><div class="table-empty">No check-in history.</div></td></tr>';
+    $('checkin-rows').innerHTML=state.checkins.map(c=>`<tr><td>${dateLabel(c.occurred_at)}</td><td>${badge(c.health)}</td><td>${esc(c.summary)}</td><td>${c.material_issue?esc(c.material_issue):'--'}</td></tr>`).join('')||'<tr><td colspan="4"><div class="table-empty">No check-in history.</div></td></tr>';
   }
 
   /* --- Modals (client_admin only) --- */
