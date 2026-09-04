@@ -155,10 +155,16 @@ suite("REGRESSION", 8099, async ({ p, base, E, P, check, errs }) => {
         `${(golden.body || []).filter(g => g.passed).length}/${(golden.body || []).length}`);
 
   const audits = await p.evaluate(async () => {
-    const g = async (v) => { const r = await fetch(`${SUPABASE_URL}/rest/v1/${v}?select=*`,
+    const g = async (v) => { const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/${v}${v.includes("?") ? "&" : "?"}select=*`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` } });
       const j = await r.json(); return Array.isArray(j) ? j.length : -1; };
-    return { bypass: await g("v_rls_bypass_audit"), c10: await g("v_c10_audit"),
+    // `?ours=is.true` — the audits now cover every table in the database, and a
+    // second system (34 pravah_* tables) shares this project. What this repo can
+    // be held to is its own tables; the neighbour's rows are reported by
+    // v_foreign_policy_audit rather than failing a suite that cannot fix them.
+    return { bypass: await g("v_rls_bypass_audit?ours=is.true"),
+             c10: await g("v_c10_audit?ours=is.true"),
              empty: await g("v_empty_profile_audit"), fn: await g("v_function_grant_audit"),
              unmatched: await g("v_unmatched_audit"), dbl: await g("v_double_session_audit"),
              lockout: await g("v_staff_lockout_audit") };

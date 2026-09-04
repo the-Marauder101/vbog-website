@@ -2275,6 +2275,117 @@ sql/42 there was no way to edit the bank from one.
 > **Code is only correct in the contexts it has actually run in.** That trigger
 > was five migrations old and had passed every assertion ever written about it.
 
+### 7ap. The instrument, revised against ninety recorded interviews
+
+Two Fathom exports — 90 interviews, 400,000 words — and the scores already in the
+database were read before anything was changed.
+
+**Which attributes actually separate candidates**, by population SD across every
+answer recorded so far:
+
+| | | | |
+|---|---|---|---|
+| Closing Ability | **1.15** | Emotional Intelligence | 0.83 |
+| Follow-Up Discipline | **1.04** | Objection Handling | 0.70 |
+| Coachability | **0.99** | Ownership | 0.64 ← was in R1 |
+| CRM Discipline | 0.94 | Longevity | 0.60 ← was in R1 |
+| Discovery & Diagnosis | 0.85 | Confidence Under Pressure | 0.50 |
+
+Two of the five attributes making up R1 were near the bottom; Follow-Up and
+Coachability, which separate better than anything but Closing, were R2-only. The
+literature agrees on coachability — it ranks coachability, drive and resilience
+above years of experience for sales roles, and finds specific quota numbers
+predict better than pedigree. **This is 3–5 candidates per attribute. Suggestive,
+not settled**, and written into sql/44 so that at fifty it can be rechecked
+rather than inherited.
+
+**R1 became a set of questions, not a set of attributes.** `priority` on the
+attribute meant "every question on these five", which is 14 and cannot be 8. R1's
+job is cheap disqualification and that does not map onto whole attributes, so the
+flag moved to `ask_questions.in_r1`. `priority` still means "surfaced first in the
+result" and stopped meaning anything about R1.
+
+The eight, and what each is there to kill: the exact words used to ask for money
+(a work sample — they have them or they do not), the ₹45,000 role-play, close
+rate and deal size and monthly revenue (where fabrication shows), the feedback
+that stung, reading a call in five minutes, touches before a lead is dead, the
+last three roles and why each ended, and why *this* role.
+
+```
+R1                    8 questions   ~9 min    team, on the phone
+R2 after an R1       29 questions   ~34 min
+R2 with no R1        37 questions   ~43 min
+```
+
+**The question already being asked forty-eight times.** "Walk me through the top
+five objections you have received and handled" appears in 48 of the 90 recorded
+interviews, in 48 different phrasings — asked inconsistently, scored nowhere,
+comparable between candidates never, which is the exact problem ASK exists to
+solve. It is now `objection-4`, and its anchors are written **from the real
+answers in those transcripts** rather than invented. The separation there is not
+about how many objections a candidate names; it is whether they name what the
+buyer actually *said*, and whether each comes with a move rather than a slogan.
+The weakest answers offer rejections as objections — "not interested", "they
+didn't pick up" — which is in the interviewer hint, because it is the tell.
+
+Four questions came out of use: each the lowest-discrimination question on its
+attribute *and* overlapping one that stays. Deactivated, not deleted, and one
+click to restore on the Questions screen.
+
+**All three readings now sit together** at the top of the candidate page — R1, R2
+and the questionnaire's best match, with the open roles directly beneath.
+Deliberately three numbers and never a fourth combining them: §7ae's whole point
+is that where two independent readings disagree is worth more than either alone.
+
+### 7aq. A second system arrived in the database
+
+`v_c10_audit` went from 0 rows to 65 between one test run and the next, and
+nothing in the Nikash tree had changed. **Thirty-four `pravah_*` tables now share
+this Supabase project** — Pravah, a sibling project at `Get Closers/pravah/` in
+this same repository, built in parallel by other sessions, with its own membership
+model and its own policies on `requirements`, `candidates`, `placements` and
+`clients`. (My branch was based on an older `main` and did not contain it, which
+is why the first reading of this said "no trace in this repo".)
+
+Sixty-three of the 65 were the audit failing to recognise a stranger. Pravah
+guards with `pravah_is_internal()`, which checks a membership row against
+`auth.uid()` and is a perfectly good guard; sql/38 recognised a guard by matching
+three literal strings it knew. Hardcoding a fourth would have fixed today and
+broken on the next arrival, so the check now asks the question it always meant:
+
+> **Does this policy depend on who is asking?**
+
+`policy_reads_identity()` resolves the functions a policy calls and asks whether
+any of them reaches `auth.uid()`. It recognises Nikash's guards, Pravah's guard,
+and one nobody has written yet, for the same reason.
+
+Two further things had to be true for the audits to keep working:
+
+- **`nikash_owned_tables`** — until a neighbour arrived, "every table in public"
+  and "every table this repo created" were the same set. They are not any more,
+  and every audit now carries `ours`, so a suite can be held to this repo's own
+  tables without either going permanently red over somebody else's schema or
+  being quietly narrowed until it stops catching our own. A registry rather than
+  a `pravah_%` prefix rule, because the prefix says nothing about the system after
+  this one.
+- **`v_foreign_policy_audit`** — a standing answer to "who else can read our
+  data", which had no answer at all until there was somebody else.
+
+What the better check leaves standing, all Pravah's, all reported and none of it
+touched — a Nikash migration editing another project's RLS would be worse than
+the finding, and these belong to whoever owns that tree:
+
+- `pravah_revenue_stages_portal_read` is `USING (true)` — every authenticated
+  user, whoever they are
+- `pravah_integration_events` has RLS forced and no policy at all — safe, but
+  almost always a forgotten policy
+
+And the one that matters most: **five outside policies reach Nikash tables** —
+`candidates`, `requirements`, `placements`, `clients`. All five are scoped to a
+person. **None reaches `candidate_profile`, `matches`, `ask_scores` or
+`candidate_responses`**, so R1 — scores never leave the building — still holds.
+`test/security.js` now asserts exactly that, permanently.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
