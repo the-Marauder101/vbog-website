@@ -54,9 +54,11 @@
   function populateStageFilter(){
     const sel=$('lead-stage-filter');
     sel.innerHTML='<option value="">All stages</option>'+state.stages.map(s=>`<option value="${esc(s.code)}">${esc(s.label)}</option>`).join('');
+    const tagSel=$('lead-tag-filter');
+    if(tagSel){const tags=allTags();tagSel.innerHTML='<option value="">All tags</option>'+tags.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}
   }
 
-  function renderAll(){renderDashboard();renderLeads();renderDeals();renderSales();renderClosers();renderReports();renderActions();renderCheckins()}
+  function renderAll(){renderDashboard();renderLeads();renderDeals();renderSales();renderClosers();renderReports();renderActions();renderCheckins();renderTrends()}
 
   /* ── 01 DASHBOARD ── */
   function renderDashboard(){
@@ -81,13 +83,35 @@
     $('dash-funnel').innerHTML=funnel.map(x=>`<div class="funnel-row"><span class="funnel-label">${esc(x.label)}</span><span class="funnel-track"><span class="funnel-fill" style="width:${Math.max(2,x.count/max*100)}%"></span></span><span class="funnel-count">${esc(x.count)}</span></div>`).join('')||'<div class="table-empty">No lead records yet.</div>';
   }
 
+  /* ── Dashboard trend charts (pure CSS) ── */
+  function renderTrends(){
+    const weekMs=7*24*60*60*1000;const now=Date.now();const weeks=8;
+    const leadBuckets=new Array(weeks).fill(0);
+    const saleBuckets=new Array(weeks).fill(0);
+    state.leads.forEach(l=>{if(!l.created_at)return;const age=Math.floor((now-new Date(l.created_at).getTime())/weekMs);if(age>=0&&age<weeks)leadBuckets[weeks-1-age]++});
+    state.sales.forEach(s=>{if(!s.sale_date)return;const age=Math.floor((now-new Date(s.sale_date).getTime())/weekMs);if(age>=0&&age<weeks)saleBuckets[weeks-1-age]++});
+    const labels=[];for(let i=weeks-1;i>=0;i--){const d=new Date(now-i*weekMs);labels.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}))}
+    function barChart(buckets,lbl,accent){
+      const max=Math.max(1,...buckets);
+      return buckets.map((v,i)=>`<div class="trend-col"><div class="trend-bar-wrap"><div class="trend-bar" style="height:${Math.max(4,v/max*100)}%;background:${accent}"></div></div><span class="trend-val mono">${v}</span><span class="trend-lbl">${lbl[i]}</span></div>`).join('');
+    }
+    $('trend-leads').innerHTML=barChart(leadBuckets,labels,'var(--client-accent,#696ff2)');
+    $('trend-sales').innerHTML=barChart(saleBuckets,labels,'#236f4d');
+  }
+
+  /* ── Tag helpers ── */
+  function allTags(){const s=new Set();state.leads.forEach(l=>(l.tags||[]).forEach(t=>s.add(t)));return[...s].sort()}
+  function tagBadges(tags){return(tags||[]).map(t=>`<span class="tag-badge">${esc(t)}</span>`).join('')}
+
   /* ── 02 LEADS ── */
   function filteredLeads(){
     let list=state.leads;
     const q=($('lead-search').value||'').toLowerCase().trim();
     const stage=$('lead-stage-filter').value;
+    const tag=($('lead-tag-filter')||{}).value||'';
     if(q)list=list.filter(l=>(l.full_name||'').toLowerCase().includes(q)||(l.email||'').toLowerCase().includes(q)||(l.phone||'').toLowerCase().includes(q));
     if(stage)list=list.filter(l=>l.stage===stage);
+    if(tag)list=list.filter(l=>(l.tags||[]).includes(tag));
     return list;
   }
   function renderLeads(){
@@ -98,7 +122,7 @@
     $('lead-rows').innerHTML=list.map(l=>{
       const stageSelect=admin?`<select class="inline-select" data-lead-stage="${esc(l.id)}">${state.stages.map(s=>`<option value="${esc(s.code)}"${s.code===l.stage?' selected':''}>${esc(s.label)}</option>`).join('')}</select>`:badge(stageLabel(l.stage));
       const actions=admin?`<button class="text-button" data-activity="${esc(l.id)}">Log</button><button class="text-button" data-deal-from-lead="${esc(l.id)}">Deal</button>`:'';
-      return `<tr data-lead-row="${esc(l.id)}">${checkCol.replace('__ID__',esc(l.id))}<td><div class="customer-name"><strong class="lead-link" data-lead-detail="${esc(l.id)}">${esc(l.full_name)}</strong><small>${esc(l.email||l.phone||'No contact detail')}</small></div></td><td>${stageSelect}</td><td>${esc(l.source||'--')}</td><td>${dateLabel(l.last_activity_at)}</td><td class="row-action">${actions}</td></tr>`;
+      return `<tr data-lead-row="${esc(l.id)}">${checkCol.replace('__ID__',esc(l.id))}<td><div class="customer-name"><strong class="lead-link" data-lead-detail="${esc(l.id)}">${esc(l.full_name)}</strong><small>${esc(l.email||l.phone||'No contact detail')}</small>${(l.tags&&l.tags.length)?'<div class="tag-list">'+tagBadges(l.tags)+'</div>':''}</div></td><td>${stageSelect}</td><td>${esc(l.source||'--')}</td><td>${dateLabel(l.last_activity_at)}</td><td class="row-action">${actions}</td></tr>`;
     }).join('')||'<tr><td colspan="6"><div class="table-empty">No leads yet. Add the first customer record.</div></td></tr>';
     syncBulkBar();
   }
@@ -158,6 +182,7 @@
     contactHtml+=`<div class="detail-field"><small>Source</small><span>${esc(lead.source||'--')}</span></div>`;
     contactHtml+=`<div class="detail-field"><small>Stage</small><span>${badge(stageLabel(lead.stage))}</span></div>`;
     contactHtml+=`<div class="detail-field"><small>Created</small><span>${dateLabel(lead.created_at)}</span></div>`;
+    if(lead.tags&&lead.tags.length)contactHtml+=`<div class="detail-field"><small>Tags</small><span>${tagBadges(lead.tags)}</span></div>`;
     contactHtml+=`</div>`;
     if(lead.notes)contactHtml+=`<div class="detail-notes"><small>Notes</small><p>${esc(lead.notes)}</p></div>`;
     contactHtml+=`</div>`;
@@ -282,8 +307,8 @@
   }
   function exportLeadsCsv(){
     const list=filteredLeads();
-    const header=['Name','Email','Phone','Stage','Source','Notes','Created'];
-    const rows=list.map(l=>[l.full_name||'',l.email||'',l.phone||'',stageLabel(l.stage),l.source||'',l.notes||'',dateLabel(l.created_at)]);
+    const header=['Name','Email','Phone','Stage','Source','Tags','Notes','Created'];
+    const rows=list.map(l=>[l.full_name||'',l.email||'',l.phone||'',stageLabel(l.stage),l.source||'',(l.tags||[]).join('; '),l.notes||'',dateLabel(l.created_at)]);
     downloadCsv('leads_export_'+today()+'.csv',header,rows);
     toast('Exported '+rows.length+' leads.');
   }
@@ -312,7 +337,7 @@
     if(type==='edit-lead'){
       const lead=seed?.lead?state.leads.find(l=>l.id===seed.lead):null;
       if(!lead){closeModal();return}
-      f.innerHTML=`<div class="form-grid"><label>Email<input id="edit-lead-email" type="email" value="${esc(lead.email||'')}"></label><label>Phone<input id="edit-lead-phone" value="${esc(lead.phone||'')}"></label><label>Stage<select id="edit-lead-stage">${state.stages.map(s=>`<option value="${esc(s.code)}"${s.code===lead.stage?' selected':''}>${esc(s.label)}</option>`).join('')}</select></label><label class="full">Notes<textarea id="edit-lead-notes" rows="3">${esc(lead.notes||'')}</textarea></label></div><div class="form-footer"><button class="button button-secondary" type="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit">Update lead</button></div>`;
+      f.innerHTML=`<div class="form-grid"><label>Email<input id="edit-lead-email" type="email" value="${esc(lead.email||'')}"></label><label>Phone<input id="edit-lead-phone" value="${esc(lead.phone||'')}"></label><label>Stage<select id="edit-lead-stage">${state.stages.map(s=>`<option value="${esc(s.code)}"${s.code===lead.stage?' selected':''}>${esc(s.label)}</option>`).join('')}</select></label><label>Tags<input id="edit-lead-tags" value="${esc((lead.tags||[]).join(', '))}" placeholder="hot, vip, follow-up"></label><label class="full">Notes<textarea id="edit-lead-notes" rows="3">${esc(lead.notes||'')}</textarea></label></div><p class="helper">Separate tags with commas.</p><div class="form-footer"><button class="button button-secondary" type="button" data-close-modal>Cancel</button><button class="button button-primary" type="submit">Update lead</button></div>`;
       f.dataset.leadId=lead.id;
     }
 
@@ -346,7 +371,7 @@
   function closeModal(){$('modal').hidden=true;$('record-form').innerHTML=''}
   async function submitModal(){const type=$('record-form').dataset.type;setLoading(true);try{
     if(type==='lead')await api.rpc('pravah_client_create_lead',{p_full_name:$('lead-name').value,p_email:$('lead-email').value||null,p_phone:$('lead-phone').value||null,p_source:$('lead-source').value||null,p_notes:$('lead-notes').value||null});
-    if(type==='edit-lead')await api.rpc('pravah_client_update_lead',{p_lead_id:$('record-form').dataset.leadId,p_stage:$('edit-lead-stage').value,p_notes:$('edit-lead-notes').value||null,p_email:$('edit-lead-email').value||null,p_phone:$('edit-lead-phone').value||null});
+    if(type==='edit-lead'){const tagStr=$('edit-lead-tags').value;const tags=tagStr?tagStr.split(',').map(t=>t.trim()).filter(Boolean):[];await api.rpc('pravah_client_update_lead',{p_lead_id:$('record-form').dataset.leadId,p_stage:$('edit-lead-stage').value,p_notes:$('edit-lead-notes').value||null,p_email:$('edit-lead-email').value||null,p_phone:$('edit-lead-phone').value||null,p_tags:tags})}
     if(type==='activity')await api.rpc('pravah_client_log_activity',{p_lead_id:$('activity-lead').value,p_activity_type:$('activity-type').value,p_occurred_at:new Date($('activity-date').value).toISOString(),p_outcome:$('activity-outcome').value||null,p_duration_seconds:$('activity-duration').value?Number($('activity-duration').value):null,p_notes:$('activity-notes').value||null});
     if(type==='deal')await api.rpc('pravah_client_create_deal',{p_lead_id:$('deal-lead').value,p_title:$('deal-title').value,p_value:Number($('deal-value').value||0),p_currency:$('deal-currency').value||'INR',p_stage:$('deal-stage').value,p_expected_close_on:$('deal-close').value||null,p_notes:$('deal-notes').value||null});
     if(type==='sale')await api.rpc('pravah_client_record_sale',{p_lead_id:$('sale-lead').value||null,p_deal_id:$('sale-deal').value||null,p_sale_date:$('sale-date').value,p_gross_amount:Number($('sale-gross').value||0),p_discount_amount:Number($('sale-discount').value||0),p_net_amount:Number($('sale-net').value||0),p_currency:$('sale-currency').value||'INR',p_notes:$('sale-notes').value||null});
@@ -526,6 +551,7 @@
   let searchTimer=null;
   $('lead-search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(renderLeads,200)});
   $('lead-stage-filter').addEventListener('change',renderLeads);
+  if($('lead-tag-filter'))$('lead-tag-filter').addEventListener('change',renderLeads);
 
   /* ── Event delegation ── */
   document.addEventListener('click',e=>{
