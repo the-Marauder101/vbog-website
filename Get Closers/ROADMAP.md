@@ -116,6 +116,22 @@ the shell without returning to the original conversation.
 - assessment prediction validity;
 - client and closer risk signals.
 
+## V8 — Client CRM
+
+- full lead register with search, stage filter, and lead detail slide-out;
+- inline lead editing (stage, contact, notes);
+- deal creation and pipeline management from client portal;
+- sale recording against leads and deals;
+- CSV/Callyzer import wizard with field and stage mapping;
+- enhanced dashboard with funnel visualization and MTD metrics;
+- client_admin write contracts for leads, deals, sales, and imports;
+- import RPCs opened to client_admin with client-scoped access.
+
+**Boundary:** V8 does not add new tables — it opens existing V4/V5 write
+contracts to `client_admin` and builds the full CRM interface.
+
+**Build status:** migration 22 and client portal rewrite in progress.
+
 ## Release discipline
 
 Every version includes migrations and rollback notes, permission verification,
