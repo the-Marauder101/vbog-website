@@ -26,6 +26,11 @@ comment on column pravah_client_profiles.sale_gap_alert_days is
 -- Only 3 of 20 production clients passed, making the client edit / check-in /
 -- archive / delete actions unreachable for the other 17. Sparse clients are
 -- now listed and marked instead of hidden.
+--
+-- IMPORTANT: create or replace view can only APPEND columns — it cannot
+-- reorder or rename existing ones (42P16). The first fifteen columns below
+-- therefore match the live view exactly, in order, and the two new columns
+-- are appended at the end.
 
 create or replace view pravah_v_clients
 with (security_invoker = true) as
@@ -36,7 +41,6 @@ select
   coalesce(cp.health, 'unknown')     as health,
   cp.reporting_currency,
   cp.checkin_cadence,
-  cp.sale_gap_alert_days,
   (select max(ci.occurred_at) from pravah_client_checkins ci where ci.client_id = c.id) as last_checkin_at,
   (select count(*) from pravah_training t
      where t.client_id = c.id and t.status = any(array['active','passed'])) as active_closers,
@@ -48,6 +52,8 @@ select
   cp.archive_reason,
   sync.source_client_id as vyom_client_id,
   case when sync.id is null then 'unlinked' else 'linked' end as vyom_link_status,
+  -- appended columns start here
+  cp.sale_gap_alert_days,
   -- replaces the old hard filter: sparse clients are visible but marked
   (sync.id is not null
     or exists (select 1 from requirements r join placements p on p.requirement_id = r.id where r.client_id = c.id)
@@ -390,31 +396,31 @@ on conflict (code) do nothing;
 insert into pravah_kpi_definitions
   (kra_code, code, name, description, weight_pct, target_value, target_unit, direction, data_source, formula, active, sort_order, subject) values
   ('cl_activity','CA-1','Call target attainment','Calls attempted against the period target.',
-     60.00, 100, 'percent','higher_better','performance_reports + targets',
+     60.00, 100, 'percent','higher_is_better','performance_reports + targets',
      'sum(calls_attempted) / target_value * 100', true, 1, 'closer'),
   ('cl_activity','CA-2','Connect rate','Connected calls as a share of calls attempted.',
-     40.00, 35, 'percent','higher_better','performance_reports',
+     40.00, 35, 'percent','higher_is_better','performance_reports',
      'sum(connected_calls) / nullif(sum(calls_attempted),0) * 100', true, 2, 'closer'),
 
   ('cl_pipeline','CP-1','Qualified opportunities','Qualified opportunities created in the period.',
-     60.00, 100, 'percent','higher_better','performance_reports',
+     60.00, 100, 'percent','higher_is_better','performance_reports',
      'sum(qualified_opportunities) vs target', true, 1, 'closer'),
   ('cl_pipeline','CP-2','Meetings booked','Meetings booked in the period.',
-     40.00, 100, 'percent','higher_better','performance_reports',
+     40.00, 100, 'percent','higher_is_better','performance_reports',
      'sum(meetings_booked) vs target', true, 2, 'closer'),
 
   ('cl_revenue','CR-1','Sales target attainment','Sales closed against the period target.',
-     50.00, 100, 'percent','higher_better','performance_reports + targets',
+     50.00, 100, 'percent','higher_is_better','performance_reports + targets',
      'sum(sales_count) / target_value * 100', true, 1, 'closer'),
   ('cl_revenue','CR-2','Cash collection attainment','Cash collected against the period target.',
-     50.00, 100, 'percent','higher_better','performance_reports + targets',
+     50.00, 100, 'percent','higher_is_better','performance_reports + targets',
      'sum(cash_collected) / target_value * 100', true, 2, 'closer'),
 
   ('cl_discipline','CD-1','Report submission rate','Both slots submitted on each working day.',
-     60.00, 100, 'percent','higher_better','performance_reports',
+     60.00, 100, 'percent','higher_is_better','performance_reports',
      'submitted_slots / (working_days * 2) * 100', true, 1, 'closer'),
   ('cl_discipline','CD-2','Report completeness','Core figures present on submitted reports.',
-     40.00, 100, 'percent','higher_better','performance_reports',
+     40.00, 100, 'percent','higher_is_better','performance_reports',
      'complete_reports / submitted_reports * 100', true, 2, 'closer')
 on conflict (code) do nothing;
 
