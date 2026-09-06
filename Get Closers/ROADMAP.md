@@ -108,6 +108,12 @@ the shell without returning to the original conversation.
 - client admin controls;
 - native lead and pipeline management.
 
+**Build status:** merged and deployed on 2026-09-02 (migration 16). Shipped
+with a latent defect: the portal views are `security_invoker` and join
+Nikash-owned tables that carry no client or closer read policy, so every
+portal table rendered empty while the metric cards showed correct counts.
+Undetected until 2026-09-06; fixed in V9.
+
 ## V7 — Automation and Intelligence
 
 - scheduled source synchronization;
@@ -115,6 +121,12 @@ the shell without returning to the original conversation.
 - deeper pattern recognition and intervention intelligence;
 - assessment prediction validity;
 - client and closer risk signals.
+
+**Build status:** partially delivered on 2026-09-04 as V7/V7b/V7c
+(migrations 19-21): the portal launcher, client name in `pravah_context`,
+and user creation via the Auth Admin API. Scheduled synchronization,
+WhatsApp API/Zapier delivery, deeper pattern intelligence and risk signals
+are **not built**.
 
 ## V8 — Client CRM
 
@@ -130,7 +142,55 @@ the shell without returning to the original conversation.
 **Boundary:** V8 does not add new tables — it opens existing V4/V5 write
 contracts to `client_admin` and builds the full CRM interface.
 
-**Build status:** migration 22 and client portal rewrite in progress.
+**Build status:** merged and deployed. Migration 22 (write contracts and
+import RLS) applied 2026-09-06; migration 23 (lead tags) applied
+2026-09-06. Deal detail slideout, bulk stage actions, CSV export, lead tags
+and 8-week dashboard trend charts all shipped.
+
+## V9 — Client registry and portal repair
+
+- portal visibility fix: SELECT policies on `placements`, `candidates` and
+  `requirements` for client and closer roles, via three security-definer
+  resolvers;
+- `client_registry` — canonical client identity anchored on `clients.id`;
+- `client_system_links` — external IDs per system, unique on
+  `(system, external_id)`;
+- `pravah_v_client_data_index` — what data exists for a client, and where;
+- auto-registration trigger on `clients`, plus backfill from `clients` and
+  `pravah_client_sync_inbox`;
+- registry upsert / link / overview RPCs.
+
+**Boundary:** `clients` is the target of 29 foreign keys and is not
+restructured. V9 promotes it to the canonical anchor and builds around it.
+
+**Build status:** merged and deployed 2026-09-06 (migration 24), verified
+against production. Registry backfilled 19 of 19 clients; 2 Vyom links
+carried from the sync inbox. Portal visibility confirmed fixed for
+`client_admin` and `closer` with no regression for internal roles.
+
+### V9b — Overload hotfix
+
+Migration 23 added `p_tags` to `pravah_client_update_lead` with
+`create or replace function`. Changing a signature creates a second
+function rather than replacing the first, and both overloads accepted
+`{p_lead_id, p_stage}`, so PostgREST returned `PGRST203`. This broke the
+inline lead stage dropdown and bulk stage update in the client portal.
+
+**Build status:** merged and deployed 2026-09-06 (migration 25), verified.
+The pre-tags 5-argument version is dropped; one signature remains.
+
+## Not yet scheduled
+
+Carried forward and not attached to any version:
+
+- **Sales/cash source of truth** (PRD §24) — the CRM and the KRA/KPI engine
+  measure the same facts through two paths that never meet. A product
+  decision, not a patch.
+- **Validation gates never closed** — V2B placed-candidate smoke test, V3
+  live scorecard verification, V4 lead-to-verified-payment acceptance test.
+- **Production hygiene** — purge `ZZ_FIXTURE` clients and the
+  `sales_count = 1000` test report; rotate the service role key exposed in
+  `21_v7c_user_creation.sql`.
 
 ## Release discipline
 

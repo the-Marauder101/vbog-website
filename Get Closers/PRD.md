@@ -761,6 +761,14 @@ Portal visibility defect confirmed fixed:
 `pravah_v_clients` and `pravah_v_reports` also populate for the client
 admin (1 and 2 rows) where both previously returned zero.
 
+Migration 25 applied and verified 2026-09-06: `pravah_client_update_lead`
+now has exactly one signature (the 6-argument form); the previously
+`PGRST203` call `{p_lead_id, p_stage}` resolves; `pravah_list_invitations`
+correctly still carries both of its non-ambiguous signatures.
+
+With migrations 22 through 25 applied, the client portal is functionally
+complete: every view renders, every write contract resolves.
+
 ## 24. Open architectural gap — two sources of truth for sales and cash
 
 This is the largest unresolved issue in the system and it predates V8. It
