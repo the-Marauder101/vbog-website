@@ -814,7 +814,7 @@ shipping neither is not, because the contradiction is client-visible.
 
 ### 23.5 Notes for the next pass
 
-1. **Purge non-production data.** Twelve `ZZ_FIXTURE` clients and a
+1. **Purge non-production data.** Five `ZZ_FIXTURE` clients and a
    performance report with `sales_count = 1000` are live in the production
    database and will surface in client-facing views.
 2. **KRA/KPI engine is inert.** Six KRAs and sixteen KPI definitions exist;
@@ -1144,3 +1144,61 @@ dash, so no front-end change was required.
 
 `27_v10b_fix_kpi_dashboard.sql` — Part A restores `pravah_kpi_dashboard`;
 Part B replaces `pravah_closer_scorecard`.
+
+### 26.4 Fourth deploy failure — missing statement terminator
+
+Migration 27 failed its first run:
+
+```
+ERROR 42601: syntax error at or near "create"
+LINE 149: create or replace function pravah_closer_scorecard(
+```
+
+Part A's body was taken from `pg_get_functiondef()`, whose output ends
+`end $function$` with **no trailing semicolon**. Part A therefore ran
+straight into Part B's `create`. Fixed by terminating the statement.
+
+Worth carrying forward: `pg_get_functiondef()` is the right way to
+faithfully reproduce a live function, but its output is not a runnable
+statement on its own. Always append the terminator when concatenating it
+with anything else.
+
+## 27. Launch readiness
+
+Audited 2026-09-06 against production.
+
+### 27.1 Clean
+
+- Every table in the database has RLS enabled.
+- **No Pravah function is callable by `anon`.**
+- `pravah_integration_events` has RLS with zero policies — fully locked to
+  the service role, which is intentional for the Edge Function bridge.
+- `pravah_list_invitations` remains the only overloaded Pravah function, and
+  it is verified non-ambiguous: the one-argument form has no default, so an
+  empty body can only match the zero-argument form.
+
+### 27.2 Non-production data still live — must clear before launch
+
+| Item | Count |
+|---|---|
+| `ZZ_FIXTURE` clients | 5 |
+| Performance report with `sales_count = 1000` | 1 |
+| `depesh_*_test` memberships | 2 |
+| `ZZ_QA Suite` staff memberships | 3 |
+
+*(An earlier draft of this document said twelve fixture clients. The
+verified count is five; corrected here and in the roadmap.)*
+
+The `sales_count = 1000` report is the most visible: with the V9 portal fix
+live, a client now sees a roster row reporting 1,002 sales beside a booked
+revenue figure drawn from the CRM.
+
+### 27.3 Outstanding before launch
+
+1. Purge the non-production rows above.
+2. Rotate the service role key exposed in `21_v7c_user_creation.sql`.
+3. Close the three validation gates — V2B placed-candidate smoke test, V3
+   scorecard verification (now possible for the first time, once migration
+   27 lands), V4 lead-to-verified-payment.
+4. Build the two remaining items from the V10 conversation: reusable import
+   mappings, and source + activity analytics.

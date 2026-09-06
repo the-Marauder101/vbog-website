@@ -126,7 +126,7 @@ begin
     )
   ) into v_result;
   return v_result;
-end $function$
+end $function$;
 
 
 -- Verification — expect a scorecard document rather than an error:
