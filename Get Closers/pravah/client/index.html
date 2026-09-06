@@ -68,6 +68,16 @@
             <div class="table-wrap"><table><thead><tr><th>Closer</th><th>Training</th><th>Sales</th><th>Verified cash</th></tr></thead><tbody id="roster-rows"></tbody></table></div>
           </article>
         </div>
+        <div class="split-grid">
+          <article class="panel table-panel">
+            <div class="panel-head"><div><p class="eyebrow">TREND</p><h2>Leads created (8 weeks)</h2></div></div>
+            <div class="trend-chart" id="trend-leads"></div>
+          </article>
+          <article class="panel table-panel">
+            <div class="panel-head"><div><p class="eyebrow">TREND</p><h2>Sales recorded (8 weeks)</h2></div></div>
+            <div class="trend-chart" id="trend-sales"></div>
+          </article>
+        </div>
         <article class="panel table-panel">
           <div class="panel-head"><div><p class="eyebrow">HEALTH</p><h2>Recent check-ins</h2></div></div>
           <div class="table-wrap"><table><thead><tr><th>Date</th><th>Health</th><th>Summary</th></tr></thead><tbody id="recent-checkin-rows"></tbody></table></div>
@@ -80,6 +90,7 @@
         <div class="toolbar">
           <input type="search" class="search-input" id="lead-search" placeholder="Search by name, email, or phone...">
           <select class="filter-select" id="lead-stage-filter"><option value="">All stages</option></select>
+          <select class="filter-select" id="lead-tag-filter"><option value="">All tags</option></select>
         </div>
         <div class="bulk-bar" id="bulk-bar" hidden>
           <span id="bulk-count">0 selected</span>

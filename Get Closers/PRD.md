@@ -494,7 +494,12 @@ are imported idempotently with duplicate detection via source record keys.
 
 - Deal detail slideout with associated sales and activity timeline;
 - Bulk lead selection with stage update across selected leads;
-- CSV export for leads and sales data;
+- CSV export for leads and sales data (includes tags);
+- Lead tags — `tags text[]` column with GIN index, editable in the lead
+  edit modal, displayed as badges in the lead register and detail slideout,
+  filterable via dropdown;
+- Dashboard trend charts — 8-week bar charts for leads created and sales
+  recorded, computed client-side from existing data;
 - Debounced search across name, email and phone fields;
 - Responsive layout down to mobile widths.
 
@@ -509,14 +514,76 @@ RLS policies on import tables grant client_admin read/write access scoped
 to their own client ID. Table-level grants permit insert and update only
 through the RPC layer.
 
+### Database isolation audit (completed)
+
+Every Pravah table (22 tables) has RLS **enabled and forced**. Client
+isolation follows a shared-table model with row-level security, not
+separate tables per client. Key findings:
+
+1. **All revenue tables** (`leads`, `activities`, `deals`, `sales`,
+   `payments`, `adjustments`) have `client_id NOT NULL` with FK to
+   `clients(id)` and RLS policies joining through `pravah_memberships` to
+   verify the caller's client.
+2. **All write RPCs** are `security definer` with `SET search_path = public`,
+   revoke PUBLIC/anon, grant only to authenticated. Every RPC validates
+   cross-entity ownership (lead/client mismatch, deal/client mismatch).
+3. **Import tables** without direct `client_id` (`mapping_versions`,
+   `batches`, `rows`, `replays`) derive client through FK chains to
+   `pravah_import_profiles.client_id`. RLS policies join through these
+   chains.
+4. **All views** use `security_invoker = true` and add explicit
+   `pravah_can_access_client()` filters.
+5. **`pravah_context()`** derives `client_id` purely from `auth.uid()`
+   against the membership table — never from user input.
+6. **No cross-client joins** exist without proper filtering.
+7. **`anon` role** has zero access to any Pravah table or function.
+
+Minor notes for awareness (not blockers):
+- `pravah_audit_events` has no client-scoped read policy (only internal).
+  Client admins cannot see their own audit trail. Intentional but could be
+  extended in a future pass.
+- Revenue table INSERT/UPDATE grants are broad (`authenticated`) but safe
+  because no INSERT RLS policy matches for non-internal users. Writes go
+  through SECURITY DEFINER RPCs only.
+- Service role key is hardcoded in `21_v7c_user_creation.sql` source file.
+  It is stored in Supabase vault at runtime, but visible in repo history.
+
 ### KPI impact
 
 Client revenue data written through V8 flows into V3 KRA/KPI scorecards
 and V4 company-wide revenue views. Verified cash requires V4 payment
 evidence regardless of the entry path.
 
-### Migration
+### Migrations
 
-`22_v8_client_crm.sql` adds the client write RPCs, updates import RPC
-access checks, and creates RLS policies for import table client access.
-No schema changes to existing tables.
+- `22_v8_client_crm.sql` — client write RPCs, import RPC access checks,
+  import table RLS policies for client access.
+- `23_v8b_lead_tags.sql` — adds `tags text[]` column with GIN index to
+  `pravah_revenue_leads`, updates `pravah_client_update_lead` to accept
+  `p_tags` parameter. **Deploy before using tags in the UI.**
+
+### Notes for the next pass
+
+The following items are ready for the next builder:
+
+1. **Deploy migration 23** (`23_v8b_lead_tags.sql`) to production via
+   Supabase SQL editor. Until deployed, the tag filter and tag editing in
+   the UI will not work (the column doesn't exist yet).
+2. **Audit trail for client admins** — consider adding a client-scoped read
+   policy on `pravah_audit_events` so client admins can see actions taken
+   on their own data.
+3. **Bulk delete** — the UI shows a "Delete selected" button but the RPC
+   does not exist yet. Needs a `pravah_client_delete_lead` function with
+   proper cascading (activities, deals, sales).
+4. **Service role key rotation** — the key in `21_v7c_user_creation.sql` is
+   in repo history. Consider rotating it and moving to environment
+   variables or a secrets manager.
+5. **Lead create with tags** — `pravah_client_create_lead` does not accept
+   tags yet. Add a `p_tags text[]` parameter if needed.
+6. **Server-side trend data** — the dashboard trend charts compute client-
+   side from the 500-lead / 250-sale fetch limit. For clients with more
+   data, consider a server-side aggregation RPC.
+7. **Payment and adjustment closer policies** — `pravah_revenue_payments`
+   and `pravah_revenue_adjustments` have no closer read policy. Closers
+   cannot see payment details. This is likely intentional but should be
+   confirmed.

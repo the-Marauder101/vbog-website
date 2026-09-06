@@ -111,6 +111,18 @@
 .row-check{width:36px;text-align:center}
 .row-check input[type="checkbox"]{cursor:pointer;width:15px;height:15px;accent-color:var(--client-accent,#696ff2)}
 
+/* Trend charts */
+.trend-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding:16px 8px 0}
+.trend-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
+.trend-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.trend-bar{width:100%;max-width:28px;border-radius:4px 4px 0 0;transition:height .3s}
+.trend-val{font-size:11px;font-weight:600;color:var(--ink,#151416)}
+.trend-lbl{font-size:10px;color:var(--muted,#706b68);white-space:nowrap}
+
+/* Tag badges */
+.tag-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:var(--client-soft,#eef0ff);color:var(--client-accent,#696ff2);margin:1px 2px}
+.tag-list{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px}
+
 /* Responsive */
 @media(max-width:1100px){.dash-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:900px){.client-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
