@@ -708,12 +708,66 @@ registry row and links. `anon` has no access. All registry RPCs are
 `security definer` with `set search_path = public`, revoke PUBLIC and
 anon, and grant execute to `authenticated` only.
 
-### 23.4 Migration
+### 23.4 Migrations
 
 `24_v9_client_registry.sql` — portal visibility policies, resolver
 functions, registry tables, trigger, backfill, data index view and
 registry RPCs. Additive only: no table is dropped, no column is altered,
 no policy is removed.
+
+`25_v9b_fix_function_overloads.sql` — hotfix. Migration 23 added `p_tags`
+to `pravah_client_update_lead` with `create or replace function`. Changing
+the signature creates a **second** function rather than replacing the
+first, and both overloads accept `{p_lead_id, p_stage}` with everything
+else defaulted. PostgREST could not disambiguate and returned `PGRST203`,
+breaking the inline lead stage dropdown and bulk stage update in the
+client portal. The edit-lead modal was unaffected because it sends
+`p_tags`, which resolves uniquely. Migration 25 drops the pre-tags
+5-argument version.
+
+`pravah_list_invitations` carries a similar zero-arg / one-arg pair but is
+**not** ambiguous and is deliberately left alone: the one-argument form has
+no default, so an empty body can only match the zero-argument form. Both
+are live callers.
+
+**Lesson for future migrations:** adding a parameter to an existing
+function is not a replace. Either keep the signature identical, or drop the
+old signature explicitly in the same migration.
+
+### 23.4.1 Deployment status — verified 2026-09-06
+
+Migrations 23 and 24 applied to production and verified by direct query:
+
+| Check | Result |
+|---|---|
+| `tags` column + GIN index | present |
+| Three visibility resolvers | present |
+| Three portal SELECT policies | present |
+| `client_registry`, `client_system_links` | created |
+| `pravah_v_client_data_index` | created |
+| Registry backfill | 19 of 19 clients |
+| Vyom links carried from sync inbox | 2 |
+| Nikash self-links | 19 |
+| Registry trigger | active |
+
+Portal visibility defect confirmed fixed:
+
+| Caller | `pravah_v_placements` before | after |
+|---|---|---|
+| client_admin @ NMT | 0 rows | 1 row (correct closer, client, training status) |
+| closer @ NMT | 0 rows | 1 row (own placement only) |
+| gc_admin (internal) | 1 row | 1 row (no regression) |
+
+`pravah_v_clients` and `pravah_v_reports` also populate for the client
+admin (1 and 2 rows) where both previously returned zero.
+
+Migration 25 applied and verified 2026-09-06: `pravah_client_update_lead`
+now has exactly one signature (the 6-argument form); the previously
+`PGRST203` call `{p_lead_id, p_stage}` resolves; `pravah_list_invitations`
+correctly still carries both of its non-ambiguous signatures.
+
+With migrations 22 through 25 applied, the client portal is functionally
+complete: every view renders, every write contract resolves.
 
 ## 24. Open architectural gap — two sources of truth for sales and cash
 
