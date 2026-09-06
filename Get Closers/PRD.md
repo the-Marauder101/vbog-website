@@ -587,3 +587,143 @@ The following items are ready for the next builder:
    and `pravah_revenue_adjustments` have no closer read policy. Closers
    cannot see payment details. This is likely intentional but should be
    confirmed.
+
+## 23. V9 — Unified client registry and portal visibility fix
+
+V9 resolves two defects found during the pre-launch database audit: a
+portal visibility break that made client and closer portals silently
+render empty tables, and the absence of a single canonical client identity
+shared across Pravah, Nikash and Vyom.
+
+### 23.1 Defect — portal views return zero rows
+
+**Symptom.** The client dashboard metric cards report correct values
+(`Active closers: 1`) while every table below them renders its empty state
+("No closers assigned yet"). The same break affects the closer portal.
+
+**Root cause.** The V6 portal views (`pravah_v_placements`,
+`pravah_v_reports`, `pravah_v_clients`, `pravah_v_attention`) are declared
+`security_invoker = true`, so the caller's RLS applies to every table the
+view joins. Those views join three Nikash-owned tables — `placements`,
+`candidates` and `requirements` — whose only SELECT policies are
+`pravah_is_internal()` and `is_staff()`. A `client_admin`, `client_viewer`
+or `closer` therefore reads zero rows from them, and the join collapses to
+an empty result. The view's own `pravah_can_access_client()` filter passes;
+the underlying RLS is what blocks it.
+
+The metric cards disagree because `pravah_client_portal()` and
+`pravah_closer_portal()` are `security definer` and bypass RLS entirely.
+The portal has been reporting counts it could not display since V6.
+
+`pravah_v_clients` fails the same way for a second reason: its `WHERE`
+clause requires an `EXISTS` over `requirements`/`placements`, which is
+RLS-blocked for portal users, so no client row is ever returned.
+
+**Fix.** Add permissive SELECT policies to `requirements`, `placements` and
+`candidates` scoped through three new `security definer` resolver
+functions. Permissive policies are OR'd with the existing internal and
+staff policies, so Nikash access is unchanged and nothing is revoked.
+
+| Function | Returns |
+|---|---|
+| `pravah_my_visible_placement_ids()` | closer → own placement only; client_admin/client_viewer → every placement of their client |
+| `pravah_my_visible_requirement_ids()` | requirements behind those placements, plus all client requirements for client roles |
+| `pravah_my_visible_candidate_ids()` | candidates placed against those placements |
+
+Each resolver is `security definer` so its internal joins are not subject
+to the caller's RLS, which avoids policy recursion.
+
+### 23.2 Unified client registry
+
+**Problem.** Client identity is fragmented across three systems:
+
+| System | Client store | Identifier |
+|---|---|---|
+| Nikash | `clients` (shared project) | canonical `clients.id` |
+| Pravah | `clients` + `pravah_client_profiles` | same `clients.id` |
+| Vyom | separate Supabase project | its own `clients.id`, unrelated |
+
+The Vyom mapping exists only inside `pravah_client_sync_inbox`, which is a
+staging inbox for a refresh workflow, not a registry: it holds 15 source
+rows of which 2 are linked, and it is Pravah-private. There is no single
+place that answers "who is this client, what are their IDs in every
+system, and what data do we hold for them".
+
+`clients` itself carries only `id`, `business_name` and `created_at`, and
+is the target of 29 foreign keys. It cannot be replaced or restructured.
+
+**Design.** `clients` is promoted to the canonical anchor and the registry
+is built around it. No existing column, constraint or foreign key changes.
+
+- **`client_registry`** — one row per client, keyed by `client_id`
+  referencing `clients(id)`. Holds the canonical identity that all three
+  products read: canonical and legal name, normalized name for matching,
+  status and lifecycle stage, primary contact, country, reporting
+  currency, and `origin_system` recording where the client first appeared.
+- **`client_system_links`** — one row per (system, external id). Maps a
+  registry client to its identifier in `vyom`, `nikash`, `pravah`,
+  `callyzer` or any future source, with link status, last-seen time and
+  the source payload. Unique on `(system, external_id)` so a Vyom client
+  can never be linked to two registry clients.
+- **`pravah_v_client_data_index`** — a live view answering "what do we hold
+  for this client": counts of requirements, placements, leads, deals,
+  sales, activities, import profiles, check-ins, actions, portal
+  memberships and Nikash `client_users`, plus the linked system list.
+
+**Automatic registration.** A trigger on `clients` creates the registry row
+on insert, so any client added by Nikash, Pravah or the Vyom bridge is
+registered without a code change in that product. A backfill populates the
+registry and the Vyom links from existing `clients` and
+`pravah_client_sync_inbox` rows.
+
+**Vyom flow.** When a client is created in Vyom, the existing Edge Function
+bridge writes to `pravah_client_sync_inbox` as it does today. Linking that
+inbox row now also writes a `client_system_links` row through
+`pravah_client_link_system()`, so the registry becomes the durable record
+and the inbox returns to being a staging area. Names remain hints; the
+UUID pair is the join.
+
+**Write contracts.**
+
+- `pravah_client_registry_upsert(...)` — internal only; create or update
+  canonical identity.
+- `pravah_client_link_system(p_client_id, p_system, p_external_id, ...)` —
+  internal only; idempotent link or relink with audit.
+- `pravah_client_registry_overview(p_client_id)` — internal, or a client
+  admin for their own client; returns identity, system links and data
+  footprint as one JSON document.
+
+**Known duplication left in place.** Nikash's `client_users` and Pravah's
+`pravah_memberships` both map auth users to clients. Merging them would
+change Nikash's access path, so V9 does not touch either. The registry
+data index surfaces both counts so the divergence is visible, and
+consolidation is deferred to a later pass.
+
+### 23.3 Security model
+
+`client_registry` and `client_system_links` have RLS enabled and forced.
+Internal staff read and write; a client admin reads only their own
+registry row and links. `anon` has no access. All registry RPCs are
+`security definer` with `set search_path = public`, revoke PUBLIC and
+anon, and grant execute to `authenticated` only.
+
+### 23.4 Migration
+
+`24_v9_client_registry.sql` — portal visibility policies, resolver
+functions, registry tables, trigger, backfill, data index view and
+registry RPCs. Additive only: no table is dropped, no column is altered,
+no policy is removed.
+
+### 23.5 Notes for the next pass
+
+1. **Consolidate user-to-client mapping.** `client_users` (Nikash) and
+   `pravah_memberships` (Pravah) overlap. Pick one as authoritative and
+   make the other a view over it.
+2. **Push registry identity into Vyom.** Vyom currently learns nothing back
+   from the registry. A return path would let Vyom display the canonical
+   client ID.
+3. **Backfill `origin_system` accurately.** The initial backfill marks
+   pre-existing clients `unknown` unless a Vyom link exists; historical
+   provenance may be recoverable from audit events.
+4. **Fixture cleanup.** Twelve `ZZ_FIXTURE` clients remain in `clients` and
+   will appear in the registry. Filter or purge before launch.
