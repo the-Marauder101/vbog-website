@@ -693,11 +693,12 @@ UUID pair is the join.
   admin for their own client; returns identity, system links and data
   footprint as one JSON document.
 
-**Known duplication left in place.** Nikash's `client_users` and Pravah's
-`pravah_memberships` both map auth users to clients. Merging them would
-change Nikash's access path, so V9 does not touch either. The registry
-data index surfaces both counts so the divergence is visible, and
-consolidation is deferred to a later pass.
+**Apparent duplication, not a live problem.** Nikash's `client_users` and
+Pravah's `pravah_memberships` both map auth users to clients, but
+`client_users` holds **zero rows** — nothing uses it. `pravah_memberships`
+is the only live mapping. No consolidation work is warranted; the registry
+data index surfaces both counts so the situation stays visible if
+`client_users` ever starts being written.
 
 ### 23.3 Security model
 
@@ -714,16 +715,72 @@ functions, registry tables, trigger, backfill, data index view and
 registry RPCs. Additive only: no table is dropped, no column is altered,
 no policy is removed.
 
+## 24. Open architectural gap — two sources of truth for sales and cash
+
+This is the largest unresolved issue in the system and it predates V8. It
+is recorded here because it is a design decision, not a defect to patch.
+
+Sales and cash are written and read through two independent paths that
+never meet:
+
+| Surface | Sales source | Cash source |
+|---|---|---|
+| Client dashboard metric cards (`pravah_client_portal`) | `pravah_revenue_sales` | `pravah_revenue_payments` |
+| Closer roster on that same page (`pravah_v_placements`) | `pravah_performance_reports.sales_count` | `pravah_performance_reports.verified_cash_collected` |
+| Closer portal (`pravah_closer_portal`) | `pravah_revenue_sales` | `pravah_revenue_payments` |
+| KRA/KPI scorecards (`pravah_kpi_dashboard`) | `pravah_performance_reports` | `pravah_performance_reports` |
+
+`pravah_performance_reports` is written only by `pravah_save_report` and
+`pravah_submit_report` — the manual weekly closer report. Nothing writes it
+from `pravah_revenue_sales`. A sale recorded in the client CRM therefore
+never reaches the closer roster or any scorecard, and a weekly report never
+reaches client booked revenue. The two figures diverge permanently.
+
+**PRD section 22 previously claimed V8 revenue "flows into V3 KRA/KPI
+scorecards". That claim is incorrect** and is retained here only so the
+record is honest. It does not flow.
+
+The visible consequence: once the V9 portal fix lands and the closer roster
+renders, a client will see `Booked revenue ₹0` on a metric card directly
+above a roster row reporting 1,002 sales, because the card reads the CRM
+and the row reads the weekly reports.
+
+**Resolution required before launch — pick one direction:**
+
+1. **CRM is the source.** Derive `pravah_performance_reports` from
+   `pravah_revenue_sales` on a period boundary; the weekly form becomes an
+   adjustment/commentary layer. KPIs then measure real CRM activity.
+2. **Reports remain the source.** Point the client and closer metric cards
+   at `pravah_performance_reports` so every surface agrees, and treat the
+   CRM as pipeline management that does not feed measurement.
+
+Option 1 matches the product vision (§2: "no manual company-wide
+consolidation"). Option 2 is the smaller change. Either is acceptable;
+shipping neither is not, because the contradiction is client-visible.
+
 ### 23.5 Notes for the next pass
 
-1. **Consolidate user-to-client mapping.** `client_users` (Nikash) and
-   `pravah_memberships` (Pravah) overlap. Pick one as authoritative and
-   make the other a view over it.
-2. **Push registry identity into Vyom.** Vyom currently learns nothing back
+1. **Purge non-production data.** Twelve `ZZ_FIXTURE` clients and a
+   performance report with `sales_count = 1000` are live in the production
+   database and will surface in client-facing views.
+2. **KRA/KPI engine is inert.** Six KRAs and sixteen KPI definitions exist;
+   `pravah_scorecards`, `pravah_targets` and `pravah_company_targets` all
+   hold zero rows. V3 shipped but has never been used. Either activate it
+   with real targets or mark it explicitly parked.
+3. **Front-end swallows load failures.** `pravah/js/app.js` wraps its portal
+   fetches in `catch (_) { … = [] }`, rendering an empty state instead of
+   surfacing the error. This is the same failure mode as the V9 RLS defect:
+   the system prefers showing nothing over showing a problem. Surface load
+   errors to the user.
+4. **`pravah_list_invitations` is overloaded** with a zero-argument and a
+   `p_client_id uuid` signature. PostgREST currently resolves it from the
+   request body, but a future caller passing an unexpected key will get an
+   ambiguity error. Collapse to one signature.
+5. **Push registry identity into Vyom.** Vyom currently learns nothing back
    from the registry. A return path would let Vyom display the canonical
    client ID.
-3. **Backfill `origin_system` accurately.** The initial backfill marks
+6. **Backfill `origin_system` accurately.** The initial backfill marks
    pre-existing clients `unknown` unless a Vyom link exists; historical
    provenance may be recoverable from audit events.
-4. **Fixture cleanup.** Twelve `ZZ_FIXTURE` clients remain in `clients` and
-   will appear in the registry. Filter or purge before launch.
+7. **Rotate the service role key.** It is hardcoded in
+   `21_v7c_user_creation.sql` and therefore in repository history.
