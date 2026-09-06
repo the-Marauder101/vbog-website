@@ -1202,3 +1202,30 @@ revenue figure drawn from the CRM.
    27 lands), V4 lead-to-verified-payment.
 4. Build the two remaining items from the V10 conversation: reusable import
    mappings, and source + activity analytics.
+
+### 27.4 `pravah_kpi_dashboard` carried two wrong column names, not one
+
+Applying migration 27 fixed `trainer_id` → `trainer_uid` and immediately
+revealed a second reference of exactly the same kind in the same function:
+`t.started_at`, where `pravah_training` defines `started_on`.
+
+Rather than continue fixing one per deploy, **every aliased column reference
+in the function was checked against `information_schema`**: twenty-six
+references across eleven tables. `t.started_at` was the only remaining one
+that does not resolve. Migration 28 fixes it, and should be the last of its
+kind for this function.
+
+Two lessons, both already visible in 25.13 but sharper here:
+
+1. **A fix that reveals another error of the same class is a signal to audit
+   the whole surface, not to patch again.** Four separate deploys were spent
+   on what one systematic check would have caught.
+2. **Automated reference checking needs care with aliases.** The first pass
+   flagged five problems; three were false positives, because
+   `pravah_training` and `pravah_targets` both bind to `t` in different
+   scopes, and `pravah_insights` and `pravah_interventions` both bind to `i`.
+   Each candidate was verified individually before concluding.
+
+This also explains the shape of the original defect. The V3 KPI engine was
+written against an assumed schema and never executed even once — two wrong
+column names in a single function survive only if the code has never run.
