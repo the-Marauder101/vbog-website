@@ -105,6 +105,12 @@
 .status-pending,.health-yellow{color:#9a6700}
 .status-cancelled,.status-reversed,.health-red{color:#b42318}
 
+/* Bulk action bar */
+.bulk-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;margin-bottom:12px;background:var(--client-soft,#eef0ff);border:1px solid var(--client-accent,#696ff2);border-radius:10px;font-size:13px;font-weight:500;color:var(--ink,#151416);flex-wrap:wrap}
+.bulk-bar span{margin-right:auto}
+.row-check{width:36px;text-align:center}
+.row-check input[type="checkbox"]{cursor:pointer;width:15px;height:15px;accent-color:var(--client-accent,#696ff2)}
+
 /* Responsive */
 @media(max-width:1100px){.dash-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:900px){.client-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}

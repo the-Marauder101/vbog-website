@@ -76,14 +76,21 @@
 
       <!-- 02 LEADS -->
       <section class="view" id="leads" data-title="Leads">
-        <div class="page-head"><div><p class="eyebrow">CRM</p><h1>Leads &amp; customers</h1></div><div class="page-actions" id="lead-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <div class="page-head"><div><p class="eyebrow">CRM</p><h1>Leads &amp; customers</h1></div><div class="page-actions" id="lead-actions"><button class="button button-secondary" data-export-leads>Export CSV</button><button class="button button-secondary" data-refresh>Refresh</button></div></div>
         <div class="toolbar">
           <input type="search" class="search-input" id="lead-search" placeholder="Search by name, email, or phone...">
           <select class="filter-select" id="lead-stage-filter"><option value="">All stages</option></select>
         </div>
+        <div class="bulk-bar" id="bulk-bar" hidden>
+          <span id="bulk-count">0 selected</span>
+          <button class="button button-secondary button-sm" id="bulk-stage-btn">Update stage</button>
+          <select class="inline-select" id="bulk-stage-select" hidden></select>
+          <button class="button button-secondary button-sm" id="bulk-stage-apply" hidden>Apply</button>
+          <button class="button button-secondary button-sm" id="bulk-delete-btn">Delete selected</button>
+        </div>
         <article class="panel table-panel">
           <div class="panel-head"><div><h2>Lead register</h2><small id="lead-count" class="helper"></small></div></div>
-          <div class="table-wrap"><table><thead><tr><th>Customer</th><th>Stage</th><th>Source</th><th>Last activity</th><th class="row-action">Actions</th></tr></thead><tbody id="lead-rows"></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th class="row-check"><input type="checkbox" id="select-all-leads"></th><th>Customer</th><th>Stage</th><th>Source</th><th>Last activity</th><th class="row-action">Actions</th></tr></thead><tbody id="lead-rows"></tbody></table></div>
         </article>
       </section>
 
@@ -98,7 +105,7 @@
 
       <!-- 04 SALES & CASH -->
       <section class="view" id="sales" data-title="Sales & cash">
-        <div class="page-head"><div><p class="eyebrow">REVENUE</p><h1>Sales &amp; cash</h1></div><div class="page-actions" id="sales-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <div class="page-head"><div><p class="eyebrow">REVENUE</p><h1>Sales &amp; cash</h1></div><div class="page-actions" id="sales-actions"><button class="button button-secondary" data-export-sales>Export CSV</button><button class="button button-secondary" data-refresh>Refresh</button></div></div>
         <div class="metric-grid client-metrics">
           <article class="metric"><span>Booked revenue</span><strong id="metric-sales-rev">--</strong><small>Total</small></article>
           <article class="metric"><span>MTD revenue</span><strong id="metric-sales-mtd">--</strong><small>This month</small></article>
@@ -202,6 +209,17 @@
         <button class="icon-button" type="button" data-close-detail aria-label="Close">×</button>
       </div>
       <div class="slideout-body" id="lead-detail-body"></div>
+    </section>
+  </div>
+
+  <!-- Deal detail slide-out -->
+  <div class="slideout-backdrop" id="deal-detail-backdrop" hidden>
+    <section class="slideout" id="deal-detail" role="dialog" aria-modal="true">
+      <div class="slideout-head">
+        <div><p class="eyebrow">DEAL</p><h2 id="deal-detail-name">Deal</h2></div>
+        <button class="icon-button" type="button" data-close-deal-detail aria-label="Close">×</button>
+      </div>
+      <div class="slideout-body" id="deal-detail-body"></div>
     </section>
   </div>
 

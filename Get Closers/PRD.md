@@ -443,3 +443,80 @@ Call Log IDs are activity source keys. Client number/name form the proposed lead
 identity. CRM status must have an explicit V4 stage mapping. Ambiguous identity,
 unknown stage or malformed rows enter a repair queue. Daily reported cash stays
 evidence only and never becomes verified cash without V4 payment evidence.
+
+## 22. V8 — Client CRM
+
+V8 opens the existing V4/V5 revenue and import contracts to `client_admin`
+accounts and builds the full client-facing CRM interface. No new tables are
+created; V8 writes into the canonical revenue model through security-definer
+RPCs with explicit client-scoped access checks.
+
+### Product boundary
+
+V8 does not create a parallel CRM schema. Every lead, deal, sale, activity
+and import row lives in the existing V4/V5 tables. Client administrators
+write through dedicated RPCs that enforce `client_id` ownership. The
+internal staff portal retains its own views and write contracts unchanged.
+
+### Client portal views
+
+| # | View | Purpose |
+|---|---|---|
+| 01 | Dashboard | Six metric cards (closers, leads, revenue, cash, pipeline, actions), lead funnel, closer roster, recent check-ins |
+| 02 | Leads & customers | Full lead register with search by name/email/phone, stage filter, inline stage update, lead detail slideout with contact info, deals, sales, and activity timeline |
+| 03 | Pipeline | Open deals table with inline stage update, deal detail slideout with associated sales and timeline |
+| 04 | Sales & cash | Four metric cards (booked, MTD, verified cash, MTD cash), recent sales table |
+| 05 | Import | Three-step CSV/Callyzer import wizard: setup, preview and field/stage mapping, validation and replay |
+| 06 | Closers | Assigned closer register and performance reports |
+| 07 | Actions & history | Open actions and full check-in history |
+
+### Write contracts opened to client_admin
+
+- `pravah_client_create_lead` — insert lead scoped to the client's own ID;
+- `pravah_client_update_lead` — update stage, notes, email, phone on own leads;
+- `pravah_client_create_deal` — create a deal linked to an own lead;
+- `pravah_client_update_deal` — update deal stage and notes;
+- `pravah_client_record_sale` — record a sale against own lead/deal;
+- `pravah_client_log_activity` — log a call, WhatsApp, email, meeting, follow-up or note;
+- `pravah_import_create_profile`, `pravah_import_stage_rows`,
+  `pravah_import_validate_batch`, `pravah_import_replay_batch` — full import
+  pipeline scoped to the client's own data.
+
+### Import support
+
+The import wizard supports Callyzer call logs, generic CSV, and CRM exports.
+Auto-mapping recognizes common column names (name, phone, email, status,
+date, duration, notes). Stage mapping translates source CRM statuses to
+canonical V4 pipeline stages. Validation catches malformed rows; valid rows
+are imported idempotently with duplicate detection via source record keys.
+
+### Additional CRM features
+
+- Deal detail slideout with associated sales and activity timeline;
+- Bulk lead selection with stage update across selected leads;
+- CSV export for leads and sales data;
+- Debounced search across name, email and phone fields;
+- Responsive layout down to mobile widths.
+
+### Security model
+
+All V8 RPCs are `security definer` with explicit checks:
+- caller must hold a valid session;
+- caller role must be `client_admin`;
+- target records must belong to the caller's own `client_id`.
+
+RLS policies on import tables grant client_admin read/write access scoped
+to their own client ID. Table-level grants permit insert and update only
+through the RPC layer.
+
+### KPI impact
+
+Client revenue data written through V8 flows into V3 KRA/KPI scorecards
+and V4 company-wide revenue views. Verified cash requires V4 payment
+evidence regardless of the entry path.
+
+### Migration
+
+`22_v8_client_crm.sql` adds the client write RPCs, updates import RPC
+access checks, and creates RLS policies for import table client access.
+No schema changes to existing tables.

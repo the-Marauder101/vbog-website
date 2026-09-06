@@ -94,11 +94,13 @@
     const list=filteredLeads();
     $('lead-count').textContent=list.length+' of '+state.leads.length+' leads';
     const admin=isAdmin();
+    const checkCol=admin?'<td class="row-check"><input type="checkbox" class="lead-check" data-lead-check="__ID__"></td>':'<td></td>';
     $('lead-rows').innerHTML=list.map(l=>{
       const stageSelect=admin?`<select class="inline-select" data-lead-stage="${esc(l.id)}">${state.stages.map(s=>`<option value="${esc(s.code)}"${s.code===l.stage?' selected':''}>${esc(s.label)}</option>`).join('')}</select>`:badge(stageLabel(l.stage));
       const actions=admin?`<button class="text-button" data-activity="${esc(l.id)}">Log</button><button class="text-button" data-deal-from-lead="${esc(l.id)}">Deal</button>`:'';
-      return `<tr data-lead-row="${esc(l.id)}"><td><div class="customer-name"><strong class="lead-link" data-lead-detail="${esc(l.id)}">${esc(l.full_name)}</strong><small>${esc(l.email||l.phone||'No contact detail')}</small></div></td><td>${stageSelect}</td><td>${esc(l.source||'--')}</td><td>${dateLabel(l.last_activity_at)}</td><td class="row-action">${actions}</td></tr>`;
-    }).join('')||'<tr><td colspan="5"><div class="table-empty">No leads yet. Add the first customer record.</div></td></tr>';
+      return `<tr data-lead-row="${esc(l.id)}">${checkCol.replace('__ID__',esc(l.id))}<td><div class="customer-name"><strong class="lead-link" data-lead-detail="${esc(l.id)}">${esc(l.full_name)}</strong><small>${esc(l.email||l.phone||'No contact detail')}</small></div></td><td>${stageSelect}</td><td>${esc(l.source||'--')}</td><td>${dateLabel(l.last_activity_at)}</td><td class="row-action">${actions}</td></tr>`;
+    }).join('')||'<tr><td colspan="6"><div class="table-empty">No leads yet. Add the first customer record.</div></td></tr>';
+    syncBulkBar();
   }
 
   /* ── 03 PIPELINE ── */
@@ -108,7 +110,7 @@
     $('deal-rows').innerHTML=open.map(d=>{
       const stageSelect=admin?`<select class="inline-select" data-deal-stage="${esc(d.id)}">${state.stages.map(s=>`<option value="${esc(s.code)}"${s.code===d.stage?' selected':''}>${esc(s.label)}</option>`).join('')}</select>`:badge(stageLabel(d.stage));
       const actions=admin?`<button class="text-button" data-sale-from-deal="${esc(d.id)}">Record sale</button>`:'';
-      return `<tr><td><strong>${esc(d.title)}</strong><small>${esc(d.notes||'')}</small></td><td>${esc(leadName(d.lead_id))}</td><td>${stageSelect}</td><td class="mono">${money(d.value,d.currency)}</td><td>${dateLabel(d.expected_close_on)}</td><td class="row-action">${actions}</td></tr>`;
+      return `<tr><td><strong class="lead-link" data-deal-detail="${esc(d.id)}">${esc(d.title)}</strong><small>${esc(d.notes||'')}</small></td><td>${esc(leadName(d.lead_id))}</td><td>${stageSelect}</td><td class="mono">${money(d.value,d.currency)}</td><td>${dateLabel(d.expected_close_on)}</td><td class="row-action">${actions}</td></tr>`;
     }).join('')||'<tr><td colspan="6"><div class="table-empty">No open deals.</div></td></tr>';
   }
 
@@ -192,6 +194,105 @@
     }
   }
   function closeDetail(){$('lead-detail-backdrop').hidden=true;$('lead-detail-body').innerHTML=''}
+
+  /* ── Deal detail slide-out ── */
+  async function openDealDetail(dealId){
+    const deal=state.deals.find(d=>d.id===dealId);
+    if(!deal)return;
+    $('deal-detail-backdrop').hidden=false;
+    $('deal-detail-name').textContent=deal.title;
+    const body=$('deal-detail-body');
+    body.innerHTML='<div class="detail-loading">Loading...</div>';
+    const admin=isAdmin();
+    let html=`<div class="detail-section"><h3>Deal info</h3><div class="detail-grid">`;
+    html+=`<div class="detail-field"><small>Title</small><span>${esc(deal.title)}</span></div>`;
+    html+=`<div class="detail-field"><small>Customer</small><span>${esc(leadName(deal.lead_id))}</span></div>`;
+    html+=`<div class="detail-field"><small>Stage</small><span>${badge(stageLabel(deal.stage))}</span></div>`;
+    html+=`<div class="detail-field"><small>Value</small><span class="mono">${money(deal.value,deal.currency)}</span></div>`;
+    html+=`<div class="detail-field"><small>Currency</small><span>${esc(deal.currency||'--')}</span></div>`;
+    html+=`<div class="detail-field"><small>Expected close</small><span>${dateLabel(deal.expected_close_on)}</span></div>`;
+    html+=`<div class="detail-field"><small>Created</small><span>${dateLabel(deal.created_at)}</span></div>`;
+    html+=`</div>`;
+    if(deal.notes)html+=`<div class="detail-notes"><small>Notes</small><p>${esc(deal.notes)}</p></div>`;
+    html+=`</div>`;
+    if(admin){
+      html+=`<div class="detail-section detail-actions-bar"><button class="button button-primary button-sm" data-modal="sale" data-seed-deal="${esc(deal.id)}">Record sale</button><button class="button button-secondary button-sm" data-modal="deal" data-seed-deal="${esc(deal.id)}">Edit deal</button></div>`;
+    }
+    const dealSales=state.sales.filter(s=>s.deal_id===dealId);
+    if(dealSales.length){
+      html+=`<div class="detail-section"><h3>Sales (${dealSales.length})</h3><div class="detail-table"><table><thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>${dealSales.map(s=>`<tr><td>${dateLabel(s.sale_date)}</td><td class="mono">${money(s.net_amount,s.currency)}</td><td>${badge(s.status)}</td></tr>`).join('')}</tbody></table></div></div>`;
+    }
+    html+=`<div class="detail-section"><h3>Activity timeline</h3><div class="detail-loading">Loading activities...</div></div>`;
+    body.innerHTML=html;
+    try{
+      const activities=await api.fetch('pravah_revenue_activities?lead_id=eq.'+deal.lead_id+'&select=*&order=occurred_at.desc&limit=50');
+      const timelineEl=body.querySelector('.detail-section:last-child');
+      if(activities&&activities.length>0){
+        timelineEl.innerHTML=`<h3>Activity timeline (${activities.length})</h3><div class="timeline">${activities.map(a=>`<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-head"><span>${badge(a.activity_type)}</span><small>${dtLabel(a.occurred_at)}</small></div>${a.outcome?`<p class="timeline-outcome">${esc(a.outcome)}</p>`:''}${a.notes?`<p class="timeline-notes">${esc(a.notes)}</p>`:''}${a.duration_seconds?`<small class="mono">${a.duration_seconds}s</small>`:''}</div></div>`).join('')}</div>`;
+      }else{
+        timelineEl.innerHTML='<h3>Activity timeline</h3><div class="table-empty">No activities recorded.</div>';
+      }
+    }catch(e){
+      const timelineEl=body.querySelector('.detail-section:last-child');
+      if(timelineEl)timelineEl.innerHTML='<h3>Activity timeline</h3><div class="table-empty">Could not load activities.</div>';
+    }
+  }
+  function closeDealDetail(){$('deal-detail-backdrop').hidden=true;$('deal-detail-body').innerHTML=''}
+
+  /* ── Bulk lead selection ── */
+  const bulkState={selected:new Set()};
+  function syncBulkBar(){
+    const bar=$('bulk-bar');if(!bar||!isAdmin())return;
+    bar.hidden=bulkState.selected.size===0;
+    $('bulk-count').textContent=bulkState.selected.size+' selected';
+  }
+  function toggleAllLeads(checked){
+    const boxes=document.querySelectorAll('.lead-check');
+    boxes.forEach(cb=>{cb.checked=checked;if(checked)bulkState.selected.add(cb.dataset.leadCheck);else bulkState.selected.delete(cb.dataset.leadCheck)});
+    syncBulkBar();
+  }
+  function toggleLeadCheck(id,checked){
+    if(checked)bulkState.selected.add(id);else bulkState.selected.delete(id);
+    const all=document.querySelectorAll('.lead-check');
+    const sel=$('select-all-leads');if(sel)sel.checked=all.length>0&&bulkState.selected.size>=all.length;
+    syncBulkBar();
+  }
+  async function bulkUpdateStage(){
+    const stage=$('bulk-stage-select').value;
+    if(!stage){toast('Select a stage first.',true);return}
+    const ids=[...bulkState.selected];
+    if(!ids.length)return;
+    setLoading(true);
+    try{
+      for(const id of ids)await api.rpc('pravah_client_update_lead',{p_lead_id:id,p_stage:stage});
+      bulkState.selected.clear();
+      $('bulk-stage-select').hidden=true;$('bulk-stage-apply').hidden=true;
+      await load();toast(ids.length+' lead(s) updated.');
+    }catch(e){toast(e.message,true)}finally{setLoading(false)}
+  }
+  function bulkDeleteLeads(){
+    toast('Bulk delete is not yet available. Contact support.',true);
+  }
+
+  /* ── CSV export ── */
+  function csvCell(v){const s=String(v??'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s}
+  function downloadCsv(filename,header,rows){
+    const csv=[header.join(','),...rows.map(r=>r.map(csvCell).join(','))].join('\n');
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  }
+  function exportLeadsCsv(){
+    const list=filteredLeads();
+    const header=['Name','Email','Phone','Stage','Source','Notes','Created'];
+    const rows=list.map(l=>[l.full_name||'',l.email||'',l.phone||'',stageLabel(l.stage),l.source||'',l.notes||'',dateLabel(l.created_at)]);
+    downloadCsv('leads_export_'+today()+'.csv',header,rows);
+    toast('Exported '+rows.length+' leads.');
+  }
+  function exportSalesCsv(){
+    const header=['Date','Customer','Gross','Discount','Net','Currency','Status','Notes'];
+    const rows=state.sales.map(s=>[dateLabel(s.sale_date),leadName(s.lead_id),s.gross_amount??'',s.discount_amount??'',s.net_amount??'',s.currency||'',s.status||'',s.notes||'']);
+    downloadCsv('sales_export_'+today()+'.csv',header,rows);
+    toast('Exported '+rows.length+' sales.');
+  }
 
   /* ── Inline stage updates ── */
   async function updateLeadStage(id,stage){try{setLoading(true);await api.rpc('pravah_client_update_lead',{p_lead_id:id,p_stage:stage});await load();toast('Lead stage updated.')}catch(e){toast(e.message,true)}finally{setLoading(false)}}
@@ -431,13 +532,16 @@
     const t=e.target;
     if(t.matches('[data-modal]')&&isAdmin()){
       const seedLead=t.dataset.seedLead;
-      openModal(t.dataset.modal,seedLead?{lead:seedLead}:undefined);
+      const seedDeal=t.dataset.seedDeal;
+      openModal(t.dataset.modal,seedLead?{lead:seedLead}:seedDeal?{deal:seedDeal}:undefined);
     }
     if(t.matches('[data-activity]')&&isAdmin())openModal('activity',{lead:t.dataset.activity});
     if(t.matches('[data-deal-from-lead]')&&isAdmin())openModal('deal',{lead:t.dataset.dealFromLead});
     if(t.matches('[data-sale-from-deal]')&&isAdmin())openModal('sale',{deal:t.dataset.saleFromDeal});
     if(t.matches('[data-lead-detail]'))openLeadDetail(t.dataset.leadDetail);
+    if(t.matches('[data-deal-detail]'))openDealDetail(t.dataset.dealDetail);
     if(t.matches('[data-close-detail]')||t===$('lead-detail-backdrop'))closeDetail();
+    if(t.matches('[data-close-deal-detail]')||t===$('deal-detail-backdrop'))closeDealDetail();
     if(t.matches('[data-close-modal]')||t===$('modal'))closeModal();
     if(t.matches('[data-refresh]'))load();
     if(t.matches('[data-signout]')){api.signOut();showSignedOut()}
@@ -446,11 +550,18 @@
     if(t.id==='import-back-2')importSetStep(1);
     if(t.id==='import-back-3')importReset();
     if(t.id==='import-replay')importReplay();
+    if(t.matches('[data-export-leads]'))exportLeadsCsv();
+    if(t.matches('[data-export-sales]'))exportSalesCsv();
+    if(t.id==='bulk-delete-btn')bulkDeleteLeads();
+    if(t.id==='bulk-stage-btn'){const sel=$('bulk-stage-select');sel.innerHTML=state.stages.map(s=>`<option value="${esc(s.code)}">${esc(s.label)}</option>`).join('');sel.hidden=false;$('bulk-stage-apply').hidden=false}
+    if(t.id==='bulk-stage-apply')bulkUpdateStage();
   });
   document.addEventListener('change',e=>{
     const t=e.target;
     if(t.matches('[data-lead-stage]'))updateLeadStage(t.dataset.leadStage,t.value);
     if(t.matches('[data-deal-stage]'))updateDealStage(t.dataset.dealStage,t.value);
+    if(t.id==='select-all-leads')toggleAllLeads(t.checked);
+    if(t.matches('[data-lead-check]'))toggleLeadCheck(t.dataset.leadCheck,t.checked);
   });
   $('record-form').addEventListener('submit',e=>{e.preventDefault();submitModal()});
   $('signin-form').addEventListener('submit',async e=>{e.preventDefault();$('signin-error').textContent='';try{const f=new FormData(e.currentTarget);await api.signIn(f.get('email'),f.get('password'));window.location.href='../home/'}catch(err){$('signin-error').textContent=err.message}});
