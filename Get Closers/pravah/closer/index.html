@@ -34,9 +34,10 @@
       <a class="brand" href="#dashboard" aria-label="Pravah closer"><span class="brand-mark" style="background-image:url('../assets/favicon-closer.svg')"></span><span><strong>pravah<span class="dot">.</span></strong><small>My workspace</small></span></a>
       <nav class="nav-list">
         <a class="nav-link active" href="#dashboard" data-view="dashboard"><span>01</span>Dashboard</a>
-        <a class="nav-link" href="#leads" data-view="leads"><span>02</span>My leads</a>
-        <a class="nav-link" href="#pipeline" data-view="pipeline"><span>03</span>My pipeline</a>
-        <a class="nav-link" href="#targets" data-view="targets"><span>04</span>Targets &amp; history</a>
+        <a class="nav-link" href="#report" data-view="report"><span>02</span>Daily report</a>
+        <a class="nav-link" href="#leads" data-view="leads"><span>03</span>My leads</a>
+        <a class="nav-link" href="#pipeline" data-view="pipeline"><span>04</span>My pipeline</a>
+        <a class="nav-link" href="#targets" data-view="targets"><span>05</span>Targets &amp; scorecard</a>
       </nav>
       <div class="sidebar-foot"><span class="status-dot"></span><div><strong>V6 closer portal</strong><small id="sync-state">Connected</small></div></div>
     </aside>
@@ -64,6 +65,56 @@
         </div>
       </section>
 
+      <section class="view" id="report" data-title="Daily report">
+        <div class="page-head">
+          <div><p class="eyebrow">DAILY SUBMISSION</p><h1>Submit your report</h1></div>
+          <div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button></div>
+        </div>
+
+        <div class="slot-status" id="slot-status"></div>
+
+        <article class="panel import-panel">
+          <div class="slot-toggle" role="tablist" aria-label="Report slot">
+            <button class="slot-btn active" type="button" data-slot="midday" role="tab" aria-selected="true">Midday <small>~3:00 PM</small></button>
+            <button class="slot-btn" type="button" data-slot="eod" role="tab" aria-selected="false">End of day <small>Close</small></button>
+          </div>
+
+          <form id="report-form" class="dynamic-form">
+            <div class="form-grid">
+              <label>Report date<input id="rep-date" type="date" required></label>
+              <label>Currency<input id="rep-currency" value="INR"></label>
+              <label>Total calls made<input id="rep-calls" type="number" min="0" inputmode="numeric"></label>
+              <label>Connected calls<input id="rep-connected" type="number" min="0" inputmode="numeric"></label>
+              <label>Positive / qualified leads<input id="rep-qualified" type="number" min="0" inputmode="numeric"></label>
+              <label>Meetings booked<input id="rep-meetings" type="number" min="0" inputmode="numeric"></label>
+              <label>Follow-ups completed<input id="rep-followups" type="number" min="0" inputmode="numeric"></label>
+              <label>Closed deals<input id="rep-sales" type="number" min="0" inputmode="numeric"></label>
+              <label>Revenue generated<input id="rep-revenue" type="number" min="0" step="0.01" inputmode="decimal"></label>
+              <label>Cash collected<input id="rep-cash" type="number" min="0" step="0.01" inputmode="decimal"></label>
+              <label>Pipeline value<input id="rep-pipeline" type="number" min="0" step="0.01" inputmode="decimal"></label>
+              <label class="full">Blocker <small class="helper">Anything stopping you today</small><textarea id="rep-blocker" rows="2"></textarea></label>
+              <label class="full">Support required<textarea id="rep-support" rows="2"></textarea></label>
+              <label class="full">Plan for next period<textarea id="rep-plan" rows="2"></textarea></label>
+            </div>
+            <p class="helper">Figures are cumulative for the day, as of now. Submitting again for the same slot updates your entry.</p>
+            <div class="form-footer">
+              <button class="button button-primary" type="submit">Submit report</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel import-panel" id="wa-panel" hidden>
+          <div class="panel-head"><div><p class="eyebrow">WHATSAPP</p><h2>Copy for WhatsApp</h2></div>
+            <button class="button button-secondary button-sm" type="button" id="wa-copy">Copy message</button></div>
+          <pre class="wa-output" id="wa-output"></pre>
+        </article>
+
+        <article class="panel table-panel" style="margin-top:18px">
+          <div class="panel-head"><div><h2>Today &amp; recent submissions</h2></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Date</th><th>Slot</th><th>Calls</th><th>Sales</th><th>Cash</th><th>Status</th></tr></thead><tbody id="submission-rows"></tbody></table></div>
+        </article>
+      </section>
+
       <section class="view" id="leads" data-title="My leads">
         <div class="page-head"><div><p class="eyebrow">CUSTOMERS</p><h1>Your leads</h1></div><div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
         <article class="panel table-panel"><div class="panel-head"><div><h2>Lead register</h2><p>Leads assigned to you. Update stages and log activity as you work each customer.</p></div></div><div class="table-wrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Stage</th><th>Source</th><th>Last activity</th><th></th></tr></thead><tbody id="lead-rows"></tbody></table></div></article>
@@ -74,9 +125,14 @@
         <article class="panel table-panel"><div class="panel-head"><div><h2>Open deals</h2><p>Opportunities you are working. Deal value is pipeline, not booked revenue.</p></div></div><div class="table-wrap"><table><thead><tr><th>Deal</th><th>Customer</th><th>Stage</th><th>Value</th><th>Expected close</th></tr></thead><tbody id="deal-rows"></tbody></table></div></article>
       </section>
 
-      <section class="view" id="targets" data-title="Targets & history">
-        <div class="page-head"><div><p class="eyebrow">GOALS</p><h1>Targets &amp; history</h1></div><div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
-        <article class="panel table-panel"><div class="panel-head"><div><h2>Active targets</h2></div></div><div class="table-wrap"><table><thead><tr><th>Period</th><th>Type</th><th>Target</th><th>Current</th><th>Achievement</th></tr></thead><tbody id="target-rows"></tbody></table></div></article>
+      <section class="view" id="targets" data-title="Targets & scorecard">
+        <div class="page-head"><div><p class="eyebrow">GOALS</p><h1>Targets &amp; scorecard</h1></div><div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
+        <article class="panel">
+          <div class="panel-head"><div><p class="eyebrow">THIS MONTH</p><h2>My scorecard</h2></div><strong class="score-big" id="score-overall">—</strong></div>
+          <div class="kra-grid" id="kra-grid"></div>
+          <div id="score-warnings"></div>
+        </article>
+        <article class="panel table-panel" style="margin-top:18px"><div class="panel-head"><div><h2>Active targets</h2></div></div><div class="table-wrap"><table><thead><tr><th>Period</th><th>Type</th><th>Target</th><th>Current</th><th>Achievement</th></tr></thead><tbody id="target-rows"></tbody></table></div></article>
         <article class="panel table-panel" style="margin-top:18px"><div class="panel-head"><div><h2>Performance history</h2></div></div><div class="table-wrap"><table><thead><tr><th>Period</th><th>Calls</th><th>Connected</th><th>Sales</th><th>Revenue</th><th>Cash</th></tr></thead><tbody id="history-rows"></tbody></table></div></article>
       </section>
     </main>

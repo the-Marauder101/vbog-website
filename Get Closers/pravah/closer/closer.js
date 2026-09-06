@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const api=window.PravahApi;
-  const state={context:null,stages:[],leads:[],deals:[],placements:[],reports:[],targets:[],history:[],dashboard:null};
+  const state={context:null,stages:[],leads:[],deals:[],placements:[],reports:[],targets:[],history:[],dashboard:null,submissions:[],scorecard:null,slot:'midday'};
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   const today=()=>new Date().toISOString().slice(0,10);
@@ -36,7 +36,9 @@
         api.fetch('pravah_revenue_deals?select=*&order=created_at.desc&limit=250'),
         api.fetch('pravah_v_placements?select=*&order=joined_on.desc&limit=10'),
         api.fetch('pravah_v_reports?select=*&order=period_start.desc&limit=50'),
-        api.fetch('pravah_targets?select=*&order=period_start.desc&limit=50')
+        api.fetch('pravah_targets?select=*&order=period_start.desc&limit=50'),
+        api.fetch('pravah_performance_reports?select=*&submitted_by_role=eq.closer&order=period_start.desc&limit=30'),
+        api.rpc('pravah_closer_scorecard')
       ]);
       state.dashboard=r[0];
       state.stages=r[1];
@@ -45,6 +47,8 @@
       state.placements=r[4];
       state.reports=r[5];
       state.targets=r[6];
+      state.submissions=r[7]||[];
+      state.scorecard=r[8]||null;
       renderAll();
       showView(location.hash.slice(1)||'dashboard');
     }catch(e){
@@ -53,7 +57,145 @@
     }finally{setLoading(false)}
   }
 
-  function renderAll(){renderDashboard();renderLeads();renderDeals();renderTargets()}
+  function renderAll(){renderDashboard();renderLeads();renderDeals();renderTargets();renderReportView();renderScorecard()}
+
+  /* ── Daily report ────────────────────────────────────────────── */
+  const NUMS=[['rep-calls','calls_attempted'],['rep-connected','connected_calls'],
+    ['rep-qualified','qualified_opportunities'],['rep-meetings','meetings_booked'],
+    ['rep-followups','followups_completed'],['rep-sales','sales_count']];
+  const MONEY=[['rep-revenue','revenue_generated'],['rep-cash','cash_collected'],['rep-pipeline','pipeline_value']];
+  const TEXTS=[['rep-blocker','blocker'],['rep-support','support_required'],['rep-plan','next_period_plan']];
+
+  function submissionFor(date,slot){
+    return state.submissions.find(s=>s.period_start===date&&s.report_slot===slot)||null;
+  }
+  function setSlot(slot){
+    state.slot=slot;
+    document.querySelectorAll('.slot-btn').forEach(b=>{
+      const on=b.dataset.slot===slot;
+      b.classList.toggle('active',on);b.setAttribute('aria-selected',String(on));
+    });
+    fillReportForm();
+  }
+  function fillReportForm(){
+    const date=$('rep-date').value||today();
+    const existing=submissionFor(date,state.slot);
+    NUMS.concat(MONEY).forEach(([id,col])=>{$(id).value=existing&&existing[col]!=null?existing[col]:''});
+    TEXTS.forEach(([id,col])=>{$(id).value=existing&&existing[col]?existing[col]:''});
+    if(existing&&existing.currency)$('rep-currency').value=existing.currency;
+    renderSlotStatus();
+  }
+  function renderSlotStatus(){
+    const date=$('rep-date').value||today();
+    const parts=['midday','eod'].map(slot=>{
+      const s=submissionFor(date,slot);
+      const label=slot==='midday'?'Midday':'End of day';
+      if(!s)return `<span class="slot-chip pending">${label} · not submitted</span>`;
+      if(s.discrepancy_status==='flagged')return `<span class="slot-chip flagged">${label} · figures disputed</span>`;
+      return `<span class="slot-chip done">${label} · submitted</span>`;
+    });
+    $('slot-status').innerHTML=parts.join('');
+  }
+  function renderReportView(){
+    if(!$('rep-date').value)$('rep-date').value=today();
+    fillReportForm();
+    const rows=state.submissions.slice(0,20).map(s=>{
+      const st=s.discrepancy_status==='flagged'?'<span class="status-cancelled">Disputed</span>'
+        :s.discrepancy_status==='resolved'?'<span class="status-pending">Resolved</span>'
+        :'<span class="status-verified">Submitted</span>';
+      return `<tr><td>${dateLabel(s.period_start)}</td><td>${esc(s.report_slot)}</td><td class="mono">${esc(s.calls_attempted??'—')}</td><td class="mono">${esc(s.sales_count??'—')}</td><td class="mono">${money(s.cash_collected,s.currency)}</td><td>${st}</td></tr>`;
+    }).join('');
+    $('submission-rows').innerHTML=rows||'<tr><td colspan="6"><div class="table-empty">No reports submitted yet.</div></td></tr>';
+  }
+  function whatsappMessage(){
+    const date=$('rep-date').value||today();
+    const slotName=state.slot==='midday'?'MIDDAY REPORT':'EOD REPORT';
+    const name=state.context?.display_name||'Closer';
+    const client=state.context?.client_name||'';
+    const v=id=>{const x=$(id).value;return x===''?null:x};
+    const line=(label,val)=>val==null?null:`${label}: ${val}`;
+    const cur=$('rep-currency').value||'INR';
+    const fmt=n=>n==null?null:new Intl.NumberFormat('en-IN',{style:'currency',currency:cur,maximumFractionDigits:0}).format(Number(n));
+    const lines=[
+      `*${slotName}* — ${dateLabel(date)}`,
+      `${name}${client?' · '+client:''}`,
+      '',
+      line('Calls made',v('rep-calls')),
+      line('Connected',v('rep-connected')),
+      line('Positive leads',v('rep-qualified')),
+      line('Meetings booked',v('rep-meetings')),
+      line('Follow-ups',v('rep-followups')),
+      line('Closed deals',v('rep-sales')),
+      line('Revenue',fmt(v('rep-revenue'))),
+      line('Cash collected',fmt(v('rep-cash'))),
+      line('Pipeline',fmt(v('rep-pipeline')))
+    ].filter(Boolean);
+    const blocker=v('rep-blocker'),support=v('rep-support'),plan=v('rep-plan');
+    if(blocker)lines.push('',`*Blocker:* ${blocker}`);
+    if(support)lines.push(`*Support needed:* ${support}`);
+    if(plan)lines.push(`*Next:* ${plan}`);
+    return lines.join('\n');
+  }
+  function showWhatsapp(){
+    $('wa-output').textContent=whatsappMessage();
+    $('wa-panel').hidden=false;
+  }
+  async function copyWhatsapp(){
+    const text=$('wa-output').textContent;
+    try{
+      if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text)}
+      else{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+        document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta)}
+      toast('Message copied. Paste it into WhatsApp.');
+    }catch(e){toast('Could not copy automatically — select the text and copy.',true)}
+  }
+  async function submitReport(){
+    const num=id=>{const v=$(id).value;return v===''?null:Number(v)};
+    const txt=id=>$(id).value.trim()||null;
+    setLoading(true);
+    try{
+      await api.rpc('pravah_closer_submit_report',{
+        p_report_slot:state.slot,
+        p_report_date:$('rep-date').value||today(),
+        p_calls_attempted:num('rep-calls'),
+        p_connected_calls:num('rep-connected'),
+        p_qualified_opportunities:num('rep-qualified'),
+        p_meetings_booked:num('rep-meetings'),
+        p_followups_completed:num('rep-followups'),
+        p_sales_count:num('rep-sales'),
+        p_revenue_generated:num('rep-revenue'),
+        p_cash_collected:num('rep-cash'),
+        p_pipeline_value:num('rep-pipeline'),
+        p_currency:$('rep-currency').value||'INR',
+        p_blocker:txt('rep-blocker'),
+        p_support_required:txt('rep-support'),
+        p_next_period_plan:txt('rep-plan')
+      });
+      showWhatsapp();
+      await load();
+      toast('Report submitted. Copy the WhatsApp message below.');
+    }catch(e){toast(e.message,true)}finally{setLoading(false)}
+  }
+
+  /* ── Scorecard ───────────────────────────────────────────────── */
+  function scoreClass(v){return v==null?'na':Number(v)>=100?'good':Number(v)>=80?'':'bad'}
+  function renderScorecard(){
+    const sc=state.scorecard;
+    if(!sc){$('score-overall').textContent='—';$('kra-grid').innerHTML='';return}
+    $('score-overall').textContent=sc.overall_score==null?'—':Number(sc.overall_score).toFixed(1);
+    $('score-overall').className='score-big '+scoreClass(sc.overall_score);
+    $('kra-grid').innerHTML=(sc.kras||[]).map(k=>{
+      const d=k.detail||{};
+      const detail=Object.entries(d).map(([key,val])=>
+        `<div class="kra-detail"><span>${esc(key.replaceAll('_',' '))}</span><strong>${val==null?'—':esc(val)}</strong></div>`).join('');
+      return `<article class="kra-card"><div class="kra-head"><h3>${esc(k.name)}</h3><span class="kra-weight">${esc(k.weight_pct)}%</span></div>
+        <strong class="kra-score ${scoreClass(k.score)}">${k.score==null?'—':Number(k.score).toFixed(1)}</strong>
+        <div class="kra-bar"><i style="width:${Math.min(100,Math.max(0,Number(k.score||0)/1.2))}%"></i></div>
+        ${detail}</article>`;
+    }).join('');
+    const warn=(sc.data_warnings||[]);
+    $('score-warnings').innerHTML=warn.length?warn.map(w=>`<div class="score-warning">${esc(w)}</div>`).join(''):'';
+  }
 
   function renderDashboard(){
     const d=state.dashboard||{};
@@ -176,15 +318,20 @@
     if(t.matches('[data-close-modal]')||t===$('modal'))closeModal();
     if(t.matches('[data-refresh]'))load();
     if(t.matches('[data-signout]')){api.signOut();showSignedOut()}
+    const slotBtn=t.closest('.slot-btn');
+    if(slotBtn)setSlot(slotBtn.dataset.slot);
+    if(t.id==='wa-copy')copyWhatsapp();
   });
 
   document.addEventListener('change',e=>{
     const t=e.target;
     if(t.matches('[data-lead-stage]'))updateLeadStage(t.dataset.leadStage,t.value);
     if(t.matches('[data-deal-stage]'))updateDealStage(t.dataset.dealStage,t.value);
+    if(t.id==='rep-date')fillReportForm();
   });
 
   $('record-form').addEventListener('submit',e=>{e.preventDefault();submitModal()});
+  $('report-form').addEventListener('submit',e=>{e.preventDefault();submitReport()});
 
   $('signin-form').addEventListener('submit',async e=>{
     e.preventDefault();

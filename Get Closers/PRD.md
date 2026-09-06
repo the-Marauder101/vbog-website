@@ -838,3 +838,207 @@ shipping neither is not, because the contradiction is client-visible.
    provenance may be recoverable from audit events.
 7. **Rotate the service role key.** It is hardcoded in
    `21_v7c_user_creation.sql` and therefore in repository history.
+
+## 25. V10 — Closer daily reporting, dual-entry reconciliation, closer KPIs
+
+V10 resolves the §24 source-of-truth question and builds the reporting loop
+that Get Closers actually runs today. It is the largest behavioural change
+since V1 because it moves closers from being *reported on* to *reporting*.
+
+### 25.1 The real-world process being modelled
+
+Each placed closer submits **two reports every working day**:
+
+| Slot | Time | Contents |
+|---|---|---|
+| Midday | ~15:00 | calls made, positive leads, closed deals, cash collected — as of that moment |
+| EOD | end of day | the same figures, as of close |
+
+Both are cumulative snapshots of the same day, not increments. Their
+purpose is twofold: measuring output, and confirming the closer is actually
+working through the day.
+
+Today these are typed into WhatsApp by the closer. Pravah's job is to
+become the place they are submitted, and to hand staff a formatted message
+to paste into WhatsApp — not to replace the WhatsApp channel itself.
+
+### 25.2 §24 resolved — closer submission is the source of truth
+
+**Decision:** the closer's own submission is treated as real data. A staff
+member may submit their own figures for the same slot; where the two
+disagree, the discrepancy is **flagged immediately**, not reconciled
+silently.
+
+Rationale: KPIs measure the closer, so the closer's own numbers are the
+measured artefact. Staff figures become a check on that claim rather than a
+substitute for it. Revenue is the most important metric in the business and
+must never carry contested values quietly.
+
+This supersedes the two options recorded in §24. It is closest to
+"CRM is the source" in spirit — measurement follows real submitted
+activity — but the submitting party is the closer, not the CRM.
+
+### 25.3 Schema problem this exposes
+
+`pravah_performance_reports` already carries every field the daily report
+needs: `calls_attempted`, `connected_calls`, `qualified_opportunities`,
+`meetings_booked`, `followups_completed`, `sales_count`,
+`revenue_generated`, `cash_collected`, `pipeline_value`, plus `blocker`,
+`support_required`, `next_period_plan`, and a full verification and void
+chain. **No new reporting table is required.**
+
+The blocker is a single constraint:
+
+```
+UNIQUE (placement_id, period_start, period_end)
+```
+
+Two reports on the same day both have `period_start = period_end = today`,
+so the second insert fails. Dual entry makes it worse: closer-midday,
+staff-midday, closer-eod and staff-eod are four rows sharing one key.
+
+**Fix:** add `report_slot` and `submitted_by_role`, and widen the unique key
+to `(placement_id, period_start, period_end, report_slot, submitted_by_role)`.
+Existing rows backfill to `report_slot = 'period'`,
+`submitted_by_role = 'staff'`, which preserves their current meaning.
+
+### 25.4 Discrepancy flagging
+
+When a closer row and a staff row exist for the same placement, date and
+slot, the pair is compared on the figures that matter — `sales_count`,
+`cash_collected`, `revenue_generated`. Any difference raises a flag
+**on write**, not on a schedule, because contested revenue must not sit
+unexamined even for an hour.
+
+The flag is surfaced in the ops Overview attention queue and on the client
+record. Resolving it is an explicit staff action that records which figure
+was accepted and why, leaving both original rows intact.
+
+### 25.5 Closer KPIs — design, and why it does not disturb the existing model
+
+The existing six KRAs and sixteen KPIs measure **Get Closers internal
+staff** — recruiters, trainers, client success. A placed closer currently
+has no scorecard; their performance only rolls up into a staff member's
+score through PCS-3, TCP-2 and TCP-3.
+
+Closer scorecards are added **without touching the staff model** by
+scoping definitions to a subject:
+
+- `pravah_kra_definitions.subject` and `pravah_kpi_definitions.subject`,
+  both defaulting to `'staff'`. Every existing row keeps its meaning, and
+  weights are summed *within* a subject, so the staff scorecard is
+  arithmetically unchanged.
+- `pravah_scorecards` gains a nullable `placement_id` alongside its
+  existing `staff_uid`, with a check that exactly one is set, plus the same
+  `subject` marker. The table currently holds zero rows, so this carries no
+  migration risk.
+
+**Four closer KRAs**, deliberately fewer than the staff six:
+
+| KRA | Weight | Measures | Source |
+|---|---|---|---|
+| Activity | 30% | calls attempted vs target, connect rate | daily reports |
+| Pipeline | 20% | qualified opportunities, meetings booked | daily reports |
+| Revenue | 35% | sales count and cash collected vs target | daily reports + targets |
+| Discipline | 15% | both slots submitted, submitted on time, fields complete | daily reports |
+
+Every closer KPI reads data the daily reports already produce. Nothing new
+is collected.
+
+Per-closer targets need no work: `pravah_targets` is already keyed on
+`placement_id` with `period_start`, `period_end`, `target_value`,
+`target_unit` and `currency`. Different closers can carry different targets
+in different units, which the Revenue and Activity KRAs read directly.
+
+### 25.6 WhatsApp output
+
+V0 built a WhatsApp report parser and V1 a formatted output, but both live
+in the **ops portal** only — the closer side never received them. V10 gives
+the closer's submission a formatted WhatsApp block with one-click copy, so
+the closer submits in Pravah and staff paste the generated message. The
+existing `shared_at` column already records that a report was shared.
+
+### 25.7 Client alert thresholds
+
+Sale-gap and check-in alerting must vary per client, because B2B and B2C
+cycles differ.
+
+- `pravah_client_profiles.sale_gap_alert_days` — default **4**.
+- `checkin_cadence` already exists and drives the check-in alert.
+- Both are editable **only by an admin**, from the client detail drawer in
+  ops. Staff cannot change them.
+
+These feed the existing Overview attention queue rather than a new alerting
+system. The queue today flags only overdue actions and high training risk;
+V10 adds sale-gap, overdue check-in, and revenue discrepancy.
+
+### 25.8 Client visibility gate removed
+
+`pravah_v_clients` filtered its output to clients having a Vyom link, a
+placement, a check-in or an action. With 20 clients in production only 3
+passed, hiding 17 — including newly created ones — and making the client
+edit, check-in, archive and delete actions unreachable for them. The filter
+is removed; all accessible clients list, with sparse ones marked rather
+than hidden.
+
+### 25.9 Client identity — confirmed single-table
+
+Recorded because it is mission-critical and was explicitly confirmed:
+
+```
+Nikash (requirements)  →  clients row            ← THE single client table
+        ↓
+Vyom (client tracker)  →  its own id  →  client_system_links
+        ↓
+"Placed - Handoff to Pravah"  →  placement  →  Pravah operates
+```
+
+`clients` is the only client table and is the target of 29 foreign keys.
+`client_system_links` carries `unique (system, external_id)`, so one Vyom
+client can never map to two Pravah clients, and
+`pravah_client_link_system` rejects relinking an external id to a different
+client. Linking stays a **deliberate manual step** performed by the
+founder; the system surfaces unlinked records but does not auto-link, since
+a wrong automatic match is worse than an unlinked one.
+
+### 25.10 Migration
+
+`26_v10_closer_reporting.sql`.
+
+`26_v10_closer_reporting.sql` — nine parts:
+
+| Part | Contents |
+|---|---|
+| A | `sale_gap_alert_days` on `pravah_client_profiles`, default 4 |
+| B | `pravah_v_clients` rebuilt without the visibility gate; adds `has_activity` |
+| C | `pravah_set_client_alert_thresholds` — admin-only, audited |
+| D | `report_slot`, `submitted_by_role`, `submitted_at`, discrepancy columns; unique key widened |
+| E | `pravah_check_report_discrepancy` trigger + `pravah_resolve_report_discrepancy` |
+| F | `pravah_closer_submit_report` + closer own-report read policy |
+| G | `subject` on KRA/KPI definitions and scorecards; four closer KRAs, eight closer KPIs |
+| H | `pravah_closer_scorecard` |
+| I | `pravah_v_revenue_alerts` — discrepancy, sale gap, unverified cash |
+
+Ordering matters: Part A must precede Part B because the rebuilt view reads
+the new column.
+
+### 25.11 Design notes worth carrying forward
+
+- **A closer may only report their own placement**, resolved from
+  `pravah_memberships`, never passed in. They cannot backdate beyond
+  yesterday; older corrections are a staff action, so the audit trail stays
+  meaningful.
+- **Re-submitting a slot updates it** rather than erroring, because a closer
+  correcting a typo at 15:05 is normal. The `submitted_at` timestamp moves;
+  the discrepancy check re-runs.
+- **Resolving a discrepancy edits neither original row.** Both are marked
+  resolved with the accepted side and a mandatory note. The claim and the
+  correction both remain visible.
+- **Scorecards read only closer-submitted rows.** Staff figures are a check,
+  not the measured artefact, so including them would let a staff correction
+  silently change a closer's score.
+- **`pravah_scorecards` needed a partial unique index** for closer rows: its
+  existing `UNIQUE (staff_uid, period_start, period_end)` does not constrain
+  rows where `staff_uid` is null, since Postgres treats nulls as distinct.
+- **Closer KRA codes carry a `cl_` prefix** because `code` is globally unique
+  across both subjects.
