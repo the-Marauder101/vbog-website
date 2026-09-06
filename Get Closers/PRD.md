@@ -1042,3 +1042,105 @@ the new column.
   rows where `staff_uid` is null, since Postgres treats nulls as distinct.
 - **Closer KRA codes carry a `cl_` prefix** because `code` is globally unique
   across both subjects.
+
+### 25.12 Deployment verification — 2026-09-06
+
+Migration 26 applied to production after two corrections (see 25.13). Verified
+by direct query:
+
+| Check | Result |
+|---|---|
+| `sale_gap_alert_days` on client profiles | present |
+| 8 new columns on `pravah_performance_reports` | all present |
+| New composite unique index | present |
+| Old `UNIQUE (placement_id, period_start, period_end)` | removed |
+| Discrepancy trigger | active |
+| 6 new functions | all present |
+| `pravah_v_revenue_alerts` | created |
+| Closer scorecard partial unique index | present |
+
+Behaviour:
+
+| Check | Before | After |
+|---|---|---|
+| Clients visible in ops | 3 of 20 | **20** (4 with activity, 16 sparse) |
+| Staff KRAs / total weight | 6 / 100 | 6 / 100 — **unchanged** |
+| Closer KRAs / total weight | — | 4 / 100 |
+| Closer KPIs per KRA | — | 2 each, summing 100 |
+| Existing staff reports | 2 rows | 2 rows, backfilled to `('period','staff')`, 1,002 sales intact |
+| `pravah_closer_scorecard` as closer | — | resolves own placement, returns 4 KRAs |
+| `pravah_v_revenue_alerts` | — | correctly flags NMT sale gap at the 4-day default |
+| client_admin / closer portal reads | working | working — no regression |
+
+### 25.13 Three deploy failures, one root cause
+
+V10 took three attempts to land. Recording the pattern because it is the same
+mistake each time — writing SQL against an assumed schema instead of a
+verified one.
+
+1. **Migration 23** used `create or replace function` to add a parameter.
+   Changing a signature creates a *second* function; both overloads then
+   matched the same request body and PostgREST returned `PGRST203`, breaking
+   the client portal's inline stage dropdown and bulk update. Fixed in 25.
+2. **Migration 26, attempt 1** — `42P16`: `create or replace view` can only
+   *append* columns, never reorder or rename. A new column had been inserted
+   mid-list.
+3. **Migration 26, attempt 2** — the closer KPI seed used
+   `direction = 'higher_better'`; the check constraint permits only
+   `'higher_is_better'`.
+
+Each would have been caught by one query before writing. The standing rule
+for future migrations: **verify the live schema before writing DDL against
+it** — column order for views, exact enum spellings for check constraints,
+and whether a function signature change implies a new overload.
+
+## 26. V10b — Two correctness fixes found during verification
+
+### 26.1 The staff KRA/KPI scorecard has never worked
+
+Verifying V10 for regressions surfaced a **pre-existing defect that predates
+all of it**:
+
+```
+ERROR 42703: column t.trainer_id does not exist
+HINT: Perhaps you meant to reference the column "t.trainer_uid".
+```
+
+`pravah_kpi_dashboard` references `pravah_training.trainer_id` in two places.
+That column has never existed — `01_pravah_core.sql` defines it as
+`trainer_uid`. The function has therefore thrown on **every call since
+migration 08 shipped on 2026-09-02**.
+
+This revises an earlier finding in this document. Section 24 recorded that
+the KRA/KPI engine was "inert — shipped but never used". The truth is
+sharper: it could never run. `/performance/` throws on load, and
+`pravah_scorecards` holds zero rows because writing one was impossible, not
+because nobody tried.
+
+It also explains why V3's exit gate — "live scorecard verification with an
+approved staff account" — was never closed. The gate was never closeable.
+
+**Fix:** migration 27 replaces the function with its live definition, both
+references corrected to `trainer_uid`. Nothing else in the body changes.
+
+### 26.2 Closer scorecard showed zero for unscoreable KRAs
+
+As written in migration 26, `pravah_closer_scorecard` coalesced an
+unscoreable KRA to `0`. A closer with no target set would have seen `0.0` on
+Activity and Revenue and reasonably read it as failure, when the truth is
+those KRAs cannot be scored at all.
+
+That contradicts the principle the staff scorecard already states on its own
+face: *"missing data stays visible instead of becoming a zero."*
+
+**Fix:** each KRA returns `null` when its inputs cannot support a score. The
+overall score is a weighted average across only the scoreable KRAs,
+renormalised so the remaining weights still total 100; it is `null` when
+nothing is scoreable. Discipline remains always scoreable — not submitting is
+itself the measurement. The closer portal already renders `null` as an em
+dash, so no front-end change was required.
+
+### 26.3 Migration
+
+`27_v10b_fix_kpi_dashboard.sql` — Part A restores `pravah_kpi_dashboard`;
+Part B replaces `pravah_closer_scorecard`.
