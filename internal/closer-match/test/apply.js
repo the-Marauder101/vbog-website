@@ -226,6 +226,18 @@ suite("APPLY SUITE", 8105, async ({ p, base, E, P, check, errs }) => {
         "");
   check("no JS errors on the applicant's page", aerrs.length === 0, aerrs.join(" | "));
 
+  // ══ BRAND ════════════════════════════════════════════════════════════════
+  // The public journey is Get Closers; a link sent to a named candidate stays
+  // V-BOG. Resolved from candidates.source server-side, so it cannot be changed
+  // by editing the address bar or lost by reopening from a bookmark (sql/48).
+  check("the apply page carries no V-BOG anywhere",
+        !/V-BOG|VBOG/i.test(await ap.content()),
+        (String(await ap.content()).match(/V-?BOG/i) || [""])[0]);
+  check("and it is Get Closers instead",
+        /Get Closers/.test(await ap.textContent("#screen-form")) &&
+        /Get Closers/.test(await ap.title()),
+        await ap.title());
+
   await ap.fill("#ap-name", "A");
   await ap.click("#btn-apply");
   await ap.waitForTimeout(400);
@@ -243,7 +255,43 @@ suite("APPLY SUITE", 8105, async ({ p, base, E, P, check, errs }) => {
                            { timeout: 25000 });
   check("and the first thing they see is the consent notice",
         await ap.isVisible("#screen-consent"), "");
+
+  const consentTxt = flat(await ap.textContent("#screen-consent"));
+  check("THE ASSESSMENT WEARS GET CLOSERS FOR AN OPEN-LINK APPLICANT",
+        /Get Closers/.test(await ap.textContent(".lockup")) &&
+        !/V-?BOG/i.test(await ap.textContent(".lockup")),
+        flat(await ap.textContent(".lockup")));
+  check("and the notice names Get Closers as the firm processing their data",
+        /consent to Get Closers processing/.test(consentTxt),
+        (consentTxt.match(/consent to [^.]{0,40}/) || [""])[0]);
   await ap.close();
+
+  // The other half of the decision: a candidate SENT a link still sees V-BOG.
+  const sentCand = await rpc(p, "create_open_link", { p_label: `${NAME} unused` });
+  const c2 = await p.evaluate(async (name) => {
+    const H = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}`,
+                "Content-Type": "application/json", Prefer: "return=representation" };
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/candidates`, { method: "POST", headers: H,
+      body: JSON.stringify({ full_name: name, contact: {}, consent_version: "pending",
+                             consent_at: new Date().toISOString() }) });
+    return (await r.json())[0];
+  }, `${NAME} Sent`);
+  const sentTok = String((await rpc(p, "issue_assessment_token",
+    { p_candidate_id: c2.id, p_valid_days: 1 })).body).replace(/^"|"$/g, "");
+
+  const sp = await p.context().newPage();
+  await require("./harness").route(sp);
+  await sp.goto(`${base}/assess.html?t=${sentTok}`, { waitUntil: "domcontentloaded" });
+  await sp.waitForSelector("#screen-consent:not([hidden])", { timeout: 25000 });
+  check("A CANDIDATE SENT A LINK STILL SEES V-BOG",
+        /V-?BOG/i.test(await sp.textContent(".lockup")) &&
+        !/Get Closers/.test(await sp.textContent(".lockup")),
+        flat(await sp.textContent(".lockup")));
+  // The collision, asserted rather than left to be discovered: the wordmark is a
+  // brand, the notice names a legal person, and on this page they differ.
+  check("but the notice still names Get Closers, because that is the legal entity",
+        /consent to Get Closers processing/.test(flat(await sp.textContent("#screen-consent"))), "");
+  await sp.close();
 
   check("no JS errors", errs.length === 0, errs.join(" | "));
 }, async ({ p, check }) => {

@@ -2457,6 +2457,41 @@ migration that created them:
 > `test/apply.js`, which uses the published key with no session — because that is
 > what an applicant has.
 
+### 7at. Two brands, one legal person
+
+Three decisions, taken deliberately:
+
+- the public application journey is **Get Closers** — that is the brand a stranger
+  answering a job post should see
+- a link sent to a named candidate stays **V-BOG**, because that is how those
+  candidates were approached
+- the consent notice names **Get Closers** for everybody, because that is the
+  entity that holds and processes candidate data
+
+**They collide on one screen, and that is written down rather than smoothed
+over.** A candidate who was sent a per-candidate link sees the V-BOG wordmark at
+the top of the page and reads *"…consent to Get Closers processing my assessment
+data"* below it. Both decisions, applied faithfully, meeting in one place.
+
+It is not a bug: the consent notice names a **legal person** and the wordmark is
+a **brand**, and those are allowed to differ. But it is the kind of thing a
+candidate asks about, so the answer is on hand — and if the intent was ever "V-BOG
+is gone everywhere", it is one row in `app_settings` and one line in
+`assess.html`.
+
+**The brand is resolved server-side from `candidates.source`, never from a query
+parameter.** A parameter is lost when somebody reopens the link from a bookmark,
+survives being edited by hand, and would make the brand a property of the URL
+rather than of the person. `get_consent_notice(p_token)` returns the notice it
+always did plus a `brand` field; called with no token it behaves exactly as
+before, which is what `test/security.js` checks is still publicly readable.
+
+Everything with legal weight — the firm, the deletion address, the grievance
+officer — is one value for everybody. The brand selects a wordmark and a page
+title and nothing else, and `test/apply.js` asserts both halves: Get Closers on
+the open-link journey, V-BOG on a sent link, and the same firm named in both
+notices.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
