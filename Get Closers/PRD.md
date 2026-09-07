@@ -1400,3 +1400,84 @@ The PRD had also described the write path as though it existed. Both the
 code and the document are corrected in migration 31, which adds the write,
 repairs the gap, and introduces `pravah_v_registry_drift` — a view that must
 always be empty, so the next divergence announces itself.
+
+## 30. V11 — Guided tour and help drawer
+
+Every new account gets a one-minute orientation on first sign-in, and a Help
+drawer available permanently. Both are **role-gated on the server-issued
+role**, because a tour that narrates a control you do not have is worse than
+no tour.
+
+### 30.1 Access gating — four independent gates
+
+Stated plainly, because this is the part that matters:
+
+1. **Role comes from `pravah_context()`.** Never the DOM, never a query
+   string, never localStorage. The portal passes the context object it
+   already fetched; `guide.js` reads `context.role` and nothing else. No
+   fallback exists that could widen access.
+2. **Every step and FAQ entry declares `roles`.** An entry whose list does
+   not contain the caller's role is dropped *before render* — never hidden
+   with CSS, and its text never enters the DOM.
+3. **A step whose anchor element is absent is dropped.** Role-gated controls
+   the server did not render therefore cannot be described. This is
+   independent of gate 2: even a mis-tagged step cannot narrate a control the
+   user does not have.
+4. **Content is authored per portal.** `client-guide.js` contains no staff
+   copy at all, `closer-guide.js` no client copy. A client cannot reach staff
+   content by any client-side means, because it was never shipped to them.
+
+Verified by an assertion script rather than by inspection — no entry lacks a
+roles array, no bundle declares an out-of-portal role, every foreign role
+receives exactly zero steps and zero FAQ items, and `client_viewer` copy
+contains no write instruction:
+
+| Portal | Role | Steps | FAQ |
+|---|---|---|---|
+| Client | `client_admin` | 12 | 16 |
+| Client | `client_viewer` | 10 | 9 |
+| Closer | `closer` | 10 | 17 |
+| Ops | `gc_admin` | 11 | 15 |
+| Ops | `operations` / `trainer` / `client_success` | 8 | 10 |
+
+The `client_viewer` and staff reductions are the gating working: viewers lose
+the add-lead, import and tagging steps; non-admin staff lose Portal, Team,
+cash verification and alert thresholds.
+
+### 30.2 Design
+
+Extends the incumbent paper/ink system rather than importing a tour library.
+`--radius` is 3px, so nothing rounds; the spotlight is built from four
+dimming panels framing a hairline cut-out rather than a box-shadow ring,
+which keeps the corner crisp at that radius. Overlays sit at z-index 400,
+above the 200 used by slide-outs. Motion is a single exponential ease-out on
+the spotlight move, and is disabled under `prefers-reduced-motion`.
+
+Keyboard: arrows step, Enter advances, Escape exits. Focus moves to the
+primary action on each step.
+
+### 30.3 Content decisions
+
+Tone is orientation rather than instruction — these users are comfortable
+with software, so steps say where a thing lives and what a number means, not
+what a lead is. Every nav section is walked, in nav order, so nobody has a
+blind spot.
+
+Where copy could mislead it explains the *why*: verified cash trails booked
+revenue because evidence is required; deal value is pipeline, not revenue; a
+dash on a scorecard means unscoreable, not zero; blank on a daily report
+means no data while zero means none happened; Vyom linking is manual because
+a wrong automatic match is worse than an unlinked record.
+
+### 30.4 Persistence
+
+Seen state is `localStorage`, keyed per portal. It is a per-browser
+convenience, not business data, so it deliberately gets no table and no
+migration. The tour reappears on a new device; the Help drawer can replay it
+at any time.
+
+### 30.5 Files
+
+`css/guide.css`, `js/guide.js` (engine, shared), plus one content bundle per
+portal: `js/ops-guide.js`, `client/client-guide.js`, `closer/closer-guide.js`.
+No new migration — this release is entirely front-end.
