@@ -23,6 +23,7 @@ if (!process.env.NIKASH_QA_EMAIL || !process.env.NIKASH_QA_PASSWORD) {
 const SUITES = [
   ["security",   "the three rules, from outside the building"],
   ["assess",     "the candidate journey, by the door a candidate uses"],
+  ["apply",      "the one open link — a door anybody can push"],
   ["intake",     "the client's half, and the shortlist it produces"],
   ["ask",        "the interview scorecard, and that it moves no match score"],
   ["keying",     "the scoring key — mutates the live bank and puts it back"],

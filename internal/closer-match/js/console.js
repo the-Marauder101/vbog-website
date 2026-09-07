@@ -43,7 +43,7 @@ const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue", cand: "n
                  ask: "nav-queue",
                  health: "nav-health", place: "nav-place", supp: "nav-supp",
                  guide: "nav-guide", dict: "nav-dict", team: "nav-team",
-                 questions: "nav-questions" };
+                 questions: "nav-questions", links: "nav-links" };
 
 function markNav(name) {
   Object.values(NAV_OF).forEach((id) => el(id) && el(id).removeAttribute("aria-current"));
@@ -387,6 +387,107 @@ function bindQuestionEditor() {
   toggle("data-attr-prio", "set_ask_attribute_priority",
          (id, to) => ({ p_id: id, p_priority: to }), (id) => `[data-aslot="${id}"]`);
 }
+
+// ═══ APPLICATION LINKS ═════════════════════════════════════════════════════
+//
+// One durable link per campaign, minted here and pasted into a job post. The
+// counts beside each one are the point: a link that brought in ninety applicants
+// and four completed assessments is telling you something about the advert, not
+// about the candidates.
+async function loadOpenLinks() {
+  view("loading");
+  let rows;
+  try { rows = await sbRpc("list_open_links"); }
+  catch (e) {
+    el("ol-list").innerHTML =
+      `<div class="notice"><span class="label">Could not load</span>${esc(e.message)}</div>`;
+    return view("links");
+  }
+
+  const url = (slug) =>
+    `${location.origin}${location.pathname.replace(/nikash\.html$/, "")}apply.html?k=${slug}`;
+
+  el("ol-list").innerHTML = `
+    <div class="region">
+      <div class="region-head"><h2>Links</h2>
+        <span class="count mono">${rows.length}</span></div>
+      ${rows.length ? rows.map((l) => {
+        const state = !l.active ? "closed"
+          : l.expired ? "expired"
+          : (l.max_uses && l.used >= l.max_uses) ? "full"
+          : "open";
+        return `
+        <div class="panel" style="margin-bottom:10px">
+          <div class="cand-head">
+            <span class="cand-name">${esc(l.label)}</span>
+            <span class="chip${state === "open" ? " strong" : ""}">${state}</span>
+            <span class="spacer"></span>
+            <span><span class="figure">${l.used}</span
+              ><span class="figure-unit">${l.max_uses ? ` / ${l.max_uses}` : ""}</span>
+              <span class="mono muted">applied</span></span>
+          </div>
+          <p class="small muted" style="margin:4px 0 0">
+            ${l.completed} of ${l.used} finished the assessment ·
+            created ${onDate(l.created_at)}${l.created_by ? ` by ${esc(l.created_by)}` : ""} ·
+            ${l.expired ? "expired" : "open until"} ${onDate(l.expires_at)}
+            ${l.last_used_at ? ` · last application ${onDate(l.last_used_at)}` : ""}
+          </p>
+          <input type="text" readonly value="${esc(url(l.slug))}" onclick="this.select()"
+                 style="margin-top:10px">
+          <div class="actions" style="margin-top:10px">
+            <button class="btn-quiet btn-small" data-ol-toggle="${esc(l.id)}"
+              data-to="${l.active ? "false" : "true"}"
+              >${l.active ? "Close this link" : "Reopen it"}</button>
+            <span class="savestate" data-olslot="${esc(l.id)}"></span>
+          </div>
+        </div>`;
+      }).join("") : `
+        <div class="empty"><h3>No application links yet</h3>
+          <p class="muted">Create one above and paste it into a job post.</p></div>`}
+    </div>`;
+
+  el("ol-list").querySelectorAll("[data-ol-toggle]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const id = b.dataset.olToggle, to = b.dataset.to === "true";
+      const slot = el("ol-list").querySelector(`[data-olslot="${id}"]`);
+      b.disabled = true;
+      if (slot) { slot.textContent = "Saving…"; delete slot.dataset.state; }
+      try {
+        await sbRpc("set_open_link_active", { p_id: id, p_active: to });
+        await loadOpenLinks();
+      } catch (e) {
+        if (slot) { slot.textContent = e.message; slot.dataset.state = "error"; }
+        b.disabled = false;
+      }
+    }));
+
+  view("links");
+}
+
+const btnNewLink = el("btn-new-link");
+if (btnNewLink) btnNewLink.addEventListener("click", async () => {
+  const label = el("ol-label").value.trim();
+  const days = Number(el("ol-days").value) || 90;
+  const capRaw = el("ol-cap").value.trim();
+  const slot = el("ol-state");
+  if (!label) { slot.textContent = "Give it a label first."; slot.dataset.state = "error"; return; }
+  btnNewLink.disabled = true;
+  slot.textContent = "Creating…"; delete slot.dataset.state;
+  try {
+    await sbRpc("create_open_link", {
+      p_label: label, p_valid_days: days,
+      p_max_uses: capRaw === "" ? null : Number(capRaw),
+      p_burst_per_hour: 40,
+    });
+    el("ol-label").value = ""; el("ol-cap").value = "";
+    slot.textContent = "Created — copy it from the list below."; slot.dataset.state = "saved";
+    await loadOpenLinks();
+  } catch (e) { slot.textContent = e.message; slot.dataset.state = "error"; }
+  finally { btnNewLink.disabled = false; }
+});
+
+const navLinks = el("nav-links");
+if (navLinks) navLinks.addEventListener("click", (e) => { e.preventDefault(); loadOpenLinks(); });
 
 const navQuestions = el("nav-questions");
 if (navQuestions) navQuestions.addEventListener("click", (e) => { e.preventDefault(); loadQuestions(); });
@@ -1717,6 +1818,128 @@ function patternHtml(d) {
 const WORK_MODES = ["onsite", "hybrid", "remote"];
 const FLUENCY = ["", "basic", "conversational", "fluent", "native"];
 
+// ═══ THE LINKS A CANDIDATE HAS ═════════════════════════════════════════════
+//
+// `issue_assessment_token()` returned the token once, the page printed it into a
+// box, and navigating away lost it — not expired, not revoked, lost, because
+// nothing ever showed it again. The only recovery was to issue a second link,
+// which leaves the first live and the candidate holding whichever email arrived
+// first.
+//
+// The token is not a secret from staff. It lives in a table only staff can read
+// and it is the thing staff are supposed to send. Showing it once was an accident
+// of the function returning it, not a decision. See sql/46.
+let LINKS = {};
+
+function linkUrl(token) {
+  return `${location.origin}${location.pathname.replace(/nikash\.html$/, "")}assess.html?t=${token}`;
+}
+
+function linksHtml(c) {
+  const a = (LINKS.assessment || []);
+  const s = (LINKS.supplement || []);
+  const live = a.filter((x) => !x.expired);
+  const done = a.length && a[0].assessment_complete;
+
+  const row = (t) => {
+    const url = linkUrl(t.token);
+    const state = t.assessment_complete ? "assessment submitted"
+      : t.expired ? "expired"
+      : t.answered ? `live · ${t.answered} answered so far`
+      : "live · not opened yet";
+    return `
+      <div class="panel plain" style="margin-bottom:8px">
+        <div class="cand-head">
+          <span class="chip${t.expired || t.assessment_complete ? "" : " strong"}">${esc(state)}</span>
+          <span class="small muted">issued ${onDate(t.issued_at)} ·
+            ${t.expired ? "expired" : "expires"} ${onDate(t.expires_at)}</span>
+          <span class="spacer"></span>
+          ${t.expired || t.assessment_complete ? "" : `
+            <button class="btn-quiet btn-small" data-revoke="${esc(t.token)}"
+              >Revoke</button>`}
+          <span class="savestate" data-lslot="${esc(t.token)}"></span>
+        </div>
+        <input type="text" readonly value="${esc(url)}" onclick="this.select()"
+               style="margin-top:8px">
+      </div>`;
+  };
+
+  return `
+  <div class="region" id="links-region">
+    <div class="region-head"><h2>Their links</h2>
+      <span class="count mono">${a.length}</span></div>
+
+    ${a.length ? a.map(row).join("") : `
+      <div class="empty">
+        <h3>No assessment link yet</h3>
+        <p class="muted">Issue one and it stays here — you can come back and copy
+          it again whenever you need to.</p>
+      </div>`}
+
+    ${live.length > 1 ? `
+      <div class="notice"><span class="label">${live.length} live links to the same test</span>
+        Whichever one the candidate opens first is the one they use. Revoke the
+        ones you did not send.</div>` : ""}
+
+    <div class="actions" style="margin-top:12px">
+      <button class="btn-quiet btn-small" data-issue="${esc(c.id)}"
+        >${a.length ? "Issue a new link" : "Issue an assessment link"}</button>
+      <span class="savestate" data-lslot="new"></span>
+    </div>
+
+    ${done ? `<p class="small muted" style="margin-top:10px">Their assessment is
+      already submitted. A new link would open on "you have already completed
+      this" — issue one only if you intend them to sit it again.</p>` : ""}
+
+    ${s.length ? `
+      <div class="panel" style="margin-top:14px">
+        <div class="region-head"><h2 class="small">Supplement links</h2>
+          <span class="count mono">${s.length}</span></div>
+        ${s.map((t) => `
+          <div class="req">
+            <span class="title small">${t.submitted_at ? "submitted" : t.expired ? "expired" : "live"}
+              · issued ${onDate(t.issued_at)}</span>
+            <span class="meta small"><input type="text" readonly
+              value="${esc(linkUrl(t.token).replace("assess.html", "supplement.html"))}"
+              onclick="this.select()"></span>
+          </div>`).join("")}
+      </div>` : ""}
+  </div>`;
+}
+
+function bindLinks(id) {
+  const body = el("cd-body");
+  const say = (tok, text, state) => {
+    const n = body.querySelector(`[data-lslot="${tok}"]`);
+    if (!n) return;
+    n.textContent = text;
+    if (state) n.dataset.state = state; else delete n.dataset.state;
+  };
+
+  body.querySelectorAll("[data-issue]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      say("new", "Issuing…");
+      try {
+        await sbRpc("issue_assessment_token", { p_candidate_id: id, p_valid_days: 14 });
+        await openCandidate(id);
+      } catch (e) { say("new", e.message, "error"); b.disabled = false; }
+    }));
+
+  body.querySelectorAll("[data-revoke]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const tok = b.dataset.revoke;
+      if (!confirm("Revoke this link?\n\nIt will stop opening the assessment. " +
+                   "The record of having issued it is kept.")) return;
+      b.disabled = true;
+      say(tok, "Revoking…");
+      try {
+        await sbRpc("revoke_assessment_token", { p_token: tok });
+        await openCandidate(id);
+      } catch (e) { say(tok, e.message, "error"); b.disabled = false; }
+    }));
+}
+
 function directFieldsHtml(c) {
   const f = c.direct_fields || {};
   const langs = f.languages || {};
@@ -1815,7 +2038,12 @@ function bindDirectFields(candidateId) {
 async function openCandidate(id) {
   view("loading");
   let d;
-  try { d = await sbRpc("get_candidate_detail", { p_candidate_id: id }); }
+  try {
+    d = await sbRpc("get_candidate_detail", { p_candidate_id: id });
+    // Fetched here rather than inside the renderer so both branches — scored and
+    // not — have it, and so a failure to read the links cannot blank the page.
+    LINKS = await sbRpc("get_candidate_links", { p_candidate_id: id }).catch(() => ({}));
+  }
   catch (e) {
     el("cd-name").textContent = "Could not load this candidate";
     el("cd-meta").textContent = e.message;
@@ -1851,10 +2079,11 @@ async function openCandidate(id) {
     el("cd-body").innerHTML = `
       <div class="notice">
         <span class="label">No questionnaire scores yet</span>${esc(d.reason)}
-      </div>` + headlineHtml(d, c) + askHtml(d, c) + directFieldsHtml(c);
+      </div>` + headlineHtml(d, c) + linksHtml(c) + askHtml(d, c) + directFieldsHtml(c);
     el("cd-disclaimer").textContent = "";
     bindDirectFields(id);
     bindAskDiscard(id);
+    bindLinks(id);
     return view("cand");
   }
 
@@ -1903,7 +2132,7 @@ async function openCandidate(id) {
       </div>`;
   }).join("");
 
-  el("cd-body").innerHTML = headlineHtml(d, c) + askHtml(d, c) + flagsHtml + patternHtml(d) + directFieldsHtml(c) + `
+  el("cd-body").innerHTML = headlineHtml(d, c) + linksHtml(c) + askHtml(d, c) + flagsHtml + patternHtml(d) + directFieldsHtml(c) + `
     <div class="region">
       <div class="region-head"><h2>The nine, against what each role asks for</h2>
         <span class="count mono">${(d.dimensions || []).length}</span></div>
@@ -1915,6 +2144,7 @@ async function openCandidate(id) {
     x.addEventListener("click", (e) => { e.preventDefault(); loadRequirement(x.dataset.cdreq); }));
   bindDirectFields(id);
   bindAskDiscard(id);
+  bindLinks(id);
 
   view("cand");
 }
