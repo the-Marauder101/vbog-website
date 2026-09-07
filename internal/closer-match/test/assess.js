@@ -103,6 +103,36 @@ suite("ASSESS SUITE", 8101, async ({ p, base, E, P, check, errs }) => {
   check("with the row saying no interview has happened yet",
         /no ASK interview yet/.test(flat(await p.textContent("#queue-list"))), "");
 
+  // ══ A LINK YOU DID NOT COPY IS NOT A LINK YOU LOST ═══════════════════════
+  // issue_assessment_token() returned the token once, the page printed it into a
+  // box, and navigating away lost it. Not expired — lost, because nothing ever
+  // showed it again. See sql/46.
+  const links1 = await rpc(p, "get_candidate_links", { p_candidate_id: candId });
+  check("a candidate's links can be read back after the fact",
+        links1.status === 200 && (links1.body.assessment || []).length === 1,
+        `${((links1.body || {}).assessment || []).length} links`);
+  check("and it is the same token that was issued",
+        links1.body.assessment[0].token === token, "");
+  check("with enough state to know whether to send it",
+        links1.body.assessment[0].expired === false &&
+        "consumed_at" in links1.body.assessment[0] &&
+        "assessment_complete" in links1.body.assessment[0],
+        JSON.stringify(links1.body.assessment[0]).slice(0, 120));
+
+  await p.click("#nav-queue");
+  await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(1500);
+  await p.click(`#queue-list [data-cand="${candId}"]`);
+  await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
+  await p.waitForTimeout(900);
+  check("THE TEST LINK IS ON THE CANDIDATE PAGE, COPYABLE",
+        (await p.$$(`#links-region input[readonly]`)).length >= 1 &&
+        (await p.inputValue("#links-region input[readonly]")).includes(token),
+        (await p.inputValue("#links-region input[readonly]").catch(() => "none")).slice(0, 60));
+  check("and it says whether the link is live and whether they have started",
+        /live · not opened yet|live · \d+ answered/.test(flat(await p.textContent("#links-region"))),
+        flat(await p.textContent("#links-region")).slice(0, 110));
+
   // ══ THE CONSENT GATE ═════════════════════════════════════════════════════
   // Nothing about a person is collected before they have agreed to it. The gate
   // is in the database, not in the page, so that closing the page and calling

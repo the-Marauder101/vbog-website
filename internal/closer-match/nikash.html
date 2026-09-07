@@ -50,6 +50,7 @@
       <span class="nav-sep" aria-hidden="true"></span>
       <a href="#" id="nav-team">Team</a>
       <a href="#" id="nav-questions">Questions</a>
+      <a href="#" id="nav-links">Apply links</a>
       <a href="#" id="nav-signout" class="muted">Sign out</a>
     </nav>
   </div>
@@ -285,6 +286,47 @@
        phone screen.</p>
     <div class="callout" id="q-summary" style="margin-bottom:8px"></div>
     <div id="q-editor"></div>
+  </section>
+
+  <!-- One durable link that anybody may open to apply. Everything else in this
+       tool mints a link for one named person; this one names nobody and lets the
+       applicant supply their own name and email. See sql/47. -->
+  <section class="screen" id="v-links" hidden>
+    <h1>Application links</h1>
+    <p class="muted">A link you can put in a job post. Whoever opens it gives a
+       name and an email and goes straight into the assessment — and lands in
+       Candidates with everybody else. The per-candidate test links you send
+       yourself are unchanged and live on each candidate's page.</p>
+
+    <div class="region">
+      <div class="region-head"><h2>Create one</h2></div>
+      <div class="panel">
+        <div class="field">
+          <label for="ol-label">What is it for?</label>
+          <span class="help">Shown to the applicant as a kicker, and to you in the
+            list below. "LinkedIn — BDA, Sept" beats "link 3".</span>
+          <input type="text" id="ol-label" placeholder="LinkedIn — BDA, September">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="ol-days">Open for</label>
+            <span class="help">Days until the link stops working.</span>
+            <input type="number" id="ol-days" value="90" min="1" max="365">
+          </div>
+          <div class="field">
+            <label for="ol-cap">Stop after</label>
+            <span class="help">Applicants, then it closes itself. Blank for no cap.</span>
+            <input type="number" id="ol-cap" placeholder="no cap" min="1">
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-quiet" id="btn-new-link">Create the link</button>
+          <span class="savestate" id="ol-state"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="ol-list"></div>
   </section>
 
   <section class="screen" id="v-team" hidden>

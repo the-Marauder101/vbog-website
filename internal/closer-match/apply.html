@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Apply · V-BOG</title>
+<link rel="icon" href="/favicon.svg">
+<meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@900&display=swap">
+<link rel="stylesheet" href="css/assess.css">
+</head>
+<body>
+
+<!--
+  The public application surface. One durable link, many applicants:
+    apply.html?k=<slug>
+
+  Unlike assess.html, which is opened with a token minted for one named person,
+  this page is opened by somebody nobody has met. It collects a name and an email
+  and hands them straight to the assessment they would have been sent.
+
+  It reads nothing. `get_open_link` returns a label and whether the link is open;
+  `open_link_apply` returns one assessment token for the person who just typed
+  their own details. There is no score on this page and nothing to leak.
+
+  Deliberately NOT a duplicate of the consent flow: consent is taken on
+  assess.html, where it always has been, against the notice the candidate is
+  actually agreeing to. This page collects two facts and gets out of the way.
+-->
+
+<main>
+  <section class="screen" id="screen-loading">
+    <p class="muted">One moment…</p>
+  </section>
+
+  <section class="screen" id="screen-closed" hidden>
+    <div class="lockup">
+      <span class="wordmark">V<i>-</i>BOG</span>
+      <span class="kicker mono">Application</span>
+    </div>
+    <h1>This link is not open</h1>
+    <p id="closed-text" class="muted"></p>
+  </section>
+
+  <section class="screen" id="screen-form" hidden>
+    <div class="lockup">
+      <span class="wordmark">V<i>-</i>BOG</span>
+      <span class="kicker mono" id="form-kicker">Application</span>
+    </div>
+    <h1>Two things, then the assessment</h1>
+    <p class="muted">It takes about 25 minutes and saves as you go, so you can
+       stop and come back on the same link. There are no right answers to
+       memorise — it asks what you would actually do.</p>
+
+    <div class="field">
+      <label for="ap-name">Your full name</label>
+      <input type="text" id="ap-name" autocomplete="name" placeholder="As you would write it on a CV">
+    </div>
+    <div class="field">
+      <label for="ap-email">Your email address</label>
+      <span class="help">So we can reach you about the role, and so you can come
+        back to this if you close the tab.</span>
+      <input type="email" id="ap-email" autocomplete="email" inputmode="email"
+             placeholder="you@example.com">
+    </div>
+
+    <p class="err" id="ap-error" hidden></p>
+
+    <button class="btn" id="btn-apply">Start the assessment →</button>
+
+    <p class="muted small" style="margin-top:18px">
+      You will be asked to read and agree to how your answers are used before any
+      question is shown.
+    </p>
+  </section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/apply.js"></script>
+</body>
+</html>

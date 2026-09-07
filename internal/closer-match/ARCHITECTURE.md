@@ -2386,6 +2386,77 @@ person. **None reaches `candidate_profile`, `matches`, `ask_scores` or
 `candidate_responses`**, so R1 — scores never leave the building — still holds.
 `test/security.js` now asserts exactly that, permanently.
 
+### 7ar. A link you did not copy was a link you had lost
+
+`issue_assessment_token()` returned the token once, the console printed it into a
+box, and navigating away lost it. Not expired, not revoked — **lost**, because
+nothing ever showed it again. The only recovery was to issue a second link, which
+leaves the first live and the candidate holding whichever email arrived first.
+
+The token was never a secret from staff. It lives in a table only staff can read
+and it is the thing staff are supposed to send. Showing it once was an accident of
+the function returning it, not a decision that it should be write-only.
+
+`get_candidate_links()` returns every link a candidate has — issued when, expires
+when, opened or not, how many answers so far, and whether the assessment behind it
+is already submitted. `revoke_assessment_token()` expires one rather than deleting
+it, because "who did we send this to and when" is worth keeping and a deleted row
+cannot be told from one that never existed. The candidate page shows them all, and
+says so when more than one is live at once.
+
+### 7as. One link, many applicants
+
+Every assessment link until now was minted for one named person. That is right for
+somebody you sourced and useless for a job post — you cannot put a per-person link
+in an advert.
+
+`apply.html?k=<slug>` takes a name and an email and hands the applicant straight
+to the assessment. They land in the same `candidates` table, the same queue,
+scored by the same engine, with `source = 'open_link'` recorded as provenance and
+nothing else different about them.
+
+**An anon-callable function that INSERTS is a different animal from one that
+reads,** and four things hold it shut, each closing a specific abuse:
+
+- **Dedupe on email** — the same address always resolves to the same candidate and
+  the same live token. So the link is idempotent per person: reopening it resumes
+  rather than creating a second row. That is both the correct behaviour for
+  somebody who closed the tab and the thing that stops one applicant becoming
+  forty rows.
+- **A per-link cap**, counted from `open_link_uses` rather than a counter that can
+  drift from the rows it claims to count.
+- **A rate limit** per rolling hour, so a script gets refused while a real
+  morning's applications do not.
+- **Expiry and an off switch.**
+
+The dedupe check runs **before** the cap, deliberately: somebody coming back to
+finish a test they started must not be turned away because the link filled up in
+the meantime. They are not a new applicant.
+
+It does not hide whether an email is already known — it says "you have already
+started, here is your test again", because pretending not to recognise them and
+creating a duplicate is worse for the applicant and worse for the data. This is a
+job application, not an account: no password to enumerate, nothing to take over.
+
+Two bugs on the way, both the same shape as §7ao and both invisible to the
+migration that created them:
+
+- **`gen_random_bytes` does not exist** under `search_path = public`. pgcrypto
+  lives in `extensions` on Supabase — which is what sql/14 was written about, and
+  which this file reintroduced by copying the wrong neighbour's header. The
+  migration's own assertion passed because the Management API runs as `postgres`,
+  whose search_path already includes `extensions`.
+- **`issue_assessment_token()` is `is_staff()` guarded**, and calling it from
+  `open_link_apply` raised *"issue_assessment_token: staff only"* for every real
+  applicant. `SECURITY DEFINER` changes the privileges a function runs with; it
+  does not change `auth.uid()`. The token is now minted inline — four duplicated
+  lines against relaxing the one staff-only path for minting links on demand.
+
+> **A migration that runs as `postgres` cannot test what an anonymous caller
+> experiences.** Both bugs sailed through their own assertions and were caught by
+> `test/apply.js`, which uses the published key with no session — because that is
+> what an applicant has.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
