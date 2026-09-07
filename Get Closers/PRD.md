@@ -678,10 +678,18 @@ registry and the Vyom links from existing `clients` and
 
 **Vyom flow.** When a client is created in Vyom, the existing Edge Function
 bridge writes to `pravah_client_sync_inbox` as it does today. Linking that
-inbox row now also writes a `client_system_links` row through
-`pravah_client_link_system()`, so the registry becomes the durable record
-and the inbox returns to being a staging area. Names remain hints; the
+inbox row also writes a `client_system_links` row, so the registry is the
+durable record and the inbox is a staging area. Names remain hints; the
 UUID pair is the join.
+
+> **Correction (V10f).** As originally written, this paragraph described an
+> intention rather than the code. V9 backfilled `client_system_links` once
+> and nothing kept it current: `pravah_link_vyom_client` wrote only to the
+> inbox. The registry drifted immediately — three linked inbox rows against
+> two registry rows — which is precisely the divergence the registry exists
+> to prevent. Migration 31 adds the write to the link path, repairs the gap,
+> and adds `pravah_v_registry_drift` so any future divergence is visible
+> rather than silent. The paragraph above is now true.
 
 **Write contracts.**
 
@@ -1312,3 +1320,83 @@ the recommended one.
 ### 28.6 Migration
 
 `30_v10e_staff_password_creation.sql`.
+
+## 29. System complexity audit
+
+Asked directly whether the chain of systems and databases is being
+over-complicated. Measured against production rather than estimated.
+
+### 29.1 What exists
+
+| Measure | Count |
+|---|---|
+| Tables in `public` | 88 |
+| of which Pravah-owned | 34 |
+| Views | 50 |
+| Pravah functions | 105 |
+| RLS policies | 132 |
+| **Pravah tables holding zero rows** | **23 of 34** |
+
+### 29.2 Honest reading
+
+Two thirds of Pravah's tables have never held a row. That number looks
+alarming and mostly is not: the revenue, import, scorecard and target tables
+are built capability waiting on data that will arrive when the CRM and daily
+reporting are used. Distinguishing *unused* from *dead* matters, and every
+candidate was checked for an RPC caller rather than assumed from a
+front-end grep.
+
+**Genuinely dead — nothing writes or reads them:**
+
+- `pravah_kpi_overrides` — no RPC caller anywhere.
+- `client_users` (Nikash) — zero rows, no reader; `pravah_memberships` is
+  the only live user-to-client mapping.
+
+**Half-built — one direction only:**
+
+- Interventions can be created (`pravah_record_intervention` is wired) but
+  never closed out: `pravah_review_intervention` has no caller. The vision's
+  question *"did the intervention work?"* cannot currently be answered.
+- The invitation subsystem writes and lists, but no client-side
+  accept-invitation handler exists, so `copyInviteLink` produces a URL
+  nothing consumes.
+
+**Duplication worth naming:**
+
+- `pravah_invite_staff` and `pravah_create_staff_user` now both create staff.
+  Deliberate: the password path works today, the email path works once SMTP
+  exists. Revisit when SMTP lands.
+- `pravah_save_report` and `pravah_submit_report` both write performance
+  reports.
+- `pravah_client_sync_inbox` and `client_system_links` both record the
+  Vyom mapping. This one was a real defect, not a design choice — see 29.4.
+
+### 29.3 Verdict
+
+The database is not over-normalised and the isolation model is not
+over-complicated: one client table, `client_id` on every operational row,
+and RLS policies that all resolve through `pravah_memberships`. That part is
+sound and worth keeping exactly as it is.
+
+What is over-built is **surface area relative to what is switched on**. 105
+functions for a system with one placement and no leads is a lot of code
+whose only proof of correctness was that nobody had run it — which is
+exactly how `pravah_kpi_dashboard` carried four separate faults for four
+days. The cost of unused capability is not storage; it is that untested code
+reads as finished.
+
+**Recommendation: stop adding surface until real data flows.** The two
+remaining planned builds (reusable import mappings, source and activity
+analytics) both operate on data that does not exist yet. Getting one client
+genuinely live through the existing paths will teach more than either.
+
+### 29.4 Registry drift — a defect introduced by V9
+
+`client_system_links` was backfilled once by migration 24 and never
+maintained. Three inbox rows were linked; two reached the registry. The
+canonical cross-system record was diverging from reality on every link.
+
+The PRD had also described the write path as though it existed. Both the
+code and the document are corrected in migration 31, which adds the write,
+repairs the gap, and introduces `pravah_v_registry_drift` — a view that must
+always be empty, so the next divergence announces itself.
