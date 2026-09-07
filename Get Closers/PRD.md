@@ -1229,3 +1229,86 @@ Two lessons, both already visible in 25.13 but sharper here:
 This also explains the shape of the original defect. The V3 KPI engine was
 written against an assumed schema and never executed even once — two wrong
 column names in a single function survive only if the code has never run.
+
+## 28. V10e — Staff and admin account creation
+
+### 28.1 The actual defect
+
+Portal access for `client_admin`, `client_viewer` and `closer` had been
+working all along. **Staff and admin accounts were the ones that could not be
+added.** This section corrects an earlier misdiagnosis in this document,
+which treated the two as one problem and led with the wrong one.
+
+The cause is an asymmetry between two functions built on different
+mechanisms, only one of which works without email:
+
+| Function | Password param | Endpoint | Sends email | Works today |
+|---|---|---|---|---|
+| `pravah_create_portal_user` | yes | `/auth/v1/admin/users` | no | **yes** |
+| `pravah_invite_staff` | no | `/auth/v1/invite` | yes | **no** |
+
+`pravah_invite_staff` depends entirely on an invitation email arriving. The
+project has no SMTP (`smtp_host` null), leaving only Supabase's development
+sender, and `mailer_autoconfirm` is true. Staff invitations therefore never
+reach anyone.
+
+The ops portal made this worse by promising something that had never
+happened. The add-staff form read: *"A magic-link email will be sent."*
+Nothing in the codebase had ever sent one to a staff member.
+
+### 28.2 Fix
+
+`pravah_create_staff_user(p_email, p_role, p_display_name, p_password)` gives
+internal roles the identical password-based path that already works for
+external ones: `POST /auth/v1/admin/users` with `email_confirm`, then an
+internal membership row (`client_id` null, conflicting on the
+`pravah_one_internal_membership` index). Admin-only, audited, minimum
+8-character password.
+
+`pravah_invite_staff` is **left in place untouched**, so it resumes working
+the moment SMTP is configured. V10e adds an alternative rather than removing
+a capability.
+
+The add-staff form now takes a temporary password, calls the new RPC, and
+states plainly that no email is sent.
+
+### 28.3 Self-service password change
+
+With passwords issued by an administrator and no email available for reset,
+an issued password would otherwise be permanent. `PravahApi.changePassword`
+calls `PUT /auth/v1/user` with the caller's own session token — deliberately
+session-based, since an emailed reset link cannot arrive and, until this
+session, would have pointed at `localhost:3000`.
+
+All three portals — ops, client and closer — now carry a **Password** control
+beside Sign out.
+
+### 28.4 Auth configuration applied
+
+| Setting | Was | Now | Reason |
+|---|---|---|---|
+| `site_url` | `http://localhost:3000` | `https://v-bog.com` | every link-based flow pointed at localhost |
+| `uri_allow_list` | empty | `https://v-bog.com/**` | redirects to the real site were rejected |
+| `mailer_autoconfirm` | `true` | `true` — unchanged | setting it false without SMTP would strand new users awaiting an email that cannot send |
+| `smtp_host` | null | null — unchanged | deliberately deferred; the account flow needs no email |
+
+Note that `password_min_length` is 6 at the Supabase level while both
+`pravah_create_staff_user` and the change-password screen enforce 8. The
+application is deliberately stricter than the platform.
+
+### 28.5 The onboarding flow, end to end, with no email
+
+1. An administrator creates the account — staff via **Team → Add to team**,
+   client or closer via **Portal** — setting a temporary password.
+2. The administrator sends the portal URL, email and temporary password
+   directly, over WhatsApp, which is the channel the team already uses.
+3. The person signs in and replaces the password from the **Password**
+   control.
+
+`copyInviteLink` remains in the ops portal and produces a token URL, but the
+client-side accept-invitation handler was never built, so that path is not
+the recommended one.
+
+### 28.6 Migration
+
+`30_v10e_staff_password_creation.sql`.
