@@ -88,15 +88,36 @@ function updateProgress() {
 
 // ═══ CONSENT ═══════════════════════════════════════════════════════════════
 
+// Which brand this candidate is being addressed under. Resolved SERVER-SIDE from
+// their own record (sql/48), not from a query parameter: somebody who applied
+// through the public link is a Get Closers applicant whether they reached this
+// page from apply.html, a bookmark or a forwarded email, and somebody who was
+// sent a link should not be able to change the brand by editing the address bar.
+//
+// Cosmetic only. Every word with legal weight — the firm named in the consent
+// notice, the deletion address, the grievance officer — is one value for
+// everybody and comes from `notice.firm` below.
+function applyBrand(brand) {
+  const gc = brand === "getclosers";
+  document.querySelectorAll("[data-wordmark]").forEach((n) => {
+    n.innerHTML = gc ? 'Get Closers<i>.</i>' : 'V<i>-</i>BOG';
+  });
+  document.title = gc ? "Sales Assessment · Get Closers" : "Sales Assessment · V-BOG";
+}
+
 async function loadConsent() {
   if (!S.token) return fail("This link is missing its access code. Please use the exact link the recruiter sent you.");
 
   let notice;
   try {
-    notice = await sbRpc("get_consent_notice");
+    notice = await sbRpc("get_consent_notice", { p_token: S.token });
   } catch (e) {
     return fail(e.message);
   }
+
+  // Set before anything else renders, so no candidate ever sees the wrong
+  // wordmark flash and then correct itself.
+  applyBrand(notice.brand);
 
   // The gate: a consent notice still containing "[Firm]" is not consent, so the
   // assessment simply does not open until the settings are filled in.
