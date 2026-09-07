@@ -43,7 +43,7 @@
     </aside>
 
     <main>
-      <header class="topbar"><button class="mobile-nav" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button><div class="crumb"><span>Get Closers</span> / <strong id="view-name">Dashboard</strong></div><div class="account-controls"><span id="account-name"></span><span class="role-chip" id="account-role"></span><button class="text-button" type="button" data-signout>Sign out</button></div></header>
+      <header class="topbar"><button class="mobile-nav" type="button" aria-label="Open navigation" aria-expanded="false">Menu</button><div class="crumb"><span>Get Closers</span> / <strong id="view-name">Dashboard</strong></div><div class="account-controls"><span id="account-name"></span><span class="role-chip" id="account-role"></span><button class="text-button" type="button" data-change-password>Password</button><button class="text-button" type="button" data-signout>Sign out</button></div></header>
 
       <section class="view active" id="dashboard" data-title="Dashboard">
         <div class="page-head"><div><p class="eyebrow">MY PERFORMANCE</p><h1>Your workspace.</h1></div><div class="page-actions"><button class="button button-secondary" data-refresh>Refresh</button></div></div>
@@ -139,6 +139,25 @@
   </div>
 
   <div class="modal-backdrop" id="modal" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><div><p class="eyebrow" id="modal-eyebrow">CLOSER</p><h2 id="modal-title">Add record</h2></div><button class="icon-button" type="button" data-close-modal aria-label="Close">&times;</button></div><form id="record-form" class="dynamic-form"></form></section></div>
+  <!-- Change own password (session-based; Pravah has no SMTP for reset emails) -->
+  <div class="modal-backdrop" id="pw-modal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="pw-title" style="max-width:440px">
+      <div class="modal-head">
+        <div><p class="eyebrow">ACCOUNT</p><h2 id="pw-title">Change your password</h2></div>
+        <button class="icon-button" type="button" data-close-pw aria-label="Close">&times;</button>
+      </div>
+      <form id="pw-form" class="dynamic-form">
+        <label>New password<input id="pw-new" type="password" autocomplete="new-password" minlength="8" required></label>
+        <label style="margin-top:12px">Confirm new password<input id="pw-confirm" type="password" autocomplete="new-password" minlength="8" required></label>
+        <p class="helper" style="margin-top:10px">At least 8 characters. You stay signed in after changing it.</p>
+        <p class="form-error" id="pw-error" role="alert"></p>
+        <div class="form-footer">
+          <button class="button button-secondary" type="button" data-close-pw>Cancel</button>
+          <button class="button button-primary" type="submit">Update password</button>
+        </div>
+      </form>
+    </section>
+  </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="loading-bar" id="loading-bar" hidden></div>
 

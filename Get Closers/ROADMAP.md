@@ -179,6 +179,33 @@ inline lead stage dropdown and bulk stage update in the client portal.
 **Build status:** merged and deployed 2026-09-06 (migration 25), verified.
 The pre-tags 5-argument version is dropped; one signature remains.
 
+## V10 — Closer daily reporting and closer KPIs
+
+- closer-submitted midday and EOD daily reports;
+- dual-entry reconciliation with immediate discrepancy flagging;
+- closer KRA/KPI scorecards, scoped so the staff model is untouched;
+- WhatsApp output on the closer side;
+- per-client sale-gap alert thresholds, admin-only;
+- client visibility gate removed.
+
+**Boundary:** V10 adds no reporting table. `pravah_performance_reports`
+already carried every field; only its uniqueness constraint changed.
+
+**Build status:** merged and deployed 2026-09-06 (migration 26, after two
+corrected attempts). Verified: 20 of 20 clients visible (was 3), staff KRAs
+unchanged at 6/100, closer KRAs 4/100, existing reports backfilled intact.
+
+### V10b — Correctness fixes found during verification
+
+- `pravah_kpi_dashboard` referenced `pravah_training.trainer_id`, a column
+  that has never existed (it is `trainer_uid`). The staff KRA/KPI scorecard
+  has therefore thrown on every call since migration 08 shipped on
+  2026-09-02 — it was never merely unused, it could never run;
+- `pravah_closer_scorecard` scored unscoreable KRAs as zero instead of
+  reporting no data.
+
+**Build status:** migration 27 — pending deployment.
+
 ## Not yet scheduled
 
 Carried forward and not attached to any version:

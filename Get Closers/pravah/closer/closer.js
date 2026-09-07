@@ -318,6 +318,8 @@
     if(t.matches('[data-close-modal]')||t===$('modal'))closeModal();
     if(t.matches('[data-refresh]'))load();
     if(t.matches('[data-signout]')){api.signOut();showSignedOut()}
+    if(t.matches('[data-change-password]')){$('pw-error').textContent='';$('pw-new').value='';$('pw-confirm').value='';$('pw-modal').hidden=false}
+    if(t.matches('[data-close-pw]')||t===$('pw-modal')){$('pw-modal').hidden=true}
     const slotBtn=t.closest('.slot-btn');
     if(slotBtn)setSlot(slotBtn.dataset.slot);
     if(t.id==='wa-copy')copyWhatsapp();
@@ -331,7 +333,20 @@
   });
 
   $('record-form').addEventListener('submit',e=>{e.preventDefault();submitModal()});
-  $('report-form').addEventListener('submit',e=>{e.preventDefault();submitReport()});
+
+  $('pw-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const a=$('pw-new').value, b=$('pw-confirm').value, err=$('pw-error');
+    err.textContent='';
+    if(a!==b){err.textContent='Passwords do not match.';return}
+    setLoading(true);
+    try{
+      await api.changePassword(a);
+      $('pw-modal').hidden=true;
+      toast('Password updated.');
+    }catch(ex){err.textContent=ex.message}
+    finally{setLoading(false)}
+  });  $('report-form').addEventListener('submit',e=>{e.preventDefault();submitReport()});
 
   $('signin-form').addEventListener('submit',async e=>{
     e.preventDefault();

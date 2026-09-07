@@ -571,6 +571,8 @@
     if(t.matches('[data-close-modal]')||t===$('modal'))closeModal();
     if(t.matches('[data-refresh]'))load();
     if(t.matches('[data-signout]')){api.signOut();showSignedOut()}
+    if(t.matches('[data-change-password]')){$('pw-error').textContent='';$('pw-new').value='';$('pw-confirm').value='';$('pw-modal').hidden=false}
+    if(t.matches('[data-close-pw]')||t===$('pw-modal')){$('pw-modal').hidden=true}
     if(t.id==='import-next-1')importParseAndPreview();
     if(t.id==='import-next-2')importStageAndValidate();
     if(t.id==='import-back-2')importSetStep(1);
@@ -590,7 +592,20 @@
     if(t.matches('[data-lead-check]'))toggleLeadCheck(t.dataset.leadCheck,t.checked);
   });
   $('record-form').addEventListener('submit',e=>{e.preventDefault();submitModal()});
-  $('signin-form').addEventListener('submit',async e=>{e.preventDefault();$('signin-error').textContent='';try{const f=new FormData(e.currentTarget);await api.signIn(f.get('email'),f.get('password'));window.location.href='../home/'}catch(err){$('signin-error').textContent=err.message}});
+
+  $('pw-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const a=$('pw-new').value, b=$('pw-confirm').value, err=$('pw-error');
+    err.textContent='';
+    if(a!==b){err.textContent='Passwords do not match.';return}
+    setLoading(true);
+    try{
+      await api.changePassword(a);
+      $('pw-modal').hidden=true;
+      toast('Password updated.');
+    }catch(ex){err.textContent=ex.message}
+    finally{setLoading(false)}
+  });  $('signin-form').addEventListener('submit',async e=>{e.preventDefault();$('signin-error').textContent='';try{const f=new FormData(e.currentTarget);await api.signIn(f.get('email'),f.get('password'));window.location.href='../home/'}catch(err){$('signin-error').textContent=err.message}});
   document.querySelector('.mobile-nav').addEventListener('click',()=>{const open=document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.mobile-nav').setAttribute('aria-expanded',String(open))});
   window.addEventListener('hashchange',()=>showView(location.hash.slice(1)||'dashboard'));
   if(api.restore())load();else showSignedOut();

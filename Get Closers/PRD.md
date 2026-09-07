@@ -678,10 +678,18 @@ registry and the Vyom links from existing `clients` and
 
 **Vyom flow.** When a client is created in Vyom, the existing Edge Function
 bridge writes to `pravah_client_sync_inbox` as it does today. Linking that
-inbox row now also writes a `client_system_links` row through
-`pravah_client_link_system()`, so the registry becomes the durable record
-and the inbox returns to being a staging area. Names remain hints; the
+inbox row also writes a `client_system_links` row, so the registry is the
+durable record and the inbox is a staging area. Names remain hints; the
 UUID pair is the join.
+
+> **Correction (V10f).** As originally written, this paragraph described an
+> intention rather than the code. V9 backfilled `client_system_links` once
+> and nothing kept it current: `pravah_link_vyom_client` wrote only to the
+> inbox. The registry drifted immediately — three linked inbox rows against
+> two registry rows — which is precisely the divergence the registry exists
+> to prevent. Migration 31 adds the write to the link path, repairs the gap,
+> and adds `pravah_v_registry_drift` so any future divergence is visible
+> rather than silent. The paragraph above is now true.
 
 **Write contracts.**
 
@@ -814,7 +822,7 @@ shipping neither is not, because the contradiction is client-visible.
 
 ### 23.5 Notes for the next pass
 
-1. **Purge non-production data.** Twelve `ZZ_FIXTURE` clients and a
+1. **Purge non-production data.** Five `ZZ_FIXTURE` clients and a
    performance report with `sales_count = 1000` are live in the production
    database and will surface in client-facing views.
 2. **KRA/KPI engine is inert.** Six KRAs and sixteen KPI definitions exist;
@@ -1144,3 +1152,251 @@ dash, so no front-end change was required.
 
 `27_v10b_fix_kpi_dashboard.sql` — Part A restores `pravah_kpi_dashboard`;
 Part B replaces `pravah_closer_scorecard`.
+
+### 26.4 Fourth deploy failure — missing statement terminator
+
+Migration 27 failed its first run:
+
+```
+ERROR 42601: syntax error at or near "create"
+LINE 149: create or replace function pravah_closer_scorecard(
+```
+
+Part A's body was taken from `pg_get_functiondef()`, whose output ends
+`end $function$` with **no trailing semicolon**. Part A therefore ran
+straight into Part B's `create`. Fixed by terminating the statement.
+
+Worth carrying forward: `pg_get_functiondef()` is the right way to
+faithfully reproduce a live function, but its output is not a runnable
+statement on its own. Always append the terminator when concatenating it
+with anything else.
+
+## 27. Launch readiness
+
+Audited 2026-09-06 against production.
+
+### 27.1 Clean
+
+- Every table in the database has RLS enabled.
+- **No Pravah function is callable by `anon`.**
+- `pravah_integration_events` has RLS with zero policies — fully locked to
+  the service role, which is intentional for the Edge Function bridge.
+- `pravah_list_invitations` remains the only overloaded Pravah function, and
+  it is verified non-ambiguous: the one-argument form has no default, so an
+  empty body can only match the zero-argument form.
+
+### 27.2 Non-production data still live — must clear before launch
+
+| Item | Count |
+|---|---|
+| `ZZ_FIXTURE` clients | 5 |
+| Performance report with `sales_count = 1000` | 1 |
+| `depesh_*_test` memberships | 2 |
+| `ZZ_QA Suite` staff memberships | 3 |
+
+*(An earlier draft of this document said twelve fixture clients. The
+verified count is five; corrected here and in the roadmap.)*
+
+The `sales_count = 1000` report is the most visible: with the V9 portal fix
+live, a client now sees a roster row reporting 1,002 sales beside a booked
+revenue figure drawn from the CRM.
+
+### 27.3 Outstanding before launch
+
+1. Purge the non-production rows above.
+2. Rotate the service role key exposed in `21_v7c_user_creation.sql`.
+3. Close the three validation gates — V2B placed-candidate smoke test, V3
+   scorecard verification (now possible for the first time, once migration
+   27 lands), V4 lead-to-verified-payment.
+4. Build the two remaining items from the V10 conversation: reusable import
+   mappings, and source + activity analytics.
+
+### 27.4 `pravah_kpi_dashboard` carried two wrong column names, not one
+
+Applying migration 27 fixed `trainer_id` → `trainer_uid` and immediately
+revealed a second reference of exactly the same kind in the same function:
+`t.started_at`, where `pravah_training` defines `started_on`.
+
+Rather than continue fixing one per deploy, **every aliased column reference
+in the function was checked against `information_schema`**: twenty-six
+references across eleven tables. `t.started_at` was the only remaining one
+that does not resolve. Migration 28 fixes it, and should be the last of its
+kind for this function.
+
+Two lessons, both already visible in 25.13 but sharper here:
+
+1. **A fix that reveals another error of the same class is a signal to audit
+   the whole surface, not to patch again.** Four separate deploys were spent
+   on what one systematic check would have caught.
+2. **Automated reference checking needs care with aliases.** The first pass
+   flagged five problems; three were false positives, because
+   `pravah_training` and `pravah_targets` both bind to `t` in different
+   scopes, and `pravah_insights` and `pravah_interventions` both bind to `i`.
+   Each candidate was verified individually before concluding.
+
+This also explains the shape of the original defect. The V3 KPI engine was
+written against an assumed schema and never executed even once — two wrong
+column names in a single function survive only if the code has never run.
+
+## 28. V10e — Staff and admin account creation
+
+### 28.1 The actual defect
+
+Portal access for `client_admin`, `client_viewer` and `closer` had been
+working all along. **Staff and admin accounts were the ones that could not be
+added.** This section corrects an earlier misdiagnosis in this document,
+which treated the two as one problem and led with the wrong one.
+
+The cause is an asymmetry between two functions built on different
+mechanisms, only one of which works without email:
+
+| Function | Password param | Endpoint | Sends email | Works today |
+|---|---|---|---|---|
+| `pravah_create_portal_user` | yes | `/auth/v1/admin/users` | no | **yes** |
+| `pravah_invite_staff` | no | `/auth/v1/invite` | yes | **no** |
+
+`pravah_invite_staff` depends entirely on an invitation email arriving. The
+project has no SMTP (`smtp_host` null), leaving only Supabase's development
+sender, and `mailer_autoconfirm` is true. Staff invitations therefore never
+reach anyone.
+
+The ops portal made this worse by promising something that had never
+happened. The add-staff form read: *"A magic-link email will be sent."*
+Nothing in the codebase had ever sent one to a staff member.
+
+### 28.2 Fix
+
+`pravah_create_staff_user(p_email, p_role, p_display_name, p_password)` gives
+internal roles the identical password-based path that already works for
+external ones: `POST /auth/v1/admin/users` with `email_confirm`, then an
+internal membership row (`client_id` null, conflicting on the
+`pravah_one_internal_membership` index). Admin-only, audited, minimum
+8-character password.
+
+`pravah_invite_staff` is **left in place untouched**, so it resumes working
+the moment SMTP is configured. V10e adds an alternative rather than removing
+a capability.
+
+The add-staff form now takes a temporary password, calls the new RPC, and
+states plainly that no email is sent.
+
+### 28.3 Self-service password change
+
+With passwords issued by an administrator and no email available for reset,
+an issued password would otherwise be permanent. `PravahApi.changePassword`
+calls `PUT /auth/v1/user` with the caller's own session token — deliberately
+session-based, since an emailed reset link cannot arrive and, until this
+session, would have pointed at `localhost:3000`.
+
+All three portals — ops, client and closer — now carry a **Password** control
+beside Sign out.
+
+### 28.4 Auth configuration applied
+
+| Setting | Was | Now | Reason |
+|---|---|---|---|
+| `site_url` | `http://localhost:3000` | `https://v-bog.com` | every link-based flow pointed at localhost |
+| `uri_allow_list` | empty | `https://v-bog.com/**` | redirects to the real site were rejected |
+| `mailer_autoconfirm` | `true` | `true` — unchanged | setting it false without SMTP would strand new users awaiting an email that cannot send |
+| `smtp_host` | null | null — unchanged | deliberately deferred; the account flow needs no email |
+
+Note that `password_min_length` is 6 at the Supabase level while both
+`pravah_create_staff_user` and the change-password screen enforce 8. The
+application is deliberately stricter than the platform.
+
+### 28.5 The onboarding flow, end to end, with no email
+
+1. An administrator creates the account — staff via **Team → Add to team**,
+   client or closer via **Portal** — setting a temporary password.
+2. The administrator sends the portal URL, email and temporary password
+   directly, over WhatsApp, which is the channel the team already uses.
+3. The person signs in and replaces the password from the **Password**
+   control.
+
+`copyInviteLink` remains in the ops portal and produces a token URL, but the
+client-side accept-invitation handler was never built, so that path is not
+the recommended one.
+
+### 28.6 Migration
+
+`30_v10e_staff_password_creation.sql`.
+
+## 29. System complexity audit
+
+Asked directly whether the chain of systems and databases is being
+over-complicated. Measured against production rather than estimated.
+
+### 29.1 What exists
+
+| Measure | Count |
+|---|---|
+| Tables in `public` | 88 |
+| of which Pravah-owned | 34 |
+| Views | 50 |
+| Pravah functions | 105 |
+| RLS policies | 132 |
+| **Pravah tables holding zero rows** | **23 of 34** |
+
+### 29.2 Honest reading
+
+Two thirds of Pravah's tables have never held a row. That number looks
+alarming and mostly is not: the revenue, import, scorecard and target tables
+are built capability waiting on data that will arrive when the CRM and daily
+reporting are used. Distinguishing *unused* from *dead* matters, and every
+candidate was checked for an RPC caller rather than assumed from a
+front-end grep.
+
+**Genuinely dead — nothing writes or reads them:**
+
+- `pravah_kpi_overrides` — no RPC caller anywhere.
+- `client_users` (Nikash) — zero rows, no reader; `pravah_memberships` is
+  the only live user-to-client mapping.
+
+**Half-built — one direction only:**
+
+- Interventions can be created (`pravah_record_intervention` is wired) but
+  never closed out: `pravah_review_intervention` has no caller. The vision's
+  question *"did the intervention work?"* cannot currently be answered.
+- The invitation subsystem writes and lists, but no client-side
+  accept-invitation handler exists, so `copyInviteLink` produces a URL
+  nothing consumes.
+
+**Duplication worth naming:**
+
+- `pravah_invite_staff` and `pravah_create_staff_user` now both create staff.
+  Deliberate: the password path works today, the email path works once SMTP
+  exists. Revisit when SMTP lands.
+- `pravah_save_report` and `pravah_submit_report` both write performance
+  reports.
+- `pravah_client_sync_inbox` and `client_system_links` both record the
+  Vyom mapping. This one was a real defect, not a design choice — see 29.4.
+
+### 29.3 Verdict
+
+The database is not over-normalised and the isolation model is not
+over-complicated: one client table, `client_id` on every operational row,
+and RLS policies that all resolve through `pravah_memberships`. That part is
+sound and worth keeping exactly as it is.
+
+What is over-built is **surface area relative to what is switched on**. 105
+functions for a system with one placement and no leads is a lot of code
+whose only proof of correctness was that nobody had run it — which is
+exactly how `pravah_kpi_dashboard` carried four separate faults for four
+days. The cost of unused capability is not storage; it is that untested code
+reads as finished.
+
+**Recommendation: stop adding surface until real data flows.** The two
+remaining planned builds (reusable import mappings, source and activity
+analytics) both operate on data that does not exist yet. Getting one client
+genuinely live through the existing paths will teach more than either.
+
+### 29.4 Registry drift — a defect introduced by V9
+
+`client_system_links` was backfilled once by migration 24 and never
+maintained. Three inbox rows were linked; two reached the registry. The
+canonical cross-system record was diverging from reality on every link.
+
+The PRD had also described the write path as though it existed. Both the
+code and the document are corrected in migration 31, which adds the write,
+repairs the gap, and introduces `pravah_v_registry_drift` — a view that must
+always be empty, so the next divergence announces itself.

@@ -51,6 +51,21 @@
     signIn: async function (email, password) { const data = await auth("token?grant_type=password", { email: email, password: password }); setSession(data); return data; },
     fetch: function (path, options) { return request(PRAVAH_SUPABASE_URL + "/rest/v1/" + path, options); },
     rpc: function (name, args) { return request(PRAVAH_SUPABASE_URL + "/rest/v1/rpc/" + name, { method: "POST", body: args || {} }); },
-    invoke: function (name, body) { return request(PRAVAH_SUPABASE_URL + "/functions/v1/" + name, { method: "POST", body: body || {} }); }
+    invoke: function (name, body) { return request(PRAVAH_SUPABASE_URL + "/functions/v1/" + name, { method: "POST", body: body || {} }); },
+    // Changes the signed-in user's own password using their existing session.
+    // Deliberately session-based, not email-based: Pravah has no SMTP, so an
+    // emailed reset link would never arrive. An admin issues the first
+    // password; the user replaces it here on first sign-in.
+    changePassword: async function (newPassword) {
+      if (!newPassword || newPassword.length < 8) throw new Error("Password must be at least 8 characters.");
+      const response = await fetch(PRAVAH_SUPABASE_URL + "/auth/v1/user", {
+        method: "PUT",
+        headers: { apikey: PRAVAH_SUPABASE_ANON_KEY, Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword })
+      });
+      const data = await response.json().catch(function () { return {}; });
+      if (!response.ok) throw new Error(data.error_description || data.msg || data.message || "Could not change password.");
+      return data;
+    }
   };
 })(window);
