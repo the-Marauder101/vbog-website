@@ -1,0 +1,129 @@
+/* Pravah guided tour + help drawer.
+   Extends the incumbent paper/ink system: --radius is 3px, so nothing here
+   rounds. Overlays sit above the 200 used by slide-outs. */
+
+:root{
+  --guide-z: 400;
+  --guide-shadow: 0 18px 44px -12px rgba(21,20,22,.34), 0 2px 6px -1px rgba(21,20,22,.14);
+}
+
+/* ── Spotlight ─────────────────────────────────────────────────────
+   Four panels rather than one box-shadow ring: the cut-out stays crisp
+   at 3px and the dimmed area remains clickable-through-proof. */
+.guide-veil{position:fixed;inset:0;z-index:var(--guide-z);pointer-events:none}
+.guide-veil.is-on{pointer-events:auto}
+.guide-panel{position:fixed;background:rgba(21,20,22,.52);transition:all .32s cubic-bezier(.16,1,.3,1)}
+.guide-cut{
+  position:fixed;border:1px solid var(--orange,#ff4d00);border-radius:var(--radius,3px);
+  box-shadow:0 0 0 1px rgba(255,77,0,.28), 0 10px 30px -8px rgba(21,20,22,.4);
+  transition:all .32s cubic-bezier(.16,1,.3,1);pointer-events:none
+}
+
+/* ── Tooltip ───────────────────────────────────────────────────────── */
+.guide-tip{
+  position:fixed;z-index:calc(var(--guide-z) + 1);width:min(340px,calc(100vw - 32px));
+  background:var(--surface,#fffdf9);border:1px solid var(--line,#d8d1ca);
+  border-radius:var(--radius,3px);box-shadow:var(--guide-shadow);
+  padding:18px 18px 14px;
+  transition:opacity .2s ease-out, transform .32s cubic-bezier(.16,1,.3,1)
+}
+.guide-tip[hidden]{display:none}
+.guide-step{
+  font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted,#706b68);margin:0 0 7px
+}
+.guide-tip h3{margin:0 0 6px;font-size:16px;line-height:1.25;letter-spacing:-.015em;color:var(--ink,#151416)}
+.guide-tip p{margin:0;font-size:13.5px;line-height:1.55;color:var(--muted,#706b68);max-width:62ch}
+.guide-foot{display:flex;align-items:center;gap:8px;margin-top:16px}
+.guide-dots{display:flex;gap:5px;margin-right:auto}
+.guide-dot{width:5px;height:5px;border-radius:50%;background:var(--line,#d8d1ca);transition:background .2s}
+.guide-dot.on{background:var(--ink,#151416)}
+.guide-btn{
+  font:inherit;font-size:12.5px;font-weight:600;padding:7px 13px;cursor:pointer;
+  border:1px solid var(--line,#d8d1ca);border-radius:var(--radius,3px);
+  background:transparent;color:var(--ink,#151416);transition:border-color .15s, background .15s
+}
+.guide-btn:hover{border-color:var(--ink,#151416)}
+.guide-btn.primary{background:var(--ink,#151416);border-color:var(--ink,#151416);color:#fff}
+.guide-btn.primary:hover{background:#000}
+.guide-btn.ghost{border-color:transparent;color:var(--muted,#706b68);padding-left:4px;padding-right:4px}
+.guide-btn.ghost:hover{color:var(--ink,#151416);border-color:transparent;text-decoration:underline}
+.guide-btn:focus-visible,.guide-close:focus-visible{outline:2px solid var(--orange,#ff4d00);outline-offset:2px}
+
+/* ── Welcome card (step 0, centred, no anchor) ─────────────────────── */
+.guide-tip.is-welcome{
+  left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 32px));padding:26px 26px 20px
+}
+.guide-tip.is-welcome h3{font-size:22px;letter-spacing:-.03em}
+.guide-tip.is-welcome p{font-size:14px}
+.guide-role{
+  display:inline-block;margin:0 0 12px;padding:3px 8px;
+  border:1px solid var(--line,#d8d1ca);border-radius:var(--radius,3px);
+  font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted,#706b68)
+}
+
+/* ── Help drawer ───────────────────────────────────────────────────── */
+.help-scrim{position:fixed;inset:0;background:rgba(21,20,22,.4);z-index:calc(var(--guide-z) + 10)}
+.help-scrim[hidden]{display:none}
+.help-drawer{
+  position:fixed;top:0;right:0;height:100%;width:min(520px,100vw);
+  background:var(--surface,#fffdf9);border-left:1px solid var(--line,#d8d1ca);
+  box-shadow:-14px 0 40px -14px rgba(21,20,22,.3);
+  display:flex;flex-direction:column;
+  animation:help-in .34s cubic-bezier(.16,1,.3,1)
+}
+@keyframes help-in{from{transform:translateX(18px);opacity:.4}to{transform:none;opacity:1}}
+.help-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:22px 24px 16px;border-bottom:1px solid var(--line,#d8d1ca)
+}
+.help-head h2{margin:3px 0 0;font-size:19px;letter-spacing:-.02em}
+.help-close{
+  font:inherit;font-size:20px;line-height:1;background:none;border:0;cursor:pointer;
+  color:var(--muted,#706b68);padding:2px 6px
+}
+.help-close:hover{color:var(--ink,#151416)}
+.help-body{padding:8px 24px 28px;overflow-y:auto;flex:1}
+.help-search{
+  width:100%;margin:16px 0 4px;padding:9px 11px;font:inherit;font-size:13px;
+  background:var(--paper,#f5f2ee);border:1px solid var(--line,#d8d1ca);
+  border-radius:var(--radius,3px);color:var(--ink,#151416)
+}
+.help-search::placeholder{color:var(--muted,#706b68)}
+.help-group{margin-top:22px}
+.help-group > h3{
+  font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--orange,#ff4d00);margin:0 0 8px
+}
+.help-q{border-top:1px solid var(--line,#d8d1ca)}
+.help-q > summary{
+  cursor:pointer;padding:11px 0;font-size:13.5px;font-weight:600;color:var(--ink,#151416);
+  list-style:none;display:flex;align-items:baseline;gap:9px
+}
+.help-q > summary::-webkit-details-marker{display:none}
+.help-q > summary::before{content:'+';color:var(--muted,#706b68);font-weight:400;flex:0 0 9px}
+.help-q[open] > summary::before{content:'–'}
+.help-q > summary:hover{color:var(--orange,#ff4d00)}
+.help-q > div{padding:0 0 13px 18px;font-size:13px;line-height:1.6;color:var(--muted,#706b68)}
+.help-q > div p{margin:0 0 8px}
+.help-q > div p:last-child{margin:0}
+.help-q code{
+  font-family:"DM Mono",monospace;font-size:12px;
+  background:var(--paper,#f5f2ee);padding:1px 4px;border-radius:var(--radius,3px)
+}
+.help-empty{padding:20px 0;font-size:13px;color:var(--muted,#706b68)}
+.help-foot{
+  border-top:1px solid var(--line,#d8d1ca);padding:14px 24px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap
+}
+.help-foot small{color:var(--muted,#706b68);font-size:12px;margin-right:auto}
+
+@media (max-width:640px){
+  .guide-tip{width:calc(100vw - 24px)}
+  .help-drawer{width:100vw;border-left:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .guide-panel,.guide-cut,.guide-tip{transition:none}
+  .help-drawer{animation:none}
+}
