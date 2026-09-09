@@ -2492,6 +2492,98 @@ title and nothing else, and `test/apply.js` asserts both halves: Get Closers on
 the open-link journey, V-BOG on a sent link, and the same firm named in both
 notices.
 
+### 7au. A requirement fit from the interview, beside the one from the test
+
+Until sql/49, a candidate could only be matched to a requirement if they had sat
+the questionnaire. On a business that runs R2s that is the wrong constraint, and
+the live data said so plainly: of the five submitted ASK scorecards, **not one
+belonged to a candidate with a questionnaire profile.** Five people interviewed
+for an hour each, scored against 168 written anchors, and the console could say
+nothing about which of fourteen open roles they suited.
+
+So each role now carries up to three numbers, and which of them are present is
+itself information:
+
+| | what it is |
+|---|---|
+| **Test** | the §9.4 composite from the questionnaire — the full reading |
+| **R2** | the same §9.2 weighted arithmetic run on the interview's evidence |
+| **Best** | the level both readings support, with a verdict |
+
+**ASK still does not enter the match score.** `compute_matches()`,
+`matches.composite` and `candidate_profile.scores` mean exactly what they meant
+before — §7ae, and `test/ask.js` still asserts the bytes either side of a submit.
+The interview fit is a parallel number with its own name that is never written
+into `matches` and never averaged into anything.
+
+**Why the two numbers can be compared at all.** Not because both end in a percent
+sign. Because both are, in their construction, *the proportion of the attainable
+maximum on that trait* — the questionnaire via `(raw + 4) / 12 × 100` (sql/04),
+ASK via `points / (3 × questions asked) × 100` (sql/40). Same shape of quantity,
+arrived at by completely different means. That is what makes it a comparison, and
+also what keeps it from being an equivalence.
+
+**The half the interview cannot see, stated rather than papered over.** §9.4 is
+`(0.6 × Quality + 0.4 × Fit)`, and Fit is MOT and STY. `ask_dimension_map` maps no
+ASK attribute onto either, deliberately (sql/36): the interview does not ask what
+ticket band somebody's instincts are tuned to. So **there is no such thing as an
+ASK composite**, and none is invented — not by borrowing the questionnaire's fit
+half, and not by renormalising 0.6 up to 1.0 and hoping nobody checks. The
+interview number is the quality half, it is labelled that everywhere it appears,
+and it is set against `matches.quality_score` so the two figures side by side are
+the same quantity from different evidence.
+
+**On "best fit", which is a decision and so is stated.** When both readings exist
+they will not agree, and something has to go in the column the roles are ordered
+by. The higher of the two flatters every candidate and turns two instruments into
+a search for whichever liked them best. The mean is the one thing §7ae exists to
+forbid. So it is **the lower of the two — the level both readings support**: if
+the test says 74 and the interview says 58, what is corroborated is 58, and the
+16 points are an open question about the candidate rather than a number to average
+away. Conservative on purpose, one `least()` to change, and never the whole answer
+on screen — both readings, the gap, the coverage and the verdict are all shown,
+because R3 is that the system ranks and explains and never decides.
+
+**Coverage, because the denominator moves.** An R1 scores 8 questions and is
+silent on whole dimensions; a partial R2 is the same problem differently shaped.
+The formula's denominator is Σw over the dimensions the scorecard could actually
+see, so a partial reading is a percentage of what it measured rather than a
+punishment for what it never asked. What that costs is comparability — 70% seen
+through a third of a role's weight is not the claim 70% through all of it is — so
+`coverage` travels with every interview fit and sits next to the number on screen.
+
+> **An absent measurement is not a zero and not a bad score.** It leaves both
+> halves of the fraction and is named. A real zero stays a zero at full coverage.
+> `test/ask.js` asserts both directions, because this is the kind of distinction
+> that reads correctly and computes wrongly.
+
+#### One definition of §9.2, and how the proof went wrong first
+
+The quality formula now lives in exactly one place, `quality_from_levels()`, and
+`compute_matches()` was rewritten to call it. A second implementation of
+`Σ[w × min(cand/req, cap)] / Σw` would drift from the first — the lesson of sql/33
+and sql/37, not worth learning a third time.
+
+Rewriting the match engine on a live tool needs proof, so the migration recomputes
+**every existing match on real data** and requires the numbers back identical.
+The first draft of that assertion failed — and not because of the rewrite. It
+compared the whole before-array with the whole after-array, and the array grew
+from 250 rows to 252. Re-running the **old** engine does exactly the same thing:
+two candidates had sat the questionnaire since the last time anybody ran a match,
+so `matches` was two rows short of the profiles that existed.
+
+> **An assertion about values must not be written as a comparison of sets.** It
+> cannot tell "this row moved" from "this row is new", so it fails for a reason
+> that has nothing to do with the change and sends you looking in the wrong
+> function.
+
+Two findings for the price of one, because the second is worse than the first:
+**the shortlist can sit quietly behind the profiles.** Nothing re-matches a
+requirement when a new candidate is scored, so a candidate can be assessed and
+still be missing from every shortlist until something happens to recompute. sql/49
+catches it up as a side effect; that it needed catching up is its own bug and is
+not fixed by this file.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

@@ -232,7 +232,7 @@ main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
 
 /* A row you can open carries the streak on its leading edge on hover and
    focus: 3px of orange is the affordance, so nothing has to move. */
-.req, .cand {
+.req, .cand, .fitrow {
   position: relative;
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -240,7 +240,7 @@ main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
   text-decoration: none; color: inherit;
   transition: border-color 0.16s ease, background 0.16s ease;
 }
-.req::before, .cand::before {
+.req::before, .cand::before, .fitrow::before {
   content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px;
   width: 3px; background: transparent;
   border-radius: var(--radius) 0 0 var(--radius);
@@ -266,6 +266,47 @@ main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
 }
 .req .meta { color: var(--muted); grid-column: 1; }
 .req .figures { grid-row: 1 / span 2; grid-column: 2; text-align: right; }
+
+/* A role carrying up to three readings: the questionnaire's match, the
+   interview's quality-only fit, and the level both of them support. Three
+   figures rather than one, because a single number here would have to choose
+   between two instruments and hide that it had. */
+.fitrow {
+  display: grid; gap: 6px 20px; align-items: baseline;
+  grid-template-columns: 1fr auto;
+  padding: 16px 20px 16px 22px;
+}
+@media (hover: hover) {
+  .fitrow:hover { border-color: var(--line-2); }
+  .fitrow:hover::before { background: var(--streak); }
+  .fitrow:hover .title a { text-decoration: underline;
+    text-decoration-thickness: 1px; text-underline-offset: 3px; }
+}
+.fitrow:focus-within { border-color: var(--line-2); }
+.fitrow:focus-within::before { background: var(--streak); }
+.fitrow .title {
+  font-family: var(--display); font-weight: 900; font-size: 17px;
+  letter-spacing: -0.028em; color: var(--ink);
+}
+.fitrow .meta { color: var(--muted); grid-column: 1; }
+.fitcells {
+  grid-row: 1 / span 2; grid-column: 2;
+  display: flex; gap: 22px; align-items: flex-start;
+}
+.fitcell { display: flex; flex-direction: column; text-align: right; min-width: 62px; }
+.fitnum { display: block; white-space: nowrap; }
+.fitcell .figure { font-size: 24px; }
+.fitcell .figure-unit { margin-left: 1px; }
+/* The label under the number, not beside it: at three columns the unit and the
+   label compete for the same line and the number stops being scannable. */
+.fitcell .mono { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+/* Below the readings the row would otherwise be a horizontal scroll on a phone,
+   so the figures drop under the title instead. */
+@media (max-width: 680px) {
+  .fitrow { grid-template-columns: 1fr; }
+  .fitcells { grid-row: auto; grid-column: 1; justify-content: flex-start; gap: 18px; }
+  .fitcell { text-align: left; }
+}
 
 /* Rule 1: a reading, not a score. Mono and tabular, so the number looks
    measured rather than awarded. */
