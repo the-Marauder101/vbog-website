@@ -312,6 +312,131 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         Array.isArray(golden.body) && golden.body.filter(g => g.passed).length === 19,
         `${(golden.body || []).filter(g => g.passed).length}/${(golden.body || []).length}`);
 
+  // ══ 7b. A REQUIREMENT FIT FROM THE INTERVIEW, BESIDE THE ONE FROM THE TEST ═
+  //
+  // `target` is a scored candidate and has just been given a submitted R2, so
+  // this is the one place in the suite where both readings exist for one person
+  // and the "best fit" rule can actually be exercised rather than described.
+  //
+  // The rule under test is deliberately narrow: the combined figure is the LOWER
+  // of the two, the level both readings support. Asserting that it is not the
+  // mean and not the higher is the point — those are the two ways this could
+  // quietly become a number that flatters a candidate or averages away the
+  // disagreement, and neither would look wrong on screen.
+  const fit = await rpc(p, "get_ask_fit", { p_candidate_id: target.id });
+  check("the candidate page can ask for a fit from both readings",
+        fit.status === 200 && Array.isArray(fit.body && fit.body.rows) && fit.body.rows.length > 0,
+        `status ${fit.status}, ${((fit.body || {}).rows || []).length} rows`);
+
+  const F = (fit.body || {}).rows || [];
+  const both = F.filter(r => r.test_quality_pct != null && r.r2_quality_pct != null);
+  check("the interview produces a fit against every open role, not just one",
+        F.length > 0 && F.every(r => r.r2_quality_pct != null),
+        `${F.filter(r => r.r2_quality_pct != null).length} of ${F.length} roles carry an R2 fit`);
+  check("and both readings land on the same roles for a candidate who has both",
+        both.length === F.length, `${both.length} of ${F.length}`);
+
+  check("THE COMBINED FIGURE IS THE LOWER OF THE TWO, NOT THE MEAN AND NOT THE HIGHER",
+        both.length > 0 && both.every(r =>
+          r.combined_pct === Math.min(r.test_quality_pct, r.r2_quality_pct)),
+        JSON.stringify(both.slice(0, 2).map(r =>
+          ({ t: r.test_quality_pct, r2: r.r2_quality_pct, best: r.combined_pct }))));
+  // Belt and braces: on a row where the two differ, the mean and the max are
+  // both wrong answers, and this says so explicitly rather than trusting the
+  // min() above to have been the thing that produced the match.
+  const differing = both.filter(r => r.test_quality_pct !== r.r2_quality_pct);
+  check("and where they differ it is neither an average nor the flattering one",
+        differing.length === 0 || differing.every(r =>
+          r.combined_pct !== Math.max(r.test_quality_pct, r.r2_quality_pct) &&
+          r.combined_pct !== (r.test_quality_pct + r.r2_quality_pct) / 2),
+        `${differing.length} rows where the readings differ`);
+
+  // Compared with a tolerance, not for equality. Postgres computes the gap in
+  // `numeric`, where 95.4 − 83.3 is exactly 12.1; JavaScript computes it in
+  // binary floating point, where it is 12.099999999999994. The first draft of
+  // this assertion demanded they match exactly and went red on correct output —
+  // a test failing on its own arithmetic rather than on the code's.
+  check("the gap is reported rather than resolved",
+        both.every(r => Math.abs(r.gap - Math.abs(r.test_quality_pct - r.r2_quality_pct)) < 0.05),
+        JSON.stringify(both.slice(0, 1).map(r =>
+          ({ gap: r.gap, t: r.test_quality_pct, r2: r.r2_quality_pct }))));
+  check("and the verdict follows the stated threshold, not a hunch",
+        both.every(r => r.verdict ===
+          (r.gap >= fit.body.threshold ? "contested" : "corroborated")),
+        `threshold ${fit.body.threshold}`);
+  check("which is labelled provisional wherever the number appears",
+        /[Pp]rovisional/.test(fit.body.threshold_note || ""),
+        (fit.body.threshold_note || "").slice(0, 60));
+
+  // The interview cannot see MOT or STY, so there is no interview composite. If
+  // one ever appears in this payload, somebody has renormalised 0.6 up to 1.0.
+  check("THE INTERVIEW READING IS THE QUALITY HALF AND SAYS SO",
+        /quality half/.test(fit.body.r2_is_quality_only || "") &&
+        F.every(r => !("r2_composite_pct" in r) && !("r2_fit_pct" in r)),
+        (fit.body.r2_is_quality_only || "").slice(0, 60));
+  check("and it carries how much of the role's weighting it actually reached",
+        F.every(r => r.r2_coverage > 0 && r.r2_coverage <= 1),
+        JSON.stringify(F.slice(0, 1).map(r => r.r2_coverage)));
+
+  // ── An absent dimension is not a zero ────────────────────────────────────
+  // The whole coverage design turns on this distinction, and it is the kind of
+  // thing that reads correctly and computes wrongly. Checked against the shared
+  // §9.2 function directly, because that is where it would be got wrong.
+  const tp = (await rest(p, "requirements?select=target_profile_id&status=eq.open&limit=1"))[0];
+  const q = async (levels) => (await rpc(p, "quality_from_levels",
+    { p_target_profile_id: tp.target_profile_id, p_levels: levels })).body;
+  const ALL = { RES: 100, DRV: 100, DSC: 100, CLS_C: 100, CLS_F: 100, CCH: 100, INT: 100 };
+  const full = await q(ALL);
+  const part = await q({ RES: 100, DSC: 100, CLS_C: 100, CLS_F: 100, INT: 100 });
+  const zero = await q({ RES: 0, DRV: 0, DSC: 0, CLS_C: 0, CLS_F: 0, CCH: 0, INT: 0 });
+  const none = await q({});
+  check("a complete set of dimensions reads as full coverage",
+        Number(full.coverage) === 1, `coverage ${full.coverage}`);
+  check("A DIMENSION NOBODY ASKED ABOUT LOWERS COVERAGE INSTEAD OF SCORING ZERO",
+        Number(part.coverage) < 1 && (part.dimensions_missing || []).length === 2 &&
+        Number(part.quality) > 0,
+        `coverage ${part.coverage}, missing ${JSON.stringify(part.dimensions_missing)}`);
+  check("AND A REAL ZERO IS STILL A ZERO, MEASURED AT FULL COVERAGE",
+        Number(zero.quality) === 0 && Number(zero.coverage) === 1,
+        `quality ${zero.quality}, coverage ${zero.coverage}`);
+  check("nothing measured produces no number rather than a flattering one",
+        full.quality != null && none.quality === null,
+        `empty quality ${JSON.stringify(none.quality)}`);
+
+  // ── The requirement direction ────────────────────────────────────────────
+  const two = await rest(p,
+    `v_two_readings?select=candidate_id,verdict,r2_quality_pct,test_quality_pct,both_support_pct&candidate_id=eq.${target.id}`);
+  check("the same two readings are available per requirement, not just per candidate",
+        two.length > 0 && two.every(r => r.r2_quality_pct != null),
+        `${two.length} rows`);
+  check("and the two directions agree with each other",
+        two.every(r => F.some(f => Number(f.r2_quality_pct) === Number(r.r2_quality_pct))),
+        JSON.stringify(two.slice(0, 1)));
+
+  // ── On the page ──────────────────────────────────────────────────────────
+  // Reached the way a recruiter reaches it — clicking the queue row — because
+  // there is no hash route to a candidate and a `goto` to one renders the queue.
+  await p.goto(`${B}/nikash.html`, { waitUntil: "domcontentloaded" });
+  await p.waitForSelector("#v-reqs:not([hidden])", { timeout: 20000 });
+  await p.click("#nav-queue");
+  await p.waitForSelector(`#queue-list [data-cand="${target.id}"]`, { timeout: 20000 });
+  await p.click(`#queue-list [data-cand="${target.id}"]`);
+  await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
+  await p.waitForSelector(".fitrow", { timeout: 20000 });
+  const fitTxt = (await p.textContent("#v-cand")).replace(/\s+/g, " ");
+  check("the candidate page shows the fit region with three readings per role",
+        /Fit against the open roles/.test(fitTxt) &&
+        (await p.$$(".fitrow")).length === F.length &&
+        (await p.$$(".fitrow .fitcell")).length === F.length * 3,
+        `${(await p.$$(".fitrow")).length} rows, ${(await p.$$(".fitrow .fitcell")).length} cells`);
+  check("it names each reading rather than showing three bare numbers",
+        /TEST/i.test(fitTxt) && /R2/.test(fitTxt) && /BEST/i.test(fitTxt), "");
+  check("it says the interview reading is the quality half only",
+        /quality half only/.test(fitTxt) || /quality only/.test(fitTxt),
+        fitTxt.slice(0, 0));
+  check("and it states on the page that the weights are not learned from outcomes",
+        /expert-set, not learned from outcomes/.test(fitTxt), "");
+
   // ══ 8. A LATE REFERENCE ANSWER ═══════════════════════════════════════════
   const refQ = bankQs.find(q => q.ref);
   const late = await rpc(p, "score_ask_reference", { p_scorecard: card, p_question: refQ.id, p_score: 3 });
@@ -791,6 +916,11 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
              start: await g("start_ask", { p_candidate_id: "00000000-0000-0000-0000-000000000000", p_round: "r2" }),
              staff: await g("list_staff", {}),
              add: await g("add_staff", { p_email: "a@b.com", p_name: "A", p_role: "admin" }),
+             fit: await g("get_ask_fit", { p_candidate_id: "00000000-0000-0000-0000-000000000000" }),
+             levels: await g("ask_levels", { p_scorecard: "00000000-0000-0000-0000-000000000000" }),
+             qual: await g("quality_from_levels", { p_target_profile_id: "00000000-0000-0000-0000-000000000000", p_levels: {} }),
+             view: (await fetch(`${SUPABASE_URL}/rest/v1/v_two_readings?select=full_name`,
+               { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } })).status,
              table: { s: tbl.status, n: ((await tbl.json()) || []).length } };
   });
   // Read the STATUS. A refused request returns an error object, so asking it for
@@ -803,6 +933,17 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         refused(anon.start.s, anon.start.t) && refused(anon.staff.s, anon.staff.t) &&
         refused(anon.add.s, anon.add.t),
         JSON.stringify({ start: anon.start.s, list: anon.staff.s, add: anon.add.s }));
+  // The fit is derived from interview scores, so it is a score-bearing surface
+  // and belongs behind the same door as the scorecard it reads.
+  check("the requirement fits are not reachable without a session",
+        refused(anon.fit.s, anon.fit.t) && refused(anon.levels.s, anon.levels.t) &&
+        anon.view >= 400,
+        JSON.stringify({ fit: anon.fit.s, levels: anon.levels.s, view: anon.view }));
+  // quality_from_levels takes its numbers from the caller, so it leaks no
+  // candidate — but it does expose a client's weights and required levels, which
+  // is a client's commercial detail and not anon's business either.
+  check("and neither is the shared quality formula, which carries client weights",
+        anon.qual.s >= 400, `${anon.qual.s} ${anon.qual.t.slice(0, 80)}`);
 
   const audits = await p.evaluate(async () => {
     const g = async (v) => (await (await fetch(

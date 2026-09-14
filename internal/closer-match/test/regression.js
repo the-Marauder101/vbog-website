@@ -95,8 +95,11 @@ suite("REGRESSION", 8099, async ({ p, base, E, P, check, errs }) => {
   // change to get_candidate_detail or to the render order actually trips.
   const regions = await p.evaluate(() =>
     [...document.querySelectorAll("#cd-body .region-head h2")].map(h => h.textContent.trim()));
+  // "Against the open roles" became "Fit against the open roles" in sql/49, when
+  // the region grew from one reading per role to up to three: the questionnaire's
+  // match, the interview's quality-only fit, and the level both of them support.
   check("the candidate page has all its regions",
-        ["Against the open roles", "How they answered", "What we asked them",
+        ["Fit against the open roles", "How they answered", "What we asked them",
          "The nine, against what each role asks for", "ASK interview"]
           .every(r => regions.some(x => x === r)),
         regions.join(" | "));

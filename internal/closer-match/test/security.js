@@ -146,6 +146,8 @@ suite("SECURITY SUITE", 8104, async ({ p, base, E, P, check, errs }) => {
     my_client_id: "a guard used inside the client-scoped RLS policies",
     recompute_ask_totals: "the shared arithmetic behind submit_ask and score_ask_reference",
     get_ask_overlap: "reached through get_candidate_detail's payload, not called directly",
+    get_ask_fit: "reached through get_candidate_detail's payload, like get_ask_overlap",
+    ask_levels: "turns one scorecard into dimension levels for get_ask_fit and v_two_readings",
     purge_candidate: "called by purge_expired_candidates and by the delete control's RPC",
     purge_expired_candidates: "the retention sweep — run on a schedule, not from a screen",
     import_ask_json: "a one-off importer for scorecards from the standalone tool",

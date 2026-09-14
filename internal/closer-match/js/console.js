@@ -1580,29 +1580,143 @@ function headlineHtml(d, c) {
     </div>
   </div>
 
-  ${roles.length ? `
-    <div class="region">
-      <div class="region-head"><h2>Against the open roles</h2>
-        <span class="count mono">${roles.length}</span></div>
-      ${roles.map((r) => `
-        <div class="req">
-          <span class="title"><a href="#req-${esc(r.requirement_id)}"
-            data-cdreq="${esc(r.requirement_id)}">${esc(r.business_name)} — ${esc(r.title)}</a></span>
-          <span class="meta small">rank ${r.rank} of ${r.of} · quality ${r.quality_pct}% ·
-            fit ${r.fit_pct}% · confidence ${esc(r.confidence || "—")}
-            ${(r.hard_filter_fails || []).length ? ` · <strong>outside the stated filters</strong>:
-              ${(r.hard_filter_fails || []).map(esc).join(" · ")}` : ""}
-            ${(r.hard_filter_unknown || []).length ? ` · <strong>cannot check</strong>:
-              ${(r.hard_filter_unknown || []).map(esc).join(" · ")}` : ""}</span>
-          <span class="figures"><span class="figure">${r.composite_pct}</span
-            ><span class="figure-unit">%</span><br><span class="mono muted">match</span></span>
-        </div>`).join("")}
-    </div>`
-  : d.scored
-    ? `<div class="notice"><span class="label">No open role to match against</span>
-        They are scored, but every requirement is closed or has no target profile,
-        so there is nothing to rank them for.</div>`
-    : ""}`;
+  ${fitsHtml(d, c)}`;
+}
+
+// ── Both readings, against every open role ────────────────────────────────
+//
+// This region used to be "Against the open roles" and could only speak for
+// candidates who had sat the questionnaire. That was the wrong constraint on a
+// business that runs R2s: somebody interviewed for an hour and scored against 168
+// written anchors had a page that said nothing about which role they suited.
+//
+// So each role now carries up to three numbers, and which ones are present is
+// itself the information:
+//
+//   · Test    — the §9.4 composite from the questionnaire. The full reading.
+//   · R2      — the same §9.2 quality arithmetic run on the interview's evidence.
+//               Quality half ONLY: the interview scores nothing onto deal motion
+//               or interpersonal style, so there is no interview composite and
+//               none is invented here. It is shown against the test's quality
+//               half, which is the number it is comparable with.
+//   · Best    — the level both readings support, i.e. the lower of the two, with
+//               a verdict saying whether they corroborate or contest each other.
+//
+// The gap is never averaged away. Where the two disagree the row says so and
+// shows both, because that disagreement is the most informative thing two
+// independent instruments produce — and R3 is that the system ranks and explains,
+// it never decides.
+function fitsHtml(d, c) {
+  const fits = (d.fits && d.fits.rows) || [];
+  const roles = d.roles || [];
+  // Rank is a property of the questionnaire's shortlist, so it comes from
+  // v_console_clean via `roles` rather than being re-derived here.
+  const rankOf = {};
+  for (const r of roles) rankOf[r.requirement_id] = r;
+
+  if (!fits.length) {
+    return d.scored
+      ? `<div class="notice"><span class="label">No open role to match against</span>
+          They are scored, but every requirement is closed or has no target profile,
+          so there is nothing to rank them for.</div>`
+      : "";
+  }
+
+  // Anything with a reading first, ordered by the level both readings support;
+  // roles neither instrument can speak to sink to the bottom rather than being
+  // hidden, because "we cannot say" is an answer a recruiter needs to see.
+  const rows = fits.slice().sort((a, b) => {
+    const av = a.combined_pct, bv = b.combined_pct;
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return bv - av;
+  });
+
+  const withReading = rows.filter((r) => r.combined_pct != null).length;
+  const anyR2 = rows.some((r) => r.r2_quality_pct != null);
+
+  const verdictChip = (r) => {
+    if (r.verdict === "corroborated") {
+      return `<span class="chip strong">both readings agree</span>`;
+    }
+    if (r.verdict === "contested") {
+      return `<span class="chip warn">readings disagree by ${r.gap} points</span>`;
+    }
+    if (r.verdict === "interview only") {
+      return `<span class="chip">interview only — no questionnaire</span>`;
+    }
+    if (r.verdict === "test only") {
+      return `<span class="chip">questionnaire only — no interview</span>`;
+    }
+    return `<span class="chip">no reading</span>`;
+  };
+
+  // The number and its unit have to share a line — in a flex column they would
+  // each take one, and "90.8" over "%" reads as two facts.
+  const cell = (label, value, sub) => `
+    <span class="fitcell">
+      <span class="fitnum"><span class="figure">${value == null ? "—" : value}</span>${
+        value == null ? "" : `<span class="figure-unit">%</span>`}</span>
+      <span class="mono muted">${label}</span>
+      ${sub ? `<span class="small muted">${sub}</span>` : ""}
+    </span>`;
+
+  return `
+  <div class="region">
+    <div class="region-head"><h2>Fit against the open roles</h2>
+      <span class="count mono">${withReading} of ${rows.length}</span></div>
+
+    ${rows.map((r) => {
+      const rk = rankOf[r.requirement_id];
+      return `
+      <div class="fitrow">
+        <span class="title"><a href="#req-${esc(r.requirement_id)}"
+          data-cdreq="${esc(r.requirement_id)}">${esc(r.business_name)} — ${esc(r.title)}</a></span>
+        <span class="meta small">
+          ${verdictChip(r)}
+          ${rk ? ` rank ${rk.rank} of ${rk.of} on the questionnaire ·` : ""}
+          ${r.r2_coverage != null
+            ? ` the interview reached ${Math.round(r.r2_coverage * 100)}% of this
+                role's weighting${
+                  (r.r2_dimensions_missing || []).length
+                    ? `, silent on ${(r.r2_dimensions_missing || []).map(esc).join(", ")}`
+                    : ""} ·`
+            : ""}
+          ${(r.hard_filter_fails || []).length ? ` <strong>outside the stated
+            filters</strong>: ${(r.hard_filter_fails || []).map(esc).join(" · ")} ·` : ""}
+          ${(r.hard_filter_unknown || []).length ? ` <strong>cannot check</strong>:
+            ${(r.hard_filter_unknown || []).map(esc).join(" · ")} ·` : ""}
+        </span>
+        <span class="fitcells">
+          ${cell("test", r.composite_pct,
+            r.test_quality_pct != null ? `quality ${r.test_quality_pct}%` : "")}
+          ${cell(r.r2_round === "r1" ? "R1" : "R2", r.r2_quality_pct,
+            r.r2_quality_pct != null ? "quality only" : "not interviewed")}
+          ${cell("best", r.combined_pct, "both support")}
+        </span>
+      </div>`;
+    }).join("")}
+
+    <p class="small muted" style="margin:14px 0 0">
+      <strong>Test</strong> is the full match: 60% quality against the required
+      levels, 40% fit against deal motion and interpersonal style.
+      <strong>R2</strong> runs the same weighted arithmetic on the interview's
+      evidence, but the interview asks nothing about deal motion or interpersonal
+      style, so it is the quality half only — compare it with the test's quality
+      figure underneath, not with the test's headline.
+      <strong>Best</strong> is the lower of the two, the level both readings
+      support; where they disagree that is flagged rather than averaged.
+      A quality figure can pass 100%: it measures distance from what the role
+      asks for, not a mark out of a hundred, so 101% means slightly above the
+      required level and 115% is as far above as it is allowed to count.
+      ${anyR2 && d.fits.threshold != null
+        ? `Called disagreement above ${d.fits.threshold} points.
+           ${esc(d.fits.threshold_note || "")}`
+        : ""}
+      Weights are expert-set, not learned from outcomes.
+    </p>
+  </div>`;
 }
 
 function askHtml(d, c) {
