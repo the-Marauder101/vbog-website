@@ -296,6 +296,17 @@ main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
 .fitcell { display: flex; flex-direction: column; text-align: right; min-width: 62px; }
 .fitnum { display: block; white-space: nowrap; }
 .fitcell .figure { font-size: 24px; }
+/* The single point. Three numbers on a row with equal weight is three headlines
+   and no answer, so the one that is actually being ranked on is larger and the
+   workings sit back. */
+.fitcell.lead { min-width: 86px; }
+.fitcell.lead .figure { font-size: 31px; }
+.fitcell.lead .mono { color: var(--ink); font-weight: 600; }
+.fitcell:not(.lead) .figure { color: var(--muted); }
+
+/* The candidate's own headline, above the three readings it is made from. */
+.panel.onepoint { margin-bottom: 10px; }
+.reading .figure.big { font-size: 42px; }
 .fitcell .figure-unit { margin-left: 1px; }
 /* The label under the number, not beside it: at three columns the unit and the
    label compete for the same line and the number stops being scannable. */

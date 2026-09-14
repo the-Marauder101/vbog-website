@@ -70,7 +70,18 @@ suite("ASSESS SUITE", 8101, async ({ p, base, E, P, check, errs }) => {
 
   await p.click("#nav-queue");
   await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
-  await p.waitForTimeout(1500);
+  // Wait for the ROW, not for a guess at how long the queue takes to draw.
+  //
+  // This was a fixed 1500ms sleep followed by a click, and it is what made this
+  // suite fail intermittently at the next assertion — always the same one, which
+  // read like a real defect rather than a race. Under load the queue needs longer
+  // than a second and a half to render a hundred candidates, the click lands on
+  // nothing, and the suite aborts.
+  //
+  // > A sleep standing in for a wait does not remove a race, it hides it until
+  // > the machine is busy — which is exactly when a test run is least convenient
+  // > to debug.
+  await p.waitForSelector(`#queue-list [data-cand="${candId}"]`, { timeout: 20000 });
   await p.click(`#queue-list [data-cand="${candId}"]`);
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   await p.waitForTimeout(900);
@@ -121,7 +132,8 @@ suite("ASSESS SUITE", 8101, async ({ p, base, E, P, check, errs }) => {
 
   await p.click("#nav-queue");
   await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
-  await p.waitForTimeout(1500);
+  // Same race as above: wait for the row rather than sleeping and hoping.
+  await p.waitForSelector(`#queue-list [data-cand="${candId}"]`, { timeout: 20000 });
   await p.click(`#queue-list [data-cand="${candId}"]`);
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   await p.waitForTimeout(900);

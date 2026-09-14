@@ -2683,6 +2683,89 @@ index into the same flat list. The one shared step that had to be extracted is
 both the arrows and the tabs change what is displayed, so a second copy of that
 save rule is exactly where a lost note would come from.
 
+### 7ay. One number, and the reason the three readings could be equated at all
+
+Three readings sat beside each other with a line underneath saying they were
+deliberately not combined. That was right while they were incommensurable. They
+are not, and the reason is what makes the single number honest rather than an
+average of three things that mean different things.
+
+**R1 and R2 are not two readings.** They are one instrument at two scopes — same
+bank, same anchors, same 0–3 scale, 8 questions against 37. So they do not need
+equating, they need **merging**: one answer set per candidate, the later answer
+winning where both rounds asked the same question, and a coverage figure saying
+how much of the bank was reached. Before this, `get_ask_fit` read only the most
+recent scorecard, so a candidate with an R1 from a colleague and an R2 from later
+had the R1 silently discarded — eight scored answers thrown away because they
+arrived on a different row.
+
+**The questionnaire is a different instrument on the same kind of scale**, for the
+reason §7au established: both produce *the proportion of the attainable maximum on
+that trait*.
+
+So the three meet **per dimension**, and §9.4 runs **once** on the result.
+
+> **Merging per dimension rather than averaging composites is what removes the
+> assumption.** Averaging an interview composite with a test composite would carry
+> §7av's stretch — "assume they are on target for deal motion and interpersonal
+> style" — into a candidate whose questionnaire had *measured* both. It would
+> discard a real number in favour of an assumption, inside an average, invisibly.
+
+Merging first fixes that: MOT and STY come from the questionnaire when there is
+one, so the single point runs on the real formula with the real fit half, and the
+stretch survives only as the fallback for a candidate interviewed and never
+tested. `one_basis` says which happened, on every row, on the screen.
+
+**When both instruments speak, the one with more evidence counts more.** The
+combination is an evidence-weighted mean, each reading weighted by the number of
+items actually behind it for that dimension — read from the bank at runtime, not
+typed once:
+
+| | questionnaire | interview | split |
+|---|---|---|---|
+| DSC | 5 items | 6 questions | 45 / 55 |
+| INT | 4 items | 2 questions | 67 / 33 |
+| MOT | 5 items | none | questionnaire alone |
+
+An 8-question R1 therefore moves the number a little and a 37-question R2 moves it
+a lot, with nothing anywhere that had to be told so. *A weight nobody derived will
+end up wherever it was first typed;* this one is derived from the evidence, so it
+cannot drift from it and needs no tuning when the bank changes.
+
+**What is lost, said plainly.** Disagreement. §7ae's argument — that two readings
+are worth more apart than averaged — has not become wrong, and a single point does
+average them. So the gap is **demoted, not destroyed**: both composites, both
+quality halves, the per-dimension gap and the corroborated/contested verdict are
+all still returned and still shown under the single number. One point to rank on,
+the workings underneath. What is refused is producing the single point while
+hiding that two instruments disagreed about the person it describes.
+
+§9.3 also got its single definition (`fit_from_levels`) on the way, for the same
+reason §9.2 did in §7au: this file became its second caller.
+
+### 7az. A sleep standing in for a wait
+
+`test/assess.js` began failing intermittently, always at the same assertion, which
+read like a real defect. It was not. Two steps clicked a candidate row after a
+fixed 1500ms sleep, without ever waiting for that row to exist. Under load the
+queue needs longer than a second and a half to draw a hundred candidates, the
+click lands on nothing, and the suite aborts at the next assertion.
+
+Worth recording for two reasons. First the rule:
+
+> **A sleep standing in for a wait does not remove a race, it hides it until the
+> machine is busy** — which is exactly when a run is least convenient to debug.
+
+Second, the diagnosis went wrong first and the way it went wrong is the more
+useful half. The failure appeared right after `loadQueue()` was changed to refresh
+stale matches, so the refresh was the obvious suspect, and blocking a first paint
+on a recompute is a real defect regardless — it was found and fixed on its own
+merits. But the run *after* that fix failed identically, and the reason is that
+the fix was half-applied: the background-refresh function had been written and was
+not yet being called, so no refresh was running at all. A failure that survives
+the removal of its suspected cause has exonerated it. The sleep had been there all
+along.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
