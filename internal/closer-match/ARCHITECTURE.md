@@ -2584,6 +2584,105 @@ still be missing from every shortlist until something happens to recompute. sql/
 catches it up as a side effect; that it needed catching up is its own bug and is
 not fixed by this file.
 
+### 7av. The interview gets a composite, and the reasoning behind reversing §7au
+
+§7au refused the interview a composite: §9.4 is `(0.6 × Quality + 0.4 × Fit) ×
+confidence`, the interview measures nothing that reaches Fit, so the number was
+published as the quality half and compared against the test's quality half.
+
+That was the cautious reading of an honest problem and it had a real cost on a
+screen. The R2 column and the Test column were different quantities sitting an
+inch apart, and the one number a person actually wants — which role does this
+candidate suit best — was the one the table would not print.
+
+So the weight is renormalised: `r2_composite = quality × confidence`. The 0.6 is
+stretched to 1.0 over the evidence the interview has, with the fit term removed
+rather than guessed.
+
+**What that assumes, said here and again on the screen.** Removing the fit term is
+arithmetically identical to assuming the candidate sits exactly on target for deal
+motion and interpersonal style. That is the most generous assumption available, so
+where fit is genuinely poor the R2 composite reads HIGH — and it reads high
+precisely for the candidates the questionnaire exists to catch.
+
+The mitigation is not a disclaimer. It is that **the quality-versus-quality pair
+stays on the row**, and the agreement verdict is still computed from it. That pair
+is the same quantity measured two ways; composite-versus-composite is not, because
+one of them has had a term removed. The composite is for ranking; the quality pair
+is for trusting.
+
+> **"Stretch to 1.0" has a second reading that would look perfectly plausible on
+> screen** — dividing the quality half by 0.6, i.e. multiplying by 1.667. It is a
+> different number and it inflates every interviewed candidate. Both `sql/50` and
+> `test/ask.js` assert the composite can never come out above its own quality
+> reading, which is only true of the right one.
+
+### 7aw. A match is a function of three timestamped inputs
+
+§7au found by accident that the shortlist can sit behind the profiles, and said
+plainly it had not fixed the cause. This is the fix.
+
+A `matches` row is a pure function of exactly three things, every one timestamped:
+`candidate_profile.computed_at`, `client_target_profile.computed_at`, and
+`requirements.opened_at`. So staleness is not a matter of judgement — a row is
+stale if it was computed before any of its inputs, and a pair with no row at all
+is the same failure with the row missing.
+
+`v_match_staleness_audit` states both, with the reason. `refresh_stale_matches()`
+recomputes exactly what the audit names and **does nothing when the audit is
+empty**, which is what makes it safe to call from `loadQueue()` — so a stale
+number cannot reach a screen, rather than being caught later by somebody noticing.
+
+`finish_assessment` already re-matched every open role, and that is why this was
+hard to see: the hole was everywhere else. A target profile recomputed for a
+requirement that already existed, a re-key producing new profiles, a requirement
+opened after the candidates were scored — none of those run `finish_assessment`.
+
+> **Do not fix a stale cache by remembering to refresh it.** Derive whether it is
+> stale from the inputs it was built from, make that derivation a view anybody can
+> read, and let the fix be "recompute what the view names".
+
+The audit is provoked in a rolled-back subtransaction in `sql/50` and again by
+ageing a real row in `test/ask.js`, because an audit nobody has watched go red is
+a query rather than a check.
+
+### 7ax. Questions to be said, not read; and an interview that is not a queue
+
+**The prompts were rewritten, the anchors were not.** sql/35 said "the wording IS
+the instrument" and was right, but it is the **anchors** that do the measuring:
+"Names five distinct objections roughly as a buyer would say them, and pairs most
+of them with something specific they actually did" is what turns an answer into a
+2. The prompt's only job is to get the candidate talking about the right thing.
+
+So a prompt can be tightened without changing what is measured — provided it still
+asks for everything the anchors score. Which is the trap:
+
+> **A shorter question that drops a detail its anchors depend on is not a tidier
+> question, it is a broken one.** Trim "five" from `objection-4` and its 2-anchor
+> can never be reached; trim "what you said back" and the 0-anchor fires on
+> answers that deserved better.
+
+`sql/51` checks the mechanical half of that automatically: every numeral in the old
+prompt must survive into the new one, so "the next 14 days", "your next 60
+seconds", "3–5 minutes" and "the 20th … 40% … 10 days" cannot go missing while the
+sentence gets shorter. Sixteen prompts were tightened; the longest live question
+went from 142 characters to 110, the average to 83. `ask_scores` snapshots
+`question_text` at scoring time, so the scorecards already submitted keep the
+wording they were actually scored against.
+
+**And the interview stopped being a queue.** An attribute strip sits above the
+question: one tab per attribute, each carrying its own scored count, and clicking
+one lands on that attribute's first *unscored* question — resuming it rather than
+restarting it. The candidate volunteers a lost deal while you are three questions
+into discovery; the old options were to arrow forward six screens or ask it out of
+order and score it from memory afterwards, and memory is the one that loses.
+
+Nothing about scoring changed. Which question is on screen was always just an
+index into the same flat list. The one shared step that had to be extracted is
+`commitNote()` — the note box belongs to the question currently displayed, and
+both the arrows and the tabs change what is displayed, so a second copy of that
+save rule is exactly where a lost note would come from.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

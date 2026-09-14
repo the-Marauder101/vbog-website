@@ -231,6 +231,52 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   check("the four anchors are the only way to score",
         (await p.$$("#q-options .option")).length === 4, "");
 
+  // ── The attribute strip ──────────────────────────────────────────────────
+  // An interview follows the conversation, not the bank. The tabs are how you go
+  // where the candidate has just taken you, so the thing worth asserting is not
+  // that they render but that clicking one actually moves the interview.
+  const tabs = await p.$$("#q-tabs .attrtab");
+  // Every attribute that has a question a candidate is asked. The two reference
+  // questions have their own flow and their attributes still appear, because
+  // both also carry ordinary questions.
+  const attrsInFlow = new Set(r2.attributes
+    .filter(a => (a.questions || []).some(q => !q.is_reference))
+    .map(a => a.id));
+  check("every attribute is a tab you can jump to",
+        tabs.length === attrsInFlow.size,
+        `${tabs.length} tabs against ${attrsInFlow.size} attributes in the flow`);
+  check("and each one says how much of it is scored",
+        (await p.textContent("#q-tabs")).match(/\d+\/\d+/g || []).length === tabs.length,
+        (await p.textContent("#q-tabs")).replace(/\s+/g, " ").slice(0, 80));
+  check("the attribute you are on is the one marked current",
+        (await p.$$("#q-tabs .attrtab.current")).length === 1, "");
+
+  const beforeJump = await p.textContent("#q-prompt");
+  const lastTabId = await p.evaluate(() => {
+    const t = [...document.querySelectorAll("#q-tabs .attrtab")];
+    return t[t.length - 1].dataset.attr;
+  });
+  await p.click(`#q-tabs [data-attr="${lastTabId}"]`);
+  await p.waitForTimeout(400);
+  check("CLICKING A TAB MOVES THE INTERVIEW TO THAT ATTRIBUTE",
+        (await p.textContent("#q-prompt")) !== beforeJump &&
+        (await p.getAttribute(`#q-tabs [data-attr="${lastTabId}"]`, "class")).includes("current"),
+        `jumped to ${lastTabId}`);
+  check("and the question header agrees with the tab you pressed",
+        (await p.textContent("#q-where")).trim().length > 0 &&
+        (await p.evaluate(() => document.querySelector("#q-tabs .attrtab.current .t").textContent.trim()))
+          === (await p.evaluate(() => document.querySelector("#q-where strong").textContent.trim())),
+        "");
+
+  // Back to where we were, so the keyboard run below still starts at question 1
+  // and the "resumes at the first unanswered" assertion stays meaningful.
+  const firstTabId = await p.evaluate(() =>
+    document.querySelector("#q-tabs .attrtab").dataset.attr);
+  await p.click(`#q-tabs [data-attr="${firstTabId}"]`);
+  await p.waitForTimeout(400);
+  check("and pressing the first tab comes back to the start",
+        (await p.textContent("#q-prompt")) === beforeJump, "");
+
   // Answer the first six by keyboard, which is how it will actually be used.
   for (let i = 0; i < 6; i++) {
     await p.keyboard.press(String(i % 4));
@@ -336,19 +382,22 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   check("and both readings land on the same roles for a candidate who has both",
         both.length === F.length, `${both.length} of ${F.length}`);
 
+  // Ranked on composites since sql/50; the agreement verdict below still runs on
+  // the quality pair, which is the half that is genuinely like-for-like.
+  const bothComp = F.filter(r => r.composite_pct != null && r.r2_composite_pct != null);
   check("THE COMBINED FIGURE IS THE LOWER OF THE TWO, NOT THE MEAN AND NOT THE HIGHER",
-        both.length > 0 && both.every(r =>
-          r.combined_pct === Math.min(r.test_quality_pct, r.r2_quality_pct)),
-        JSON.stringify(both.slice(0, 2).map(r =>
-          ({ t: r.test_quality_pct, r2: r.r2_quality_pct, best: r.combined_pct }))));
+        bothComp.length > 0 && bothComp.every(r =>
+          r.combined_pct === Math.min(r.composite_pct, r.r2_composite_pct)),
+        JSON.stringify(bothComp.slice(0, 2).map(r =>
+          ({ t: r.composite_pct, r2: r.r2_composite_pct, best: r.combined_pct }))));
   // Belt and braces: on a row where the two differ, the mean and the max are
   // both wrong answers, and this says so explicitly rather than trusting the
   // min() above to have been the thing that produced the match.
-  const differing = both.filter(r => r.test_quality_pct !== r.r2_quality_pct);
+  const differing = bothComp.filter(r => r.composite_pct !== r.r2_composite_pct);
   check("and where they differ it is neither an average nor the flattering one",
         differing.length === 0 || differing.every(r =>
-          r.combined_pct !== Math.max(r.test_quality_pct, r.r2_quality_pct) &&
-          r.combined_pct !== (r.test_quality_pct + r.r2_quality_pct) / 2),
+          r.combined_pct !== Math.max(r.composite_pct, r.r2_composite_pct) &&
+          r.combined_pct !== (r.composite_pct + r.r2_composite_pct) / 2),
         `${differing.length} rows where the readings differ`);
 
   // Compared with a tolerance, not for equality. Postgres computes the gap in
@@ -368,12 +417,24 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         /[Pp]rovisional/.test(fit.body.threshold_note || ""),
         (fit.body.threshold_note || "").slice(0, 60));
 
-  // The interview cannot see MOT or STY, so there is no interview composite. If
-  // one ever appears in this payload, somebody has renormalised 0.6 up to 1.0.
-  check("THE INTERVIEW READING IS THE QUALITY HALF AND SAYS SO",
-        /quality half/.test(fit.body.r2_is_quality_only || "") &&
-        F.every(r => !("r2_composite_pct" in r) && !("r2_fit_pct" in r)),
-        (fit.body.r2_is_quality_only || "").slice(0, 60));
+  // sql/50 stretched the quality weight from 0.6 to 1.0 so the interview has a
+  // composite to rank on. "Stretch to 1.0" has a second, wrong reading — dividing
+  // the quality half by 0.6, i.e. multiplying by 1.667 — which would look
+  // perfectly plausible on screen and inflate every interviewed candidate. The
+  // composite must be quality scaled ONLY by the confidence multiplier, which is
+  // at most 1, so it can never come out above its own quality reading.
+  check("THE INTERVIEW COMPOSITE IS QUALITY x CONFIDENCE, NEVER QUALITY DIVIDED BY 0.6",
+        F.every(r => r.r2_composite_pct == null ||
+                     r.r2_composite_pct <= r.r2_quality_pct + 0.05),
+        JSON.stringify(F.slice(0, 2).map(r =>
+          ({ q: r.r2_quality_pct, comp: r.r2_composite_pct, conf: r.confidence }))));
+  check("and the payload still says what removing the fit half assumes",
+        /deal motion/.test(fit.body.r2_composite_note || "") &&
+        /generous/.test(fit.body.r2_composite_note || ""),
+        (fit.body.r2_composite_note || "").slice(0, 70));
+  // The interview reaches nothing in the fit half, so it must never claim one.
+  check("the interview never invents a fit reading of its own",
+        F.every(r => !("r2_fit_pct" in r)), "");
   check("and it carries how much of the role's weighting it actually reached",
         F.every(r => r.r2_coverage > 0 && r.r2_coverage <= 1),
         JSON.stringify(F.slice(0, 1).map(r => r.r2_coverage)));
@@ -403,6 +464,44 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         full.quality != null && none.quality === null,
         `empty quality ${JSON.stringify(none.quality)}`);
 
+  // ── Nothing on screen is computed from inputs that have since moved ──────
+  //
+  // A match is a pure function of the candidate profile, the target profile and
+  // the requirement, all three timestamped — so "is this number out of date" is
+  // derivable rather than a matter of trust. Asserted in both directions: the
+  // audit is empty, AND it is capable of not being empty, because an audit that
+  // has never been seen to fire is a query rather than a check.
+  const stale = await rest(p, "v_match_staleness_audit?select=full_name,title,why");
+  check("NO MATCH ON SCREEN WAS COMPUTED BEFORE THE THINGS IT IS MADE OF",
+        stale.length === 0,
+        stale.length ? JSON.stringify(stale.slice(0, 3)) : "audit empty");
+
+  const refreshed = await rpc(p, "refresh_stale_matches");
+  check("and the refresh is a no-op when there is nothing to fix",
+        refreshed.status === 200 && refreshed.body.stale_rows === 0 &&
+        refreshed.body.requirements_recomputed === 0,
+        JSON.stringify(refreshed.body));
+
+  // Age one row by hand, confirm the audit sees it, let the refresh repair it,
+  // and confirm the repair is real rather than the audit having stopped looking.
+  const aged = (await rest(p, "matches?select=requirement_id,candidate_id&limit=1"))[0];
+  await p.evaluate(async (v) => {
+    await fetch(`${SUPABASE_URL}/rest/v1/matches?requirement_id=eq.${v.requirement_id}&candidate_id=eq.${v.candidate_id}`,
+      { method: "PATCH",
+        headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json",
+                   Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` },
+        body: JSON.stringify({ computed_at: "2001-01-01T00:00:00Z" }) });
+  }, aged);
+  const sawIt = await rest(p, "v_match_staleness_audit?select=why");
+  check("A MATCH OLDER THAN ITS INPUTS IS REPORTED, NOT ASSUMED FINE",
+        sawIt.length > 0, `${sawIt.length} rows after ageing one to 2001`);
+
+  const fixed = await rpc(p, "refresh_stale_matches");
+  const clean = await rest(p, "v_match_staleness_audit?select=why");
+  check("and refreshing fixes exactly what the audit named",
+        fixed.status === 200 && fixed.body.stale_rows > 0 && clean.length === 0,
+        `${JSON.stringify(fixed.body)}, ${clean.length} left`);
+
   // ── The requirement direction ────────────────────────────────────────────
   const two = await rest(p,
     `v_two_readings?select=candidate_id,verdict,r2_quality_pct,test_quality_pct,both_support_pct&candidate_id=eq.${target.id}`);
@@ -431,8 +530,13 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         `${(await p.$$(".fitrow")).length} rows, ${(await p.$$(".fitrow .fitcell")).length} cells`);
   check("it names each reading rather than showing three bare numbers",
         /TEST/i.test(fitTxt) && /R2/.test(fitTxt) && /BEST/i.test(fitTxt), "");
-  check("it says the interview reading is the quality half only",
-        /quality half only/.test(fitTxt) || /quality only/.test(fitTxt),
+  // The page must disclose what stretching the quality weight to 100% assumes,
+  // not just print the bigger number. Removing the fit term is the same as
+  // assuming the candidate is on target for deal motion and interpersonal style,
+  // which flatters exactly the candidates the questionnaire exists to catch.
+  check("it says on the page what the interview composite assumes",
+        /60% to 100%/.test(fitTxt) && /deal motion/.test(fitTxt) &&
+        /generous/.test(fitTxt),
         fitTxt.slice(0, 0));
   check("and it states on the page that the weights are not learned from outcomes",
         /expert-set, not learned from outcomes/.test(fitTxt), "");

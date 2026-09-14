@@ -148,6 +148,7 @@ suite("SECURITY SUITE", 8104, async ({ p, base, E, P, check, errs }) => {
     get_ask_overlap: "reached through get_candidate_detail's payload, not called directly",
     get_ask_fit: "reached through get_candidate_detail's payload, like get_ask_overlap",
     ask_levels: "turns one scorecard into dimension levels for get_ask_fit and v_two_readings",
+    quality_from_levels: "PRD 9.2 itself — called by compute_matches and get_ask_fit",
     purge_candidate: "called by purge_expired_candidates and by the delete control's RPC",
     purge_expired_candidates: "the retention sweep — run on a schedule, not from a screen",
     import_ask_json: "a one-off importer for scorecards from the standalone tool",

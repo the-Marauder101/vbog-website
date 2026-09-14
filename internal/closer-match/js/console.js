@@ -1309,6 +1309,18 @@ function queueStatus(c) {
 }
 
 async function loadQueue() {
+  // Bring any out-of-date match up to date before reading the queue, so nobody
+  // is ever ranked by a number computed against weights or scores that have since
+  // changed. It is a no-op when nothing is stale — `refresh_stale_matches()`
+  // recomputes only what `v_match_staleness_audit` names, and the audit is empty
+  // in the normal case — so this costs one cheap query per visit.
+  //
+  // Not fatal if it fails. A queue that renders with a possibly-stale number
+  // beats a queue that does not render, and the audit still reports the problem
+  // where somebody will see it.
+  try { await sbRpc("refresh_stale_matches"); }
+  catch (e) { console.warn("match refresh skipped:", e.message); }
+
   const rows = await sbFetch("v_candidate_queue?order=created_at.desc&limit=100");
   el("queue-count").textContent = `${rows.length}`;
   el("queue-list").innerHTML = rows.length
@@ -1691,8 +1703,10 @@ function fitsHtml(d, c) {
         <span class="fitcells">
           ${cell("test", r.composite_pct,
             r.test_quality_pct != null ? `quality ${r.test_quality_pct}%` : "")}
-          ${cell(r.r2_round === "r1" ? "R1" : "R2", r.r2_quality_pct,
-            r.r2_quality_pct != null ? "quality only" : "not interviewed")}
+          ${cell(r.r2_round === "r1" ? "R1" : "R2", r.r2_composite_pct,
+            r.r2_composite_pct != null
+              ? `quality ${r.r2_quality_pct}%`
+              : "not interviewed")}
           ${cell("best", r.combined_pct, "both support")}
         </span>
       </div>`;
@@ -1702,9 +1716,12 @@ function fitsHtml(d, c) {
       <strong>Test</strong> is the full match: 60% quality against the required
       levels, 40% fit against deal motion and interpersonal style.
       <strong>R2</strong> runs the same weighted arithmetic on the interview's
-      evidence, but the interview asks nothing about deal motion or interpersonal
-      style, so it is the quality half only — compare it with the test's quality
-      figure underneath, not with the test's headline.
+      evidence. The interview asks nothing about deal motion or interpersonal
+      style, so its composite stretches the quality weight from 60% to 100% —
+      which is the same as assuming the candidate sits on target for both. That
+      is the most generous assumption available, so where fit is genuinely poor
+      this number reads high. The quality figures under each are like-for-like,
+      and they are what the agreement verdict is computed from.
       <strong>Best</strong> is the lower of the two, the level both readings
       support; where they disagree that is flagged rather than averaged.
       A quality figure can pass 100%: it measures distance from what the role

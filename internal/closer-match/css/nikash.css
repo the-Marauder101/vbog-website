@@ -770,6 +770,42 @@ button, .btn {
   transition: width 0.25s ease;
 }
 
+/* The attribute strip. An interview follows the conversation, not the bank, so
+   these are how you go where the candidate has just taken you. Each tab carries
+   its own scored count, which makes the strip double as the only progress signal
+   that says WHERE the gaps are rather than just how many are left. */
+.attrtabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.attrtab {
+  display: inline-flex; align-items: baseline; gap: 7px;
+  padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--muted); font: inherit; font-size: 12px; line-height: 1.4;
+  cursor: pointer; white-space: nowrap;
+  transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
+}
+.attrtab .n { font-size: 11px; font-variant-numeric: tabular-nums; opacity: 0.75; }
+@media (hover: hover) { .attrtab:hover { border-color: var(--line-2); color: var(--ink); } }
+.attrtab:focus-visible { outline: 2px solid var(--streak); outline-offset: 2px; }
+/* Part-done and fully-done are different states, not degrees of the same one:
+   "started this attribute" is the thing you scan for when picking where to go
+   back to, and it has to be findable without reading every count. */
+.attrtab.part { color: var(--ink); border-color: var(--line-2); }
+.attrtab.full { color: var(--ink); border-color: var(--line-2); background: var(--raised); }
+.attrtab.full .n { opacity: 1; }
+.attrtab.current {
+  border-color: var(--ink); color: var(--ink); background: var(--raised);
+  font-weight: 600;
+}
+@media (max-width: 680px) {
+  /* On a phone the strip is a single scrolling row rather than six wrapped
+     lines pushing the question itself below the fold. */
+  .attrtabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .attrtab { flex: 0 0 auto; }
+}
+
 /* One anchor. The score sits in its own column so the four read as a scale
    rather than as four unrelated choices — which is what makes picking the
    description that fits easier than inventing a number. */
