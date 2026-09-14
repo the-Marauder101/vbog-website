@@ -296,6 +296,17 @@ main { max-width: var(--shell); margin: 0 auto; padding: 34px 28px 96px; }
 .fitcell { display: flex; flex-direction: column; text-align: right; min-width: 62px; }
 .fitnum { display: block; white-space: nowrap; }
 .fitcell .figure { font-size: 24px; }
+/* The single point. Three numbers on a row with equal weight is three headlines
+   and no answer, so the one that is actually being ranked on is larger and the
+   workings sit back. */
+.fitcell.lead { min-width: 86px; }
+.fitcell.lead .figure { font-size: 31px; }
+.fitcell.lead .mono { color: var(--ink); font-weight: 600; }
+.fitcell:not(.lead) .figure { color: var(--muted); }
+
+/* The candidate's own headline, above the three readings it is made from. */
+.panel.onepoint { margin-bottom: 10px; }
+.reading .figure.big { font-size: 42px; }
 .fitcell .figure-unit { margin-left: 1px; }
 /* The label under the number, not beside it: at three columns the unit and the
    label compete for the same line and the number stops being scannable. */
@@ -768,6 +779,42 @@ button, .btn {
 .progress-fill {
   height: 100%; width: 0; background: var(--streak);
   transition: width 0.25s ease;
+}
+
+/* The attribute strip. An interview follows the conversation, not the bank, so
+   these are how you go where the candidate has just taken you. Each tab carries
+   its own scored count, which makes the strip double as the only progress signal
+   that says WHERE the gaps are rather than just how many are left. */
+.attrtabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.attrtab {
+  display: inline-flex; align-items: baseline; gap: 7px;
+  padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--muted); font: inherit; font-size: 12px; line-height: 1.4;
+  cursor: pointer; white-space: nowrap;
+  transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
+}
+.attrtab .n { font-size: 11px; font-variant-numeric: tabular-nums; opacity: 0.75; }
+@media (hover: hover) { .attrtab:hover { border-color: var(--line-2); color: var(--ink); } }
+.attrtab:focus-visible { outline: 2px solid var(--streak); outline-offset: 2px; }
+/* Part-done and fully-done are different states, not degrees of the same one:
+   "started this attribute" is the thing you scan for when picking where to go
+   back to, and it has to be findable without reading every count. */
+.attrtab.part { color: var(--ink); border-color: var(--line-2); }
+.attrtab.full { color: var(--ink); border-color: var(--line-2); background: var(--raised); }
+.attrtab.full .n { opacity: 1; }
+.attrtab.current {
+  border-color: var(--ink); color: var(--ink); background: var(--raised);
+  font-weight: 600;
+}
+@media (max-width: 680px) {
+  /* On a phone the strip is a single scrolling row rather than six wrapped
+     lines pushing the question itself below the fold. */
+  .attrtabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .attrtab { flex: 0 0 auto; }
 }
 
 /* One anchor. The score sits in its own column so the four read as a scale

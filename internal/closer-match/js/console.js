@@ -1308,6 +1308,34 @@ function queueStatus(c) {
   return `assessed · passes no filter on ${c.open_reqs === 1 ? "the open role" : `any of ${c.open_reqs} open roles`}, still listed with the reason`;
 }
 
+// Bring any out-of-date match up to date, so nobody is ranked by a number
+// computed against scores or weights that have since changed.
+//
+// **Deliberately not awaited before the queue renders.** The first version of
+// this blocked the first paint on the refresh, and `test/assess.js` caught it
+// immediately: run on its own nothing was stale and the call returned instantly,
+// but in a full run there was real work to do and the queue did not appear inside
+// twenty seconds. Live, that is the console hanging after a batch of assessments
+// — the exact moment there is most to recompute and somebody is waiting.
+//
+// So the queue paints from what is there, the refresh runs behind it, and the
+// queue is drawn again only if the refresh actually changed something. Not fatal
+// if it fails: a queue with a possibly-stale number beats no queue, and
+// `v_match_staleness_audit` still reports the problem where it will be seen.
+let refreshing = false;
+async function refreshMatchesInBackground(redraw) {
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    const r = await sbRpc("refresh_stale_matches");
+    if (r && r.stale_rows > 0) await redraw();
+  } catch (e) {
+    console.warn("match refresh skipped:", e.message);
+  } finally {
+    refreshing = false;
+  }
+}
+
 async function loadQueue() {
   const rows = await sbFetch("v_candidate_queue?order=created_at.desc&limit=100");
   el("queue-count").textContent = `${rows.length}`;
@@ -1380,6 +1408,10 @@ async function loadQueue() {
         loadQueue, cerr(b.dataset.candDel))));
 
   view("queue");
+
+  // The queue is on screen; now catch up anything stale behind it, and redraw
+  // only if that actually moved a number. See refreshMatchesInBackground.
+  refreshMatchesInBackground(loadQueue);
 }
 
 // ═══ DICTIONARY ════════════════════════════════════════════════════════════
@@ -1547,10 +1579,34 @@ function headlineHtml(d, c) {
   // best match, which is the number that actually means something.
   const best = roles.length ? roles[0] : null;
 
+  // The candidate's own single number: their best role, computed from everything
+  // that has been measured. This is what the three readings below are ingredients
+  // for — they used to be presented as three separate conclusions, which left the
+  // question "so what is this person worth to me" unanswered on the page.
+  const one = (d.fits && d.fits.best_pct != null) ? d.fits : null;
+
   return `
   <div class="region">
     <div class="region-head"><h2>Where this candidate stands</h2>
       <span class="count mono">${[r1, r2, d.scored].filter(Boolean).length} of 3</span></div>
+
+    ${one ? `
+    <div class="panel onepoint">
+      <div class="reading">
+        <span class="label">Best fit across ${fitsCount(d)} open ${
+          fitsCount(d) === 1 ? "role" : "roles"}</span>
+        <span class="figure big">${one.best_pct}</span><span class="figure-unit">%</span>
+        <span class="small muted">${esc(one.best_role || "")}</span>
+      </div>
+      <p class="small muted" style="margin:10px 0 0">
+        One number, from everything measured: ${
+          (one.rounds_merged || []).length
+            ? `${(one.rounds_merged || []).map((x) => esc(String(x).toUpperCase())).join(" + ")}
+               — ${one.questions_scored} question${one.questions_scored === 1 ? "" : "s"} scored`
+            : "no interview yet"}${d.scored ? ", plus the questionnaire" : ", no questionnaire"}.
+        The readings underneath are what it was built from.
+      </p>
+    </div>` : ""}
     <div class="panel">
       <div class="readings">
         ${reading("R1 — phone screen", r1,
@@ -1574,8 +1630,11 @@ function headlineHtml(d, c) {
             </div>`}
       </div>
       <p class="small muted" style="margin:12px 0 0">
-        Three independent readings. They are deliberately not combined into one
-        number — where two of them disagree is worth more than either on its own.
+        Three readings of the same person. R1 and R2 are one instrument at two
+        lengths, so they merge; the questionnaire is a second instrument and meets
+        them per dimension. Where two of them disagree is still worth more than
+        either on its own, so the gap is reported against every role rather than
+        averaged away by the number above.
       </p>
     </div>
   </div>
@@ -1606,6 +1665,9 @@ function headlineHtml(d, c) {
 // shows both, because that disagreement is the most informative thing two
 // independent instruments produce — and R3 is that the system ranks and explains,
 // it never decides.
+const fitsCount = (d) =>
+  ((d.fits && d.fits.rows) || []).filter((r) => r.one_pct != null).length;
+
 function fitsHtml(d, c) {
   const fits = (d.fits && d.fits.rows) || [];
   const roles = d.roles || [];
@@ -1622,18 +1684,18 @@ function fitsHtml(d, c) {
       : "";
   }
 
-  // Anything with a reading first, ordered by the level both readings support;
-  // roles neither instrument can speak to sink to the bottom rather than being
-  // hidden, because "we cannot say" is an answer a recruiter needs to see.
+  // Ordered by the single point. Roles nothing can speak to sink to the bottom
+  // rather than being hidden, because "we cannot say" is an answer a recruiter
+  // needs to see.
   const rows = fits.slice().sort((a, b) => {
-    const av = a.combined_pct, bv = b.combined_pct;
+    const av = a.one_pct, bv = b.one_pct;
     if (av == null && bv == null) return 0;
     if (av == null) return 1;
     if (bv == null) return -1;
     return bv - av;
   });
 
-  const withReading = rows.filter((r) => r.combined_pct != null).length;
+  const withReading = rows.filter((r) => r.one_pct != null).length;
   const anyR2 = rows.some((r) => r.r2_quality_pct != null);
 
   const verdictChip = (r) => {
@@ -1652,10 +1714,31 @@ function fitsHtml(d, c) {
     return `<span class="chip">no reading</span>`;
   };
 
+  // How much of the single point rests on an assumption rather than a
+  // measurement. "Stretched" is the one that matters: nobody has measured deal
+  // motion or interpersonal style, so the fit half is absent and the number is
+  // the most generous reading available. It gets a warning chip, not a footnote.
+  const basisChip = (r) => {
+    if (r.one_basis === "full") {
+      return `<span class="chip strong">fully measured</span>`;
+    }
+    if (r.one_basis === "quality stretched") {
+      return `<span class="chip warn">no questionnaire — fit assumed on target</span>`;
+    }
+    if (r.one_basis === "partial fit") {
+      return `<span class="chip warn">fit half only partly measured</span>`;
+    }
+    return "";
+  };
+
   // The number and its unit have to share a line — in a flex column they would
   // each take one, and "90.8" over "%" reads as two facts.
-  const cell = (label, value, sub) => `
-    <span class="fitcell">
+  //
+  // `lead` marks the single point. It is the number this row is ranked on and the
+  // one a recruiter is meant to read; the other two are the workings, and they
+  // have to look like workings or the row becomes three competing headlines.
+  const cell = (label, value, sub, kind) => `
+    <span class="fitcell${kind === "lead" ? " lead" : ""}">
       <span class="fitnum"><span class="figure">${value == null ? "—" : value}</span>${
         value == null ? "" : `<span class="figure-unit">%</span>`}</span>
       <span class="mono muted">${label}</span>
@@ -1674,8 +1757,11 @@ function fitsHtml(d, c) {
         <span class="title"><a href="#req-${esc(r.requirement_id)}"
           data-cdreq="${esc(r.requirement_id)}">${esc(r.business_name)} — ${esc(r.title)}</a></span>
         <span class="meta small">
+          ${basisChip(r)}
           ${verdictChip(r)}
           ${rk ? ` rank ${rk.rank} of ${rk.of} on the questionnaire ·` : ""}
+          ${(r.one_sources || []).length
+            ? ` built from ${(r.one_sources || []).map(esc).join(" + ")} ·` : ""}
           ${r.r2_coverage != null
             ? ` the interview reached ${Math.round(r.r2_coverage * 100)}% of this
                 role's weighting${
@@ -1689,29 +1775,41 @@ function fitsHtml(d, c) {
             ${(r.hard_filter_unknown || []).map(esc).join(" · ")} ·` : ""}
         </span>
         <span class="fitcells">
+          ${cell("fit", r.one_pct,
+            r.one_pct != null
+              ? `${r.one_quality_pct != null ? `quality ${r.one_quality_pct}%` : ""}${
+                  r.one_fit_pct != null ? ` · fit ${r.one_fit_pct}%` : ""}`
+              : "nothing measured", "lead")}
           ${cell("test", r.composite_pct,
-            r.test_quality_pct != null ? `quality ${r.test_quality_pct}%` : "")}
-          ${cell(r.r2_round === "r1" ? "R1" : "R2", r.r2_quality_pct,
-            r.r2_quality_pct != null ? "quality only" : "not interviewed")}
-          ${cell("best", r.combined_pct, "both support")}
+            r.test_quality_pct != null ? `quality ${r.test_quality_pct}%` : "not taken")}
+          ${cell(r.r2_round === "r1" ? "R1" : "R2", r.r2_composite_pct,
+            r.r2_composite_pct != null
+              ? `quality ${r.r2_quality_pct}%`
+              : "not interviewed")}
         </span>
       </div>`;
     }).join("")}
 
     <p class="small muted" style="margin:14px 0 0">
-      <strong>Test</strong> is the full match: 60% quality against the required
-      levels, 40% fit against deal motion and interpersonal style.
-      <strong>R2</strong> runs the same weighted arithmetic on the interview's
-      evidence, but the interview asks nothing about deal motion or interpersonal
-      style, so it is the quality half only — compare it with the test's quality
-      figure underneath, not with the test's headline.
-      <strong>Best</strong> is the lower of the two, the level both readings
-      support; where they disagree that is flagged rather than averaged.
+      <strong>Fit</strong> is the number to read, and the one these roles are
+      ordered by. R1 and R2 are the same question bank at different lengths, so
+      every round the candidate has finished is merged into one answer set; that
+      meets the questionnaire dimension by dimension, weighted by how many items
+      each put behind it; and the result runs through the ordinary match once —
+      60% quality against the required levels, 40% fit against deal motion and
+      interpersonal style.
+      <strong>Test</strong> and <strong>R2</strong> beside it are the workings:
+      each instrument's own reading, kept visible so a single number never hides
+      two that disagreed. Where there is no questionnaire, deal motion and
+      interpersonal style are unmeasured and the quality weight stretches from
+      60% to 100% — the same as assuming the candidate is on target for both,
+      which is the most generous assumption available. Every row says which of
+      the two happened.
       A quality figure can pass 100%: it measures distance from what the role
       asks for, not a mark out of a hundred, so 101% means slightly above the
       required level and 115% is as far above as it is allowed to count.
       ${anyR2 && d.fits.threshold != null
-        ? `Called disagreement above ${d.fits.threshold} points.
+        ? `Readings are called contested above ${d.fits.threshold} points apart.
            ${esc(d.fits.threshold_note || "")}`
         : ""}
       Weights are expert-set, not learned from outcomes.

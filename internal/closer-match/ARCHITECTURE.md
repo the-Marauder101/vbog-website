@@ -2584,6 +2584,188 @@ still be missing from every shortlist until something happens to recompute. sql/
 catches it up as a side effect; that it needed catching up is its own bug and is
 not fixed by this file.
 
+### 7av. The interview gets a composite, and the reasoning behind reversing §7au
+
+§7au refused the interview a composite: §9.4 is `(0.6 × Quality + 0.4 × Fit) ×
+confidence`, the interview measures nothing that reaches Fit, so the number was
+published as the quality half and compared against the test's quality half.
+
+That was the cautious reading of an honest problem and it had a real cost on a
+screen. The R2 column and the Test column were different quantities sitting an
+inch apart, and the one number a person actually wants — which role does this
+candidate suit best — was the one the table would not print.
+
+So the weight is renormalised: `r2_composite = quality × confidence`. The 0.6 is
+stretched to 1.0 over the evidence the interview has, with the fit term removed
+rather than guessed.
+
+**What that assumes, said here and again on the screen.** Removing the fit term is
+arithmetically identical to assuming the candidate sits exactly on target for deal
+motion and interpersonal style. That is the most generous assumption available, so
+where fit is genuinely poor the R2 composite reads HIGH — and it reads high
+precisely for the candidates the questionnaire exists to catch.
+
+The mitigation is not a disclaimer. It is that **the quality-versus-quality pair
+stays on the row**, and the agreement verdict is still computed from it. That pair
+is the same quantity measured two ways; composite-versus-composite is not, because
+one of them has had a term removed. The composite is for ranking; the quality pair
+is for trusting.
+
+> **"Stretch to 1.0" has a second reading that would look perfectly plausible on
+> screen** — dividing the quality half by 0.6, i.e. multiplying by 1.667. It is a
+> different number and it inflates every interviewed candidate. Both `sql/50` and
+> `test/ask.js` assert the composite can never come out above its own quality
+> reading, which is only true of the right one.
+
+### 7aw. A match is a function of three timestamped inputs
+
+§7au found by accident that the shortlist can sit behind the profiles, and said
+plainly it had not fixed the cause. This is the fix.
+
+A `matches` row is a pure function of exactly three things, every one timestamped:
+`candidate_profile.computed_at`, `client_target_profile.computed_at`, and
+`requirements.opened_at`. So staleness is not a matter of judgement — a row is
+stale if it was computed before any of its inputs, and a pair with no row at all
+is the same failure with the row missing.
+
+`v_match_staleness_audit` states both, with the reason. `refresh_stale_matches()`
+recomputes exactly what the audit names and **does nothing when the audit is
+empty**, which is what makes it safe to call from `loadQueue()` — so a stale
+number cannot reach a screen, rather than being caught later by somebody noticing.
+
+`finish_assessment` already re-matched every open role, and that is why this was
+hard to see: the hole was everywhere else. A target profile recomputed for a
+requirement that already existed, a re-key producing new profiles, a requirement
+opened after the candidates were scored — none of those run `finish_assessment`.
+
+> **Do not fix a stale cache by remembering to refresh it.** Derive whether it is
+> stale from the inputs it was built from, make that derivation a view anybody can
+> read, and let the fix be "recompute what the view names".
+
+The audit is provoked in a rolled-back subtransaction in `sql/50` and again by
+ageing a real row in `test/ask.js`, because an audit nobody has watched go red is
+a query rather than a check.
+
+### 7ax. Questions to be said, not read; and an interview that is not a queue
+
+**The prompts were rewritten, the anchors were not.** sql/35 said "the wording IS
+the instrument" and was right, but it is the **anchors** that do the measuring:
+"Names five distinct objections roughly as a buyer would say them, and pairs most
+of them with something specific they actually did" is what turns an answer into a
+2. The prompt's only job is to get the candidate talking about the right thing.
+
+So a prompt can be tightened without changing what is measured — provided it still
+asks for everything the anchors score. Which is the trap:
+
+> **A shorter question that drops a detail its anchors depend on is not a tidier
+> question, it is a broken one.** Trim "five" from `objection-4` and its 2-anchor
+> can never be reached; trim "what you said back" and the 0-anchor fires on
+> answers that deserved better.
+
+`sql/51` checks the mechanical half of that automatically: every numeral in the old
+prompt must survive into the new one, so "the next 14 days", "your next 60
+seconds", "3–5 minutes" and "the 20th … 40% … 10 days" cannot go missing while the
+sentence gets shorter. Sixteen prompts were tightened; the longest live question
+went from 142 characters to 110, the average to 83. `ask_scores` snapshots
+`question_text` at scoring time, so the scorecards already submitted keep the
+wording they were actually scored against.
+
+**And the interview stopped being a queue.** An attribute strip sits above the
+question: one tab per attribute, each carrying its own scored count, and clicking
+one lands on that attribute's first *unscored* question — resuming it rather than
+restarting it. The candidate volunteers a lost deal while you are three questions
+into discovery; the old options were to arrow forward six screens or ask it out of
+order and score it from memory afterwards, and memory is the one that loses.
+
+Nothing about scoring changed. Which question is on screen was always just an
+index into the same flat list. The one shared step that had to be extracted is
+`commitNote()` — the note box belongs to the question currently displayed, and
+both the arrows and the tabs change what is displayed, so a second copy of that
+save rule is exactly where a lost note would come from.
+
+### 7ay. One number, and the reason the three readings could be equated at all
+
+Three readings sat beside each other with a line underneath saying they were
+deliberately not combined. That was right while they were incommensurable. They
+are not, and the reason is what makes the single number honest rather than an
+average of three things that mean different things.
+
+**R1 and R2 are not two readings.** They are one instrument at two scopes — same
+bank, same anchors, same 0–3 scale, 8 questions against 37. So they do not need
+equating, they need **merging**: one answer set per candidate, the later answer
+winning where both rounds asked the same question, and a coverage figure saying
+how much of the bank was reached. Before this, `get_ask_fit` read only the most
+recent scorecard, so a candidate with an R1 from a colleague and an R2 from later
+had the R1 silently discarded — eight scored answers thrown away because they
+arrived on a different row.
+
+**The questionnaire is a different instrument on the same kind of scale**, for the
+reason §7au established: both produce *the proportion of the attainable maximum on
+that trait*.
+
+So the three meet **per dimension**, and §9.4 runs **once** on the result.
+
+> **Merging per dimension rather than averaging composites is what removes the
+> assumption.** Averaging an interview composite with a test composite would carry
+> §7av's stretch — "assume they are on target for deal motion and interpersonal
+> style" — into a candidate whose questionnaire had *measured* both. It would
+> discard a real number in favour of an assumption, inside an average, invisibly.
+
+Merging first fixes that: MOT and STY come from the questionnaire when there is
+one, so the single point runs on the real formula with the real fit half, and the
+stretch survives only as the fallback for a candidate interviewed and never
+tested. `one_basis` says which happened, on every row, on the screen.
+
+**When both instruments speak, the one with more evidence counts more.** The
+combination is an evidence-weighted mean, each reading weighted by the number of
+items actually behind it for that dimension — read from the bank at runtime, not
+typed once:
+
+| | questionnaire | interview | split |
+|---|---|---|---|
+| DSC | 5 items | 6 questions | 45 / 55 |
+| INT | 4 items | 2 questions | 67 / 33 |
+| MOT | 5 items | none | questionnaire alone |
+
+An 8-question R1 therefore moves the number a little and a 37-question R2 moves it
+a lot, with nothing anywhere that had to be told so. *A weight nobody derived will
+end up wherever it was first typed;* this one is derived from the evidence, so it
+cannot drift from it and needs no tuning when the bank changes.
+
+**What is lost, said plainly.** Disagreement. §7ae's argument — that two readings
+are worth more apart than averaged — has not become wrong, and a single point does
+average them. So the gap is **demoted, not destroyed**: both composites, both
+quality halves, the per-dimension gap and the corroborated/contested verdict are
+all still returned and still shown under the single number. One point to rank on,
+the workings underneath. What is refused is producing the single point while
+hiding that two instruments disagreed about the person it describes.
+
+§9.3 also got its single definition (`fit_from_levels`) on the way, for the same
+reason §9.2 did in §7au: this file became its second caller.
+
+### 7az. A sleep standing in for a wait
+
+`test/assess.js` began failing intermittently, always at the same assertion, which
+read like a real defect. It was not. Two steps clicked a candidate row after a
+fixed 1500ms sleep, without ever waiting for that row to exist. Under load the
+queue needs longer than a second and a half to draw a hundred candidates, the
+click lands on nothing, and the suite aborts at the next assertion.
+
+Worth recording for two reasons. First the rule:
+
+> **A sleep standing in for a wait does not remove a race, it hides it until the
+> machine is busy** — which is exactly when a run is least convenient to debug.
+
+Second, the diagnosis went wrong first and the way it went wrong is the more
+useful half. The failure appeared right after `loadQueue()` was changed to refresh
+stale matches, so the refresh was the obvious suspect, and blocking a first paint
+on a recompute is a real defect regardless — it was found and fixed on its own
+merits. But the run *after* that fix failed identically, and the reason is that
+the fix was half-applied: the background-refresh function had been written and was
+not yet being called, so no refresh was running at all. A failure that survives
+the removal of its suspected cause has exonerated it. The sleep had been there all
+along.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

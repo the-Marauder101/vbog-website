@@ -231,6 +231,52 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   check("the four anchors are the only way to score",
         (await p.$$("#q-options .option")).length === 4, "");
 
+  // ── The attribute strip ──────────────────────────────────────────────────
+  // An interview follows the conversation, not the bank. The tabs are how you go
+  // where the candidate has just taken you, so the thing worth asserting is not
+  // that they render but that clicking one actually moves the interview.
+  const tabs = await p.$$("#q-tabs .attrtab");
+  // Every attribute that has a question a candidate is asked. The two reference
+  // questions have their own flow and their attributes still appear, because
+  // both also carry ordinary questions.
+  const attrsInFlow = new Set(r2.attributes
+    .filter(a => (a.questions || []).some(q => !q.is_reference))
+    .map(a => a.id));
+  check("every attribute is a tab you can jump to",
+        tabs.length === attrsInFlow.size,
+        `${tabs.length} tabs against ${attrsInFlow.size} attributes in the flow`);
+  check("and each one says how much of it is scored",
+        (await p.textContent("#q-tabs")).match(/\d+\/\d+/g || []).length === tabs.length,
+        (await p.textContent("#q-tabs")).replace(/\s+/g, " ").slice(0, 80));
+  check("the attribute you are on is the one marked current",
+        (await p.$$("#q-tabs .attrtab.current")).length === 1, "");
+
+  const beforeJump = await p.textContent("#q-prompt");
+  const lastTabId = await p.evaluate(() => {
+    const t = [...document.querySelectorAll("#q-tabs .attrtab")];
+    return t[t.length - 1].dataset.attr;
+  });
+  await p.click(`#q-tabs [data-attr="${lastTabId}"]`);
+  await p.waitForTimeout(400);
+  check("CLICKING A TAB MOVES THE INTERVIEW TO THAT ATTRIBUTE",
+        (await p.textContent("#q-prompt")) !== beforeJump &&
+        (await p.getAttribute(`#q-tabs [data-attr="${lastTabId}"]`, "class")).includes("current"),
+        `jumped to ${lastTabId}`);
+  check("and the question header agrees with the tab you pressed",
+        (await p.textContent("#q-where")).trim().length > 0 &&
+        (await p.evaluate(() => document.querySelector("#q-tabs .attrtab.current .t").textContent.trim()))
+          === (await p.evaluate(() => document.querySelector("#q-where strong").textContent.trim())),
+        "");
+
+  // Back to where we were, so the keyboard run below still starts at question 1
+  // and the "resumes at the first unanswered" assertion stays meaningful.
+  const firstTabId = await p.evaluate(() =>
+    document.querySelector("#q-tabs .attrtab").dataset.attr);
+  await p.click(`#q-tabs [data-attr="${firstTabId}"]`);
+  await p.waitForTimeout(400);
+  check("and pressing the first tab comes back to the start",
+        (await p.textContent("#q-prompt")) === beforeJump, "");
+
   // Answer the first six by keyboard, which is how it will actually be used.
   for (let i = 0; i < 6; i++) {
     await p.keyboard.press(String(i % 4));
@@ -336,20 +382,72 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   check("and both readings land on the same roles for a candidate who has both",
         both.length === F.length, `${both.length} of ${F.length}`);
 
-  check("THE COMBINED FIGURE IS THE LOWER OF THE TWO, NOT THE MEAN AND NOT THE HIGHER",
-        both.length > 0 && both.every(r =>
-          r.combined_pct === Math.min(r.test_quality_pct, r.r2_quality_pct)),
-        JSON.stringify(both.slice(0, 2).map(r =>
-          ({ t: r.test_quality_pct, r2: r.r2_quality_pct, best: r.combined_pct }))));
-  // Belt and braces: on a row where the two differ, the mean and the max are
-  // both wrong answers, and this says so explicitly rather than trusting the
-  // min() above to have been the thing that produced the match.
-  const differing = both.filter(r => r.test_quality_pct !== r.r2_quality_pct);
-  check("and where they differ it is neither an average nor the flattering one",
+  // ── THE SINGLE POINT ─────────────────────────────────────────────────────
+  //
+  // sql/52 replaced "the lower of the two composites" with a merge. The two are
+  // not the same shape and the difference is the whole argument: averaging two
+  // composites would carry sql/50's stretch — "assume they are on target for deal
+  // motion and interpersonal style" — into a candidate whose questionnaire had
+  // MEASURED both. Merging per dimension first cannot do that, because the fit
+  // half is taken from the questionnaire before anything is combined.
+  //
+  // `target` has a questionnaire and now a submitted R2, so these rows should be
+  // on the real §9.4 with a genuine fit half.
+  check("every role carries one number, and it is what the rows are ordered by",
+        F.length > 0 && F.every(r => r.one_pct != null),
+        `${F.filter(r => r.one_pct != null).length} of ${F.length}`);
+  check("combined_pct is gone rather than sitting beside its replacement",
+        F.every(r => !("combined_pct" in r)), "");
+
+  check("THE SINGLE POINT USES THE REAL FIT HALF WHEN THE QUESTIONNAIRE MEASURED IT",
+        F.every(r => r.one_basis === "full" && r.one_fit_pct != null),
+        JSON.stringify(F.slice(0, 2).map(r =>
+          ({ basis: r.one_basis, fit: r.one_fit_pct, one: r.one_pct }))));
+  check("and it says so on every row rather than leaving it to be inferred",
+        F.every(r => /60% quality/.test(r.one_basis_note || "")),
+        (F[0] || {}).one_basis_note ? (F[0].one_basis_note).slice(0, 60) : "missing");
+
+  // The single point is a composite in its own right, not a blend of the two
+  // beside it. Asserting it is NOT the mean and NOT either input is what catches
+  // somebody quietly reverting to an average later.
+  const bothComp = F.filter(r => r.composite_pct != null && r.r2_composite_pct != null);
+  const differing = bothComp.filter(r =>
+    Math.abs(r.composite_pct - r.r2_composite_pct) > 1);
+  check("IT IS COMPUTED FROM MERGED EVIDENCE, NOT AVERAGED FROM THE TWO COMPOSITES",
         differing.length === 0 || differing.every(r =>
-          r.combined_pct !== Math.max(r.test_quality_pct, r.r2_quality_pct) &&
-          r.combined_pct !== (r.test_quality_pct + r.r2_quality_pct) / 2),
-        `${differing.length} rows where the readings differ`);
+          Math.abs(r.one_pct - (r.composite_pct + r.r2_composite_pct) / 2) > 0.05),
+        `${differing.length} rows where the two composites differ by more than a point`);
+
+  // Built from both instruments, and it names them.
+  check("and it names what it was built from",
+        F.every(r => Array.isArray(r.one_sources) && r.one_sources.length > 0 &&
+                     r.one_sources.every(s => ["both", "questionnaire", "interview"].includes(s))),
+        JSON.stringify((F[0] || {}).one_sources));
+  check("a dimension both instruments measured is marked as carrying both",
+        F.some(r => (r.one_sources || []).includes("both")),
+        JSON.stringify((F[0] || {}).one_sources));
+
+  // Per-dimension provenance: the weighting is derived from item counts, so it
+  // has to BE the item counts rather than a number somebody typed once.
+  const lv = (F[0] || {}).levels || {};
+  const dsc = lv.DSC || {};
+  check("the merge is weighted by how many items each instrument actually put behind it",
+        dsc.questionnaire_items > 0 && dsc.interview_items > 0 &&
+        Math.abs(dsc.level -
+          ((dsc.questionnaire * dsc.questionnaire_items + dsc.interview * dsc.interview_items) /
+           (dsc.questionnaire_items + dsc.interview_items))) < 0.1,
+        JSON.stringify(dsc));
+  check("and deal motion is the questionnaire's alone, because the interview never asks",
+        (lv.MOT || {}).source === "questionnaire" && (lv.MOT || {}).interview == null &&
+        (lv.STY || {}).source === "questionnaire",
+        JSON.stringify({ MOT: lv.MOT, STY: lv.STY }));
+
+  // The candidate's own headline is their best role, not an average of roles.
+  const bestRow = F.reduce((a, b) => (b.one_pct > (a ? a.one_pct : -1) ? b : a), null);
+  check("the candidate's headline number is their best role",
+        Math.abs(fit.body.best_pct - bestRow.one_pct) < 0.05 &&
+        fit.body.best_role.includes(bestRow.title),
+        `${fit.body.best_pct} vs ${bestRow.one_pct} — ${fit.body.best_role}`);
 
   // Compared with a tolerance, not for equality. Postgres computes the gap in
   // `numeric`, where 95.4 − 83.3 is exactly 12.1; JavaScript computes it in
@@ -368,12 +466,24 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         /[Pp]rovisional/.test(fit.body.threshold_note || ""),
         (fit.body.threshold_note || "").slice(0, 60));
 
-  // The interview cannot see MOT or STY, so there is no interview composite. If
-  // one ever appears in this payload, somebody has renormalised 0.6 up to 1.0.
-  check("THE INTERVIEW READING IS THE QUALITY HALF AND SAYS SO",
-        /quality half/.test(fit.body.r2_is_quality_only || "") &&
-        F.every(r => !("r2_composite_pct" in r) && !("r2_fit_pct" in r)),
-        (fit.body.r2_is_quality_only || "").slice(0, 60));
+  // sql/50 stretched the quality weight from 0.6 to 1.0 so the interview has a
+  // composite to rank on. "Stretch to 1.0" has a second, wrong reading — dividing
+  // the quality half by 0.6, i.e. multiplying by 1.667 — which would look
+  // perfectly plausible on screen and inflate every interviewed candidate. The
+  // composite must be quality scaled ONLY by the confidence multiplier, which is
+  // at most 1, so it can never come out above its own quality reading.
+  check("THE INTERVIEW COMPOSITE IS QUALITY x CONFIDENCE, NEVER QUALITY DIVIDED BY 0.6",
+        F.every(r => r.r2_composite_pct == null ||
+                     r.r2_composite_pct <= r.r2_quality_pct + 0.05),
+        JSON.stringify(F.slice(0, 2).map(r =>
+          ({ q: r.r2_quality_pct, comp: r.r2_composite_pct, conf: r.confidence }))));
+  check("and the payload explains how the one number is put together",
+        /merged into one answer set/.test(fit.body.one_point_note || "") &&
+        /dimension by dimension/.test(fit.body.one_point_note || ""),
+        (fit.body.one_point_note || "").slice(0, 70));
+  // The interview reaches nothing in the fit half, so it must never claim one.
+  check("the interview never invents a fit reading of its own",
+        F.every(r => !("r2_fit_pct" in r)), "");
   check("and it carries how much of the role's weighting it actually reached",
         F.every(r => r.r2_coverage > 0 && r.r2_coverage <= 1),
         JSON.stringify(F.slice(0, 1).map(r => r.r2_coverage)));
@@ -403,14 +513,138 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         full.quality != null && none.quality === null,
         `empty quality ${JSON.stringify(none.quality)}`);
 
+  // ── R1 AND R2 ARE ONE INSTRUMENT, SO THEY MERGE ──────────────────────────
+  //
+  // The flow is becoming "team runs a 15-minute R1, then R2 if it looks worth
+  // it", and nothing in the live data exercises it yet — no candidate has both a
+  // submitted R1 and a submitted R2, and carry-forward has never been used. So
+  // the case has to be built here, because the alternative is finding out in
+  // production that one round was silently thrown away.
+  //
+  // Two properties, and they pull in opposite directions:
+  //   · nothing is discarded — questions only one round asked still count
+  //   · where both asked the same question, the LATER answer wins
+  const mergedBefore = await rpc(p, "ask_levels_merged", { p_candidate_id: target.id });
+  check("the merged reading knows which rounds it came from",
+        mergedBefore.status === 200 &&
+        JSON.stringify(mergedBefore.body.rounds) === JSON.stringify(["r2"]) &&
+        mergedBefore.body.questions_scored === 37,
+        JSON.stringify({ rounds: mergedBefore.body.rounds,
+                         n: mergedBefore.body.questions_scored }));
+
+  // An R1 conducted after the R2, scoring every one of its eight questions 0 —
+  // deliberately the opposite of the 2s the R2 run above used, so "the later
+  // answer wins" is visible rather than a coincidence.
+  const mergeCard = await rpc(p, "start_ask", { p_candidate_id: target.id, p_round: "r1" });
+  const r1id = mergeCard.body.scorecard_id || mergeCard.body.id || mergeCard.body;
+  MADE.push(r1id);
+  const r1qs = r1.attributes.flatMap(a => (a.questions || [])).filter(q => !q.is_reference);
+  for (const q of r1qs) {
+    await rpc(p, "save_ask_score", { p_scorecard: r1id, p_question: q.id, p_score: 0,
+                                     p_note: "ZZ_QA merge check" });
+  }
+  const r1submit = await rpc(p, "submit_ask", { p_scorecard: r1id });
+  check("an R1 can be run and submitted alongside an existing R2",
+        r1submit.status === 200 && r1submit.body.submitted === true,
+        JSON.stringify(r1submit.body).slice(0, 90));
+
+  const mergedAfter = await rpc(p, "ask_levels_merged", { p_candidate_id: target.id });
+  check("BOTH ROUNDS MERGE — NEITHER IS DISCARDED",
+        JSON.stringify((mergedAfter.body.rounds || []).slice().sort()) ===
+          JSON.stringify(["r1", "r2"]) &&
+        mergedAfter.body.questions_scored === 37,
+        JSON.stringify({ rounds: mergedAfter.body.rounds,
+                         n: mergedAfter.body.questions_scored }));
+
+  // Eight questions moved from 2 to 0, so every dimension those eight touch must
+  // have come DOWN. If the R1 had been ignored, nothing would move at all.
+  const dimsBefore = mergedBefore.body.dimensions || {};
+  const dimsAfter = mergedAfter.body.dimensions || {};
+  const moved = Object.keys(dimsBefore)
+    .filter(k => dimsAfter[k] && dimsAfter[k].level < dimsBefore[k].level);
+  check("AND THE LATER ANSWER WINS WHERE BOTH ROUNDS ASKED THE SAME QUESTION",
+        moved.length > 0,
+        `${moved.length} dimension(s) moved down: ${moved.join(", ")}`);
+  check("while the item count behind each dimension is unchanged, because the "
+        + "same questions were answered, not more of them",
+        Object.keys(dimsBefore).every(k =>
+          !dimsAfter[k] || dimsAfter[k].items === dimsBefore[k].items),
+        JSON.stringify(Object.fromEntries(Object.entries(dimsAfter)
+          .map(([k, v]) => [k, v.items]))));
+
+  // And the single point moved with it, because the whole point of merging is
+  // that a second round changes the answer.
+  const fitAfter = await rpc(p, "get_ask_fit", { p_candidate_id: target.id });
+  const oneBefore = F[0].one_pct;
+  const oneAfter = (fitAfter.body.rows.find(x => x.requirement_id === F[0].requirement_id) || {}).one_pct;
+  check("a second round changes the single point",
+        oneAfter != null && oneAfter !== oneBefore,
+        `${oneBefore} then ${oneAfter}`);
+
+  // Put it back, so the candidate's real record is as it was. NOT via
+  // `discard_ask` — that refuses a submitted scorecard, which is correct and is
+  // the whole reason a submitted interview cannot be quietly thrown away. The
+  // suite owns this row (it is in MADE and cleanup would take it either way), so
+  // it deletes the row it created rather than asking a guard to make an exception.
+  await p.evaluate(async (id) => {
+    await fetch(`${SUPABASE_URL}/rest/v1/ask_scorecards?id=eq.${id}`, { method: "DELETE",
+      headers: { apikey: SUPABASE_ANON_KEY,
+                 Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` } });
+  }, r1id);
+  const gone = await rest(p, `ask_scorecards?select=id&id=eq.${r1id}`);
+  check("and the merge check removes the round it invented",
+        gone.length === 0, `${gone.length} left`);
+
+  // ── Nothing on screen is computed from inputs that have since moved ──────
+  //
+  // A match is a pure function of the candidate profile, the target profile and
+  // the requirement, all three timestamped — so "is this number out of date" is
+  // derivable rather than a matter of trust. Asserted in both directions: the
+  // audit is empty, AND it is capable of not being empty, because an audit that
+  // has never been seen to fire is a query rather than a check.
+  const stale = await rest(p, "v_match_staleness_audit?select=full_name,title,why");
+  check("NO MATCH ON SCREEN WAS COMPUTED BEFORE THE THINGS IT IS MADE OF",
+        stale.length === 0,
+        stale.length ? JSON.stringify(stale.slice(0, 3)) : "audit empty");
+
+  const refreshed = await rpc(p, "refresh_stale_matches");
+  check("and the refresh is a no-op when there is nothing to fix",
+        refreshed.status === 200 && refreshed.body.stale_rows === 0 &&
+        refreshed.body.requirements_recomputed === 0,
+        JSON.stringify(refreshed.body));
+
+  // Age one row by hand, confirm the audit sees it, let the refresh repair it,
+  // and confirm the repair is real rather than the audit having stopped looking.
+  const aged = (await rest(p, "matches?select=requirement_id,candidate_id&limit=1"))[0];
+  await p.evaluate(async (v) => {
+    await fetch(`${SUPABASE_URL}/rest/v1/matches?requirement_id=eq.${v.requirement_id}&candidate_id=eq.${v.candidate_id}`,
+      { method: "PATCH",
+        headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json",
+                   Authorization: `Bearer ${sessionStorage.getItem("nikash_token")}` },
+        body: JSON.stringify({ computed_at: "2001-01-01T00:00:00Z" }) });
+  }, aged);
+  const sawIt = await rest(p, "v_match_staleness_audit?select=why");
+  check("A MATCH OLDER THAN ITS INPUTS IS REPORTED, NOT ASSUMED FINE",
+        sawIt.length > 0, `${sawIt.length} rows after ageing one to 2001`);
+
+  const fixed = await rpc(p, "refresh_stale_matches");
+  const clean = await rest(p, "v_match_staleness_audit?select=why");
+  check("and refreshing fixes exactly what the audit named",
+        fixed.status === 200 && fixed.body.stale_rows > 0 && clean.length === 0,
+        `${JSON.stringify(fixed.body)}, ${clean.length} left`);
+
   // ── The requirement direction ────────────────────────────────────────────
   const two = await rest(p,
-    `v_two_readings?select=candidate_id,verdict,r2_quality_pct,test_quality_pct,both_support_pct&candidate_id=eq.${target.id}`);
-  check("the same two readings are available per requirement, not just per candidate",
-        two.length > 0 && two.every(r => r.r2_quality_pct != null),
-        `${two.length} rows`);
+    `v_two_readings?select=candidate_id,requirement_id,one_pct,one_basis,one_quality_pct,one_fit_pct,test_quality_pct&candidate_id=eq.${target.id}`);
+  check("the single point is available per requirement, not just per candidate",
+        Array.isArray(two) && two.length > 0 && two.every(r => r.one_pct != null),
+        Array.isArray(two) ? `${two.length} rows` : JSON.stringify(two).slice(0, 140));
   check("and the two directions agree with each other",
-        two.every(r => F.some(f => Number(f.r2_quality_pct) === Number(r.r2_quality_pct))),
+        two.every(r => {
+          const f = F.find(x => x.requirement_id === r.requirement_id);
+          return f && Math.abs(Number(f.one_pct) - Number(r.one_pct)) < 0.05 &&
+                 f.one_basis === r.one_basis;
+        }),
         JSON.stringify(two.slice(0, 1)));
 
   // ── On the page ──────────────────────────────────────────────────────────
@@ -431,8 +665,13 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
         `${(await p.$$(".fitrow")).length} rows, ${(await p.$$(".fitrow .fitcell")).length} cells`);
   check("it names each reading rather than showing three bare numbers",
         /TEST/i.test(fitTxt) && /R2/.test(fitTxt) && /BEST/i.test(fitTxt), "");
-  check("it says the interview reading is the quality half only",
-        /quality half only/.test(fitTxt) || /quality only/.test(fitTxt),
+  // The page must disclose what stretching the quality weight to 100% assumes,
+  // not just print the bigger number. Removing the fit term is the same as
+  // assuming the candidate is on target for deal motion and interpersonal style,
+  // which flatters exactly the candidates the questionnaire exists to catch.
+  check("it says on the page what the interview composite assumes",
+        /60% to 100%/.test(fitTxt) && /deal motion/.test(fitTxt) &&
+        /generous/.test(fitTxt),
         fitTxt.slice(0, 0));
   check("and it states on the page that the weights are not learned from outcomes",
         /expert-set, not learned from outcomes/.test(fitTxt), "");

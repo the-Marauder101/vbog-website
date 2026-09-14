@@ -64,7 +64,9 @@ suite("REGRESSION", 8099, async ({ p, base, E, P, check, errs }) => {
 
   // ══ THE CANDIDATE QUEUE ══════════════════════════════════════════════════
   await p.click("#nav-queue"); await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
-  await p.waitForTimeout(1600);
+  // Wait for a row to exist rather than sleeping a guessed interval — see the
+  // note in test/assess.js about what a sleep standing in for a wait costs.
+  await p.waitForSelector("#queue-list .cand", { timeout: 20000 });
   const queue = flat(await p.textContent("#queue-list"));
   check("the queue renders", (await p.$$("#queue-list .cand")).length > 0,
         `${(await p.$$("#queue-list .cand")).length} candidates`);
