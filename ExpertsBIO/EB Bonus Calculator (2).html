@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EB Bonus Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F7FA; --panel:#FFFFFF; --ink:#13294B; --muted:#5B6B82; --rule:#D5DCE8;
+  --field:#FFFFFF; --pass:#1C7C54; --passbg:#E3F3EA; --fail:#B3261E; --failbg:#FBE7E5;
+  --wait:#8A5A00; --waitbg:#FFF3D6; --accent:#13294B; --accentink:#FFFFFF;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1626; --panel:#16213A; --ink:#E6ECF5; --muted:#9AA8BE; --rule:#2B3A57;
+    --field:#0F1A2E; --pass:#5DCB97; --passbg:#173528; --fail:#FF8A80; --failbg:#3A1C1C;
+    --wait:#F2C46B; --waitbg:#3A2E14; --accent:#E6ECF5; --accentink:#0E1626;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1626; --panel:#16213A; --ink:#E6ECF5; --muted:#9AA8BE; --rule:#2B3A57;
+  --field:#0F1A2E; --pass:#5DCB97; --passbg:#173528; --fail:#FF8A80; --failbg:#3A1C1C;
+  --wait:#F2C46B; --waitbg:#3A2E14; --accent:#E6ECF5; --accentink:#0E1626;
+  color-scheme: dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+header h1{font:700 clamp(28px,4vw,40px)/1.1 "IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;margin:0 0 6px;letter-spacing:-.01em}
+header p{margin:0 0 24px;color:var(--muted);max-width:62ch}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:24px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+section.box{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px 18px 20px;margin-bottom:18px}
+h2{font:600 17px/1.3 "IBM Plex Sans",sans-serif;margin:0 0 14px}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;min-height:38px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.row{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:12px}
+.pod{border-top:1px solid var(--rule);padding-top:14px;margin-top:14px}
+.pod:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.pod h3{font:600 15px/1.3 "IBM Plex Sans",sans-serif;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.moves{display:grid;gap:8px;margin-top:4px}
+.move{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center}
+button{font:inherit;cursor:pointer;border-radius:6px;min-height:38px;padding:0 14px}
+.ghost{background:transparent;color:var(--ink);border:1px dashed var(--rule)}
+.x{background:transparent;border:1px solid var(--rule);color:var(--muted);width:38px;padding:0}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{width:38px;padding:0;background:var(--field);border:1px solid var(--rule);color:var(--ink)}
+.stepper output{min-width:24px;text-align:center;font-weight:600}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.pick{display:flex;flex-wrap:wrap;gap:6px}
+.pick label,label.tick{display:inline-flex;align-items:center;gap:6px;margin:0;padding:6px 10px;border:1px solid var(--rule);border-radius:6px;color:var(--ink);font-size:14px;background:var(--field);cursor:pointer;min-height:38px}
+.pick input,.tick input{width:auto;min-height:0;margin:0}
+.save{margin-top:14px;background:var(--accentink);color:var(--accent);border:0;font-weight:600}
+.proj{margin-top:24px}
+.projhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.projhead h2{margin:0}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--rule);vertical-align:middle}
+th{font-weight:600;color:var(--muted);font-size:13px}
+td.num,th.num{text-align:right;white-space:nowrap}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:18px 8px}
+tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
+.hidden{display:none}
+/* receipt */
+.receipt{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+@media (max-width:860px){.receipt{position:static}}
+.total{background:var(--accent);color:var(--accentink);padding:20px 20px 18px}
+.total .who{font-size:14px;opacity:.85;margin:0 0 4px}
+.total .amt{font:700 clamp(36px,6vw,52px)/1 "IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;letter-spacing:-.01em}
+.total .when{font-size:13px;opacity:.8;margin-top:8px}
+.lines{padding:6px 20px 4px}
+.line{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed var(--rule)}
+.line:last-child{border-bottom:0}
+.line .what{font-size:14px}
+.line .how{display:block;font-size:12.5px;color:var(--muted)}
+.line .val{font-weight:600;white-space:nowrap}
+.checks{padding:14px 20px 18px;border-top:1px solid var(--rule)}
+.checks h2{margin-bottom:10px}
+.chk{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13.5px;padding:5px 0}
+.mark{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:1px}
+.ok .mark{background:var(--passbg);color:var(--pass)}
+.no .mark{background:var(--failbg);color:var(--fail)}
+.wt .mark{background:var(--waitbg);color:var(--wait)}
+.salary{padding:14px 20px 18px;border-top:1px solid var(--rule)}
+@media (prefers-reduced-motion:no-preference){.total .amt{transition:opacity .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Bonus calculator</h1>
+  <p>Enter your role and this month’s pod numbers. The page applies the bonus rules and shows what you earn and why.</p>
+</header>
+
+<div class="grid">
+<div>
+  <section class="box">
+    <h2>You</h2>
+    <div class="row">
+      <div><label for="role">Role</label>
+        <select id="role">
+          <option>Senior PM</option><option>Junior PM</option><option>Senior Strategist</option><option>Junior Strategist</option>
+          <option>Video editor</option><option>Graphic designer</option><option>Group Lead</option><option>UI/UX designer</option><option>Leadership (head)</option>
+        </select></div>
+      <div id="myPodWrap"><label>Your pods (tick every pod you work in)</label><div id="myPods" class="pick"></div></div>
+      <div id="glWrap"><label>&nbsp;</label><label class="tick"><input type="checkbox" id="alsoGl"> Also Group Lead for these pods</label></div>
+      <div id="shareWrap" class="hidden"><label for="share">Your leadership share (%)</label><input id="share" type="number" min="0" max="100" step="1" value="50"></div>
+    </div>
+    <div>
+      <label>Number of pods</label>
+      <div class="stepper"><button type="button" id="minus" aria-label="Remove a pod">−</button><output id="podCount">2</output><button type="button" id="plus" aria-label="Add a pod">+</button></div>
+    </div>
+  </section>
+
+  <section class="box">
+    <h2>Pods this month</h2>
+    <div id="pods"></div>
+    <p class="hint">Spend is the month’s ad spend incl. GST across the pod. ROI is cash collected ÷ ad spend. If only some accounts are at 2x, enter just those accounts’ spend and ROI.</p>
+  </section>
+
+  <section class="box">
+    <h2>At-risk salary (optional)</h2>
+    <div class="row">
+      <div><label for="salary">Monthly salary (₹)</label><input id="salary" type="number" min="0" step="1000" placeholder="e.g. 50000"></div>
+      <div><label for="met">KPIs met (score 1 or 2)</label><input id="met" type="number" min="0" step="1" placeholder="e.g. 3"></div>
+      <div><label for="scored">KPIs scored</label><input id="scored" type="number" min="0" step="1" placeholder="e.g. 4"></div>
+    </div>
+  </section>
+</div>
+
+<aside class="receipt" aria-live="polite">
+  <div class="total">
+    <p class="who" id="who">Senior PM, Pod 1</p>
+    <div class="amt" id="amt">₹0</div>
+    <p class="when">Bonus earned this month. Paid with the salary two months later.</p>
+    <button type="button" id="saveBtn" class="save">Add to projection</button>
+  </div>
+  <div class="lines" id="lines"></div>
+  <div class="salary hidden" id="salaryBox"></div>
+  <div class="checks"><h2>Rules checked</h2><div id="checks"></div></div>
+</aside>
+</div>
+
+<section class="box proj">
+  <div class="projhead"><h2>Projection</h2><button type="button" class="ghost" id="clearProj">Clear all</button></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Who</th><th>Pods (spend @ ROI)</th><th class="num">Bonus</th><th><span class="hidden">Remove</span></th></tr></thead>
+    <tbody id="projRows"></tbody>
+    <tfoot><tr><td><strong>Total bonuses</strong> <span class="muted" id="projCount"></span></td><td></td><td class="num"><strong id="projTotal">₹0</strong></td><td></td></tr></tfoot>
+  </table></div>
+  <p class="hint">Kept in this tab only. Refreshing the page clears it.</p>
+</section>
+</div>
+
+<script>
+const GATE=60, POD_RATE=2250, LEAD=500, LEAD2=1000, DBL=90, GL_RATE=300, UX_RATE=150;
+const SHARE={"Senior PM":.275,"Junior PM":.175,"Senior Strategist":.225,"Junior Strategist":.125,"Video editor":.10,"Graphic designer":.10};
+const RISK={"Senior PM":.2,"Junior PM":.2,"Senior Strategist":.2,"Junior Strategist":.2,"Video editor":.15,"Graphic designer":.15,"Group Lead":.25,"UI/UX designer":.15,"Leadership (head)":.30};
+const HOLD={pod:{3:10000,4:25000},lead:{3:2000,4:5000},gl:{3:1000,4:2500}};
+const MOVE={pod:{"1-2":25000,"2-3":50000,"3-4":100000},lead:{"1-2":5000,"2-3":10000,"3-4":20000},gl:{"1-2":2500,"2-3":5000,"3-4":10000}};
+const MOVE_LABEL={"1-2":"T1 → T2","2-3":"T2 → T3","3-4":"T3 → T4"};
+const WHEN_LABEL={"0":"this month","2":"2 months ago","4":"4 months ago"};
+
+let pods=[
+  {spend:96,roi:2.2,t3:2,t4:0,moves:[{m:"2-3",w:"2"}]},
+  {spend:130,roi:2.2,t3:1,t4:1,moves:[{m:"3-4",w:"2"}]}
+];
+let mine=[0];
+const $=id=>document.getElementById(id);
+const inr=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+const lk=n=>(Math.round(n*100)/100).toLocaleString("en-IN")+"L";
+
+function blankPod(){return {spend:0,roi:2,t3:0,t4:0,moves:[]};}
+
+function renderPods(){
+  $("podCount").textContent=pods.length;
+  const box=$("pods"); box.innerHTML="";
+  pods.forEach((p,i)=>{
+    const d=document.createElement("div"); d.className="pod";
+    d.innerHTML=`<h3>Pod ${i+1}</h3>
+    <div class="row">
+      <div><label for="s${i}">Spend (₹ lakhs)</label><input id="s${i}" type="number" min="0" step="0.5" value="${p.spend}"></div>
+      <div><label for="r${i}">ROI (x)</label><input id="r${i}" type="number" min="0" step="0.1" value="${p.roi}"></div>
+      <div><label for="a${i}">T3 accounts</label><input id="a${i}" type="number" min="0" step="1" value="${p.t3}"></div>
+      <div><label for="b${i}">T4 accounts</label><input id="b${i}" type="number" min="0" step="1" value="${p.t4}"></div>
+    </div>
+    <label>Accounts that moved up a tier</label>
+    <div class="moves" id="mv${i}"></div>
+    <button type="button" class="ghost" id="add${i}" style="margin-top:8px">Add tier move</button>`;
+    box.appendChild(d);
+    const mv=d.querySelector(`#mv${i}`);
+    p.moves.forEach((m,j)=>{
+      const r=document.createElement("div"); r.className="move";
+      r.innerHTML=`<select aria-label="Move">${Object.keys(MOVE_LABEL).map(k=>`<option value="${k}"${k===m.m?" selected":""}>${MOVE_LABEL[k]}</option>`).join("")}</select>
+      <select aria-label="When">${Object.keys(WHEN_LABEL).map(k=>`<option value="${k}"${k===m.w?" selected":""}>Moved ${WHEN_LABEL[k]}</option>`).join("")}</select>
+      <button type="button" class="x" aria-label="Remove move">✕</button>`;
+      const [s1,s2]=r.querySelectorAll("select");
+      s1.onchange=()=>{m.m=s1.value;calc();}; s2.onchange=()=>{m.w=s2.value;calc();};
+      r.querySelector("button").onclick=()=>{p.moves.splice(j,1);renderPods();};
+      mv.appendChild(r);
+    });
+    d.querySelector(`#add${i}`).onclick=()=>{p.moves.push({m:"2-3",w:"2"});renderPods();};
+    [["s","spend"],["r","roi"],["a","t3"],["b","t4"]].forEach(([k,f])=>{
+      d.querySelector(`#${k}${i}`).oninput=e=>{p[f]=parseFloat(e.target.value)||0;calc();};
+    });
+  });
+  mine=mine.filter(i=>i<pods.length); if(!mine.length) mine=[0];
+  $("myPods").innerHTML=pods.map((_,i)=>`<label><input type="checkbox" value="${i}"${mine.includes(i)?" checked":""}> Pod ${i+1}</label>`).join("");
+  $("myPods").querySelectorAll("input").forEach(cb=>cb.onchange=()=>{mine=[...$("myPods").querySelectorAll("input:checked")].map(x=>+x.value);calc();});
+  calc();
+}
+
+function calc(){
+  const role=$("role").value, isPodRole=role in SHARE, alsoGl=isPodRole&&$("alsoGl").checked;
+  $("myPodWrap").classList.toggle("hidden",!(isPodRole||role==="Group Lead"));
+  $("glWrap").classList.toggle("hidden",!isPodRole);
+  $("shareWrap").classList.toggle("hidden",role!=="Leadership (head)");
+  const P=pods.map(p=>{
+    const at2x=p.roi>=2, counted=at2x?p.spend:0, above=Math.max(0,counted-GATE);
+    const tu=k=>at2x?p.moves.filter(m=>m.w!=="0").reduce((s,m)=>s+MOVE[k][m.m]/2,0):0;
+    const hold=k=>at2x?(p.t3*HOLD[k][3]+p.t4*HOLD[k][4]):0;
+    return {...p,at2x,counted,above,holdPod:hold("pod"),holdLead:hold("lead"),holdGl:hold("gl"),tuPod:tu("pod"),tuLead:tu("lead"),tuGl:tu("gl")};
+  });
+  const allGate=P.every(p=>p.counted>=GATE);
+  const lines=[], checks=[];
+  const chk=(cls,txt)=>checks.push(`<div class="chk ${cls}"><span class="mark">${cls==="ok"?"✓":cls==="no"?"✕":"…"}</span><span>${txt}</span></div>`);
+
+  P.forEach((p,i)=>{
+    const n=`Pod ${i+1}`;
+    chk(p.at2x?"ok":"no",`${n}: ROI ${p.roi}x ${p.at2x?"meets":"is below"} 2x${p.at2x?"":". Spend not counted, no tier bonuses"}`);
+    if(p.at2x) chk(p.counted>GATE?"ok":"no",`${n}: counted spend ${lk(p.counted)} ${p.counted>GATE?`is ${lk(p.above)} above`:"is not above"} the ₹60L gate`);
+    p.moves.forEach(m=>{
+      const lbl=`${n}: ${MOVE_LABEL[m.m]} moved ${WHEN_LABEL[m.w]}`;
+      if(m.w==="0") chk("wt",`${lbl}. Nothing yet; first half pays in 2 months`);
+      else if(!p.at2x) chk("no",`${lbl}. ${m.w==="2"?"First":"Second"} half forfeited (pod below 2x)`);
+      else chk("ok",`${lbl}. ${m.w==="2"?"First":"Second"} half pays now`);
+    });
+  });
+
+  let total=0, who=role;
+  const myP=mine.map(i=>({i,p:P[i]})).filter(x=>x.p);
+  const podNames=myP.map(x=>`Pod ${x.i+1}`).join(" + ")||"no pod ticked";
+  const glCalc=()=>{
+    const mineGate=myP.length>0&&myP.every(x=>x.p.counted>=GATE);
+    const above=myP.reduce((s,x)=>s+x.p.above,0);
+    const sp=mineGate?above*GL_RATE:0, tier=myP.reduce((s,x)=>s+x.p.holdGl+x.p.tuGl,0);
+    lines.push(["Group Lead spend share",mineGate?`${lk(above)} above gate in ${podNames} × ₹${GL_RATE}`:"₹0: one of your pods is below ₹60L",sp]);
+    lines.push(["Group Lead tier share",`Fixed amounts for holds and tier-ups in ${podNames}`,tier]);
+    chk(mineGate?"ok":"no",mineGate?`Group Lead: all your pods (${podNames}) are at ₹60L+, spend share pays`:`Group Lead: a pod in ${podNames} is below ₹60L, spend share is ₹0`);
+    return sp+tier;
+  };
+  if(isPodRole){
+    const s=SHARE[role], rate=POD_RATE*s;
+    myP.forEach(({i,p})=>{
+      const a=p.above*rate, b=p.holdPod*s, c=p.tuPod*s;
+      lines.push([`Pod ${i+1}: spend bonus`,`${lk(p.above)} above gate × ₹${rate.toLocaleString("en-IN")} per lakh`,a]);
+      if(b) lines.push([`Pod ${i+1}: tier hold`,`${p.t3} × T3, ${p.t4} × T4 at your rate`,b]);
+      if(c) lines.push([`Pod ${i+1}: tier up`,`Halves due this month, at your rate`,c]);
+      total+=a+b+c;
+    });
+    if(alsoGl) total+=glCalc();
+    who=`${role}, ${podNames}${alsoGl?" + Group Lead":""}`;
+  } else if(role==="Leadership (head)"){
+    const sh=(parseFloat($("share").value)||0)/100;
+    let sp=0, desc=[];
+    P.forEach((p,i)=>{const dbl=allGate&&p.counted>DBL, r=dbl?LEAD2:LEAD; sp+=p.above*r; if(p.above>0) desc.push(`Pod ${i+1}: ${lk(p.above)} × ₹${r}`);});
+    const tier=P.reduce((s,p)=>s+p.holdLead+p.tuLead,0);
+    lines.push(["Leadership spend share",(desc.join(" + ")||"No pod above gate")+` × your ${Math.round(sh*100)}%`,sp*sh]);
+    lines.push(["Leadership tier share",`${inr(tier)} pool × your ${Math.round(sh*100)}%`,tier*sh]);
+    total=(sp+tier)*sh; who=`Leadership, ${Math.round(sh*100)}% share`;
+    chk(allGate?"ok":"no",allGate?"Every pod is at ₹60L+: doubling is open for pods past ₹90L":"A pod is below ₹60L: no doubling this month");
+  } else if(role==="Group Lead"){
+    total=glCalc(); who=`Group Lead, ${podNames}`;
+  } else {
+    const above=P.reduce((s,p)=>s+p.above,0);
+    lines.push(["Spend share",`${lk(above)} above gate across pods × ₹${UX_RATE}`,above*UX_RATE]);
+    total=above*UX_RATE; who="UI/UX designer, all pods";
+  }
+
+  last={who,total,pods:P.map((p,i)=>`Pod ${i+1}: ${lk(p.spend)} @ ${p.roi}x`).join(", ")};
+  $("who").textContent=who; $("amt").textContent=inr(total);
+  $("lines").innerHTML=lines.map(([w,h,v])=>`<div class="line"><span class="what">${w}<span class="how">${h}</span></span><span class="val">${inr(v)}</span></div>`).join("");
+  $("checks").innerHTML=checks.join("");
+
+  const sal=parseFloat($("salary").value), met=parseFloat($("met").value), sc=parseFloat($("scored").value);
+  const sb=$("salaryBox");
+  if(sal>0){
+    const risk=RISK[role], pct=sc>0?Math.min(1,(met||0)/sc):1, paid=sal*risk*pct, fixed=sal*(1-risk);
+    sb.classList.remove("hidden");
+    sb.innerHTML=`<h2>Salary this month</h2>
+    <div class="line"><span class="what">Fixed part<span class="how">${Math.round((1-risk)*100)}% of ${inr(sal)}</span></span><span class="val">${inr(fixed)}</span></div>
+    <div class="line"><span class="what">At-risk part paid<span class="how">${Math.round(risk*100)}% at risk × ${sc>0?`${met||0} of ${sc} KPIs met`:"not scored (100%)"}</span></span><span class="val">${inr(paid)}</span></div>
+    <div class="line"><span class="what"><strong>Salary</strong></span><span class="val">${inr(fixed+paid)}</span></div>`;
+  } else sb.classList.add("hidden");
+}
+
+$("plus").onclick=()=>{if(pods.length<6){pods.push(blankPod());renderPods();}};
+$("minus").onclick=()=>{if(pods.length>1){pods.pop();renderPods();}};
+["role","share","salary","met","scored","alsoGl"].forEach(id=>{$(id).addEventListener("input",calc);$(id).addEventListener("change",calc);});
+let proj=[], last=null;
+function renderProj(){
+  const b=$("projRows");
+  b.innerHTML=proj.length?proj.map((x,i)=>`<tr><td>${x.who}</td><td class="muted">${x.pods}</td><td class="num">${inr(x.total)}</td><td><button type="button" class="x" data-i="${i}" aria-label="Remove ${x.who}">✕</button></td></tr>`).join("")
+    :`<tr><td colspan="4" class="empty">Nothing added yet. Set up a role above and click “Add to projection”.</td></tr>`;
+  b.querySelectorAll("button[data-i]").forEach(bt=>bt.onclick=()=>{proj.splice(+bt.dataset.i,1);renderProj();});
+  $("projTotal").textContent=inr(proj.reduce((s,x)=>s+x.total,0));
+  $("projCount").textContent=proj.length?`(${proj.length} ${proj.length===1?"entry":"entries"})`:"";
+}
+$("saveBtn").onclick=()=>{if(!last)return;proj.push({...last});renderProj();const s=$("saveBtn");s.textContent="Added";setTimeout(()=>s.textContent="Add to projection",1200);};
+$("clearProj").onclick=()=>{proj=[];renderProj();};
+renderPods();
+renderProj();
+</script>
+</body>
+</html>
