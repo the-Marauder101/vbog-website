@@ -80,6 +80,17 @@
   <!-- ── 2. One question at a time ────────────────────────────────────── -->
   <section class="screen" id="v-q" hidden>
     <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+
+    <!--
+      An interview is not a queue. The candidate brings up a lost deal while you
+      are three questions into discovery, and the choice used to be arrow through
+      six screens to reach objection handling or ask the question out of order and
+      score it later from memory. Neither is good.
+
+      One tab per attribute, each carrying how much of it is scored, so you follow
+      the conversation and let the instrument keep the books.
+    -->
+    <nav class="attrtabs" id="q-tabs" aria-label="Jump to an attribute"></nav>
     <p class="small muted" id="q-where"></p>
 
     <h1 id="q-prompt"></h1>

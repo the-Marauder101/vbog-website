@@ -81,6 +81,84 @@ function flatten(bank) {
   return flat;
 }
 
+// ═══ THE ATTRIBUTE STRIP ═══════════════════════════════════════════════════
+//
+// An interview does not run in bank order. The candidate volunteers a lost deal
+// while you are three questions into discovery, and the honest options used to be
+// arrow forward six screens or ask it out of order and score it from memory
+// afterwards. Memory is the one that loses, every time.
+//
+// So: one tab per attribute, each showing how many of its questions are scored,
+// and clicking one lands on that attribute's first UNSCORED question — not its
+// first question, because coming back to an attribute you half-covered should
+// resume it rather than restart it. If it is fully scored, it lands on its last
+// question, so a click is still a way to review what you put down.
+//
+// Nothing about scoring changes. The bank, the order it is stored in, the totals
+// and the submit rule are all untouched; this only decides which question is on
+// screen, which was always just an index into the same flat list.
+function attrGroups() {
+  const groups = [];
+  const byId = {};
+  S.flat.forEach((item, idx) => {
+    let g = byId[item.attr.id];
+    if (!g) {
+      g = { attr: item.attr, first: idx, idxs: [] };
+      byId[item.attr.id] = g;
+      groups.push(g);
+    }
+    g.idxs.push(idx);
+  });
+  return groups;
+}
+
+function renderTabs() {
+  const host = el("q-tabs");
+  if (!host) return;
+  const here = S.flat[S.i];
+  if (!here) return;
+
+  // The reference call is two questions put to a previous manager. A strip of
+  // tabs over two questions is furniture, not navigation.
+  host.hidden = MODE === "reference";
+  if (host.hidden) return;
+
+  host.innerHTML = attrGroups().map((g) => {
+    const done = g.idxs.filter((i) => S.answers[S.flat[i].q.id]).length;
+    const total = g.idxs.length;
+    const state = done === 0 ? "" : done === total ? " full" : " part";
+    const current = g.attr.id === here.attr.id ? " current" : "";
+    return `<button type="button" class="attrtab${state}${current}"
+      data-attr="${esc(g.attr.id)}"
+      aria-current="${current ? "true" : "false"}"
+      title="${esc(g.attr.name)} — ${done} of ${total} scored">
+      <span class="t">${esc(g.attr.name)}</span>
+      <span class="n mono">${done}/${total}</span>
+    </button>`;
+  }).join("");
+
+  host.querySelectorAll("[data-attr]").forEach((n) =>
+    n.addEventListener("click", () => jumpTo(n.dataset.attr)));
+
+  // Keep the active tab in view when the strip scrolls sideways on a laptop.
+  const cur = host.querySelector(".attrtab.current");
+  if (cur && cur.scrollIntoView) {
+    cur.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+}
+
+async function jumpTo(attrId) {
+  const g = attrGroups().find((x) => x.attr.id === attrId);
+  if (!g) return;
+  // Save whatever is in the note box before the screen changes underneath it —
+  // the same rule `move()` follows, and the reason it is a shared step rather
+  // than a copied one.
+  await commitNote();
+  const unscored = g.idxs.find((i) => !S.answers[S.flat[i].q.id]);
+  S.i = unscored !== undefined ? unscored : g.idxs[g.idxs.length - 1];
+  render();
+}
+
 // ═══ ONE QUESTION ══════════════════════════════════════════════════════════
 
 function render() {
@@ -139,6 +217,7 @@ function render() {
     n.addEventListener("click", () => score(Number(n.dataset.score))));
 
   el("q-note").value = (answered && answered.note) || "";
+  renderTabs();
   el("btn-prev").disabled = S.i === 0;
   el("btn-next").textContent = S.i === S.flat.length - 1 ? "See the scorecard" : "Next →";
   setSave("");
@@ -150,6 +229,9 @@ async function score(value) {
   S.answers[q.id] = { score: value, note: el("q-note").value.trim() || null };
   document.querySelectorAll("#q-options .option").forEach((n) =>
     n.classList.toggle("selected", Number(n.dataset.score) === value));
+  // The tab counts are the only progress signal that says WHERE the gaps are, so
+  // they have to move the moment an answer lands rather than on the next screen.
+  renderTabs();
   await persist(q.id);
 }
 
@@ -188,11 +270,20 @@ async function persist(questionId) {
   }
 }
 
-async function move(delta) {
-  const { q } = S.flat[S.i];
-  const a = S.answers[q.id];
+// Whatever is in the note box belongs to the question currently on screen, so it
+// has to be written before the screen changes. Both the arrows and the attribute
+// tabs change the screen, so this is one step they share rather than two copies
+// that drift — the second copy is exactly where a lost note would come from.
+async function commitNote() {
+  const item = S.flat[S.i];
+  if (!item) return;
+  const a = S.answers[item.q.id];
   const typed = el("q-note").value.trim() || null;
-  if (a && a.note !== typed) { a.note = typed; await persist(q.id); }
+  if (a && a.note !== typed) { a.note = typed; await persist(item.q.id); }
+}
+
+async function move(delta) {
+  await commitNote();
 
   const next = S.i + delta;
   if (next < 0) return;
