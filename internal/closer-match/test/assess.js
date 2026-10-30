@@ -11,7 +11,7 @@
 // reaches this flow through a staff session proves nothing about it.
 //
 // Run: NIKASH_QA_EMAIL=… NIKASH_QA_PASSWORD=… node test/assess.js
-const { suite, signIn, rpc, insert, flat } = require("./harness");
+const { suite, signIn, rpc, insert, flat, revealQueueRow } = require("./harness");
 const CFG = require("fs").readFileSync(require("path").join(__dirname, "..", "js", "config.js"), "utf8");
 const URL_ = (CFG.match(/SUPABASE_URL\s*=\s*"([^"]+)"/) || [])[1];
 const KEY = (CFG.match(/SUPABASE_ANON_KEY\s*=\s*"([^"]+)"/) || [])[1];
@@ -81,8 +81,7 @@ suite("ASSESS SUITE", 8101, async ({ p, base, E, P, check, errs }) => {
   // > A sleep standing in for a wait does not remove a race, it hides it until
   // > the machine is busy — which is exactly when a test run is least convenient
   // > to debug.
-  await p.waitForSelector(`#queue-list [data-cand="${candId}"]`, { timeout: 20000 });
-  await p.click(`#queue-list [data-cand="${candId}"]`);
+  await p.click(await revealQueueRow(p, candId));
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   await p.waitForTimeout(900);
   const unscoredPage = flat(await p.textContent("#cd-body"));
@@ -133,8 +132,7 @@ suite("ASSESS SUITE", 8101, async ({ p, base, E, P, check, errs }) => {
   await p.click("#nav-queue");
   await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
   // Same race as above: wait for the row rather than sleeping and hoping.
-  await p.waitForSelector(`#queue-list [data-cand="${candId}"]`, { timeout: 20000 });
-  await p.click(`#queue-list [data-cand="${candId}"]`);
+  await p.click(await revealQueueRow(p, candId));
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   await p.waitForTimeout(900);
   check("THE TEST LINK IS ON THE CANDIDATE PAGE, COPYABLE",

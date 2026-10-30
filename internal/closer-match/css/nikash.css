@@ -842,3 +842,11 @@ button, .btn {
   font-style: normal; display: block; color: var(--muted);
   font-size: 13px; margin-top: 3px;
 }
+
+/* The end of a page of candidates: how many are not shown, and the way to them.
+   A truncated list with no edge looks complete, which is the failure this exists
+   to prevent. */
+.queue-more {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; padding: 14px 4px 4px;
+}

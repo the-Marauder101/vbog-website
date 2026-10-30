@@ -2853,6 +2853,34 @@ read as a pass. Zero assertions is now a failure that prints the child's own
 error. This is §7af's lesson — a count that does not say the run was cut short —
 arriving in the runner rather than in a suite.
 
+### 7bc. A list that looks complete when it is not
+
+Re-checking everything before this PR, the ASK suite aborted reproducibly: it
+could not find Razi Syed's row on the Candidates tab. Razi was row 99 of 99.
+
+`loadQueue()` fetched `limit=100` and put the number of rows it got into the
+header. So the list was always going to be complete-looking: on the 101st
+candidate the oldest would drop off the tab, the header would say "100", and
+nothing on screen would say anybody was missing. With the open apply link
+bringing people in, that was one or two applicants away. The suite found it
+first because its candidate happened to be the oldest one.
+
+The tab now loads a page at a time, newest first, and says how many exist: the
+header reads "100 of 214" and a "Show 100 older" control sits at the bottom.
+The total comes from an id-only count on `candidates` with the queue's own two
+exclusions, not from the view, so it costs nothing.
+
+> **A truncated list with no edge reads as the whole list.** If you cannot show
+> everything, say how much you are not showing, every time.
+
+The suites now open candidates through `revealQueueRow()`, which pages with the
+same "Show older" control a recruiter uses and fails by name if a candidate is on
+no page — so every suite that opens a candidate also exercises the paging. With
+99 candidates the paging never triggers on live data yet, so it was verified
+separately with the page size dropped to 20: all 99 reached in five pages, no
+duplicates, the header right at every step, the oldest candidate opening from
+the last page.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

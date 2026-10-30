@@ -11,7 +11,7 @@
 //
 // The rest drives the real surface: run an R2 in a browser, drop out halfway,
 // come back, finish, submit, and read it on the candidate page.
-const { suite, rest, rpc, insert, flat } = require("./harness");
+const { suite, rest, rpc, insert, flat, revealQueueRow } = require("./harness");
 
 // The server, browser, Supabase route handler, credential check and sign-in all
 // live in ./harness.js. This suite needs an ADMIN login, not just any staff
@@ -653,8 +653,7 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   await p.goto(`${B}/nikash.html`, { waitUntil: "domcontentloaded" });
   await p.waitForSelector("#v-reqs:not([hidden])", { timeout: 20000 });
   await p.click("#nav-queue");
-  await p.waitForSelector(`#queue-list [data-cand="${target.id}"]`, { timeout: 20000 });
-  await p.click(`#queue-list [data-cand="${target.id}"]`);
+  await p.click(await revealQueueRow(p, target.id));
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   await p.waitForSelector(".fitrow", { timeout: 20000 });
   const fitTxt = (await p.textContent("#v-cand")).replace(/\s+/g, " ");
@@ -870,8 +869,7 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
   await p.waitForSelector("#v-reqs:not([hidden])", { timeout: 25000 });
   await p.click("#nav-queue");
   await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
-  await p.waitForTimeout(1500);
-  await p.click(`#queue-list [data-cand="${target.id}"]`);
+  await p.click(await revealQueueRow(p, target.id));
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   await p.waitForTimeout(1100);
   check("the candidate page offers to read the full scorecard",
@@ -1100,13 +1098,13 @@ suite("ASK SUITE", 8098, async ({ p, base, E, P, check, errs }) => {
     await p.waitForSelector("#v-reqs:not([hidden])", { timeout: 20000 });
   }
   await p.click("#nav-queue"); await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
-  await p.waitForTimeout(1500);
+  const targetRow = await revealQueueRow(p, target.id);
 
   const queueTxt = (await p.textContent("#queue-list")).replace(/\s+/g, " ");
   check("the queue row carries an ASK chip beside the match percentage",
         /ASK R2 [\d.]+%/.test(queueTxt), (queueTxt.match(/ASK R2 [\d.]+%[^·]*/) || [""])[0].slice(0, 60));
 
-  await p.click(`#queue-list [data-cand="${target.id}"]`);
+  await p.click(targetRow);
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   await p.waitForTimeout(1000);
   const cd = (await p.textContent("#cd-body")).replace(/\s+/g, " ");

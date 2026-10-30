@@ -195,4 +195,28 @@ async function suite(name, port, body, cleanup) {
   }
 }
 
-module.exports = { suite, signIn, route, serve, credentials, rest, rpc, anonRpc, anonRows, insert, flat, ROOT, CHROME };
+// Bring one candidate's queue row on screen and return its selector.
+//
+// The Candidates tab loads a page at a time, newest first (sql/54 era, see the
+// note on QUEUE_PAGE in js/console.js). A suite that assumed its candidate was in
+// the first hundred broke the day the list reached 99: the row simply was not
+// there, and `page.click` waited thirty seconds for it. This pages through with
+// the same "Show older" control a recruiter uses — so every suite that opens a
+// candidate is also exercising the paging — and fails by name if the candidate
+// is on no page at all, rather than as an anonymous timeout.
+async function revealQueueRow(p, id) {
+  const sel = `#queue-list [data-cand="${id}"]`;
+  await p.waitForSelector("#queue-list .cand, #queue-list .empty", { timeout: 25000 });
+  for (let page = 0; page < 50; page++) {
+    if (await p.$(sel)) return sel;
+    const more = await p.$("#btn-queue-more");
+    if (!more) break;
+    const before = (await p.$$("#queue-list .cand")).length;
+    await more.click();
+    await p.waitForFunction((n) => document.querySelectorAll("#queue-list .cand").length > n,
+                            before, { timeout: 25000 });
+  }
+  throw new Error(`candidate ${id} is not on the Candidates tab at any page`);
+}
+
+module.exports = { revealQueueRow, suite, signIn, route, serve, credentials, rest, rpc, anonRpc, anonRows, insert, flat, ROOT, CHROME };

@@ -1336,9 +1336,25 @@ async function refreshMatchesInBackground(redraw) {
   }
 }
 
+// The queue loads a page at a time, newest first, and says how many there are in
+// all. It used to be a flat `limit=100` with the visible row count as the
+// header — so on the 101st candidate the oldest one would have dropped off the
+// Candidates tab with nothing on screen to say anybody was missing. With 99 on
+// the list that was one or two open-link applicants away. Nothing disappears
+// now: the header gives the true total, and the older ones are a click away.
+const QUEUE_PAGE = 100;
+let queueShown = QUEUE_PAGE;
+
 async function loadQueue() {
-  const rows = await sbFetch("v_candidate_queue?order=created_at.desc&limit=100");
-  el("queue-count").textContent = `${rows.length}`;
+  // The total comes from `candidates` itself with the queue's own two exclusions,
+  // not from the view — an id-only count is cheap, and it is the number a
+  // recruiter needs to know whether the list in front of them is all of it.
+  const [rows, all] = await Promise.all([
+    sbFetch(`v_candidate_queue?order=created_at.desc&limit=${queueShown}`),
+    sbFetch("candidates?select=id&full_name=not.like.ZZ_FIXTURE*&full_name=not.like.ZZ_E2E*"),
+  ]);
+  const total = Array.isArray(all) ? all.length : rows.length;
+  el("queue-count").textContent = rows.length < total ? `${rows.length} of ${total}` : `${total}`;
   el("queue-list").innerHTML = rows.length
     ? rows.map((c) => `
       <div class="cand" style="grid-template-columns:1fr">
@@ -1378,6 +1394,22 @@ async function loadQueue() {
       </div>`).join("")
     : `<div class="empty"><h3>No candidates yet</h3>
        <p class="muted">Create a test link above.</p></div>`;
+
+  // The older candidates, explicitly. Shown only when the list is not all of it,
+  // and phrased with the count so "is anybody missing?" never needs asking.
+  if (rows.length < total) {
+    const older = total - rows.length;
+    el("queue-list").insertAdjacentHTML("beforeend", `
+      <div class="queue-more">
+        <span class="small muted">Showing the ${rows.length} most recent of ${total}.</span>
+        <button class="btn-quiet" id="btn-queue-more">Show ${Math.min(QUEUE_PAGE, older)} older${
+          older > QUEUE_PAGE ? ` (${older} in all)` : ""}</button>
+      </div>`);
+    el("btn-queue-more").addEventListener("click", () => {
+      queueShown += QUEUE_PAGE;
+      loadQueue();
+    });
+  }
 
   el("queue-list").querySelectorAll("[data-dict]").forEach((a) =>
     a.addEventListener("click", (e) => { e.preventDefault(); loadDictionary(); }));

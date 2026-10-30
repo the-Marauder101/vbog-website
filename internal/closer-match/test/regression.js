@@ -17,7 +17,7 @@
 // which does the deep work on the newest feature.
 //
 // Run: node test/regression.js   (needs a staff login and a served copy of the app)
-const { suite, rest, rpc, flat } = require("./harness");
+const { suite, rest, rpc, flat, revealQueueRow } = require("./harness");
 
 // The server, the browser, the Supabase route handler, the credentials check and
 // the sign-in all live in ./harness.js — five suites needed them and five copies
@@ -88,6 +88,21 @@ suite("REGRESSION", 8099, async ({ p, base, E, P, check, errs }) => {
   // note in test/assess.js about what a sleep standing in for a wait costs.
   await p.waitForSelector("#queue-list .cand", { timeout: 20000 });
   const queue = flat(await p.textContent("#queue-list"));
+
+  // The list must never look complete when it is not. The header carries the
+  // true total; if fewer rows are on screen than exist, it says "N of M" and
+  // there is a way to the rest. With a flat limit=100 the 101st candidate would
+  // have pushed the oldest off the tab with nothing to say anyone was missing.
+  const truth = (await rest(p,
+    "candidates?select=id&full_name=not.like.ZZ_FIXTURE*&full_name=not.like.ZZ_E2E*")).length;
+  const shownRows = (await p.$$("#queue-list .cand")).length;
+  const header = (await p.textContent("#queue-count")).trim();
+  const hasMore = !!(await p.$("#btn-queue-more"));
+  check("THE CANDIDATES TAB NEVER LOOKS COMPLETE WHEN IT IS NOT",
+        shownRows === truth
+          ? header === String(truth) && !hasMore
+          : header === `${shownRows} of ${truth}` && hasMore,
+        `${shownRows} rows on screen, ${truth} exist, header "${header}", more button ${hasMore}`);
   check("the queue renders", (await p.$$("#queue-list .cand")).length > 0,
         `${(await p.$$("#queue-list .cand")).length} candidates`);
   check("scores are on the row", (await p.$$("#queue-list .strip")).length > 0, "");
@@ -108,7 +123,7 @@ suite("REGRESSION", 8099, async ({ p, base, E, P, check, errs }) => {
     return row && row.querySelector("[data-cand]").dataset.cand;
   });
   check("there is an assessed candidate to open", !!id, id || "none");
-  await p.click(`#queue-list [data-cand="${id}"]`);
+  await p.click(await revealQueueRow(p, id));
   await p.waitForSelector("#v-cand:not([hidden])", { timeout: 20000 });
   await p.waitForTimeout(1200);
   const cd = flat(await p.textContent("#cd-body"));
