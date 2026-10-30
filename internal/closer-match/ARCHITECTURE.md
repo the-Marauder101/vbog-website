@@ -2766,6 +2766,93 @@ not yet being called, so no refresh was running at all. A failure that survives
 the removal of its suspected cause has exonerated it. The sleep had been there all
 along.
 
+### 7ba. The Candidates tab stopped opening, and it was not a migration
+
+The symptom was "the candidate tab is not opening, and we haven't changed
+anything on Nikash." Both halves were true. Nothing had touched
+`internal/closer-match` on `main`; the only commits were unrelated files.
+
+The request behind the tab was returning:
+
+    {"code":"57014","message":"canceling statement due to statement timeout"}
+
+`v_candidate_queue` had crossed Supabase's 8-second statement timeout, and
+`loadQueue()` awaits that request before it calls `view("queue")` — so the screen
+stayed hidden rather than rendering badly. **The tab, not the candidate detail.**
+
+**It was data growth, not a regression.** Between one look and the next: ~30
+profiles became 65, 10 open roles became 23, 250 match rows became 1011, and
+candidates went from ~40 to 110. The view is superlinear in all of them at once.
+Per candidate it scanned `v_console_clean` twice — once for `roles`, once for
+`best_pct` — and then ran
+
+    (select count(*) from v_console_clean v2 where v2.requirement_id = …)
+
+**for every role row**, to fill in the "rank 3 of 17". `v_console_clean` is not a
+table: it resolves through `v_console`, which carries a window function and a
+self-join on `matches`. So the innermost count re-derived the whole console once
+per role per candidate — the plan showed subplans entered 99,078 and 92,022 times.
+
+The rewrite computes the per-role counts once and each candidate's roles and best
+percentage in a single pass. Output asserted identical, value by value, before the
+replacement was allowed to stand.
+
+| | as `postgres` | as `authenticated` |
+|---|---|---|
+| before | 905 ms | **5705 ms** |
+| after | — | **82 ms** |
+
+> **A query measured as `postgres` has not been measured.** RLS is part of the
+> query and on this database it is most of it — every table is default-deny with a
+> policy calling `is_staff()`, and that multiplies through a plan entered ~99,000
+> times. The functions are correctly STABLE; the problem was the number of
+> entries. The margin that matters is the one the application's own role sees,
+> against the row counts production actually has.
+
+Raising `statement_timeout` would have cleared the error in one line and left the
+view quadratic, to fail again at a row count nobody was watching. The timeout was
+the messenger.
+
+**Two things found on the way.** The old `roles` array ordered by `composite_pct`
+alone, so two roles on the same percentage came out in whatever order the plan
+produced — 25 of 110 candidates carry such a tie, and their role list could
+reshuffle between page loads. `v_console` had added a deterministic tiebreak for
+exactly this; the array never got one. It has one now, and that is the only
+intended difference in the rewrite — which is why the assertion compares `roles`
+as a set and checks the best-first ordering separately, rather than comparing the
+rendered row and failing for the one reason that was deliberate.
+
+And the diagnosis was wrong twice before it was right. The first guess was that
+migrations 50–53 had broken `get_candidate_detail`, since the database was four
+migrations ahead of the deployed site; the second was a malformed target profile
+making the new `fit_from_levels` raise. Both were checked and both were false —
+every target profile is well-formed, and `get_candidate_detail` returns 200. The
+answer only arrived from running the deployed build against the live database and
+watching which request actually failed.
+
+> **A plausible cause that fits the timing is not evidence.** The deployed code
+> and the live schema had genuinely diverged, which made a schema fault the
+> obvious story and cost two wrong turns. Reproduce first; the failing request
+> names itself.
+
+### 7bb. A harness pinned to the machine it was written on
+
+Running the suites after a container rebuild produced this:
+
+      ok  security    0/0
+      ok  assess      0/0
+
+Seven suites, all green, none of them run. `test/harness.js` named an absolute
+Chromium path (`chromium-1194`) and an absolute module path, and the rebuilt
+container ships `chromium-1243` under a different layout. Both are now resolved by
+name, newest-first, with the hardcoded path gone.
+
+The worse half is the report. `all.js` marked a suite `ok` whenever
+`passed === total`, which is true of `0 === 0`, so a suite that could not start
+read as a pass. Zero assertions is now a failure that prints the child's own
+error. This is §7af's lesson — a count that does not say the run was cut short —
+arriving in the runner rather than in a suite.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:

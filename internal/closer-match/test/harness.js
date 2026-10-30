@@ -11,11 +11,39 @@
 // Every such request is intercepted and replayed through Node's fetch, which
 // does use the proxy, then fulfilled. Without this nothing loads at all and
 // every suite fails for a reason that has nothing to do with the code.
-const { chromium } = require("/opt/node22/lib/node_modules/playwright");
+// Resolved by name, not by absolute path. Both of these were pinned to one
+// container's layout and both broke when the container was rebuilt — the module
+// path moved, and the browser build number went from 1194 to 1243. A suite that
+// cannot start reports zero assertions, which `all.js` prints as "suite produced
+// no readable result": a green-looking 0/0 that says nothing about the code.
+//
+// > A test harness pinned to the machine it was written on stops testing the
+// > moment that machine changes, and fails in a way that looks like no result
+// > rather than a failure.
+const { chromium } = require("playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
-const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+// Let Playwright find its own browser (PLAYWRIGHT_BROWSERS_PATH is set in this
+// environment). Only fall back to a path if that is somehow unavailable, and
+// discover it rather than naming a build number.
+const CHROME = (() => {
+  if (process.env.CHROME_PATH && fs.existsSync(process.env.CHROME_PATH)) {
+    return process.env.CHROME_PATH;
+  }
+  try { const p = chromium.executablePath(); if (fs.existsSync(p)) return p; } catch (_) {}
+  const base = process.env.PLAYWRIGHT_BROWSERS_PATH || "/opt/pw-browsers";
+  try {
+    const dir = fs.readdirSync(base)
+      .filter(d => /^chromium-\d+$/.test(d))
+      .sort((a, b) => Number(b.split("-")[1]) - Number(a.split("-")[1]))[0];
+    if (dir) {
+      const p = path.join(base, dir, "chrome-linux", "chrome");
+      if (fs.existsSync(p)) return p;
+    }
+  } catch (_) {}
+  return undefined;   // undefined == "use Playwright's default"
+})();
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml" };
 
 // No default credentials. A password committed to a repository is a live

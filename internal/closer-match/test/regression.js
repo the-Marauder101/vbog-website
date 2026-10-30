@@ -63,6 +63,26 @@ suite("REGRESSION", 8099, async ({ p, base, E, P, check, errs }) => {
   check("and can be edited", await p.isVisible("#btn-edit-intake"), "");
 
   // ══ THE CANDIDATE QUEUE ══════════════════════════════════════════════════
+  //
+  // Timed, because this is the request that took the Candidates tab down.
+  // `v_candidate_queue` was quadratic in candidates x roles and crossed
+  // Supabase's 8-second statement timeout at 110 candidates and 23 open roles;
+  // `loadQueue()` awaits it before calling view("queue"), so a 500 here means the
+  // tab never opens at all. sql/54 made it one pass. This is the tripwire for
+  // the next time it creeps back up.
+  const qT0 = Date.now();
+  const qRows = await rest(p, "v_candidate_queue?select=*&order=created_at.desc&limit=100");
+  const qMs = Date.now() - qT0;
+  check("THE CANDIDATE QUEUE ANSWERS, AND WELL INSIDE THE STATEMENT TIMEOUT",
+        Array.isArray(qRows) && qRows.length > 0 && qMs < 4000,
+        `${Array.isArray(qRows) ? qRows.length + " rows" : JSON.stringify(qRows).slice(0, 120)} in ${qMs}ms (8000ms cancels)`);
+  // The roles array is ordered best-first and its order is stable on ties — two
+  // roles on the same composite used to come out in whatever order the plan gave.
+  check("and each candidate's roles are ordered best-first",
+        (Array.isArray(qRows) ? qRows : []).every(r =>
+          (r.roles || []).every((x, i, a) => i === 0 || a[i - 1].pct >= x.pct)),
+        "");
+
   await p.click("#nav-queue"); await p.waitForSelector("#v-queue:not([hidden])", { timeout: 20000 });
   // Wait for a row to exist rather than sleeping a guessed interval — see the
   // note in test/assess.js about what a sleep standing in for a wait costs.

@@ -46,8 +46,19 @@ for (const [name, what] of SUITES) {
     failures = ["suite produced no readable result"];
   }
   const aborted = /ABORTED/.test(r.stderr || "");
-  totals.push({ name, passed, total, aborted, failures });
-  process.stderr.write(`   ${passed}/${total}${aborted ? "  ABORTED" : ""}\n`);
+  // A suite that could not start produces no assertions, and 0 === 0 made the
+  // summary print "ok  security  0/0" — green for a suite that never ran. That
+  // happened for real when a container rebuild moved the Chromium path, and
+  // every one of the seven read as ok. Zero assertions is a failure, and the
+  // reason the child gave is printed rather than swallowed.
+  const ranNothing = total === 0;
+  if (ranNothing) {
+    failures = ["suite ran no assertions — it could not start"];
+    const tail = (r.stderr || "").trim().split("\n").slice(-4);
+    if (tail.length) failures.push(...tail.map(l => "  " + l));
+  }
+  totals.push({ name, passed, total, aborted: aborted || ranNothing, failures });
+  process.stderr.write(`   ${passed}/${total}${aborted ? "  ABORTED" : ""}${ranNothing ? "  DID NOT RUN" : ""}\n`);
   for (const f of failures) process.stderr.write(`   FAIL  ${f}\n`);
 }
 
