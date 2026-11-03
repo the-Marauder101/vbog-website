@@ -86,6 +86,8 @@ tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
 .mini td{padding:5px 8px}
 .mgmt .tablewrap{margin:10px 0 12px}
 .ebtake{border:1px solid var(--rule);border-radius:8px;padding:14px;margin:4px 0 16px}
+.gstmath{margin-top:8px;font-size:13px}
+.gstmath td,.gstmath th{padding:6px 8px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .stats div{display:flex;flex-direction:column;gap:2px}
 .stats .k{font-size:13px;color:var(--muted)}
@@ -183,7 +185,7 @@ tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
   <div class="ebtake">
     <div class="row">
       <div><label for="ebPct">EB take (% of distribution)</label><input id="ebPct" type="number" min="0" max="100" step="0.5" value="15"></div>
-      <div><label for="gstPct">GST on ad spend (%)</label><input id="gstPct" type="number" min="0" step="1" value="18"></div>
+      <div><label for="gstPct">GST on EB’s take (%)</label><input id="gstPct" type="number" min="0" step="1" value="18"></div>
       <div><label>&nbsp;</label><label class="tick"><input type="checkbox" id="incDisc"> Add management discretionary (5%)</label></div>
     </div>
     <div class="stats">
@@ -192,7 +194,11 @@ tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
       <div><span class="k">Projected bonuses, % of EB take</span><span class="v" id="ebPctAll">–</span></div>
       <div><span class="k">Projected bonuses, % of take above the gate</span><span class="v" id="ebPctAbove">–</span></div>
     </div>
-    <p class="hint">Per pod: EB take = (spend × ROI − spend × (1 + GST)) × EB %. Uses the pod numbers above.</p>
+    <p class="hint">Per pod: EB take = (cash collected − ad spend) × EB % − GST on that, where cash collected = spend × ROI. Pods below 2x ROI count nowhere: no EB take, no bonuses, no discretionary.</p>
+    <div class="tablewrap"><table class="gstmath">
+      <thead><tr><th>Pod</th><th class="num">Spend</th><th class="num">ROI</th><th class="num">Cash − spend</th><th class="num" id="thPct">× 15%</th><th class="num" id="thGst">− 18% GST</th><th class="num">EB take</th><th class="num">Above ₹60L</th></tr></thead>
+      <tbody id="gstRows"></tbody>
+    </table></div>
   </div>
   <div class="tablewrap"><table>
     <thead><tr><th>Who</th><th class="num">Bonus</th><th><span class="hidden">Remove</span></th></tr></thead>
@@ -211,7 +217,7 @@ tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
   <h2>The basics</h2>
   <ul>
     <li>Spend is counted <strong>excluding GST</strong>.</li>
-    <li>An account counts only at <strong>2x ROI</strong>: cash collected ≥ 2 × ad spend.</li>
+    <li>An account counts only at <strong>2x ROI</strong>: cash collected ≥ 2 × ad spend. Below 2x it counts nowhere: no bonuses, no EB take, no discretionary.</li>
     <li><strong>Gate: ₹60L</strong> counted spend per pod. Spend bonuses pay only on lakhs above it.</li>
     <li>Tiers by monthly spend: T1 under ₹15L · T2 ₹15–30L · T3 ₹30–60L · T4 ₹60L+</li>
     <li>Earned in month 1, paid with month 3 salary.</li>
@@ -258,7 +264,7 @@ tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
   <h2>4. Leadership</h2>
   <ul>
     <li><strong>₹500</strong> per lakh above ₹60L, in each pod.</li>
-    <li>Pod past <strong>₹90L</strong>: <strong>₹1,000</strong> on every lakh above ₹60L, if every pod is at ₹60L+.</li>
+    <li>Pod past <strong>₹90L</strong>: <strong>₹1,000</strong> on every lakh above ₹60L in that pod, if every pod is at ₹60L+. Pods at ₹60–90L stay at ₹500.</li>
     <li>Plus <strong>15%</strong> of every pod tier bonus, on top.</li>
     <li>One pool, split by shares out of 100 (today 50 / 50). A new head joins by the others giving up share.</li>
   </ul>
@@ -282,13 +288,13 @@ tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
 <section class="box">
   <h2>7. Management discretionary</h2>
   <ul>
-    <li><strong>5%</strong> of EB’s take above the gate (₹615 per lakh).</li>
+    <li><strong>5%</strong> of EB’s take above the gate (₹615 per lakh at 2x), pods at 2x only.</li>
     <li>Calculated monthly. Paid only on management approval.</li>
   </ul>
   <h2 class="sub">At-risk salary</h2>
   <ul>
     <li>Paid on KPIs: each KPI met pays an equal slice.</li>
-    <li>At risk: 20% PM, strategist · 15% editor, designer, UI/UX · 25% Group Lead · 30% heads.</li>
+    <li>At risk: 20% PM, strategist · 15% editor, designer, UI/UX · 25% Group Lead · 30% heads. A PM or strategist who is also Group Lead stays at 20%.</li>
   </ul>
 </section>
 </div>
@@ -296,7 +302,7 @@ tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
 <section class="box">
   <h2>What it costs EB</h2>
   <ul>
-    <li>EB earns about <strong>₹12,300 per lakh</strong> of spend at 2x (15% take, after 18% GST on ad spend).</li>
+    <li>EB earns about <strong>₹12,300 per lakh</strong> of spend at 2x: (cash − spend) × 15%, less 18% GST on that take. 1L × 15% = ₹15,000 − ₹2,700 GST = ₹12,300. At 3x: ₹24,600.</li>
   </ul>
   <div class="tablewrap"><table>
     <thead><tr><th>Per lakh above ₹60L</th><th class="num">Pod</th><th class="num">Leadership</th><th class="num">Group Lead</th><th class="num">UI/UX</th><th class="num">Total</th><th class="num">% of EB’s take</th></tr></thead>
@@ -547,6 +553,11 @@ function renderProj(){
   const bon=rows.reduce((s,x)=>s+x.total,0)+(inc?disc:0), any=rows.length||inc;
   $("projTotal").textContent=inr(bon);
   $("ebTake").textContent=inr(E.total); $("ebAbove").textContent=inr(E.above);
+  $("thPct").textContent=`× ${+(E.pct*100).toFixed(2)}%`; $("thGst").textContent=`− ${+(E.gst*100).toFixed(2)}% GST`;
+  setHTML($("gstRows"),E.rows.map(r=>r.at2x
+    ?`<tr><td>Pod ${r.i+1}</td><td class="num">${lk(r.p.spend)}</td><td class="num">${r.p.roi}x</td><td class="num">${inr(r.margin)}</td><td class="num">${inr(r.gross)}</td><td class="num">−${inr(r.tax)}</td><td class="num"><strong>${inr(r.take)}</strong></td><td class="num">${inr(r.up)}</td></tr>`
+    :`<tr><td>Pod ${r.i+1}</td><td class="num">${lk(r.p.spend)}</td><td class="num">${r.p.roi}x</td><td colspan="5" class="muted">Below 2x ROI: not counted</td></tr>`).join("")
+    +`<tr><td><strong>Total</strong></td><td colspan="5"></td><td class="num"><strong>${inr(E.total)}</strong></td><td class="num"><strong>${inr(E.above)}</strong></td></tr>`);
   $("ebPctAll").textContent=E.total>0&&any?(bon/E.total*100).toFixed(1)+"%":"–";
   $("ebPctAbove").textContent=E.above>0&&any?(bon/E.above*100).toFixed(1)+"%":"–";
   $("projCount").textContent=rows.length?`(${rows.length} ${rows.length===1?"person":"people"})`:"";
@@ -556,10 +567,15 @@ $("projRows").addEventListener("click",e=>{const bt=e.target.closest("button[dat
 $("saveBtn").onclick=()=>{if(!last||$("saveBtn").disabled)return;proj.push({...last,mine:[...last.mine]});$("pname").value="";calc();const s=$("saveBtn");s.textContent="Added";setTimeout(()=>s.textContent="Add to projection",1200);};
 $("clearProj").onclick=()=>{proj=[];renderProj();};
 function ebTake(){
+  // EB take = (cash collected − spend) × EB %, less GST on EB's take. Pods below 2x count nowhere.
   const pct=Math.max(0,num($("ebPct").value))/100, gst=Math.max(0,num($("gstPct").value))/100;
-  let total=0, above=0;
-  pods.forEach(p=>{const f=Math.max(0,p.roi-(1+gst))*1e5*pct; total+=p.spend*f; above+=Math.max(0,p.spend-GATE)*f;});
-  return {total,above};
+  let total=0, above=0; const rows=[];
+  pods.forEach((p,i)=>{
+    const at2x=p.roi>=2, margin=at2x?p.spend*(p.roi-1)*1e5:0, gross=margin*pct, tax=gross*gst, take=gross-tax;
+    const up=at2x&&p.spend>0?take*Math.max(0,p.spend-GATE)/p.spend:0;
+    total+=take; above+=up; rows.push({i,p,at2x,margin,gross,tax,take,up});
+  });
+  return {total,above,rows,pct,gst};
 }
 function route(){
   const v=location.hash==="#management"?"management":"calculator";
