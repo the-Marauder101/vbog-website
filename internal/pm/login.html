@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=23">
+  <link rel="stylesheet" href="css/style.css?v=24">
 </head>
 <body class="login-body">
   <div class="login-card">
@@ -31,13 +31,21 @@
     <div class="login-hint">Don't have an ID? Ask your admin to create one in Settings.</div>
   </div>
 
-  <script src="js/config.js?v=23"></script>
-  <script src="js/supabase.js?v=23"></script>
-  <script src="js/ui.js?v=23"></script>
-  <script src="js/auth.js?v=23"></script>
+  <script src="js/config.js?v=24"></script>
+  <script src="js/supabase.js?v=24"></script>
+  <script src="js/ui.js?v=24"></script>
+  <script src="js/auth.js?v=24"></script>
   <script>
-    // Already logged in? Straight to the dashboard.
+    // Already logged in? Straight to the dashboard (the session is re-verified there).
     if (Auth.user()) window.location.replace("vyom.html");
+    else localStorage.removeItem(Auth.KEY); // clear any stale/old-format session
+
+    if (new URLSearchParams(location.search).get("signedout") === "expired") {
+      UI.fieldError(
+        document.getElementById("login-code"),
+        "You've been signed out — your ID may have changed. Enter your current ID."
+      );
+    }
 
     document.getElementById("login-form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -50,7 +58,7 @@
       }
       try {
         const rows = await sbFetch(
-          `team_members?login_code=eq.${encodeURIComponent(code)}&active=eq.true&select=id,name,user_role`
+          `team_members?login_code=eq.${encodeURIComponent(code)}&active=eq.true&select=id,name,user_role,login_code`
         );
         if (!rows.length) {
           UI.fieldError(input, "That ID doesn't match anyone. Check with your admin.");

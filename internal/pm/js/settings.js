@@ -146,6 +146,9 @@
         try {
           const updated = await API.updateMember(id, { login_code: code });
           members = members.map((m) => (m.id === id ? updated : m));
+          // Changing your own ID keeps you signed in; everyone else holding the
+          // old ID is signed out by Auth.verify() on their next check.
+          if (id === Auth.user()?.id && updated.login_code) Auth.save(updated);
           UI.toast(code ? `Login ID for ${member.name} is now “${code}”.` : `${member.name} can no longer log in (no ID).`, "success");
         } catch (e) {
           input.value = member.login_code || "";

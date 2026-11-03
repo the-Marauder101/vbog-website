@@ -112,8 +112,16 @@ an unknown status to its first column, inserts the task with `source: "api"`.
 ## 4. Auth model — a gate, not a vault
 
 - `login.html` looks up `team_members` by `login_code` (case-insensitive, active only)
-  and stores `{id, name, user_role}` as `vyom_user` in **localStorage**. That's the
-  whole session. Logout = remove the key.
+  and stores `{id, name, user_role, login_code, epoch}` as `vyom_user` in
+  **localStorage**. Logout = remove the key.
+- **Sessions are re-verified** (`Auth.verify()`): on every page load, when the tab
+  regains focus, and every 60s, the stored `id` + `login_code` must still match an
+  `active` member. Change or clear someone's login ID, or deactivate them, and every
+  browser holding the old session is signed out within a minute (old ID also stops
+  working at the gate). Network errors never sign anyone out — only a definite miss.
+  A changed name/role is picked up and the page reloads.
+- **Sign everyone out**: bump `Auth.EPOCH` in `js/auth.js` and release (bump `?v=`).
+  Sessions from an older epoch — or missing `login_code` — are treated as logged out.
 - Every page script starts with `if (!Auth.requireLogin()) return;` —
   settings uses `Auth.requireAdmin()`. Then `Auth.initNav()` (user chip, hides
   Settings link for non-admins) and `Inbox.init()` (bell + panel).
@@ -140,7 +148,7 @@ an unknown status to its first column, inserts the task with `source: "api"`.
 4. **Cache busting**: every CSS/JS reference carries `?v=N`. **Bump N in all five
    HTML files on every release** — GitHub Pages caches ~10 min and users will
    otherwise run mixed old/new code (this caused "API.x is not a function" bugs).
-   Current version: `v=18`.
+   Current version: `v=24`.
 5. **Escape everything**: any user data inserted via innerHTML goes through
    `UI.esc()`. No exceptions.
 6. **Optimistic, in-place updates in async handlers** — the hard-won rule:
