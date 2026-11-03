@@ -180,14 +180,14 @@ async function expectToast(substr) {
   // Swap the logged-in user without driving the form (form is tested separately)
   async function become(code) {
     const rows = await rest(
-      `team_members?login_code=eq.${code}&select=id,name,user_role`
+      `team_members?login_code=eq.${code}&select=id,name,user_role,login_code`
     );
     if (!rows.length) throw new Error(`no user with code ${code}`);
-    await page.evaluate(
-      (u) => localStorage.setItem("vyom_user", JSON.stringify({ id: u.id, name: u.name, user_role: u.user_role })),
-      rows[0]
-    );
-    if (rows[0].user_role === "admin") adminUser = { id: rows[0].id, name: rows[0].name, user_role: rows[0].user_role };
+    const session = await page.evaluate((u) => {
+      Auth.save(u); // same shape (login_code + epoch) the login page writes
+      return Auth.user();
+    }, rows[0]);
+    if (rows[0].user_role === "admin") adminUser = session;
     return rows[0];
   }
 
