@@ -15,7 +15,7 @@
 
 const Auth = {
   KEY: "vyom_user",
-  EPOCH: 2, // bump to invalidate every existing session
+  EPOCH: 3, // bump to invalidate every existing session
   VERIFY_EVERY_MS: 60 * 1000,
   _allowed: undefined, // cached project-id allowlist for externals (null = all)
   _watching: false,
