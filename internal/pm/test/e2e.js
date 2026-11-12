@@ -918,8 +918,9 @@ async function expectToast(substr) {
     await expectToast("e2e-ext-2");
     const m = await rest(`team_members?id=eq.${extId}&select=login_code`);
     if (m[0].login_code !== "e2e-ext-2") throw new Error("login code not saved");
-    // duplicate code rejected
-    await input.fill("depesh");
+    // duplicate code rejected — collide with a REAL current ID, resolved rather
+    // than pinned, or a rotation turns this into a silent no-op that passes.
+    await input.fill(await loginCodeFor("Depesh"));
     await input.blur();
     await expectToast("already taken");
   });
