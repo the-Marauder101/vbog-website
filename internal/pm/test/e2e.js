@@ -177,12 +177,28 @@ async function expectToast(substr) {
     if (m.type() === "error") consoleErrors.push(`console: ${m.text().slice(0, 200)}`);
   });
 
-  // Swap the logged-in user without driving the form (form is tested separately)
-  async function become(code) {
+  // Login IDs get rotated (they are credentials, not fixtures), so look the
+  // admin's up rather than hardcoding it — a rotation should not red the suite.
+  async function loginCodeFor(name) {
     const rows = await rest(
-      `team_members?login_code=eq.${code}&select=id,name,user_role,login_code`
+      `team_members?name=eq.${encodeURIComponent(name)}&active=eq.true&select=login_code`
     );
-    if (!rows.length) throw new Error(`no user with code ${code}`);
+    if (!rows.length || !rows[0].login_code)
+      throw new Error(`${name} has no active login ID — check Settings`);
+    return rows[0].login_code;
+  }
+
+  // Swap the logged-in user without driving the form (form is tested separately).
+  // Takes a login ID or a NAME: real people's IDs get rotated, so the suite
+  // resolves them rather than pinning them. Test fixtures keep using their code.
+  async function become(codeOrName) {
+    const sel = "select=id,name,user_role,login_code";
+    let rows = await rest(`team_members?login_code=eq.${encodeURIComponent(codeOrName)}&${sel}`);
+    if (!rows.length)
+      rows = await rest(
+        `team_members?name=eq.${encodeURIComponent(codeOrName)}&active=eq.true&${sel}`
+      );
+    if (!rows.length) throw new Error(`no user matching "${codeOrName}"`);
     const session = await page.evaluate((u) => {
       Auth.save(u); // same shape (login_code + epoch) the login page writes
       return Auth.user();
@@ -204,7 +220,7 @@ async function expectToast(substr) {
   });
 
   await step("Login gate: valid ID enters Vyom with user chip + admin nav", async () => {
-    await page.fill("#login-code", "Depesh"); // case-insensitive
+    await page.fill("#login-code", (await loginCodeFor("Depesh")).toUpperCase()); // case-insensitive
     await page.click(".login-btn");
     await page.waitForURL(/vyom\.html/, { timeout: 8000 });
     await page.locator(".user-chip .user-name", { hasText: "Depesh" }).waitFor({ timeout: 8000 });
@@ -661,7 +677,7 @@ async function expectToast(substr) {
   // ---------- inbox: assignment notifications ----------
   let inboxTaskId, sahilId;
   await step("Inbox: assigning a task notifies the assignee", async () => {
-    sahilId = (await rest("team_members?login_code=eq.sahil&select=id"))[0].id;
+    sahilId = (await rest("team_members?name=eq.Sahil&select=id"))[0].id;
     await page.goto(`${BASE}/board.html?project=${projectId}`);
     await page.locator(".add-task-btn").first().waitFor();
     await page.locator('.kanban-col[data-status="Backlog"] .add-task-btn').click();
@@ -678,7 +694,7 @@ async function expectToast(substr) {
   });
 
   await step("Inbox: badge + notification visible to Sahil; click opens the task", async () => {
-    await become("sahil");
+    await become("Sahil");
     await page.goto(`${BASE}/vyom.html`);
     const badge = page.locator(".inbox-badge");
     await badge.waitFor({ state: "visible", timeout: 8000 });
@@ -769,7 +785,7 @@ async function expectToast(substr) {
 
   // ---------- @mentions ----------
   await step("Mentions: @ opens the member picker and inserts the name", async () => {
-    await become("depesh");
+    await become("Depesh");
     await page.goto(`${BASE}/board.html?project=${projectId}`);
     await page.locator(".task-card", { hasText: "Inbox e2e task" }).click();
     await page.locator("#task-modal.open").waitFor();
@@ -892,7 +908,7 @@ async function expectToast(substr) {
   });
 
   await step("Roles: login ID can be changed inline from Settings", async () => {
-    await become("depesh");
+    await become("Depesh");
     await page.goto(`${BASE}/settings.html`);
     const row = page.locator("#members-table tr", { hasText: "E2E External" });
     await row.waitFor({ timeout: 8000 });
@@ -1276,7 +1292,7 @@ async function expectToast(substr) {
     page.$$eval(".kanban-col .col-title", (els) => els.map((e) => e.textContent.trim()));
 
   await step("Columns: admin hiding a column removes it and reports it in the pill", async () => {
-    await become("depesh");
+    await become("Depesh");
     await page.goto(`${BASE}/board.html?project=${projectId}`);
     await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
     const statuses = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0].statuses;
@@ -1355,7 +1371,7 @@ async function expectToast(substr) {
   });
 
   await step("Columns: a non-admin's hide is local and never touches the project", async () => {
-    await become("sahil"); // member
+    await become("Sahil"); // member
     await page.goto(`${BASE}/board.html?project=${projectId}`);
     await page.locator(".kanban-col").first().waitFor({ timeout: 8000 });
     const target = (await rest(`projects?id=eq.${projectId}&select=statuses`))[0].statuses[1];
@@ -1394,7 +1410,7 @@ async function expectToast(substr) {
     // Leave the board clean for the remaining checks
     await rest(`projects?id=eq.${projectId}`, { method: "PATCH", body: { hidden_statuses: [] } });
     await page.evaluate((id) => localStorage.removeItem(`vyom_hidden_cols_${id}`), projectId);
-    await become("depesh");
+    await become("Depesh");
   });
 
   // ---------- HR Stage Date (sql/13 status_changed_at, surfaced by sql/14) ----------
@@ -1501,7 +1517,7 @@ async function expectToast(substr) {
   });
 
   await step("SLA: flags are visible to a non-admin too (rules aren't admin-only)", async () => {
-    await become("sahil"); // member
+    await become("Sahil"); // member
     await page.goto(`${BASE}/board.html?project=${hrId}`);
     const card = page.locator(`.task-card[data-id="${slaCardId}"]`);
     await card.waitFor({ timeout: 8000 });
@@ -1510,7 +1526,7 @@ async function expectToast(substr) {
     // …but the rule EDITOR stays admin-only
     if (!(await page.locator("#sla-btn").isHidden()))
       throw new Error("a member should not get the SLA Rules button");
-    await become("depesh");
+    await become("Depesh");
   });
 
   await step("SLA: hiding a column reports the flagged cards it takes out of view", async () => {
