@@ -1,1 +1,6 @@
 node_modules/
+# Playwright is installed ad hoc to run test/e2e.js; the repo has no build step
+# and must not gain a package manifest (see ARCHITECTURE.md §1).
+/package.json
+/package-lock.json
+/node_modules/
