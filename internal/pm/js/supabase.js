@@ -7,6 +7,35 @@
 // Errors always throw with a human-readable message (shown via UI.toast).
 // PGRST205 (missing tables) reveals the "Database not set up" banner.
 
+// sbFetchAll(path) — the same thing for a query that can exceed 1000 rows.
+//
+// PostgREST caps a response at 1000 rows (Supabase's db-max-rows) and says so
+// only in a header: an over-long result comes back looking like a complete
+// one, which is how a board can quietly stop showing a sixth of its cards.
+//
+// Paging also needs a deterministic ORDER BY. Without one Postgres may return
+// heap order, and an UPDATE rewrites the row at the END of the heap — so the
+// card somebody just saved is precisely the one that falls off page one. Any
+// path with no `order=` gets `id.asc` here; a path that brings its own order
+// must make it unique (add `id.asc` as a tiebreaker) or rows can repeat or go
+// missing across page boundaries.
+async function sbFetchAll(path, { pageSize = 1000, maxPages = 50 } = {}) {
+  const sep = path.includes("?") ? "&" : "?";
+  const base = /[?&]order=/.test(path) ? path : `${path}${sep}order=id.asc`;
+  const out = [];
+  for (let page = 0; page < maxPages; page++) {
+    const rows = await sbFetch(`${base}&limit=${pageSize}&offset=${page * pageSize}`);
+    if (!Array.isArray(rows)) return rows;
+    out.push(...rows);
+    if (rows.length < pageSize) return out;
+  }
+  // maxPages is a runaway guard, not an expected limit — say so rather than
+  // silently returning a truncated list, which is the bug this function exists
+  // to prevent.
+  console.warn(`sbFetchAll: stopped at ${maxPages} pages for ${path}`);
+  return out;
+}
+
 async function sbFetch(path, { method = "GET", body } = {}) {
   const headers = {
     apikey: SUPABASE_ANON_KEY,
