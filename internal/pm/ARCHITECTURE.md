@@ -138,6 +138,20 @@ an unknown status to its first column, inserts the task with `source: "api"`.
 
 1. **All queries live in `js/api.js`** as small named methods returning promises.
    PostgREST filter syntax: `tasks?project_id=eq.X&select=*,projects(name)`.
+   **A query that can return more than 1000 rows must use `sbFetchAll()`, not
+   `sbFetch()`.** PostgREST caps a response at 1000 rows (Supabase's
+   `db-max-rows`) and reports it only in a header, so an over-long result
+   arrives looking like a complete one. This shipped as a real bug: GetClosers
+   passed 1000 cards and the board silently stopped showing ~166 of them —
+   saving a card appeared to work, then it vanished on refresh.
+   Two parts to getting it right:
+   - **Page it.** `sbFetchAll()` walks `limit`/`offset` until a short page.
+   - **Order it deterministically.** Without an `ORDER BY`, Postgres may return
+     heap order, and an `UPDATE` rewrites the row at the END of the heap — so
+     the card someone just saved is exactly the one that falls off page one.
+     `sbFetchAll()` adds `order=id.asc` when the path has no order of its own;
+     a path with its own order must make it unique (append `id.asc` as a
+     tiebreaker) or rows can repeat or vanish across a page boundary.
 2. **Custom dropdowns**: never style a raw `<select>`. Call `UI.enhanceSelect(sel)` —
    it hides the native select (kept as the source of truth for `.value` and `change`
    events) and builds a styled `.dd` widget. **Re-call it after repopulating options**,

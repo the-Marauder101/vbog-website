@@ -40,19 +40,19 @@ const API = {
 
   // ---- tasks ----
   getTasks(projectId) {
-    return sbFetch(`tasks?project_id=eq.${projectId}&select=*`);
+    return sbFetchAll(`tasks?project_id=eq.${projectId}&select=*`);
   },
   // Lightweight fetch for dashboard counts (all projects at once)
   getTaskSummaries() {
-    return sbFetch("tasks?select=project_id,due_date");
+    return sbFetchAll("tasks?select=project_id,due_date");
   },
   // Every task across all active projects, with project info embedded (All Tasks view).
   // projects(*) rather than a column list so new project columns (e.g.
   // parent_project_id) flow through without breaking pre-migration.
   getAllTasks() {
-    return sbFetch(
+    return sbFetchAll(
       "tasks?select=*,projects!inner(*)&projects.archived=eq.false" +
-        "&order=due_date.asc.nullslast,created_at.asc"
+        "&order=due_date.asc.nullslast,created_at.asc,id.asc"
     );
   },
   createTask(fields) {
@@ -81,7 +81,7 @@ const API = {
   // Task id/status/project across a set of projects — feeds the transition
   // mapping step when status columns change.
   getTasksByProjects(projectIds) {
-    return sbFetch(`tasks?project_id=in.(${projectIds.join(",")})&select=id,project_id,status`);
+    return sbFetchAll(`tasks?project_id=in.(${projectIds.join(",")})&select=id,project_id,status`);
   },
   // Bulk transition-mapping move. Each updated task fires the webhook and
   // status_changed automation triggers once (server-side) — that's correct:
