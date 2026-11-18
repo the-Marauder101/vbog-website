@@ -48,8 +48,11 @@ function plainRefusal(status: number, msg: string): string {
   return `${msg}. Try again, or send this to V-BOG.`;
 }
 
+/** The one Supabase client (null in demo mode). data.ts uses it for the deal, payables, Tally and admin screens. */
+export const supabase = url && key ? createClient(url, key) : null;
+
 function liveApi(url: string, key: string): Api {
-  const sb = createClient(url, key);
+  const sb = supabase!;
   const ok = <T,>(r: { data: T; error: { message: string } | null }): T => {
     if (r.error) throw new Error(r.error.message);
     return r.data;

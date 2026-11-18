@@ -33,6 +33,9 @@ npm run dev                                   # keys in public/config.js, or lea
 npm run build && cp ../deploy/config.js /tmp/ra-config.js && rm -rf ../deploy && cp -r dist ../deploy && cp /tmp/ra-config.js ../deploy/config.js
 ```
 
+Screens: `App.tsx` (sections) → `Deals`, `DealPage` (tabs: `DealDocs`, `Weights`, `DebitNotes`, `PaymentTab`), `Payables`, `Tally`, `Admin`.
+Data calls: `api.ts` (sign-in, documents, staff) and `data.ts` (everything else, live only). Uploads: `uploads.ts`.
+
 After editing any file in `supabase/migrations/`, run `./build_setup.sh` to regenerate `supabase/setup.sql`.
 `setup.sql` is for a fresh project; on a project that already has data, run only the new migration.
 

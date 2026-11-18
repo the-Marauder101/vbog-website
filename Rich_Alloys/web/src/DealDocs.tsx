@@ -10,8 +10,8 @@ type State = DocStatus | "missing";
 const rank: Record<State, number> = { approved: 4, verified: 3, uploaded: 2, rejected: 1, missing: 0 };
 const sides: Side[] = ["supplier", "rich_alloys", "return"];
 
-export default function DealDocs({ t, lang, deal, profile, onBack }: {
-  t: (k: Key) => string; lang: Lang; deal: Deal; profile: Profile; onBack: () => void;
+export default function DealDocs({ t, lang, deal, profile }: {
+  t: (k: Key) => string; lang: Lang; deal: Deal; profile: Profile;
 }) {
   const [data, setData] = useState<DealDocsData | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -65,17 +65,14 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
   const stateOf = (code: string): State =>
     data.docs.filter((d) => d.doc_type === code)
       .reduce<State>((best, d) => (rank[d.status] > rank[best] ? d.status : best), "missing");
-  const done = shown.filter((ty) => stateOf(ty.code) === "approved").length;
+  const required = shown.filter((ty) => ty.required);
+  const done = required.filter((ty) => stateOf(ty.code) === "approved").length;
 
   return (
     <>
-      <button className="link back" onClick={onBack}>← {t("back")}</button>
-      <h1 className="deal-no">{deal.deal_no}</h1>
-      <p className="muted">{deal.suppliers?.name}<br />{deal.po_no}</p>
-
-      <div className="progress" role="img" aria-label={`${done} ${t("of")} ${shown.length} ${t("progress")}`}>
-        <div className="bar"><span style={{ width: `${(done / Math.max(shown.length, 1)) * 100}%` }} /></div>
-        <p><strong>{done}</strong> {t("of")} {shown.length} {t("progress")}</p>
+      <div className="progress" role="img" aria-label={`${done} ${t("of")} ${required.length} ${t("progress")}`}>
+        <div className="bar"><span style={{ width: `${(done / Math.max(required.length, 1)) * 100}%` }} /></div>
+        <p><strong>{done}</strong> {t("of")} {required.length} {t("progress")}</p>
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       {queue.length > 0 && !online() && <p className="notice" role="status">{t("pendingOffline")}</p>}
@@ -93,7 +90,8 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
               return (
                 <li key={ty.code} className={`state-${state}`}>
                   <button className="row" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : ty.code)}>
-                    <span className="row-main"><span>{lang === "hi" && ty.name_hi ? ty.name_hi : ty.name}</span></span>
+                    <span className="row-main"><span>{lang === "hi" && ty.name_hi ? ty.name_hi : ty.name}</span>
+                      {!ty.required && <span className="muted small">{t("optional")}</span>}</span>
                     {waiting.length > 0 && state === "missing"
                       ? <span className={`chip ${waiting.some((q) => q.state === "failed") ? "rejected" : "uploaded"}`}>
                           {waiting.some((q) => q.state === "failed") ? t("upFailed") : t("upUploading")}

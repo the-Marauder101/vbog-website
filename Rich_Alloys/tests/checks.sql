@@ -5,7 +5,7 @@ declare n numeric; t text; ok boolean;
   gate uuid := '00000000-0000-0000-0000-000000000001';
   facc uuid := '00000000-0000-0000-0000-000000000002';
   hoac uuid := '00000000-0000-0000-0000-000000000003';
-  v_deal uuid; v_doc uuid;
+  v_deal uuid; v_doc uuid; v_inv uuid;
 begin
   -- ---- numbers ----
   select weight_short_kg into n from v_inward where grade='OC';  assert n = 14.350, 'OC weight short';
@@ -73,7 +73,50 @@ begin
   ok := false;
   begin perform approve_dn((select id from invoices limit 1), 'weight_short', current_date, true);
   exception when insufficient_privilege then ok := true; end;
-  assert ok, 'DN approval is closed until its slice ships';
+  assert ok, 'raw approve_dn stays closed; staff use approve_debit_note';
+
+  -- ---- slices 2-5 (any active staff writes for now; HO accounts here) ----
+  select invoice_id into v_inv from v_payable where deal_no = 'RA-082';
+  select taxable_gap + gst_gap + total_gap into n from v_invoice_check where invoice_id = v_inv;
+  assert n = 0, 'Ogo invoice arithmetic agrees with its lines';
+  select balance into n from v_payable_by_supplier; assert n = 682999.40, 'supplier balance';
+  select count(*) into n from v_tally_pending where kind = 'payment'; assert n = 1, 'provisional payment waits for Tally';
+  select count(*) into n from v_tally_pending where kind = 'debit_note'; assert n = 0, 'booked DNs are not pending';
+  select count(*) into n from v_double_payment; assert n = 0, 'no double payment yet';
+
+  ok := false;
+  begin update receipt_lines set factory_bag_kg = 0 where grade = 'OC';
+  exception when others then ok := sqlerrm like '%frozen%'; end;
+  assert ok, 'weights frozen while DNs stand';
+  ok := false;
+  begin update deals set status = 'closed' where id = v_deal;
+  exception when others then ok := sqlerrm like '%has not reached the supplier%'; end;
+  assert ok, 'deal with an undelivered return cannot close';
+  update returns set delivered_on = '2026-11-08' where deal_id = v_deal;
+  ok := false;
+  begin update deals set status = 'closed' where id = v_deal;
+  exception when others then ok := sqlerrm like '%balance%'; end;
+  assert ok, 'deal with a balance cannot close';
+
+  ok := false;
+  begin perform approve_debit_note(v_inv, 'weight_short', true); exception when others then ok := true; end;
+  assert ok, 'cannot approve a DN twice';
+  ok := false;
+  begin perform cancel_debit_note((select id from debit_notes where tally_dn_no = 'RAI/DN/26-27/114'), ' ');
+  exception when others then ok := true; end;
+  assert ok, 'cancel needs a reason';
+  perform cancel_debit_note((select id from debit_notes where tally_dn_no = 'RAI/DN/26-27/114'), 'test re-approval');
+  select debit_notes into n from v_payable where invoice_id = v_inv; assert n = 31921.95 + 257745.00, 'cancelled DN leaves the payable';
+  perform approve_debit_note(v_inv, 'weight_short', true);
+  select total into n from debit_notes where invoice_id = v_inv and dn_type = 'weight_short' and status = 'approved';
+  assert n = 38094.00, 're-approved weight-short DN reproduces DN 114';
+  perform set_dn_tally_no((select id from debit_notes where invoice_id = v_inv and dn_type = 'weight_short' and status = 'approved'), 'RAI/DN/TEST');
+  select status into t from debit_notes where tally_dn_no = 'RAI/DN/TEST'; assert t = 'booked_in_tally', 'Tally number books the DN';
+
+  insert into payments (deal_id, invoice_id, kind, amount, paid_on, bank_ref) values (v_deal, v_inv, 'final', 100, current_date, 'UTR1');
+  insert into payments (deal_id, invoice_id, kind, amount, paid_on, bank_ref) values (v_deal, v_inv, 'final', 100, current_date, 'UTR1');
+  select count(*) into n from v_double_payment where issue in ('same_bank_ref', 'same_amount_same_day'); assert n = 2, 'double payment flagged';
+  select count(*) into n from audit_log where table_name = 'payments' and action = 'insert' and actor = hoac; assert n = 2, 'payments audited with actor';
 
   -- ---- staff ----
   perform set_config('request.jwt.claim.sub', gate::text, true);
