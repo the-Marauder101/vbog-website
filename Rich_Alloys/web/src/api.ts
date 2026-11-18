@@ -1,7 +1,7 @@
 // Every read and write the screens make goes through this file.
 // Live mode talks to Supabase. Demo mode (no keys in .env) runs on in-memory sample data.
 import { createClient } from "@supabase/supabase-js";
-import type { Deal, Doc, DocType, Profile, Role } from "./types";
+import { toLogin, type Deal, type Doc, type DocType, type Profile, type Role, type StaffAction, type StaffMember } from "./types";
 import { demoApi } from "./demo";
 
 export type DealDocsData = { types: DocType[]; docs: Doc[]; hasReturn: boolean };
@@ -20,6 +20,8 @@ export interface Api {
   upload(deal: Deal, docType: string, file: File, userId: string): Promise<void>;
   fileUrl(doc: Doc): Promise<string>;
   act(action: DocAction, docId: string, note?: string): Promise<void>;
+  staff(): Promise<StaffMember[]>;
+  staffAction(body: StaffAction): Promise<void>;
 }
 
 // Keys come from config.js at run time (so a built copy can be configured without rebuilding),
@@ -43,7 +45,7 @@ function liveApi(url: string, key: string): Api {
       return () => data.subscription.unsubscribe();
     },
     async signIn(email, password) {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email: toLogin(email), password });
       if (error) throw new Error(error.message);
     },
     async signOut() { await sb.auth.signOut(); },
@@ -85,7 +87,22 @@ function liveApi(url: string, key: string): Api {
       const { error } = await sb.rpc(action, args);
       if (error) throw new Error(error.message);
     },
+    // Staff logins are managed by the staff-admin edge function, which holds the service key.
+    async staff() {
+      return (await callStaffAdmin({ action: "list" })).staff as StaffMember[];
+    },
+    async staffAction(body) { await callStaffAdmin(body); },
   };
+
+  async function callStaffAdmin(body: object): Promise<Record<string, unknown>> {
+    const { data, error } = await sb.functions.invoke("staff-admin", { body });
+    if (error) {
+      const ctx = (error as { context?: Response }).context;
+      const msg = ctx && typeof ctx.json === "function" ? (await ctx.json().catch(() => null))?.error : null;
+      throw new Error(msg || error.message);
+    }
+    return data as Record<string, unknown>;
+  }
 }
 
 export const api: Api = url && key ? liveApi(url, key) : demoApi();

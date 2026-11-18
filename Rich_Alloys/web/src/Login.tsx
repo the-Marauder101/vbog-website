@@ -20,8 +20,8 @@ export default function Login({ t }: { t: (k: Key) => string }) {
     <form className="card login" onSubmit={submit}>
       <h1>{t("signIn")}</h1>
       {api.demo && <p className="muted">{t("demoLogin")}</p>}
-      <label>{t("email")}
-        <input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
+      <label>{t("loginLabel")}
+        <input type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <label>{t("password")}
         <input type="password" autoComplete="current-password" required value={password}

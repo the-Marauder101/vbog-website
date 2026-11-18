@@ -37,8 +37,17 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
   }
 
   const act = (action: DocAction, doc: Doc, note?: string) => run(() => api.act(action, doc.id, note));
-  const view = (doc: Doc) =>
-    run(async () => { window.open(await api.fileUrl(doc), "_blank", "noopener"); });
+  // Open the tab inside the tap itself (phone browsers block tabs opened after a wait), then point it at the file.
+  const view = (doc: Doc) => {
+    const tab = window.open("", "_blank");
+    if (tab) tab.opener = null;
+    return run(async () => {
+      try {
+        const url = await api.fileUrl(doc);
+        if (tab) tab.location.href = url; else window.location.href = url;
+      } catch (e) { tab?.close(); throw e; }
+    });
+  };
 
   if (!data) return error ? <p className="error" role="alert">{error}</p> : <p className="muted">{t("loading")}</p>;
 

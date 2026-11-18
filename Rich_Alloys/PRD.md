@@ -167,6 +167,15 @@ Status: **Built** = in this folder and tested; **Schema** = tables and maths exi
 - Email and password. No public sign-up; V-BOG creates users and assigns one role each.
 - A signed-in person without a role sees a clear message and no data.
 - English and Hindi toggle, remembered on the device.
+- **Staff screen (Built, 18 Nov):** `owner` and `vbog_admin` add a login (name, email or short login ID, role,
+  temporary password), change a role, reset a password, switch a login off or back on. **Placeholder until
+  Himanshu confirms who may manage staff.** Nobody can remove their own admin access or switch themselves off.
+- Staff without email get a short login ID (e.g. `sanjay`), stored as `sanjay@staff.richalloys.v-bog.com`. No mail is
+  ever sent to it. They sign in by typing just the ID.
+- Passwords are never visible anywhere, including to V-BOG: Supabase stores only a one-way hash. The temporary
+  password is shown once, with WhatsApp and copy buttons; a lost password is reset, not looked up.
+- Switching off a login bans it in Supabase Auth and sets `profiles.active = false`, so an open session reads
+  nothing at once. Every staff change is written to the audit log.
 
 ### 7.2 Deal book (Schema; screen planned, slice 5)
 - One deal = one ID (`deal_no`) used everywhere, from phone deal to final payment.
@@ -222,7 +231,7 @@ All in schema `public`, defined in `supabase/migrations/0001_schema.sql`.
 | Table | Holds |
 | --- | --- |
 | `plants`, `grades`, `sort_categories`, `doc_types` | Master data |
-| `profiles` | One row per user: name, role, plant (id = Supabase auth user id) |
+| `profiles` | The staff list: name, login email, role, plant, active, created (id = Supabase auth user id). Read it in Table Editor |
 | `suppliers` | Supplier master and KYC status |
 | `deals`, `deal_lines` | The deal and its agreed quantity and rate per grade |
 | `invoices`, `invoice_lines` | Supplier invoice and the supplier's own weights per grade |
@@ -250,7 +259,9 @@ Access rules (`0003_access.sql`, `0004_storage.sql`): the anonymous key can read
 can read everything; deal desk roles can write suppliers, deals and deal lines; any staff member can insert a
 document as themselves in status "uploaded"; document status changes only through `verify_document`,
 `approve_document`, `reject_document`; everything else is writable by the service role only until its slice
-ships. Each new slice adds its own write rules and its own access tests.
+ships. Each new slice adds its own write rules and its own access tests. `profiles` is written only by the
+`staff-admin` edge function (`supabase/functions/staff-admin`), the one piece of code holding the service key; it
+checks the caller's role itself. A switched-off profile reads and writes nothing (`is_staff()` and `my_role()` check `active`).
 
 ## 9. UI and UX requirements
 
@@ -296,7 +307,8 @@ more comfortable in Hindi than English. Then an accountant on a phone or laptop.
 | Debit notes | Planned | Three cards with lines and totals, rounding switch, approve, download working, mark Tally number |
 | Payables | Planned | Per supplier and per bill; overdue first |
 | New deal | Planned | Supplier, grades, quantity, rate; under one minute |
-| Admin | Planned | Users and roles, suppliers, master lists |
+| Staff | Built | List with role, login, last sign-in; add staff; change role; reset password; switch off. Shown to owner and V-BOG admin only |
+| Admin | Planned | Suppliers, master lists |
 
 States every screen must handle: loading, empty, error with retry, no permission, offline or slow upload
 (show progress, never lose a photo silently).
@@ -307,6 +319,7 @@ verify, reject with reason, Hindi labels, gate role sees no verify button, no si
 ## 10. Architecture and repository
 
 - **Database:** Supabase Postgres. Logic in views and a few functions. Row-level security on every table.
+- **Server code:** one edge function, `staff-admin`, for creating and managing logins (needs the service key).
 - **Files:** Supabase Storage, private bucket `deal-docs`, path `<deal_no>/<doc_type>/<timestamp>-<name>`.
 - **Web app:** React 18 + TypeScript + Vite, no router, plain CSS. Every data call goes through `web/src/api.ts`,
   which has a live implementation (Supabase) and a demo implementation (in-memory Ogo data, used when no keys are set).
@@ -334,22 +347,27 @@ Rich_Alloys/
 2. SQL editor: paste all of `supabase/setup.sql`, run once. It is one transaction; on any error nothing is created.
 3. Optional, for a demo: run `supabase/test_data/ogo_po082.sql`. Never in production.
 4. Authentication settings: turn off "Allow new users to sign up".
-5. Authentication → Users → Add user (email, password, auto-confirm). Then edit and run `supabase/add_user.sql` for each person.
+5. Deploy the staff function: `supabase functions deploy staff-admin --project-ref <ref> --no-verify-jwt --use-api`.
+   Create the first admin in Authentication → Users → Add user, then edit and run `supabase/add_user.sql`.
+   Everyone else is added from the app's Staff screen.
 6. Put the project URL and anon key in `deploy/config.js` (never the service_role key).
 7. Upload the `deploy/` folder to the host, or point the host at `Rich_Alloys/web` (build `npm run build`, output `dist`).
 8. First-run check on the live project: sign in, upload one photo, view it, verify, approve, reject another with a reason.
 
-18 Nov 2026: steps 1, 2, 4 and 6 done on project `Rich Alloys` (ref `rqxjjrpngybglmhzlmtj`, ap-south-1). Confirmed live:
+18 Nov 2026: steps 1 to 6 done on project `Rich Alloys` (ref `rqxjjrpngybglmhzlmtj`, ap-south-1). Confirmed live:
 20 tables all with RLS, 7 views, 24 table rules, bucket `deal-docs` (private, 20 MB) with its two rules, 20 document
-types all with Hindi labels, anon key cannot read deals, `approve_dn` closed to app users. No users yet, no demo data.
-Still not verified on real Supabase: sign-in and file upload. Expect small first-run fixes.
+types all with Hindi labels, anon key cannot read deals, `approve_dn` closed to app users. `0005_staff.sql` run on its
+own afterwards. Ogo demo data loaded (with placeholder PDFs behind its 16 documents): **delete before go-live.** One
+user: Depesh (`vbog_admin`). Verified live in a 360 px browser and by direct calls: sign-in, deal list, view a file,
+upload, every staff action, role refusals, switched-off login refused and reading nothing. Not yet hosted.
 
 ## 12. Testing and quality bar
 
 - `tests/run_local.sh` runs the exact paste-in file on local Postgres with stand-ins for Supabase auth and storage, loads Ogo, and asserts:
   weight short per grade; DN 114, 115, 116 totals; invoice less DNs; balance; the mitti exception; four missing documents;
   anonymous key reads nothing; non-staff read nothing; gate can upload but not verify; factory accounts cannot approve;
-  no direct status edits; DN approval closed; storage bucket and rules exist; every document has a Hindi label.
+  no direct status edits; DN approval closed; storage bucket and rules exist; every document has a Hindi label;
+  no direct role edits; only owner and vbog_admin manage staff; a switched-off login reads and uploads nothing.
 - The test was proven to fail when an expected amount is changed.
 - Rule: every closed transaction received from Rich Alloys is added as test data plus checks. A release that changes a past rupee does not ship.
 - Each slice adds access tests for its new write rules and a phone-sized browser run of its screens.
@@ -359,7 +377,7 @@ Still not verified on real Supabase: sign-in and file upload. Expect small first
 | Slice | Contents | Status |
 | --- | --- | --- |
 | 0 | Schema, calculations, Ogo regression test | Done |
-| 1 | Sign-in, roles, deal list, document upload, verify, approve, reject | Built; needs first live run |
+| 1 | Sign-in, roles, deal list, document upload, verify, approve, reject, staff management | Built; live on Supabase, not yet hosted |
 | 2 | Inward weights and sorting entry (notebook layout), sorting exceptions | Next |
 | 3 | DN approval screen, supplier DN working PDF, returns, Tally DN number capture | Planned |
 | 4 | Payables: payments, deductions, per-supplier view, due dates | Planned |
@@ -393,7 +411,8 @@ owner per system and gives decisions within 3 working days. Commercial terms are
 | 12 | Full list of grades and sorting categories | Slice 2 |
 | 13 | How many sites really exist (calls mentioned four plants and a second factory) | Future extension only |
 | 14 | Import and LC flow | Out of scope until walked through |
-| 15 | Do factory staff have email addresses, or do we issue simple logins | Slice 1 go-live |
+| 15 | Do factory staff have email addresses? Short login IDs now work without one; confirm per person | Slice 1 go-live |
+| 16 | Who may add staff and reset passwords (placeholder: owner, vbog_admin) | Slice 1 go-live |
 
 ## 15. Risks
 

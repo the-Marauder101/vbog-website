@@ -1,24 +1,24 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { tr, type Key, type Lang } from "./i18n";
-import type { Deal, Profile, Role } from "./types";
+import { canManageStaff, ROLES, type Deal, type Profile, type Role } from "./types";
 import Login from "./Login";
 import Deals from "./Deals";
 import DealDocs from "./DealDocs";
-
-const roles: Role[] = ["gate", "factory", "factory_accounts", "ho_accounts", "owner", "deal_desk", "vbog_admin"];
+import Staff from "./Staff";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem("lang") === "hi" ? "hi" : "en"));
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [deal, setDeal] = useState<Deal | null>(null);
+  const [view, setView] = useState<"deals" | "staff">("deals");
   const t = tr(lang);
 
   useEffect(() => { localStorage.setItem("lang", lang); document.documentElement.lang = lang; }, [lang]);
   useEffect(() => { api.currentUser().then(setUserId); return api.onAuthChange(setUserId); }, []);
   useEffect(() => {
-    if (!userId) { setProfile(undefined); setDeal(null); return; }
+    if (!userId) { setProfile(undefined); setDeal(null); setView("deals"); return; }
     api.profile(userId).then(setProfile).catch(() => setProfile(null));
   }, [userId]);
 
@@ -42,16 +42,25 @@ export default function App() {
                 const role = e.target.value as Role;
                 api.setDemoRole?.(role); setProfile({ ...profile, role });
               }}>
-                {roles.map((r) => <option key={r} value={r}>{t(`role_${r}` as Key)}</option>)}
+                {ROLES.map((r) => <option key={r} value={r}>{t(`role_${r}` as Key)}</option>)}
               </select>
             </label>
           )}
         </div>
       )}
+      {profile && canManageStaff(profile.role) && (
+        <nav className="tabs" aria-label="Sections">
+          {(["deals", "staff"] as const).map((v) => (
+            <button key={v} aria-current={view === v ? "page" : undefined}
+                    onClick={() => { setView(v); setDeal(null); }}>{t(v)}</button>
+          ))}
+        </nav>
+      )}
       <main>
         {!userId ? <Login t={t} />
           : profile === undefined ? <p className="muted">{t("loading")}</p>
           : profile === null ? <p className="notice">{t("noProfile")}</p>
+          : view === "staff" && canManageStaff(profile.role) ? <Staff t={t} me={profile} />
           : deal ? <DealDocs t={t} lang={lang} deal={deal} profile={profile} onBack={() => setDeal(null)} />
           : <Deals t={t} onOpen={setDeal} />}
       </main>

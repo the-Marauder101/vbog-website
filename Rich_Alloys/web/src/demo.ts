@@ -1,7 +1,7 @@
 // Demo mode: sample data held in memory so the screens can be shown without Supabase.
 // The deal is the verified Ogo purchase (PO/RA/082/26-27). Nothing here is saved.
 import type { Api } from "./api";
-import type { Deal, Doc, DocType, Profile, Role } from "./types";
+import type { Deal, Doc, DocType, Profile, Role, StaffMember } from "./types";
 
 const types: DocType[] = ([
   ["PO", "Purchase order", "खरीद आदेश (PO)", "supplier"], ["TAX_INVOICE", "Tax invoice", "टैक्स इनवॉइस", "supplier"],
@@ -28,6 +28,14 @@ export function demoApi(): Api {
   const files = new Map<string, string>();
   let docs: Doc[] = types.filter((t) => t.side !== "rich_alloys").map((t, i) => ({
     id: `seed-${i}`, doc_type: t.code, storage_path: "", status: "approved", note: null, uploaded_at: "2026-10-25T10:00:00+05:30",
+  }));
+  let staff: StaffMember[] = ([
+    ["demo-user", "demo@v-bog.com", "Demo user", "vbog_admin"], ["s1", "gate1@staff.richalloys.v-bog.com", "Demo watchman", "gate"],
+    ["s2", "factory1@staff.richalloys.v-bog.com", "Demo factory supervisor", "factory"],
+    ["s3", "accounts@example.com", "Demo HO accountant", "ho_accounts"],
+  ] as const).map(([id, email, full_name, r], i) => ({
+    id, email, full_name, role: r as Role, active: true, created_at: "2026-11-18T10:00:00+05:30",
+    last_sign_in_at: i < 2 ? "2026-11-18T10:30:00+05:30" : null,
   }));
   const find = (id: string) => {
     const d = docs.find((x) => x.id === id);
@@ -64,6 +72,15 @@ export function demoApi(): Api {
       if (action === "approve_document") d.status = "approved";
       if (action === "reject_document") { d.status = "rejected"; d.note = note ?? ""; }
       docs = [...docs];
+    },
+    async staff() { return staff.map((s) => (s.id === "demo-user" ? { ...s, role } : s)); },
+    async staffAction(b) {
+      if (b.action === "create") {
+        if (staff.some((s) => s.email === b.email)) throw new Error("This login already exists");
+        staff = [...staff, { id: `s${Date.now()}`, email: b.email, full_name: b.full_name, role: b.role, active: true,
+          created_at: new Date().toISOString(), last_sign_in_at: null }];
+      } else if (b.action === "update") staff = staff.map((s) => (s.id === b.id ? { ...s, role: b.role } : s));
+      else if (b.action === "set_active") staff = staff.map((s) => (s.id === b.id ? { ...s, active: b.active } : s));
     },
   };
 }

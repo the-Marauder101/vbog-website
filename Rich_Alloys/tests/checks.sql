@@ -69,6 +69,27 @@ begin
   exception when insufficient_privilege then ok := true; end;
   assert ok, 'DN approval is closed until its slice ships';
 
+  -- ---- staff ----
+  perform set_config('request.jwt.claim.sub', gate::text, true);
+  update profiles set role = 'vbog_admin' where id = gate;          -- nobody promotes themselves
+  select role into t from profiles where id = gate; assert t = 'gate', 'no direct role edits';
+  assert not can_manage_staff(), 'gate cannot manage staff';
+  perform set_config('request.jwt.claim.sub', hoac::text, true);
+  assert not can_manage_staff(), 'HO accounts cannot manage staff (placeholder)';
+
+  reset role;
+  insert into profiles (id, full_name, role) values ('00000000-0000-0000-0000-000000000004','Test admin','vbog_admin');
+  update profiles set active = false where id = gate;               -- switched off
+  set local role authenticated;
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);
+  assert can_manage_staff(), 'vbog_admin can manage staff';
+  perform set_config('request.jwt.claim.sub', gate::text, true);
+  select count(*) into n from deals; assert n = 0, 'switched-off staff see nothing';
+  ok := false;
+  begin insert into documents (deal_id, doc_type, storage_path, uploaded_by) values (v_deal,'RECEIPT_PHOTOS','y', gate);
+  exception when others then ok := true; end;
+  assert ok, 'switched-off staff cannot upload';
+
   reset role;
   select count(*) into n from storage.buckets where id = 'deal-docs' and not public; assert n = 1, 'private bucket exists';
   select count(*) into n from pg_policies where schemaname = 'storage' and tablename = 'objects'; assert n = 2, 'storage rules exist';
