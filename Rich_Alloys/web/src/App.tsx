@@ -1,27 +1,21 @@
-import { useEffect, useState } from "react";
-import { api } from "./api";
-import { tr, type Key, type Lang } from "./i18n";
-import { ROLES, type Deal, type Profile, type Role } from "./types";
-import Login from "./Login";
-import Deals from "./Deals";
-import DealPage, { type DealTab } from "./DealPage";
-import NewDeal from "./NewDeal";
-import Payables from "./Payables";
-import Tally from "./Tally";
-import Admin from "./Admin";
+import { useEffect, useState, type FormEvent } from "react";
+import { configured, go, LangCtx, MeCtx, q, rpc, sb, toLogin, useRoute, useT, type Lang, type Me } from "./lib";
 import { online, pause, resume, useUploads } from "./uploads";
-
-type View = "deals" | "payables" | "tally" | "admin";
-const VIEWS: [View, Key][] = [["deals", "deals"], ["payables", "payables"], ["tally", "tally"], ["admin", "admin"]];
+import { Btn, Err } from "./ui";
+import Home from "./screens/Home";
+import Lots from "./screens/Lots";
+import Deal from "./screens/Deal";
+import Lot from "./screens/Lot";
+import Cash from "./screens/Cash";
+import Money from "./screens/Money";
+import Stock from "./screens/Stock";
+import Admin from "./screens/Admin";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem("lang") === "hi" ? "hi" : "en"));
-  const [userId, setUserId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
-  const [deal, setDeal] = useState<{ deal: Deal; tab?: DealTab } | null>(null);
-  const [view, setView] = useState<View>("deals");
-  const [creating, setCreating] = useState(false);
-  const t = tr(lang);
+  const [userId, setUserId] = useState<string | null | undefined>(undefined);
+  const [me, setMe] = useState<Me | null | undefined>(undefined);
+  const route = useRoute();
   const queue = useUploads();
   const [, setNet] = useState(0);
   useEffect(() => {
@@ -31,70 +25,100 @@ export default function App() {
   }, []);
 
   useEffect(() => { localStorage.setItem("lang", lang); document.documentElement.lang = lang; }, [lang]);
-  useEffect(() => { api.currentUser().then(setUserId); return api.onAuthChange(setUserId); }, []);
   useEffect(() => {
-    if (!userId) { setProfile(undefined); setDeal(null); setView("deals"); setCreating(false); pause(); return; }
-    api.profile(userId).then(setProfile).catch(() => setProfile(null));
-    resume(userId);
+    sb.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null));
+    const { data } = sb.auth.onAuthStateChange((_e, s) => setUserId(s?.user.id ?? null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+  useEffect(() => {
+    if (!userId) { setMe(userId === null ? null : undefined); pause(); return; }
+    resume(userId);   // files left waiting on this phone by this person go up now
+    (async () => {
+      const p = await q<{ id: string; full_name: string; role: string } | null>(sb.from("profiles").select("id, full_name, role").eq("id", userId).eq("active", true).maybeSingle());
+      if (!p) { setMe(null); return; }
+      const actions = await rpc<string[]>("my_actions");
+      setMe({ ...p, actions: new Set(actions ?? []) });
+    })().catch(() => setMe(null));
   }, [userId]);
 
-  // Open a deal by id (from Payables or after creating one): fetch its list row for the header.
-  function openDeal(id: string, tab?: DealTab) {
-    api.deals().then(({ deals }) => { const d = deals.find((x) => x.id === id); if (d) setDeal({ deal: d, tab }); });
-  }
+  const T = (en: string, hi: string) => (lang === "hi" ? hi : en);
+  const nav = me ? [
+    { id: "", label: T("Home", "होम"), icon: "⌂", show: true },
+    { id: "lots", label: T("Lots", "लॉट"), icon: "▤", show: true },
+    { id: "cash", label: T("Cash", "कैश"), icon: "₹", show: me.actions.has("money_view") },
+    { id: "money", label: T("Money", "पैसा"), icon: "⇄", show: me.actions.has("money_view") },
+    { id: "stock", label: T("Stock", "स्टॉक"), icon: "◫", show: me.actions.has("production_edit") || me.actions.has("stock_edit") || me.actions.has("admin") },
+    { id: "admin", label: T("Admin", "एडमिन"), icon: "⚙", show: me.actions.has("admin") },
+  ].filter((n) => n.show) : [];
+  const [r0, r1, r2] = route;
+  const allowed = (id: string) => nav.some((n) => n.id === id);
+
+  let page: JSX.Element;
+  if (!me) page = <></>;
+  else if (r0 === "lots") page = <Lots openNew={r1 === "new"} />;
+  else if (r0 === "deal" && r1) page = <Deal id={r1} />;
+  else if (r0 === "lot" && r1) page = <Lot id={r1} tab={r2} key={r1} />;
+  else if (r0 === "cash" && allowed("cash")) page = <Cash />;
+  else if (r0 === "money" && allowed("money")) page = <Money tab={r1} openNew={r1 === "new"} />;
+  else if (r0 === "stock" && allowed("stock")) page = <Stock openProduction={r1 === "production"} />;
+  else if (r0 === "admin" && allowed("admin")) page = <Admin tab={r1} />;
+  else page = <Home />;
 
   return (
-    <div className="shell">
-      <header className="top">
-        <div className="brand">Rich Alloys<span> · Palghar</span></div>
-        <div className="top-actions">
-          <button className="link" onClick={() => setLang(lang === "en" ? "hi" : "en")}>
-            {lang === "en" ? "हिंदी" : "English"}
-          </button>
-          {userId && <button className="link" onClick={() => api.signOut()}>{t("signOut")}</button>}
-        </div>
-      </header>
-      {api.demo && (
-        <div className="demo">
-          <span>{t("demoBanner")}</span>
-          {profile && (
-            <label>{t("demoRole")}{" "}
-              <select value={profile.role} onChange={(e) => {
-                const role = e.target.value as Role;
-                api.setDemoRole?.(role); setProfile({ ...profile, role });
-              }}>
-                {ROLES.map((r) => <option key={r} value={r}>{t(`role_${r}` as Key)}</option>)}
-              </select>
-            </label>
-          )}
-        </div>
-      )}
-      {profile && !api.demo && (
-        <nav className="tabs main-tabs" aria-label={t("sections")}>
-          {VIEWS.map(([v, label]) => (
-            <button key={v} aria-current={view === v && !deal && !creating ? "page" : undefined}
-                    onClick={() => { setView(v); setDeal(null); setCreating(false); }}>{t(label)}</button>
-          ))}
-        </nav>
-      )}
-      {queue.length > 0 && (
-        <div className={`pending-bar ${queue.some((q) => q.state === "failed") ? "bad" : ""}`} role="status">
-          <strong>{t("pendingCount")}: {queue.length}.</strong>{" "}
-          {queue.some((q) => q.state === "failed") ? t("pendingFailed") : online() ? t("pendingOnline") : t("pendingOffline")}
-        </div>
-      )}
-      <main>
-        {!userId ? <Login t={t} />
-          : profile === undefined ? <p className="muted">{t("loading")}</p>
-          : profile === null ? <p className="notice">{t("noProfile")}</p>
-          : deal ? <DealPage key={deal.deal.id} t={t} lang={lang} deal={deal.deal} tab={deal.tab} profile={profile} onBack={() => setDeal(null)} />
-          : creating ? <NewDeal t={t} lang={lang} userId={profile.id} onCancel={() => setCreating(false)}
-                         onCreated={(id) => { setCreating(false); openDeal(id, "weights"); }} />
-          : view === "payables" ? <Payables t={t} onOpenDeal={(id) => openDeal(id, "pay")} />
-          : view === "tally" ? <Tally t={t} />
-          : view === "admin" ? <Admin t={t} me={profile} />
-          : <Deals t={t} onOpen={(d) => setDeal({ deal: d })} onNew={api.demo ? undefined : () => setCreating(true)} />}
-      </main>
-    </div>
+    <LangCtx.Provider value={lang}>
+      <div className="shell">
+        <header className="top">
+          <a className="brand" href="#/">Rich Alloys<span> · {T("Purchase desk", "खरीद डेस्क")}</span></a>
+          {me && <nav className="topnav">{nav.map((n) => <a key={n.id} href={`#/${n.id}`} className={(r0 ?? "") === n.id ? "on" : ""}>{n.label}</a>)}</nav>}
+          <div className="top-actions">
+            <button type="button" className="link" onClick={() => setLang(lang === "en" ? "hi" : "en")}>{lang === "en" ? "हिंदी" : "English"}</button>
+            {userId && <button type="button" className="link" onClick={() => { sb.auth.signOut(); go(""); }}>{T("Sign out", "साइन आउट")}</button>}
+          </div>
+        </header>
+        {queue.length > 0 && (
+          <div className={`pending-bar ${queue.some((x) => x.state === "failed") ? "bad" : ""}`} role="status">
+            <strong>{T("Not uploaded yet", "अभी अपलोड नहीं हुईं")}: {queue.length}.</strong>{" "}
+            {queue.some((x) => x.state === "failed") ? T("Some files were refused. Open the deal to see why.", "कुछ फ़ाइलें अस्वीकार हुईं। कारण देखने के लिए सौदा खोलें।")
+              : online() ? T("Uploading now. Keep this page open.", "अपलोड हो रहा है। यह पेज खुला रखें।")
+              : T("No network. Files are saved on this phone and will upload by themselves.", "नेटवर्क नहीं है। फ़ाइलें फ़ोन में सेव हैं, नेटवर्क आते ही अपने आप अपलोड होंगी।")}
+          </div>
+        )}
+        <main>
+          {!configured ? <p className="notice">Supabase keys are missing. Put the project URL and anon key in config.js.</p>
+            : userId === undefined || (userId && me === undefined) ? <p className="muted pad">{T("Loading…", "लोड हो रहा है…")}</p>
+            : !userId ? <Login />
+            : me === null ? <p className="notice">{T("Your login works, but you have not been given a role yet. Ask the admin to add you.", "आपका लॉगिन सही है, पर अभी आपको कोई भूमिका नहीं दी गई है। एडमिन से कहें।")}</p>
+            : me ? <MeCtx.Provider value={me}>{page}</MeCtx.Provider> : null}
+        </main>
+        {me && (
+          <nav className="bottomnav" aria-label={T("Main", "मुख्य")}>
+            {nav.map((n) => <a key={n.id} href={`#/${n.id}`} className={(r0 ?? "") === n.id ? "on" : ""}><span aria-hidden="true">{n.icon}</span>{n.label}</a>)}
+          </nav>
+        )}
+      </div>
+    </LangCtx.Provider>
+  );
+}
+
+function Login() {
+  const t = useT();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit(e: FormEvent) {
+    e.preventDefault(); setBusy(true); setError("");
+    const { error } = await sb.auth.signInWithPassword({ email: toLogin(email), password });
+    if (error) setError(error.message);
+    setBusy(false);
+  }
+  return (
+    <form className="card login" onSubmit={submit}>
+      <h1>{t("Sign in", "साइन इन")}</h1>
+      <label className="field"><span className="label">{t("Email or login ID", "ईमेल या लॉगिन ID")}</span><input type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+      <label className="field"><span className="label">{t("Password", "पासवर्ड")}</span><input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+      <Err error={error} />
+      <Btn kind="primary" className="block" type="submit" disabled={busy}>{busy ? t("Signing in…", "साइन इन हो रहा है…") : t("Sign in", "साइन इन")}</Btn>
+    </form>
   );
 }

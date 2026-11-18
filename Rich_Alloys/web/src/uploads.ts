@@ -1,13 +1,65 @@
 // Upload queue. PRD 9: "offline or slow upload: show progress, never lose a photo silently".
-// - Every chosen file is saved on the phone (IndexedDB) before any network call, so a reload,
+// - Photos are shrunk first (PRD 9: max 1,800 px JPEG), then saved on the phone (IndexedDB) before any network call, so a reload,
 //   a closed tab or the browser killing the page while the camera is open does not lose it.
 // - One file at a time (patchy network), with a progress bar per file.
 // - Network trouble: the file waits and goes up by itself when the network is back.
 // - Refused by the server (too big, wrong type, no permission): kept, reason shown, Retry or Remove.
 // - Retries are safe: a file already stored or a document row already written counts as done.
 import { useSyncExternalStore } from "react";
-import { api, UploadError } from "./api";
-import type { Deal } from "./types";
+import { BUCKET, SUPABASE_KEY, SUPABASE_URL, sb, shrinkImage } from "./lib";
+
+/** transient = worth retrying by itself (network, server busy); otherwise a person must act. */
+export class UploadError extends Error {
+  constructor(message: string, public transient: boolean) { super(message); }
+}
+
+// Server refusals in words a person can act on (PRD 9: errors say what to do next).
+function plainRefusal(status: number, msg: string): string {
+  if (status === 413 || /too large|exceeded the maximum/i.test(msg)) return "File is larger than 20 MB. Take a smaller photo or split the PDF.";
+  if (status === 415 || /mime|content type/i.test(msg)) return "Only photos and PDFs can be uploaded.";
+  if (status === 403 || /row-level security|unauthori[sz]ed|permission/i.test(msg)) return "Your login is not allowed to upload. Ask the admin to check your role.";
+  return `${msg}. Try again, or send this to V-BOG.`;
+}
+
+/** Store one file with progress (plain XHR: the only browser API that reports upload progress).
+ *  A file already at this path counts as stored. */
+async function putFile(path: string, blob: Blob, type: string, onProgress: (p: number) => void, signal: AbortSignal) {
+  const token = (await sb.auth.getSession()).data.session?.access_token;
+  if (!token) throw new UploadError("Signed out. Sign in again; the file is kept on this phone.", true);
+  await new Promise<void>((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open("POST", `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`);
+    x.setRequestHeader("Authorization", `Bearer ${token}`);
+    x.setRequestHeader("apikey", SUPABASE_KEY);
+    x.setRequestHeader("Content-Type", type || "application/octet-stream");
+    x.setRequestHeader("x-upsert", "false");
+    x.timeout = 15 * 60 * 1000;
+    x.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+    x.onload = () => {
+      if (x.status >= 200 && x.status < 300) return resolve();
+      let body: { error?: string; message?: string; statusCode?: string } = {};
+      try { body = JSON.parse(x.responseText); } catch { /* not JSON */ }
+      const msg = body.message || body.error || `Upload refused (${x.status})`;
+      if (x.status === 409 || body.statusCode === "409" || /duplicate|already exists/i.test(msg)) return resolve();
+      const transient = x.status >= 500 || x.status === 429 || x.status === 401 || x.status === 408;
+      reject(new UploadError(transient ? msg : plainRefusal(x.status, msg), transient));
+    };
+    x.onerror = () => reject(new UploadError("Network dropped", true));
+    x.ontimeout = () => reject(new UploadError("Network too slow", true));
+    x.onabort = () => reject(new UploadError("Network dropped", true));
+    if (signal.aborted) return x.abort();
+    signal.addEventListener("abort", () => x.abort(), { once: true });
+    x.send(blob);
+  });
+}
+
+/** Write the document row for a stored file. A row already written for this path counts as done. */
+async function recordDocument(d: { dealId: string; docType: string; path: string; userId: string }) {
+  const { error } = await sb.from("documents")
+    .insert({ deal_id: d.dealId, doc_type: d.docType, storage_path: d.path, uploaded_by: d.userId });
+  if (!error || error.code === "23505") return;      // 23505: this path is already recorded
+  throw new UploadError(error.message, !error.code); // no code = never reached the database
+}
 
 export const MAX_BYTES = 20 * 1024 * 1024;   // matches the deal-docs bucket limit
 const STALL_MS = 45_000;                       // no progress for this long = connection is dead
@@ -82,9 +134,10 @@ function guessType(f: File) {
 }
 
 /** Queue files for one checklist item. Returns the files refused on the spot (never queued). */
-export async function enqueue(deal: Deal, docType: string, files: File[], uid: string): Promise<Refused[]> {
+export async function enqueue(deal: { id: string; deal_no: string }, docType: string, files: File[], uid: string): Promise<Refused[]> {
   const refused: Refused[] = [];
-  for (const f of files) {
+  for (const f0 of files) {
+    const f = await shrinkImage(f0);
     const type = guessType(f);
     if (!(type.startsWith("image/") || type === "application/pdf")) { refused.push({ name: f.name, reason: "badType" }); continue; }
     if (f.size > MAX_BYTES) { refused.push({ name: f.name, reason: "tooBig" }); continue; }
@@ -171,13 +224,13 @@ async function attempt(i: UpItem) {
   try {
     if (i.stage === "file") {
       kick();
-      await api.putFile(i.path, i.blob, i.type, (p) => { kick(); patch(i.id, { progress: p }); }, ctrl.signal);
+      await putFile(i.path, i.blob, i.type, (p) => { kick(); patch(i.id, { progress: p }); }, ctrl.signal);
       if (stall) clearTimeout(stall);
       if (!get(i.id)) return;                                  // removed while uploading
       patch(i.id, { stage: "record", progress: 1 });
       await save(get(i.id)!);
     }
-    await api.recordDocument({ dealId: i.dealId, docType: i.docType, path: i.path, userId: i.userId, blob: i.blob, name: i.name });
+    await recordDocument({ dealId: i.dealId, docType: i.docType, path: i.path, userId: i.userId });
     items = items.filter((x) => x.id !== i.id);
     emit();
     await forget(i.id);
