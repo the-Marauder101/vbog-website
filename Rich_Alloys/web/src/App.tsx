@@ -6,6 +6,7 @@ import Login from "./Login";
 import Deals from "./Deals";
 import DealDocs from "./DealDocs";
 import Staff from "./Staff";
+import { online, pause, resume, useUploads } from "./uploads";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem("lang") === "hi" ? "hi" : "en"));
@@ -14,12 +15,20 @@ export default function App() {
   const [deal, setDeal] = useState<Deal | null>(null);
   const [view, setView] = useState<"deals" | "staff">("deals");
   const t = tr(lang);
+  const queue = useUploads();
+  const [, setNet] = useState(0);
+  useEffect(() => {
+    const f = () => setNet((n) => n + 1);
+    window.addEventListener("online", f); window.addEventListener("offline", f);
+    return () => { window.removeEventListener("online", f); window.removeEventListener("offline", f); };
+  }, []);
 
   useEffect(() => { localStorage.setItem("lang", lang); document.documentElement.lang = lang; }, [lang]);
   useEffect(() => { api.currentUser().then(setUserId); return api.onAuthChange(setUserId); }, []);
   useEffect(() => {
-    if (!userId) { setProfile(undefined); setDeal(null); setView("deals"); return; }
+    if (!userId) { setProfile(undefined); setDeal(null); setView("deals"); pause(); return; }
     api.profile(userId).then(setProfile).catch(() => setProfile(null));
+    resume(userId);
   }, [userId]);
 
   return (
@@ -55,6 +64,12 @@ export default function App() {
                     onClick={() => { setView(v); setDeal(null); }}>{t(v)}</button>
           ))}
         </nav>
+      )}
+      {queue.length > 0 && (
+        <div className={`pending-bar ${queue.some((q) => q.state === "failed") ? "bad" : ""}`} role="status">
+          <strong>{t("pendingCount")}: {queue.length}.</strong>{" "}
+          {queue.some((q) => q.state === "failed") ? t("pendingFailed") : online() ? t("pendingOnline") : t("pendingOffline")}
+        </div>
       )}
       <main>
         {!userId ? <Login t={t} />

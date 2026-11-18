@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { api, type DealDocsData, type DocAction } from "./api";
 import type { Key, Lang } from "./i18n";
 import { canApprove, canVerify, type Deal, type Doc, type DocStatus, type DocType, type Profile, type Side } from "./types";
+import { enqueue, onUploaded, online, remove, retry, useUploads, type Refused, type UpItem } from "./uploads";
+
+const mb = (n: number) => `${(n / 1048576).toFixed(n < 1048576 ? 2 : 1)} MB`;
 
 type State = DocStatus | "missing";
 const rank: Record<State, number> = { approved: 4, verified: 3, uploaded: 2, rejected: 1, missing: 0 };
@@ -12,7 +15,9 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
 }) {
   const [data, setData] = useState<DealDocsData | null>(null);
   const [open, setOpen] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [refused, setRefused] = useState<Refused[]>([]);
+  const [flash, setFlash] = useState("");
+  const queue = useUploads().filter((i) => i.dealId === deal.id);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
@@ -22,6 +27,13 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
     [deal.id],
   );
   useEffect(() => { load(); }, [load]);
+  // When a queued file finishes: refresh the list and say so on screen.
+  useEffect(() => onUploaded((i) => {
+    if (i.dealId !== deal.id) return;
+    load();
+    setFlash(`${t("uploadedOk")}: ${i.name}`);
+  }), [deal.id, load, t]);
+  useEffect(() => { if (!flash) return; const h = setTimeout(() => setFlash(""), 5000); return () => clearTimeout(h); }, [flash]);
 
   async function run(work: () => Promise<void>) {
     setError("");
@@ -31,9 +43,7 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
 
   async function upload(type: DocType, files: FileList | null) {
     if (!files?.length) return;
-    setBusy(type.code);
-    await run(async () => { for (const f of Array.from(files)) await api.upload(deal, type.code, f, profile.id); });
-    setBusy(null);
+    setRefused(await enqueue(deal, type.code, Array.from(files), profile.id));
   }
 
   const act = (action: DocAction, doc: Doc, note?: string) => run(() => api.act(action, doc.id, note));
@@ -68,6 +78,8 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
         <p><strong>{done}</strong> {t("of")} {shown.length} {t("progress")}</p>
       </div>
       {error && <p className="error" role="alert">{error}</p>}
+      {queue.length > 0 && !online() && <p className="notice" role="status">{t("pendingOffline")}</p>}
+      {flash && <p className="okline" role="status">✓ {flash}</p>}
 
       {sides.filter((s) => shown.some((ty) => ty.side === s)).map((side) => (
         <section key={side}>
@@ -77,11 +89,16 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
               const state = stateOf(ty.code);
               const mine = data.docs.filter((d) => d.doc_type === ty.code);
               const isOpen = open === ty.code;
+              const waiting = queue.filter((q) => q.docType === ty.code);
               return (
                 <li key={ty.code} className={`state-${state}`}>
                   <button className="row" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : ty.code)}>
                     <span className="row-main"><span>{lang === "hi" && ty.name_hi ? ty.name_hi : ty.name}</span></span>
-                    <span className={`chip ${state}`}>{t(state)}</span>
+                    {waiting.length > 0 && state === "missing"
+                      ? <span className={`chip ${waiting.some((q) => q.state === "failed") ? "rejected" : "uploaded"}`}>
+                          {waiting.some((q) => q.state === "failed") ? t("upFailed") : t("upUploading")}
+                        </span>
+                      : <span className={`chip ${state}`}>{t(state)}</span>}
                   </button>
                   {isOpen && (
                     <div className="detail">
@@ -118,9 +135,13 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
                           )}
                         </div>
                       ))}
-                      <label className={`upload ${busy === ty.code ? "busy" : ""}`}>
-                        {busy === ty.code ? t("uploading") : `+ ${t("upload")}`}
-                        <input type="file" accept="image/*,application/pdf" multiple hidden disabled={busy !== null}
+                      {waiting.map((q) => <UploadRow key={q.id} t={t} q={q} />)}
+                      {refused.length > 0 && waiting.length === 0 && open === ty.code && refused.map((r) => (
+                        <p key={r.name} className="error" role="alert">{r.name} {t(r.reason)}</p>
+                      ))}
+                      <label className="upload">
+                        + {t("upload")}
+                        <input type="file" accept="image/*,application/pdf" multiple hidden
                                onChange={(e) => { upload(ty, e.target.files); e.target.value = ""; }} />
                       </label>
                     </div>
@@ -132,5 +153,42 @@ export default function DealDocs({ t, lang, deal, profile, onBack }: {
         </section>
       ))}
     </>
+  );
+}
+
+// One file on its way up: name, size, a progress bar, and what happens next in words.
+function UploadRow({ t, q }: { t: (k: Key) => string; q: UpItem }) {
+  const [confirm, setConfirm] = useState(false);
+  const pct = Math.round(q.progress * 100);
+  const line = q.state === "uploading" ? `${t("upUploading")} ${pct}%`
+    : q.state === "failed" ? `${t("upFailed")}: ${q.error ?? ""}`
+    : !online() ? t("upWaitingNet")
+    : q.retryAt ? t("upRetrying") : t("upQueued");
+  return (
+    <div className={`file pending ${q.state}`}>
+      <div className="file-head">
+        <span className="fname">{q.name}</span>
+        <span className="muted small">{mb(q.size)}</span>
+      </div>
+      <div className="bar thin" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={q.name}>
+        <span style={{ width: `${q.state === "failed" ? 0 : pct}%` }} />
+      </div>
+      <p className={q.state === "failed" ? "note" : "muted small"} role={q.state === "failed" ? "alert" : undefined}>{line}</p>
+      {confirm ? (
+        <div className="confirm">
+          <p>{t("confirmRemove")}</p>
+          <div className="actions">
+            <button className="btn danger" onClick={() => remove(q.id)}>{t("remove")}</button>
+            <button className="btn" onClick={() => setConfirm(false)}>{t("cancel")}</button>
+          </div>
+        </div>
+      ) : q.state !== "uploading" && (
+        <div className="actions">
+          {(q.state === "failed" || (q.retryAt && online())) &&
+            <button className="btn primary" onClick={() => retry(q.id)}>{t("retryNow")}</button>}
+          <button className="btn danger" onClick={() => setConfirm(true)}>{t("remove")}</button>
+        </div>
+      )}
+    </div>
   );
 }

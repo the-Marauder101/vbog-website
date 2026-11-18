@@ -115,3 +115,13 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .share dt { color: var(--soft); }
 .share dd { margin: 0; overflow-wrap: anywhere; }
 .share .big { font-size: 1.25rem; font-weight: 700; }
+
+/* Upload queue */
+.file.pending { border-style: dashed; border-color: #d9a520; }
+.file.pending.failed { border-color: var(--bad); }
+.fname { font-weight: 500; overflow-wrap: anywhere; min-width: 0; }
+.bar.thin { height: 8px; margin: .5rem 0 .3rem; }
+.file.pending .bar span { background: var(--copper); }
+.okline { padding: .6rem 1rem; border-radius: 6px; background: var(--ok-bg); color: var(--ok); margin: .8rem 0; overflow-wrap: anywhere; }
+.pending-bar { padding: .55rem 1rem; background: var(--wait-bg); color: var(--wait); font-size: .92rem; }
+.pending-bar.bad { background: var(--bad-bg); color: var(--bad); }

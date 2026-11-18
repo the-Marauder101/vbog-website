@@ -48,6 +48,12 @@ begin
   assert ok, 'upload cannot arrive pre-approved';
 
   ok := false;
+  begin insert into documents (deal_id, doc_type, storage_path, uploaded_by)
+        values (v_deal,'WEIGHBRIDGE_FACTORY','RA-082/WEIGHBRIDGE_FACTORY/test.jpg', gate);
+  exception when unique_violation then ok := true; end;
+  assert ok, 'a retried upload cannot create a second row for the same file';
+
+  ok := false;
   begin perform verify_document(v_doc); exception when others then ok := true; end;
   assert ok, 'gate cannot verify';
 

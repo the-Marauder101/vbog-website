@@ -86,6 +86,7 @@ bills checked by hand; the supplier's invoice charges 18% interest on late payme
 | 10 | Dedicated new Supabase project for Rich Alloys | Table names like `profiles` collide with other apps; `setup.sql` refuses to run otherwise |
 | 11 | Plant is a field from day one; data structure reusable for sales | Second factory and sales side are future paid extensions |
 | 12 | Pricing is out of the solution discussion | Depesh's instruction |
+| 13 | Only admins set or reset passwords; staff cannot change their own | Depesh's call, 18 Nov. Admin stays in control of every login |
 
 ## 4. Scope
 
@@ -187,6 +188,12 @@ Status: **Built** = in this folder and tested; **Schema** = tables and maths exi
 ### 7.3 Document collection and approval (Built, slice 1)
 - Checklist per deal in three groups: from the supplier (12), at our factory (4), material return (4, shown only when a return exists). Full list in `0002_masters.sql`, each with a Hindi label.
 - Anyone on staff can add photos or PDFs (up to 20 MB) from a phone, several at once.
+- **Uploads never lose a file silently (Built, 18 Nov).** Each chosen file is saved on the phone first (IndexedDB),
+  then sent one at a time with a progress bar. If the network drops, the file waits and uploads by itself when it
+  returns, including after the tab is closed and reopened. A file the server refuses stays on screen with the
+  reason in plain words, and Try now / Remove. A too-big or non-photo file is refused on the spot. The page warns
+  before closing while files are pending. Retries never create a second row (`0006_upload_retry.sql`).
+  Photos are uploaded as taken, not compressed, so the original evidence and its metadata are kept.
 - Each file moves uploaded → verified → approved, or rejected with a mandatory reason. A rejected document needs a fresh upload.
 - A checklist item is complete only when at least one of its files is approved.
 - Verify and reject: `factory_accounts`, `ho_accounts`, `owner`, `vbog_admin`. Approve: `ho_accounts`, `owner`, `vbog_admin`. **Placeholder until Himanshu confirms.**
@@ -313,6 +320,9 @@ more comfortable in Hindi than English. Then an accountant on a phone or laptop.
 States every screen must handle: loading, empty, error with retry, no permission, offline or slow upload
 (show progress, never lose a photo silently).
 
+Upload states checked on the live project at 360 px with simulated slow network, network loss mid-upload,
+tab closed and reopened, server refusal, oversize file and a dropped request (18 Nov).
+
 Checked so far in a phone-sized browser (360 and 390 px) in demo mode: sign in, deal list, checklist, upload,
 verify, reject with reason, Hindi labels, gate role sees no verify button, no sideways scrolling.
 
@@ -357,7 +367,7 @@ Rich_Alloys/
 18 Nov 2026: steps 1 to 6 done on project `Rich Alloys` (ref `rqxjjrpngybglmhzlmtj`, ap-south-1). Confirmed live:
 20 tables all with RLS, 7 views, 24 table rules, bucket `deal-docs` (private, 20 MB) with its two rules, 20 document
 types all with Hindi labels, anon key cannot read deals, `approve_dn` closed to app users. `0005_staff.sql` run on its
-own afterwards. Ogo demo data loaded (with placeholder PDFs behind its 16 documents): **delete before go-live.** One
+own afterwards, then `0006_upload_retry.sql`. Ogo demo data loaded (with placeholder PDFs behind its 16 documents): **delete before go-live.** One
 user: Depesh (`vbog_admin`). Verified live in a 360 px browser and by direct calls: sign-in, deal list, view a file,
 upload, every staff action, role refusals, switched-off login refused and reading nothing. Not yet hosted.
 
@@ -367,7 +377,8 @@ upload, every staff action, role refusals, switched-off login refused and readin
   weight short per grade; DN 114, 115, 116 totals; invoice less DNs; balance; the mitti exception; four missing documents;
   anonymous key reads nothing; non-staff read nothing; gate can upload but not verify; factory accounts cannot approve;
   no direct status edits; DN approval closed; storage bucket and rules exist; every document has a Hindi label;
-  no direct role edits; only owner and vbog_admin manage staff; a switched-off login reads and uploads nothing.
+  no direct role edits; only owner and vbog_admin manage staff; a switched-off login reads and uploads nothing;
+  one stored file can never get a second document row.
 - The test was proven to fail when an expected amount is changed.
 - Rule: every closed transaction received from Rich Alloys is added as test data plus checks. A release that changes a past rupee does not ship.
 - Each slice adds access tests for its new write rules and a phone-sized browser run of its screens.

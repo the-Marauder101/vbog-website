@@ -1,6 +1,6 @@
 // Demo mode: sample data held in memory so the screens can be shown without Supabase.
 // The deal is the verified Ogo purchase (PO/RA/082/26-27). Nothing here is saved.
-import type { Api } from "./api";
+import { UploadError, type Api } from "./api";
 import type { Deal, Doc, DocType, Profile, Role, StaffMember } from "./types";
 
 const types: DocType[] = ([
@@ -56,10 +56,22 @@ export function demoApi(): Api {
       return { deals: [deal], gaps: { [deal.deal_no]: types.filter((t) => !approved.has(t.code)).length } };
     },
     async dealDocs() { return { types, docs: [...docs], hasReturn: true }; },
-    async upload(_deal, docType, file) {
+    // Demo: pretend upload over about two seconds so progress can be seen. Honours "no network".
+    putFile(_path, _blob, _type, onProgress, signal) {
+      return new Promise<void>((resolve, reject) => {
+        let p = 0;
+        const tick = setInterval(() => {
+          p = Math.min(1, p + 0.1); onProgress(p);
+          if (p >= 1) { clearInterval(tick); resolve(); }
+        }, 200);
+        signal.addEventListener("abort", () => { clearInterval(tick); reject(new UploadError("Network dropped", true)); }, { once: true });
+      });
+    },
+    async recordDocument(d) {
+      if (docs.some((x) => x.storage_path === d.path)) return;
       const id = `demo-${Date.now()}-${Math.round(Math.random() * 1e6)}`;
-      files.set(id, URL.createObjectURL(file));
-      docs = [...docs, { id, doc_type: docType, storage_path: file.name, status: "uploaded", note: null, uploaded_at: new Date().toISOString() }];
+      files.set(id, URL.createObjectURL(d.blob));
+      docs = [...docs, { id, doc_type: d.docType, storage_path: d.path, status: "uploaded", note: null, uploaded_at: new Date().toISOString() }];
     },
     async fileUrl(doc) {
       const u = files.get(doc.id);
