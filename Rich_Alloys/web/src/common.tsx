@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { BUCKET, day, inr, isNum, rpc, sb, today, q, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "./lib";
 import { enqueue, onUploaded, online, remove, retry, useUploads, type Refused, type UpItem } from "./uploads";
-import { Btn, Chip, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn, type Tone } from "./ui";
+import { DateIn, Btn, Chip, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn, type Tone } from "./ui";
 
 export const STAGES: { id: string; en: string; hi: string; tone: Tone }[] = [
   { id: "received", en: "Received", hi: "माल आया", tone: "wait" },
@@ -131,7 +131,7 @@ export function PaymentSheet({ supplierId, invoiceId, dealId, existing, onClose,
       )}
       <div className="grid2">
         <Field label={t("Amount paid", "भुगतान रकम")}><NumIn value={amount} onChange={setAmount} suffix="₹" autoFocus /></Field>
-        <Field label={t("Paid on", "भुगतान तारीख")}><input type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} /></Field>
+        <Field label={t("Paid on", "भुगतान तारीख")}><DateIn value={paidOn} onChange={setPaidOn} /></Field>
         <Field label={t("Mode", "माध्यम")}><Select value={mode} onChange={setMode} options={MODES.map((m) => ({ value: m, label: m.toUpperCase() }))} /></Field>
         <Field label={t("Bank reference / UTR", "बैंक रेफरेंस / UTR")}><TextIn value={ref} onValue={setRef} /></Field>
         <Field label={t("Type", "प्रकार")}>
@@ -201,6 +201,7 @@ export function DealDocs({ dealId, dealNo, hasReturn }: { dealId: string; dealNo
   const { data, error, reload } = useLoad(() => Promise.all([
     q(sb.from("doc_types").select("*").eq("active", true).order("sort")),
     q(sb.from("documents").select("*").eq("deal_id", dealId).order("uploaded_at")),
+    q<Row>(sb.from("deals").select("suppliers(supplier_type)").eq("id", dealId).single()),
   ]), [dealId]);
   const [open, setOpen] = useState<string | null>(null);
   const [refused, setRefused] = useState<Refused[]>([]);
@@ -213,8 +214,9 @@ export function DealDocs({ dealId, dealNo, hasReturn }: { dealId: string; dealNo
   const [reason, setReason] = useState("");
   const s = useSave();
   if (!data) return error ? <Err error={error} /> : <Loading />;
-  const [types, docs] = data;
-  const shown = types.filter((x) => x.side !== "return" || hasReturn);
+  const [types, docs, deal] = data;
+  const stype = deal?.suppliers?.supplier_type ?? "domestic";   // PRD 7b: the checklist follows the supplier type
+  const shown = types.filter((x) => (x.side !== "return" || hasReturn) && (!x.supplier_types || x.supplier_types.includes(stype)));
   const stateOf = (code: string): DocState =>
     docs.filter((d) => d.doc_type === code).reduce<DocState>((b, d) => (rank[d.status as DocState] > rank[b] ? d.status : b), "missing");
   const done = shown.filter((x) => stateOf(x.code) === "approved").length;

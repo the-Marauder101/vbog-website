@@ -2,7 +2,7 @@
 
 Owner: Depesh Vyas (V-BOG) · Client: Rich Alloys India Pvt Ltd (Himanshu Jain) · Updated 18 Nov 2026
 Status: v2.2 live on Supabase project `rqxjjrpngybglmhzlmtj` (Mumbai) since 19 Nov 2026, with Ogo test data, served at
-v-bog.com/Rich_Alloys/deploy/. Includes staff management and upload reliability from the interim build (decisions 25–28).
+v-bog.com/Rich_Alloys/deploy/. Section 7a items 1–5 built 19 Nov (stock opens 1 Nov 2026); items 6–7 partly. Section 7b (supplier types) built 20 Nov. Section 7c (Tinu's stock statement) built 20 Nov. Includes staff management and upload reliability from the interim build (decisions 25–28).
 
 This is the single document a new chat or developer follows to continue the build. It overrides the older
 project brief where they differ (section 3 lists what changed).
@@ -78,6 +78,8 @@ the factory Tally, the office Tally, or both.
 | 25 | Only admins set or reset passwords; staff cannot change their own | Depesh, 18 Nov |
 | 26 | Staff are added from the app (Admin > Staff), not in Supabase. Staff without email get a short login ID (e.g. `sanjay`, stored as `sanjay@staff.richalloys.v-bog.com`; no mail is sent to it) | Depesh, 18 Nov |
 | 27 | Uploads never lose a file silently: saved on the phone, progress shown, retried when the network returns. This includes the invoice photo in the arrival form | Depesh, 18 Nov |
+| 29 | An opening entry starts an item's stock: movements dated before it are already inside it and stop counting. Stock opened 1 Nov 2026 from Tinu's 31 Oct closings, so the Ogo lot of 25 Oct is not counted twice | Claude, 19 Nov, from 7a item 4 |
+| 30 | **Every source that brings material in is a supplier**: domestic sellers, the Mumbai branch, import sellers, job workers. Each delivery is a lot with weights, sorting, rejections and documents. The money steps apply only where money is owed for the material (section 7b). (Numbered 25 in Depesh's draft; renumbered because 25–29 were already in use.) | Depesh, 20 Nov |
 | 28 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 3a. Source of truth
@@ -170,6 +172,125 @@ return freight and who paid; due dates (supplier charges 18% late interest).
 - Niti's biggest pain is imports (CHA follow-ups, high seas) — out of scope.
 - Tinu's production sheet: copper ingot from copper scrap plus phosphorus copper, with copper gross/slag and another by-product; opening and closing tally with Tally to the gram.
 
+## 7a. What Tinu's stock and production sheets show (Apr–Oct 2026)
+
+Source: the 14 workbooks Tinu sends Niti monthly, cleaned into `Tinu_stock_Apr-Oct_2026_clean.xlsx`
+(Project files; it holds client data, so keep it out of any public repo). 631 stock movements, 67 production days.
+
+**What holds up**
+- Every sheet adds up and every month carries into the next. October closings: copper scrap 105,380.660 kg, copper wire
+  6,701.620, phosphorus copper 2,670.000, copper ingot 10,893.850, copper strips 0, copper ingot 74031900 0.
+- Production report and stock ledger agree on scrap consumed and ingots produced every month.
+- Purchases are booked at the supplier's billed net (OGOES15 = 9,957.900 kg on 25 Oct), and debit notes take kg off
+  stock, exactly as the portal does.
+
+**What does not**
+- April consumption dated 4–5 Apr in the production report, 1–2 Apr in the stock ledger.
+- Dates typed into the wrong month (21.05.20226; 10.09 in June; 10.07 and 11.07 in August).
+- April opening scrap 38,620.73 in the 31 Mar statement vs 38,650.23 in the ledger; April's summary notes its own 2,501.40 kg gap.
+- Party names vary for the same party, and no GSTINs are recorded.
+
+- Copper ingot is also *bought*: 33 purchases, 545.5 t in 7 months, besides 822.8 t
+  produced. 575.5 t moved from Copper ingot to Copper ingot 74031900 (open question 23).
+- Checked 19 Nov against the workbook: October closings, monthly balances (no differences), 631 movements, 67 production
+  days, 35 scrap sales (429.6 t), 3 import receipts (95.1 t), OGOES15 at 9,957.900 kg on 25 Oct.
+
+**What it changes in the portal** (status 19 Nov after each item)
+1. Stock items, named as in these sheets: Copper scrap, Copper wire, Copper strips, Phosphorus copper, Copper ingot,
+   Copper ingot (74031900), Copper dross/slag, Copper ash. (Plastic scrap appears once in a summary; confirm.) Replaces
+   the four starting items. Wire is bought and consumed alongside scrap. **Built** (`0008_stock_7a.sql`; codes kept, names changed).
+2. Stock movements beyond supplier lots, quantity only, each with date, party, document number:
+   transfer from the Mumbai branch (delivery note; 39 in 7 months: 95.7 t of scrap in, 21.1 t back out), job work received (KBS Industries, Mehtacop),
+   import receipt on a bill of entry (Alcumet, Alco Metal; the import process itself stays out of scope),
+   sale/dispatch (scrap is also sold on: 35 sales, ~430 t), item-to-item transfer (Copper ingot to Copper ingot 74031900),
+   credit note received. Without these the portal's stock cannot match Tinu's. **Narrowed by 7b** (branch, import and
+   job-work receipts are now lots). **Built**: Stock > Other stock entry, each with
+   party and document number, item-to-item in one step (`transfer_stock`); summary columns follow Tinu's monthly layout.
+3. Production: dross and ash are booked as fixed percentages of what was consumed (1.5% / 0.5% in April; 3.5% / 1.5% and
+   6.5% / 1.5% later), so input always equals output and real melting yield is never measured. The production form keeps
+   the actual figures entered and shows yield % (ingot ÷ consumed); it must not force input = output. **Built**:
+   `v_production_runs` gives yield and "not accounted for" kg per run (Tinu's 2 Oct run: 95.00%, balanced by his percentages).
+4. Opening stock: start the portal on 1 Nov 2026 with the October closings above as opening entries. The Apr–Oct
+   history stays in the workbook; importing it is optional. **Built and loaded live** (`test_data/opening_2026_11.sql`), with
+   dross/slag 17,457.000 and ash 8,051.640 from the October production report. Scrap 30 Nov: 105,179.960 kg after the
+   Ogo DNs of 5 Nov. Plastic scrap (−29,020 kg in his sheet) is not loaded: question 24.
+5. Dates: warn when a date is outside the current month or in the future. **Built** for every date that records an event
+   (arrival, payment, sorting, return, TDS, production, stock entry); invoice dates warn only when in the future.
+6. Supplier master keyed on GSTIN. The sheets show 49 scrap supplier *spellings*; the same party is often written
+   several ways, so the real count is lower. Collect GSTINs, then merge the spellings. **Partly**: GSTIN shape checked in
+   the database and in both supplier forms; merging spellings waits for the GSTINs.
+7. Regression: a test loading the October closings and November movements must reproduce Tinu's November sheet
+   during the parallel run. **Ready**: the 1 Nov opening is loaded; `tests/checks_7a.sql` covers the mechanics. The
+   November sheet is needed to write the check itself.
+
+## 7b. Supplier types (decision 30)
+
+Each supplier has a type. The physical steps are the same for all; the money steps differ.
+
+| Type | Examples from Tinu's sheets | Lot, weights, sorting, documents | Rejected material | Invoice, payment, cash plan, ledger, TDS |
+| --- | --- | --- | --- | --- |
+| Domestic purchase | RS Industries, Ogo, Rajput Metallica | Yes | Debit note (money and kg) | Yes |
+| Own branch | Rich Alloys, Mumbai (delivery notes) | Yes | Shortage / return note, kg only (a company cannot debit itself) | No: same company, no sale |
+| Import | Alcumet Trading, Alco Metal Trading (bill of entry) | Yes, from arrival at Palghar | Claim note, kg only for now | No: paid through LC; imports stay out of scope |
+| Job worker | KBS Industries, Mehtacop Refinery (material returned after processing) | Yes; also shows what was sent vs returned | Shortage note, kg only | Their service bill only, if Himanshu wants it tracked |
+
+Not suppliers: customers returning goods (the credit notes from HKL Industries are sales returns; sales side, out of scope).
+
+What this changes in the build:
+- `suppliers.type` (domestic, branch, import, job_work); the arrival form asks for a delivery note, bill of entry or challan instead of a tax invoice when the type is not domestic.
+- Lots from non-domestic suppliers skip the invoice, payable, cash plan, ledger and TDS; their notes carry kg, not rupees, and still reduce stock.
+- The Mumbai branch also needs Mumbai-side documents (who sent it, vehicle, weight at dispatch) so transfer shortages show up.
+- Item 2 of section 7a narrows: transfers from Mumbai, imports and job-work receipts become lots; only sales/dispatch, item-to-item transfers and sales returns stay as plain stock movements.
+
+**Built 20 Nov** (`0009_supplier_types.sql`):
+- `suppliers.supplier_type` (domestic, branch, import, job_work; named `supplier_type`, not `type`). Admin > Suppliers
+  can now add a supplier directly, with its type; the new-deal form lists domestic suppliers only.
+- The inward document has a kind (`invoices.doc_kind`): tax invoice, delivery note, bill of entry, challan. It follows
+  the supplier type and carries no money for non-domestic lots.
+- Lots > "+ From branch / import / job work": one form, no deal needed (`create_receipt` makes one behind the scenes).
+  Asks for the document number and date, the weight on their document ("weight sent from Mumbai" for the branch),
+  our weighbridge gross and bags, who sent it at Mumbai, and a photo of the document (through the upload queue).
+  Shortage or excess shows live.
+- Notes on non-domestic lots are kg only and named "Shortage / return note" (branch, job work) or "Claim note"
+  (import). They still take kg off stock and go to factory Tally. No Payment tab, no office-Tally tick.
+- Money views (payable, cash plan, ledger, supplier balance, invoice register, GST by month, office-Tally queue,
+  2B task) count tax invoices only.
+- Stock > Other stock entry keeps sales/dispatch, sales returns (credit notes), item-to-item, opening and correction,
+  plus two outward kinds 7b did not list: **to the Mumbai branch** and **sent for job work** (question 27). Both name
+  the supplier, so Stock shows a "With job workers" panel: sent, came back, still with them (`v_job_work`).
+- The document checklist follows the supplier type (question 26): PO, tax invoice and e-invoice for domestic only;
+  delivery note, bill of entry or challan required for their type; everything else for all.
+- Not built: Mumbai weighing at dispatch beyond the delivery-note weight, job-work service bills (question 19).
+
+## 7c. Tinu's monthly stock statement (Stock_analysis_2627.xlsx)
+
+Source: the stock statement Tinu keeps for 2026-27 (Project files; client data, keep out of any public repo). One table
+per month, April to November, and a year total, for nine items, in these columns:
+OP BALANCE · PURCHASE · TRANSFER RECED · MFG · Recipt Note · Recd Process Job Wrk · CREDIT NOTE · TOTAL · SALE ·
+Transfer to · Debit Note · Del Note To Rich Mum · Send to Labour Job · Consumption · Closing Balance.
+It is the summary his stock and production sheets roll up into, and every month adds up ("diff 0").
+
+**What it shows**
+- Branch receipts ("Recipt Note", 86.6 t in the year) and job-work returns ("Recd Process Job Wrk", 62.4 t) are their
+  own columns, not purchases. Imports are inside PURCHASE.
+- Plastic scrap is a real item: 7,865 kg at April opening, then received, transferred in from copper scrap and sold;
+  **0 at the end of October**. The −29,020 kg in the October production report is an error there (question 24).
+- Copper ingot is bought (545.5 t), produced (822.8 t), sent to and received back from job work (24.9 t in Sept) and
+  has small debit notes, so bought ingots are domestic lots with weights and DNs (question 23, partly answered).
+- Dross/slag receives material from job work (8,000 kg in June, 2,300 kg in July, remarks "Copper Dross (Ann)") and
+  from copper ash (2,500 and 1,570 kg, item-to-item).
+- The second ingot item is "Copper Ingots(74031200)" here but "COPPER INGOT_74031900" in the stock sheet (question 29).
+- Copper scrap closes October at **105,380.75 kg** here, but 105,380.66 kg in the stock ledger and production report.
+  The 0.09 kg gap starts in May and carries through. The portal opens at 105,380.660 until Tally settles it (question 28).
+
+**Built 20 Nov** (`0010_stock_statement.sql`)
+- `stock_summary` returns Tinu's columns. Lots fall into PURCHASE (domestic, import), Recipt Note (branch) or
+  Recd Process Job Wrk (job work) by supplier type. Corrections show in their own column only when there are any.
+- Stock > "Stock statement" prints the month in his layout (company header, his column headings); "Download (CSV)"
+  gives the same table. This replaces the sheet once the parallel run shows it matching.
+- Item Plastic scrap added (opening 0, so nothing to load).
+- Job-work returns of ingots or dross need grades mapped to those items (Admin > Grades) before Tinu records them as lots.
+
 ## 8. Data model (Postgres, `supabase/migrations`)
 
 | Table | Holds |
@@ -186,13 +307,15 @@ return freight and who paid; due dates (supplier charges 18% late interest).
 | `payments`, `tds`, `ledger_confirmations` | Money, deductions, supplier ledger checks |
 | `tally_marks` | Entity, book (factory/office), voucher ref, who, when |
 | `production_runs`, `production_lines`, `stock_moves`, `stock_tally_checks` | Production, other stock entries (opening, other inward, dispatch, correction with reason), Tally closing |
+| `suppliers.supplier_type`, `invoices.doc_kind`, `lots.sent_by`, `stock_moves.supplier_id`, `doc_types.supplier_types` | Supplier types (7b) |
+| `stock_moves.party`, `.doc_no`, `.transfer_id`; kinds for branch, job work, import receipt, sale, credit note, item-to-item | Stock movements beyond lots (7a) |
 | `tally_marks.amount_at_mark`, `documents.lot_id` | Amount when ticked (to detect later changes); invoice photo per lot |
 | `gstr2b_imports`, `gstr2b_lines` | Uploaded 2B months and their lines, with the matched invoice |
 | `documents`, `audit_log` | Files and their status; every change logged |
 
 Views: `v_lot_lines`, `v_dn_calc(_lines)`, `v_sorting_exceptions`, `v_payable`, `v_tally_missing`, `v_doc_gaps`,
 `v_lots` (stage), `v_deals_incoming`, `v_ledger_lines`, `v_supplier_balance`, `v_cash_plan`, `v_gst_month`,
-`v_stock_moves`, `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
+`v_stock_moves` (opening starts an item), `v_production_runs` (yield), `v_job_work` (sent vs back), `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
 
 Actions (functions): `create_deal`, `create_lot`, `close_lot`, `reopen_lot`, `approve_dn`, `cancel_note`,
 `set_note_tally_no`, `mark_tally`, `unmark_tally`, `reconcile_payment`, `reject_payment`, `confirm_ledger`,
@@ -270,6 +393,16 @@ Recommended later: serve only `deploy/`, on its own subdomain.
   5.000 kg shown live), the photo went up through the queue and is linked to the new lot; the Tally queue's "View
   invoice photo" opened it. 18 Nov (v2.0, same code paths): upload survived a dropped network; Admin > Staff created,
   used and switched off a gate login. Live then reset to the Ogo-only state.
+- `tests/checks_7a.sql` also checks Tinu's statement arithmetic for every item; `checks_7b.sql` checks that a branch
+  delivery is a Recipt Note and job work sits in its own columns, not in PURCHASE.
+- `tests/checks_7b.sql`: a branch delivery (Tinu's delivery note 37, 2,505 kg) on a delivery note with no money, its
+  5 kg shortage note in kg only, no payable/cash/ledger/register rows, factory Tally only, stock up 2,505 and down 5,
+  domestic still needs a deal, job work sent 1,000 / back 950, checklist by type, Ogo balance unchanged. Proven to
+  fail when branch lots leak into payables.
+- `tests/checks_7a.sql` (run by `run_local.sh` after loading the 1 Nov opening): opening = Tinu's closing, the Ogo lot not
+  counted twice, DN kg taken off, Tinu's 2 Oct yield, input need not equal output, every movement kind in its column,
+  opening + in − out = closing for every item, one-sided transfers and sales that add stock refused, GSTIN shape.
+  Proven to fail when the opening rule is removed. `tests/e2e/run.py` passes on the 7a build (19 Nov).
 - `tests/e2e/run.py` passed on 19 Nov on the merged v2.2 (PostgREST 12.2.3, Python Playwright 1.63.0, installed by the
   environment's setup script): DNs ₹7,080 / ₹1,180 / ₹14,160, ledger ₹10,90,179.40, cash ₹10.90 L open, register photo ✓
   factory ✓ PUR-501 office ✗, copper scrap 10,242.200 kg, watchman sees no money screens, no sideways scrolling, no errors.
@@ -305,8 +438,18 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 | 12 | Factory-side document list (four assumed) | Documents |
 | 13 | Who bears return freight and is it recovered | Returns |
 | 14 | Do factory staff have email addresses for login? (Short login IDs work without one) | Go-live |
-| 18 | Who may add staff and reset passwords (default: owner, vbog_admin) | Permissions |
+| 22 | Who may add staff and reset passwords (default: owner, vbog_admin) | Permissions |
 | 17 | Does Tinu post factory Tally entries from the portal screen, and when does his own Excel stop? Agree the cutover date with him | Source of truth |
+| 18 | Are dross and ash weighed or set as a percentage? Who sets the percentage? (Yield is Himanshu's margin) | Production |
+| 19 | Decided: every source is a supplier (decision 30). Still to confirm: does Mumbai weigh at dispatch, and who at Mumbai uploads the delivery note? Do job-work bills need tracking? | Supplier types |
+| 20 | Scrap sold on (~430 t in 7 months): does it pass through sorting, or is it back-to-back trading? | Stock |
+| 21 | What are the 2,501.40 kg April gap and the 29.50 kg April opening difference? | Stock history |
+| 26 | Document checklist per supplier type (built as a proposal, see 7b): is it right for the branch, imports and job work? | Documents |
+| 27 | Material sent out to the Mumbai branch and to job workers is kept as a stock movement naming the supplier (7b listed only sales, item-to-item and sales returns). Confirm | Stock |
+| 24 | Plastic scrap: the stock statement shows 0 at 31 Oct (portal agrees, item added); the October production report shows −29,020 kg. Confirm the report figure is an error | Stock opening |
+| 28 | Copper scrap at 31 Oct: 105,380.75 kg (stock statement) or 105,380.66 kg (stock ledger, production report)? Which does Tally show? The portal opened at 105,380.66 | Stock opening |
+| 29 | The second ingot item: HSN 74031200 (stock statement, production report heading) or 74031900 (stock sheet)? | Stock masters |
+| 23 | Copper ingot is bought as well as produced (545.5 t in 7 months). Do bought ingots come in through the portal as lots (with weights and DNs, but no sorting)? And why do 575.5 t move to "Copper ingot 74031900"? | Stock, scope |
 | 15 | If 2B is switched on later: test with a real JSON from Niti (the parser has only seen a sample) | GST (optional) |
 | 16 | GST API later: which GSP (or the provider Rich Alloys' consultants already use), cost, and who enters the OTP each 6 hours or 30 days | GST |
 
@@ -314,7 +457,9 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 
 - Adoption: if entry is slower than the notebook, it will not be used. Measure time per arrival and per sorting entry in the parallel run.
 - Two Tallys: ticks show what is entered where, but the portal cannot see inside Tally until import is built.
-- Scope: production is now in; imports, sales and other sites will be asked for next.
+- Scope: production is now in; imports, sales and other sites will be asked for next. Section 7a item 2 brings branch
+  transfers, import receipts and sales into *stock* as quantity-only movements (no prices, buyers or import process);
+  keep it at that.
 - Public folder: the whole `Rich_Alloys` folder is currently public through GitHub Pages (decision 28). Scrub client
   details or serve only `deploy/` before real data or wider sharing.
 - Invoice totals are readable by every staff member (needed for weights); payments, ledger and cash are not.

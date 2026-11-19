@@ -1,9 +1,21 @@
 import { useState } from "react";
 import { COMPANY, csv, day, download, esc, inr, isNum, kg, printHtml, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
-import { Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Sheet, SaveBar, Tabs, TextIn } from "../ui";
+import { DateIn, Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Sheet, SaveBar, Tabs, TextIn } from "../ui";
 import { DN_LABEL, DealDocs, PaymentRow, PaymentSheet, Stepper, StageChip, TallyTick, useSave } from "../common";
 import { TermsSheet } from "./Deal";
 import { TermsLine } from "./Lots";
+
+// PRD 7b: only domestic purchases carry money. Branch, import and job-work lots work in kg.
+type TT = (en: string, hi?: string) => string;
+const isDomestic = (d: { v: Row }) => (d.v.supplier_type ?? "domestic") === "domestic";
+export const noteWord = (t: TT, type: string | undefined, plural = false) =>
+  type === "import" ? (plural ? t("Claim notes", "क्लेम नोट") : t("Claim note", "क्लेम नोट"))
+  : type && type !== "domestic" ? (plural ? t("Shortage / return notes", "कमी / वापसी नोट") : t("Shortage / return note", "कमी / वापसी नोट"))
+  : (plural ? t("Debit notes", "डेबिट नोट") : t("Debit note", "डेबिट नोट"));
+export const docWord = (t: TT, kind: string | undefined) =>
+  kind === "delivery_note" ? t("Delivery note", "डिलीवरी नोट") : kind === "bill_of_entry" ? t("Bill of entry", "बिल ऑफ एंट्री")
+  : kind === "challan" ? t("Challan", "चालान") : t("Invoice", "बिल");
+const noteKg = (n: Row) => (n.note_lines ?? []).reduce((a: number, l: Row) => a + Number(l.qty_kg), 0);
 
 async function loadLot(id: string, money: boolean) {
   const lot = await q<Row>(sb.from("lots").select("*, deals(*, suppliers(*)), invoices(*)").eq("id", id).single());
@@ -41,9 +53,9 @@ export default function Lot({ id, tab }: { id: string; tab?: string }) {
     { id: "summary", label: t("Summary", "सारांश") },
     { id: "weights", label: t("Weights", "वज़न") },
     { id: "sorting", label: t("Sorting", "छँटाई"), badge: d.sorting.length },
-    { id: "dn", label: t("Debit notes", "डेबिट नोट"), badge: d.calc.filter((c) => !c.approved).length },
+    { id: "dn", label: noteWord(t, d.v.supplier_type, true), badge: d.calc.filter((c) => !c.approved).length },
     { id: "docs", label: t("Documents", "दस्तावेज़"), badge: Number(d.v.doc_gaps) || 0 },
-    ...(can("money_view") ? [{ id: "pay", label: t("Payment", "पेमेंट") }] : []),
+    ...(can("money_view") && isDomestic(d) ? [{ id: "pay", label: t("Payment", "पेमेंट") }] : []),
   ];
   return (
     <>
@@ -76,7 +88,8 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
       <KV rows={[
         [t("Received", "माल आया"), `${day(d.lot.received_on)} · ${d.v.days_open} ${t("days ago", "दिन पहले")}`],
         [t("Vehicle", "गाड़ी"), d.lot.vehicle_no ?? "—"],
-        [t("Invoice", "बिल"), inv ? `${inv.invoice_no} · ${day(inv.invoice_date)}` : "—"],
+        [docWord(t, d.v.doc_kind), inv ? `${inv.invoice_no} · ${day(inv.invoice_date)}` : "—"],
+        ...(d.lot.sent_by ? [[t("Sent by", "किसने भेजा"), d.lot.sent_by] as [string, string]] : []),
         [t("Weight short", "वज़न कम"), kg(d.v.weight_short_kg)],
         ...(Number(d.v.weight_excess_kg) > 0 ? [[t("Weight excess", "वज़न ज़्यादा"), kg(d.v.weight_excess_kg), "warn"] as [string, string, string]] : []),
         [t("Sorting", "छँटाई"), d.lot.sorting_closed_at ? `${t("Closed", "बंद")} ${day(d.lot.sorting_closed_at)}` : t("Open", "चालू")],
@@ -94,10 +107,10 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
       )}
       <Section title={t("Entered in Tally?", "टैली में दर्ज?")}>
         <ul className="rows tally">
-          {inv && <li><div className="row static"><span className="row-main"><span>{t("Purchase invoice", "खरीद बिल")} {inv.invoice_no}</span></span>
-            <span className="ticks"><TallyTick entity="invoice" id={inv.id} book="factory" marks={d.marks} onDone={reload} /><TallyTick entity="invoice" id={inv.id} book="office" marks={d.marks} onDone={reload} /></span></div></li>}
-          {live.map((n) => <li key={n.id}><div className="row static"><span className="row-main"><span>{t(...DN_LABEL[n.dn_type])} {n.tally_no ?? ""} · {inr(n.total)}</span></span>
-            <span className="ticks"><TallyTick entity="note" id={n.id} book="factory" marks={d.marks} onDone={reload} /><TallyTick entity="note" id={n.id} book="office" marks={d.marks} onDone={reload} /></span></div></li>)}
+          {inv && <li><div className="row static"><span className="row-main"><span>{isDomestic(d) ? t("Purchase invoice", "खरीद बिल") : docWord(t, d.v.doc_kind)} {inv.invoice_no}</span></span>
+            <span className="ticks"><TallyTick entity="invoice" id={inv.id} book="factory" marks={d.marks} onDone={reload} />{isDomestic(d) && <TallyTick entity="invoice" id={inv.id} book="office" marks={d.marks} onDone={reload} />}</span></div></li>}
+          {live.map((n) => <li key={n.id}><div className="row static"><span className="row-main"><span>{isDomestic(d) ? t(...DN_LABEL[n.dn_type]) : noteWord(t, d.v.supplier_type)} {n.tally_no ?? ""} · {isDomestic(d) ? inr(n.total) : kg(noteKg(n))}</span></span>
+            <span className="ticks"><TallyTick entity="note" id={n.id} book="factory" marks={d.marks} onDone={reload} />{isDomestic(d) && <TallyTick entity="note" id={n.id} book="office" marks={d.marks} onDone={reload} />}</span></div></li>)}
           {d.payments.filter((p) => p.status === "reconciled").map((p) => <li key={p.id}><div className="row static"><span className="row-main"><span>{t("Payment", "पेमेंट")} {inr(p.amount)} · {day(p.paid_on)}</span></span>
             <span className="ticks"><TallyTick entity="payment" id={p.id} book="office" marks={d.marks} onDone={reload} /></span></div></li>)}
           {d.tds.map((x) => <li key={x.id}><div className="row static"><span className="row-main"><span>TDS {x.section} · {inr(x.amount)}</span></span>
@@ -106,7 +119,7 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
       </Section>
       <div className="actions">
         <Btn onClick={() => printLot(d)}>{t("Print lot summary", "लॉट सारांश प्रिंट करें")}</Btn>
-        {live.length > 0 && <Btn onClick={() => exportTally(d)}>{t("Download debit notes for Tally (CSV)", "टैली के लिए डेबिट नोट (CSV)")}</Btn>}
+        {live.length > 0 && <Btn onClick={() => exportTally(d)}>{isDomestic(d) ? t("Download debit notes for Tally (CSV)", "टैली के लिए डेबिट नोट (CSV)") : t("Download notes for Tally (CSV)", "टैली के लिए नोट (CSV)")}</Btn>}
       </div>
     </>
   );
@@ -198,7 +211,7 @@ function InvoiceEdit({ inv, onClose, onSaved }: { inv: Row; onClose: () => void;
       }, () => { onSaved(); onClose(); })} />}>
       <div className="grid2">
         <Field label={t("Invoice number", "बिल नंबर")}><TextIn value={f.no} onValue={(v) => setF({ ...f, no: v })} /></Field>
-        <Field label={t("Invoice date", "बिल तारीख")}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
+        <Field label={t("Invoice date", "बिल तारीख")}><DateIn value={f.date} onChange={(v) => setF({ ...f, date: v })} futureOnly /></Field>
         <Field label={t("Taxable", "कर योग्य")}><NumIn value={f.tax} onChange={(v) => setF({ ...f, tax: v })} suffix="₹" /></Field>
         <Field label="GST"><NumIn value={f.gst} onChange={(v) => setF({ ...f, gst: v })} suffix="₹" /></Field>
         <Field label={t("Total", "कुल")}><NumIn value={f.total} onChange={(v) => setF({ ...f, total: v })} suffix="₹" /></Field>
@@ -288,7 +301,7 @@ function SortingSheet({ d, onClose, onSaved }: { d: LotData; onClose: () => void
       </Field>
       <div className="grid2">
         <Field label={t("Weight", "वज़न")}><NumIn value={kgv} onChange={setKg} suffix="kg" /></Field>
-        <Field label={t("Date", "तारीख")}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+        <Field label={t("Date", "तारीख")}><DateIn value={date} onChange={setDate} /></Field>
       </div>
       {cat && (
         <>
@@ -318,7 +331,7 @@ function Notes({ d, reload }: { d: LotData; reload: () => void }) {
     <>
       {types.length === 0 && <Empty>{t("Nothing to debit on this lot.", "इस लॉट पर कुछ डेबिट नहीं।")}</Empty>}
       {types.map((ty) => <NoteCard key={ty} d={d} type={ty} reload={reload} />)}
-      {live.length > 0 && <Btn onClick={() => exportTally(d)}>{t("Download debit notes for Tally (CSV)", "टैली के लिए डेबिट नोट (CSV)")}</Btn>}
+      {live.length > 0 && <Btn onClick={() => exportTally(d)}>{isDomestic(d) ? t("Download debit notes for Tally (CSV)", "टैली के लिए डेबिट नोट (CSV)") : t("Download notes for Tally (CSV)", "टैली के लिए नोट (CSV)")}</Btn>}
       {(returnKg > 0 || d.returns.length > 0) && (
         <Section title={t("Material return", "माल वापसी")} right={can("inward_edit") ? <Btn small onClick={() => setRet(true)}>+ {t("Record dispatch", "वापसी भेजी")}</Btn> : undefined}>
           <Err error={s.error} />
@@ -352,14 +365,29 @@ function NoteCard({ d, type, reload }: { d: LotData; type: string; reload: () =>
   const gst = note ? note.gst_amount : calc?.gst_amount;
   const total = note ? note.total : round ? calc?.total_rounded : calc?.total_exact;
   const stale = note && calc && Math.abs(Number(calc.taxable) - Number(note.taxable)) > 0.005;
+  const money = isDomestic(d);
+  const kgTotal = lines.reduce((a: number, l: Row) => a + Number(l.qty_kg), 0);
   return (
     <div className={`card note-card ${note ? "approved" : ""}`}>
-      <div className="item-head"><h3>{t(...DN_LABEL[type])}</h3>{note ? <Chip tone="ok">{t("Approved", "मंज़ूर")}</Chip> : <Chip tone="bad">{t("To approve", "मंज़ूरी बाकी")}</Chip>}</div>
-      <table className="tbl compact">
-        <thead><tr><th>{t("Item", "विवरण")}</th><th className="n">kg</th><th className="n">{t("Rate", "रेट")}</th><th className="n">{t("Amount", "रकम")}</th></tr></thead>
-        <tbody>{lines.map((l: Row, i: number) => <tr key={i}><td>{l.grade} · {l.description}</td><td className="n">{Number(l.qty_kg).toFixed(3)}</td><td className="n">{Number(l.rate).toFixed(2)}</td><td className="n">{inr(l.amount)}</td></tr>)}</tbody>
-      </table>
-      <KV rows={[[t("Taxable", "कर योग्य"), inr(taxable)], [`GST ${d.lot.invoices?.gst_rate ?? ""}%`, inr(gst)], ...(note && Number(note.round_off) ? [[t("Round off", "राउंड ऑफ"), Number(note.round_off).toFixed(3)] as [string, string]] : []), [t("Total", "कुल"), <strong key="t">{inr(total)}</strong>]]} />
+      <div className="item-head"><h3>{t(...DN_LABEL[type])}{!money && <span className="muted small"> · {noteWord(t, d.v.supplier_type)}</span>}</h3>{note ? <Chip tone="ok">{t("Approved", "मंज़ूर")}</Chip> : <Chip tone="bad">{t("To approve", "मंज़ूरी बाकी")}</Chip>}</div>
+      {money ? (
+        <>
+          <table className="tbl compact">
+            <thead><tr><th>{t("Item", "विवरण")}</th><th className="n">kg</th><th className="n">{t("Rate", "रेट")}</th><th className="n">{t("Amount", "रकम")}</th></tr></thead>
+            <tbody>{lines.map((l: Row, i: number) => <tr key={i}><td>{l.grade} · {l.description}</td><td className="n">{Number(l.qty_kg).toFixed(3)}</td><td className="n">{Number(l.rate).toFixed(2)}</td><td className="n">{inr(l.amount)}</td></tr>)}</tbody>
+          </table>
+          <KV rows={[[t("Taxable", "कर योग्य"), inr(taxable)], [`GST ${d.lot.invoices?.gst_rate ?? ""}%`, inr(gst)], ...(note && Number(note.round_off) ? [[t("Round off", "राउंड ऑफ"), Number(note.round_off).toFixed(3)] as [string, string]] : []), [t("Total", "कुल"), <strong key="t">{inr(total)}</strong>]]} />
+        </>
+      ) : (
+        <>
+          <table className="tbl compact">
+            <thead><tr><th>{t("Item", "विवरण")}</th><th className="n">kg</th></tr></thead>
+            <tbody>{lines.map((l: Row, i: number) => <tr key={i}><td>{l.grade} · {l.description}</td><td className="n">{Number(l.qty_kg).toFixed(3)}</td></tr>)}</tbody>
+          </table>
+          <KV rows={[[t("Total", "कुल"), <strong key="t">{kg(kgTotal)}</strong>]]} />
+          <p className="muted small">{t("Kilograms only: no money is owed for this material. It comes off stock when approved.", "सिर्फ किलो: इस माल का पैसा नहीं बनता। मंज़ूरी पर स्टॉक से घटेगा।")}</p>
+        </>
+      )}
       <Err error={s.error} />
       {stale && <p className="warn">{t("Sorting changed after approval. Cancel and approve again.", "मंज़ूरी के बाद छँटाई बदली। रद्द करके फिर मंज़ूर करें।")}</p>}
       {!note && can("dn_approve") && (
@@ -367,17 +395,17 @@ function NoteCard({ d, type, reload }: { d: LotData; type: string; reload: () =>
           <label className="check"><input type="checkbox" checked={round} onChange={(e) => setRound(e.target.checked)} /> {t("Round total to the rupee", "कुल रुपये में राउंड करें")}</label>
           {blocked && <p className="muted small">{t("Close sorting first.", "पहले छँटाई बंद करें।")}</p>}
           <Btn kind="primary" className="block" disabled={blocked || s.busy} onClick={() => s.run(() => rpc("approve_dn", { p_lot: d.lot.id, p_type: type, p_date: today(), p_round: round }), reload)}>
-            ✓ {t("Approve debit note", "डेबिट नोट मंज़ूर करें")} · {inr(total)}</Btn>
+            ✓ {money ? `${t("Approve debit note", "डेबिट नोट मंज़ूर करें")} · ${inr(total)}` : `${t("Approve", "मंज़ूर करें")} ${noteWord(t, d.v.supplier_type)} · ${kg(kgTotal)}`}</Btn>
         </>
       )}
       {note && (
         <>
-          <Field label={t("Debit note number from Tally", "टैली से डेबिट नोट नंबर")}>
+          <Field label={money ? t("Debit note number from Tally", "टैली से डेबिट नोट नंबर") : t("Note number from Tally", "टैली से नोट नंबर")}>
             <span className="inline"><TextIn value={no} onValue={setNo} placeholder="RAI/DN/…" />
               {(can("tally_factory") || can("tally_office") || can("dn_approve")) && no !== (note.tally_no ?? "") &&
                 <Btn small kind="primary" onClick={() => s.run(() => rpc("set_note_tally_no", { p_id: note.id, p_no: no }), reload)}>{t("Save", "सेव")}</Btn>}</span>
           </Field>
-          <div className="ticks"><TallyTick entity="note" id={note.id} book="factory" marks={d.marks} onDone={reload} /><TallyTick entity="note" id={note.id} book="office" marks={d.marks} onDone={reload} /></div>
+          <div className="ticks"><TallyTick entity="note" id={note.id} book="factory" marks={d.marks} onDone={reload} />{money && <TallyTick entity="note" id={note.id} book="office" marks={d.marks} onDone={reload} />}</div>
           <div className="actions">
             <Btn onClick={() => printNote(d, note)}>{t("Print working for supplier", "सप्लायर के लिए प्रिंट")}</Btn>
             {can("dn_approve") && <Btn kind="danger" onClick={() => setCancel("")}>{t("Cancel", "रद्द करें")}</Btn>}
@@ -407,7 +435,7 @@ function ReturnSheet({ lotId, kgDefault, onClose, onSaved }: { lotId: string; kg
           transporter: f.tr || null, lr_no: f.lr || null, freight: f.fr ? Number(f.fr) : null, freight_paid_by: f.by }));
       }, () => { onSaved(); onClose(); })} />}>
       <div className="grid2">
-        <Field label={t("Sent on", "भेजने की तारीख")}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
+        <Field label={t("Sent on", "भेजने की तारीख")}><DateIn value={f.date} onChange={(v) => setF({ ...f, date: v })} /></Field>
         <Field label={t("Weight", "वज़न")}><NumIn value={f.kg} onChange={(v) => setF({ ...f, kg: v })} suffix="kg" /></Field>
         <Field label={t("Packages", "पैकेज")}><NumIn value={f.pk} onChange={(v) => setF({ ...f, pk: v })} /></Field>
         <Field label={t("E-way bill", "ई-वे बिल")}><TextIn value={f.eway} onValue={(v) => setF({ ...f, eway: v })} /></Field>
@@ -474,7 +502,7 @@ export function TdsSheet({ invoice, onClose, onSaved }: { invoice: Row; onClose:
       <div className="grid2">
         <Field label={t("TDS amount", "TDS रकम")}><NumIn value={f.amount} onChange={(v) => setF({ ...f, amount: v })} suffix="₹" autoFocus /></Field>
         <Field label={t("Section (optional)", "सेक्शन (वैकल्पिक)")}><TextIn value={f.section} onValue={(v) => setF({ ...f, section: v })} /></Field>
-        <Field label={t("Deducted on", "काटने की तारीख")}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
+        <Field label={t("Deducted on", "काटने की तारीख")}><DateIn value={f.date} onChange={(v) => setF({ ...f, date: v })} /></Field>
       </div>
     </Sheet>
   );
@@ -494,11 +522,21 @@ function exportTally(d: LotData) {
 function head(d: LotData, title: string) {
   const sup = d.lot.deals?.suppliers ?? {}; const inv = d.lot.invoices ?? {};
   return `<div class="box"><div><h1>${esc(title)}</h1><div class="muted">${esc(COMPANY.name)}<br>${esc(COMPANY.address)}<br>GSTIN ${COMPANY.gstin}</div></div>
-    <div><b>${esc(sup.name)}</b><br>GSTIN ${esc(sup.gstin ?? "—")}<br>Invoice ${esc(inv.invoice_no ?? "—")} dated ${esc(day(inv.invoice_date))}<br>Lot ${esc(d.lot.lot_no)} · Deal ${esc(d.lot.deals?.deal_no)}</div></div>`;
+    <div><b>${esc(sup.name)}</b><br>GSTIN ${esc(sup.gstin ?? "—")}<br>${esc(docWord((en) => en, d.v.doc_kind))} ${esc(inv.invoice_no ?? "—")} dated ${esc(day(inv.invoice_date))}<br>Lot ${esc(d.lot.lot_no)} · Deal ${esc(d.lot.deals?.deal_no)}</div></div>`;
 }
 
 function printNote(d: LotData, n: Row) {
   const label = DN_LABEL[n.dn_type][0];
+  if (!isDomestic(d)) {
+    const title = noteWord((en) => en, d.v.supplier_type);
+    const kgRows = n.note_lines.map((l: Row) => `<tr><td>${esc(l.grade)} · ${esc(l.description)}</td><td class="n">${Number(l.qty_kg).toFixed(3)}</td></tr>`).join("");
+    printHtml(`${title} ${n.tally_no ?? ""}`, `${head(d, `${title}: ${label}`)}
+      <p>Note no. <b>${esc(n.tally_no ?? "—")}</b> · dated ${esc(day(n.note_date))}</p>
+      <table><thead><tr><th>Description</th><th class="n">Qty kg</th></tr></thead><tbody>${kgRows}</tbody>
+      <tfoot><tr><td><b>Total</b></td><td class="n"><b>${noteKg(n).toFixed(3)}</b></td></tr></tfoot></table>
+      <p class="muted">Quantity only. Calculated from our weighbridge and sorting records.</p>`);
+    return;
+  }
   const rows = n.note_lines.map((l: Row) => `<tr><td>${esc(l.grade)} · ${esc(l.description)}</td><td class="n">${Number(l.qty_kg).toFixed(3)}</td><td class="n">${Number(l.rate).toFixed(2)}</td><td class="n">${esc(inr(l.amount))}</td></tr>`).join("");
   printHtml(`${label} ${n.tally_no ?? ""}`, `${head(d, `Debit note working: ${label}`)}
     <p>Debit note no. <b>${esc(n.tally_no ?? "(issued from Tally)")}</b> · dated ${esc(day(n.note_date))}</p>

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
-import { Btn, Chip, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn } from "../ui";
+import { gstinOk, normGstin, day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "../lib";
+import { Btn, Chip, DateIn, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { StageChip, useSave } from "../common";
+import { enqueue, refusal } from "../uploads";
 
 const FILTERS: [string, string, string][] = [
   ["open", "Open", "चालू"], ["incoming", "On the way", "रास्ते में"], ["sorting", "Sorting", "छँटाई"],
@@ -14,6 +15,7 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
   const [f, setF] = useState("open");
   const [text, setText] = useState("");
   const [newDeal, setNewDeal] = useState(!!openNew);
+  const [receipt, setReceipt] = useState(false);
   const { data, error, reload } = useLoad(() => Promise.all([
     q(sb.from("v_lots").select("*").order("received_on", { ascending: false })),
     q(sb.from("v_deals_incoming").select("*").order("expected_date", { ascending: true, nullsFirst: false })),
@@ -29,7 +31,10 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
     <>
       <div className="page-head">
         <h1>{t("Lots", "लॉट")}</h1>
-        {can("deal_edit") && <Btn kind="primary" onClick={() => setNewDeal(true)}>+ {t("New deal", "नया सौदा")}</Btn>}
+        <span className="actions tight">
+          {can("inward_edit") && <Btn onClick={() => setReceipt(true)}>+ {t("From branch / import / job work", "ब्रांच / इम्पोर्ट / जॉब वर्क से")}</Btn>}
+          {can("deal_edit") && <Btn kind="primary" onClick={() => setNewDeal(true)}>+ {t("New deal", "नया सौदा")}</Btn>}
+        </span>
       </div>
       <div className="filters" role="tablist">
         {FILTERS.map(([id, en, hi]) => <button key={id} type="button" className={f === id ? "on" : ""} onClick={() => setF(id)}>{t(en, hi)}</button>)}
@@ -63,7 +68,7 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
                 <button type="button" className="row" onClick={() => go(`lot/${l.lot_id}`)}>
                   <span className="row-main">
                     <strong>{l.lot_no} · {l.deal_no}</strong>
-                    <span>{l.supplier}</span>
+                    <span>{l.supplier}{l.supplier_type && l.supplier_type !== "domestic" ? <span className="muted small"> · {t(...TYPE_WORD[l.supplier_type])}</span> : null}</span>
                     <span className="muted small">{day(l.received_on)} · {l.days_open} {t("days", "दिन")}{l.doc_gaps ? ` · ${l.doc_gaps} ${t("docs pending", "दस्तावेज़ बाकी")}` : ""}</span>
                   </span>
                   <StageChip stage={l.stage} />
@@ -74,6 +79,7 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
         </>
       )}
       {!inRows.length && !lotRows.length && <Empty>{t("Nothing here.", "यहाँ कुछ नहीं है।")}</Empty>}
+      {receipt && <ReceiptSheet onClose={() => setReceipt(false)} onSaved={(id) => { reload(); go(`lot/${id}`); }} />}
       {newDeal && <NewDealSheet onClose={() => setNewDeal(false)} onSaved={(id) => { reload(); go(`deal/${id}`); }} />}
     </>
   );
@@ -83,7 +89,7 @@ type Line = { grade: string; qty: string; rate: string };
 export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (id: string) => void }) {
   const t = useT(); const lang = useLang();
   const m = useLoad(() => Promise.all([
-    q(sb.from("suppliers").select("id,name,provisional_pct,provisional_days,balance_days").eq("active", true).order("name")),
+    q(sb.from("suppliers").select("id,name,provisional_pct,provisional_days,balance_days").eq("active", true).eq("supplier_type", "domestic").order("name")),
     q(sb.from("grades").select("*").eq("active", true).order("sort")),
   ]), []);
   const [sup, setSup] = useState("");
@@ -106,8 +112,10 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
     for (const l of good) if (!l.grade || !isNum(l.qty) || !isNum(l.rate)) throw new Error(t("Each grade needs quantity and rate.", "हर ग्रेड की मात्रा और रेट डालें।"));
     if (sup === "new" && !newSup.name.trim()) throw new Error(t("Enter the supplier's name.", "सप्लायर का नाम डालें।"));
     if (!sup) throw new Error(t("Choose the supplier.", "सप्लायर चुनें।"));
+    if (sup === "new" && newSup.gstin.trim() && !gstinOk(newSup.gstin))
+      throw new Error(t("The GSTIN does not look right (15 characters, e.g. 27AAMCR8303C1ZF). Check it on the supplier's invoice.", "GSTIN सही नहीं लग रहा (15 अक्षर, जैसे 27AAMCR8303C1ZF)। सप्लायर के बिल पर जाँचें।"));
     const id = await rpc<string>("create_deal", { p: {
-      supplier_id: sup === "new" ? null : sup, supplier_name: newSup.name, supplier_gstin: newSup.gstin, supplier_state: newSup.state,
+      supplier_id: sup === "new" ? null : sup, supplier_name: newSup.name, supplier_gstin: normGstin(newSup.gstin), supplier_state: newSup.state,
       po_no: po, deal_date: dealDate, expected_date: expected || null, gst_rate: gst,
       provisional_pct: terms.pct, provisional_days: terms.pdays, balance_days: terms.bdays,
       lines: good.map((l) => ({ grade: l.grade, qty_kg: Number(l.qty), rate_per_kg: Number(l.rate) })) } });
@@ -166,3 +174,85 @@ export function TermsLine({ pct, pdays, bdays }: { pct: unknown; pdays: unknown;
   return <span>{f(pct)}% {t("after", "बाद")} {f(pdays)} {t("days", "दिन")} · {t("balance after", "बाकी")} {f(bdays)} {t("days", "दिन")}</span>;
 }
 export const inrOrDash = (v: unknown) => (v == null ? "—" : inr(v));
+
+// ---------- PRD 7b: material from the branch, an import seller or a job worker (no deal, no money) ----------
+const TYPE_WORD: Record<string, [string, string]> = {
+  branch: ["branch transfer", "ब्रांच ट्रांसफर"], import: ["import", "इम्पोर्ट"], job_work: ["job work", "जॉब वर्क"] };
+const DOC: Record<string, { code: string; en: string; hi: string }> = {
+  branch: { code: "DELIVERY_NOTE", en: "Delivery note", hi: "डिलीवरी नोट" },
+  import: { code: "BILL_OF_ENTRY", en: "Bill of entry", hi: "बिल ऑफ एंट्री" },
+  job_work: { code: "CHALLAN", en: "Challan", hi: "चालान" },
+};
+type RL = { grade: string; theirs: string; gross: string; bags: string; bagKg: string };
+
+function ReceiptSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (lotId: string) => void }) {
+  const t = useT(); const lang = useLang(); const me = useMe();
+  const m = useLoad(() => Promise.all([
+    q(sb.from("suppliers").select("id,name,supplier_type").eq("active", true).neq("supplier_type", "domestic").order("name")),
+    q(sb.from("grades").select("*").eq("active", true).order("sort")),
+  ]), []);
+  const [sup, setSup] = useState("");
+  const [docNo, setDocNo] = useState(""); const [docDate, setDocDate] = useState(today());
+  const [rec, setRec] = useState(today()); const [veh, setVeh] = useState(""); const [sentBy, setSentBy] = useState("");
+  const [lines, setLines] = useState<RL[]>([{ grade: "", theirs: "", gross: "", bags: "", bagKg: "" }]);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const s = useSave();
+  if (!m.data) return m.error ? <Sheet title="…" onClose={onClose}><Err error={m.error} /></Sheet> : null;
+  const [sups, grades] = m.data;
+  const type = sups.find((x) => x.id === sup)?.supplier_type as string | undefined;
+  const doc = type ? DOC[type] : undefined;
+  const set = (i: number, k: keyof RL, v: string) => setLines(lines.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
+  const n = (v: string) => (isNum(v) ? Number(v) : 0);
+  const save = () => s.run(async () => {
+    if (!sup) throw new Error(t("Choose who sent the material.", "माल किसने भेजा, चुनें।"));
+    if (!docNo.trim()) throw new Error(t("Enter the document number.", "डॉक्यूमेंट नंबर डालें।"));
+    const used = lines.filter((x) => x.grade || x.theirs || x.gross);
+    if (!used.length) throw new Error(t("Enter the weights for at least one grade.", "कम से कम एक ग्रेड का वज़न डालें।"));
+    for (const x of used) if (!x.grade || !isNum(x.theirs) || !isNum(x.gross))
+      throw new Error(t("Each grade needs the weight on their document and our weighbridge gross.", "हर ग्रेड का उनके डॉक्यूमेंट का वज़न और हमारा कुल वज़न डालें।"));
+    if (photo && refusal(photo)) throw new Error(t("The document must be a photo or PDF under 20 MB.", "डॉक्यूमेंट 20 MB से छोटी फोटो या PDF हो।"));
+    const lotId = await rpc<string>("create_receipt", { p: {
+      supplier_id: sup, invoice_no: docNo, invoice_date: docDate, received_on: rec, vehicle_no: veh, sent_by: sentBy,
+      lines: used.map((x) => ({ grade: x.grade, billed_net_kg: x.theirs, factory_gross_kg: x.gross, bag_count: x.bags, factory_bag_kg: x.bagKg || "0" })) } });
+    if (photo && doc) {
+      const lot = await q<Row>(sb.from("lots").select("deal_id, deals(deal_no)").eq("id", lotId).single());
+      await enqueue({ id: lot.deal_id, deal_no: lot.deals.deal_no }, doc.code, [photo], me.id, lotId);
+    }
+    onClose(); onSaved(lotId);
+  });
+  return (
+    <Sheet title={t("Material from branch, import or job work", "ब्रांच, इम्पोर्ट या जॉब वर्क से माल")} onClose={onClose}
+      footer={<SaveBar busy={s.busy} error={s.error} onSave={save} label={t("Save arrival", "माल आया सेव करें")} />}>
+      <Field label={t("Who sent it", "किसने भेजा")} hint={!sups.length ? t("Add the branch, import sellers and job workers in Admin > Suppliers first.", "पहले एडमिन > सप्लायर में ब्रांच, इम्पोर्ट विक्रेता और जॉब वर्कर जोड़ें।") : undefined}>
+        <Select value={sup} onChange={setSup} placeholder="—" options={sups.map((x) => ({ value: x.id, label: `${x.name} · ${t(...TYPE_WORD[x.supplier_type])}` }))} /></Field>
+      <div className="grid2">
+        <Field label={doc ? `${t(doc.en, doc.hi)} ${t("number", "नंबर")}` : t("Document number", "डॉक्यूमेंट नंबर")}><TextIn value={docNo} onValue={setDocNo} /></Field>
+        <Field label={t("Document date", "डॉक्यूमेंट की तारीख")}><DateIn value={docDate} onChange={setDocDate} futureOnly /></Field>
+        <Field label={t("Received on", "माल आने की तारीख")}><DateIn value={rec} onChange={setRec} /></Field>
+        <Field label={t("Vehicle number", "गाड़ी नंबर")}><TextIn value={veh} onValue={setVeh} autoCapitalize="characters" /></Field>
+        {type === "branch" && <Field label={t("Sent by (at Mumbai)", "किसने भेजा (मुंबई में)")}><TextIn value={sentBy} onValue={setSentBy} /></Field>}
+      </div>
+      <label className={`upload ${photo ? "done" : ""}`}>
+        {photo ? `✓ ${t("Document photo added", "डॉक्यूमेंट की फोटो जुड़ी")} · ${photo.name}` : `📷 ${t("Photo of the", "फोटो:")} ${doc ? t(doc.en, doc.hi) : t("document", "डॉक्यूमेंट")}`}
+        <input type="file" accept="image/*,application/pdf" hidden onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
+      </label>
+      {lines.map((x, i) => {
+        const net = n(x.gross) - n(x.bagKg); const diff = n(x.theirs) - net; const ready = isNum(x.theirs) && isNum(x.gross);
+        return (
+          <div className="card grade-card" key={i}>
+            <Field label={t("Grade", "ग्रेड")}><Select value={x.grade} onChange={(v) => set(i, "grade", v)} placeholder="—" options={grades.map((g) => ({ value: g.code, label: nm(lang, g) }))} /></Field>
+            <div className="grid2">
+              <Field label={type === "branch" ? t("Weight sent from Mumbai", "मुंबई से भेजा वज़न") : t("Weight on their document", "उनके डॉक्यूमेंट पर वज़न")}><NumIn value={x.theirs} onChange={(v) => set(i, "theirs", v)} suffix="kg" /></Field>
+              <Field label={t("Gross on our weighbridge", "हमारे कांटे पर कुल")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
+              <Field label={t("Number of bags", "बोरी गिनती")}><NumIn value={x.bags} onChange={(v) => set(i, "bags", v)} /></Field>
+              <Field label={t("Bag weight", "बोरी वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
+            </div>
+            {ready && <p className={`result ${diff > 0.0005 ? "bad" : "okline"}`}>{t("Our net", "हमारा नेट")} {kg(net)} · {diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}</p>}
+          </div>
+        );
+      })}
+      <Btn small onClick={() => setLines([...lines, { grade: "", theirs: "", gross: "", bags: "", bagKg: "" }])}>+ {t("Another grade", "और ग्रेड")}</Btn>
+      <p className="muted small">{t("No invoice, payment or debit note in rupees for this material. Shortages and rejections become notes in kg.", "इस माल का बिल, भुगतान या रुपये का डेबिट नोट नहीं। कमी और रिजेक्शन किलो के नोट बनेंगे।")}</p>
+    </Sheet>
+  );
+}

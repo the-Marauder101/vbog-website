@@ -1,6 +1,6 @@
 // Small set of building blocks. Big targets, few choices, words plus colour for every status.
 import { isValidElement, useEffect, type ReactNode } from "react";
-import { useT } from "./lib";
+import { dateWarning, useT } from "./lib";
 
 type BtnProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { kind?: "primary" | "danger" | "ghost" | ""; small?: boolean };
 export function Btn({ kind = "", small, className = "", ...p }: BtnProps) {
@@ -132,6 +132,20 @@ export function SaveBar({ busy, error, onSave, label, disabled }: { busy: boolea
     <>
       <Err error={error} />
       <Btn kind="primary" className="block" disabled={busy || disabled} onClick={onSave}>{busy ? t("Saving…", "सेव हो रहा है…") : label}</Btn>
+    </>
+  );
+}
+
+/** A date that happened. Warns (does not block) when it is in the future or outside the current month. */
+export function DateIn({ value, onChange, futureOnly }: { value: string; onChange: (v: string) => void; futureOnly?: boolean }) {
+  const t = useT();
+  const w = dateWarning(value, futureOnly);
+  return (
+    <>
+      <input type="date" value={value} onChange={(e) => onChange(e.target.value)} />
+      {w && <span className="date-warn" role="status">{w === "future"
+        ? t("This date is in the future. Check it.", "यह तारीख आगे की है। जाँच लें।")
+        : t("This date is not in the current month. Check it.", "यह तारीख इस महीने की नहीं है। जाँच लें।")}</span>}
     </>
   );
 }
