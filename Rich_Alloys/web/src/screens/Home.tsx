@@ -2,6 +2,8 @@ import { addDays, day, go, inr, inrShort, q, sb, today, useCan, useLang, useLoad
 import { Btn, Empty, Err, Loading, Section } from "../ui";
 
 const KINDS: Record<string, { en: string; hi: string; to: (r: Row) => string }> = {
+  rate_confirm: { en: "Trucks that came without a booking: confirm the rate", hi: "बिना बुकिंग आए ट्रक: रेट पक्का करें", to: (r) => `deal/${r.ref_id}` },
+  arrival_late: { en: "Booked supplies that are late", hi: "देर से आने वाला बुक माल", to: (r) => `deal/${r.ref_id}` },
   sorting_open: { en: "Lots to sort", hi: "छँटाई करनी है", to: (r) => `lot/${r.ref_id}/sorting` },
   dn_pending: { en: "Debit notes to approve", hi: "डेबिट नोट मंज़ूर करने हैं", to: (r) => `lot/${r.ref_id}/dn` },
   doc_verify: { en: "Documents to verify", hi: "दस्तावेज़ जाँचने हैं", to: (r) => `deal/${r.ref_id}` },
