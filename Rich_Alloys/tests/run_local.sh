@@ -17,3 +17,4 @@ psql -d "$DB" -f tests/checks.sql
 # PRD 7a: stock from the 1 Nov opening (Tinu's 31 Oct closing)
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/test_data/opening_2026_11.sql
 psql -d "$DB" -f tests/checks_7a.sql
+psql -d "$DB" -f tests/checks_7b.sql

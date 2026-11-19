@@ -15,4 +15,4 @@ Rules:
 - setup.sql is for a fresh project. Once real data exists, ship schema changes as a new numbered migration only.
 - Only deploy/ should be public, but today GitHub Pages publishes the whole V-BOG website repo, so this folder is public
   too (PRD decision 28). Never commit client spreadsheets, invoices or photos; keep them in Project files.
-- Next work: PRD section 7a ("What it changes in the portal").
+- Done: PRD 7a and 7b. Next: answers to PRD section 13 (questions 18–27), then the parallel run.

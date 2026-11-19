@@ -25,7 +25,8 @@ export default function Stock({ openProduction }: { openProduction?: boolean }) 
     const [marks, yields] = ids.length
       ? await Promise.all([q(sb.from("tally_marks").select("*").in("entity_id", ids)), q(sb.from("v_production_runs").select("*").in("id", ids))])
       : [[], []];
-    return { sum, items, runs, marks, yields };
+    const jobWork = await q(sb.from("v_job_work").select("*").order("supplier"));
+    return { sum, items, runs, marks, yields, jobWork };
   }, [month]);
   if (!data) return error ? <Err error={error} /> : <Loading />;
   const iname = (code: string) => nm(lang, data.items.find((i) => i.code === code)) || code;
@@ -56,6 +57,17 @@ export default function Stock({ openProduction }: { openProduction?: boolean }) 
       {!all && data.sum.some((r) => [r.opening, r.total_in, r.total_out, r.closing].every((v) => Number(v) === 0) && r.tally_closing == null) &&
         <button type="button" className="link small" onClick={() => setAll(true)}>{t("Show items with no stock", "बिना स्टॉक वाले आइटम दिखाएँ")}</button>}
       <p className="muted small">{t("In = purchases (arrivals at billed weight, other purchases, imports) + branch transfers + production + job work, credit notes and transfers. Out = consumption + weight-short and return debit notes + sales + branch transfers + job work and transfers. Tap an item for the breakdown. An opening entry starts an item's stock: earlier entries are inside it. Tally column compares the closing on", "आया = खरीद (बिल वज़न पर माल, अन्य खरीद, इम्पोर्ट) + ब्रांच ट्रांसफर + उत्पादन + जॉब वर्क, क्रेडिट नोट और ट्रांसफर। गया = खपत + वज़न कम और वापसी डेबिट नोट + बिक्री + ब्रांच ट्रांसफर + जॉब वर्क और ट्रांसफर। ब्रेकअप के लिए आइटम दबाएँ। शुरुआती स्टॉक एंट्री से आइटम का स्टॉक शुरू होता है। टैली कॉलम इस तारीख की क्लोज़िंग मिलाता है:")} {day(to)}.</p>
+      {data.jobWork.some((j: Row) => Number(j.sent_kg) || Number(j.returned_kg)) && (
+        <Section title={t("With job workers", "जॉब वर्कर के पास")}>
+          <ul className="rows">{data.jobWork.filter((j: Row) => Number(j.sent_kg) || Number(j.returned_kg)).map((j: Row) => (
+            <li key={j.supplier_id} className={Number(j.with_job_worker_kg) > 0.0005 ? "edge-wait" : "edge-ok"}><div className="row static">
+              <span className="row-main"><strong>{j.supplier}</strong>
+                <span className="muted small">{t("Sent", "भेजा")} {kg(j.sent_kg)} · {t("Came back", "वापस आया")} {kg(j.returned_kg)}</span></span>
+              <span className="num"><strong>{kg(j.with_job_worker_kg)}</strong></span>
+            </div></li>))}
+          </ul>
+        </Section>
+      )}
       <Section title={t("Production entries", "उत्पादन एंट्री")}>
         {data.runs.length === 0 ? <Empty>{t("None yet.", "अभी कोई नहीं।")}</Empty> : data.runs.map((r) => (
           <div className="item" key={r.id}>
@@ -113,22 +125,25 @@ function ProductionSheet({ items, onClose, onSaved }: { items: Row[]; onClose: (
 }
 
 // Stock movements beyond supplier lots (PRD 7a item 2). Quantity only: no prices, buyers or import process.
-const MOVE_KINDS: { value: string; en: string; hi: string; dir: 1 | -1 | 0 }[] = [
+// PRD 7b: material coming in from the branch, import sellers and job workers arrives as a lot (Lots screen).
+// What stays here: sales, sending to the branch or a job worker, sales returns, item-to-item, opening, correction.
+const MOVE_KINDS: { value: string; en: string; hi: string; dir: 1 | -1 | 0; to?: string }[] = [
   { value: "dispatch", en: "Sale / dispatch", hi: "बिक्री / डिस्पैच", dir: -1 },
-  { value: "branch_in", en: "From Mumbai branch", hi: "मुंबई ब्रांच से आया", dir: 1 },
-  { value: "branch_out", en: "To Mumbai branch", hi: "मुंबई ब्रांच भेजा", dir: -1 },
-  { value: "purchase_other", en: "Other purchase", hi: "अन्य खरीद", dir: 1 },
-  { value: "import_receipt", en: "Import receipt (bill of entry)", hi: "इम्पोर्ट (बिल ऑफ एंट्री)", dir: 1 },
-  { value: "job_work_in", en: "Job work received", hi: "जॉब वर्क आया", dir: 1 },
-  { value: "job_work_out", en: "Job work sent", hi: "जॉब वर्क भेजा", dir: -1 },
-  { value: "credit_note", en: "Credit note received", hi: "क्रेडिट नोट आया", dir: 1 },
+  { value: "branch_out", en: "To Mumbai branch", hi: "मुंबई ब्रांच भेजा", dir: -1, to: "branch" },
+  { value: "job_work_out", en: "Sent for job work", hi: "जॉब वर्क के लिए भेजा", dir: -1, to: "job_work" },
+  { value: "credit_note", en: "Sales return (credit note)", hi: "बिक्री वापसी (क्रेडिट नोट)", dir: 1 },
   { value: "transfer", en: "Item to item", hi: "आइटम से आइटम", dir: 0 },
   { value: "opening", en: "Opening stock", hi: "शुरुआती स्टॉक", dir: 1 },
   { value: "adjustment", en: "Correction", hi: "सुधार", dir: 0 },
 ];
+const OLD_KINDS: Record<string, [string, string]> = {
+  branch_in: ["From Mumbai branch", "मुंबई ब्रांच से आया"], purchase_other: ["Other purchase", "अन्य खरीद"],
+  import_receipt: ["Import receipt", "इम्पोर्ट"], job_work_in: ["Job work received", "जॉब वर्क आया"] };
 
 function MoveSheet({ items, onClose, onSaved }: { items: Row[]; onClose: () => void; onSaved: () => void }) {
   const t = useT(); const lang = useLang();
+  const sups = useLoad(() => q(sb.from("suppliers").select("id,name,supplier_type").eq("active", true).in("supplier_type", ["branch", "job_work"]).order("name")), []);
+  const [to, setTo] = useState("");
   const [kind, setKind] = useState("dispatch");
   const [item, setItem] = useState("");
   const [toItem, setToItem] = useState("");
@@ -150,22 +165,27 @@ function MoveSheet({ items, onClose, onSaved }: { items: Row[]; onClose: () => v
       return;
     }
     const sign = k.dir !== 0 ? k.dir : dir === "-" ? -1 : 1;
-    await q(sb.from("stock_moves").insert({ move_date: date, item, kind, kg: sign * Number(kgv),
-      party: party.trim() || null, doc_no: doc.trim() || null, reason: reason.trim() || null }));
+    if (k.to && !to) throw new Error(k.to === "branch" ? t("Choose the branch.", "ब्रांच चुनें।") : t("Choose the job worker.", "जॉब वर्कर चुनें।"));
+    const toName = (sups.data ?? []).find((x) => x.id === to)?.name;
+    await q(sb.from("stock_moves").insert({ move_date: date, item, kind, kg: sign * Number(kgv), supplier_id: k.to ? to : null,
+      party: (k.to ? toName : party.trim()) || null, doc_no: doc.trim() || null, reason: reason.trim() || null }));
   }, () => { onSaved(); onClose(); });
   return (
     <Sheet title={t("Other stock entry", "अन्य स्टॉक एंट्री")} onClose={onClose} footer={<SaveBar busy={s.busy} error={s.error} onSave={save} label={t("Save", "सेव करें")} />}>
       <Field label={t("What is it", "क्या है")}>
-        <Choice value={kind} onChange={setKind} cols={2} options={MOVE_KINDS.map((x) => ({ value: x.value, label: t(x.en, x.hi) }))} />
+        <Choice value={kind} onChange={(v) => { setKind(v); setTo(""); }} cols={2} options={MOVE_KINDS.map((x) => ({ value: x.value, label: t(x.en, x.hi) }))} />
       </Field>
+      <p className="muted small">{t("Material arriving from the branch, an import seller or a job worker is recorded on the Lots screen.", "ब्रांच, इम्पोर्ट विक्रेता या जॉब वर्कर से आया माल लॉट स्क्रीन पर दर्ज होता है।")}</p>
       <div className="grid2">
         <Field label={kind === "transfer" ? t("From item", "किस आइटम से") : t("Item", "आइटम")}><Select value={item} onChange={setItem} placeholder="—" options={opts} /></Field>
         {kind === "transfer" && <Field label={t("To item", "किस आइटम में")}><Select value={toItem} onChange={setToItem} placeholder="—" options={opts} /></Field>}
         <Field label={t("Weight", "वज़न")}><NumIn value={kgv} onChange={setKg} suffix="kg" /></Field>
         <Field label={t("Date", "तारीख")}><DateIn value={date} onChange={setDate} /></Field>
-        {kind !== "transfer" && kind !== "opening" && kind !== "adjustment" &&
-          <Field label={t("Party", "पार्टी")}><TextIn value={party} onValue={setParty} /></Field>}
-        {kind !== "adjustment" && <Field label={t("Document number", "डॉक्यूमेंट नंबर")} hint={kind === "import_receipt" ? t("Bill of entry", "बिल ऑफ एंट्री") : kind.startsWith("branch") ? t("Delivery note", "डिलीवरी नोट") : undefined}>
+        {k.to && <Field label={k.to === "branch" ? t("Branch", "ब्रांच") : t("Job worker", "जॉब वर्कर")}>
+          <Select value={to} onChange={setTo} placeholder="—" options={(sups.data ?? []).filter((x) => x.supplier_type === k.to).map((x) => ({ value: x.id, label: x.name }))} /></Field>}
+        {!k.to && kind !== "transfer" && kind !== "opening" && kind !== "adjustment" &&
+          <Field label={kind === "credit_note" ? t("Customer", "ग्राहक") : t("Party", "पार्टी")}><TextIn value={party} onValue={setParty} /></Field>}
+        {kind !== "adjustment" && <Field label={t("Document number", "डॉक्यूमेंट नंबर")} hint={kind === "branch_out" ? t("Delivery note", "डिलीवरी नोट") : kind === "job_work_out" ? t("Challan", "चालान") : undefined}>
           <TextIn value={doc} onValue={setDoc} /></Field>}
       </div>
       {kind === "adjustment" && <Field label={t("Direction", "दिशा")}><Choice value={dir} onChange={setDir} cols={2} options={[{ value: "+", label: t("Add to stock", "स्टॉक बढ़ाएँ") }, { value: "-", label: t("Take off stock", "स्टॉक घटाएँ") }]} /></Field>}
@@ -210,7 +230,8 @@ function MovesSheet({ row, from, to, onClose }: { row: Row; from: string; to: st
   const { data, error } = useLoad(() => q(sb.from("v_stock_moves").select("*").eq("item", row.item).gte("move_date", from).lte("move_date", to).order("move_date")), [row.item, from, to]);
   const kinds: Record<string, string> = { inward: t("Arrival", "आवक"), note: t("Debit note", "डेबिट नोट"), consumed: t("Consumed", "खपत"), produced: t("Produced", "उत्पादन"),
     adjustment: t("Correction", "सुधार"), transfer_in: t("Transfer in", "ट्रांसफर आया"), transfer_out: t("Transfer out", "ट्रांसफर गया"),
-    ...Object.fromEntries(MOVE_KINDS.map((x) => [x.value, t(x.en, x.hi)])) };
+    ...Object.fromEntries(MOVE_KINDS.map((x) => [x.value, t(x.en, x.hi)])),
+    ...Object.fromEntries(Object.entries(OLD_KINDS).map(([k2, [en, hi]]) => [k2, t(en, hi)])) };
   const rows: [string, string, string][] = [["purchased", "Purchases", "खरीद"], ["branch_in", "From branch", "ब्रांच से"], ["produced", "Produced", "उत्पादन"],
     ["other_in", "Job work, credit notes, transfers in", "जॉब वर्क, क्रेडिट नोट, ट्रांसफर आया"], ["consumed", "Consumed", "खपत"], ["notes_out", "Debit notes", "डेबिट नोट"],
     ["sold", "Sold / dispatched", "बिक्री / डिस्पैच"], ["branch_out", "To branch", "ब्रांच को"], ["other_out", "Job work, transfers out", "जॉब वर्क, ट्रांसफर गया"]];

@@ -201,6 +201,7 @@ export function DealDocs({ dealId, dealNo, hasReturn }: { dealId: string; dealNo
   const { data, error, reload } = useLoad(() => Promise.all([
     q(sb.from("doc_types").select("*").eq("active", true).order("sort")),
     q(sb.from("documents").select("*").eq("deal_id", dealId).order("uploaded_at")),
+    q<Row>(sb.from("deals").select("suppliers(supplier_type)").eq("id", dealId).single()),
   ]), [dealId]);
   const [open, setOpen] = useState<string | null>(null);
   const [refused, setRefused] = useState<Refused[]>([]);
@@ -213,8 +214,9 @@ export function DealDocs({ dealId, dealNo, hasReturn }: { dealId: string; dealNo
   const [reason, setReason] = useState("");
   const s = useSave();
   if (!data) return error ? <Err error={error} /> : <Loading />;
-  const [types, docs] = data;
-  const shown = types.filter((x) => x.side !== "return" || hasReturn);
+  const [types, docs, deal] = data;
+  const stype = deal?.suppliers?.supplier_type ?? "domestic";   // PRD 7b: the checklist follows the supplier type
+  const shown = types.filter((x) => (x.side !== "return" || hasReturn) && (!x.supplier_types || x.supplier_types.includes(stype)));
   const stateOf = (code: string): DocState =>
     docs.filter((d) => d.doc_type === code).reduce<DocState>((b, d) => (rank[d.status as DocState] > rank[b] ? d.status : b), "missing");
   const done = shown.filter((x) => stateOf(x.code) === "approved").length;

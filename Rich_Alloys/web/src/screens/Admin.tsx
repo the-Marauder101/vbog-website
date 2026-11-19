@@ -117,11 +117,12 @@ function Suppliers() {
   if (!data) return error ? <Err error={error} /> : <Loading />;
   return (
     <>
-      <p className="muted small">{t("Payment terms here drive the cash plan. A deal or lot can override them.", "यहाँ की पेमेंट शर्तें कैश प्लान चलाती हैं। सौदा या लॉट इन्हें बदल सकता है।")}</p>
+      <p className="muted small">{t("Payment terms here drive the cash plan. A deal or lot can override them. Every source of material is a supplier: domestic sellers, the Mumbai branch, import sellers and job workers.", "यहाँ की पेमेंट शर्तें कैश प्लान चलाती हैं। सौदा या लॉट इन्हें बदल सकता है। माल का हर स्रोत सप्लायर है: घरेलू विक्रेता, मुंबई ब्रांच, इम्पोर्ट विक्रेता और जॉब वर्कर।")}</p>
+      <Btn kind="primary" onClick={() => setEdit({ supplier_type: "branch", active: true, kyc_status: "verified" })}>+ {t("Add supplier", "सप्लायर जोड़ें")}</Btn>
       {data.length === 0 && <Empty>{t("No suppliers yet. They are added when a deal is booked.", "अभी कोई सप्लायर नहीं। सौदा बुक करते समय जुड़ते हैं।")}</Empty>}
       <ul className="rows">{data.map((s) => (
         <li key={s.id} className={s.active ? "" : "off"}><div className="row static">
-          <span className="row-main"><strong>{s.name}</strong><span className="muted small">{s.gstin ?? "—"} · {s.state ?? "—"} · KYC {s.kyc_status}</span>
+          <span className="row-main"><strong>{s.name}</strong><span className="muted small">{SUPPLIER_TYPES.find((x) => x[0] === s.supplier_type)?.[1] ?? s.supplier_type} · {s.gstin ?? "—"} · {s.state ?? "—"} · KYC {s.kyc_status}</span>
             <span className="small"><TermsLine pct={s.provisional_pct} pdays={s.provisional_days} bdays={s.balance_days} /></span></span>
           <span className="actions tight"><Btn small onClick={() => setTerms(s)}>{t("Terms", "शर्तें")}</Btn><Btn small onClick={() => setEdit(s)}>{t("Edit", "बदलें")}</Btn></span>
         </div></li>))}
@@ -132,15 +133,27 @@ function Suppliers() {
   );
 }
 
+// PRD 7b: the supplier type decides which steps a delivery goes through
+export const SUPPLIER_TYPES: [string, string, string][] = [
+  ["domestic", "Domestic purchase", "घरेलू खरीद"], ["branch", "Own branch (Mumbai)", "अपनी ब्रांच (मुंबई)"],
+  ["import", "Import seller", "इम्पोर्ट विक्रेता"], ["job_work", "Job worker", "जॉब वर्कर"],
+];
+
 function SupplierSheet({ row, onClose, onSaved }: { row: Row; onClose: () => void; onSaved: () => void }) {
-  const [f, setF] = useState({ name: row.name ?? "", gstin: row.gstin ?? "", state: row.state ?? "", kyc: row.kyc_status ?? "pending", active: row.active ? "yes" : "no" });
+  const t = useT();
+  const [f, setF] = useState({ name: row.name ?? "", gstin: row.gstin ?? "", state: row.state ?? "", kyc: row.kyc_status ?? "pending",
+    active: row.active ? "yes" : "no", type: row.supplier_type ?? "domestic" });
   const s = useSave();
   return (
-    <Sheet title={row.name} onClose={onClose} footer={<SaveBar busy={s.busy} error={s.error} label="Save" onSave={() => s.run(async () => {
+    <Sheet title={row.id ? row.name : t("Add supplier", "सप्लायर जोड़ें")} onClose={onClose} footer={<SaveBar busy={s.busy} error={s.error} label="Save" onSave={() => s.run(async () => {
       if (!f.name.trim()) throw new Error("Name is required.");
       if (f.gstin.trim() && !gstinOk(f.gstin)) throw new Error("The GSTIN does not look right (15 characters, e.g. 27AAMCR8303C1ZF). Check it on the supplier's invoice.");
-      await q(sb.from("suppliers").update({ name: f.name.trim(), gstin: normGstin(f.gstin) || null, state: f.state.trim() || null, kyc_status: f.kyc, active: f.active === "yes" }).eq("id", row.id));
+      const rec = { name: f.name.trim(), gstin: normGstin(f.gstin) || null, state: f.state.trim() || null, kyc_status: f.kyc, active: f.active === "yes", supplier_type: f.type };
+      await q(row.id ? sb.from("suppliers").update(rec).eq("id", row.id) : sb.from("suppliers").insert(rec));
     }, () => { onSaved(); onClose(); })} />}>
+      <Field label={t("Type", "प्रकार")} hint={f.type === "domestic" ? t("Invoices, debit notes in rupees, payments.", "बिल, रुपये में डेबिट नोट, भुगतान।")
+        : t("Weights, sorting and documents only. Notes in kg; no payments.", "सिर्फ वज़न, छँटाई और दस्तावेज़। नोट किलो में; भुगतान नहीं।")}>
+        <Select value={f.type} onChange={(v) => setF({ ...f, type: v })} options={SUPPLIER_TYPES.map(([v, en, hi]) => ({ value: v, label: t(en, hi) }))} /></Field>
       <Field label="Name"><TextIn value={f.name} onValue={(v) => setF({ ...f, name: v })} /></Field>
       <Field label="GSTIN"><TextIn value={f.gstin} onValue={(v) => setF({ ...f, gstin: v })} /></Field>
       <Field label="State"><TextIn value={f.state} onValue={(v) => setF({ ...f, state: v })} /></Field>
