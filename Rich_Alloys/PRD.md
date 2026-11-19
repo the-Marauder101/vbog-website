@@ -2,7 +2,7 @@
 
 Owner: Depesh Vyas (V-BOG) · Client: Rich Alloys India Pvt Ltd (Himanshu Jain) · Updated 18 Nov 2026
 Status: v2.2 live on Supabase project `rqxjjrpngybglmhzlmtj` (Mumbai) since 19 Nov 2026, with Ogo test data, served at
-v-bog.com/Rich_Alloys/deploy/. Next: section 7a (from Tinu's sheets). Includes staff management and upload reliability from the interim build (decisions 25–28).
+v-bog.com/Rich_Alloys/deploy/. Section 7a items 1–5 built 19 Nov (stock opens 1 Nov 2026); items 6–7 partly (see 7a). Includes staff management and upload reliability from the interim build (decisions 25–28).
 
 This is the single document a new chat or developer follows to continue the build. It overrides the older
 project brief where they differ (section 3 lists what changed).
@@ -78,6 +78,7 @@ the factory Tally, the office Tally, or both.
 | 25 | Only admins set or reset passwords; staff cannot change their own | Depesh, 18 Nov |
 | 26 | Staff are added from the app (Admin > Staff), not in Supabase. Staff without email get a short login ID (e.g. `sanjay`, stored as `sanjay@staff.richalloys.v-bog.com`; no mail is sent to it) | Depesh, 18 Nov |
 | 27 | Uploads never lose a file silently: saved on the phone, progress shown, retried when the network returns. This includes the invoice photo in the arrival form | Depesh, 18 Nov |
+| 29 | An opening entry starts an item's stock: movements dated before it are already inside it and stop counting. Stock opened 1 Nov 2026 from Tinu's 31 Oct closings, so the Ogo lot of 25 Oct is not counted twice | Claude, 19 Nov, from 7a item 4 |
 | 28 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 3a. Source of truth
@@ -193,25 +194,32 @@ Source: the 14 workbooks Tinu sends Niti monthly, cleaned into `Tinu_stock_Apr-O
 - Checked 19 Nov against the workbook: October closings, monthly balances (no differences), 631 movements, 67 production
   days, 35 scrap sales (429.6 t), 3 import receipts (95.1 t), OGOES15 at 9,957.900 kg on 25 Oct.
 
-**What it changes in the portal (to build)**
+**What it changes in the portal** (status 19 Nov after each item)
 1. Stock items, named as in these sheets: Copper scrap, Copper wire, Copper strips, Phosphorus copper, Copper ingot,
    Copper ingot (74031900), Copper dross/slag, Copper ash. (Plastic scrap appears once in a summary; confirm.) Replaces
-   the four starting items. Wire is bought and consumed alongside scrap.
+   the four starting items. Wire is bought and consumed alongside scrap. **Built** (`0008_stock_7a.sql`; codes kept, names changed).
 2. Stock movements beyond supplier lots, quantity only, each with date, party, document number:
    transfer from the Mumbai branch (delivery note; 39 in 7 months: 95.7 t of scrap in, 21.1 t back out), job work received (KBS Industries, Mehtacop),
    import receipt on a bill of entry (Alcumet, Alco Metal; the import process itself stays out of scope),
    sale/dispatch (scrap is also sold on: 35 sales, ~430 t), item-to-item transfer (Copper ingot to Copper ingot 74031900),
-   credit note received. Without these the portal's stock cannot match Tinu's.
+   credit note received. Without these the portal's stock cannot match Tinu's. **Built**: Stock > Other stock entry, each with
+   party and document number, item-to-item in one step (`transfer_stock`); summary columns follow Tinu's monthly layout.
 3. Production: dross and ash are booked as fixed percentages of what was consumed (1.5% / 0.5% in April; 3.5% / 1.5% and
    6.5% / 1.5% later), so input always equals output and real melting yield is never measured. The production form keeps
-   the actual figures entered and shows yield % (ingot ÷ consumed); it must not force input = output.
+   the actual figures entered and shows yield % (ingot ÷ consumed); it must not force input = output. **Built**:
+   `v_production_runs` gives yield and "not accounted for" kg per run (Tinu's 2 Oct run: 95.00%, balanced by his percentages).
 4. Opening stock: start the portal on 1 Nov 2026 with the October closings above as opening entries. The Apr–Oct
-   history stays in the workbook; importing it is optional.
-5. Dates: warn when a date is outside the current month or in the future.
+   history stays in the workbook; importing it is optional. **Built and loaded live** (`test_data/opening_2026_11.sql`), with
+   dross/slag 17,457.000 and ash 8,051.640 from the October production report. Scrap 30 Nov: 105,179.960 kg after the
+   Ogo DNs of 5 Nov. Plastic scrap (−29,020 kg in his sheet) is not loaded: question 24.
+5. Dates: warn when a date is outside the current month or in the future. **Built** for every date that records an event
+   (arrival, payment, sorting, return, TDS, production, stock entry); invoice dates warn only when in the future.
 6. Supplier master keyed on GSTIN. The sheets show 49 scrap supplier *spellings*; the same party is often written
-   several ways, so the real count is lower. Collect GSTINs, then merge the spellings.
+   several ways, so the real count is lower. Collect GSTINs, then merge the spellings. **Partly**: GSTIN shape checked in
+   the database and in both supplier forms; merging spellings waits for the GSTINs.
 7. Regression: a test loading the October closings and November movements must reproduce Tinu's November sheet
-   during the parallel run.
+   during the parallel run. **Ready**: the 1 Nov opening is loaded; `tests/checks_7a.sql` covers the mechanics. The
+   November sheet is needed to write the check itself.
 
 ## 8. Data model (Postgres, `supabase/migrations`)
 
@@ -229,13 +237,14 @@ Source: the 14 workbooks Tinu sends Niti monthly, cleaned into `Tinu_stock_Apr-O
 | `payments`, `tds`, `ledger_confirmations` | Money, deductions, supplier ledger checks |
 | `tally_marks` | Entity, book (factory/office), voucher ref, who, when |
 | `production_runs`, `production_lines`, `stock_moves`, `stock_tally_checks` | Production, other stock entries (opening, other inward, dispatch, correction with reason), Tally closing |
+| `stock_moves.party`, `.doc_no`, `.transfer_id`; kinds for branch, job work, import receipt, sale, credit note, item-to-item | Stock movements beyond lots (7a) |
 | `tally_marks.amount_at_mark`, `documents.lot_id` | Amount when ticked (to detect later changes); invoice photo per lot |
 | `gstr2b_imports`, `gstr2b_lines` | Uploaded 2B months and their lines, with the matched invoice |
 | `documents`, `audit_log` | Files and their status; every change logged |
 
 Views: `v_lot_lines`, `v_dn_calc(_lines)`, `v_sorting_exceptions`, `v_payable`, `v_tally_missing`, `v_doc_gaps`,
 `v_lots` (stage), `v_deals_incoming`, `v_ledger_lines`, `v_supplier_balance`, `v_cash_plan`, `v_gst_month`,
-`v_stock_moves`, `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
+`v_stock_moves` (opening starts an item), `v_production_runs` (yield), `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
 
 Actions (functions): `create_deal`, `create_lot`, `close_lot`, `reopen_lot`, `approve_dn`, `cancel_note`,
 `set_note_tally_no`, `mark_tally`, `unmark_tally`, `reconcile_payment`, `reject_payment`, `confirm_ledger`,
@@ -313,6 +322,10 @@ Recommended later: serve only `deploy/`, on its own subdomain.
   5.000 kg shown live), the photo went up through the queue and is linked to the new lot; the Tally queue's "View
   invoice photo" opened it. 18 Nov (v2.0, same code paths): upload survived a dropped network; Admin > Staff created,
   used and switched off a gate login. Live then reset to the Ogo-only state.
+- `tests/checks_7a.sql` (run by `run_local.sh` after loading the 1 Nov opening): opening = Tinu's closing, the Ogo lot not
+  counted twice, DN kg taken off, Tinu's 2 Oct yield, input need not equal output, every movement kind in its column,
+  opening + in − out = closing for every item, one-sided transfers and sales that add stock refused, GSTIN shape.
+  Proven to fail when the opening rule is removed. `tests/e2e/run.py` passes on the 7a build (19 Nov).
 - `tests/e2e/run.py` passed on 19 Nov on the merged v2.2 (PostgREST 12.2.3, Python Playwright 1.63.0, installed by the
   environment's setup script): DNs ₹7,080 / ₹1,180 / ₹14,160, ledger ₹10,90,179.40, cash ₹10.90 L open, register photo ✓
   factory ✓ PUR-501 office ✗, copper scrap 10,242.200 kg, watchman sees no money screens, no sideways scrolling, no errors.
@@ -354,6 +367,7 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 | 19 | The Mumbai branch sends 95.7 t of scrap in 7 months (and takes 21.1 t back): is it a supplier-like source for the portal (lots, sorting, DNs) or a stock transfer only? | Scope |
 | 20 | Scrap sold on (~430 t in 7 months): does it pass through sorting, or is it back-to-back trading? | Stock |
 | 21 | What are the 2,501.40 kg April gap and the 29.50 kg April opening difference? | Stock history |
+| 24 | Plastic scrap: Tinu's sheet carries −29,020 kg and moved 4,711.7 kg of copper scrap into it in October. What is it, and what is the true balance? | Stock opening |
 | 23 | Copper ingot is bought as well as produced (545.5 t in 7 months). Do bought ingots come in through the portal as lots (with weights and DNs, but no sorting)? And why do 575.5 t move to "Copper ingot 74031900"? | Stock, scope |
 | 15 | If 2B is switched on later: test with a real JSON from Niti (the parser has only seen a sample) | GST (optional) |
 | 16 | GST API later: which GSP (or the provider Rich Alloys' consultants already use), cost, and who enters the OTP each 6 hours or 30 days | GST |

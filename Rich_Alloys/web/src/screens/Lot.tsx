@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { COMPANY, csv, day, download, esc, inr, isNum, kg, printHtml, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
-import { Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Sheet, SaveBar, Tabs, TextIn } from "../ui";
+import { DateIn, Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Sheet, SaveBar, Tabs, TextIn } from "../ui";
 import { DN_LABEL, DealDocs, PaymentRow, PaymentSheet, Stepper, StageChip, TallyTick, useSave } from "../common";
 import { TermsSheet } from "./Deal";
 import { TermsLine } from "./Lots";
@@ -198,7 +198,7 @@ function InvoiceEdit({ inv, onClose, onSaved }: { inv: Row; onClose: () => void;
       }, () => { onSaved(); onClose(); })} />}>
       <div className="grid2">
         <Field label={t("Invoice number", "बिल नंबर")}><TextIn value={f.no} onValue={(v) => setF({ ...f, no: v })} /></Field>
-        <Field label={t("Invoice date", "बिल तारीख")}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
+        <Field label={t("Invoice date", "बिल तारीख")}><DateIn value={f.date} onChange={(v) => setF({ ...f, date: v })} futureOnly /></Field>
         <Field label={t("Taxable", "कर योग्य")}><NumIn value={f.tax} onChange={(v) => setF({ ...f, tax: v })} suffix="₹" /></Field>
         <Field label="GST"><NumIn value={f.gst} onChange={(v) => setF({ ...f, gst: v })} suffix="₹" /></Field>
         <Field label={t("Total", "कुल")}><NumIn value={f.total} onChange={(v) => setF({ ...f, total: v })} suffix="₹" /></Field>
@@ -288,7 +288,7 @@ function SortingSheet({ d, onClose, onSaved }: { d: LotData; onClose: () => void
       </Field>
       <div className="grid2">
         <Field label={t("Weight", "वज़न")}><NumIn value={kgv} onChange={setKg} suffix="kg" /></Field>
-        <Field label={t("Date", "तारीख")}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+        <Field label={t("Date", "तारीख")}><DateIn value={date} onChange={setDate} /></Field>
       </div>
       {cat && (
         <>
@@ -407,7 +407,7 @@ function ReturnSheet({ lotId, kgDefault, onClose, onSaved }: { lotId: string; kg
           transporter: f.tr || null, lr_no: f.lr || null, freight: f.fr ? Number(f.fr) : null, freight_paid_by: f.by }));
       }, () => { onSaved(); onClose(); })} />}>
       <div className="grid2">
-        <Field label={t("Sent on", "भेजने की तारीख")}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
+        <Field label={t("Sent on", "भेजने की तारीख")}><DateIn value={f.date} onChange={(v) => setF({ ...f, date: v })} /></Field>
         <Field label={t("Weight", "वज़न")}><NumIn value={f.kg} onChange={(v) => setF({ ...f, kg: v })} suffix="kg" /></Field>
         <Field label={t("Packages", "पैकेज")}><NumIn value={f.pk} onChange={(v) => setF({ ...f, pk: v })} /></Field>
         <Field label={t("E-way bill", "ई-वे बिल")}><TextIn value={f.eway} onValue={(v) => setF({ ...f, eway: v })} /></Field>
@@ -474,7 +474,7 @@ export function TdsSheet({ invoice, onClose, onSaved }: { invoice: Row; onClose:
       <div className="grid2">
         <Field label={t("TDS amount", "TDS रकम")}><NumIn value={f.amount} onChange={(v) => setF({ ...f, amount: v })} suffix="₹" autoFocus /></Field>
         <Field label={t("Section (optional)", "सेक्शन (वैकल्पिक)")}><TextIn value={f.section} onValue={(v) => setF({ ...f, section: v })} /></Field>
-        <Field label={t("Deducted on", "काटने की तारीख")}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
+        <Field label={t("Deducted on", "काटने की तारीख")}><DateIn value={f.date} onChange={(v) => setF({ ...f, date: v })} /></Field>
       </div>
     </Sheet>
   );

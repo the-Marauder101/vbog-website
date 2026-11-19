@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
+import { gstinOk, normGstin, day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
 import { Btn, Chip, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { StageChip, useSave } from "../common";
 
@@ -106,8 +106,10 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
     for (const l of good) if (!l.grade || !isNum(l.qty) || !isNum(l.rate)) throw new Error(t("Each grade needs quantity and rate.", "हर ग्रेड की मात्रा और रेट डालें।"));
     if (sup === "new" && !newSup.name.trim()) throw new Error(t("Enter the supplier's name.", "सप्लायर का नाम डालें।"));
     if (!sup) throw new Error(t("Choose the supplier.", "सप्लायर चुनें।"));
+    if (sup === "new" && newSup.gstin.trim() && !gstinOk(newSup.gstin))
+      throw new Error(t("The GSTIN does not look right (15 characters, e.g. 27AAMCR8303C1ZF). Check it on the supplier's invoice.", "GSTIN सही नहीं लग रहा (15 अक्षर, जैसे 27AAMCR8303C1ZF)। सप्लायर के बिल पर जाँचें।"));
     const id = await rpc<string>("create_deal", { p: {
-      supplier_id: sup === "new" ? null : sup, supplier_name: newSup.name, supplier_gstin: newSup.gstin, supplier_state: newSup.state,
+      supplier_id: sup === "new" ? null : sup, supplier_name: newSup.name, supplier_gstin: normGstin(newSup.gstin), supplier_state: newSup.state,
       po_no: po, deal_date: dealDate, expected_date: expected || null, gst_rate: gst,
       provisional_pct: terms.pct, provisional_days: terms.pdays, balance_days: terms.bdays,
       lines: good.map((l) => ({ grade: l.grade, qty_kg: Number(l.qty), rate_per_kg: Number(l.rate) })) } });

@@ -153,3 +153,18 @@ export function toLogin(input: string): string {
 }
 export const isLoginId = (s: string) => /^[a-z0-9][a-z0-9._-]{1,30}$/.test(s.trim().toLowerCase());
 export const showLogin = (email: string | null | undefined) => (email ?? "").replace(`@${LOGIN_DOMAIN}`, "");
+
+// ---------- dates (PRD 7a item 5: Tinu's sheets had dates typed into the wrong month or year) ----------
+/** "future" if after today; "month" if not in the current month (unless futureOnly). */
+export function dateWarning(iso: string, futureOnly = false): "future" | "month" | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const now = today();
+  if (iso > now) return "future";
+  if (!futureOnly && iso.slice(0, 7) !== now.slice(0, 7)) return "month";
+  return null;
+}
+
+// ---------- GSTIN (PRD 7a item 6: suppliers keyed on GSTIN) ----------
+export const normGstin = (s: string) => s.replace(/\s/g, "").toUpperCase();
+/** Same shape the database checks: 2 digits (state), PAN (5 letters, 4 digits, 1 letter), entity, Z, check. */
+export const gstinOk = (s: string) => /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/.test(normGstin(s));

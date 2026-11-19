@@ -1,7 +1,7 @@
 import { enqueue, refusal } from "../uploads";
 import { useMemo, useState } from "react";
 import { day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "../lib";
-import { Btn, Chip, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, TextIn } from "../ui";
+import { DateIn, Btn, Chip, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { DealDocs, StageChip, useSave } from "../common";
 import { TermsLine } from "./Lots";
 
@@ -141,10 +141,10 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
     <Sheet title={`${t("Material arrived", "माल आया")} · ${deal.deal_no}`} onClose={onClose}
       footer={<SaveBar busy={s.busy} error={s.error} onSave={save} label={t("Save arrival", "माल आया सेव करें")} />}>
       <div className="grid2">
-        <Field label={t("Received on", "माल आने की तारीख")}><input type="date" value={rec} onChange={(e) => setRec(e.target.value)} /></Field>
+        <Field label={t("Received on", "माल आने की तारीख")}><DateIn value={rec} onChange={setRec} /></Field>
         <Field label={t("Vehicle number", "गाड़ी नंबर")}><TextIn value={veh} onValue={setVeh} autoCapitalize="characters" /></Field>
         <Field label={t("Supplier invoice number", "सप्लायर का बिल नंबर")}><TextIn value={invNo} onValue={setInvNo} /></Field>
-        <Field label={t("Invoice date", "बिल की तारीख")}><input type="date" value={invDate} onChange={(e) => setInvDate(e.target.value)} /></Field>
+        <Field label={t("Invoice date", "बिल की तारीख")}><DateIn value={invDate} onChange={setInvDate} futureOnly /></Field>
       </div>
       <label className={`upload ${photo ? "done" : ""}`}>
         {photo ? `✓ ${t("Invoice photo added", "बिल की फोटो जुड़ी")} · ${photo.name}` : `📷 ${t("Photo of the supplier invoice", "सप्लायर बिल की फोटो")}`}

@@ -16,7 +16,8 @@ do $$ declare r record; begin
              'lot_has_notes','guard_sorting','guard_weights','guard_payment','guard_profile','lot_is_paid','stock_summary',
              'create_deal','create_lot','close_lot','reopen_lot','approve_dn','cancel_note','set_note_tally_no','mark_tally',
              'unmark_tally','clear_tally_change','entity_amount','reconcile_payment','reject_payment','confirm_ledger',
-             'set_invoice_2b','save_production','verify_document','approve_document','reject_document','doc_norm','import_gstr2b') loop
+             'set_invoice_2b','save_production','verify_document','approve_document','reject_document','doc_norm','import_gstr2b',
+             'transfer_stock') loop
     execute format('drop function if exists %s cascade', r.f);
   end loop;
 end $$;

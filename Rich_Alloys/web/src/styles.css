@@ -241,3 +241,6 @@ p.okline { padding: .6rem .9rem; border-radius: 6px; background: var(--ok-bg); m
 .share .kv .big { font-size: 1.25rem; font-weight: 700; }
 a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .chev { font-size: 1.4rem; color: var(--soft); line-height: 1; flex: none; }
+
+/* date warning (PRD 7a item 5) */
+.date-warn { display: block; margin-top: .25rem; color: var(--wait); background: var(--wait-bg); border-radius: 4px; padding: .2rem .45rem; font-size: .85rem; font-weight: 500; }

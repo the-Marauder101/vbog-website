@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { q, sb, useCan, useLoad, useT, type Row } from "../lib";
+import { gstinOk, normGstin, q, sb, useCan, useLoad, useT, type Row } from "../lib";
 import Staff from "./Staff";
 import { Btn, Chip, Empty, Err, Field, Loading, Select, Sheet, SaveBar, Tabs, TextIn } from "../ui";
 import { useSave } from "../common";
@@ -138,7 +138,8 @@ function SupplierSheet({ row, onClose, onSaved }: { row: Row; onClose: () => voi
   return (
     <Sheet title={row.name} onClose={onClose} footer={<SaveBar busy={s.busy} error={s.error} label="Save" onSave={() => s.run(async () => {
       if (!f.name.trim()) throw new Error("Name is required.");
-      await q(sb.from("suppliers").update({ name: f.name.trim(), gstin: f.gstin.trim().toUpperCase() || null, state: f.state.trim() || null, kyc_status: f.kyc, active: f.active === "yes" }).eq("id", row.id));
+      if (f.gstin.trim() && !gstinOk(f.gstin)) throw new Error("The GSTIN does not look right (15 characters, e.g. 27AAMCR8303C1ZF). Check it on the supplier's invoice.");
+      await q(sb.from("suppliers").update({ name: f.name.trim(), gstin: normGstin(f.gstin) || null, state: f.state.trim() || null, kyc_status: f.kyc, active: f.active === "yes" }).eq("id", row.id));
     }, () => { onSaved(); onClose(); })} />}>
       <Field label="Name"><TextIn value={f.name} onValue={(v) => setF({ ...f, name: v })} /></Field>
       <Field label="GSTIN"><TextIn value={f.gstin} onValue={(v) => setF({ ...f, gstin: v })} /></Field>

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { BUCKET, day, inr, isNum, rpc, sb, today, q, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "./lib";
 import { enqueue, onUploaded, online, remove, retry, useUploads, type Refused, type UpItem } from "./uploads";
-import { Btn, Chip, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn, type Tone } from "./ui";
+import { DateIn, Btn, Chip, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn, type Tone } from "./ui";
 
 export const STAGES: { id: string; en: string; hi: string; tone: Tone }[] = [
   { id: "received", en: "Received", hi: "माल आया", tone: "wait" },
@@ -131,7 +131,7 @@ export function PaymentSheet({ supplierId, invoiceId, dealId, existing, onClose,
       )}
       <div className="grid2">
         <Field label={t("Amount paid", "भुगतान रकम")}><NumIn value={amount} onChange={setAmount} suffix="₹" autoFocus /></Field>
-        <Field label={t("Paid on", "भुगतान तारीख")}><input type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} /></Field>
+        <Field label={t("Paid on", "भुगतान तारीख")}><DateIn value={paidOn} onChange={setPaidOn} /></Field>
         <Field label={t("Mode", "माध्यम")}><Select value={mode} onChange={setMode} options={MODES.map((m) => ({ value: m, label: m.toUpperCase() }))} /></Field>
         <Field label={t("Bank reference / UTR", "बैंक रेफरेंस / UTR")}><TextIn value={ref} onValue={setRef} /></Field>
         <Field label={t("Type", "प्रकार")}>
