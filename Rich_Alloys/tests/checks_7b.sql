@@ -34,6 +34,8 @@ begin
   assert t = 'factory', 'shortage note goes to factory Tally only';
   select closing into n from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_SCRAP';
   assert n = 105179.960 + 2505 - 5, 'branch delivery adds stock at the delivery-note weight, the shortage note takes 5 kg off';
+  select receipt_note, purchase into r from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_SCRAP';
+  assert r.receipt_note = 2505 and r.purchase = 0, 'branch delivery is a receipt note in Tinu''s statement, not a purchase';
 
   select string_agg(code, ',' order by code) into t from v_doc_gaps g join lots l on l.deal_id = g.deal_id
    where l.id = v_lot and g.code in ('PO','TAX_INVOICE','E_INVOICE','DELIVERY_NOTE','BILL_OF_ENTRY','CHALLAN');
@@ -55,6 +57,8 @@ begin
   select doc_kind into t from v_lots where lot_id = v_lot2; assert t = 'challan', 'job work comes back on a challan';
   select * into r from v_job_work where supplier_id = v_jw;
   assert r.sent_kg = 1000 and r.returned_kg = 950 and r.with_job_worker_kg = 50, 'job work: sent 1,000, back 950, 50 kg unaccounted';
+  select job_work_in, to_job_work into r from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_SCRAP';
+  assert r.job_work_in = 950 and r.to_job_work = 1000, 'job work in its own columns';
 
   -- the Ogo purchase is untouched
   select balance into n from v_payable where deal_no = 'RA-082'; assert n = 682999.40, 'Ogo balance unchanged';

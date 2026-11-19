@@ -2,7 +2,7 @@
 
 Owner: Depesh Vyas (V-BOG) · Client: Rich Alloys India Pvt Ltd (Himanshu Jain) · Updated 18 Nov 2026
 Status: v2.2 live on Supabase project `rqxjjrpngybglmhzlmtj` (Mumbai) since 19 Nov 2026, with Ogo test data, served at
-v-bog.com/Rich_Alloys/deploy/. Section 7a items 1–5 built 19 Nov (stock opens 1 Nov 2026); items 6–7 partly. Section 7b (supplier types) built 20 Nov. Includes staff management and upload reliability from the interim build (decisions 25–28).
+v-bog.com/Rich_Alloys/deploy/. Section 7a items 1–5 built 19 Nov (stock opens 1 Nov 2026); items 6–7 partly. Section 7b (supplier types) built 20 Nov. Section 7c (Tinu's stock statement) built 20 Nov. Includes staff management and upload reliability from the interim build (decisions 25–28).
 
 This is the single document a new chat or developer follows to continue the build. It overrides the older
 project brief where they differ (section 3 lists what changed).
@@ -262,6 +262,35 @@ What this changes in the build:
   delivery note, bill of entry or challan required for their type; everything else for all.
 - Not built: Mumbai weighing at dispatch beyond the delivery-note weight, job-work service bills (question 19).
 
+## 7c. Tinu's monthly stock statement (Stock_analysis_2627.xlsx)
+
+Source: the stock statement Tinu keeps for 2026-27 (Project files; client data, keep out of any public repo). One table
+per month, April to November, and a year total, for nine items, in these columns:
+OP BALANCE · PURCHASE · TRANSFER RECED · MFG · Recipt Note · Recd Process Job Wrk · CREDIT NOTE · TOTAL · SALE ·
+Transfer to · Debit Note · Del Note To Rich Mum · Send to Labour Job · Consumption · Closing Balance.
+It is the summary his stock and production sheets roll up into, and every month adds up ("diff 0").
+
+**What it shows**
+- Branch receipts ("Recipt Note", 86.6 t in the year) and job-work returns ("Recd Process Job Wrk", 62.4 t) are their
+  own columns, not purchases. Imports are inside PURCHASE.
+- Plastic scrap is a real item: 7,865 kg at April opening, then received, transferred in from copper scrap and sold;
+  **0 at the end of October**. The −29,020 kg in the October production report is an error there (question 24).
+- Copper ingot is bought (545.5 t), produced (822.8 t), sent to and received back from job work (24.9 t in Sept) and
+  has small debit notes, so bought ingots are domestic lots with weights and DNs (question 23, partly answered).
+- Dross/slag receives material from job work (8,000 kg in June, 2,300 kg in July, remarks "Copper Dross (Ann)") and
+  from copper ash (2,500 and 1,570 kg, item-to-item).
+- The second ingot item is "Copper Ingots(74031200)" here but "COPPER INGOT_74031900" in the stock sheet (question 29).
+- Copper scrap closes October at **105,380.75 kg** here, but 105,380.66 kg in the stock ledger and production report.
+  The 0.09 kg gap starts in May and carries through. The portal opens at 105,380.660 until Tally settles it (question 28).
+
+**Built 20 Nov** (`0010_stock_statement.sql`)
+- `stock_summary` returns Tinu's columns. Lots fall into PURCHASE (domestic, import), Recipt Note (branch) or
+  Recd Process Job Wrk (job work) by supplier type. Corrections show in their own column only when there are any.
+- Stock > "Stock statement" prints the month in his layout (company header, his column headings); "Download (CSV)"
+  gives the same table. This replaces the sheet once the parallel run shows it matching.
+- Item Plastic scrap added (opening 0, so nothing to load).
+- Job-work returns of ingots or dross need grades mapped to those items (Admin > Grades) before Tinu records them as lots.
+
 ## 8. Data model (Postgres, `supabase/migrations`)
 
 | Table | Holds |
@@ -364,6 +393,8 @@ Recommended later: serve only `deploy/`, on its own subdomain.
   5.000 kg shown live), the photo went up through the queue and is linked to the new lot; the Tally queue's "View
   invoice photo" opened it. 18 Nov (v2.0, same code paths): upload survived a dropped network; Admin > Staff created,
   used and switched off a gate login. Live then reset to the Ogo-only state.
+- `tests/checks_7a.sql` also checks Tinu's statement arithmetic for every item; `checks_7b.sql` checks that a branch
+  delivery is a Recipt Note and job work sits in its own columns, not in PURCHASE.
 - `tests/checks_7b.sql`: a branch delivery (Tinu's delivery note 37, 2,505 kg) on a delivery note with no money, its
   5 kg shortage note in kg only, no payable/cash/ledger/register rows, factory Tally only, stock up 2,505 and down 5,
   domestic still needs a deal, job work sent 1,000 / back 950, checklist by type, Ogo balance unchanged. Proven to
@@ -415,7 +446,9 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 | 21 | What are the 2,501.40 kg April gap and the 29.50 kg April opening difference? | Stock history |
 | 26 | Document checklist per supplier type (built as a proposal, see 7b): is it right for the branch, imports and job work? | Documents |
 | 27 | Material sent out to the Mumbai branch and to job workers is kept as a stock movement naming the supplier (7b listed only sales, item-to-item and sales returns). Confirm | Stock |
-| 24 | Plastic scrap: Tinu's sheet carries −29,020 kg and moved 4,711.7 kg of copper scrap into it in October. What is it, and what is the true balance? | Stock opening |
+| 24 | Plastic scrap: the stock statement shows 0 at 31 Oct (portal agrees, item added); the October production report shows −29,020 kg. Confirm the report figure is an error | Stock opening |
+| 28 | Copper scrap at 31 Oct: 105,380.75 kg (stock statement) or 105,380.66 kg (stock ledger, production report)? Which does Tally show? The portal opened at 105,380.66 | Stock opening |
+| 29 | The second ingot item: HSN 74031200 (stock statement, production report heading) or 74031900 (stock sheet)? | Stock masters |
 | 23 | Copper ingot is bought as well as produced (545.5 t in 7 months). Do bought ingots come in through the portal as lots (with weights and DNs, but no sorting)? And why do 575.5 t move to "Copper ingot 74031900"? | Stock, scope |
 | 15 | If 2B is switched on later: test with a real JSON from Niti (the parser has only seen a sample) | GST (optional) |
 | 16 | GST API later: which GSP (or the provider Rich Alloys' consultants already use), cost, and who enters the OTP each 6 hours or 30 days | GST |

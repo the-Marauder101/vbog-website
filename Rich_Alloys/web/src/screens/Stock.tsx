@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { day, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
+import { COMPANY, csv, day, download, esc, isNum, kg, printHtml, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
 import { Btn, Choice, DateIn, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { TallyTick, useSave } from "../common";
 
@@ -37,6 +37,8 @@ export default function Stock({ openProduction }: { openProduction?: boolean }) 
       <div className="quick">
         {can("production_edit") && <Btn kind="primary" onClick={() => setProd(true)}>+ {t("Production", "उत्पादन")}</Btn>}
         {can("stock_edit") && <Btn onClick={() => setMove(true)}>+ {t("Other stock entry", "अन्य स्टॉक एंट्री")}</Btn>}
+        <Btn onClick={() => printStatement(data.sum, month)}>{t("Stock statement", "स्टॉक स्टेटमेंट")}</Btn>
+        <Btn onClick={() => download(`stock_statement_${month}.csv`, csv(data.sum.map((r) => ({ ...r, item_name: r.name })), [["item_name", "Item Description"], ...STATEMENT_COLS.map(([c, , , head]): [string, string] => [c, head])]))}>{t("Download (CSV)", "डाउनलोड (CSV)")}</Btn>
       </div>
       <div className="tablewrap">
         <table className="tbl stock">
@@ -232,9 +234,7 @@ function MovesSheet({ row, from, to, onClose }: { row: Row; from: string; to: st
     adjustment: t("Correction", "सुधार"), transfer_in: t("Transfer in", "ट्रांसफर आया"), transfer_out: t("Transfer out", "ट्रांसफर गया"),
     ...Object.fromEntries(MOVE_KINDS.map((x) => [x.value, t(x.en, x.hi)])),
     ...Object.fromEntries(Object.entries(OLD_KINDS).map(([k2, [en, hi]]) => [k2, t(en, hi)])) };
-  const rows: [string, string, string][] = [["purchased", "Purchases", "खरीद"], ["branch_in", "From branch", "ब्रांच से"], ["produced", "Produced", "उत्पादन"],
-    ["other_in", "Job work, credit notes, transfers in", "जॉब वर्क, क्रेडिट नोट, ट्रांसफर आया"], ["consumed", "Consumed", "खपत"], ["notes_out", "Debit notes", "डेबिट नोट"],
-    ["sold", "Sold / dispatched", "बिक्री / डिस्पैच"], ["branch_out", "To branch", "ब्रांच को"], ["other_out", "Job work, transfers out", "जॉब वर्क, ट्रांसफर गया"]];
+  const rows: [string, string, string][] = STATEMENT_COLS.filter(([c]) => !["opening", "total", "closing"].includes(c)).map(([c, en, hi]) => [c, en, hi]);
   let run = Number(row.opening);
   return (
     <Sheet title={nm(lang, row)} onClose={onClose}>
@@ -251,4 +251,27 @@ function MovesSheet({ row, from, to, onClose }: { row: Row; from: string; to: st
         </table>)}
     </Sheet>
   );
+}
+
+// Tinu's monthly stock statement, column for column (Stock_analysis_2627.xlsx). Figures come from stock_summary.
+const STATEMENT_COLS: [string, string, string, string][] = [
+  ["opening", "Opening", "शुरुआती", "OP BALANCE"], ["purchase", "Purchase", "खरीद", "PURCHASE"],
+  ["transfer_in", "Transfer received", "ट्रांसफर आया", "TRANSFER RECED"], ["produced", "Production (MFG)", "उत्पादन", "MFG"],
+  ["receipt_note", "Receipt note (branch)", "रसीद नोट (ब्रांच)", "Recipt Note"], ["job_work_in", "Received from job work", "जॉब वर्क से आया", "Recd Process Job Wrk"],
+  ["credit_note", "Credit note (sales return)", "क्रेडिट नोट", "CREDIT NOTE"], ["total", "Total", "कुल", "TOTAL"],
+  ["sale", "Sale", "बिक्री", "SALE"], ["transfer_out", "Transfer to", "ट्रांसफर गया", "Transfer to"],
+  ["debit_note", "Debit note", "डेबिट नोट", "Debit Note"], ["to_branch", "Delivery note to Mumbai", "मुंबई डिलीवरी नोट", "Del Note To Rich Mum"],
+  ["to_job_work", "Sent for job work", "जॉब वर्क भेजा", "Send to Labour Job"], ["consumed", "Consumption", "खपत", "Consumption"],
+  ["correction", "Correction (+/−)", "सुधार (+/−)", "Correction"], ["closing", "Closing", "बचा", "Closing Balance"],
+];
+
+function printStatement(sum: Row[], month: string) {
+  const title = new Date(`${month}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  const cols = STATEMENT_COLS.filter(([c]) => c !== "correction" || sum.some((r) => Number(r.correction) !== 0));
+  const n3 = (v: unknown) => Number(v ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  const body = sum.map((r) => `<tr><td>${esc(r.name)}</td>${cols.map(([c]) => `<td class="n">${n3(r[c])}</td>`).join("")}</tr>`).join("");
+  printHtml(`Stock statement ${title}`, `<div><b>${esc(COMPANY.name)}</b><br>${esc(COMPANY.address)}<br>GSTIN ${esc(COMPANY.gstin)}</div>
+    <h1 style="margin-top:12px">Stock Statement For The Month of ${esc(title)}</h1>
+    <table><thead><tr><th>Item Description</th>${cols.map(([, , , h]) => `<th class="n">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table>
+    <p class="muted">kg. Prepared by the purchase portal from arrivals, debit notes, production and stock entries.</p>`);
 }

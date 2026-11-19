@@ -8,9 +8,9 @@ begin
   perform set_config('request.jwt.claim.sub', own::text, true);
 
   -- the opening equals Tinu's 31 Oct closing; the Ogo lot of 25 Oct is inside it and is not counted again
-  select opening, notes_out, closing into r from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_SCRAP';
+  select opening, debit_note, closing into r from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_SCRAP';
   assert r.opening = 105380.660, 'scrap opening = Tinu 31 Oct closing';
-  assert r.notes_out = 200.700, 'Ogo DNs of 5 Nov take 25.400 + 175.300 kg off';
+  assert r.debit_note = 200.700, 'Ogo DNs of 5 Nov take 25.400 + 175.300 kg off';
   assert r.closing = 105179.960, 'scrap closing 30 Nov = opening - DN kg';
   select closing into n from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_GROSS_SLAG'; assert n = 17457.000, 'dross opening';
   select closing into n from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_ASH'; assert n = 8051.640, 'ash opening';
@@ -36,11 +36,13 @@ begin
     ('2026-11-14', 'COPPER_SCRAP', 'import_receipt', 500, 'Test importer', 'B/E 1');
   perform transfer_stock('{"move_date":"2026-11-15","from_item":"COPPER_INGOT","to_item":"COPPER_INGOT_74031900","kg":300}'::jsonb);
   select * into r from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_SCRAP';
-  assert r.branch_in = 2000 and r.sold = 1500 and r.purchased = 500 and r.consumed = 1000, 'each kind in its column';
+  assert r.receipt_note = 2000 and r.sale = 1500 and r.purchase = 500 and r.consumed = 1000, 'each kind in its column';
   select closing into n from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_INGOT_74031900'; assert n = 300, 'transfer in';
   select closing into n from stock_summary('2026-11-01','2026-11-30') where item = 'COPPER_INGOT'; assert n = 10893.850 + 940 - 300, 'transfer out';
   for r in select * from stock_summary('2026-11-01','2026-11-30') loop
     assert r.opening + r.total_in - r.total_out = r.closing, format('opening + in - out = closing for %s', r.item);
+    assert r.total - r.sale - r.transfer_out - r.debit_note - r.to_branch - r.to_job_work - r.consumed + r.correction = r.closing,
+      format('Tinu''s statement adds up for %s', r.item);
   end loop;
 
   ok := false; begin insert into stock_moves (item, kind, kg) values ('COPPER_SCRAP', 'dispatch', 10); exception when check_violation then ok := true; end;
