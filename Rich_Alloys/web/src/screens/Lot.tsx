@@ -448,10 +448,9 @@ function Pay({ d, reload }: { d: LotData; reload: () => void }) {
         <Err error={s.error} />
         {d.tds.length === 0 ? <Empty>{t("No TDS recorded.", "कोई TDS दर्ज नहीं।")}</Empty> : d.tds.map((x) => (
           <div className="item" key={x.id}>
-            <div className="item-head"><strong>{x.section} · {x.rate}% {t("of", "का")} {inr(x.base)} = {inr(x.amount)}</strong>
-              {x.deposited_on ? <Chip tone="ok">{t("Deposited", "जमा")} {day(x.deposited_on)}</Chip> : <Chip tone="wait">{t("Not deposited", "जमा बाकी")}</Chip>}</div>
-            <p className="muted small">{t("Deducted", "काटा")} {day(x.deducted_on)}{x.challan_ref ? ` · ${t("challan", "चालान")} ${x.challan_ref}` : ""}</p>
-            <TallyTick entity="tds" id={x.id} book="office" marks={d.marks} onDone={reload} />
+            <div className="item-head"><strong>{inr(x.amount)}{x.section ? ` · ${x.section}` : ""}</strong><span className="muted small">{day(x.deducted_on)}</span></div>
+            <div className="actions"><TallyTick entity="tds" id={x.id} book="office" marks={d.marks} onDone={reload} />
+              {can("tax_edit") && <Btn small kind="ghost" onClick={() => { if (confirm(t("Remove this TDS entry?", "यह TDS हटाएँ?"))) s.run(() => q(sb.from("tds").delete().eq("id", x.id)), reload); }}>{t("Remove", "हटाएँ")}</Btn>}</div>
           </div>))}
       </Section>
       {pay && <PaymentSheet supplierId={d.lot.deals?.supplier_id} invoiceId={d.lot.invoice_id} onClose={() => setPay(false)} onSaved={reload} />}
@@ -463,20 +462,18 @@ function Pay({ d, reload }: { d: LotData; reload: () => void }) {
 
 export function TdsSheet({ invoice, onClose, onSaved }: { invoice: Row; onClose: () => void; onSaved: () => void }) {
   const t = useT();
-  const [f, setF] = useState({ section: "", rate: "", base: String(invoice.taxable_value ?? ""), date: today() });
+  const [f, setF] = useState({ section: "", amount: "", date: today() });
   const s = useSave();
-  const amt = isNum(f.rate) && isNum(f.base) ? Math.round(Number(f.base) * Number(f.rate)) / 100 : null;
   return (
     <Sheet title={`TDS · ${invoice.invoice_no}`} onClose={onClose}
-      footer={<SaveBar busy={s.busy} error={s.error} label={amt != null ? `${t("Save", "सेव करें")} · ${inr(amt)}` : t("Save", "सेव करें")} onSave={() => s.run(async () => {
-        if (!f.section.trim() || !isNum(f.rate) || !isNum(f.base)) throw new Error(t("Enter section, rate and base amount.", "सेक्शन, रेट और आधार रकम डालें।"));
-        await q(sb.from("tds").insert({ invoice_id: invoice.id, section: f.section.trim().toUpperCase(), rate: Number(f.rate), base: Number(f.base), deducted_on: f.date }));
+      footer={<SaveBar busy={s.busy} error={s.error} label={t("Save", "सेव करें")} onSave={() => s.run(async () => {
+        if (!isNum(f.amount) || Number(f.amount) <= 0) throw new Error(t("Enter the TDS amount deducted.", "काटा गया TDS डालें।"));
+        await q(sb.from("tds").insert({ invoice_id: invoice.id, section: f.section.trim().toUpperCase() || null, amount: Number(f.amount), deducted_on: f.date }));
       }, () => { onSaved(); onClose(); })} />}>
-      <p className="muted small">{t("Enter the section and rate your accountant applies. The portal only does the arithmetic.", "जो सेक्शन और रेट आपके अकाउंटेंट लगाते हैं वो डालें। पोर्टल सिर्फ़ हिसाब करता है।")}</p>
+      <p className="muted small">{t("Usually entered with the payment. Use this only for TDS deducted separately.", "आम तौर पर पेमेंट के साथ डलता है। अलग से काटा हो तभी यहाँ डालें।")}</p>
       <div className="grid2">
-        <Field label={t("Section", "सेक्शन")}><TextIn value={f.section} onValue={(v) => setF({ ...f, section: v })} placeholder="194Q" /></Field>
-        <Field label={t("Rate", "रेट")}><NumIn value={f.rate} onChange={(v) => setF({ ...f, rate: v })} suffix="%" /></Field>
-        <Field label={t("On amount", "किस रकम पर")}><NumIn value={f.base} onChange={(v) => setF({ ...f, base: v })} suffix="₹" /></Field>
+        <Field label={t("TDS amount", "TDS रकम")}><NumIn value={f.amount} onChange={(v) => setF({ ...f, amount: v })} suffix="₹" autoFocus /></Field>
+        <Field label={t("Section (optional)", "सेक्शन (वैकल्पिक)")}><TextIn value={f.section} onValue={(v) => setF({ ...f, section: v })} /></Field>
         <Field label={t("Deducted on", "काटने की तारीख")}><input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
       </div>
     </Sheet>

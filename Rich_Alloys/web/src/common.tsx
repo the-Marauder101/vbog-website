@@ -95,6 +95,8 @@ export function PaymentSheet({ supplierId, invoiceId, dealId, existing, onClose,
   const [mode, setMode] = useState(existing?.mode ?? "neft");
   const [ref, setRef] = useState(existing?.bank_ref ?? "");
   const [kind, setKind] = useState(existing?.kind ?? (invoiceId ? "provisional" : "advance"));
+  const [tds, setTds] = useState("");
+  const [section, setSection] = useState("");
   const s = useSave();
   const sups = useLoad(() => q(sb.from("suppliers").select("id,name").eq("active", true).order("name")), []);
   const open = useLoad(() => (supplier ? q(sb.from("v_payable").select("invoice_id,invoice_no,lot_no,balance").eq("supplier_id", supplier)) : Promise.resolve([] as Row[])), [supplier]);
@@ -103,8 +105,13 @@ export function PaymentSheet({ supplierId, invoiceId, dealId, existing, onClose,
     if (!isNum(amount) || Number(amount) <= 0) throw new Error(t("Enter the amount paid.", "भुगतान की रकम डालें।"));
     const row = { supplier_id: supplier, invoice_id: invoice || null, deal_id: invoice ? null : (dealId ?? existing?.deal_id ?? null),
                   amount: Number(amount), paid_on: paidOn, mode, bank_ref: ref.trim() || null, kind };
+    if (tds && (!isNum(tds) || Number(tds) <= 0)) throw new Error(t("Check the TDS amount.", "TDS रकम जाँचें।"));
+    if (tds && !invoice) throw new Error(t("TDS needs a bill. Choose the bill.", "TDS के लिए बिल चुनें।"));
     if (existing) await q(sb.from("payments").update(row).eq("id", existing.id));
-    else await q(sb.from("payments").insert(row));
+    else {
+      const p = await q<Row>(sb.from("payments").insert(row).select("id").single());
+      if (tds) await q(sb.from("tds").insert({ invoice_id: invoice, payment_id: p.id, amount: Number(tds), section: section.trim().toUpperCase() || null, deducted_on: paidOn }));
+    }
   }, () => { onSaved(); onClose(); });
   return (
     <Sheet title={existing ? t("Correct payment", "पेमेंट सुधारें") : t("Record payment", "पेमेंट दर्ज करें")} onClose={onClose}
@@ -133,6 +140,12 @@ export function PaymentSheet({ supplierId, invoiceId, dealId, existing, onClose,
             { value: "final", label: t("Final", "फाइनल") }, { value: "other", label: t("Other", "अन्य") }]} />
         </Field>
       </div>
+      {!existing && invoice && (
+        <div className="grid2">
+          <Field label={t("TDS deducted from this bill", "इस बिल से काटा TDS")} hint={t("Leave empty if none.", "न हो तो खाली छोड़ें।")}><NumIn value={tds} onChange={setTds} suffix="₹" /></Field>
+          <Field label={t("TDS section (optional)", "TDS सेक्शन (वैकल्पिक)")}><TextIn value={section} onValue={setSection} /></Field>
+        </div>
+      )}
     </Sheet>
   );
 }

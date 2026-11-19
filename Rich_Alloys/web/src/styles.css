@@ -217,6 +217,11 @@ h3.sub { font-size: .95rem; color: var(--copper); margin: 1.1rem 0 .4rem; displa
 
 .login { display: grid; gap: .4rem; max-width: 420px; margin: 8vh auto 0; }
 @media (prefers-reduced-motion: no-preference) { .bar span, .barrow .bt span { transition: width .3s ease; } }
+.filebtn { display: inline-flex; align-items: center; cursor: pointer; }
+.upload.done { border-style: solid; border-color: var(--ok); color: var(--ok); background: var(--ok-bg); }
+.voucher .kv { margin: .4rem 0; }
+.voucher .inline input { flex: 1; }
+.bottomnav a { font-size: .74rem; }
 
 /* ---------- upload queue and staff (merged from the interim build) ---------- */
 .item.pending { border-style: dashed; border-color: #d9a520; }

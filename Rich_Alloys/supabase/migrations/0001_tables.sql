@@ -249,17 +249,13 @@ create table payments (
   reconciled_at timestamptz
 );
 
-create table tds (
+create table tds (                         -- TDS deducted from a bill; books stay in office Tally
   id uuid primary key default gen_random_uuid(),
   invoice_id uuid not null references invoices(id),
-  payment_id uuid references payments(id),
-  section text not null,
-  rate numeric(6,3) not null check (rate > 0),
-  base numeric(14,2) not null check (base > 0),
-  amount numeric(14,2) generated always as (round(base * rate / 100, 2)) stored,
-  deducted_on date not null,
-  deposited_on date,
-  challan_ref text,
+  payment_id uuid references payments(id) on delete set null,
+  section text,
+  amount numeric(14,2) not null check (amount > 0),
+  deducted_on date not null default current_date,
   entered_by uuid references profiles(id) default auth.uid()
 );
 
@@ -281,6 +277,7 @@ create table tally_marks (                -- "entered in Tally" ticks; two Tally
   entity_id uuid not null,
   book text not null check (book in ('factory','office')),
   voucher_ref text,
+  amount_at_mark numeric(16,3),            -- what it was when ticked; a later change means Tally needs correcting
   marked_by uuid references profiles(id),
   marked_at timestamptz not null default now(),
   unique (entity, entity_id, book)
@@ -331,6 +328,7 @@ create table stock_tally_checks (         -- closing stock as shown in Tally, to
 create table documents (
   id uuid primary key default gen_random_uuid(),
   deal_id uuid not null references deals(id),
+  lot_id uuid references lots(id),          -- set when the file belongs to one truck (e.g. its invoice)
   doc_type text not null references doc_types(code),
   storage_path text not null,
   status text not null default 'uploaded' check (status in ('uploaded','verified','approved','rejected')),

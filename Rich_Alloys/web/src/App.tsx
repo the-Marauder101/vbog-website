@@ -6,8 +6,8 @@ import Home from "./screens/Home";
 import Lots from "./screens/Lots";
 import Deal from "./screens/Deal";
 import Lot from "./screens/Lot";
-import Cash from "./screens/Cash";
-import Money from "./screens/Money";
+import Payables from "./screens/Payables";
+import Tally from "./screens/Tally";
 import Stock from "./screens/Stock";
 import Admin from "./screens/Admin";
 
@@ -45,8 +45,8 @@ export default function App() {
   const nav = me ? [
     { id: "", label: T("Home", "होम"), icon: "⌂", show: true },
     { id: "lots", label: T("Lots", "लॉट"), icon: "▤", show: true },
-    { id: "cash", label: T("Cash", "कैश"), icon: "₹", show: me.actions.has("money_view") },
-    { id: "money", label: T("Money", "पैसा"), icon: "⇄", show: me.actions.has("money_view") },
+    { id: "payables", label: T("Payables", "देनदारी"), icon: "₹", show: me.actions.has("money_view") },
+    { id: "tally", label: T("Tally", "टैली"), icon: "✓", show: me.actions.has("tally_factory") || me.actions.has("tally_office") || me.actions.has("admin") },
     { id: "stock", label: T("Stock", "स्टॉक"), icon: "◫", show: me.actions.has("production_edit") || me.actions.has("stock_edit") || me.actions.has("admin") },
     { id: "admin", label: T("Admin", "एडमिन"), icon: "⚙", show: me.actions.has("admin") },
   ].filter((n) => n.show) : [];
@@ -58,8 +58,8 @@ export default function App() {
   else if (r0 === "lots") page = <Lots openNew={r1 === "new"} />;
   else if (r0 === "deal" && r1) page = <Deal id={r1} />;
   else if (r0 === "lot" && r1) page = <Lot id={r1} tab={r2} key={r1} />;
-  else if (r0 === "cash" && allowed("cash")) page = <Cash />;
-  else if (r0 === "money" && allowed("money")) page = <Money tab={r1} openNew={r1 === "new"} />;
+  else if ((r0 === "payables" || r0 === "cash" || r0 === "money") && allowed("payables")) page = <Payables tab={r0 === "cash" ? "topay" : r1} />;
+  else if (r0 === "tally" && allowed("tally")) page = <Tally tab={r1} />;
   else if (r0 === "stock" && allowed("stock")) page = <Stock openProduction={r1 === "production"} />;
   else if (r0 === "admin" && allowed("admin")) page = <Admin tab={r1} />;
   else page = <Home />;

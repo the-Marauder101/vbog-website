@@ -23,7 +23,6 @@ export default function Cash() {
   const missing = new Set(data.filter((r) => r.terms_missing).map((r) => r.supplier));
   return (
     <>
-      <h1>{t("Cash needed", "कितना कैश चाहिए")}</h1>
       <div className="stats">
         <div><small>{t("Overdue", "बकाया")}</small><strong className={sum(buckets[0].rows) > 0 ? "bad" : ""}>{inrShort(sum(buckets[0].rows))}</strong></div>
         <div><small>{t("Next 7 days", "अगले 7 दिन")}</small><strong>{inrShort(sum(buckets[1]?.rows ?? []))}</strong></div>

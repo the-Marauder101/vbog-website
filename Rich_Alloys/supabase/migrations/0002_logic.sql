@@ -239,6 +239,68 @@ select 'production', r.id, 'factory', null::uuid, r.run_date
 from production_runs r
 where not exists (select 1 from tally_marks t where t.entity = 'production' and t.entity_id = r.id and t.book = 'factory');
 
+-- the figure Tally holds for an entry; null when the entry no longer exists or was cancelled
+create function entity_amount(p_entity text, p_id uuid) returns numeric
+language sql stable security definer set search_path = public as $$
+  select case p_entity
+    when 'invoice' then (select total from invoices where id = p_id)
+    when 'note' then (select total from notes where id = p_id and status <> 'cancelled')
+    when 'payment' then (select amount from payments where id = p_id and status = 'reconciled')
+    when 'tds' then (select amount from tds where id = p_id)
+    when 'production' then (select sum(kg) from production_lines where run_id = p_id)
+  end
+$$;
+
+-- ticked entries that changed (or were cancelled/deleted) after they were entered in Tally
+create view v_tally_changes with (security_invoker = true) as
+select m.id as mark_id, m.entity, m.entity_id, m.book, m.voucher_ref, m.amount_at_mark,
+       entity_amount(m.entity, m.entity_id) as amount_now, m.marked_at
+from tally_marks m
+where entity_amount(m.entity, m.entity_id) is distinct from m.amount_at_mark;
+
+-- one list per Tally of what to enter, with what is needed to find it
+create view v_tally_queue with (security_invoker = true) as
+with items as (
+  select 'pending'::text as state, x.entity, x.entity_id, x.book, null::uuid as mark_id, null::text as voucher_ref,
+         null::numeric as amount_at_mark from v_tally_missing x
+  union all
+  select 'changed', c.entity, c.entity_id, c.book, c.mark_id, c.voucher_ref, c.amount_at_mark from v_tally_changes c
+)
+select it.*, coalesce(i.invoice_date, n.note_date, p.paid_on, t.deducted_on, r.run_date) as entry_date,
+       coalesce(l.id, nl.id, pl.id, tl.id) as lot_id, coalesce(l.lot_no, nl.lot_no, pl.lot_no, tl.lot_no) as lot_no,
+       coalesce(s1.name, s2.name, s3.name, s4.name) as supplier, coalesce(s1.gstin, s2.gstin, s3.gstin, s4.gstin) as gstin,
+       case it.entity when 'invoice' then i.invoice_no when 'note' then coalesce(n.tally_no, n.dn_type)
+                      when 'payment' then coalesce(p.bank_ref, upper(p.mode)) when 'tds' then coalesce(t.section, 'TDS')
+                      when 'production' then 'Production' end as ref,
+       entity_amount(it.entity, it.entity_id) as amount, n.dn_type
+from items it
+left join invoices i on it.entity = 'invoice' and i.id = it.entity_id
+left join lots l on l.invoice_id = i.id
+left join deals d1 on d1.id = i.deal_id left join suppliers s1 on s1.id = d1.supplier_id
+left join notes n on it.entity = 'note' and n.id = it.entity_id
+left join lots nl on nl.id = n.lot_id left join deals d2 on d2.id = nl.deal_id left join suppliers s2 on s2.id = d2.supplier_id
+left join payments p on it.entity = 'payment' and p.id = it.entity_id
+left join lots pl on pl.invoice_id = p.invoice_id left join suppliers s3 on s3.id = p.supplier_id
+left join tds t on it.entity = 'tds' and t.id = it.entity_id
+left join invoices ti on ti.id = t.invoice_id left join lots tl on tl.invoice_id = ti.id
+left join deals d4 on d4.id = ti.deal_id left join suppliers s4 on s4.id = d4.supplier_id
+left join production_runs r on it.entity = 'production' and r.id = it.entity_id
+where public.can(case when it.book = 'factory' then 'tally_factory' else 'tally_office' end) or public.can('admin');
+
+-- every purchase invoice in one place (replaces the shared invoice-tracker Excel)
+create view v_invoice_register with (security_invoker = true) as
+select i.id as invoice_id, i.invoice_no, i.invoice_date, s.name as supplier, s.gstin, d.deal_no, l.id as lot_id, l.lot_no,
+       l.received_on, i.taxable_value, i.gst_amount, i.total,
+       exists (select 1 from documents x where x.doc_type = 'TAX_INVOICE' and x.status <> 'rejected'
+               and (x.lot_id = l.id or (x.lot_id is null and x.deal_id = d.id))) as has_scan,
+       (select voucher_ref from tally_marks m where m.entity = 'invoice' and m.entity_id = i.id and m.book = 'factory') as factory_ref,
+       exists (select 1 from tally_marks m where m.entity = 'invoice' and m.entity_id = i.id and m.book = 'factory') as in_factory,
+       (select voucher_ref from tally_marks m where m.entity = 'invoice' and m.entity_id = i.id and m.book = 'office') as office_ref,
+       exists (select 1 from tally_marks m where m.entity = 'invoice' and m.entity_id = i.id and m.book = 'office') as in_office
+from invoices i join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
+left join lots l on l.invoice_id = i.id
+where not d.cancelled;
+
 -- required documents not yet approved, per deal
 create view v_doc_gaps with (security_invoker = true) as
 select d.id as deal_id, d.deal_no, t.side, t.code, t.name, t.name_hi,
@@ -483,13 +545,13 @@ select * from (
   select 'payment_fix', 'payment_enter', 'money', p.id, coalesce(d.deal_no, ''), s.name, p.reject_note, null, p.paid_on, p.amount
   from payments p join suppliers s on s.id = p.supplier_id left join deals d on d.id = p.deal_id where p.status = 'rejected'
   union all
-  select 'tds_deposit', 'tax_edit', 'money', t.id, i.invoice_no, s.name, t.section, null, t.deducted_on, t.amount
-  from tds t join invoices i on i.id = t.invoice_id join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
-  where t.deposited_on is null
-  union all
-  select 'gst_2b', 'tax_edit', 'money', i.id, i.invoice_no, s.name, null, null, i.invoice_date, i.gst_amount
+  select 'gst_2b', 'gst_2b', 'money', i.id, i.invoice_no, s.name, null, null, i.invoice_date, i.gst_amount
   from invoices i join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
   where not i.in_2b and i.invoice_date < date_trunc('month', current_date)
+  union all
+  select 'tally_changed', case when c.book = 'factory' then 'tally_factory' else 'tally_office' end, 'tally', c.entity_id,
+         c.entity, null, c.book, null, c.marked_at::date, c.amount_now
+  from v_tally_changes c
   union all
   select 'ledger_confirm', 'ledger_confirm', 'supplier', b.supplier_id, null, b.supplier, null, null, b.last_confirmed_on, b.balance
   from v_supplier_balance b
@@ -632,9 +694,25 @@ create function mark_tally(p_entity text, p_id uuid, p_book text, p_ref text) re
 language plpgsql security definer set search_path = public as $$
 begin
   perform require(case when p_book = 'factory' then 'tally_factory' else 'tally_office' end);
-  insert into tally_marks (entity, entity_id, book, voucher_ref, marked_by)
-  values (p_entity, p_id, p_book, nullif(trim(p_ref), ''), auth.uid())
-  on conflict (entity, entity_id, book) do update set voucher_ref = excluded.voucher_ref, marked_by = excluded.marked_by, marked_at = now();
+  if entity_amount(p_entity, p_id) is null then raise exception 'This entry no longer exists.'; end if;
+  insert into tally_marks (entity, entity_id, book, voucher_ref, amount_at_mark, marked_by)
+  values (p_entity, p_id, p_book, nullif(trim(p_ref), ''), entity_amount(p_entity, p_id), auth.uid())
+  on conflict (entity, entity_id, book) do update
+    set voucher_ref = coalesce(excluded.voucher_ref, tally_marks.voucher_ref), amount_at_mark = excluded.amount_at_mark,
+        marked_by = excluded.marked_by, marked_at = now();
+end $$;
+
+-- after a correction or reversal has been made in Tally: clear a tick whose entry was cancelled or deleted
+create function clear_tally_change(p_mark uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare m tally_marks;
+begin
+  select * into m from tally_marks where id = p_mark;
+  if not found then raise exception 'Not found.'; end if;
+  perform require(case when m.book = 'factory' then 'tally_factory' else 'tally_office' end);
+  if entity_amount(m.entity, m.entity_id) is null then delete from tally_marks where id = p_mark;
+  else update tally_marks set amount_at_mark = entity_amount(m.entity, m.entity_id), marked_by = auth.uid(), marked_at = now() where id = p_mark;
+  end if;
 end $$;
 
 create function unmark_tally(p_entity text, p_id uuid, p_book text) returns void

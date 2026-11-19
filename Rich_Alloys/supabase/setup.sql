@@ -257,17 +257,13 @@ create table payments (
   reconciled_at timestamptz
 );
 
-create table tds (
+create table tds (                         -- TDS deducted from a bill; books stay in office Tally
   id uuid primary key default gen_random_uuid(),
   invoice_id uuid not null references invoices(id),
-  payment_id uuid references payments(id),
-  section text not null,
-  rate numeric(6,3) not null check (rate > 0),
-  base numeric(14,2) not null check (base > 0),
-  amount numeric(14,2) generated always as (round(base * rate / 100, 2)) stored,
-  deducted_on date not null,
-  deposited_on date,
-  challan_ref text,
+  payment_id uuid references payments(id) on delete set null,
+  section text,
+  amount numeric(14,2) not null check (amount > 0),
+  deducted_on date not null default current_date,
   entered_by uuid references profiles(id) default auth.uid()
 );
 
@@ -289,6 +285,7 @@ create table tally_marks (                -- "entered in Tally" ticks; two Tally
   entity_id uuid not null,
   book text not null check (book in ('factory','office')),
   voucher_ref text,
+  amount_at_mark numeric(16,3),            -- what it was when ticked; a later change means Tally needs correcting
   marked_by uuid references profiles(id),
   marked_at timestamptz not null default now(),
   unique (entity, entity_id, book)
@@ -339,6 +336,7 @@ create table stock_tally_checks (         -- closing stock as shown in Tally, to
 create table documents (
   id uuid primary key default gen_random_uuid(),
   deal_id uuid not null references deals(id),
+  lot_id uuid references lots(id),          -- set when the file belongs to one truck (e.g. its invoice)
   doc_type text not null references doc_types(code),
   storage_path text not null,
   status text not null default 'uploaded' check (status in ('uploaded','verified','approved','rejected')),
@@ -602,6 +600,68 @@ select 'production', r.id, 'factory', null::uuid, r.run_date
 from production_runs r
 where not exists (select 1 from tally_marks t where t.entity = 'production' and t.entity_id = r.id and t.book = 'factory');
 
+-- the figure Tally holds for an entry; null when the entry no longer exists or was cancelled
+create function entity_amount(p_entity text, p_id uuid) returns numeric
+language sql stable security definer set search_path = public as $$
+  select case p_entity
+    when 'invoice' then (select total from invoices where id = p_id)
+    when 'note' then (select total from notes where id = p_id and status <> 'cancelled')
+    when 'payment' then (select amount from payments where id = p_id and status = 'reconciled')
+    when 'tds' then (select amount from tds where id = p_id)
+    when 'production' then (select sum(kg) from production_lines where run_id = p_id)
+  end
+$$;
+
+-- ticked entries that changed (or were cancelled/deleted) after they were entered in Tally
+create view v_tally_changes with (security_invoker = true) as
+select m.id as mark_id, m.entity, m.entity_id, m.book, m.voucher_ref, m.amount_at_mark,
+       entity_amount(m.entity, m.entity_id) as amount_now, m.marked_at
+from tally_marks m
+where entity_amount(m.entity, m.entity_id) is distinct from m.amount_at_mark;
+
+-- one list per Tally of what to enter, with what is needed to find it
+create view v_tally_queue with (security_invoker = true) as
+with items as (
+  select 'pending'::text as state, x.entity, x.entity_id, x.book, null::uuid as mark_id, null::text as voucher_ref,
+         null::numeric as amount_at_mark from v_tally_missing x
+  union all
+  select 'changed', c.entity, c.entity_id, c.book, c.mark_id, c.voucher_ref, c.amount_at_mark from v_tally_changes c
+)
+select it.*, coalesce(i.invoice_date, n.note_date, p.paid_on, t.deducted_on, r.run_date) as entry_date,
+       coalesce(l.id, nl.id, pl.id, tl.id) as lot_id, coalesce(l.lot_no, nl.lot_no, pl.lot_no, tl.lot_no) as lot_no,
+       coalesce(s1.name, s2.name, s3.name, s4.name) as supplier, coalesce(s1.gstin, s2.gstin, s3.gstin, s4.gstin) as gstin,
+       case it.entity when 'invoice' then i.invoice_no when 'note' then coalesce(n.tally_no, n.dn_type)
+                      when 'payment' then coalesce(p.bank_ref, upper(p.mode)) when 'tds' then coalesce(t.section, 'TDS')
+                      when 'production' then 'Production' end as ref,
+       entity_amount(it.entity, it.entity_id) as amount, n.dn_type
+from items it
+left join invoices i on it.entity = 'invoice' and i.id = it.entity_id
+left join lots l on l.invoice_id = i.id
+left join deals d1 on d1.id = i.deal_id left join suppliers s1 on s1.id = d1.supplier_id
+left join notes n on it.entity = 'note' and n.id = it.entity_id
+left join lots nl on nl.id = n.lot_id left join deals d2 on d2.id = nl.deal_id left join suppliers s2 on s2.id = d2.supplier_id
+left join payments p on it.entity = 'payment' and p.id = it.entity_id
+left join lots pl on pl.invoice_id = p.invoice_id left join suppliers s3 on s3.id = p.supplier_id
+left join tds t on it.entity = 'tds' and t.id = it.entity_id
+left join invoices ti on ti.id = t.invoice_id left join lots tl on tl.invoice_id = ti.id
+left join deals d4 on d4.id = ti.deal_id left join suppliers s4 on s4.id = d4.supplier_id
+left join production_runs r on it.entity = 'production' and r.id = it.entity_id
+where public.can(case when it.book = 'factory' then 'tally_factory' else 'tally_office' end) or public.can('admin');
+
+-- every purchase invoice in one place (replaces the shared invoice-tracker Excel)
+create view v_invoice_register with (security_invoker = true) as
+select i.id as invoice_id, i.invoice_no, i.invoice_date, s.name as supplier, s.gstin, d.deal_no, l.id as lot_id, l.lot_no,
+       l.received_on, i.taxable_value, i.gst_amount, i.total,
+       exists (select 1 from documents x where x.doc_type = 'TAX_INVOICE' and x.status <> 'rejected'
+               and (x.lot_id = l.id or (x.lot_id is null and x.deal_id = d.id))) as has_scan,
+       (select voucher_ref from tally_marks m where m.entity = 'invoice' and m.entity_id = i.id and m.book = 'factory') as factory_ref,
+       exists (select 1 from tally_marks m where m.entity = 'invoice' and m.entity_id = i.id and m.book = 'factory') as in_factory,
+       (select voucher_ref from tally_marks m where m.entity = 'invoice' and m.entity_id = i.id and m.book = 'office') as office_ref,
+       exists (select 1 from tally_marks m where m.entity = 'invoice' and m.entity_id = i.id and m.book = 'office') as in_office
+from invoices i join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
+left join lots l on l.invoice_id = i.id
+where not d.cancelled;
+
 -- required documents not yet approved, per deal
 create view v_doc_gaps with (security_invoker = true) as
 select d.id as deal_id, d.deal_no, t.side, t.code, t.name, t.name_hi,
@@ -846,13 +906,13 @@ select * from (
   select 'payment_fix', 'payment_enter', 'money', p.id, coalesce(d.deal_no, ''), s.name, p.reject_note, null, p.paid_on, p.amount
   from payments p join suppliers s on s.id = p.supplier_id left join deals d on d.id = p.deal_id where p.status = 'rejected'
   union all
-  select 'tds_deposit', 'tax_edit', 'money', t.id, i.invoice_no, s.name, t.section, null, t.deducted_on, t.amount
-  from tds t join invoices i on i.id = t.invoice_id join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
-  where t.deposited_on is null
-  union all
-  select 'gst_2b', 'tax_edit', 'money', i.id, i.invoice_no, s.name, null, null, i.invoice_date, i.gst_amount
+  select 'gst_2b', 'gst_2b', 'money', i.id, i.invoice_no, s.name, null, null, i.invoice_date, i.gst_amount
   from invoices i join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
   where not i.in_2b and i.invoice_date < date_trunc('month', current_date)
+  union all
+  select 'tally_changed', case when c.book = 'factory' then 'tally_factory' else 'tally_office' end, 'tally', c.entity_id,
+         c.entity, null, c.book, null, c.marked_at::date, c.amount_now
+  from v_tally_changes c
   union all
   select 'ledger_confirm', 'ledger_confirm', 'supplier', b.supplier_id, null, b.supplier, null, null, b.last_confirmed_on, b.balance
   from v_supplier_balance b
@@ -995,9 +1055,25 @@ create function mark_tally(p_entity text, p_id uuid, p_book text, p_ref text) re
 language plpgsql security definer set search_path = public as $$
 begin
   perform require(case when p_book = 'factory' then 'tally_factory' else 'tally_office' end);
-  insert into tally_marks (entity, entity_id, book, voucher_ref, marked_by)
-  values (p_entity, p_id, p_book, nullif(trim(p_ref), ''), auth.uid())
-  on conflict (entity, entity_id, book) do update set voucher_ref = excluded.voucher_ref, marked_by = excluded.marked_by, marked_at = now();
+  if entity_amount(p_entity, p_id) is null then raise exception 'This entry no longer exists.'; end if;
+  insert into tally_marks (entity, entity_id, book, voucher_ref, amount_at_mark, marked_by)
+  values (p_entity, p_id, p_book, nullif(trim(p_ref), ''), entity_amount(p_entity, p_id), auth.uid())
+  on conflict (entity, entity_id, book) do update
+    set voucher_ref = coalesce(excluded.voucher_ref, tally_marks.voucher_ref), amount_at_mark = excluded.amount_at_mark,
+        marked_by = excluded.marked_by, marked_at = now();
+end $$;
+
+-- after a correction or reversal has been made in Tally: clear a tick whose entry was cancelled or deleted
+create function clear_tally_change(p_mark uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare m tally_marks;
+begin
+  select * into m from tally_marks where id = p_mark;
+  if not found then raise exception 'Not found.'; end if;
+  perform require(case when m.book = 'factory' then 'tally_factory' else 'tally_office' end);
+  if entity_amount(m.entity, m.entity_id) is null then delete from tally_marks where id = p_mark;
+  else update tally_marks set amount_at_mark = entity_amount(m.entity, m.entity_id), marked_by = auth.uid(), marked_at = now() where id = p_mark;
+  end if;
 end $$;
 
 create function unmark_tally(p_entity text, p_id uuid, p_book text) returns void
@@ -1242,7 +1318,105 @@ select a, r from (values
   ('stock_edit',        '{owner,vbog_admin,factory_accounts}')
 ) x(a, roles), unnest(roles::text[]) r;
 
--- ######## migrations/0006_staff_and_uploads.sql ########
+-- ######## migrations/0006_gstr2b.sql ########
+-- OPTIONAL, OFF BY DEFAULT: only works for roles given the 'gst_2b' permission in Admin.
+-- GSTR-2B: Niti downloads the month's 2B JSON from the GST portal and uploads it here.
+-- Each B2B invoice is matched to a purchase invoice by supplier GSTIN + invoice number (ignoring spaces,
+-- slashes and dashes). Matches tick "seen in 2B" automatically; differences and gaps are listed.
+
+create table gstr2b_imports (
+  id uuid primary key default gen_random_uuid(),
+  period text not null unique check (period ~ '^\d{4}-\d{2}$'),   -- YYYY-MM; a re-upload replaces the month
+  file_name text,
+  uploaded_by uuid references profiles(id) default auth.uid(),
+  uploaded_at timestamptz not null default now()
+);
+
+create table gstr2b_lines (
+  id uuid primary key default gen_random_uuid(),
+  import_id uuid not null references gstr2b_imports(id) on delete cascade,
+  period text not null,
+  section text not null check (section in ('b2b','cdnr','other')),
+  supplier_gstin text not null,
+  supplier_name text,
+  doc_type text not null check (doc_type in ('invoice','credit_note','debit_note')),
+  doc_no text not null,
+  doc_no_norm text not null,
+  doc_date date,
+  taxable numeric(14,2),
+  tax numeric(14,2),
+  total numeric(14,2),
+  itc_available boolean,
+  matched_invoice_id uuid references invoices(id)
+);
+create index gstr2b_lines_match on gstr2b_lines (supplier_gstin, doc_no_norm);
+
+create function doc_norm(p text) returns text language sql immutable as
+$$ select upper(regexp_replace(coalesce(p, ''), '[^A-Za-z0-9]', '', 'g')) $$;
+
+-- p = { period: 'YYYY-MM', file_name, lines: [{section, supplier_gstin, supplier_name, doc_type, doc_no, doc_date, taxable, tax, total, itc_available}] }
+create function import_gstr2b(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare v_imp uuid; v_period text := p->>'period'; v_matched int; v_lines int;
+begin
+  perform require('gst_2b');
+  if v_period !~ '^\d{4}-\d{2}$' then raise exception 'Could not read the return period from the file.'; end if;
+  if jsonb_array_length(coalesce(p->'lines', '[]')) = 0 then raise exception 'No invoices found in the file.'; end if;
+  perform set_config('ra.via_fn', 'on', true);
+  -- replacing a month: clear the ticks it set before
+  update invoices set in_2b = false, gstr2b_period = null
+  where gstr2b_period = v_period and id in (select l.matched_invoice_id from gstr2b_lines l where l.period = v_period);
+  delete from gstr2b_imports where period = v_period;
+  insert into gstr2b_imports (period, file_name) values (v_period, p->>'file_name') returning id into v_imp;
+  insert into gstr2b_lines (import_id, period, section, supplier_gstin, supplier_name, doc_type, doc_no, doc_no_norm,
+                            doc_date, taxable, tax, total, itc_available)
+  select v_imp, v_period, coalesce(x->>'section', 'b2b'), upper(trim(x->>'supplier_gstin')), x->>'supplier_name',
+         coalesce(x->>'doc_type', 'invoice'), x->>'doc_no', doc_norm(x->>'doc_no'),
+         nullif(x->>'doc_date', '')::date, nullif(x->>'taxable', '')::numeric, nullif(x->>'tax', '')::numeric,
+         nullif(x->>'total', '')::numeric, nullif(x->>'itc_available', '')::boolean
+  from jsonb_array_elements(p->'lines') x
+  where nullif(trim(x->>'supplier_gstin'), '') is not null and nullif(trim(x->>'doc_no'), '') is not null;
+  get diagnostics v_lines = row_count;
+  update gstr2b_lines l set matched_invoice_id = i.id
+  from invoices i join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
+  where l.import_id = v_imp and l.doc_type = 'invoice'
+    and upper(s.gstin) = l.supplier_gstin and doc_norm(i.invoice_no) = l.doc_no_norm;
+  update invoices i set in_2b = true, gstr2b_period = v_period
+  from gstr2b_lines l where l.import_id = v_imp and l.matched_invoice_id = i.id;
+  select count(*) into v_matched from gstr2b_lines where import_id = v_imp and matched_invoice_id is not null;
+  perform set_config('ra.via_fn', 'off', true);
+  return jsonb_build_object('lines', v_lines, 'matched', v_matched);
+end $$;
+
+-- one row per 2B line and per portal invoice still missing from 2B
+create view v_gstr2b_recon with (security_invoker = true) as
+select l.period, 'matched'::text as status, l.supplier_gstin, coalesce(s.name, l.supplier_name) as supplier,
+       l.doc_no, l.doc_date, l.total as gstr2b_total, i.total as portal_total, l.tax as gstr2b_tax, i.gst_amount as portal_tax,
+       coalesce(l.total, 0) - coalesce(i.total, 0) as difference, l.itc_available, i.id as invoice_id, lt.id as lot_id
+from gstr2b_lines l
+join invoices i on i.id = l.matched_invoice_id
+join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
+left join lots lt on lt.invoice_id = i.id
+union all
+select l.period, case when l.doc_type = 'invoice' then 'not_in_portal' else l.doc_type end, l.supplier_gstin, l.supplier_name,
+       l.doc_no, l.doc_date, l.total, null, l.tax, null, null, l.itc_available, null, null
+from gstr2b_lines l where l.matched_invoice_id is null
+union all
+select null, 'not_in_2b', s.gstin, s.name, i.invoice_no, i.invoice_date, null, i.total, null, i.gst_amount, null, null, i.id, lt.id
+from invoices i join deals d on d.id = i.deal_id join suppliers s on s.id = d.supplier_id
+left join lots lt on lt.invoice_id = i.id
+where not i.in_2b and not d.cancelled;
+
+alter table gstr2b_imports enable row level security;
+alter table gstr2b_lines enable row level security;
+revoke all on gstr2b_imports, gstr2b_lines, v_gstr2b_recon from anon;
+grant select on gstr2b_imports, gstr2b_lines, v_gstr2b_recon to authenticated;
+create policy money_read on gstr2b_imports for select to authenticated using (public.can('money_view'));
+create policy money_read on gstr2b_lines for select to authenticated using (public.can('money_view'));
+revoke execute on function import_gstr2b(jsonb), doc_norm(text) from public, anon;
+grant execute on function import_gstr2b(jsonb), doc_norm(text) to authenticated;
+
+-- ######## migrations/0007_staff_and_uploads.sql ########
 -- Staff management from the app, and safe upload retries.
 --
 -- Staff: profiles becomes the readable staff list (Supabase > Table Editor > profiles): name, login email,

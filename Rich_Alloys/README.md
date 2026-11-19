@@ -4,8 +4,8 @@ V-BOG build for Rich Alloys. Read `PRD.md` first: context, decisions, requiremen
 
 ## Deploy
 
-**You already ran the v1 setup on your Supabase project (no real data in it):**
-1. SQL editor: run `supabase/reset_v1.sql` once. Login accounts and uploaded files are kept.
+**Your Supabase project already has an earlier version (v1 or v2) and only test data:**
+1. SQL editor: run `supabase/reset_all.sql` once. Login accounts and uploaded files are kept.
 2. SQL editor: paste all of `supabase/setup.sql` and run it once.
 3. Run `supabase/add_user.sql` again for each person (edit the three values each time).
 
@@ -15,13 +15,14 @@ Then:
 4. Optional demo data: `supabase/test_data/ogo_po082.sql` (never in production).
 5. Authentication settings: public sign-ups off.
 6. Put the project URL and anon key in `deploy/config.js` and upload the `deploy/` folder to your host.
+
 7. Staff function (needs the Supabase CLI and an access token):
    `supabase functions deploy staff-admin --project-ref <ref> --no-verify-jwt --use-api`
    Then add everyone else from the app: **Admin > Staff**. `add_user.sql` is only for the first admin.
 
 Passwords cannot be seen by anyone, including V-BOG; a lost one is reset in Admin > Staff and shown once.
 
-Publish only the `deploy/` folder. The rest of this folder (PRD, SQL, test data) holds client details and must not be on the public site.
+Publish only the `deploy/` folder. The rest of this folder (PRD, SQL, test data) holds client details. Today GitHub Pages publishes the whole repo, so it is public too (PRD decision 28).
 
 ## Develop
 
