@@ -2,7 +2,7 @@
 
 Owner: Depesh Vyas (V-BOG) · Client: Rich Alloys India Pvt Ltd (Himanshu Jain) · Updated 18 Nov 2026
 Status: v2.2 live on Supabase project `rqxjjrpngybglmhzlmtj` (Mumbai) since 19 Nov 2026, with Ogo test data, served at
-v-bog.com/Rich_Alloys/deploy/. Includes staff management and upload reliability from the interim build (decisions 25–28).
+v-bog.com/Rich_Alloys/deploy/. Next: section 7a (from Tinu's sheets). Includes staff management and upload reliability from the interim build (decisions 25–28).
 
 This is the single document a new chat or developer follows to continue the build. It overrides the older
 project brief where they differ (section 3 lists what changed).
@@ -170,6 +170,49 @@ return freight and who paid; due dates (supplier charges 18% late interest).
 - Niti's biggest pain is imports (CHA follow-ups, high seas) — out of scope.
 - Tinu's production sheet: copper ingot from copper scrap plus phosphorus copper, with copper gross/slag and another by-product; opening and closing tally with Tally to the gram.
 
+## 7a. What Tinu's stock and production sheets show (Apr–Oct 2026)
+
+Source: the 14 workbooks Tinu sends Niti monthly, cleaned into `Tinu_stock_Apr-Oct_2026_clean.xlsx`
+(Project files; it holds client data, so keep it out of any public repo). 631 stock movements, 67 production days.
+
+**What holds up**
+- Every sheet adds up and every month carries into the next. October closings: copper scrap 105,380.660 kg, copper wire
+  6,701.620, phosphorus copper 2,670.000, copper ingot 10,893.850, copper strips 0, copper ingot 74031900 0.
+- Production report and stock ledger agree on scrap consumed and ingots produced every month.
+- Purchases are booked at the supplier's billed net (OGOES15 = 9,957.900 kg on 25 Oct), and debit notes take kg off
+  stock, exactly as the portal does.
+
+**What does not**
+- April consumption dated 4–5 Apr in the production report, 1–2 Apr in the stock ledger.
+- Dates typed into the wrong month (21.05.20226; 10.09 in June; 10.07 and 11.07 in August).
+- April opening scrap 38,620.73 in the 31 Mar statement vs 38,650.23 in the ledger; April's summary notes its own 2,501.40 kg gap.
+- Party names vary for the same party, and no GSTINs are recorded.
+
+- Copper ingot is also *bought*: 33 purchases, 545.5 t in 7 months, besides 822.8 t
+  produced. 575.5 t moved from Copper ingot to Copper ingot 74031900 (open question 23).
+- Checked 19 Nov against the workbook: October closings, monthly balances (no differences), 631 movements, 67 production
+  days, 35 scrap sales (429.6 t), 3 import receipts (95.1 t), OGOES15 at 9,957.900 kg on 25 Oct.
+
+**What it changes in the portal (to build)**
+1. Stock items, named as in these sheets: Copper scrap, Copper wire, Copper strips, Phosphorus copper, Copper ingot,
+   Copper ingot (74031900), Copper dross/slag, Copper ash. (Plastic scrap appears once in a summary; confirm.) Replaces
+   the four starting items. Wire is bought and consumed alongside scrap.
+2. Stock movements beyond supplier lots, quantity only, each with date, party, document number:
+   transfer from the Mumbai branch (delivery note; 39 in 7 months: 95.7 t of scrap in, 21.1 t back out), job work received (KBS Industries, Mehtacop),
+   import receipt on a bill of entry (Alcumet, Alco Metal; the import process itself stays out of scope),
+   sale/dispatch (scrap is also sold on: 35 sales, ~430 t), item-to-item transfer (Copper ingot to Copper ingot 74031900),
+   credit note received. Without these the portal's stock cannot match Tinu's.
+3. Production: dross and ash are booked as fixed percentages of what was consumed (1.5% / 0.5% in April; 3.5% / 1.5% and
+   6.5% / 1.5% later), so input always equals output and real melting yield is never measured. The production form keeps
+   the actual figures entered and shows yield % (ingot ÷ consumed); it must not force input = output.
+4. Opening stock: start the portal on 1 Nov 2026 with the October closings above as opening entries. The Apr–Oct
+   history stays in the workbook; importing it is optional.
+5. Dates: warn when a date is outside the current month or in the future.
+6. Supplier master keyed on GSTIN. The sheets show 49 scrap supplier *spellings*; the same party is often written
+   several ways, so the real count is lower. Collect GSTINs, then merge the spellings.
+7. Regression: a test loading the October closings and November movements must reproduce Tinu's November sheet
+   during the parallel run.
+
 ## 8. Data model (Postgres, `supabase/migrations`)
 
 | Table | Holds |
@@ -305,8 +348,13 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 | 12 | Factory-side document list (four assumed) | Documents |
 | 13 | Who bears return freight and is it recovered | Returns |
 | 14 | Do factory staff have email addresses for login? (Short login IDs work without one) | Go-live |
-| 18 | Who may add staff and reset passwords (default: owner, vbog_admin) | Permissions |
+| 22 | Who may add staff and reset passwords (default: owner, vbog_admin) | Permissions |
 | 17 | Does Tinu post factory Tally entries from the portal screen, and when does his own Excel stop? Agree the cutover date with him | Source of truth |
+| 18 | Are dross and ash weighed or set as a percentage? Who sets the percentage? (Yield is Himanshu's margin) | Production |
+| 19 | The Mumbai branch sends 95.7 t of scrap in 7 months (and takes 21.1 t back): is it a supplier-like source for the portal (lots, sorting, DNs) or a stock transfer only? | Scope |
+| 20 | Scrap sold on (~430 t in 7 months): does it pass through sorting, or is it back-to-back trading? | Stock |
+| 21 | What are the 2,501.40 kg April gap and the 29.50 kg April opening difference? | Stock history |
+| 23 | Copper ingot is bought as well as produced (545.5 t in 7 months). Do bought ingots come in through the portal as lots (with weights and DNs, but no sorting)? And why do 575.5 t move to "Copper ingot 74031900"? | Stock, scope |
 | 15 | If 2B is switched on later: test with a real JSON from Niti (the parser has only seen a sample) | GST (optional) |
 | 16 | GST API later: which GSP (or the provider Rich Alloys' consultants already use), cost, and who enters the OTP each 6 hours or 30 days | GST |
 
@@ -314,7 +362,9 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 
 - Adoption: if entry is slower than the notebook, it will not be used. Measure time per arrival and per sorting entry in the parallel run.
 - Two Tallys: ticks show what is entered where, but the portal cannot see inside Tally until import is built.
-- Scope: production is now in; imports, sales and other sites will be asked for next.
+- Scope: production is now in; imports, sales and other sites will be asked for next. Section 7a item 2 brings branch
+  transfers, import receipts and sales into *stock* as quantity-only movements (no prices, buyers or import process);
+  keep it at that.
 - Public folder: the whole `Rich_Alloys` folder is currently public through GitHub Pages (decision 28). Scrub client
   details or serve only `deploy/` before real data or wider sharing.
 - Invoice totals are readable by every staff member (needed for weights); payments, ledger and cash are not.
