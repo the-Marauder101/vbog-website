@@ -56,7 +56,7 @@ export default function App() {
   let page: JSX.Element;
   if (!me) page = <></>;
   else if (r0 === "lots") page = <Lots openNew={r1 === "new"} />;
-  else if (r0 === "deal" && r1) page = <Deal id={r1} />;
+  else if (r0 === "deal" && r1) page = <Deal id={r1} openArrival={r2 === "arrive"} key={r1} />;
   else if (r0 === "lot" && r1) page = <Lot id={r1} tab={r2} key={r1} />;
   else if ((r0 === "payables" || r0 === "cash" || r0 === "money") && allowed("payables")) page = <Payables tab={r0 === "cash" ? "topay" : r1} />;
   else if (r0 === "tally" && allowed("tally")) page = <Tally tab={r1} />;

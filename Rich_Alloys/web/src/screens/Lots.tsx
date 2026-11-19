@@ -16,6 +16,8 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
   const [text, setText] = useState("");
   const [newDeal, setNewDeal] = useState(!!openNew);
   const [receipt, setReceipt] = useState(false);
+  const [truck, setTruck] = useState(false);
+  const [unbooked, setUnbooked] = useState(false);
   const { data, error, reload } = useLoad(() => Promise.all([
     q(sb.from("v_lots").select("*").order("received_on", { ascending: false })),
     q(sb.from("v_deals_incoming").select("*").order("expected_date", { ascending: true, nullsFirst: false })),
@@ -32,7 +34,7 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
       <div className="page-head">
         <h1>{t("Lots", "लॉट")}</h1>
         <span className="actions tight">
-          {can("inward_edit") && <Btn onClick={() => setReceipt(true)}>+ {t("From branch / import / job work", "ब्रांच / इम्पोर्ट / जॉब वर्क से")}</Btn>}
+          {can("inward_edit") && <Btn onClick={() => setTruck(true)}>+ {t("Truck arrived", "ट्रक आया")}</Btn>}
           {can("deal_edit") && <Btn kind="primary" onClick={() => setNewDeal(true)}>+ {t("New deal", "नया सौदा")}</Btn>}
         </span>
       </div>
@@ -52,7 +54,9 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
                     <span>{d.supplier}</span>
                     <span className="muted small">{t("Still to come", "आना बाकी")}: {kg(d.remaining_kg)} · {t("expected", "अपेक्षित")} {day(d.expected_date)}</span>
                   </span>
-                  <Chip tone="info">{d.lots ? t("Part received", "कुछ आया") : t("On the way", "रास्ते में")}</Chip>
+                  {Number(d.days_late) > 0
+                    ? <Chip tone="bad">{t("Late", "देरी")} {d.days_late} {t("days", "दिन")}</Chip>
+                    : <Chip tone="info">{d.lots ? t("Part received", "कुछ आया") : t("On the way", "रास्ते में")}</Chip>}
                 </button>
               </li>
             ))}
@@ -70,6 +74,7 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
                     <strong>{l.lot_no} · {l.deal_no}</strong>
                     <span>{l.supplier}{l.supplier_type && l.supplier_type !== "domestic" ? <span className="muted small"> · {t(...TYPE_WORD[l.supplier_type])}</span> : null}</span>
                     <span className="muted small">{day(l.received_on)} · {l.days_open} {t("days", "दिन")}{l.doc_gaps ? ` · ${l.doc_gaps} ${t("docs pending", "दस्तावेज़ बाकी")}` : ""}</span>
+                    {l.unbooked && !l.rate_confirmed_at && <span><Chip tone="wait">{t("Not booked: rate to confirm", "बिना बुकिंग: रेट पक्का करना है")}</Chip></span>}
                   </span>
                   <StageChip stage={l.stage} />
                 </button>
@@ -79,6 +84,9 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
         </>
       )}
       {!inRows.length && !lotRows.length && <Empty>{t("Nothing here.", "यहाँ कुछ नहीं है।")}</Empty>}
+      {truck && <TruckSheet incoming={incoming} onClose={() => setTruck(false)}
+        onPick={(k, dealId) => { setTruck(false); if (k === "booked" && dealId) go(`deal/${dealId}/arrive`); if (k === "unbooked") setUnbooked(true); if (k === "other") setReceipt(true); }} />}
+      {unbooked && <UnbookedSheet onClose={() => setUnbooked(false)} onSaved={(id) => { reload(); go(`lot/${id}`); }} />}
       {receipt && <ReceiptSheet onClose={() => setReceipt(false)} onSaved={(id) => { reload(); go(`lot/${id}`); }} />}
       {newDeal && <NewDealSheet onClose={() => setNewDeal(false)} onSaved={(id) => { reload(); go(`deal/${id}`); }} />}
     </>
@@ -253,6 +261,130 @@ function ReceiptSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (lot
       })}
       <Btn small onClick={() => setLines([...lines, { grade: "", theirs: "", gross: "", bags: "", bagKg: "" }])}>+ {t("Another grade", "और ग्रेड")}</Btn>
       <p className="muted small">{t("No invoice, payment or debit note in rupees for this material. Shortages and rejections become notes in kg.", "इस माल का बिल, भुगतान या रुपये का डेबिट नोट नहीं। कमी और रिजेक्शन किलो के नोट बनेंगे।")}</p>
+    </Sheet>
+  );
+}
+
+// ---------- "+ Truck arrived": one button, three paths ----------
+function TruckSheet({ incoming, onClose, onPick }: { incoming: Row[]; onClose: () => void; onPick: (k: "booked" | "unbooked" | "other", dealId?: string) => void }) {
+  const t = useT();
+  return (
+    <Sheet title={t("Truck arrived", "ट्रक आया")} onClose={onClose}>
+      <h3 className="sub">{t("Against a booked deal", "बुक किए सौदे का")}</h3>
+      {incoming.length === 0 ? <Empty>{t("Nothing booked is on the way.", "कोई बुक माल रास्ते में नहीं है।")}</Empty> : (
+        <ul className="rows">{incoming.map((d) => (
+          <li key={d.deal_id} className={Number(d.days_late) > 0 ? "edge-bad" : "edge-info"}>
+            <button type="button" className="row" onClick={() => onPick("booked", d.deal_id)}>
+              <span className="row-main"><strong>{d.supplier}</strong>
+                <span className="muted small">{d.deal_no}{d.po_no ? ` · ${d.po_no}` : ""} · {t("still to come", "आना बाकी")} {kg(d.remaining_kg)} · {t("expected", "अपेक्षित")} {day(d.expected_date)}</span></span>
+            </button></li>))}
+        </ul>)}
+      <h3 className="sub">{t("Not booked", "बिना बुकिंग")}</h3>
+      <ul className="rows"><li className="edge-wait"><button type="button" className="row" onClick={() => onPick("unbooked")}>
+        <span className="row-main"><strong>{t("A supplier's truck nobody booked", "ऐसा ट्रक जिसका सौदा बुक नहीं था")}</strong>
+          <span className="muted small">{t("Recorded and tallied in full. The rate comes from the invoice until Himanshu confirms it.", "पूरा दर्ज और हिसाब में। हिमांशु जी के पक्का करने तक रेट बिल से।")}</span></span>
+      </button></li></ul>
+      <h3 className="sub">{t("Not a purchase", "खरीद नहीं")}</h3>
+      <ul className="rows"><li><button type="button" className="row" onClick={() => onPick("other")}>
+        <span className="row-main"><strong>{t("From the Mumbai branch, an import seller or a job worker", "मुंबई ब्रांच, इम्पोर्ट विक्रेता या जॉब वर्कर से")}</strong>
+          <span className="muted small">{t("Delivery note, bill of entry or challan; no money.", "डिलीवरी नोट, बिल ऑफ एंट्री या चालान; पैसा नहीं।")}</span></span>
+      </button></li></ul>
+    </Sheet>
+  );
+}
+
+// ---------- a domestic truck that came without a booking: recorded and tallied like any purchase ----------
+type UL = { grade: string; slipGross: string; slipBags: string; billed: string; rate: string; gross: string; bags: string; bagKg: string };
+const emptyUL = (): UL => ({ grade: "", slipGross: "", slipBags: "", billed: "", rate: "", gross: "", bags: "", bagKg: "" });
+
+function UnbookedSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (lotId: string) => void }) {
+  const t = useT(); const lang = useLang(); const me = useMe();
+  const m = useLoad(() => Promise.all([
+    q(sb.from("suppliers").select("id,name").eq("active", true).eq("supplier_type", "domestic").order("name")),
+    q(sb.from("grades").select("*").eq("active", true).order("sort")),
+  ]), []);
+  const [sup, setSup] = useState("");
+  const [newSup, setNewSup] = useState({ name: "", gstin: "", state: "" });
+  const [invNo, setInvNo] = useState(""); const [invDate, setInvDate] = useState(today());
+  const [gst, setGst] = useState("18"); const [rec, setRec] = useState(today()); const [veh, setVeh] = useState("");
+  const [lines, setLines] = useState<UL[]>([emptyUL()]);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const s = useSave();
+  if (!m.data) return m.error ? <Sheet title="…" onClose={onClose}><Err error={m.error} /></Sheet> : null;
+  const [sups, grades] = m.data;
+  const set = (i: number, k: keyof UL, v: string) => setLines(lines.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
+  const n = (v: string) => (isNum(v) ? Number(v) : 0);
+  const save = () => s.run(async () => {
+    if (!sup) throw new Error(t("Choose the supplier.", "सप्लायर चुनें।"));
+    if (sup === "new" && !newSup.name.trim()) throw new Error(t("Enter the supplier's name.", "सप्लायर का नाम डालें।"));
+    if (sup === "new" && newSup.gstin.trim() && !gstinOk(newSup.gstin))
+      throw new Error(t("The GSTIN does not look right (15 characters, e.g. 27AAMCR8303C1ZF). Check it on the invoice.", "GSTIN सही नहीं लग रहा (15 अक्षर, जैसे 27AAMCR8303C1ZF)। बिल पर जाँचें।"));
+    if (!invNo.trim()) throw new Error(t("Enter the invoice number.", "बिल नंबर डालें।"));
+    const used = lines.filter((x) => x.grade || x.billed || x.gross);
+    if (!used.length) throw new Error(t("Enter the weights for at least one grade.", "कम से कम एक ग्रेड का वज़न डालें।"));
+    for (const x of used) {
+      if (!x.grade || !isNum(x.billed) || !isNum(x.rate) || Number(x.rate) <= 0)
+        throw new Error(t("Each grade needs the billed weight and rate from the invoice.", "हर ग्रेड का बिल वाला वज़न और रेट डालें।"));
+      if (!isNum(x.gross)) throw new Error(t("Each grade needs our weighbridge gross weight.", "हर ग्रेड का हमारा कुल वज़न डालें।"));
+    }
+    if (photo && refusal(photo)) throw new Error(t("The invoice must be a photo or PDF under 20 MB.", "बिल 20 MB से छोटी फोटो या PDF हो।"));
+    const lotId = await rpc<string>("create_unbooked_lot", { p: {
+      supplier_id: sup === "new" ? null : sup, supplier_name: newSup.name, supplier_gstin: normGstin(newSup.gstin), supplier_state: newSup.state,
+      gst_rate: gst, invoice_no: invNo, invoice_date: invDate, received_on: rec, vehicle_no: veh,
+      lines: used.map((x) => ({ grade: x.grade, billed_net_kg: x.billed, billed_rate: x.rate, slip_gross_kg: x.slipGross, slip_bag_kg: x.slipBags,
+                                factory_gross_kg: x.gross, bag_count: x.bags, factory_bag_kg: x.bagKg || "0" })) } });
+    if (photo) {
+      const lot = await q<Row>(sb.from("lots").select("deal_id, deals(deal_no)").eq("id", lotId).single());
+      await enqueue({ id: lot.deal_id, deal_no: lot.deals.deal_no }, "TAX_INVOICE", [photo], me.id, lotId);
+    }
+    onClose(); onSaved(lotId);
+  });
+  return (
+    <Sheet title={t("Truck arrived without a booking", "बिना बुकिंग ट्रक आया")} onClose={onClose}
+      footer={<SaveBar busy={s.busy} error={s.error} onSave={save} label={t("Save arrival", "माल आया सेव करें")} />}>
+      <p className="muted small">{t("Everything is recorded as for a booked deal. The rate is taken from the invoice; Himanshu is asked to confirm it.", "सब कुछ बुक सौदे की तरह दर्ज होगा। रेट बिल से लिया जाएगा; हिमांशु जी से पक्का करवाया जाएगा।")}</p>
+      <Field label={t("Supplier", "सप्लायर")}>
+        <Select value={sup} onChange={setSup} placeholder="—" options={[...sups.map((x) => ({ value: x.id, label: x.name })), { value: "new", label: `+ ${t("New supplier", "नया सप्लायर")}` }]} /></Field>
+      {sup === "new" && (
+        <div className="grid2">
+          <Field label={t("Supplier name", "सप्लायर का नाम")} wide><TextIn value={newSup.name} onValue={(v) => setNewSup({ ...newSup, name: v })} /></Field>
+          <Field label="GSTIN"><TextIn value={newSup.gstin} onValue={(v) => setNewSup({ ...newSup, gstin: v })} /></Field>
+          <Field label={t("State", "राज्य")}><TextIn value={newSup.state} onValue={(v) => setNewSup({ ...newSup, state: v })} /></Field>
+        </div>)}
+      <div className="grid2">
+        <Field label={t("Supplier invoice number", "सप्लायर का बिल नंबर")}><TextIn value={invNo} onValue={setInvNo} /></Field>
+        <Field label={t("Invoice date", "बिल की तारीख")}><DateIn value={invDate} onChange={setInvDate} futureOnly /></Field>
+        <Field label="GST"><NumIn value={gst} onChange={setGst} suffix="%" /></Field>
+        <Field label={t("Received on", "माल आने की तारीख")}><DateIn value={rec} onChange={setRec} /></Field>
+        <Field label={t("Vehicle number", "गाड़ी नंबर")}><TextIn value={veh} onValue={setVeh} autoCapitalize="characters" /></Field>
+      </div>
+      <label className={`upload ${photo ? "done" : ""}`}>
+        {photo ? `✓ ${t("Invoice photo added", "बिल की फोटो जुड़ी")} · ${photo.name}` : `📷 ${t("Photo of the supplier invoice", "सप्लायर बिल की फोटो")}`}
+        <input type="file" accept="image/*,application/pdf" hidden onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
+      </label>
+      {lines.map((x, i) => {
+        const net = n(x.gross) - n(x.bagKg); const diff = n(x.billed) - net; const ready = isNum(x.billed) && isNum(x.gross);
+        return (
+          <div className="card grade-card" key={i}>
+            <Field label={t("Grade", "ग्रेड")}><Select value={x.grade} onChange={(v) => set(i, "grade", v)} placeholder="—" options={grades.map((g) => ({ value: g.code, label: nm(lang, g) }))} /></Field>
+            <p className="label-row">{t("As per supplier (packing slip and invoice)", "सप्लायर के अनुसार (पैकिंग स्लिप और बिल)")}</p>
+            <div className="grid2">
+              <Field label={t("Slip gross", "स्लिप कुल")}><NumIn value={x.slipGross} onChange={(v) => set(i, "slipGross", v)} suffix="kg" /></Field>
+              <Field label={t("Slip bags", "स्लिप बोरी")}><NumIn value={x.slipBags} onChange={(v) => set(i, "slipBags", v)} suffix="kg" /></Field>
+              <Field label={t("Billed net", "बिल नेट")}><NumIn value={x.billed} onChange={(v) => set(i, "billed", v)} suffix="kg" /></Field>
+              <Field label={t("Rate on invoice", "बिल पर रेट")}><NumIn value={x.rate} onChange={(v) => set(i, "rate", v)} suffix="₹/kg" /></Field>
+            </div>
+            <p className="label-row">{t("Our weighbridge", "हमारा कांटा")}</p>
+            <div className="grid2">
+              <Field label={t("Gross on our weighbridge", "हमारे कांटे पर कुल")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
+              <Field label={t("Number of bags", "बोरी गिनती")}><NumIn value={x.bags} onChange={(v) => set(i, "bags", v)} /></Field>
+              <Field label={t("Bag weight", "बोरी वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
+            </div>
+            {ready && <p className={`result ${diff > 0.0005 ? "bad" : "okline"}`}>{t("Our net", "हमारा नेट")} {kg(net)} · {diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}</p>}
+          </div>
+        );
+      })}
+      <Btn small onClick={() => setLines([...lines, emptyUL()])}>+ {t("Another grade", "और ग्रेड")}</Btn>
     </Sheet>
   );
 }

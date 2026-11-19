@@ -5,9 +5,10 @@ import { DateIn, Btn, Chip, Empty, Err, Field, KV, Loading, NumIn, Section, Sele
 import { DealDocs, StageChip, useSave } from "../common";
 import { TermsLine } from "./Lots";
 
-export default function Deal({ id }: { id: string }) {
+export default function Deal({ id, openArrival }: { id: string; openArrival?: boolean }) {
   const t = useT(); const lang = useLang(); const can = useCan();
-  const [arrival, setArrival] = useState(false);
+  const [arrival, setArrival] = useState(!!openArrival);
+  const [rates, setRates] = useState<Record<string, string> | null>(null);
   const [terms, setTerms] = useState(false);
   const s = useSave();
   const { data, error, reload } = useLoad(() => Promise.all([
@@ -28,6 +29,34 @@ export default function Deal({ id }: { id: string }) {
         {deal.cancelled ? <Chip tone="bad">{t("Cancelled", "रद्द")}</Chip> : incoming ? <Chip tone="info">{t("On the way", "रास्ते में")}</Chip> : <Chip tone="ok">{t("All received", "सब आ गया")}</Chip>}
       </div>
       <Err error={s.error} />
+      {deal.unbooked && (
+        <div className={deal.rate_confirmed_at ? "notice ok-notice" : "warnbox"}>
+          <strong>{t("Arrived without a booking.", "बिना बुकिंग के आया।")}</strong>{" "}
+          {deal.rate_confirmed_at
+            ? `${t("Rate confirmed on", "रेट पक्का किया")} ${day(deal.rate_confirmed_at)}.`
+            : t("The rate is taken from the supplier's invoice until Himanshu confirms it.", "हिमांशु जी के पक्का करने तक रेट सप्लायर के बिल से लिया गया है।")}
+          {!deal.rate_confirmed_at && can("rate_confirm") && !rates &&
+            <div className="actions"><Btn kind="primary" onClick={() => setRates(Object.fromEntries(lines.map((l) => [l.grade, String(l.rate_per_kg)])))}>{t("Confirm the rate", "रेट पक्का करें")}</Btn></div>}
+          {rates && (
+            <div className="stack">
+              <p className="small">{t("Change a rate only if the phone deal was different. Debit notes use the confirmed rate.", "रेट तभी बदलें जब फोन पर अलग तय हुआ हो। डेबिट नोट पक्के रेट से बनेंगे।")}</p>
+              {lines.map((l) => (
+                <Field key={l.grade} label={`${nm(lang, l.grades) || l.grade} · ${t("agreed rate", "तय रेट")}`}>
+                  <NumIn value={rates[l.grade] ?? ""} onChange={(v) => setRates({ ...rates, [l.grade]: v })} suffix="₹/kg" /></Field>))}
+              <div className="actions">
+                <Btn kind="primary" disabled={s.busy} onClick={() => s.run(async () => {
+                  const changed = Object.fromEntries(lines.filter((l) => Number(rates[l.grade]) !== Number(l.rate_per_kg)).map((l) => [l.grade, Number(rates[l.grade])]));
+                  if (Object.values(changed).some((v) => !(Number(v) > 0))) throw new Error(t("Enter each agreed rate.", "हर तय रेट डालें।"));
+                  await rpc("confirm_deal_rate", { p_deal: id, p_rates: Object.keys(changed).length ? changed : null });
+                }, () => { setRates(null); reload(); })}>{t("Confirm", "पक्का करें")}</Btn>
+                <Btn onClick={() => setRates(null)}>{t("Cancel", "रद्द करें")}</Btn>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {!deal.cancelled && incoming && Number(incoming.days_late) > 0 &&
+        <p className="error">{t("Late by", "देरी")} {incoming.days_late} {t("days: expected", "दिन: आना था")} {day(deal.expected_date)}.</p>}
       {!deal.cancelled && incoming && can("inward_edit") &&
         <Btn kind="primary" className="block big" onClick={() => setArrival(true)}>+ {t("Material arrived: record it", "माल आया: दर्ज करें")}</Btn>}
 

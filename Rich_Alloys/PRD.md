@@ -2,7 +2,7 @@
 
 Owner: Depesh Vyas (V-BOG) · Client: Rich Alloys India Pvt Ltd (Himanshu Jain) · Updated 18 Nov 2026
 Status: v2.2 live on Supabase project `rqxjjrpngybglmhzlmtj` (Mumbai) since 19 Nov 2026, with Ogo test data, served at
-v-bog.com/Rich_Alloys/deploy/. Section 7a items 1–5 built 19 Nov (stock opens 1 Nov 2026); items 6–7 partly. Section 7b (supplier types) built 20 Nov. Section 7c (Tinu's stock statement) built 20 Nov. Includes staff management and upload reliability from the interim build (decisions 25–28).
+v-bog.com/Rich_Alloys/deploy/. Section 7a items 1–5 built 19 Nov (stock opens 1 Nov 2026); items 6–7 partly. Section 7b (supplier types) built 20 Nov. Section 7c (Tinu's stock statement) built 20 Nov. Unbooked trucks and late bookings built 20 Nov (5a). Includes staff management and upload reliability from the interim build (decisions 25–28).
 
 This is the single document a new chat or developer follows to continue the build. It overrides the older
 project brief where they differ (section 3 lists what changed).
@@ -80,6 +80,7 @@ the factory Tally, the office Tally, or both.
 | 27 | Uploads never lose a file silently: saved on the phone, progress shown, retried when the network returns. This includes the invoice photo in the arrival form | Depesh, 18 Nov |
 | 29 | An opening entry starts an item's stock: movements dated before it are already inside it and stop counting. Stock opened 1 Nov 2026 from Tinu's 31 Oct closings, so the Ogo lot of 25 Oct is not counted twice | Claude, 19 Nov, from 7a item 4 |
 | 30 | **Every source that brings material in is a supplier**: domestic sellers, the Mumbai branch, import sellers, job workers. Each delivery is a lot with weights, sorting, rejections and documents. The money steps apply only where money is owed for the material (section 7b). (Numbered 25 in Depesh's draft; renumbered because 25–29 were already in use.) | Depesh, 20 Nov |
+| 31 | A truck that arrives without a booking is recorded and tallied in full (lot, tax invoice, debit notes, payable, cash plan, ledger, both Tally queues, stock). Its deal is marked unbooked; the rate comes from the invoice until someone with `rate_confirm` (owner, vbog_admin) confirms or corrects it | Depesh, 20 Nov |
 | 28 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 3a. Source of truth
@@ -140,6 +141,21 @@ because lots are mixed in melting).
    **GSTR-2B (optional, off by default; decision 20)**: Niti downloads the month's 2B JSON from the GST portal and uploads it. Each B2B invoice is matched to our purchase invoice by supplier GSTIN + invoice number (spaces, slashes and dashes ignored); matches tick "seen in 2B". Four lists: amount differs, our invoices not in 2B (chase before paying the balance), in 2B but not in the portal (other purchases or a missed arrival), supplier credit/debit notes (our DNs should come back as their credit notes). Re-uploading a month replaces it. A manual "seen in 2B" remains for invoice numbers the supplier typed differently.
 10. **Production**: date, items consumed and kg, items produced and kg. Stock per item per month: opening, in, out, closing, compared with the Tally closing typed in.
 11. **Cash needed** (Payables, first tab): overdue, next 7 days, weekly bars for 4/8/12 weeks, every amount listed with supplier, lot or deal, tranche and due date.
+
+### 5a. Booking a supply, and trucks that come without one (built 20 Nov, `0011_unbooked_arrivals.sql`)
+
+- **Booking** (step 1 above): Himanshu books on Lots > "+ New deal": supplier, grades, quantity, agreed rate, PO,
+  expected arrival, GST, terms. It shows under Lots > On the way with kg still to come, and in the cash plan.
+- **Late**: a booking past its expected date with material still to come shows "Late N days" on Lots and on the deal,
+  and appears on Home as "Booked supplies that are late" for whoever can book deals.
+- **"+ Truck arrived"** (Lots, for anyone with `inward_edit`) asks one question: which booked deal (opens its arrival form),
+  not booked, or from the branch / an import seller / a job worker (section 7b).
+- **Not booked**: one form (supplier, or a new one with GSTIN; invoice number, date, GST; per grade the supplier's slip
+  and billed weights and the invoice rate, our weighbridge; invoice photo). It creates an unbooked deal from the invoice
+  and the lot, which then goes through everything a booked truck does. The lot shows "Not booked: rate to confirm".
+- **Rate confirmation**: Himanshu's Home lists "Trucks that came without a booking: confirm the rate". On the deal he
+  confirms it, or corrects it to the phone rate first; debit notes then use his rate and the invoice rate shows as
+  different from the deal on the lot. A rate cannot change under an approved debit note.
 
 Lot stages: Received → Sorting → DN to approve → Tally entry pending → Payment pending → Settled.
 
@@ -393,6 +409,10 @@ Recommended later: serve only `deploy/`, on its own subdomain.
   5.000 kg shown live), the photo went up through the queue and is linked to the new lot; the Tally queue's "View
   invoice photo" opened it. 18 Nov (v2.0, same code paths): upload survived a dropped network; Admin > Staff created,
   used and switched off a gate login. Live then reset to the Ogo-only state.
+- `tests/checks_booking.sql`: an unbooked truck from a new supplier is a full purchase (tax invoice at weights x invoice
+  rate + GST, payable, both Tally queues, stock); Tinu is not asked to confirm and cannot; Himanshu is; his corrected rate
+  drives the weight-short DN; no rate change under an approved DN; a booking 3 days past its date is late and on the
+  to-do list. Proven to fail when the rate permission is removed.
 - `tests/checks_7a.sql` also checks Tinu's statement arithmetic for every item; `checks_7b.sql` checks that a branch
   delivery is a Recipt Note and job work sits in its own columns, not in PURCHASE.
 - `tests/checks_7b.sql`: a branch delivery (Tinu's delivery note 37, 2,505 kg) on a delivery note with no money, its
@@ -446,6 +466,7 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 | 21 | What are the 2,501.40 kg April gap and the 29.50 kg April opening difference? | Stock history |
 | 26 | Document checklist per supplier type (built as a proposal, see 7b): is it right for the branch, imports and job work? | Documents |
 | 27 | Material sent out to the Mumbai branch and to job workers is kept as a stock movement naming the supplier (7b listed only sales, item-to-item and sales returns). Confirm | Stock |
+| 30 | An invoice rate above the agreed rate shows on the lot but raises no debit note (true for booked deals too). Should the portal raise a rate debit note for it? | DNs |
 | 24 | Plastic scrap: the stock statement shows 0 at 31 Oct (portal agrees, item added); the October production report shows −29,020 kg. Confirm the report figure is an error | Stock opening |
 | 28 | Copper scrap at 31 Oct: 105,380.75 kg (stock statement) or 105,380.66 kg (stock ledger, production report)? Which does Tally show? The portal opened at 105,380.66 | Stock opening |
 | 29 | The second ingot item: HSN 74031200 (stock statement, production report heading) or 74031900 (stock sheet)? | Stock masters |

@@ -91,7 +91,9 @@ with sync_playwright() as pw:
     c, p = ctx(b); login(p, "niti@t"); step("niti signed in")
     p.screenshot(path="08_niti_home.png", full_page=True)
     p.goto(URL + "#/payables/payments")
-    p.get_by_role("button", name="Matches bank statement").first.click(); p.wait_for_selector("text=Reconciled, not yet in office Tally")
+    p.get_by_role("button", name="Matches bank statement").first.click()
+    # the section headings are always shown; wait until the waiting list is empty, i.e. the reconcile has saved
+    p.wait_for_selector("text=Waiting for reconciliation (0)")
     p.goto(URL + "#/tally/office"); p.wait_for_selector("text=To enter")
     print("Office queue:", p.locator(".rows").last.inner_text().count("₹"), "items")
     p.get_by_role("button", name=re.compile("^Payment.*UTR123")).click(); p.wait_for_selector(".voucher .kv")

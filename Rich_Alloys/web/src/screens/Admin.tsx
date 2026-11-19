@@ -18,6 +18,7 @@ const ACTIONS: [string, string][] = [
   ["ledger_confirm", "Confirm supplier ledgers"], ["gst_2b", "GSTR-2B upload (optional, off by default)"], ["tally_factory", "Tick factory Tally"], ["tally_office", "Tick office Tally"],
   ["production_edit", "Enter production"], ["stock_edit", "Other stock entries, Tally closing"],
   ["staff_manage", "Add staff, reset passwords, switch logins off"],
+  ["rate_confirm", "Confirm the rate of trucks that came without a booking"],
 ];
 
 export default function Admin({ tab }: { tab?: string }) {
