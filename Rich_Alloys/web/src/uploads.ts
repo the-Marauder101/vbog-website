@@ -54,9 +54,9 @@ async function putFile(path: string, blob: Blob, type: string, onProgress: (p: n
 }
 
 /** Write the document row for a stored file. A row already written for this path counts as done. */
-async function recordDocument(d: { dealId: string; docType: string; path: string; userId: string }) {
+async function recordDocument(d: { dealId: string; docType: string; path: string; userId: string; lotId?: string | null }) {
   const { error } = await sb.from("documents")
-    .insert({ deal_id: d.dealId, doc_type: d.docType, storage_path: d.path, uploaded_by: d.userId });
+    .insert({ deal_id: d.dealId, lot_id: d.lotId ?? null, doc_type: d.docType, storage_path: d.path, uploaded_by: d.userId });
   if (!error || error.code === "23505") return;      // 23505: this path is already recorded
   throw new UploadError(error.message, !error.code); // no code = never reached the database
 }
@@ -67,7 +67,7 @@ const BACKOFF = [3, 10, 30, 60];               // seconds between automatic retr
 
 export type UpState = "uploading" | "waiting" | "failed";
 export type UpItem = {
-  id: string; userId: string; dealId: string; dealNo: string; docType: string;
+  id: string; userId: string; dealId: string; dealNo: string; docType: string; lotId?: string | null;
   name: string; type: string; size: number; path: string; blob: Blob; addedAt: number;
   stage: "file" | "record";           // file = not yet in storage; record = stored, row not yet written
   state: UpState; progress: number; error?: string; attempts: number; retryAt?: number;
@@ -134,7 +134,15 @@ function guessType(f: File) {
 }
 
 /** Queue files for one checklist item. Returns the files refused on the spot (never queued). */
-export async function enqueue(deal: { id: string; deal_no: string }, docType: string, files: File[], uid: string): Promise<Refused[]> {
+/** Would this file be refused on the spot? (Photos are shrunk first, so only non-photo size counts.) */
+export function refusal(f: File): Refused["reason"] | null {
+  const type = guessType(f);
+  if (!(type.startsWith("image/") || type === "application/pdf")) return "badType";
+  if (!type.startsWith("image/") && f.size > MAX_BYTES) return "tooBig";
+  return null;
+}
+
+export async function enqueue(deal: { id: string; deal_no: string }, docType: string, files: File[], uid: string, lotId?: string | null): Promise<Refused[]> {
   const refused: Refused[] = [];
   for (const f0 of files) {
     const f = await shrinkImage(f0);
@@ -144,7 +152,7 @@ export async function enqueue(deal: { id: string; deal_no: string }, docType: st
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const item: UpItem = {
-      id, userId: uid, dealId: deal.id, dealNo: deal.deal_no, docType, name: f.name, type, size: f.size,
+      id, userId: uid, dealId: deal.id, dealNo: deal.deal_no, docType, lotId: lotId ?? null, name: f.name, type, size: f.size,
       path: `${deal.deal_no}/${docType}/${Date.now()}-${safe}`, blob: f, addedAt: Date.now(),
       stage: "file", state: "waiting", progress: 0, attempts: 0,
     };
@@ -230,7 +238,7 @@ async function attempt(i: UpItem) {
       patch(i.id, { stage: "record", progress: 1 });
       await save(get(i.id)!);
     }
-    await recordDocument({ dealId: i.dealId, docType: i.docType, path: i.path, userId: i.userId });
+    await recordDocument({ dealId: i.dealId, docType: i.docType, path: i.path, userId: i.userId, lotId: i.lotId });
     items = items.filter((x) => x.id !== i.id);
     emit();
     await forget(i.id);

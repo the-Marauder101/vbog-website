@@ -96,6 +96,22 @@ begin
   perform approve_dn(v_lot2, 'weight_short', current_date, true);
   select total into n from notes where lot_id = v_lot2; assert n = 5900, 'weight short DN on new lot';
 
+  -- Tally ticks remember the amount; a change afterwards asks for a correction in Tally
+  select count(*) into n from v_tally_queue where state = 'pending' and book = 'factory' and lot_id = v_lot2; assert n = 2, 'invoice and DN waiting for factory Tally';
+  perform mark_tally('note', (select id from notes where lot_id = v_lot2), 'factory', 'DN-9');
+  select count(*) into n from v_tally_changes; assert n = 0, 'fresh tick is clean';
+  perform cancel_note((select id from notes where lot_id = v_lot2), 'test reversal');
+  select count(*) into n from v_tally_queue where state = 'changed' and book = 'factory'; assert n = 1, 'cancelled DN shows as changed after entry';
+  perform clear_tally_change((select mark_id from v_tally_changes limit 1));
+  select count(*) into n from v_tally_changes; assert n = 0, 'cleared once reversed in Tally';
+  perform approve_dn(v_lot2, 'weight_short', current_date, true);
+  select count(*) into n from v_invoice_register where lot_id = v_lot2 and not in_factory and not has_scan; assert n = 1, 'invoice register shows gaps';
+
+  -- TDS recorded with a payment reduces what is owed
+  insert into tds (invoice_id, section, amount) values ((select invoice_id from lots where id = v_lot2), '194Q', 1000);
+  select balance into n from v_payable where invoice_id = (select invoice_id from lots where id = v_lot2);
+  assert n = 1180000.00 - 5900 - 1000, 'TDS reduces the balance';
+
   -- payments: anyone allowed enters, Niti reconciles
   insert into payments (supplier_id, invoice_id, amount, paid_on, status) values (v_sup, v_inv, 100, current_date, 'reconciled') returning id into v_pay;
   select status into t from payments where id = v_pay; assert t = 'entered', 'new payments always wait for reconciliation';
@@ -115,7 +131,25 @@ begin
   assert ok, 'reconciled payment is frozen';
   select confirm_ledger(v_sup, current_date, 0, null) into n;
   select portal_balance into n from ledger_confirmations order by confirmed_at desc limit 1;
-  assert n = 682999.40 + 1180000.00 - 5900 - 120, 'ledger snapshot: Ogo balance + new invoice - its DN - reconciled payment';
+  assert n = 682999.40 + 1180000.00 - 5900 - 1000 - 120, 'ledger snapshot: Ogo balance + new invoice - its DN - TDS - reconciled payment';
+
+  -- GSTR-2B is off by default
+  ok := false; begin perform import_gstr2b('{"period":"2026-10","lines":[{"supplier_gstin":"X","doc_no":"1"}]}'::jsonb);
+  exception when insufficient_privilege then ok := true; end;
+  assert ok, '2B upload is off until switched on';
+  -- switched on for HO accounts by the owner: matches by GSTIN + invoice number, ignoring punctuation
+  perform set_config('request.jwt.claim.sub', own::text, true);
+  insert into permissions (action, role) values ('gst_2b', 'ho_accounts');
+  perform set_config('request.jwt.claim.sub', hoac::text, true);
+  select import_gstr2b(jsonb_build_object('period','2026-10','file_name','test.json','lines', jsonb_build_array(
+    jsonb_build_object('supplier_gstin','36aaeco5492p1zo','doc_type','invoice','doc_no','OGO-ES/15','doc_date','2026-10-23','taxable',12720983.35,'tax',2289777,'total',15010760.35),
+    jsonb_build_object('supplier_gstin','27AAAAA0000A1Z5','supplier_name','Power company','doc_type','invoice','doc_no','E-1','total',5000)))) into t;
+  select in_2b and gstr2b_period = '2026-10' into ok from invoices where id = v_inv; assert ok, '2B match ticks the invoice';
+  select count(*) into n from v_gstr2b_recon where status = 'not_in_portal'; assert n = 1, 'unmatched 2B line listed';
+  select difference into n from v_gstr2b_recon where status = 'matched' and invoice_id = v_inv; assert n = 0, 'amounts agree';
+  select import_gstr2b(jsonb_build_object('period','2026-10','lines', jsonb_build_array(
+    jsonb_build_object('supplier_gstin','27AAAAA0000A1Z5','doc_no','E-1','total',5000)))) into t;
+  select in_2b into ok from invoices where id = v_inv; assert not ok, 're-upload of a month replaces its ticks';
 
   -- admin: owner adds a sorting category
   perform set_config('request.jwt.claim.sub', own::text, true);
@@ -124,7 +158,7 @@ begin
   ok := false; begin update profiles set role = 'gate' where id = own; exception when others then ok := true; end;
   assert ok, 'owner cannot demote themselves';
 
-  -- staff management and upload retries (0006)
+  -- staff management and upload retries (0007)
   assert can('staff_manage'), 'owner manages staff';
   perform set_config('request.jwt.claim.sub', hoac::text, true);
   assert not can('staff_manage'), 'HO accounts cannot manage staff';

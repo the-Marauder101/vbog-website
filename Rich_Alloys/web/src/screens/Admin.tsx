@@ -15,7 +15,7 @@ const ACTIONS: [string, string][] = [
   ["inward_edit", "Record arrivals and returns"], ["sorting_edit", "Enter sorting"], ["lot_close", "Close or reopen sorting"],
   ["doc_verify", "Verify documents"], ["doc_approve", "Approve documents"], ["dn_approve", "Approve debit notes"],
   ["payment_enter", "Record payments"], ["payment_reconcile", "Reconcile payments"], ["tax_edit", "TDS and GST status"],
-  ["ledger_confirm", "Confirm supplier ledgers"], ["tally_factory", "Tick factory Tally"], ["tally_office", "Tick office Tally"],
+  ["ledger_confirm", "Confirm supplier ledgers"], ["gst_2b", "GSTR-2B upload (optional, off by default)"], ["tally_factory", "Tick factory Tally"], ["tally_office", "Tick office Tally"],
   ["production_edit", "Enter production"], ["stock_edit", "Other stock entries, Tally closing"],
   ["staff_manage", "Add staff, reset passwords, switch logins off"],
 ];

@@ -1,5 +1,6 @@
+import { enqueue, refusal } from "../uploads";
 import { useMemo, useState } from "react";
-import { day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
+import { day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "../lib";
 import { Btn, Chip, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { DealDocs, StageChip, useSave } from "../common";
 import { TermsLine } from "./Lots";
@@ -106,6 +107,8 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
   const [invDate, setInvDate] = useState(today());
   const [printed, setPrinted] = useState("");
   const [complete, setComplete] = useState(true);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const me = useMe();
   const [gl, setGl] = useState<GL[]>(lines.map((l) => ({ grade: l.grade, slipGross: "", slipBags: "", billed: "", rate: String(l.rate_per_kg), gross: "", bags: "", bagKg: "" })));
   const s = useSave();
   const set = (i: number, k: keyof GL, v: string) => setGl(gl.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
@@ -115,6 +118,9 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
   const total = Math.round((taxable + gst) * 100) / 100;
   const save = () => s.run(async () => {
     if (!invNo.trim()) throw new Error(t("Enter the invoice number.", "बिल नंबर डालें।"));
+    if (photo && refusal(photo)) throw new Error(refusal(photo) === "tooBig"
+      ? t("The invoice file is larger than 20 MB. Take a photo instead.", "बिल की फाइल 20 MB से बड़ी है। फोटो लें।")
+      : t("The invoice must be a photo or PDF.", "बिल फोटो या PDF होना चाहिए।"));
     const used = gl.filter((x) => x.billed || x.gross);
     if (!used.length) throw new Error(t("Enter the weights for at least one grade.", "कम से कम एक ग्रेड का वज़न डालें।"));
     for (const x of used) {
@@ -126,6 +132,8 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
       total: printed || null, completes_deal: complete,
       lines: used.map((x) => ({ grade: x.grade, billed_net_kg: x.billed, billed_rate: x.rate, slip_gross_kg: x.slipGross, slip_bag_kg: x.slipBags,
                                 factory_gross_kg: x.gross, bag_count: x.bags, factory_bag_kg: x.bagKg || "0" })) } });
+    // Through the upload queue: saved on the phone, retried until it is up, never dropped silently.
+    if (photo) await enqueue({ id: deal.id, deal_no: deal.deal_no }, "TAX_INVOICE", [photo], me.id, id);
     onClose(); onSaved(id);
   });
   const gName = (code: string) => nm(lang, grades.data?.find((g) => g.code === code)) || code;
@@ -138,6 +146,10 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
         <Field label={t("Supplier invoice number", "सप्लायर का बिल नंबर")}><TextIn value={invNo} onValue={setInvNo} /></Field>
         <Field label={t("Invoice date", "बिल की तारीख")}><input type="date" value={invDate} onChange={(e) => setInvDate(e.target.value)} /></Field>
       </div>
+      <label className={`upload ${photo ? "done" : ""}`}>
+        {photo ? `✓ ${t("Invoice photo added", "बिल की फोटो जुड़ी")} · ${photo.name}` : `📷 ${t("Photo of the supplier invoice", "सप्लायर बिल की फोटो")}`}
+        <input type="file" accept="image/*,application/pdf" hidden onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
+      </label>
       {gl.map((x, i) => {
         const fNet = num(x.gross) - num(x.bagKg); const diff = num(x.billed) - fNet; const ready = isNum(x.billed) && isNum(x.gross);
         return (
