@@ -1,48 +1,39 @@
-# Rich Alloys purchase portal
+# Rich Alloys purchase portal (v2)
 
-V-BOG build for Rich Alloys (Palghar). Read `PRD.md` first: it holds the context, decisions, requirements,
-UI rules, build plan and open questions.
+V-BOG build for Rich Alloys. Read `PRD.md` first: context, decisions, requirements, UI rules, plan, open questions.
 
-## Deploy in six steps
+## Deploy
 
-1. Create a **new, empty** Supabase project.
+**You already ran the v1 setup on your Supabase project (no real data in it):**
+1. SQL editor: run `supabase/reset_v1.sql` once. Login accounts and uploaded files are kept.
 2. SQL editor: paste all of `supabase/setup.sql` and run it once.
-3. Optional demo data: run `supabase/test_data/ogo_po082.sql` (never in production).
-4. Authentication: turn off public sign-ups. Deploy the staff function:
-   `supabase functions deploy staff-admin --project-ref <ref> --no-verify-jwt --use-api`.
-   Create the first admin in Authentication > Users, then run `supabase/add_user.sql` (edit the three values).
-   Add everyone else from the app: **Staff > Add staff**.
-5. Paste the project URL and anon key into `deploy/config.js`. Never the service_role key.
-6. Upload the `deploy/` folder to any static host (a subdomain such as `richalloys.v-bog.com` is best).
+3. Run `supabase/add_user.sql` again for each person (edit the three values each time).
 
-With `config.js` left empty the app runs in demo mode on sample data, so the screens can be shown before Supabase exists.
+**New, empty project:** skip step 1.
 
-## Staff and passwords
+Then:
+4. Optional demo data: `supabase/test_data/ogo_po082.sql` (never in production).
+5. Authentication settings: public sign-ups off.
+6. Put the project URL and anon key in `deploy/config.js` and upload the `deploy/` folder to your host.
+7. Staff function (needs the Supabase CLI and an access token):
+   `supabase functions deploy staff-admin --project-ref <ref> --no-verify-jwt --use-api`
+   Then add everyone else from the app: **Admin > Staff**. `add_user.sql` is only for the first admin.
 
-- The staff list is the `profiles` table (Supabase > Table Editor > profiles): name, login, role, active, created.
-- Passwords cannot be seen by anyone, including V-BOG. Supabase stores only a one-way hash. The app shows a
-  temporary password once when a login is created or reset; if it is lost, reset it from the Staff screen.
-- Staff without email get a short login ID (e.g. `sanjay`) and sign in with just that.
+Passwords cannot be seen by anyone, including V-BOG; a lost one is reset in Admin > Staff and shown once.
+
+Publish only the `deploy/` folder. The rest of this folder (PRD, SQL, test data) holds client details and must not be on the public site.
 
 ## Develop
 
 ```bash
-cd web
-npm install
-npm run dev                                   # keys in public/config.js, or leave empty for demo mode
-npm run build && cp ../deploy/config.js /tmp/ra-config.js && rm -rf ../deploy && cp -r dist ../deploy && cp /tmp/ra-config.js ../deploy/config.js
+cd web && npm install && npm run dev        # keys in web/public/config.js
+npm run build && rm -rf ../deploy && cp -r dist ../deploy
 ```
 
-After editing any file in `supabase/migrations/`, run `./build_setup.sh` to regenerate `supabase/setup.sql`.
-`setup.sql` is for a fresh project; on a project that already has data, run only the new migration.
+After editing `supabase/migrations/`, run `./build_setup.sh`. `setup.sql` is for a fresh project; once real data exists,
+ship changes as a new migration file and run only that.
 
 ## Test
 
-```bash
-tests/run_local.sh        # needs local Postgres 15+ and psql; must print ALL CHECKS PASSED
-```
-
-## Live project
-
-Supabase project `Rich Alloys` (ref `rqxjjrpngybglmhzlmtj`, Mumbai). `deploy/config.js` points at it.
-It holds the Ogo demo deal: delete it before staff start entering real deals. See PRD section 11.
+- `tests/run_local.sh` — database: Ogo figures, cash plan, stock, permissions, payment flow, v1 upgrade. Must print `ALL CHECKS PASSED`.
+- `tests/e2e/` — the real app in a browser as five staff members. See its README.

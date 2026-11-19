@@ -1,12 +1,12 @@
 // Staff management for the Rich Alloys portal. The only code that holds the service key.
-// Called by the app's Staff screen with the signed-in person's token. Every action first
-// checks that the caller is an active owner or vbog_admin, then uses Supabase's admin API.
+// Called by the app's Admin > Staff screen with the signed-in person's token. Every action first
+// checks that the caller is active and their role has 'staff_manage' in the permissions table
+// (owner and vbog_admin by default; editable in Admin > Permissions), then uses Supabase's admin API.
 // Deploy: supabase functions deploy staff-admin --project-ref <ref> --no-verify-jwt
 // (the function checks the token itself; see `caller` below).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
-// Must match can_manage_staff() in migrations/0005_staff.sql and canManageStaff in web/src/types.ts.
-const MANAGERS = ["owner", "vbog_admin"];
+const ACTION = "staff_manage";
 const ROLES = ["owner", "deal_desk", "gate", "factory", "factory_accounts", "ho_accounts", "vbog_admin"];
 const MIN_PASSWORD = 8;
 
@@ -30,7 +30,9 @@ async function caller(req: Request) {
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data.user) throw new Refuse("Not signed in", 401);
   const { data: p } = await admin.from("profiles").select("id, role, active").eq("id", data.user.id).maybeSingle();
-  if (!p?.active || !MANAGERS.includes(p.role)) throw new Refuse("Your role cannot manage staff", 403);
+  if (!p?.active) throw new Refuse("Your role cannot manage staff", 403);
+  const { data: perm } = await admin.from("permissions").select("action").eq("action", ACTION).eq("role", p.role).maybeSingle();
+  if (!perm) throw new Refuse("Your role cannot manage staff", 403);
   return p.id as string;
 }
 
@@ -92,7 +94,7 @@ async function update(me: string, b: Record<string, unknown>) {
   }
   if (b.role !== undefined) {
     patch.role = checkRole(b.role);
-    if (id === me && !MANAGERS.includes(patch.role as string)) throw new Refuse("You cannot remove your own admin access");
+    if (id === me) throw new Refuse("You cannot change your own role");
   }
   ok(await admin.from("profiles").update(patch).eq("id", id));
   await audit(me, id, "staff_updated", patch);

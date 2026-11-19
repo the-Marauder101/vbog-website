@@ -1,441 +1,276 @@
-# Rich Alloys Purchase Portal: product requirements
+# Rich Alloys Purchase Portal: product requirements (v2)
 
-Owner: Depesh Vyas (V-BOG) · Client: Rich Alloys India Pvt Ltd (Himanshu Jain) · Written 16 Nov 2026 · Status: slice 1 built; schema live on Supabase project `rqxjjrpngybglmhzlmtj` (Mumbai) since 18 Nov 2026, app not yet hosted
+Owner: Depesh Vyas (V-BOG) · Client: Rich Alloys India Pvt Ltd (Himanshu Jain) · Updated 18 Nov 2026
+Status: v2 live on Supabase project `rqxjjrpngybglmhzlmtj` (Mumbai) since 18 Nov 2026, with Ogo test data; served at
+v-bog.com/Rich_Alloys/deploy/. Merged with the interim build's staff management and upload reliability (sections 3, 8, 9).
 
-This is the single document any new chat or developer follows to continue the build. It replaces the
-"Google Sheets first" direction in the older project brief (see section 3).
+This is the single document a new chat or developer follows to continue the build. It overrides the older
+project brief where they differ (section 3 lists what changed).
 
 ## 1. How to use this document
 
-Order of truth when sources disagree:
+Order of truth: Depesh's latest messages → this PRD → `Rich_Alloys_VBOG_Project_Brief_for_Claude (1).md` →
+source documents (PO, invoice bundle, DNs 114–116, notebook photos, call transcripts, Proposal and Agreement).
 
-1. Depesh's latest messages
-2. This PRD
-3. `Rich_Alloys_VBOG_Project_Brief_for_Claude (1).md` (ignore any older .docx brief)
-4. Source documents: PO, invoice bundle, DNs 114–116, notebook photos, call transcripts, the Proposal and Agreement
-
-Working rules for anyone continuing:
-
+Working rules:
 - Direct, opinionated answers. Recommend, don't list options.
-- Never invent weights, rates or amounts. Use the documents or ask.
-- Tally is the book of record. The portal calculates, approves and exports; it reconciles to Tally.
-- Purchase side only, one site (Palghar melting unit + Mumbai office). Flag scope creep immediately.
-- When a new fact contradicts this PRD, say so and update the PRD in the same change.
-- Every change must keep `tests/run_local.sh` printing `ALL CHECKS PASSED`.
-- Client team communication is often in Hindi; drafts for them in simple Hindi or Hinglish when asked.
-- Calls with Himanshu are on Fathom in Hindi; only transcripts can be read, and English transcripts of both calls are in Project files.
+- Never invent weights, rates or amounts. Use the documents or ask. Tax sections and rates are entered by people, never assumed.
+- Tally is the book of record. There are two Tallys (section 2); every figure reconciles to the right one.
+- Flag scope creep immediately. When a new fact contradicts this PRD, say so and update the PRD in the same change.
+- Every change keeps `tests/run_local.sh` printing `ALL CHECKS PASSED`; UI changes keep `tests/e2e/run.py` passing.
+- Pricing is not part of solution discussions (Depesh's instruction).
+- Fathom has the Himanshu calls in Hindi; only transcripts can be read. Transcripts of all calls are in Project files.
 
-## 2. The business and the problem
+## 2. The business
 
-**V-BOG** (Vyas Business Operations Group, v-bog.com) implements operations for founders; it does not hand over
-decks. Engagement model: audit, game plan, implementation (60–90 days), optional scaling partnership.
-Principles told to clients: fix one or two systems at a time; everything must show in profit or revenue and
-survive the next scale level. Sprint pod: Depesh, Sahil, Sarika.
+**V-BOG** (v-bog.com) implements operations for founders. Sprint pod: Depesh, Sahil, Sarika.
 
-**Rich Alloys India Private Limited** (GSTIN 27AAMCR8303C1ZF; Plot 33/34/35, Aamgaon Industrial Estate,
-Talasari–Sanjan Road, Palghar, Maharashtra 401606). About two years old. Buys copper scrap (domestic and
-imports), sorts into 6–7 grades (OC, Lal, others), melts into bars and squares, sells to large buyers (Adani,
-Hindalco, Birla Copper, Vedanta Sterlite, Precision Wire). Turnover about ₹200 cr, margin about 1%: a 1%
-loss is the whole margin. Cash-flow-driven; uses LCs and bank discounting. Theft risk is high.
+**Rich Alloys India Private Limited**, GSTIN 27AAMCR8303C1ZF, Plot 33/34/35 Aamgaon Industrial Estate,
+Talasari–Sanjan Road, Palghar 401606. Buys copper scrap from ~25 domestic suppliers (and imports), sorts it,
+melts it into ingots (plus gross/slag and other by-products), sells to large buyers. Turnover ~₹200 cr at ~1% margin.
 
-**People in the purchase flow**
+**People**
 
-| Person | Where | Role today | Portal role |
+| Person | Where | What they do | Portal role |
 | --- | --- | --- | --- |
-| Himanshu Jain | Founder | Negotiates every deal by phone; holds payables and cash in his head | `owner` |
-| Deal-book owner (unconfirmed) | — | Nominally keeps the deal book | `deal_desk` |
-| Watchman | Factory gate | Truck, seal, driver photos | `gate` |
-| Sanjay | Factory | Inward, weighing, sorting oversight, weight and rejection report. Already overloaded | `factory` |
-| Sorting lead (unnamed) | Factory | Grades material, reports bad material to Sanjay | `factory` |
-| Return handler (unnamed) | Factory | Takes rejected material to the transporter | `factory` |
-| Tinu Anand | Factory accountant | Billing; raises the debit notes (in Tally format) | `factory_accounts` |
-| Niti | Mumbai office | Tally entry, reconciliation, double-payment checks | `ho_accounts` |
+| Himanshu Jain | Founder | Books every deal by phone; pays big copper suppliers himself, net of TDS; plans cash | `owner` |
+| Tinu Anand | Palghar factory | Factory accountant: inward, stock, production, consumption, dispatch, debit notes, in **factory Tally (Silver)**; keeps his own Excel mirroring it; scans and emails invoices to Niti; works on a desktop PC | `factory_accounts` |
+| Niti Chopra | Mumbai office | Accounts in **office Tally (cloud)**: purchase/sale invoices, DN/CN, TDS, GST working, supplier ledger matching, small payments; checks bank statement morning and evening | `ho_accounts` |
+| Sanjay | Factory | Supervisor: weighing, sorting oversight, rejection report. Overloaded. Did not pick up for his call | `factory` |
+| Sorting supervisor (unnamed) | Factory | Keeps a side tally per lot of kachra, gross, reti, iron, brass | `factory` |
+| Watchman | Gate | Truck, seal, driver photos | `gate` |
+| Vinod | Sakinaka (Mumbai) branch | Sends that branch's bills and stock to Niti | out of scope |
+| Aakash, Shashank | Visiting consultants | Check GST/TDS working, file returns | none |
 | V-BOG | — | Admin and support | `vbog_admin` |
 
-**What Himanshu cares about:** speed and trust with suppliers (he tells them of shortfalls immediately, with
-photos), never paying more or less than correct, and being able to defend every transaction to GST, Income Tax
-or ED. He wants an implementer, not a guru. He said he does not want new software for its own sake, so the
-portal is pitched as "your notebook and DNs in one click".
+**Two Tallys.** Factory Tally Silver (Tinu: stock, inward, production, DNs) and office Tally cloud (Niti: accounts,
+payments, TDS). They do not sync and their stock does not match. The portal records, per entry, whether it is in
+the factory Tally, the office Tally, or both.
 
-**Pains this product must remove**
+## 3. Decisions
 
-| Pain | Today | Done means |
+| # | Decision | Source |
 | --- | --- | --- |
-| Compliance exposure | Wants 10–15 documents per purchase, cannot see which exist; Rich Alloys' own receiving proof is not kept consistently | Checklist per purchase on both sides, gaps visible daily, a pack that can be pulled for any notice |
-| No live payables | In his head and a self-built Excel; partial payments when funds are short | Per supplier, bill by bill: invoice, DNs, TDS, paid, balance, due date |
-| Tally reconciliation | Tally books only what is physically documented; advances, provisional payments and TDS sit outside | One export per transaction; a daily view of portal vs Tally |
-| Triple entry of DNs | Each DN recorded at the factory, in Tally in Mumbai, then in Excel | Entered once, calculated, approved, exported |
-| Founder time | 4–6 hours a day producing numbers only he can | Team runs it; he books deals and approves |
-
-Also raised: no deal book others can read; supplier invoices not checked against the agreed rate; transport
-bills checked by hand; the supplier's invoice charges 18% interest on late payment, so due dates cost money.
-
-## 3. Decisions already made
-
-| # | Decision | Why |
-| --- | --- | --- |
-| 1 | Custom portal, not Google Sheets | Depesh's call, 16 Nov. Uploads, approvals and one-click documents are what a sheet cannot do. Overrides the brief's "Sheets first" principle |
-| 2 | Supabase backend (Postgres, Auth, Storage) | Depesh's call |
-| 3 | Mobile-first web page; standalone app later | Depesh's call. Staff use phones at the gate and on the floor |
-| 4 | Code, not Lovable | Lovable cannot adopt an existing repo and wants to manage the backend through prompts; money logic must sit in tested SQL |
-| 5 | Lives in folder `Rich_Alloys` inside the V-BOG website repo | Depesh's call |
-| 6 | All money and weight maths in database views | A screen bug must never change a rupee |
-| 7 | Tally issues the numbered DN; the portal calculates, approves and exports it | Today's DNs are Tally printouts (RAI/DN/26-27/…). Two number series would break "Tally is the truth". Proposed by Claude, not objected to; confirm the import method after seeing Tally with Niti |
-| 8 | Email + password login for v0 | Works on day one. Phone login needs an SMS provider and Indian SMS registration; revisit later |
-| 9 | Suppliers get no login in v1 | They keep sending on WhatsApp; staff upload |
-| 10 | Dedicated new Supabase project for Rich Alloys | Table names like `profiles` collide with other apps; `setup.sql` refuses to run otherwise |
-| 11 | Plant is a field from day one; data structure reusable for sales | Second factory and sales side are future paid extensions |
-| 12 | Pricing is out of the solution discussion | Depesh's instruction |
+| 1 | Custom portal on Supabase, mobile web page served from Depesh's site; app later | Depesh |
+| 2 | Code, not Lovable; folder `Rich_Alloys` in the V-BOG website repo | Depesh |
+| 3 | All money and weight maths in database views and functions; screens capture and display only | Claude, accepted |
+| 4 | **Every inward is a lot.** A deal can have several lots; status follows the lot through sorting, DN, Tally and payment | Depesh, 18 Nov |
+| 5 | Sorting is recorded inside the lot over several days; categories are managed in Admin (add, rename, switch off) | Depesh, 18 Nov |
+| 6 | Weight-short and return DNs reduce stock; rate-difference DNs do not | Depesh, 18 Nov |
+| 7 | The portal replaces the invoice and "material arrived" emails. Every invoice, DN, payment, TDS entry and production run shows whether it is in factory Tally and/or office Tally | Depesh, 18 Nov |
+| 8 | Himanshu, Tinu or Niti can record a payment; Niti reconciles it against the bank statement; only reconciled payments reduce what is owed. The portal is the live supplier ledger, checked against the supplier's own ledger | Depesh, 18 Nov |
+| 9 | GST and TDS details are captured per invoice so paid vs pending is visible | Depesh, 18 Nov |
+| 10 | **Production and consumption are in scope**, and stock is tallied here against Tally | Depesh, 18 Nov. Scope change: the agreement lists production as out; the 30 Nov plan must include it |
+| 11 | Cash plan: cash needed for received lots and deals still on the way, by due date, from payment terms per supplier, overridable per deal and per lot | Depesh, 18 Nov |
+| 12 | Imports and LCs are out of scope | Depesh, 18 Nov |
+| 13 | Factory screens must be one-tap simple on phone and desktop; few choices; nothing to remember | Depesh, 18 Nov |
+| 14 | New-staff onboarding later; build the system first | Depesh, 18 Nov |
+| 15 | Tally numbers the debit note; the portal calculates, approves, prints the working and stores the Tally number | Claude, not objected |
+| 16 | Stock dispatch is recorded as quantity only (no sale price, buyer or receivable) so finished-goods stock stays true without building sales | Claude, to confirm |
+| 17 | Payment terms model: provisional % paid N days after invoice, balance M days after invoice | Claude, to confirm with Himanshu |
+| 18 | Email + password login; who-can-do-what lives in a permissions table editable in Admin | Claude |
+| 19 | Only admins set or reset passwords; staff cannot change their own | Depesh, 18 Nov |
+| 20 | Staff are added from the app (Admin > Staff), not in Supabase. Staff without email get a short login ID (e.g. `sanjay`, stored as `sanjay@staff.richalloys.v-bog.com`; no mail is sent to it) | Depesh, 18 Nov |
+| 21 | Uploads must never lose a file silently: saved on the phone, progress shown, retried when the network returns | Depesh, 18 Nov |
+| 22 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 4. Scope
 
-**In (v1, purchase side, Palghar + Mumbai office):** deal book, document collection and approval, inward
-weights and sorting, debit note calculation and approval, material returns, accounts payable, Tally export
-and reconciliation view.
+In: deals, lots (inward), sorting, debit notes, returns, documents, payments and reconciliation, supplier ledger,
+GST/TDS status, two-Tally tracking, production and consumption, stock vs Tally, cash plan, admin of masters and permissions.
 
-**Out, do not design or promise:** sales, receivables, sales-side cash flow, other plants, imports and LCs
-(flow not yet walked through), factory production and planning, hedging, statutory or tax advice, anything
-inside the bank's LC systems, supplier logins, a native app. The signed agreement text reads as if sales is
-included; Depesh's confirmed scope (purchase only, one site) wins, and the 30 Nov plan must say so.
+Out: sales and receivables, imports and LCs, other plants and the Sakinaka branch, pay-to-cash factory expenses,
+supplier logins, tax computation or advice, anything inside bank systems, supplier-level yield (not traceable today
+because lots are mixed in melting).
 
-## 5. How a purchase works today
+## 5. How it works (the flow the portal follows)
 
-1. **Deal.** Himanshu books by phone (e.g. 10 t OC at ₹/kg + GST), notes it in a diary.
-2. **PO.** Factory issues a PO. New suppliers go through KYC first.
-3. **Supplier dispatch pack.** PO, tax invoice, e-invoice, e-way bill, external weighbridge slip, packing slips by grade (gross and bag weight), seal photos with GPS, transporter LR, loading photos, vehicle and driver licence checks.
-4. **Receipt.** Weighed at the external weighbridge, then inside. Watchman takes seal-cutting, vehicle and driver photos.
-5. **Weighing.** Each grade weighed separately; gunny bag weight deducted. Factory net vs billed net = weight short. Supplier told at once with photos.
-6. **Sorting (3–4 days).** Wrong grade and foreign material found here.
-7. **Rejection report.** Sanjay splits rejections into lower grade that can be kept and unusable material. Photos and calculation go to the supplier before any DN.
-8. **Debit notes.** Tinu raises up to three. Rate cuts are negotiated per lot; no agreement means the lot is returned. Suppliers sometimes force acceptance of part of a return. Small off-grade lots (1–2%) go straight into the DN.
-9. **Return.** Rejected material goes back with its own e-way bill, a handwritten chit and the transporter's LR. Returns from several suppliers are consolidated in one truck.
-10. **Payment.** About 90% provisionally on invoice. Final = invoice − DNs − TDS − provisional. Closed bill by bill.
-11. **Books.** Niti enters in Tally, checks double payment and the supplier's GST in GSTR-2B. Complete only when payment is settled and returned material has reached the supplier.
+1. **Deal** (Himanshu or anyone with `deal_edit`): supplier, grades, quantity, agreed rate, PO, expected arrival, GST, optional terms. Shows as "on the way".
+2. **Material arrived** (Tinu/Sanjay): one form per truck: invoice number and date, per grade the supplier's slip gross, slip bags, billed net, billed rate, and our weighbridge gross, bag count and bag weight. Weight short or excess shows live. Saving creates the lot, the invoice and stock inward at billed weight. "All material for this deal has arrived" closes the deal's incoming balance.
+3. **Sorting** (Sanjay/Tinu): over days, add results: what was found (category buttons), kg, keep at a lower rate (with ₹/kg cut) or return. Debiting a different kg needs a reason. "Sorting finished" closes the lot.
+4. **Debit notes** (Tinu): weight short (any time), rate difference and return (after sorting closes) are calculated. One tap approves each, optional rounding to the rupee. Approved DNs lock the lot's weights, reduce stock (weight short, return), print a working for the supplier, export as CSV for Tally, and take the Tally DN number.
+5. **Return**: dispatch with e-way bill, transporter, LR, freight and who paid; mark delivered.
+6. **Tally ticks**: each invoice and DN ticked for factory and office Tally; payments and TDS for office; production for factory. Missing ticks become tasks.
+7. **Payment**: anyone allowed records it (amount, date, mode, UTR, against which bill or as advance). Niti marks it "matches bank statement" or sends it back with a reason; a corrected payment returns to her. Reconciled payments are frozen.
+8. **Ledger**: per supplier, invoices less DNs, TDS and reconciled payments, with a running ledger. Niti records "their ledger says X as on date"; the portal stores the difference.
+9. **Tax**: TDS per invoice (section, rate and base entered; amount calculated), deposited date and challan; invoice "seen in GSTR-2B" with period; GST by month (invoices less DNs).
+10. **Production**: date, items consumed and kg, items produced and kg. Stock per item per month: opening, in, out, closing, compared with the Tally closing typed in.
+11. **Cash plan**: overdue, next 7 days, weekly bars for 4/8/12 weeks, every amount listed with supplier, lot or deal, tranche and due date.
 
-| Debit note | Trigger | Value |
-| --- | --- | --- |
-| Weight short | Factory net below billed net | short kg × deal rate + GST |
-| Rate difference | Lower grade Rich Alloys keeps | kg × agreed rate cut + GST |
-| Material return | Dirt, attachments, or lower grade the supplier won't re-rate | kg × deal rate + GST |
+Lot stages: Received → Sorting → DN to approve → Tally entry pending → Payment pending → Settled.
 
-## 6. Reference transaction (the regression test)
+## 6. Reference transaction and what the documents taught
 
-PO/RA/082/26-27, Ogo Enviro Solutions Pvt Ltd (Hyderabad, GSTIN 36AAECO5492P1ZO), invoice OGOES15 of
-23 Oct 2026, 18% IGST. In the system as deal `RA-082`; data in `supabase/test_data/ogo_po082.sql`.
+PO/RA/082/26-27, Ogo Enviro Solutions (GSTIN 36AAECO5492P1ZO), invoice OGOES15 of 23 Oct 2026, OC 5 t at ₹1,234 and Lal 5 t at ₹1,319, 18% IGST.
+Loaded as deal RA-082, lot L-0001 in `supabase/test_data/ogo_po082.sql`, created through the same functions the app uses.
 
-| Line | OC (₹1,234/kg) | Lal (₹1,319/kg) |
-| --- | --- | --- |
-| Supplier slip gross / bags (kg) | 4,884.550 / 20.200 | 5,104.100 / 10.750 |
-| Supplier billed net (kg) | 4,864.550 | 5,093.350 |
-| Factory gross / bags (kg) | 4,874.900 (120 bags) / 24.700 | 5,100.100 (74 bags) / 17.800 |
-| Factory net (kg) | 4,850.200 | 5,082.300 |
-| Weight short (kg) | 14.350 | 11.050 |
-| Sorting | lead copper 125.9 (cut ₹80), DC 27.6 (cut ₹185), attachment 131.8 (return), mitti 37.4 (return) | low quality 139.7 (cut ₹85), attachment 24.8 (return) |
-
-| Money (₹) | Amount |
+| Check | Value |
 | --- | --- |
-| Invoice (1,27,20,983.35 + IGST 22,89,777.00) | 1,50,10,760.35 |
-| DN RAI/DN/26-27/114 weight short | 38,094.00 |
-| DN RAI/DN/26-27/115 rate difference | 31,921.95 |
-| DN RAI/DN/26-27/116 material return | 2,57,745.00 |
-| Invoice less DNs | 1,46,82,999.40 |
-| Provisional paid | 1,40,00,000.00 |
-| Balance before TDS | 6,82,999.40 |
+| Weight short OC / Lal | 14.350 / 11.050 kg |
+| DN 114 / 115 / 116 | ₹38,094.00 / ₹31,921.95 / ₹2,57,745.00 |
+| Invoice less DNs | ₹1,46,82,999.40 |
+| Balance after ₹1.4 cr reconciled | ₹6,82,999.40 (also the supplier ledger and cash plan figure) |
+| Mitti sorted 37.4, debited 18.7 | ₹27,229.44 not recovered, flagged |
+| Copper scrap stock after DNs | 9,757.200 kg (billed 9,957.900 − short 25.400 − returned 175.300) |
 
-Timeline: PO 22 Oct, invoice and dispatch 23 Oct, received 25 Oct, all DNs 5 Nov, return dispatched 6 Nov
-(e-way bill 202325973829, VRL LR 1079490402, 175.3 kg in 6 packages, freight ₹1,900 paid by Rich Alloys).
+Requirements born from the documents: both bag weights captured; slip-vs-invoice and rate-vs-deal checks; reason
+required when debited ≠ sorted; DN lines show kg, rate and amount; rounding per DN (114 and 116 rounded, 115 not);
+return freight and who paid; due dates (supplier charges 18% late interest).
 
-**What the documents revealed, and the requirement each creates**
+## 7. Facts from the Niti and Tinu calls (18 Nov)
 
-| Finding | Requirement |
-| --- | --- |
-| Mitti: 37.4 kg sorted, 18.7 kg debited; about ₹27,229 not recovered, no reason recorded | A debited quantity cannot differ from the sorted quantity without a written reason; exceptions are listed with their rupee value |
-| Weight short comes from bag weight (supplier 20.2 / 10.75 kg vs factory 24.7 / 17.8 kg) | Capture both bag weights |
-| Packing slip nets to 4,864.350 kg, invoice bills 4,864.550 kg | Automatic slip-vs-invoice check |
-| Notebook header reads 4,864.85 instead of 4,864.55 | No hand-copying: one entry, calculated onwards |
-| DN 115 shows amounts only, no quantity or rate | Every DN working shows quantity, rate and amount per line |
-| DNs 114 and 116 are rounded to the rupee, DN 115 is not | Rounding is a switch per DN until the rule is confirmed |
-| Return freight ₹1,900 paid by Rich Alloys, no recovery shown | Record freight, who paid, and whether recovered |
-| Supplier invoice charges 18% on late payment | Due date per bill in payables |
-| Rich Alloys' own proof (factory weighbridge slip, receipt photos, seal-cutting photo, sorting report) is absent | These are required documents on the checklist |
+- Two Tallys, not synced (section 2).
+- Tinu enters inward in a shared Excel, then factory Tally immediately; stock is booked at invoice quantity and the DN later takes kg off.
+- DNs usually take 15–25 days, mostly at month end, because a 25 t lot takes 1–2 weeks to sort at 10–15 t a day and lots from many suppliers are mixed in melting. A 5 t lot can be settled the same day. Each supplier's bags are kept as a separate batch.
+- Sorting finds iron, goni (bags), mitti, dhaagi, kachra, reti, brass and more. Grades can come in over billed weight as well as under.
+- Tinu sends Niti invoice scans as they arrive, plus three daily Excels (stock, pay-to-cash, an invoice tracker so no invoice is missed for TDS/GST). Supplier document packs stay with Tinu, often on paper.
+- Niti matches each supplier's ledger before paying, books payments and TDS from the bank statement, prepares the monthly GST working for the consultants. Nobody but Himanshu sees cash needs.
+- Niti's biggest pain is imports (CHA follow-ups, high seas) — out of scope.
+- Tinu's production sheet: copper ingot from copper scrap plus phosphorus copper, with copper gross/slag and another by-product; opening and closing tally with Tally to the gram.
 
-## 7. Product requirements by module
-
-Status: **Built** = in this folder and tested; **Schema** = tables and maths exist, no screen yet; **Planned** = not started.
-
-### 7.1 Sign-in and roles (Built)
-- Email and password. No public sign-up; V-BOG creates users and assigns one role each.
-- A signed-in person without a role sees a clear message and no data.
-- English and Hindi toggle, remembered on the device.
-- **Staff screen (Built, 18 Nov):** `owner` and `vbog_admin` add a login (name, email or short login ID, role,
-  temporary password), change a role, reset a password, switch a login off or back on. **Placeholder until
-  Himanshu confirms who may manage staff.** Nobody can remove their own admin access or switch themselves off.
-- Staff without email get a short login ID (e.g. `sanjay`), stored as `sanjay@staff.richalloys.v-bog.com`. No mail is
-  ever sent to it. They sign in by typing just the ID.
-- Passwords are never visible anywhere, including to V-BOG: Supabase stores only a one-way hash. The temporary
-  password is shown once, with WhatsApp and copy buttons; a lost password is reset, not looked up.
-- Switching off a login bans it in Supabase Auth and sets `profiles.active = false`, so an open session reads
-  nothing at once. Every staff change is written to the audit log.
-
-### 7.2 Deal book (Schema; screen planned, slice 5)
-- One deal = one ID (`deal_no`) used everywhere, from phone deal to final payment.
-- Fields: supplier, plant, deal date, PO number and date, per grade quantity and agreed rate, status, notes.
-- Status: booked → po_issued → in_transit → received → sorted → dn_approved → settled → closed (or cancelled).
-- Supplier master with GSTIN, state, KYC status (pending, verified, blocked), provisional %, credit days.
-- Must flag an invoice whose rate differs from the agreed rate (`rate_vs_deal` exists in `v_inward`).
-
-### 7.3 Document collection and approval (Built, slice 1)
-- Checklist per deal in three groups: from the supplier (12), at our factory (4), material return (4, shown only when a return exists). Full list in `0002_masters.sql`, each with a Hindi label.
-- Anyone on staff can add photos or PDFs (up to 20 MB) from a phone, several at once.
-- Each file moves uploaded → verified → approved, or rejected with a mandatory reason. A rejected document needs a fresh upload.
-- A checklist item is complete only when at least one of its files is approved.
-- Verify and reject: `factory_accounts`, `ho_accounts`, `owner`, `vbog_admin`. Approve: `ho_accounts`, `owner`, `vbog_admin`. **Placeholder until Himanshu confirms.**
-- Deal list shows the count of pending documents per deal; the deal page shows "N of M approved".
-- Files are private; opened through links that expire in two minutes. Every status change is written to the audit log.
-- Later: one-tap "transaction pack" (all approved documents for a deal as one PDF or ZIP) for GST/IT/ED notices.
-
-### 7.4 Inward and sorting (Schema; screen planned, slice 2)
-- Mirrors Himanshu's notebook page line for line, per grade: supplier slip gross and bags, billed net, factory gross, bag count, factory bag weight. Net and weight short are calculated, never typed.
-- Sorting lines per grade: category (lead copper, DC, low quality, attachment, mitti; list is editable master data), kg, action (rate difference or return), rate cut, quantity to debit.
-- Quantity to debit defaults to the sorted quantity; changing it demands a reason.
-- Must be no slower than the notebook for Sanjay: number keypad, large fields, one grade per card.
-- Photos of rejected material attach to the sorting line (planned).
-
-### 7.5 Debit notes (Schema + approval function; screen planned, slice 3)
-- The three DNs are calculated from inward and sorting data (`v_dn_calc`, `v_dn_calc_lines`).
-- One tap approves a DN: lines and amounts are frozen, approver and time recorded (`approve_dn`).
-- Rounding to the rupee is chosen per DN until the rule is confirmed.
-- Output 1: a supplier-facing DN working (PDF) with quantity, rate, amount per line and photos.
-- Output 2: the Tally export row(s). Tally issues the DN number; Tinu or Niti types that number back against the DN (`tally_dn_no`), status moves approved → exported → booked_in_tally.
-- DN approval is closed to all app users until this slice ships (tested).
-
-### 7.6 Material returns (Schema; screen planned, slice 3)
-- Per return: date, kg, packages, e-way bill number, transporter, LR number, freight, who paid, recovered or not, delivered date.
-- A deal is not complete until returned material is delivered.
-
-### 7.7 Payables (Schema; screen planned, slice 4)
-- Per bill: invoice total − debit notes − deductions (TDS) − payments = balance, with due date (`v_payable`).
-- Rolled up per supplier. Payments typed as advance, provisional or final, with bank reference.
-- TDS is entered, never assumed, with a flag for whether it shows on the income tax portal.
-- Later: a payment plan view (what is due this week against cash available).
-
-### 7.8 Tally export and reconciliation (Export view built; rest planned, slice 5)
-- `v_tally_dn_export`: one row per DN line with party, GSTIN, invoice reference, quantities, rates, totals.
-- Start with a file Niti enters from; move to direct Tally import once the Tally version and ledger structure are known.
-- Reconciliation view: items in the portal not yet in Tally (`payments.in_tally`, DN status), and a double-payment check.
-
-## 8. Data model
-
-All in schema `public`, defined in `supabase/migrations/0001_schema.sql`.
+## 8. Data model (Postgres, `supabase/migrations`)
 
 | Table | Holds |
 | --- | --- |
-| `plants`, `grades`, `sort_categories`, `doc_types` | Master data |
-| `profiles` | The staff list: name, login email, role, plant, active, created (id = Supabase auth user id). Read it in Table Editor |
-| `suppliers` | Supplier master and KYC status |
-| `deals`, `deal_lines` | The deal and its agreed quantity and rate per grade |
-| `invoices`, `invoice_lines` | Supplier invoice and the supplier's own weights per grade |
-| `receipts`, `receipt_lines` | Factory weights per grade (net is a generated column) |
-| `sorting_lines` | Sorting results and what is debited, with reason when they differ |
-| `debit_notes`, `debit_note_lines` | Approved DNs, frozen at approval |
-| `returns`, `payments`, `deductions` | Return dispatch, money paid, TDS and similar |
-| `documents` | Uploaded files and their status |
-| `audit_log` | Who did what, when |
+| `plants`, `profiles`, `permissions` | Site; staff (name, login email, role, active, created: the readable staff list in Table Editor); which role may do which action |
+| `items`, `grades`, `sort_categories`, `doc_types` | Masters (Tally stock items; grades map to an item; sorting categories; document checklist), each with Hindi name and on/off |
+| `suppliers` | GSTIN, KYC, default payment terms |
+| `deals`, `deal_lines` | Booking: agreed qty and rate per grade; terms override; receiving complete |
+| `invoices`, `invoice_lines` | Supplier invoice; billed and slip weights per grade; GSTR-2B status |
+| `lots`, `lot_lines` | Each truck: received date, vehicle, terms override, sorting closed; our weights per grade |
+| `sorting_lines` | Sorting results by date, category, kg, action, rate cut, debited kg, reason |
+| `notes`, `note_lines` | Approved DNs frozen with lines, stock kg, Tally number; cancel with reason |
+| `returns` | Return dispatch and delivery |
+| `payments`, `tds`, `ledger_confirmations` | Money, deductions, supplier ledger checks |
+| `tally_marks` | Entity, book (factory/office), voucher ref, who, when |
+| `production_runs`, `production_lines`, `stock_moves`, `stock_tally_checks` | Production, other stock entries (opening, other inward, dispatch, correction with reason), Tally closing |
+| `documents`, `audit_log` | Files and their status; every change logged |
 
-| View | Answers |
-| --- | --- |
-| `v_inward` | Supplier vs factory weights, weight short, slip-vs-invoice gap, rate vs deal |
-| `v_dn_calc_lines`, `v_dn_calc` | What each DN should be |
-| `v_sorting_exceptions` | Sorted but not debited, and its value |
-| `v_payable` | Balance per bill |
-| `v_doc_gaps` | Required documents not yet approved, per deal |
-| `v_tally_dn_export` | DN rows for Tally |
+Views: `v_lot_lines`, `v_dn_calc(_lines)`, `v_sorting_exceptions`, `v_payable`, `v_tally_missing`, `v_doc_gaps`,
+`v_lots` (stage), `v_deals_incoming`, `v_ledger_lines`, `v_supplier_balance`, `v_cash_plan`, `v_gst_month`,
+`v_stock_moves`, `v_tally_dn_export`, `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
 
-Calculation rules: net = gross − bags; weight short = billed net − factory net (only when positive);
-DN taxable = Σ kg × rate; GST = taxable × invoice GST rate; total = exact or rounded to the rupee.
-Precision: kg to 3 decimals, rates to 3, money to 2.
+Actions (functions): `create_deal`, `create_lot`, `close_lot`, `reopen_lot`, `approve_dn`, `cancel_note`,
+`set_note_tally_no`, `mark_tally`, `unmark_tally`, `reconcile_payment`, `reject_payment`, `confirm_ledger`,
+`set_invoice_2b`, `save_production`, `verify_document`, `approve_document`, `reject_document`.
 
-Access rules (`0003_access.sql`, `0004_storage.sql`): the anonymous key can read nothing; any staff member
-can read everything; deal desk roles can write suppliers, deals and deal lines; any staff member can insert a
-document as themselves in status "uploaded"; document status changes only through `verify_document`,
-`approve_document`, `reject_document`; everything else is writable by the service role only until its slice
-ships. Each new slice adds its own write rules and its own access tests. `profiles` is written only by the
-`staff-admin` edge function (`supabase/functions/staff-admin`), the one piece of code holding the service key; it
-checks the caller's role itself. A switched-off profile reads and writes nothing (`is_staff()` and `my_role()` check `active`).
+Staff management (`0006_staff_and_uploads.sql`, `supabase/functions/staff-admin`): the edge function is the only code
+holding the service key. It checks the caller's role has `staff_manage` (owner and vbog_admin by default), then creates
+logins, changes roles, resets passwords (shown once, with WhatsApp and copy buttons) and switches logins off (Auth ban
+plus `profiles.active = false`, so an open session reads nothing at once). Nobody changes their own role or switches
+themselves off. Every action goes to `audit_log`. Passwords are never readable anywhere: Supabase stores a one-way hash.
+`documents.storage_path` is unique, so a retried upload never creates a second row.
 
-## 9. UI and UX requirements
+Rules enforced in the database: anonymous key reads nothing; money (payments, TDS, ledger, payables, cash plan, GST)
+only for `money_view`; writes need the action in `permissions`; sorting locked once a lot is closed; weights and invoice
+locked once a DN is approved; new payments always start unreconciled and any edit sends them back; reconciled payments
+frozen; nobody can change their own role.
 
-**Who it is for:** a watchman or supervisor on a mid-range Android phone, one hand, outdoors, patchy network,
-more comfortable in Hindi than English. Then an accountant on a phone or laptop.
+Cash plan maths: received lot = invoice total − DNs − TDS; provisional tranche = invoice × % due invoice date + days;
+balance due invoice date + days; payments (reconciled or waiting) applied to provisional first. On-the-way deal =
+remaining kg × agreed rate × (1 + GST), base date = expected arrival. Missing terms put the full amount on the base
+date and are flagged.
 
-**Principles**
-- Phone first at 360 px wide; works up to laptop (content column max 640 px).
-- One job per screen. The next thing to do is the most visible thing.
-- No slower than the notebook or WhatsApp. If a step adds taps without removing work elsewhere, cut it.
-- Status is always shown in words with colour as a second signal, never colour alone.
-- Every action a person takes is confirmed on screen; every error says what to do next.
-- Nothing typed twice. Calculated values are shown, never editable.
-- Hindi and English for every label, including master data (`name_hi`).
+## 9. UI and UX
 
-**Visual language** (in `web/src/styles.css`; keep new screens consistent)
+For a watchman or supervisor on a mid-range Android phone, one hand, outdoors, patchy data, more at home in Hindi;
+and Tinu and Niti on desktop PCs.
 
-| Token | Value | Use |
-| --- | --- | --- |
-| Paper / sheet | `#f6f1e7` / `#fffdf8` | Page and card backgrounds (ledger paper) |
-| Ink / soft | `#1f1b16` / `#6d6459` | Text and secondary text |
-| Copper | `#a8521c` | The one accent: primary buttons, section titles, upload |
-| OK | `#2f6b3f` on `#e2efe1` | Approved, complete |
-| Waiting | `#7a4f00` on `#f6e7c4` | Uploaded, verified, demo banner |
-| Problem | `#9c2b1c` on `#f6dcd6` | Rejected, errors, destructive buttons |
-| None | `#6d6459` on `#ebe4d6` | Missing |
+- Phone first at 360 px; desktop layout from 900 px (top navigation, wider tables). Bottom navigation on phones.
+- Each person sees only their screens (Home, Lots, plus Cash, Money, Stock, Admin by permission) and a Home list of exactly what is waiting for them, one tap from each item.
+- One job per form. Big option buttons instead of dropdowns where choices are few (sorting categories, actions).
+- Never type a number twice; calculated values shown live (weight short while entering arrival, TDS amount, DN totals).
+- Status always in words plus colour; left edge colour on rows; stepper on each lot.
+- English/Hindi toggle on every screen, including master names.
+- Photos shrunk on the phone before upload (max 1,800 px, JPEG).
+- Uploads (`web/src/uploads.ts`): each file is saved on the phone (IndexedDB) after shrinking and before any network
+  call, sent one at a time with a progress bar, waits when the network drops and goes up by itself when it returns
+  (also after the tab is closed and reopened by the same person). A refused file stays on screen with the reason in
+  plain words and Try now / Remove. A banner shows files not yet uploaded; the page warns before closing.
+- Sign-in takes an email or a short login ID.
+- Errors say what to do next; destructive actions ask for a reason or confirmation.
+- Visual language: ledger paper `#f6f1e7`, ink `#1f1b16`, one copper accent `#a8521c`; green/amber/red/blue status pairs; Mukta (Latin + Devanagari); 44 px minimum touch targets; tabular figures; Indian number grouping.
 
-- Type: Mukta (Latin + Devanagari), 17 px base, 1.45 line height; headings 1.6 rem and 1.05 rem. Numbers in tabular figures.
-- Touch targets at least 44 px high; primary actions 48 px or more.
-- Rows carry a left edge in the status colour; status chip on the right.
-- Dates as "16 Nov 2026, 5:52 pm". Weights with 3 decimals and "kg". Money in Indian grouping (1,50,10,760.35).
-- Visible keyboard focus; text contrast at least 4.5:1; respects reduced-motion.
-
-**Screens**
-
-| Screen | Status | Must do |
-| --- | --- | --- |
-| Sign in | Built | Email, password, clear error |
-| Deals | Built | List with supplier, PO, date, pending-document count; tap opens the deal |
-| Deal documents | Built | Progress bar, three groups, tap a row to see files, add, view, verify, approve, reject with reason |
-| Deal tabs (Documents, Weights, Debit notes, Payment) | Planned | One deal, four tabs, same header |
-| Weights and sorting entry | Planned | Notebook layout per grade; live weight short; sorting lines with reason prompt |
-| Debit notes | Planned | Three cards with lines and totals, rounding switch, approve, download working, mark Tally number |
-| Payables | Planned | Per supplier and per bill; overdue first |
-| New deal | Planned | Supplier, grades, quantity, rate; under one minute |
-| Staff | Built | List with role, login, last sign-in; add staff; change role; reset password; switch off. Shown to owner and V-BOG admin only |
-| Admin | Planned | Suppliers, master lists |
-
-States every screen must handle: loading, empty, error with retry, no permission, offline or slow upload
-(show progress, never lose a photo silently).
-
-Checked so far in a phone-sized browser (360 and 390 px) in demo mode: sign in, deal list, checklist, upload,
-verify, reject with reason, Hindi labels, gate role sees no verify button, no sideways scrolling.
-
-## 10. Architecture and repository
-
-- **Database:** Supabase Postgres. Logic in views and a few functions. Row-level security on every table.
-- **Server code:** one edge function, `staff-admin`, for creating and managing logins (needs the service key).
-- **Files:** Supabase Storage, private bucket `deal-docs`, path `<deal_no>/<doc_type>/<timestamp>-<name>`.
-- **Web app:** React 18 + TypeScript + Vite, no router, plain CSS. Every data call goes through `web/src/api.ts`,
-  which has a live implementation (Supabase) and a demo implementation (in-memory Ogo data, used when no keys are set).
-- **Config:** `config.js` next to `index.html` holds the Supabase URL and anon key, read at run time.
-- **Hosting:** any static host. Recommended: its own subdomain (e.g. `richalloys.v-bog.com`), separate from the marketing site.
+## 10. Repository and deployment
 
 ```
 Rich_Alloys/
-  PRD.md                      this document
-  README.md                   setup and deploy steps
-  build_setup.sh              rebuilds supabase/setup.sql from the migrations
-  supabase/
-    setup.sql                 PASTE THIS into Supabase (generated; do not edit)
-    add_user.sql              give a person a role
-    migrations/0001..0004     source of setup.sql
-    test_data/ogo_po082.sql   demo and regression data, not for production
-  tests/                      local Postgres run of setup.sql + checks
-  web/                        app source
-  deploy/                     prebuilt copy of the app, ready to upload
+  PRD.md, README.md, build_setup.sh
+  supabase/setup.sql          paste into Supabase (generated)
+  supabase/reset_v1.sql       one time, for the project that ran v1 (also removes the interim 18 Nov additions)
+  supabase/functions/staff-admin   edge function for Admin > Staff (deploy with the Supabase CLI)
+  supabase/add_user.sql       give a person a role
+  supabase/migrations/        source of setup.sql
+  supabase/test_data/         Ogo transaction (test only)
+  tests/run_local.sh          database checks
+  tests/e2e/                  browser test with a local Supabase stand-in
+  web/                        React + TypeScript + Vite source
+  deploy/                     built app to upload (config.js holds URL and anon key)
 ```
 
-## 11. Deploying
+Deploy: see README. Done on the live project 18 Nov: `reset_v1.sql` + `setup.sql` + first admin + Ogo data in one
+transaction, then the `staff-admin` function. Everyone else is added in Admin > Staff.
+Today GitHub Pages publishes the whole repo, so this folder (PRD, SQL, test data) is public too (decision 22).
+Recommended later: serve only `deploy/`, on its own subdomain.
 
-1. Create a **new, empty** Supabase project (region: Mumbai).
-2. SQL editor: paste all of `supabase/setup.sql`, run once. It is one transaction; on any error nothing is created.
-3. Optional, for a demo: run `supabase/test_data/ogo_po082.sql`. Never in production.
-4. Authentication settings: turn off "Allow new users to sign up".
-5. Deploy the staff function: `supabase functions deploy staff-admin --project-ref <ref> --no-verify-jwt --use-api`.
-   Create the first admin in Authentication → Users → Add user, then edit and run `supabase/add_user.sql`.
-   Everyone else is added from the app's Staff screen.
-6. Put the project URL and anon key in `deploy/config.js` (never the service_role key).
-7. Upload the `deploy/` folder to the host, or point the host at `Rich_Alloys/web` (build `npm run build`, output `dist`).
-8. First-run check on the live project: sign in, upload one photo, view it, verify, approve, reject another with a reason.
+## 11. Testing
 
-18 Nov 2026: steps 1 to 6 done on project `Rich Alloys` (ref `rqxjjrpngybglmhzlmtj`, ap-south-1). Confirmed live:
-20 tables all with RLS, 7 views, 24 table rules, bucket `deal-docs` (private, 20 MB) with its two rules, 20 document
-types all with Hindi labels, anon key cannot read deals, `approve_dn` closed to app users. `0005_staff.sql` run on its
-own afterwards. Ogo demo data loaded (with placeholder PDFs behind its 16 documents): **delete before go-live.** One
-user: Depesh (`vbog_admin`). Verified live in a 360 px browser and by direct calls: sign-in, deal list, view a file,
-upload, every staff action, role refusals, switched-off login refused and reading nothing. Not yet hosted.
+- Database (`tests/run_local.sh`): Ogo figures, mitti exception, stock, cash plan with and without terms, new deal and lot through the app functions, weight-short DN on a new lot, permissions per role (anon, no profile, gate, factory, factory accounts, HO accounts, owner), payment reject/correct/reconcile/freeze, ledger snapshot, admin category change, audit, v1→v2 upgrade. Proven to fail when an expected figure changes.
+- Browser (`tests/e2e`): Tinu books a deal with terms, records arrival (short 5 kg), sorts (mitti, lead copper), closes, approves three DNs (₹7,080 / ₹1,180 / ₹14,160), saves a Tally number, ticks factory Tally, records ₹24 L payment; Niti reconciles, ticks office Tally, checks the ledger (₹10,92,579.40); Himanshu sees cash (₹10.93 L open), adds a sorting category, enters production and sees stock (copper scrap 10,242.200 kg); watchman in Hindi sees no money screens; Sanjay sorts in Hindi on a 360 px screen with no sideways scrolling.
+- Database checks also cover staff management (only `staff_manage` roles, nobody promotes themselves), the unique
+  storage path, and the upgrade from exactly what the live project ran before v2 (`tests/v1_setup.sql` is that snapshot).
+- Live run, 18 Nov, 360 px: sign-in; every screen with no sideways scrolling; Ogo figures on Lots, Money (ledger
+  ₹6,82,999.40), Cash (₹6.83 L overdue) and Stock (9,757.200 kg); upload on a throttled network with the network
+  dropped mid-upload, finishing when it returned; View opens the stored file; Admin > Staff created a gate login,
+  that login signed in and saw only Home and Lots, was switched off and then saw nothing. Test login and file removed.
+- `tests/e2e/run.py` was not run in the merge session (PostgREST and Python Playwright could not be installed there).
+  Run it before the next UI change.
+- Rule: every closed transaction from Rich Alloys becomes test data plus checks.
 
-## 12. Testing and quality bar
+## 12. Plan
 
-- `tests/run_local.sh` runs the exact paste-in file on local Postgres with stand-ins for Supabase auth and storage, loads Ogo, and asserts:
-  weight short per grade; DN 114, 115, 116 totals; invoice less DNs; balance; the mitti exception; four missing documents;
-  anonymous key reads nothing; non-staff read nothing; gate can upload but not verify; factory accounts cannot approve;
-  no direct status edits; DN approval closed; storage bucket and rules exist; every document has a Hindi label;
-  no direct role edits; only owner and vbog_admin manage staff; a switched-off login reads and uploads nothing.
-- The test was proven to fail when an expected amount is changed.
-- Rule: every closed transaction received from Rich Alloys is added as test data plus checks. A release that changes a past rupee does not ship.
-- Each slice adds access tests for its new write rules and a phone-sized browser run of its screens.
-
-## 13. Build plan
-
-| Slice | Contents | Status |
-| --- | --- | --- |
-| 0 | Schema, calculations, Ogo regression test | Done |
-| 1 | Sign-in, roles, deal list, document upload, verify, approve, reject, staff management | Built; live on Supabase, not yet hosted |
-| 2 | Inward weights and sorting entry (notebook layout), sorting exceptions | Next |
-| 3 | DN approval screen, supplier DN working PDF, returns, Tally DN number capture | Planned |
-| 4 | Payables: payments, deductions, per-supplier view, due dates | Planned |
-| 5 | New-deal screen and deal book, admin screens, Tally export file, reconciliation view | Planned |
-| 6 | Transaction pack download, payment plan, direct Tally import | Later |
-
-Rollout: for two weeks Sanjay keeps the notebook and Tinu raises DNs as usual while the portal runs alongside.
-It replaces them only after matching every day. Each system ships with a one-page SOP and a named owner.
-Collect 3–5 more closed transactions on the visit as tests.
-
-Engagement dates: audit phase now; call with Himanshu's accountant 17 Nov 2026; on-site in Mumbai/Palghar
-18–20 Nov per the agreement (another note says 20–21 Nov; confirm); written plan due 30 Nov 2026 and must
-state purchase-only, one-site scope; implementation 60–90 days from a December start. Client nominates one
-owner per system and gives decisions within 3 working days. Commercial terms are in the Proposal and Agreement.
-
-## 14. Open questions
-
-| # | Question | Blocks |
-| --- | --- | --- |
-| 1 | Who verifies and who approves documents? | Slice 1 go-live |
-| 2 | Exact Rich Alloys-side document list (four assumed) | Slice 1 go-live |
-| 3 | Deal number format (`RA-082` is a placeholder; could follow the PO number) | Slice 5 |
-| 4 | DN rounding rule (114 and 116 rounded, 115 not) | Slice 3 |
-| 5 | Why DN 116 carries 18.7 kg of mitti against 37.4 kg sorted | Understanding of concessions |
-| 6 | TDS sections and rates (agreement says 0.1%; the 11 Nov call mentioned 2% and 0.1%) | Slice 4 |
-| 7 | Payment terms per supplier, provisional %, how due dates are set | Slice 4 |
-| 8 | Tally version, ledger structure, bill-wise details, advances; import method | Slices 3 and 5 |
-| 9 | Who owns the deal book today and in what format | Slice 5 |
-| 10 | Who bears return freight and is it recovered | Slice 3 |
-| 11 | Do suppliers accept a portal-made DN working, and in what layout | Slice 3 |
-| 12 | Full list of grades and sorting categories | Slice 2 |
-| 13 | How many sites really exist (calls mentioned four plants and a second factory) | Future extension only |
-| 14 | Import and LC flow | Out of scope until walked through |
-| 15 | Do factory staff have email addresses? Short login IDs now work without one; confirm per person | Slice 1 go-live |
-| 16 | Who may add staff and reset passwords (placeholder: owner, vbog_admin) | Slice 1 go-live |
-
-## 15. Risks
-
-- **Adoption.** Sanjay is overloaded. If entry is slower than the notebook, it will not be used. Take work away (no copying, no report writing) before adding any.
-- **Two sources of truth.** Avoided only if Tally numbers the DN and the portal stores that number.
-- **Scope creep.** Sales, imports and other plants will be asked for. They are separate, paid extensions.
-- **Support after go-live.** Hosting, fixes and changes need an owner at V-BOG.
-- **Untested on live Supabase.** First deployment needs a checked run before anyone at Rich Alloys sees it.
-
-## 16. Glossary
-
-| Term | Meaning |
+| Step | Status |
 | --- | --- |
-| OC, Lal | Copper scrap grades (6–7 in total); OC is also called Berch/Birch |
-| DC | A lower copper grade found in sorting; kept at a rate difference |
-| Lead copper, low quality | Lower-grade material kept at a rate difference |
-| Mitti | Dirt in the load; rejected |
-| Attachment | Non-copper material attached to scrap; rejected |
-| Weight short | Factory net below the supplier's billed net |
-| DN / CN | Debit note / credit note |
-| Provisional payment | About 90% paid on invoice before DNs are settled |
-| LR | Lorry receipt from the transporter |
-| E-way bill | GST document required to move goods, including returns |
-| LC | Letter of credit, used mainly on imports |
-| Tally | Rich Alloys' accounting system and book of record |
-| RLS | Row-level security: database rules deciding who can read or write each row |
+| v1: documents slice | Deployed at v-bog.com/Rich_Alloys/deploy/ |
+| v2: everything in section 5 | Built and tested locally |
+| Deploy v2 and run the first live check | Done 18 Nov |
+| Staff management in the app, reliable uploads | Done 18 Nov |
+| On the visit: confirm open questions, collect 3–5 closed transactions as tests, get Tinu's sheets and Niti's invoice tracker, record a real lot end to end with Tinu | Next |
+| Parallel run two weeks: notebook, Excel and Tally carry on; portal must match daily | Then |
+| Tally import (not just CSV) once Tally version and ledgers are known, transaction pack download, WhatsApp alerts | Later |
+
+## 13. Open questions
+
+| # | Question | Affects |
+| --- | --- | --- |
+| 1 | Payment terms per supplier (provisional %, days) and is "days after invoice" the right base? | Cash plan |
+| 2 | Which Tally issues the DN number (RAI/DN/…): factory or office? | DN flow |
+| 3 | Who verifies and approves documents (now: Tinu verifies, Himanshu approves) and who approves DNs (now: Tinu) | Permissions |
+| 4 | DN rounding rule | DNs |
+| 5 | Default action for iron, dhaagi, kachra, reti; how brass is handled | Sorting masters |
+| 6 | What happens with weight excess: paid, credited, ignored? | Payables |
+| 7 | TDS sections and rates (agreement says 0.1%; calls mention 2% and 0.1%) | Tax |
+| 8 | Exact Tally stock item names and the third production by-product | Stock masters |
+| 9 | Is stock dispatch by quantity enough for finished goods (decision 16)? | Stock |
+| 10 | Why DN 116 carries 18.7 kg of mitti against 37.4 kg sorted | Concessions |
+| 11 | Does Sakinaka buy scrap? (If yes, a future site) | Scope |
+| 12 | Factory-side document list (four assumed) | Documents |
+| 13 | Who bears return freight and is it recovered | Returns |
+| 14 | Do factory staff have email addresses for login? (Short login IDs work without one) | Go-live |
+| 15 | Who may add staff and reset passwords (default: owner, vbog_admin) | Permissions |
+
+## 14. Risks
+
+- Adoption: if entry is slower than the notebook, it will not be used. Measure time per arrival and per sorting entry in the parallel run.
+- Two Tallys: ticks show what is entered where, but the portal cannot see inside Tally until import is built.
+- Scope: production is now in; imports, sales and other sites will be asked for next.
+- Public folder: the whole `Rich_Alloys` folder is currently public through GitHub Pages (decision 22). Scrub client
+  details or serve only `deploy/` before real data or wider sharing.
+- Invoice totals are readable by every staff member (needed for weights); payments, ledger and cash are not.
+
+## 15. Glossary
+
+OC, Lal: scrap grades · DC, lead copper, low quality: lower grades kept at a rate cut · mitti, attachment, iron,
+dhaagi, kachra, reti: rejected material · goni: gunny bag · weight short/excess: our net vs billed net · DN/CN:
+debit/credit note · provisional: part payment on invoice · LR: lorry receipt · GSTR-2B: auto-drafted input-tax statement ·
+TDS: tax deducted at source · Tally Silver / cloud: factory and office Tally.

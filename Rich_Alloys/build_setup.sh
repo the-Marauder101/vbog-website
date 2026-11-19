@@ -3,8 +3,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/supabase"
 {
-  echo "-- Rich Alloys purchase portal: complete database setup."
+  echo "-- Rich Alloys purchase portal: complete database setup (v2)."
   echo "-- Paste this whole file into the Supabase SQL editor of a NEW, EMPTY project and run it once."
+  echo "-- A project that ran the v1 setup: run reset_v1.sql first."
   echo "-- Generated from supabase/migrations by build_setup.sh. Do not edit by hand."
   echo; echo "begin;"
   for f in migrations/*.sql; do echo; echo "-- ######## $f ########"; cat "$f"; done

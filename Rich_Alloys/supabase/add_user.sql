@@ -1,6 +1,6 @@
--- Fallback only. Normally staff are added from the app: Staff > Add staff.
--- Use this if no one can sign in as owner or vbog_admin. First create the person in Supabase:
--- Authentication > Users > Add user (email + password, tick "Auto confirm"). Then edit the three values below and run.
+-- First admin only. Everyone else is added in the app: Admin > Staff.
+-- First create the person in Supabase: Authentication > Users > Add user (email + password, tick "Auto confirm user").
+-- Then edit the three values below and run.
 -- Roles: owner, deal_desk, gate, factory, factory_accounts, ho_accounts, vbog_admin
 insert into profiles (id, email, full_name, role, plant_id)
 select u.id, u.email, 'Full Name', 'vbog_admin', (select id from plants where name = 'Palghar')

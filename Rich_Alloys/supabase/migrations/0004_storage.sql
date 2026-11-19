@@ -3,6 +3,8 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('deal-docs', 'deal-docs', false, 20971520, array['image/*','application/pdf'])
 on conflict (id) do nothing;
 
+drop policy if exists deal_docs_read on storage.objects;
+drop policy if exists deal_docs_upload on storage.objects;
 create policy deal_docs_read on storage.objects for select to authenticated
   using (bucket_id = 'deal-docs' and public.is_staff());
 create policy deal_docs_upload on storage.objects for insert to authenticated
