@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { COMPANY, csv, day, download, esc, inr, isNum, kg, printHtml, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
 import { DateIn, Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Sheet, SaveBar, Tabs, TextIn } from "../ui";
-import { DN_LABEL, DealDocs, PaymentRow, PaymentSheet, PriceDecisions, Stepper, StageChip, TallyTick, useSave } from "../common";
+import { DN_LABEL, DealDocs, PaymentRow, PaymentSheet, PriceDecisions, RateCell, RateHistory, Stepper, StageChip, TallyTick, useSave } from "../common";
 import { TermsSheet } from "./Deal";
 import { TermsLine } from "./Lots";
 
@@ -31,14 +31,15 @@ async function loadLot(id: string, money: boolean) {
     q(sb.from("sort_categories").select("*").order("sort")),
     q(sb.from("v_sorting_exceptions").select("*").eq("lot_id", id)),
   ]);
-  const [payable, payments, tds] = money && inv ? await Promise.all([
+  const [payable, payments, tds, priceHistory] = money && inv ? await Promise.all([
     q(sb.from("v_payable").select("*").eq("invoice_id", inv)),
     q(sb.from("payments").select("*").eq("invoice_id", inv).order("paid_on")),
     q(sb.from("tds").select("*").eq("invoice_id", inv).order("deducted_on")),
-  ]) : [[], [], []];
+    q(sb.from("deal_rate_history").select("*, profiles(full_name)").eq("lot_id", id).order("changed_at", { ascending: false })),
+  ]) : [[], [], [], []];
   const ids = [inv, ...notes.map((n) => n.id), ...payments.map((p) => p.id), ...tds.map((x) => x.id)].filter(Boolean) as string[];
   const marks = ids.length ? await q(sb.from("tally_marks").select("*").in("entity_id", ids)) : [];
-  return { lot, v: v[0] ?? {}, lines, sorting, calc, calcLines, notes, returns, cats, exc, payable: payable[0], payments, tds, marks };
+  return { lot, v: v[0] ?? {}, lines, sorting, calc, calcLines, notes, returns, cats, exc, payable: payable[0], payments, tds, priceHistory, marks };
 }
 export type LotData = Awaited<ReturnType<typeof loadLot>>;
 
@@ -100,6 +101,7 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
           [t("Balance to pay", "देना बाकी"), <strong key="b">{inr(d.payable.balance)}</strong>],
         ] as [string, JSX.Element | string][] : []),
       ]} />
+      {can("money_view") && isDomestic(d) && inv && <TruckPrice d={d} locked={live.length > 0} reload={reload} />}
       {d.exc.length > 0 && (
         <div className="warnbox">
           <strong>{t("Sorted but not fully debited", "छँटा पर पूरा डेबिट नहीं हुआ")}</strong>
@@ -127,6 +129,26 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
 }
 
 // ---------------- weights ----------------
+// The price this truck is bought at: fixed when it came in; after that only Himanshu (rate_confirm) changes it.
+function TruckPrice({ d, locked, reload }: { d: LotData; locked: boolean; reload: () => void }) {
+  const t = useT(); const can = useCan(); const lang = useLang();
+  const edit = can("rate_confirm") && !locked;
+  const names = Object.fromEntries(d.lines.map((l) => [l.grade, nm(lang, { name: l.grade_name, name_hi: l.grade_name_hi })]));
+  return (
+    <Section title={t("Price for this truck", "इस ट्रक का रेट")}>
+      <table className="tbl">
+        <thead><tr><th>{t("Grade", "ग्रेड")}</th><th className="n">{t("Invoice", "बिल")}</th><th className="n">{t("Our price", "हमारा रेट")}</th></tr></thead>
+        <tbody>{d.lines.map((l) => <tr key={l.lot_line_id}><td>{names[l.grade]}</td><td className="n">{inr(l.billed_rate)}</td>
+          <td className="n"><RateCell rate={l.deal_rate} label={l.grade} editable={edit} save={(v) => rpc("set_lot_rate", { p_lot: d.lot.id, p_grade: l.grade, p_rate: v })} onSaved={reload} /></td></tr>)}</tbody>
+      </table>
+      <p className="muted small">{edit ? t("Fixed when the truck came in. Tap to change it; only you can.", "ट्रक आते ही तय हुआ। बदलने के लिए टैप करें; सिर्फ़ आप बदल सकते हैं।")
+        : can("rate_confirm") ? t("Debit notes are approved: cancel them to change the price.", "डेबिट नोट मंज़ूर हैं: रेट बदलने के लिए उन्हें रद्द करें।")
+        : t("Fixed when the truck came in. Only Himanshu can change it.", "ट्रक आते ही तय हुआ। सिर्फ़ हिमांशु बदल सकते हैं।")}</p>
+      {d.priceHistory.length > 0 && <RateHistory rows={d.priceHistory} names={names} />}
+    </Section>
+  );
+}
+
 function Weights({ d, reload }: { d: LotData; reload: () => void }) {
   const t = useT(); const can = useCan(); const lang = useLang();
   const locked = d.notes.some((n) => n.status !== "cancelled");

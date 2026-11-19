@@ -18,7 +18,8 @@ do $$ declare r record; begin
              'unmark_tally','clear_tally_change','entity_amount','reconcile_payment','reject_payment','confirm_ledger',
              'set_invoice_2b','save_production','verify_document','approve_document','reject_document','doc_norm','import_gstr2b',
              'transfer_stock','create_receipt','doc_kind_for','create_unbooked_lot','confirm_deal_rate',
-             'log_rate_change','apply_deal_rate','set_deal_rate','decide_price') loop
+             'log_rate_change','apply_deal_rate','set_deal_rate','decide_price',
+             'pin_truck_price','apply_truck_price','set_lot_rate') loop
     execute format('drop function if exists %s cascade', r.f);
   end loop;
 end $$;
