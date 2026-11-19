@@ -270,8 +270,9 @@ Recommended later: serve only `deploy/`, on its own subdomain.
   5.000 kg shown live), the photo went up through the queue and is linked to the new lot; the Tally queue's "View
   invoice photo" opened it. 18 Nov (v2.0, same code paths): upload survived a dropped network; Admin > Staff created,
   used and switched off a gate login. Live then reset to the Ogo-only state.
-- `tests/e2e/run.py` was not run in the merge sessions (PostgREST and Python Playwright could not be installed there).
-  Run it before the next UI change.
+- `tests/e2e/run.py` passed on 19 Nov on the merged v2.2 (PostgREST 12.2.3, Python Playwright 1.63.0, installed by the
+  environment's setup script): DNs ₹7,080 / ₹1,180 / ₹14,160, ledger ₹10,90,179.40, cash ₹10.90 L open, register photo ✓
+  factory ✓ PUR-501 office ✗, copper scrap 10,242.200 kg, watchman sees no money screens, no sideways scrolling, no errors.
 - Rule: every closed transaction from Rich Alloys becomes test data plus checks.
 
 ## 12. Plan
