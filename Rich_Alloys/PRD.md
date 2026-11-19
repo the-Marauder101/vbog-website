@@ -81,6 +81,7 @@ the factory Tally, the office Tally, or both.
 | 29 | An opening entry starts an item's stock: movements dated before it are already inside it and stop counting. Stock opened 1 Nov 2026 from Tinu's 31 Oct closings, so the Ogo lot of 25 Oct is not counted twice | Claude, 19 Nov, from 7a item 4 |
 | 30 | **Every source that brings material in is a supplier**: domestic sellers, the Mumbai branch, import sellers, job workers. Each delivery is a lot with weights, sorting, rejections and documents. The money steps apply only where money is owed for the material (section 7b). (Numbered 25 in Depesh's draft; renumbered because 25–29 were already in use.) | Depesh, 20 Nov |
 | 31 | A truck that arrives without a booking is recorded and tallied in full (lot, tax invoice, debit notes, payable, cash plan, ledger, both Tally queues, stock). Its deal is marked unbooked; the rate comes from the invoice until someone with `rate_confirm` (owner, vbog_admin) confirms or corrects it | Depesh, 20 Nov |
+| 32 | **Every invoice rate that differs from the deal is flagged**, over or under. Himanshu or Tinu (`price_decide`: owner, vbog_admin, factory_accounts) chooses one of two: **accept the invoice rate** (the deal takes it, recorded in its rate history) or **keep the agreed rate** (if the invoice is higher, a debit note for the difference × billed kg + GST; if lower, nothing is raised and the supplier bills the difference). Deal rates stay editable at any time from the deal itself, with a history of who changed what and why. Trucks already settled keep the rate they were settled at | Depesh, 20 Nov |
 | 28 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 3a. Source of truth
@@ -155,7 +156,26 @@ because lots are mixed in melting).
   and the lot, which then goes through everything a booked truck does. The lot shows "Not booked: rate to confirm".
 - **Rate confirmation**: Himanshu's Home lists "Trucks that came without a booking: confirm the rate". On the deal he
   confirms it, or corrects it to the phone rate first; debit notes then use his rate and the invoice rate shows as
-  different from the deal on the lot. A rate cannot change under an approved debit note.
+  different from the deal on the lot. A rate change after a debit note keeps that truck at the rate it was settled at.
+
+### 5b. Rates and invoice rate differences (decision 32, built 20 Nov, `0012_prices.sql`)
+
+Hierarchy: **Deal** (what Himanshu agreed on the phone: supplier, one or more grades, each with quantity and rate) →
+one or more **Lots** (each truck, with its invoice) → reductions on each lot (weight short, sorting: mitti, goni,
+attachments, rejects; rate cuts; returns) → debit notes → payment.
+
+- **Changing a rate**: on the deal, tap the rate (✎), type the new one, ✓. No other screen or button. Every change is
+  kept in "Rate history" under the table: old → new, booked / changed / invoice rate accepted / confirmed (unbooked),
+  who, when, and the invoice or note. Trucks with debit notes already raised stay pinned at their old rate
+  (`lot_lines.agreed_rate`); the others follow the new rate.
+- **Arrival**: the invoice rate is typed from the invoice; it is never pre-filled from the deal (pre-filling hid
+  differences). If it differs from the agreed rate the form says so in red while typing.
+- **Decision**: a lot whose invoice rate differs from its deal shows one card with both choices on Home ("Invoice rate
+  differs from the deal", top of the work list), on the lot and on the deal: grade, invoice and agreed rates, ₹/kg × kg
+  and the total with GST. "Accept invoice rate" changes the deal's rate. "Keep agreed rate" raises a debit note of type
+  "Invoice rate above agreed" when the invoice is higher; it needs no sorting to finish and has no stock effect. Others
+  see "Himanshu or Tinu will decide this." The lot stays at "DN to approve" until it is decided.
+- Only domestic lots on a tax invoice are checked (branch, import and job work carry no money, section 7b).
 
 Lot stages: Received → Sorting → DN to approve → Tally entry pending → Payment pending → Settled.
 
@@ -326,16 +346,17 @@ It is the summary his stock and production sheets roll up into, and every month 
 | `suppliers.supplier_type`, `invoices.doc_kind`, `lots.sent_by`, `stock_moves.supplier_id`, `doc_types.supplier_types` | Supplier types (7b) |
 | `stock_moves.party`, `.doc_no`, `.transfer_id`; kinds for branch, job work, import receipt, sale, credit note, item-to-item | Stock movements beyond lots (7a) |
 | `tally_marks.amount_at_mark`, `documents.lot_id` | Amount when ticked (to detect later changes); invoice photo per lot |
+| `deal_rate_history`, `price_decisions`, `lot_lines.agreed_rate` | Every rate change on a deal (old, new, why, lot, note, who, when); each invoice-rate decision (accept or keep, who, when); the rate a settled truck is pinned to |
 | `gstr2b_imports`, `gstr2b_lines` | Uploaded 2B months and their lines, with the matched invoice |
 | `documents`, `audit_log` | Files and their status; every change logged |
 
 Views: `v_lot_lines`, `v_dn_calc(_lines)`, `v_sorting_exceptions`, `v_payable`, `v_tally_missing`, `v_doc_gaps`,
 `v_lots` (stage), `v_deals_incoming`, `v_ledger_lines`, `v_supplier_balance`, `v_cash_plan`, `v_gst_month`,
-`v_stock_moves` (opening starts an item), `v_production_runs` (yield), `v_job_work` (sent vs back), `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
+`v_stock_moves` (opening starts an item), `v_production_runs` (yield), `v_job_work` (sent vs back), `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_price_diffs` (invoice rate vs deal rate, open or decided), `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
 
 Actions (functions): `create_deal`, `create_lot`, `close_lot`, `reopen_lot`, `approve_dn`, `cancel_note`,
 `set_note_tally_no`, `mark_tally`, `unmark_tally`, `reconcile_payment`, `reject_payment`, `confirm_ledger`,
-`clear_tally_change`, `set_invoice_2b`, `import_gstr2b`, `save_production`, `verify_document`, `approve_document`, `reject_document`.
+`clear_tally_change`, `set_deal_rate`, `decide_price`, `confirm_deal_rate`, `create_unbooked_lot`, `set_invoice_2b`, `import_gstr2b`, `save_production`, `verify_document`, `approve_document`, `reject_document`.
 
 Staff management (`0007_staff_and_uploads.sql`, `supabase/functions/staff-admin`): the edge function is the only code
 holding the service key. It checks the caller's role has `staff_manage` (owner and vbog_admin by default), then creates
@@ -413,6 +434,13 @@ Recommended later: serve only `deploy/`, on its own subdomain.
   rate + GST, payable, both Tally queues, stock); Tinu is not asked to confirm and cannot; Himanshu is; his corrected rate
   drives the weight-short DN; no rate change under an approved DN; a booking 3 days past its date is late and on the
   to-do list. Proven to fail when the rate permission is removed.
+- `tests/checks_prices.sql`: a deal for OC and Lal; truck 1 invoiced OC ₹50/kg above is flagged (₹1,00,000 + GST =
+  ₹1,18,000), Lal at the agreed rate is not; Sanjay cannot decide or change a rate; Tinu keeps the agreed rate and the
+  ₹1,18,000 debit note is approved before sorting and reduces the payable, not stock; truck 2 at the same rate is
+  accepted by Himanshu, the deal moves to ₹1,250 with history, truck 1 stays at ₹1,200; truck 3 under the rate raises no
+  note; a rate edit with a note is logged with who. Browser role play (360 px, Hindi): Himanshu books OC and Lal in one
+  deal, raises OC on the deal, Sanjay's arrival form flags the invoice rate, Tinu keeps the agreed rate from Home,
+  Himanshu accepts the next truck from Home in Hindi; no sideways scrolling.
 - `tests/checks_7a.sql` also checks Tinu's statement arithmetic for every item; `checks_7b.sql` checks that a branch
   delivery is a Recipt Note and job work sits in its own columns, not in PURCHASE.
 - `tests/checks_7b.sql`: a branch delivery (Tinu's delivery note 37, 2,505 kg) on a delivery note with no money, its
@@ -466,7 +494,7 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 | 21 | What are the 2,501.40 kg April gap and the 29.50 kg April opening difference? | Stock history |
 | 26 | Document checklist per supplier type (built as a proposal, see 7b): is it right for the branch, imports and job work? | Documents |
 | 27 | Material sent out to the Mumbai branch and to job workers is kept as a stock movement naming the supplier (7b listed only sales, item-to-item and sales returns). Confirm | Stock |
-| 30 | An invoice rate above the agreed rate shows on the lot but raises no debit note (true for booked deals too). Should the portal raise a rate debit note for it? | DNs |
+| 30 | ~~An invoice rate above the agreed rate raises no debit note. Should it?~~ Answered (decision 32): every difference is flagged; accept the invoice rate or keep the agreed rate with a debit note. Still open: the exact DN and CN formats Depesh will send, to be recreated exactly | DNs |
 | 24 | Plastic scrap: the stock statement shows 0 at 31 Oct (portal agrees, item added); the October production report shows −29,020 kg. Confirm the report figure is an error | Stock opening |
 | 28 | Copper scrap at 31 Oct: 105,380.75 kg (stock statement) or 105,380.66 kg (stock ledger, production report)? Which does Tally show? The portal opened at 105,380.66 | Stock opening |
 | 29 | The second ingot item: HSN 74031200 (stock statement, production report heading) or 74031900 (stock sheet)? | Stock masters |
@@ -489,5 +517,5 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 
 OC, Lal: scrap grades · DC, lead copper, low quality: lower grades kept at a rate cut · mitti, attachment, iron,
 dhaagi, kachra, reti: rejected material · goni: gunny bag · weight short/excess: our net vs billed net · DN/CN:
-debit/credit note · provisional: part payment on invoice · LR: lorry receipt · GSTR-2B: auto-drafted input-tax statement ·
+debit/credit note · deal: what was agreed on the phone (grades, kg, rate) · lot: one truck against a deal · provisional: part payment on invoice · LR: lorry receipt · GSTR-2B: auto-drafted input-tax statement ·
 TDS: tax deducted at source · Tally Silver / cloud: factory and office Tally.

@@ -1,5 +1,6 @@
 import { addDays, day, go, inr, inrShort, q, sb, today, useCan, useLang, useLoad, useMe, useT, type Row } from "../lib";
 import { Btn, Empty, Err, Loading, Section } from "../ui";
+import { PriceDecisions } from "../common";
 
 const KINDS: Record<string, { en: string; hi: string; to: (r: Row) => string }> = {
   rate_confirm: { en: "Trucks that came without a booking: confirm the rate", hi: "बिना बुकिंग आए ट्रक: रेट पक्का करें", to: (r) => `deal/${r.ref_id}` },
@@ -48,7 +49,8 @@ export default function Home() {
         </button>
       )}
       <Section title={t("Your work", "आपका काम")}>
-        {groups.length === 0 && <Empty>{t("Nothing waiting for you.", "आपके लिए कुछ बाकी नहीं।")}</Empty>}
+        {tasks.some((x) => x.kind === "price_decide") && <PriceDecisions title />}
+        {groups.length === 0 && !tasks.some((x) => x.kind === "price_decide") && <Empty>{t("Nothing waiting for you.", "आपके लिए कुछ बाकी नहीं।")}</Empty>}
         {groups.map(({ k, rows }) => (
           <div key={k} className="task-group">
             <h3 className="sub">{t(KINDS[k].en, KINDS[k].hi)} <span className="count">{rows.length}</span></h3>

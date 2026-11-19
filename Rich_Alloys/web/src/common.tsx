@@ -32,6 +32,7 @@ export function Stepper({ stage }: { stage: string }) {
 }
 
 export const DN_LABEL: Record<string, [string, string]> = {
+  price_diff: ["Invoice rate above agreed", "तय रेट से ज़्यादा बिल रेट"],
   weight_short: ["Weight short", "वज़न कम"],
   rate_diff: ["Rate difference", "रेट अंतर"],
   return: ["Material return", "माल वापसी"],
@@ -343,6 +344,53 @@ function UploadRow({ q: x }: { q: UpItem }) {
           <Btn kind="danger" onClick={() => setConfirm(true)}>{t("Remove", "हटाएँ")}</Btn>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------- invoice rate vs agreed rate: decide per truck, in one tap (migration 0012) ----------
+// Shown on Home (Himanshu, Tinu), on the lot and on the deal. Accept = the deal takes the invoice rate;
+// keep = over-billing becomes a debit note for the excess, under-billing is just recorded.
+export function PriceDecisions({ lotId, dealId, onDone, title }: { lotId?: string; dealId?: string; onDone?: () => void; title?: boolean }) {
+  const t = useT(); const can = useCan(); const lang = useLang();
+  const { data, reload } = useLoad(() => {
+    let qq = sb.from("v_price_diffs").select("*").eq("status", "open").order("invoice_date");
+    if (lotId) qq = qq.eq("lot_id", lotId);
+    if (dealId) qq = qq.eq("deal_id", dealId);
+    return q(qq);
+  }, [lotId, dealId]);
+  const s = useSave();
+  if (!data || !data.length) return null;
+  const lots = Array.from(new Set(data.map((r) => r.lot_id)));
+  const decide = (lot: string, choice: string) => s.run(() => rpc("decide_price", { p_lot: lot, p_choice: choice }), () => { reload(); onDone?.(); });
+  return (
+    <div className="price-block">
+      {title && <h2 className="sub">{t("Invoice rate differs from the deal", "बिल का रेट सौदे से अलग")}</h2>}
+      <Err error={s.error} />
+      {lots.map((lot) => {
+        const rows = data.filter((r) => r.lot_id === lot); const f = rows[0];
+        const over = rows.filter((r) => r.direction === "over");
+        const dn = over.reduce((a, r) => a + Number(r.total), 0);
+        return (
+          <div className="card price-card" key={lot}>
+            <div className="item-head"><strong>{f.supplier}</strong><span className="muted small">{f.lot_no} · {t("invoice", "बिल")} {f.invoice_no}</span></div>
+            {rows.map((r) => (
+              <p key={r.grade} className="price-line">
+                <strong>{nm(lang, { name: r.grade_name, name_hi: r.grade_name_hi }) || r.grade}</strong>:{" "}
+                {t("invoice", "बिल")} {inr(r.invoice_rate)} · {t("agreed", "तय")} {inr(r.agreed_rate)}{" "}
+                <span className={r.direction === "over" ? "bad" : "okline"}>({r.direction === "over" ? "+" : "−"}{inr(Math.abs(Number(r.diff_per_kg)))}/kg × {Number(r.billed_net_kg).toLocaleString("en-IN")} kg = {inr(Math.abs(Number(r.total)))} {t("incl. GST", "GST सहित")})</span>
+              </p>))}
+            {can("price_decide") ? (
+              <div className="choice-buttons">
+                <Btn kind="primary" disabled={s.busy} onClick={() => decide(lot, "accept_invoice")}>
+                  {t("Accept invoice rate", "बिल का रेट मानें")}<small>{t("The deal takes this rate", "सौदे का रेट यही होगा")}</small></Btn>
+                <Btn disabled={s.busy} onClick={() => decide(lot, "keep_agreed")}>
+                  {t("Keep agreed rate", "तय रेट रखें")}<small>{over.length ? `${t("Debit note", "डेबिट नोट")} ${inr(dn)}` : t("Supplier to bill the difference", "फर्क का बिल सप्लायर भेजेगा")}</small></Btn>
+              </div>
+            ) : <p className="muted small">{t("Himanshu or Tinu will decide this.", "हिमांशु जी या टीनू तय करेंगे।")}</p>}
+          </div>
+        );
+      })}
     </div>
   );
 }

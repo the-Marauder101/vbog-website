@@ -5,7 +5,7 @@ do $$ declare r record; begin
     execute format('drop view if exists public.%I cascade', r.table_name);
   end loop;
 end $$;
-drop table if exists gstr2b_lines, gstr2b_imports, audit_log, documents, stock_tally_checks, stock_moves, production_lines,
+drop table if exists price_decisions, deal_rate_history, gstr2b_lines, gstr2b_imports, audit_log, documents, stock_tally_checks, stock_moves, production_lines,
   production_runs, tally_marks, ledger_confirmations, tds, payments, returns, note_lines, notes, sorting_lines, lot_lines,
   lots, invoice_lines, invoices, deal_lines, deals, suppliers, doc_types, sort_categories, grades, items, permissions,
   profiles, plants, deductions, debit_note_lines, debit_notes, receipt_lines, receipts cascade;
@@ -17,7 +17,8 @@ do $$ declare r record; begin
              'create_deal','create_lot','close_lot','reopen_lot','approve_dn','cancel_note','set_note_tally_no','mark_tally',
              'unmark_tally','clear_tally_change','entity_amount','reconcile_payment','reject_payment','confirm_ledger',
              'set_invoice_2b','save_production','verify_document','approve_document','reject_document','doc_norm','import_gstr2b',
-             'transfer_stock','create_receipt','doc_kind_for','create_unbooked_lot','confirm_deal_rate') loop
+             'transfer_stock','create_receipt','doc_kind_for','create_unbooked_lot','confirm_deal_rate',
+             'log_rate_change','apply_deal_rate','set_deal_rate','decide_price') loop
     execute format('drop function if exists %s cascade', r.f);
   end loop;
 end $$;
