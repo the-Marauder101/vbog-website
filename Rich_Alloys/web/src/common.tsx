@@ -383,7 +383,7 @@ export function PriceDecisions({ lotId, dealId, onDone, title }: { lotId?: strin
             {can("price_decide") ? (
               <div className="choice-buttons">
                 <Btn kind="primary" disabled={s.busy} onClick={() => decide(lot, "accept_invoice")}>
-                  {t("Accept invoice rate", "बिल का रेट मानें")}<small>{t("The deal takes this rate", "सौदे का रेट यही होगा")}</small></Btn>
+                  {t("Accept invoice rate", "बिल का रेट मानें")}<small>{t("Also for trucks still to come", "आगे के ट्रकों के लिए भी")}</small></Btn>
                 <Btn disabled={s.busy} onClick={() => decide(lot, "keep_agreed")}>
                   {t("Keep agreed rate", "तय रेट रखें")}<small>{over.length ? `${t("Debit note", "डेबिट नोट")} ${inr(dn)}` : t("Supplier to bill the difference", "फर्क का बिल सप्लायर भेजेगा")}</small></Btn>
               </div>
@@ -392,5 +392,44 @@ export function PriceDecisions({ lotId, dealId, onDone, title }: { lotId?: strin
         );
       })}
     </div>
+  );
+}
+
+// Tap the rate, type the new one, tick. Used for a deal's rate and for a truck's price.
+export function RateCell({ rate, label, editable, save, onSaved }: { rate: unknown; label: string; editable: boolean; save: (v: number) => Promise<unknown>; onSaved: () => void }) {
+  const t = useT();
+  const [v, setV] = useState<string | null>(null);
+  const s = useSave();
+  if (!editable) return <>{inr(rate)}/kg</>;
+  if (v === null) return <button type="button" className="rate-btn" aria-label={`${t("Change rate", "रेट बदलें")} ${label}`} onClick={() => setV(String(rate ?? ""))}>{inr(rate)}/kg ✎</button>;
+  return (
+    <span className="rate-edit">
+      <NumIn value={v} onChange={setV} autoFocus />
+      <Btn small kind="primary" disabled={s.busy || !isNum(v) || Number(v) <= 0} aria-label={t("Save rate", "रेट सेव करें")}
+        onClick={() => s.run(() => save(Number(v)), () => { setV(null); onSaved(); })}>✓</Btn>
+      <Btn small aria-label={t("Cancel", "रद्द करें")} onClick={() => setV(null)}>✕</Btn>
+      {s.error && <span className="error small">{s.error}</span>}
+    </span>
+  );
+}
+
+const SOURCE: Record<string, [string, string]> = {
+  booked: ["booked", "बुक किया"], changed: ["deal changed", "सौदा बदला"],
+  accepted_invoice: ["invoice rate accepted", "बिल का रेट माना"], confirmed_unbooked: ["confirmed (unbooked truck)", "पक्का किया (बिना बुकिंग)"],
+  truck_changed: ["truck price changed", "ट्रक का रेट बदला"],
+};
+// rows from deal_rate_history (with profiles(full_name) and lots(lot_no))
+export function RateHistory({ rows, names, open }: { rows: Row[]; names: Record<string, string>; open?: boolean }) {
+  const t = useT(); const lang = useLang();
+  return (
+    <details className="rate-history" open={open}>
+      <summary>{t("Rate history", "रेट का इतिहास")} ({rows.length})</summary>
+      <ul className="history">{rows.map((h) => (
+        <li key={h.id}>
+          <strong>{names[h.grade] ?? h.grade}</strong>{h.lots?.lot_no ? ` · ${h.lots.lot_no}` : ""} {h.old_rate != null ? <>{inr(h.old_rate)} → </> : null}<strong>{inr(h.new_rate)}</strong>
+          <span className="muted"> · {t(...(SOURCE[h.source] ?? [h.source, h.source]))} · {h.profiles?.full_name ?? "—"} · {new Date(h.changed_at).toLocaleString(lang === "hi" ? "hi-IN" : "en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}{h.note ? ` · ${h.note}` : ""}</span>
+        </li>))}
+      </ul>
+    </details>
   );
 }

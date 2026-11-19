@@ -45,10 +45,12 @@ begin
   select taxable into n from v_dn_calc where lot_id = v_lot and dn_type = 'weight_short'; assert n = 5750, 'weight short at the confirmed rate';
   select count(*) into n from v_tasks where kind = 'rate_confirm' and ref_id = v_deal; assert n = 0, 'confirmed: off his list';
   perform approve_dn(v_lot, 'weight_short', current_date, true);
-  -- a later change applies to the deal; this truck, already settled, keeps the rate it was settled at
-  perform confirm_deal_rate(v_deal, '{"OC": 1100}'::jsonb);
+  -- the truck's price cannot change under its approved debit note; the deal rate can, for trucks still to come
+  ok := false; begin perform confirm_deal_rate(v_deal, '{"OC": 1100}'::jsonb); exception when others then ok := sqlerrm like '%Cancel it first%'; end;
+  assert ok, 'no truck price change under an approved debit note';
+  perform set_deal_rate(v_deal, 'OC', 1100, null);
   select rate_per_kg into n from deal_lines where deal_id = v_deal; assert n = 1100, 'deal rate changed';
-  select deal_rate into n from v_lot_lines where lot_id = v_lot; assert n = 1150, 'settled truck keeps its rate';
+  select deal_rate into n from v_lot_lines where lot_id = v_lot; assert n = 1150, 'the truck keeps its confirmed price';
   select count(*) into n from deal_rate_history where deal_id = v_deal; assert n = 3, 'history: booked 1200, 1150, 1100';
 
   -- a booked supply three days past its expected date

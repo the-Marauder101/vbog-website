@@ -1,11 +1,11 @@
--- Rates on the deal with history; every invoice rate difference decided (migration 0012).
+-- Rates on the deal with history; a truck's price fixed when it enters; every invoice rate difference decided (0012, 0013).
 \set ON_ERROR_STOP 1
 do $$
 declare n numeric; t text; ok boolean; r record;
   facc uuid := '00000000-0000-0000-0000-0000000000e1';   -- Tinu
   own  uuid := '00000000-0000-0000-0000-0000000000e2';   -- Himanshu
   fac  uuid := '00000000-0000-0000-0000-0000000000e3';   -- Sanjay
-  v_dom uuid; v_deal uuid; v_lot1 uuid; v_lot2 uuid; v_lot3 uuid; v_inv uuid;
+  v_dom uuid; v_deal uuid; v_lot1 uuid; v_lot2 uuid; v_lot3 uuid; v_lot4 uuid; v_inv uuid;
 begin
   insert into profiles (id, full_name, role) values (facc, 'Tinu', 'factory_accounts'), (own, 'Himanshu', 'owner'), (fac, 'Sanjay', 'factory');
   select supplier_id into v_dom from v_lots where deal_no = 'RA-082';
@@ -21,8 +21,9 @@ begin
   -- truck 1: OC invoiced at 1,250 (50 over), Lal at the agreed 1,300
   perform set_config('request.jwt.claim.sub', facc::text, true);
   v_lot1 := create_lot(jsonb_build_object('deal_id', v_deal, 'invoice_no', 'P-1', 'lines', jsonb_build_array(
-    jsonb_build_object('grade', 'OC', 'billed_net_kg', 2000, 'billed_rate', 1250, 'factory_gross_kg', 2000),
+    jsonb_build_object('grade', 'OC', 'billed_net_kg', 2000, 'billed_rate', 1250, 'factory_gross_kg', 1990),
     jsonb_build_object('grade', 'LAL', 'billed_net_kg', 1000, 'billed_rate', 1300, 'factory_gross_kg', 1000))));
+  select agreed_rate into n from lot_lines where lot_id = v_lot1 and grade = 'OC'; assert n = 1200, 'truck 1 price fixed on entry';
   select * into r from v_price_diffs where lot_id = v_lot1;
   assert r.grade = 'OC' and r.direction = 'over' and r.status = 'open' and r.amount = 100000 and r.total = 118000,
     'OC flagged: 2,000 kg x 50 = 1,00,000 + 18% GST';
@@ -36,16 +37,21 @@ begin
   ok := false; begin perform set_deal_rate(v_deal, 'OC', 1, null); exception when insufficient_privilege then ok := true; end;
   assert ok, 'Sanjay cannot change rates';
 
-  -- Tinu keeps the agreed rate: a price debit note for the excess, approvable before sorting
+  -- no debit note until the price is confirmed
   perform set_config('request.jwt.claim.sub', facc::text, true);
+  ok := false; begin perform approve_dn(v_lot1, 'weight_short', current_date, true); exception when others then ok := sqlerrm like '%confirm the price first%'; end;
+  assert ok, 'weight short waits for the price';
+  -- Tinu keeps the agreed rate: a price debit note for the excess, approvable before sorting
   perform decide_price(v_lot1, 'keep_agreed');
   select status into t from v_price_diffs where lot_id = v_lot1; assert t = 'kept_agreed', 'decided';
   perform approve_dn(v_lot1, 'price_diff', current_date, true);
   select total, (select sum(stock_kg) from note_lines where note_id = notes.id) as kg into r from notes where lot_id = v_lot1 and dn_type = 'price_diff';
   assert r.total = 118000 and r.kg = 0, 'price debit note 1,18,000; no stock effect';
+  perform approve_dn(v_lot1, 'weight_short', current_date, true);
+  select total into n from notes where lot_id = v_lot1 and dn_type = 'weight_short'; assert n = 14160, '10 kg short at the fixed 1,200 + GST';
   perform set_config('request.jwt.claim.sub', own::text, true);
   select balance into n from v_payable where invoice_id = (select invoice_id from lots where id = v_lot1);
-  assert n = (2000 * 1250 + 1000 * 1300) * 1.18 - 118000, 'owed at the agreed rate';
+  assert n = (2000 * 1250 + 1000 * 1300) * 1.18 - 118000 - 14160, 'owed at the agreed rate, less the shortage';
 
   -- truck 2: OC again at 1,250; Himanshu accepts (he agreed it on the phone)
   perform set_config('request.jwt.claim.sub', facc::text, true);
@@ -67,6 +73,29 @@ begin
   select direction into t from v_price_diffs where lot_id = v_lot3; assert t = 'under', 'under-billing is flagged too';
   perform decide_price(v_lot3, 'keep_agreed');
   select count(*) into n from v_dn_calc where lot_id = v_lot3 and dn_type = 'price_diff'; assert n = 0, 'no debit note for under-billing';
+
+  -- the deal rate moves after truck 3 is in: truck 3 (no debit notes) keeps its price; the next truck takes the new one
+  perform set_deal_rate(v_deal, 'OC', 1300, 'Market up');
+  select deal_rate into n from v_lot_lines where lot_id = v_lot3; assert n = 1250, 'truck 3 keeps the price it entered at';
+  v_lot4 := create_lot(jsonb_build_object('deal_id', v_deal, 'invoice_no', 'P-4', 'lines', jsonb_build_array(
+    jsonb_build_object('grade', 'OC', 'billed_net_kg', 500, 'billed_rate', 1300, 'factory_gross_kg', 500))));
+  select deal_rate into n from v_lot_lines where lot_id = v_lot4; assert n = 1300, 'truck 4 enters at the new deal rate';
+  -- once in, only Himanshu changes a truck's price
+  ok := false; begin perform set_lot_rate(v_lot3, 'OC', 1245, null); exception when insufficient_privilege then ok := true; end;
+  assert ok, 'Tinu cannot change a truck''s price';
+  perform set_config('request.jwt.claim.sub', fac::text, true);
+  ok := false; begin update lot_lines set agreed_rate = 1 where lot_id = v_lot3; exception when others then ok := sqlerrm like '%Only Himanshu%'; end;
+  assert ok, 'nobody edits a truck''s price directly';
+  perform set_config('request.jwt.claim.sub', own::text, true);
+  perform set_lot_rate(v_lot3, 'OC', 1245, 'Agreed on call');
+  select source, old_rate, new_rate, lot_id, note, changed_by into r from deal_rate_history where lot_id = v_lot3 order by changed_at desc limit 1;
+  assert r.source = 'truck_changed' and r.old_rate = 1250 and r.new_rate = 1245 and r.note = 'Agreed on call' and r.changed_by = own,
+    'truck price change in the history, with who and why';
+  select status into t from v_price_diffs where lot_id = v_lot3; assert t = 'kept_agreed', 'his price is the decision: nothing to ask';
+  select rate_per_kg into n from deal_lines where deal_id = v_deal and grade = 'OC'; assert n = 1300, 'the deal is untouched';
+  ok := false; begin perform set_lot_rate(v_lot1, 'OC', 1250, null); exception when others then ok := sqlerrm like '%Cancel it first%'; end;
+  assert ok, 'no price change under an approved debit note';
+  perform set_config('request.jwt.claim.sub', facc::text, true);
 
   -- a direct rate change, with a note, is in the history
   perform set_deal_rate(v_deal, 'LAL', 1310, 'Revised on call');
