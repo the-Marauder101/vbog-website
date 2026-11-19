@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { COMPANY, csv, day, download, esc, inr, isNum, kg, printHtml, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
 import { DateIn, Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Sheet, SaveBar, Tabs, TextIn } from "../ui";
-import { DN_LABEL, DealDocs, PaymentRow, PaymentSheet, Stepper, StageChip, TallyTick, useSave } from "../common";
+import { DN_LABEL, DealDocs, PaymentRow, PaymentSheet, PriceDecisions, Stepper, StageChip, TallyTick, useSave } from "../common";
 import { TermsSheet } from "./Deal";
 import { TermsLine } from "./Lots";
 
@@ -85,6 +85,7 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
   return (
     <>
       <Stepper stage={d.v.stage} />
+      <PriceDecisions lotId={d.lot.id} onDone={reload} />
       <KV rows={[
         [t("Received", "माल आया"), `${day(d.lot.received_on)} · ${d.v.days_open} ${t("days ago", "दिन पहले")}`],
         [t("Vehicle", "गाड़ी"), d.lot.vehicle_no ?? "—"],
@@ -322,7 +323,7 @@ function SortingSheet({ d, onClose, onSaved }: { d: LotData; onClose: () => void
 // ---------------- debit notes ----------------
 function Notes({ d, reload }: { d: LotData; reload: () => void }) {
   const t = useT(); const can = useCan();
-  const types = ["weight_short", "rate_diff", "return"].filter((x) => d.calc.some((c) => c.dn_type === x) || d.notes.some((n) => n.dn_type === x && n.status !== "cancelled"));
+  const types = ["weight_short", "price_diff", "rate_diff", "return"].filter((x) => d.calc.some((c) => c.dn_type === x) || d.notes.some((n) => n.dn_type === x && n.status !== "cancelled"));
   const live = d.notes.filter((n) => n.status !== "cancelled");
   const returnKg = live.filter((n) => n.dn_type === "return").flatMap((n) => n.note_lines).reduce((a: number, l: Row) => a + Number(l.qty_kg), 0);
   const [ret, setRet] = useState(false);

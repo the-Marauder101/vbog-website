@@ -19,6 +19,7 @@ const ACTIONS: [string, string][] = [
   ["production_edit", "Enter production"], ["stock_edit", "Other stock entries, Tally closing"],
   ["staff_manage", "Add staff, reset passwords, switch logins off"],
   ["rate_confirm", "Confirm the rate of trucks that came without a booking"],
+  ["price_decide", "Decide when an invoice rate differs from the deal"],
 ];
 
 export default function Admin({ tab }: { tab?: string }) {

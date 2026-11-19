@@ -2,7 +2,7 @@ import { enqueue, refusal } from "../uploads";
 import { useMemo, useState } from "react";
 import { day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "../lib";
 import { DateIn, Btn, Chip, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, TextIn } from "../ui";
-import { DealDocs, StageChip, useSave } from "../common";
+import { DealDocs, PriceDecisions, StageChip, useSave } from "../common";
 import { TermsLine } from "./Lots";
 
 export default function Deal({ id, openArrival }: { id: string; openArrival?: boolean }) {
@@ -16,9 +16,10 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
     q(sb.from("deal_lines").select("*, grades(name, name_hi)").eq("deal_id", id)),
     q(sb.from("v_lots").select("*").eq("deal_id", id).order("received_on")),
     q(sb.from("v_deals_incoming").select("*").eq("deal_id", id)),
+    q(sb.from("deal_rate_history").select("*, profiles(full_name)").eq("deal_id", id).order("changed_at", { ascending: false })),
   ]), [id]);
   if (!data) return error ? <Err error={error} /> : <Loading />;
-  const [deal, lines, lots, inc] = data;
+  const [deal, lines, lots, inc, rateHistory] = data;
   const incoming = inc[0];
   const sup = deal.suppliers ?? {};
   return (
@@ -63,8 +64,11 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
       <Section title={t("What was agreed", "क्या तय हुआ")}>
         <table className="tbl">
           <thead><tr><th>{t("Grade", "ग्रेड")}</th><th className="n">{t("Quantity", "मात्रा")}</th><th className="n">{t("Rate", "रेट")}</th></tr></thead>
-          <tbody>{lines.map((l) => <tr key={l.id}><td>{nm(lang, l.grades) || l.grade}</td><td className="n">{kg(l.qty_kg)}</td><td className="n">{inr(l.rate_per_kg)}/kg</td></tr>)}</tbody>
+          <tbody>{lines.map((l) => <tr key={l.id}><td>{nm(lang, l.grades) || l.grade}</td><td className="n">{kg(l.qty_kg)}</td>
+            <td className="n"><RateCell dealId={id} grade={l.grade} rate={l.rate_per_kg} editable={can("deal_edit") && !deal.cancelled} onSaved={reload} /></td></tr>)}</tbody>
         </table>
+        {can("deal_edit") && !deal.cancelled && <p className="muted small">{t("Tap a rate to change it. Trucks already settled keep their rate; the rest take the new one.", "रेट बदलने के लिए उस पर टैप करें। निपट चुके ट्रक पुराने रेट पर रहेंगे; बाकी नए रेट पर।")}</p>}
+        {rateHistory.length > 1 && <RateHistory rows={rateHistory} lang={lang} names={Object.fromEntries(lines.map((l) => [l.grade, nm(lang, l.grades) || l.grade]))} />}
         <KV rows={[
           [t("Deal date", "सौदे की तारीख"), day(deal.deal_date)],
           [t("Expected arrival", "माल कब आएगा"), day(deal.expected_date)],
@@ -84,7 +88,8 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
         </div>
       </Section>
 
-      <Section title={t("Lots received", "आए हुए लॉट")}>
+      <PriceDecisions dealId={id} title onDone={reload} />
+      <Section title={t("Lots (trucks) received", "आए हुए लॉट (ट्रक)")}>
         {lots.length === 0 ? <Empty>{t("No material received yet.", "अभी कोई माल नहीं आया।")}</Empty> : (
           <ul className="rows">{lots.map((l) => (
             <li key={l.lot_id}><button type="button" className="row" onClick={() => go(`lot/${l.lot_id}`)}>
@@ -138,7 +143,8 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
   const [complete, setComplete] = useState(true);
   const [photo, setPhoto] = useState<File | null>(null);
   const me = useMe();
-  const [gl, setGl] = useState<GL[]>(lines.map((l) => ({ grade: l.grade, slipGross: "", slipBags: "", billed: "", rate: String(l.rate_per_kg), gross: "", bags: "", bagKg: "" })));
+  // The invoice rate is typed from the invoice, never pre-filled: a pre-filled agreed rate would hide a difference.
+  const [gl, setGl] = useState<GL[]>(lines.map((l) => ({ grade: l.grade, slipGross: "", slipBags: "", billed: "", rate: "", gross: "", bags: "", bagKg: "" })));
   const s = useSave();
   const set = (i: number, k: keyof GL, v: string) => setGl(gl.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   const num = (v: string) => (isNum(v) ? Number(v) : 0);
@@ -189,7 +195,11 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
               <Field label={t("Slip gross", "स्लिप कुल")}><NumIn value={x.slipGross} onChange={(v) => set(i, "slipGross", v)} suffix="kg" /></Field>
               <Field label={t("Slip bags", "स्लिप बोरी")}><NumIn value={x.slipBags} onChange={(v) => set(i, "slipBags", v)} suffix="kg" /></Field>
               <Field label={t("Billed net", "बिल नेट")}><NumIn value={x.billed} onChange={(v) => set(i, "billed", v)} suffix="kg" /></Field>
-              <Field label={t("Billed rate", "बिल रेट")}><NumIn value={x.rate} onChange={(v) => set(i, "rate", v)} suffix="₹/kg" /></Field>
+              <Field label={t("Rate on invoice", "बिल पर रेट")} hint={(() => {
+                const agreed = Number(lines.find((l) => l.grade === x.grade)?.rate_per_kg ?? 0);
+                if (!isNum(x.rate) || !agreed || Number(x.rate) === agreed) return `${t("agreed", "तय")} ${inr(agreed)}`;
+                return <span className="bad">{t("Differs from agreed", "तय रेट से अलग")} {inr(agreed)}: {t("it will be flagged", "इसे फ्लैग किया जाएगा")}</span>;
+              })()}><NumIn value={x.rate} onChange={(v) => set(i, "rate", v)} suffix="₹/kg" placeholder={String(lines.find((l) => l.grade === x.grade)?.rate_per_kg ?? "")} /></Field>
             </div>
             <p className="label-row">{t("At our weighbridge", "हमारे काँटे पर")}</p>
             <div className="grid3">
@@ -217,5 +227,42 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
       </div>
       <label className="check"><input type="checkbox" checked={complete} onChange={(e) => setComplete(e.target.checked)} /> {t("All material for this deal has arrived", "इस सौदे का सारा माल आ गया")}</label>
     </Sheet>
+  );
+}
+
+// Tap the rate, type the new one, tick. Trucks with approved debit notes keep the rate they were settled at.
+function RateCell({ dealId, grade, rate, editable, onSaved }: { dealId: string; grade: string; rate: unknown; editable: boolean; onSaved: () => void }) {
+  const t = useT();
+  const [v, setV] = useState<string | null>(null);
+  const s = useSave();
+  if (!editable) return <>{inr(rate)}/kg</>;
+  if (v === null) return <button type="button" className="rate-btn" aria-label={`${t("Change rate", "रेट बदलें")} ${grade}`} onClick={() => setV(String(rate))}>{inr(rate)}/kg ✎</button>;
+  return (
+    <span className="rate-edit">
+      <NumIn value={v} onChange={setV} autoFocus />
+      <Btn small kind="primary" disabled={s.busy || !isNum(v) || Number(v) <= 0} aria-label={t("Save rate", "रेट सेव करें")}
+        onClick={() => s.run(() => rpc("set_deal_rate", { p_deal: dealId, p_grade: grade, p_rate: Number(v) }), () => { setV(null); onSaved(); })}>✓</Btn>
+      <Btn small aria-label={t("Cancel", "रद्द करें")} onClick={() => setV(null)}>✕</Btn>
+      {s.error && <span className="error small">{s.error}</span>}
+    </span>
+  );
+}
+
+const SOURCE: Record<string, [string, string]> = {
+  booked: ["booked", "बुक किया"], changed: ["changed", "बदला"],
+  accepted_invoice: ["invoice rate accepted", "बिल का रेट माना"], confirmed_unbooked: ["confirmed (unbooked truck)", "पक्का किया (बिना बुकिंग)"],
+};
+function RateHistory({ rows, lang, names }: { rows: Row[]; lang: string; names: Record<string, string> }) {
+  const t = useT();
+  return (
+    <details className="rate-history">
+      <summary>{t("Rate history", "रेट का इतिहास")} ({rows.length})</summary>
+      <ul className="history">{rows.map((h) => (
+        <li key={h.id}>
+          <strong>{names[h.grade] ?? h.grade}</strong> {h.old_rate != null ? <>{inr(h.old_rate)} → </> : null}<strong>{inr(h.new_rate)}</strong>
+          <span className="muted"> · {t(...(SOURCE[h.source] ?? [h.source, h.source]))} · {h.profiles?.full_name ?? "—"} · {new Date(h.changed_at).toLocaleString(lang === "hi" ? "hi-IN" : "en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}{h.note ? ` · ${h.note}` : ""}</span>
+        </li>))}
+      </ul>
+    </details>
   );
 }
