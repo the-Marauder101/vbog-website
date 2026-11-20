@@ -6,6 +6,13 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Nikash · V-BOG</title>
 <link rel="icon" href="img/nikash.svg">
+<!-- Installable as a phone app: manifest.webmanifest, sw.js, js/app.js. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/app/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nikash">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -85,6 +92,10 @@
         <button class="btn-primary" id="btn-signin">Sign in</button>
         <button class="btn-quiet" id="btn-signup">Create account</button>
       </div>
+      <!-- Shown only on a phone browser that is not already the installed app.
+           iPhones never offer to install a web app on their own, so without this
+           line nobody would find out it can be one. Text filled in by console.js. -->
+      <p class="small muted install-hint" id="install-hint" hidden></p>
     </div>
 
     <aside class="stone-card">
@@ -372,6 +383,7 @@
 
 </main>
 
+<script src="js/app.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/console.js"></script>
