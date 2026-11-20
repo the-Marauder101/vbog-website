@@ -21,14 +21,43 @@ function sbSetToken(token) {
   SB_ACCESS_TOKEN = token;
 }
 
+// WHERE THE SESSION LIVES
+//
+// In a browser tab: sessionStorage, as it always has been. Close the tab and the
+// session is gone, which is the right default for a laptop that someone else
+// might use next.
+//
+// In the installed app: localStorage. iOS clears sessionStorage whenever a
+// home-screen app is closed from the app switcher, so without this the app asked
+// for a password every time it was opened — which is not an app, it is a bookmark
+// with extra steps. Persisting is what every phone app does, and the cost is
+// specific: a phone that is lost UNLOCKED stays signed in until somebody signs it
+// out or removes that person's access on the Team screen. The staff check is not
+// relaxed: every launch still asks `whoami` before showing anything, and a
+// removed staff member is refused even with a stored session.
+//
+// Sign-out clears both, so leaving the app is always one tap.
+const SB_INSTALLED = (() => {
+  try {
+    return window.matchMedia("(display-mode: standalone)").matches ||
+           window.navigator.standalone === true;          // iOS Safari's own flag
+  } catch (_) { return false; }
+})();
+
+function sbStore() {
+  try { return SB_INSTALLED ? window.localStorage : window.sessionStorage; }
+  catch (_) { return null; }        // storage blocked: the session lives in memory only
+}
+
 function sbSetSession(d) {
+  const st = sbStore();
   if (d.access_token) {
     SB_ACCESS_TOKEN = d.access_token;
-    sessionStorage.setItem("nikash_token", d.access_token);
+    if (st) st.setItem("nikash_token", d.access_token);
   }
   if (d.refresh_token) {
     SB_REFRESH_TOKEN = d.refresh_token;
-    sessionStorage.setItem("nikash_refresh", d.refresh_token);
+    if (st) st.setItem("nikash_refresh", d.refresh_token);
   }
 }
 
@@ -131,8 +160,9 @@ async function sbSignUp(email, password) {
 }
 
 function sbRestoreToken() {
-  const t = sessionStorage.getItem("nikash_token");
-  const r = sessionStorage.getItem("nikash_refresh");
+  const st = sbStore();
+  const t = st && st.getItem("nikash_token");
+  const r = st && st.getItem("nikash_refresh");
   if (t) SB_ACCESS_TOKEN = t;
   if (r) SB_REFRESH_TOKEN = r;
   return t;
@@ -141,8 +171,11 @@ function sbRestoreToken() {
 function sbSignOut() {
   SB_ACCESS_TOKEN = null;
   SB_REFRESH_TOKEN = null;
-  sessionStorage.removeItem("nikash_token");
-  sessionStorage.removeItem("nikash_refresh");
+  // Both stores, whichever this run used: signing out must never leave a session
+  // behind in the other one.
+  for (const st of [window.sessionStorage, window.localStorage]) {
+    try { st.removeItem("nikash_token"); st.removeItem("nikash_refresh"); } catch (_) {}
+  }
 }
 
 // PostgREST. Filters live in the path:

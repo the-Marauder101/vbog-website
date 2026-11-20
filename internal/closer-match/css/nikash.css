@@ -168,6 +168,30 @@ a:hover { color: var(--streak-t); text-decoration: underline; text-decoration-th
   transition: color 0.14s ease;
 }
 .masthead nav a:hover { color: var(--ink); text-decoration: none; }
+
+/* ── On a phone ────────────────────────────────────────────────────────────
+   Thirteen links wrapped into four rows and the masthead is sticky, so on an
+   iPhone a third of the screen was navigation on every screen at every scroll
+   position. Below 680px the nav is ONE row that scrolls sideways, the active tab
+   is scrolled into view by markNav(), and the right edge fades so it is obvious
+   there is more. Desktop is untouched. */
+@media (max-width: 680px) {
+  .masthead-in { padding: 0 16px; min-height: 0; gap: 0; }
+  .brand { padding: 10px 0 2px; }
+  .brand-sub { display: none; }
+  .masthead nav {
+    flex: none; width: calc(100% + 32px); margin: 0 -16px;
+    flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+    padding: 0 8px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 82%, transparent);
+            mask-image: linear-gradient(to right, #000 82%, transparent);
+  }
+  .masthead nav::-webkit-scrollbar { display: none; }
+  /* 44px tall: the smallest target a thumb hits reliably. */
+  .masthead nav a { flex: none; white-space: nowrap; padding: 13px 11px; }
+  .masthead nav .nav-sep { flex: none; }
+}
 /* Where you are, marked by the streak. Set by the view switcher, so the nav
    answers "which screen am I on" — which it previously could not. */
 .masthead nav a[aria-current="page"] { color: var(--ink); font-weight: 600; }
@@ -849,4 +873,17 @@ button, .btn {
 .queue-more {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   flex-wrap: wrap; padding: 14px 4px 4px;
+}
+
+/* "Add to Home Screen" — a quiet line under the sign-in buttons, phones only. */
+.install-hint { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
+
+/* The interview question on a phone. At the desktop's 32px display weight one
+   question ran to five or six lines and pushed every scoring option below the
+   fold, so the interviewer scrolled past the question to score it — and back up
+   to read the next one. Smaller and a touch lighter, it stays a headline and
+   leaves the anchors on screen with it. */
+@media (max-width: 680px) {
+  #q-prompt { font-size: 22px; line-height: 1.22; letter-spacing: -0.02em; font-weight: 800; }
+  #q-hint { font-size: 14px; }
 }

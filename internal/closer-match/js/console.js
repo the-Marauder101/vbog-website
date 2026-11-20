@@ -48,7 +48,18 @@ const NAV_OF = { reqs: "nav-reqs", req: "nav-reqs", queue: "nav-queue", cand: "n
 function markNav(name) {
   Object.values(NAV_OF).forEach((id) => el(id) && el(id).removeAttribute("aria-current"));
   const active = NAV_OF[name] && el(NAV_OF[name]);
-  if (active) active.setAttribute("aria-current", "page");
+  if (active) {
+    active.setAttribute("aria-current", "page");
+    // On a phone the nav is a single row that scrolls sideways (css/nikash.css),
+    // so the current screen's tab can be off the edge. Bring it in — by moving
+    // the nav's own scroll position, not with scrollIntoView, which would also
+    // be free to scroll the page itself.
+    const nav = active.parentElement;
+    if (nav && nav.scrollWidth > nav.clientWidth) {
+      const left = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
+      nav.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+    }
+  }
 }
 
 function rupees(n) {
@@ -92,7 +103,8 @@ async function afterSignIn() {
   }
 
   try {
-    await loadRequirements();
+    // A candidate link that arrived signed-out survives the sign-in screen.
+    if (!(await openFromHash())) await loadRequirements();
   } catch (e) {
     sbSignOut();
     el("signin-error").hidden = false;
@@ -1368,7 +1380,7 @@ async function loadQueue() {
             ${(c.flags || []).map((f) => `<span class="chip">${esc(f.replace(/_/g, " "))}</span>`).join(" ")}
             <span class="spacer"></span>
             ${c.best_pct != null
-              ? `<span class="figure">${c.best_pct}</span><span class="figure-unit">%</span>`
+              ? `<span class="fitnum"><span class="figure">${c.best_pct}</span><span class="figure-unit">%</span></span>`
               : `<span class="small muted">${queueStatus(c)}</span>`}
           </div>
           ${c.best_pct != null ? `<p class="small muted" style="margin:4px 0 0">${queueStatus(c)}</p>` : ""}
@@ -1593,7 +1605,7 @@ function headlineHtml(d, c) {
     if (card) {
       return `<div class="reading">
         <span class="label">${label}</span>
-        <span class="figure">${card.pct}</span><span class="figure-unit">%</span>
+        <span class="fitnum"><span class="figure">${card.pct}</span><span class="figure-unit">%</span></span>
         <span class="small muted">${card.total} of ${card.max_total}${
           card.interviewer ? ` · ${esc(card.interviewer)}` : ""}${
           card.submitted_at ? ` · ${onDate(card.submitted_at)}` : ""}${
@@ -1627,7 +1639,7 @@ function headlineHtml(d, c) {
       <div class="reading">
         <span class="label">Best fit across ${fitsCount(d)} open ${
           fitsCount(d) === 1 ? "role" : "roles"}</span>
-        <span class="figure big">${one.best_pct}</span><span class="figure-unit">%</span>
+        <span class="fitnum"><span class="figure big">${one.best_pct}</span><span class="figure-unit">%</span></span>
         <span class="small muted">${esc(one.best_role || "")}</span>
       </div>
       <p class="small muted" style="margin:10px 0 0">
@@ -1650,8 +1662,8 @@ function headlineHtml(d, c) {
         ${d.scored
           ? `<div class="reading">
               <span class="label">Questionnaire</span>
-              <span class="figure">${best ? best.composite_pct : "—"}</span
-                ><span class="figure-unit">%</span>
+              <span class="fitnum"><span class="figure">${best ? best.composite_pct : "—"}</span
+                ><span class="figure-unit">%</span></span>
               <span class="small muted">${best
                 ? `best match · ${esc(best.business_name)} — ${esc(best.title)}`
                 : "scored, but no open role to match against"}</span>
@@ -1697,6 +1709,20 @@ function headlineHtml(d, c) {
 // shows both, because that disagreement is the most informative thing two
 // independent instruments produce — and R3 is that the system ranks and explains,
 // it never decides.
+// What the single point was built from, in words. `one_sources` is the set of
+// per-dimension sources ("both", "questionnaire", "interview"), so joining it
+// raw printed "built from both + questionnaire", which describes the data
+// structure rather than the candidate.
+function builtFrom(sources) {
+  const s = new Set(sources || []);
+  const iv = s.has("interview") || s.has("both");
+  const qn = s.has("questionnaire") || s.has("both");
+  if (iv && qn) return "built from the interview and the questionnaire";
+  if (iv) return "built from the interview alone";
+  if (qn) return "built from the questionnaire alone";
+  return "";
+}
+
 const fitsCount = (d) =>
   ((d.fits && d.fits.rows) || []).filter((r) => r.one_pct != null).length;
 
@@ -1793,7 +1819,7 @@ function fitsHtml(d, c) {
           ${verdictChip(r)}
           ${rk ? ` rank ${rk.rank} of ${rk.of} on the questionnaire ·` : ""}
           ${(r.one_sources || []).length
-            ? ` built from ${(r.one_sources || []).map(esc).join(" + ")} ·` : ""}
+            ? ` ${builtFrom(r.one_sources)} ·` : ""}
           ${r.r2_coverage != null
             ? ` the interview reached ${Math.round(r.r2_coverage * 100)}% of this
                 role's weighting${
@@ -2640,11 +2666,53 @@ el("nav-health").addEventListener("click", (e) => { e.preventDefault(); loadHeal
 // ═══ BOOT ══════════════════════════════════════════════════════════════════
 // A restored token gets the same positive check as a fresh sign-in. Reloading
 // the page is not a second way in.
+//
+// `#cand-<id>` opens that candidate. The ASK screen's "Back to candidate" has
+// always linked here, and nothing read it — so finishing an interview landed you
+// on Requirements, to find the person again by hand. In a browser Back covered
+// for it; in the installed app there is no Back button, so it is honoured now.
+// Only a well-formed id is acted on; anything else falls through to the default
+// screen. The staff check above it is unchanged — the hash chooses a screen, it
+// does not open a door.
+// One line on the sign-in screen saying Nikash can live on the home screen —
+// only on a phone, only in a browser, never once it is already installed.
+(function installHint() {
+  const hint = el("install-hint");
+  if (!hint || SB_INSTALLED) return;
+  if (!window.matchMedia("(max-width: 680px)").matches) return;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  hint.textContent = ios
+    ? "On iPhone: tap Share, then “Add to Home Screen” to keep Nikash as an app. You stay signed in there."
+    : "On Android: open the browser menu, then “Install app” to keep Nikash as an app. You stay signed in there.";
+  hint.hidden = false;
+})();
+
+const CAND_HASH = /^#cand-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+async function openFromHash() {
+  const m = CAND_HASH.exec(location.hash);
+  if (!m) return false;
+  // Cleared first, so a later reload of the console starts on its own default
+  // screen rather than reopening this candidate forever.
+  history.replaceState(null, "", location.pathname + location.search);
+  try { await openCandidate(m[1]); return true; }
+  catch (_) { return false; }
+}
+
+// And while the console is already open: a hash change alone does not reload
+// the page, so the boot path above never sees it. Only acted on once signed in.
+window.addEventListener("hashchange", () => {
+  if (SB_ACCESS_TOKEN) openFromHash();
+});
+
 (async () => {
   if (sbRestoreToken()) {
     try {
       const me = await sbRpc("whoami");
-      if (me && me.staff === true) { await loadRequirements(); return; }
+      if (me && me.staff === true) {
+        if (!(await openFromHash())) await loadRequirements();
+        return;
+      }
     } catch (_) { /* fall through */ }
     sbSignOut();
   }

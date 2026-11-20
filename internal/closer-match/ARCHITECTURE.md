@@ -2881,6 +2881,47 @@ separately with the page size dropped to 20: all 99 reached in five pages, no
 duplicates, the header right at every step, the oldest candidate opening from
 the last page.
 
+### 7bd. Nikash on a phone
+
+Nikash installs as a phone app — "Add to Home Screen" on iPhone, "Install app" on
+Android — from the same pages it has always been. No app store: it is a web app
+with a manifest, icons and a service worker, so a merge reaches every phone the
+next time the app is opened, and there is no review, no developer account and
+no second codebase.
+
+**The service worker caches no code and no data.** That is the unusual choice
+and the important one. Caching the app shell is the normal reason to have a
+worker; here it would recreate, on every phone, the exact failure that cost
+hours in §7ba — code and database disagreeing — silently, until each phone
+happened to update. So every request for code goes to the network as it would
+in a browser tab. Candidate data is cross-origin and the worker ignores it
+outright, so none of it can land in a cache on a device. The worker's one job is
+to show a plain "you're offline" page instead of the browser's error, and only
+for the three staff pages: candidate and client pages are never intercepted,
+even on a staff member's phone.
+
+**The installed app stays signed in; a browser tab does not.** iOS clears
+`sessionStorage` whenever a home-screen app is closed, so without a change the
+app asked for a password on every open. When running installed, the session is
+kept in `localStorage`; in a browser it stays in `sessionStorage` as before.
+The cost is specific and stated: a phone lost *unlocked* stays signed in until
+someone signs out or removes that person on the Team screen. The staff check is
+not relaxed — every launch still asks `whoami` before showing anything.
+
+**What the phone exposed.** Rendering every screen at iPhone width (mocked data)
+found four things, three of them not phone-specific:
+
+- the nav was thirteen links in four rows inside a sticky masthead — a third of
+  the screen, permanently. Below 680px it is one row that scrolls sideways.
+- in "Where this candidate stands" and on the candidate list, the `%` sat on
+  its own line under the number: `.reading` is a vertical flex column at every
+  width, so this was broken on desktop too, in a block added in §7ay and never
+  looked at rendered.
+- "built from both + questionnaire" printed the data structure, not a sentence.
+- "Back to candidate" after an interview linked to `nikash.html#cand-<id>`, and
+  nothing read the hash, so it landed on Requirements. In a browser, Back hid
+  that; an installed app has no Back button.
+
 ## 8. Next
 
 Phase 1 remainder and Phase 2, in order:
