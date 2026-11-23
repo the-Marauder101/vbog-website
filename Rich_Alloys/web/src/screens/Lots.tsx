@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { gstinOk, normGstin, day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "../lib";
+import { csv, download, gstinOk, normGstin, day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "../lib";
 import { Btn, Chip, DateIn, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { StageChip, useSave } from "../common";
 import { enqueue, refusal } from "../uploads";
@@ -18,6 +18,8 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
   const [receipt, setReceipt] = useState(false);
   const [truck, setTruck] = useState(false);
   const [unbooked, setUnbooked] = useState(false);
+  const [view, setView] = useState<"list" | "table">(() => { try { return localStorage.getItem("lotsView") === "table" ? "table" : "list"; } catch { return "list"; } });
+  const pickView = (v: "list" | "table") => { setView(v); try { localStorage.setItem("lotsView", v); } catch { /* private mode */ } };
   const { data, error, reload } = useLoad(() => Promise.all([
     q(sb.from("v_lots").select("*").order("received_on", { ascending: false })),
     q(sb.from("v_deals_incoming").select("*").order("expected_date", { ascending: true, nullsFirst: false })),
@@ -41,7 +43,14 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
       <div className="filters" role="tablist">
         {FILTERS.map(([id, en, hi]) => <button key={id} type="button" className={f === id ? "on" : ""} onClick={() => setF(id)}>{t(en, hi)}</button>)}
       </div>
-      <input className="search" type="search" placeholder={t("Search supplier, lot, PO, invoice", "सप्लायर, लॉट, PO, बिल खोजें")} value={text} onChange={(e) => setText(e.target.value)} />
+      <div className="search-row">
+        <input className="search" type="search" placeholder={t("Search supplier, lot, PO, invoice", "सप्लायर, लॉट, PO, बिल खोजें")} value={text} onChange={(e) => setText(e.target.value)} />
+        <span className="seg" role="group" aria-label={t("View", "देखें")}>
+          <button type="button" className={view === "list" ? "on" : ""} onClick={() => pickView("list")}>{t("List", "सूची")}</button>
+          <button type="button" className={view === "table" ? "on" : ""} onClick={() => pickView("table")}>{t("Table", "टेबल")}</button>
+        </span>
+      </div>
+      {view === "table" ? <LotRegister ids={new Set(lotRows.map((l) => l.lot_id))} /> : <>
       {inRows.length > 0 && (
         <>
           <h3 className="sub">{t("On the way", "रास्ते में")}</h3>
@@ -84,6 +93,7 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
         </>
       )}
       {!inRows.length && !lotRows.length && <Empty>{t("Nothing here.", "यहाँ कुछ नहीं है।")}</Empty>}
+      </>}
       {truck && <TruckSheet incoming={incoming} onClose={() => setTruck(false)}
         onPick={(k, dealId) => { setTruck(false); if (k === "booked" && dealId) go(`deal/${dealId}/arrive`); if (k === "unbooked") setUnbooked(true); if (k === "other") setReceipt(true); }} />}
       {unbooked && <UnbookedSheet onClose={() => setUnbooked(false)} onSaved={(id) => { reload(); go(`lot/${id}`); }} />}
@@ -93,16 +103,61 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
   );
 }
 
+// Every lot in one table: supplier, weights, rates, each debit note, GST, TDS, paid and pending.
+const REG_COLS: { k: string; en: string; hi: string; kind?: "kg" | "inr" | "text" | "date"; money?: boolean }[] = [
+  { k: "lot_no", en: "Lot", hi: "लॉट" }, { k: "received_on", en: "Received", hi: "आया", kind: "date" },
+  { k: "supplier", en: "Supplier", hi: "सप्लायर" }, { k: "invoice_no", en: "Invoice", hi: "बिल" }, { k: "grades", en: "Grades", hi: "ग्रेड" },
+  { k: "billed_kg", en: "Billed kg", hi: "बिल वज़न", kind: "kg" }, { k: "factory_kg", en: "Our kg", hi: "हमारा वज़न", kind: "kg" },
+  { k: "weight_short_kg", en: "Short kg", hi: "कम वज़न", kind: "kg" },
+  { k: "invoice_rates", en: "Invoice rate", hi: "बिल रेट", money: true }, { k: "our_rates", en: "Our rate", hi: "हमारा रेट", money: true },
+  { k: "taxable", en: "Taxable", hi: "कर योग्य", kind: "inr", money: true }, { k: "gst", en: "GST", hi: "GST", kind: "inr", money: true },
+  { k: "invoice_total", en: "Invoice total", hi: "बिल कुल", kind: "inr", money: true },
+  { k: "dn_weight_short", en: "DN weight short", hi: "DN वज़न कम", kind: "inr", money: true },
+  { k: "dn_quality", en: "DN quality (sorting)", hi: "DN छँटाई", kind: "inr", money: true },
+  { k: "dn_return", en: "DN return", hi: "DN वापसी", kind: "inr", money: true },
+  { k: "dn_price", en: "DN price", hi: "DN रेट", kind: "inr", money: true },
+  { k: "dn_total", en: "DN total", hi: "DN कुल", kind: "inr", money: true },
+  { k: "dn_to_approve", en: "DN to approve", hi: "DN बाकी", kind: "inr", money: true },
+  { k: "tds_it", en: "TDS (income tax)", hi: "TDS (आयकर)", kind: "inr", money: true },
+  { k: "tds_gst", en: "TDS (GST)", hi: "TDS (GST)", kind: "inr", money: true },
+  { k: "paid", en: "Paid", hi: "दिया", kind: "inr", money: true },
+  { k: "paid_unreconciled", en: "Paid, not reconciled", hi: "दिया, मिलान बाकी", kind: "inr", money: true },
+  { k: "balance", en: "Pending", hi: "देना बाकी", kind: "inr", money: true },
+];
+function LotRegister({ ids }: { ids: Set<string> }) {
+  const t = useT(); const can = useCan();
+  const { data, error } = useLoad(() => q(sb.from("v_lot_register").select("*").order("received_on", { ascending: false })), []);
+  if (!data) return error ? <Err error={error} /> : <Loading />;
+  const rows = data.filter((r) => ids.has(r.lot_id));
+  const cols = REG_COLS.filter((c) => !c.money || can("money_view"));
+  const fmt = (c: typeof REG_COLS[number], v: unknown) => v == null ? "—" : c.kind === "kg" ? kg(v) : c.kind === "inr" ? inr(v) : c.kind === "date" ? day(v) : String(v);
+  const sum = (k: string) => rows.reduce((a, r) => a + Number(r[k] ?? 0), 0);
+  return (
+    <>
+      <div className="actions"><Btn small onClick={() => download(`lots_${today()}.csv`, csv(rows, cols.map((c): [string, string] => [c.k, c.en])))}>{t("Download (CSV)", "डाउनलोड (CSV)")}</Btn>
+        <span className="muted small">{rows.length} {t("lots", "लॉट")}</span></div>
+      {rows.length === 0 ? <Empty>{t("Nothing here.", "यहाँ कुछ नहीं है।")}</Empty> : (
+        <div className="tablewrap register">
+          <table className="tbl">
+            <thead><tr>{cols.map((c) => <th key={c.k} className={c.kind === "kg" || c.kind === "inr" ? "n" : ""}>{t(c.en, c.hi)}</th>)}</tr></thead>
+            <tbody>{rows.map((r) => <tr key={r.lot_id} className="click" onClick={() => go(`lot/${r.lot_id}`)}>
+              {cols.map((c) => <td key={c.k} className={c.kind === "kg" || c.kind === "inr" ? "n" : ""}>{c.k === "lot_no" ? <strong>{r.lot_no}</strong> : fmt(c, r[c.k])}</td>)}</tr>)}</tbody>
+            <tfoot><tr>{cols.map((c, i) => <td key={c.k} className={c.kind === "kg" || c.kind === "inr" ? "n" : ""}>{i === 0 ? <strong>{t("Total", "कुल")}</strong> : c.kind === "kg" || c.kind === "inr" ? <strong>{fmt(c, sum(c.k))}</strong> : ""}</td>)}</tr></tfoot>
+          </table>
+        </div>)}
+    </>
+  );
+}
+
 type Line = { grade: string; qty: string; rate: string };
 export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (id: string) => void }) {
   const t = useT(); const lang = useLang();
   const m = useLoad(() => Promise.all([
-    q(sb.from("suppliers").select("id,name,provisional_pct,provisional_days,balance_days").eq("active", true).eq("supplier_type", "domestic").order("name")),
+    q(sb.from("suppliers").select("id,name,provisional_pct,provisional_days,balance_days,onboarded_at").eq("active", true).eq("supplier_type", "domestic").order("name")),
     q(sb.from("grades").select("*").eq("active", true).order("sort")),
   ]), []);
   const [sup, setSup] = useState("");
   const [newSup, setNewSup] = useState({ name: "", gstin: "", state: "" });
-  const [po, setPo] = useState("");
   const [dealDate, setDealDate] = useState(today());
   const [expected, setExpected] = useState("");
   const [gst, setGst] = useState("18");
@@ -124,17 +179,19 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
       throw new Error(t("The GSTIN does not look right (15 characters, e.g. 27AAMCR8303C1ZF). Check it on the supplier's invoice.", "GSTIN सही नहीं लग रहा (15 अक्षर, जैसे 27AAMCR8303C1ZF)। सप्लायर के बिल पर जाँचें।"));
     const id = await rpc<string>("create_deal", { p: {
       supplier_id: sup === "new" ? null : sup, supplier_name: newSup.name, supplier_gstin: normGstin(newSup.gstin), supplier_state: newSup.state,
-      po_no: po, deal_date: dealDate, expected_date: expected || null, gst_rate: gst,
+      deal_date: dealDate, expected_date: expected || null, gst_rate: gst,
       provisional_pct: terms.pct, provisional_days: terms.pdays, balance_days: terms.bdays,
       lines: good.map((l) => ({ grade: l.grade, qty_kg: Number(l.qty), rate_per_kg: Number(l.rate) })) } });
     onClose(); onSaved(id);
   });
   return (
     <Sheet title={t("New deal", "नया सौदा")} onClose={onClose} footer={<SaveBar busy={s.busy} error={s.error} onSave={save} label={t("Save deal", "सौदा सेव करें")} />}>
+      <p className="muted small">{t("Book what was agreed. The PO is issued from the deal once it is booked.", "जो तय हुआ वो बुक करें। बुक होने के बाद सौदे से PO जारी होगा।")}</p>
       <Field label={t("Supplier", "सप्लायर")}>
         <Select value={sup} onChange={setSup} placeholder={t("Choose…", "चुनें…")}
-                options={[...sups.map((x) => ({ value: x.id, label: x.name })), { value: "new", label: `+ ${t("New supplier", "नया सप्लायर")}` }]} />
+                options={[...sups.map((x) => ({ value: x.id, label: x.onboarded_at ? x.name : `${x.name} · ${t("not onboarded", "ऑनबोर्ड नहीं")}` })), { value: "new", label: `+ ${t("New supplier", "नया सप्लायर")}` }]} />
       </Field>
+      {sup === "new" && <p className="muted small">{t("A new supplier starts as not onboarded. Finish onboarding from the supplier's page.", "नया सप्लायर ऑनबोर्ड नहीं माना जाएगा। सप्लायर के पेज से ऑनबोर्डिंग पूरी करें।")}</p>}
       {sup === "new" && (
         <div className="grid2">
           <Field label={t("Supplier name", "सप्लायर का नाम")} wide><TextIn value={newSup.name} onValue={(v) => setNewSup({ ...newSup, name: v })} /></Field>
@@ -153,7 +210,6 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
       ))}
       <Btn small onClick={() => setLines([...lines, { grade: "", qty: "", rate: "" }])}>+ {t("Another grade", "और ग्रेड")}</Btn>
       <div className="grid2 gap-top">
-        <Field label={t("PO number", "PO नंबर")}><TextIn value={po} onValue={setPo} /></Field>
         <Field label={t("Deal date", "सौदे की तारीख")}><input type="date" value={dealDate} onChange={(e) => setDealDate(e.target.value)} /></Field>
         <Field label={t("Expected arrival", "माल कब आएगा")}><input type="date" value={expected} onChange={(e) => setExpected(e.target.value)} /></Field>
         <Field label="GST"><NumIn value={gst} onChange={setGst} suffix="%" /></Field>

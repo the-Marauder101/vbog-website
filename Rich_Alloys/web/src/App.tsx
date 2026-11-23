@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { configured, go, LangCtx, MeCtx, q, rpc, sb, toLogin, useRoute, useT, type Lang, type Me } from "./lib";
-import { online, pause, resume, useUploads } from "./uploads";
-import { Btn, Err } from "./ui";
+import { onUploaded, online, pause, resume, useUploads } from "./uploads";
+import { Btn, Err, Toaster, toast } from "./ui";
 import Home from "./screens/Home";
 import Lots from "./screens/Lots";
 import Deal from "./screens/Deal";
@@ -10,6 +10,7 @@ import Payables from "./screens/Payables";
 import Tally from "./screens/Tally";
 import Stock from "./screens/Stock";
 import Admin from "./screens/Admin";
+import Supplier from "./screens/Supplier";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem("lang") === "hi" ? "hi" : "en"));
@@ -25,6 +26,7 @@ export default function App() {
   }, []);
 
   useEffect(() => { localStorage.setItem("lang", lang); document.documentElement.lang = lang; }, [lang]);
+  useEffect(() => onUploaded(() => toast(["File uploaded", "फ़ाइल अपलोड हो गई"])), []);
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null));
     const { data } = sb.auth.onAuthStateChange((_e, s) => setUserId(s?.user.id ?? null));
@@ -58,6 +60,7 @@ export default function App() {
   else if (r0 === "lots") page = <Lots openNew={r1 === "new"} />;
   else if (r0 === "deal" && r1) page = <Deal id={r1} openArrival={r2 === "arrive"} key={r1} />;
   else if (r0 === "lot" && r1) page = <Lot id={r1} tab={r2} key={r1} />;
+  else if (r0 === "supplier" && r1) page = <Supplier id={r1} key={r1} />;
   else if ((r0 === "payables" || r0 === "cash" || r0 === "money") && allowed("payables")) page = <Payables tab={r0 === "cash" ? "topay" : r1} />;
   else if (r0 === "tally" && allowed("tally")) page = <Tally tab={r1} />;
   else if (r0 === "stock" && allowed("stock")) page = <Stock openProduction={r1 === "production"} />;
@@ -95,6 +98,7 @@ export default function App() {
             {nav.map((n) => <a key={n.id} href={`#/${n.id}`} className={(r0 ?? "") === n.id ? "on" : ""}><span aria-hidden="true">{n.icon}</span>{n.label}</a>)}
           </nav>
         )}
+        <Toaster />
       </div>
     </LangCtx.Provider>
   );

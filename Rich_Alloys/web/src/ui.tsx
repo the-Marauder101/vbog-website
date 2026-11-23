@@ -1,5 +1,5 @@
 // Small set of building blocks. Big targets, few choices, words plus colour for every status.
-import { isValidElement, useEffect, type ReactNode } from "react";
+import { isValidElement, useEffect, useState, type ReactNode } from "react";
 import { dateWarning, useT } from "./lib";
 
 type BtnProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { kind?: "primary" | "danger" | "ghost" | ""; small?: boolean };
@@ -148,4 +148,16 @@ export function DateIn({ value, onChange, futureOnly }: { value: string; onChang
         : t("This date is not in the current month. Check it.", "यह तारीख इस महीने की नहीं है। जाँच लें।")}</span>}
     </>
   );
+}
+
+// ---------- "Saved" confirmation: one small banner at the bottom, gone after 2.5 s ----------
+type ToastMsg = { id: number; text: [string, string]; tone: "ok" | "bad" };
+let toastSink: ((m: ToastMsg) => void) | null = null; let toastId = 0;
+export function toast(text: [string, string] = ["Saved", "सेव हो गया"], tone: "ok" | "bad" = "ok") { toastSink?.({ id: ++toastId, text, tone }); }
+export function Toaster() {
+  const t = useT();
+  const [m, setM] = useState<ToastMsg | null>(null);
+  useEffect(() => { toastSink = setM; return () => { toastSink = null; }; }, []);
+  useEffect(() => { if (!m) return; const h = setTimeout(() => setM(null), 2500); return () => clearTimeout(h); }, [m]);
+  return <div className="toast-wrap" aria-live="polite">{m && <div key={m.id} className={`toast ${m.tone}`} role="status">{m.tone === "ok" ? "✓ " : ""}{t(...m.text)}</div>}</div>;
 }

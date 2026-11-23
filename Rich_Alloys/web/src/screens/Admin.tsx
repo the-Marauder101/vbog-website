@@ -39,9 +39,13 @@ export default function Admin({ tab }: { tab?: string }) {
     documents: { table: "doc_types", title: t("Document checklist", "दस्तावेज़ सूची"),
              cols: [{ k: "name", label: "Name", required: true }, { k: "name_hi", label: "Hindi name" },
                     { k: "side", label: "Group", type: "select", required: true, options: [{ value: "supplier", label: "From the supplier" }, { value: "rich_alloys", label: "At our factory" }, { value: "return", label: "Material return" }] }] },
+    onboarding: { table: "onboarding_steps", title: t("Supplier onboarding steps", "सप्लायर ऑनबोर्डिंग के कदम"),
+             hint: t("The checklist every new supplier goes through. A supplier is onboarded once every required step is ticked.", "हर नए सप्लायर की सूची। सभी ज़रूरी कदम पूरे होने पर सप्लायर ऑनबोर्ड माना जाएगा।"),
+             cols: [{ k: "name", label: "Step", required: true }, { k: "name_hi", label: "Hindi name" },
+                    { k: "required", label: "Required", type: "select", required: true, options: [{ value: "true", label: "Required" }, { value: "false", label: "Optional" }] }] },
   };
   const tabs = [...(can("staff_manage") ? [{ id: "staff", label: t("Staff", "स्टाफ") }] : []), { id: "categories", label: t("Sorting", "छँटाई") }, { id: "grades", label: t("Grades", "ग्रेड") }, { id: "items", label: t("Stock items", "आइटम") },
-                { id: "documents", label: t("Documents", "दस्तावेज़") }, { id: "suppliers", label: t("Suppliers", "सप्लायर") }, { id: "permissions", label: t("Permissions", "अनुमति") }];
+                { id: "documents", label: t("Documents", "दस्तावेज़") }, { id: "suppliers", label: t("Suppliers", "सप्लायर") }, { id: "onboarding", label: t("Onboarding", "ऑनबोर्डिंग") }, { id: "permissions", label: t("Permissions", "अनुमति") }];
   return (
     <>
       <h1>{t("Admin", "एडमिन")}</h1>
@@ -70,7 +74,7 @@ function Master({ cfg }: { cfg: Cfg }) {
           <li key={r.code} className={r.active ? "" : "off"}>
             <div className="row static">
               <span className="row-main"><strong>{r.name}</strong><span className="muted small">{r.code}{r.name_hi ? ` · ${r.name_hi}` : ""}
-                {cfg.cols.filter((c) => c.type === "select").map((c) => ` · ${c.options?.find((o) => o.value === r[c.k])?.label ?? r[c.k]}`).join("")}</span></span>
+                {cfg.cols.filter((c) => c.type === "select").map((c) => ` · ${c.options?.find((o) => o.value === String(r[c.k]))?.label ?? r[c.k]}`).join("")}</span></span>
               <span className="actions tight">
                 <Btn small onClick={() => setEdit(r)}>{t("Edit", "बदलें")}</Btn>
                 <Btn small kind={r.active ? "danger" : ""} onClick={() => s.run(() => q(sb.from(cfg.table).update({ active: !r.active }).eq("code", r.code)), reload)}>
@@ -86,7 +90,7 @@ function Master({ cfg }: { cfg: Cfg }) {
 
 function MasterSheet({ cfg, row, count, onClose, onSaved }: { cfg: Cfg; row: Row | null; count: number; onClose: () => void; onSaved: () => void }) {
   const t = useT();
-  const [f, setF] = useState<Row>(() => Object.fromEntries(cfg.cols.map((c) => [c.k, row?.[c.k] ?? (c.type === "select" ? c.options?.[0]?.value ?? "" : "")])));
+  const [f, setF] = useState<Row>(() => Object.fromEntries(cfg.cols.map((c) => [c.k, row?.[c.k] != null ? String(row[c.k]) : (c.type === "select" ? c.options?.[0]?.value ?? "" : "")])));
   const [code, setCode] = useState<string>(row?.code ?? "");
   const s = useSave();
   const save = () => s.run(async () => {
@@ -124,7 +128,7 @@ function Suppliers() {
       {data.length === 0 && <Empty>{t("No suppliers yet. They are added when a deal is booked.", "अभी कोई सप्लायर नहीं। सौदा बुक करते समय जुड़ते हैं।")}</Empty>}
       <ul className="rows">{data.map((s) => (
         <li key={s.id} className={s.active ? "" : "off"}><div className="row static">
-          <span className="row-main"><strong>{s.name}</strong><span className="muted small">{SUPPLIER_TYPES.find((x) => x[0] === s.supplier_type)?.[1] ?? s.supplier_type} · {s.gstin ?? "—"} · {s.state ?? "—"} · KYC {s.kyc_status}</span>
+          <span className="row-main"><a href={`#/supplier/${s.id}`}><strong>{s.name}</strong></a>{s.supplier_type === "domestic" && !s.onboarded_at && <> <Chip tone="wait">{t("Not onboarded", "ऑनबोर्ड नहीं")}</Chip></>}<span className="muted small">{SUPPLIER_TYPES.find((x) => x[0] === s.supplier_type)?.[1] ?? s.supplier_type} · {s.gstin ?? "—"} · {s.state ?? "—"} · KYC {s.kyc_status}</span>
             <span className="small"><TermsLine pct={s.provisional_pct} pdays={s.provisional_days} bdays={s.balance_days} /></span></span>
           <span className="actions tight"><Btn small onClick={() => setTerms(s)}>{t("Terms", "शर्तें")}</Btn><Btn small onClick={() => setEdit(s)}>{t("Edit", "बदलें")}</Btn></span>
         </div></li>))}
@@ -141,7 +145,7 @@ export const SUPPLIER_TYPES: [string, string, string][] = [
   ["import", "Import seller", "इम्पोर्ट विक्रेता"], ["job_work", "Job worker", "जॉब वर्कर"],
 ];
 
-function SupplierSheet({ row, onClose, onSaved }: { row: Row; onClose: () => void; onSaved: () => void }) {
+export function SupplierSheet({ row, onClose, onSaved }: { row: Row; onClose: () => void; onSaved: () => void }) {
   const t = useT();
   const [f, setF] = useState({ name: row.name ?? "", gstin: row.gstin ?? "", state: row.state ?? "", kyc: row.kyc_status ?? "pending",
     active: row.active ? "yes" : "no", type: row.supplier_type ?? "domestic" });

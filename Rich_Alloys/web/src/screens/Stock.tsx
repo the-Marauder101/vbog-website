@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { COMPANY, csv, day, download, esc, isNum, kg, printHtml, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
-import { Btn, Choice, DateIn, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, TextIn } from "../ui";
+import { Btn, Chip, Choice, DateIn, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { TallyTick, useSave } from "../common";
 
 const monthStart = (m: string) => `${m}-01`;
@@ -13,6 +13,7 @@ export default function Stock({ openProduction }: { openProduction?: boolean }) 
   const [move, setMove] = useState(false);
   const [check, setCheck] = useState<Row | null>(null);
   const [item, setItem] = useState<Row | null>(null);
+  const [closing, setClosing] = useState<Row | null>(null);
   const [all, setAll] = useState(false);
   const from = monthStart(month); const to = monthEnd(month);
   const { data, error, reload } = useLoad(async () => {
@@ -25,8 +26,8 @@ export default function Stock({ openProduction }: { openProduction?: boolean }) 
     const [marks, yields] = ids.length
       ? await Promise.all([q(sb.from("tally_marks").select("*").in("entity_id", ids)), q(sb.from("v_production_runs").select("*").in("id", ids))])
       : [[], []];
-    const jobWork = await q(sb.from("v_job_work").select("*").order("supplier"));
-    return { sum, items, runs, marks, yields, jobWork };
+    const [jobWork, position] = await Promise.all([q(sb.from("v_job_work").select("*").order("supplier")), q(sb.from("v_stock_position").select("*").order("sort"))]);
+    return { sum, items, runs, marks, yields, jobWork, position };
   }, [month]);
   if (!data) return error ? <Err error={error} /> : <Loading />;
   const iname = (code: string) => nm(lang, data.items.find((i) => i.code === code)) || code;
@@ -40,6 +41,19 @@ export default function Stock({ openProduction }: { openProduction?: boolean }) 
         <Btn onClick={() => printStatement(data.sum, month)}>{t("Stock statement", "स्टॉक स्टेटमेंट")}</Btn>
         <Btn onClick={() => download(`stock_statement_${month}.csv`, csv(data.sum.map((r) => ({ ...r, item_name: r.name })), [["item_name", "Item Description"], ...STATEMENT_COLS.map(([c, , , head]): [string, string] => [c, head])]))}>{t("Download (CSV)", "डाउनलोड (CSV)")}</Btn>
       </div>
+      {data.position.length > 0 && (
+        <Section title={t("Where the stock is today", "आज स्टॉक कहाँ है")}>
+          <div className="tablewrap">
+            <table className="tbl">
+              <thead><tr><th>{t("Item", "आइटम")}</th><th className="n">{t("In factory", "फ़ैक्टरी में")}</th><th className="n">{t("In production", "उत्पादन में")}</th><th className="n">{t("Booked, to come", "बुक, आना बाकी")}</th><th className="n">{t("Total", "कुल")}</th></tr></thead>
+              <tbody>{data.position.map((r) => <tr key={r.item}><td>{nm(lang, r)}</td><td className="n">{kg(r.in_factory)}</td>
+                <td className="n">{Number(r.in_production) ? kg(r.in_production) : "—"}</td><td className="n">{Number(r.booked) ? kg(r.booked) : "—"}</td>
+                <td className="n"><strong>{kg(Number(r.in_factory) + Number(r.in_production) + Number(r.booked))}</strong></td></tr>)}</tbody>
+            </table>
+          </div>
+          <p className="muted small">{t("In factory: stock not yet used. In production: material used in production that is not closed yet (output not entered). Booked: deals still to arrive.", "फ़ैक्टरी में: जो अभी इस्तेमाल नहीं हुआ। उत्पादन में: उत्पादन में लगा माल जिसका उत्पादन अभी बंद नहीं हुआ। बुक: सौदों का आना बाकी माल।")}</p>
+        </Section>)}
+      <h3 className="sub">{t("Monthly statement", "मासिक स्टेटमेंट")}</h3>
       <div className="tablewrap">
         <table className="tbl stock">
           <thead><tr><th>{t("Item", "आइटम")}</th><th className="n">{t("Opening", "शुरुआती")}</th><th className="n">{t("In", "आया")}</th><th className="n">{t("Out", "गया")}</th><th className="n">{t("Closing", "बचा")}</th><th className="n">{t("Tally", "टैली")}</th></tr></thead>
@@ -73,14 +87,17 @@ export default function Stock({ openProduction }: { openProduction?: boolean }) 
       <Section title={t("Production entries", "उत्पादन एंट्री")}>
         {data.runs.length === 0 ? <Empty>{t("None yet.", "अभी कोई नहीं।")}</Empty> : data.runs.map((r) => (
           <div className="item" key={r.id}>
-            <div className="item-head"><strong>{day(r.run_date)}</strong><TallyTick entity="production" id={r.id} book="factory" marks={data.marks} onDone={reload} /></div>
+            <div className="item-head"><strong>{day(r.run_date)}{r.status === "open" ? <> <Chip tone="wait">{t("In production", "उत्पादन चालू")}</Chip></> : r.closed_on && r.closed_on !== r.run_date ? <span className="muted small"> → {day(r.closed_on)}</span> : null}</strong>
+              <TallyTick entity="production" id={r.id} book="factory" marks={data.marks} onDone={reload} /></div>
             <p className="small">{t("Used", "खपत")}: {r.production_lines.filter((l: Row) => l.direction === "consumed").map((l: Row) => `${iname(l.item)} ${kg(l.kg)}`).join(", ") || "—"}</p>
             <p className="small">{t("Made", "बना")}: {r.production_lines.filter((l: Row) => l.direction === "produced").map((l: Row) => `${iname(l.item)} ${kg(l.kg)}`).join(", ") || "—"}</p>
             <YieldLine y={data.yields.find((y: Row) => y.id === r.id)} />
             {r.notes && <p className="muted small">{r.notes}</p>}
+            {r.status === "open" && can("production_edit") && <div className="actions"><Btn small kind="primary" onClick={() => setClosing(r)}>{t("Production done: enter what was made", "उत्पादन पूरा: क्या बना डालें")}</Btn></div>}
           </div>))}
       </Section>
       {prod && <ProductionSheet items={data.items} onClose={() => setProd(false)} onSaved={reload} />}
+      {closing && <CloseProductionSheet run={closing} items={data.items} onClose={() => setClosing(null)} onSaved={reload} />}
       {move && <MoveSheet items={data.items} onClose={() => setMove(false)} onSaved={reload} />}
       {check && <TallyCheckSheet row={check} asOf={to} onClose={() => setCheck(null)} onSaved={reload} />}
       {item && <MovesSheet row={item} from={from} to={to} onClose={() => setItem(null)} />}
@@ -112,16 +129,47 @@ function ProductionSheet({ items, onClose, onSaved }: { items: Row[]; onClose: (
     const lines = [...used.filter((l) => l.item && l.kg).map((l) => ({ item: l.item, direction: "consumed", kg: l.kg })),
                    ...made.filter((l) => l.item && l.kg).map((l) => ({ item: l.item, direction: "produced", kg: l.kg }))];
     if (lines.some((l) => !isNum(l.kg))) throw new Error(t("Check the weights.", "वज़न जाँचें।"));
-    if (!lines.length) throw new Error(t("Add what was used and what was made.", "क्या लगा और क्या बना, डालें।"));
+    if (!lines.some((l) => l.direction === "consumed")) throw new Error(t("Add what was used.", "क्या लगा, डालें।"));
     await rpc("save_production", { p: { run_date: date, notes, lines } });
-  }, () => { onSaved(); onClose(); });
+  }, () => { onSaved(); onClose(); }, lines0() ? ["Production saved", "उत्पादन सेव हुआ"] : ["Saved as in production. Close it when the output is weighed.", "उत्पादन चालू के रूप में सेव। माल तौलने पर बंद करें।"]);
+  function lines0() { return made.some((l) => l.item && l.kg); }
   return (
     <Sheet title={t("Production", "उत्पादन")} onClose={onClose} footer={<SaveBar busy={s.busy} error={s.error} onSave={save} label={t("Save production", "उत्पादन सेव करें")} />}>
       <Field label={t("Date", "तारीख")}><DateIn value={date} onChange={setDate} /></Field>
       <p className="muted small">{t("Enter what was actually weighed. Dross and ash do not have to make the run balance; anything not accounted for shows as melting loss.", "जो सच में तौला, वही डालें। ड्रॉस और ऐश से हिसाब बराबर करना ज़रूरी नहीं; जो बचा वो पिघलाई में कमी दिखेगी।")}</p>
       <h3 className="sub">{t("Used (consumed)", "क्या लगा (खपत)")}</h3>{rows(used, setUsed)}
-      <h3 className="sub">{t("Made (produced)", "क्या बना (उत्पादन)")}</h3>{rows(made, setMade)}
+      <h3 className="sub">{t("Made (produced)", "क्या बना (उत्पादन)")}</h3>
+      <p className="muted small">{t("Still in the furnace? Leave this empty and save. It shows as 'in production' until you enter what was made.", "अभी भट्टी में है? इसे खाली छोड़कर सेव करें। जब तक क्या बना न डालें, यह 'उत्पादन चालू' दिखेगा।")}</p>
+      {rows(made, setMade)}
       <Field label={t("Note (optional)", "नोट (वैकल्पिक)")}><TextIn value={notes} onValue={setNotes} /></Field>
+    </Sheet>
+  );
+}
+
+// Production done: what came out is weighed and entered, and the run closes
+function CloseProductionSheet({ run, items, onClose, onSaved }: { run: Row; items: Row[]; onClose: () => void; onSaved: () => void }) {
+  const t = useT(); const lang = useLang();
+  const opt = items.map((i) => ({ value: i.code, label: nm(lang, i) }));
+  const [date, setDate] = useState(today());
+  const [made, setMade] = useState<PL[]>([{ item: items.find((i) => i.kind === "finished")?.code ?? "", kg: "" }]);
+  const s = useSave();
+  const used = (run.production_lines ?? []).filter((l: Row) => l.direction === "consumed");
+  return (
+    <Sheet title={`${t("Production done", "उत्पादन पूरा")} · ${day(run.run_date)}`} onClose={onClose}
+      footer={<SaveBar busy={s.busy} error={s.error} label={t("Save and close", "सेव करें और बंद करें")} onSave={() => s.run(async () => {
+        const lines = made.filter((l) => l.item && l.kg);
+        if (!lines.length || lines.some((l) => !isNum(l.kg))) throw new Error(t("Enter what was made.", "क्या बना, डालें।"));
+        await rpc("close_production", { p_run: run.id, p: { closed_on: date, lines } });
+      }, () => { onSaved(); onClose(); }, ["Production closed", "उत्पादन बंद हुआ"])} />}>
+      <p className="small">{t("Used", "खपत")}: {used.map((l: Row) => `${nm(lang, items.find((i) => i.code === l.item)) || l.item} ${kg(l.kg)}`).join(", ")}</p>
+      <Field label={t("Finished on", "पूरा होने की तारीख")}><DateIn value={date} onChange={setDate} /></Field>
+      {made.map((l, i) => (
+        <div className="line two" key={i}>
+          <Field label={t("Item made", "क्या बना")}><Select value={l.item} onChange={(v) => setMade(made.map((x, j) => (j === i ? { ...x, item: v } : x)))} placeholder="—" options={opt} /></Field>
+          <Field label={t("Weight", "वज़न")}><NumIn value={l.kg} onChange={(v) => setMade(made.map((x, j) => (j === i ? { ...x, kg: v } : x)))} suffix="kg" /></Field>
+          {made.length > 1 && <button type="button" className="x" aria-label={t("Remove", "हटाएँ")} onClick={() => setMade(made.filter((_, j) => j !== i))}>×</button>}
+        </div>))}
+      <Btn small onClick={() => setMade([...made, { item: "", kg: "" }])}>+ {t("Another item", "और आइटम")}</Btn>
     </Sheet>
   );
 }

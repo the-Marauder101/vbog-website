@@ -12,7 +12,7 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
   const [terms, setTerms] = useState(false);
   const s = useSave();
   const { data, error, reload } = useLoad(() => Promise.all([
-    q<Row>(sb.from("deals").select("*, suppliers(name, provisional_pct, provisional_days, balance_days)").eq("id", id).single()),
+    q<Row>(sb.from("deals").select("*, suppliers(*)").eq("id", id).single()),
     q(sb.from("deal_lines").select("*, grades(name, name_hi)").eq("deal_id", id)),
     q(sb.from("v_lots").select("*").eq("deal_id", id).order("received_on")),
     q(sb.from("v_deals_incoming").select("*").eq("deal_id", id)),
@@ -26,7 +26,8 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
     <>
       <button type="button" className="link back" onClick={() => history.back()}>← {t("Back", "वापस")}</button>
       <div className="page-head">
-        <div><h1>{deal.deal_no}</h1><p className="muted">{sup.name}{deal.po_no ? ` · ${deal.po_no}` : ""}</p></div>
+        <div><h1>{deal.deal_no}</h1><p className="muted"><a href={`#/supplier/${deal.supplier_id}`}>{sup.name}</a>{deal.po_no ? ` · ${deal.po_no}` : ""}
+          {sup.supplier_type === "domestic" && !sup.onboarded_at && <> <Chip tone="wait">{t("Not onboarded", "ऑनबोर्ड नहीं")}</Chip></>}</p></div>
         {deal.cancelled ? <Chip tone="bad">{t("Cancelled", "रद्द")}</Chip> : incoming ? <Chip tone="info">{t("On the way", "रास्ते में")}</Chip> : <Chip tone="ok">{t("All received", "सब आ गया")}</Chip>}
       </div>
       <Err error={s.error} />
@@ -58,6 +59,7 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
       )}
       {!deal.cancelled && incoming && Number(incoming.days_late) > 0 &&
         <p className="error">{t("Late by", "देरी")} {incoming.days_late} {t("days: expected", "दिन: आना था")} {day(deal.expected_date)}.</p>}
+      {!deal.cancelled && sup.supplier_type === "domestic" && <PoBlock deal={deal} lines={lines} history={rateHistory} reload={reload} />}
       {!deal.cancelled && incoming && can("inward_edit") &&
         <Btn kind="primary" className="block big" onClick={() => setArrival(true)}>+ {t("Material arrived: record it", "माल आया: दर्ज करें")}</Btn>}
 
@@ -114,21 +116,73 @@ export function TermsSheet({ table, id, row, onClose, onSaved }: { table: "deals
   const [pct, setPct] = useState(str(row.provisional_pct));
   const [pd, setPd] = useState(str(row.provisional_days));
   const [bd, setBd] = useState(str(row.balance_days));
+  const [hp, setHp] = useState(str(row.hold_pct));
+  const [hd, setHd] = useState(str(row.hold_days));
+  const [scope, setScope] = useState(String(row.hold_scope ?? "lot"));
   const s = useSave();
   const n = (v: string) => (v.trim() === "" ? null : Number(v));
   return (
     <Sheet title={t("Payment terms", "पेमेंट शर्तें")} onClose={onClose}
       footer={<SaveBar busy={s.busy} error={s.error} label={t("Save", "सेव करें")} onSave={() => s.run(async () => {
         if (pct && (Number(pct) < 0 || Number(pct) > 100)) throw new Error(t("Provisional share must be 0 to 100%.", "प्रोविजनल 0 से 100% के बीच हो।"));
-        await q(sb.from(table).update({ provisional_pct: n(pct), provisional_days: n(pd), balance_days: n(bd) }).eq("id", id));
+        if (hp && (Number(hp) < 0 || Number(hp) > 100)) throw new Error(t("Hold must be 0 to 100%.", "रोकना 0 से 100% के बीच हो।"));
+        await q(sb.from(table).update({ provisional_pct: n(pct), provisional_days: n(pd), balance_days: n(bd), hold_pct: n(hp), hold_days: n(hd),
+                                        ...(table === "suppliers" ? { hold_scope: scope } : {}) }).eq("id", id));
       }, () => { onSaved(); onClose(); })} />}>
       <p className="muted">{table === "suppliers" ? t("Used for every deal with this supplier unless a deal or lot says otherwise.", "इस सप्लायर के हर सौदे पर लगेगा, जब तक सौदा या लॉट अलग न कहे।")
         : t("Leave empty to use the supplier's terms.", "खाली छोड़ें तो सप्लायर की शर्तें लगेंगी।")}</p>
       <Field label={t("Share paid provisionally", "प्रोविजनल कितना")}><NumIn value={pct} onChange={setPct} suffix="%" /></Field>
       <Field label={t("Provisional paid how many days after the invoice", "बिल के कितने दिन बाद प्रोविजनल")}><NumIn value={pd} onChange={setPd} suffix={t("days", "दिन")} /></Field>
       <Field label={t("Balance paid how many days after the invoice", "बिल के कितने दिन बाद बाकी")}><NumIn value={bd} onChange={setBd} suffix={t("days", "दिन")} /></Field>
+      <h3 className="sub">{t("Hold back", "रोक कर रखें")}</h3>
+      <p className="muted small">{t("Pay up to 100% minus the hold. You are alerted when that is reached, and again when the held amount is due.", "रोकी रकम छोड़कर बाकी पेमेंट करें। सीमा पहुँचने पर और रोकी रकम देने के दिन, दोनों बार सूचना मिलेगी।")}</p>
+      <div className="grid2">
+        <Field label={t("Hold", "रोकें")}><NumIn value={hp} onChange={setHp} suffix="%" /></Field>
+        <Field label={t("Release after", "कितने दिन बाद दें")}><NumIn value={hd} onChange={setHd} suffix={t("days", "दिन")} /></Field>
+      </div>
+      {table === "suppliers" && <Field label={t("Count it", "हिसाब")}><Select value={scope} onChange={setScope} options={[
+        { value: "lot", label: t("For each lot", "हर लॉट का अलग") }, { value: "supplier", label: t("Across all this supplier's bills", "इस सप्लायर के सभी बिल मिलाकर") }]} /></Field>}
     </Sheet>
   );
+}
+
+// A PO is issued after the deal is booked, then sent to the supplier as a PDF.
+function PoBlock({ deal, lines, history, reload }: { deal: Row; lines: Row[]; history: Row[]; reload: () => void }) {
+  const t = useT(); const can = useCan();
+  const [no, setNo] = useState<string | null>(null);
+  const s = useSave();
+  const changed = deal.po_issued_at && history.some((h) => h.source !== "booked" && !h.lot_id && h.changed_at > deal.po_issued_at);
+  const pdf = () => s.run(async () => { const { downloadPo } = await import("../po"); await downloadPo(deal, lines); }, undefined, ["PO downloaded", "PO डाउनलोड हुआ"]);
+  const open = () => s.run(async () => setNo(deal.po_no ?? await rpc<string>("suggest_po_no", {})), undefined, null);
+  if (no !== null) return (
+    <div className="card stack">
+      <Field label={t("PO number", "PO नंबर")} hint={t("Suggested from the last PO. Change it if you need to.", "पिछले PO से सुझाया गया। ज़रूरत हो तो बदलें।")}><TextIn value={no} onValue={setNo} /></Field>
+      <Err error={s.error} />
+      <div className="actions">
+        <Btn kind="primary" disabled={s.busy} onClick={() => s.run(async () => {
+          const v = await rpc<string>("issue_po", { p_deal: deal.id, p_po_no: no });
+          const { downloadPo } = await import("../po");
+          await downloadPo({ ...deal, po_no: v, po_date: new Date().toISOString().slice(0, 10), po_revision: Number(deal.po_revision ?? 0) + 1 }, lines);
+        }, () => { setNo(null); reload(); }, ["PO issued and downloaded", "PO जारी हुआ, डाउनलोड हुआ"])}>{t("Issue PO and download PDF", "PO जारी करें, PDF डाउनलोड करें")}</Btn>
+        <Btn onClick={() => setNo(null)}>{t("Cancel", "रद्द करें")}</Btn>
+      </div>
+    </div>);
+  if (!deal.po_issued_at) return (
+    <div className={deal.unbooked ? "notice" : "warnbox"}>
+      <strong>{t("PO not issued yet.", "PO अभी जारी नहीं हुआ।")}</strong> {t("Issue it and send the PDF to the supplier.", "जारी करें और PDF सप्लायर को भेजें।")}
+      <Err error={s.error} />
+      {can("deal_edit") && <div className="actions"><Btn kind="primary" disabled={s.busy} onClick={open}>{t("Issue PO", "PO जारी करें")}</Btn></div>}
+    </div>);
+  return (
+    <div className={changed ? "warnbox" : "notice ok-notice"}>
+      <strong>PO {deal.po_no}</strong> · {t("issued", "जारी")} {day(deal.po_date)}{Number(deal.po_revision) > 1 ? ` · Rev ${deal.po_revision}` : ""}
+      {changed && <p className="small">{t("Rates changed after this PO was issued. Re-issue it so the supplier has the new rates.", "PO के बाद रेट बदले। सप्लायर को नए रेट देने के लिए दोबारा जारी करें।")}</p>}
+      <Err error={s.error} />
+      <div className="actions">
+        <Btn disabled={s.busy} onClick={pdf}>{t("Download PO (PDF)", "PO डाउनलोड (PDF)")}</Btn>
+        {can("deal_edit") && <Btn kind={changed ? "primary" : ""} disabled={s.busy} onClick={open}>{t("Re-issue PO", "PO दोबारा जारी करें")}</Btn>}
+      </div>
+    </div>);
 }
 
 type GL = { grade: string; slipGross: string; slipBags: string; billed: string; rate: string; gross: string; bags: string; bagKg: string };

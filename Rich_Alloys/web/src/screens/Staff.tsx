@@ -3,7 +3,7 @@
 // Passwords are never readable anywhere; a new or reset password is shown once, to share straight away.
 import { useState } from "react";
 import { isLoginId, sb, showLogin, toLogin, useLoad, useMe, useT, type Row } from "../lib";
-import { Btn, Chip, Empty, Err, Field, Loading, Select, TextIn } from "../ui";
+import { Btn, Chip, Empty, Err, Field, Loading, Select, TextIn, toast } from "../ui";
 
 const ROLES: [string, string, string][] = [
   ["gate", "Gate", "गेट"], ["factory", "Factory", "फैक्ट्री"], ["factory_accounts", "Factory accounts", "फैक्ट्री अकाउंट्स"],
@@ -43,7 +43,7 @@ export default function Staff() {
 
   async function run(body: Row) {
     setBusy(true); setErr("");
-    try { await call(body); reload(); return true; } catch (e) { setErr((e as Error).message); return false; } finally { setBusy(false); }
+    try { await call(body); reload(); toast(); return true; } catch (e) { setErr((e as Error).message); return false; } finally { setBusy(false); }
   }
 
   if (!data) return error ? <><Err error={error} /><Btn onClick={reload}>{t("Try again", "फिर से कोशिश करें")}</Btn></> : <Loading />;
