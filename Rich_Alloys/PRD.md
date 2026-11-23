@@ -462,6 +462,13 @@ Recommended later: serve only `deploy/`, on its own subdomain.
 
 ## 10a. iPhone and Android apps (planned, iPhone first)
 
+**Now (23 Nov): installable web app for the team, for testing and QA.** No store, no accounts. The site has a web app
+manifest, icons and a service worker (`web/public/manifest.webmanifest`, `sw.js`): Android/Chrome shows "Install
+app" (Home card, or Chrome menu > Install app), iPhone uses Safari > Share > Add to Home Screen. It opens full screen
+from its own icon, uses the same database and login, updates itself on every deploy (pages network-first; built files
+cached), and opens offline to the last screen shell (data still needs the network; photos wait in the upload queue).
+An Android .apk can be built the same way later if a file to send is wanted. The store apps below replace it.
+
 The same React app, wrapped with **Capacitor** (one codebase: the website, the iPhone app and the Android app stay
 identical). The app bundles the screens and talks to the same Supabase project.
 

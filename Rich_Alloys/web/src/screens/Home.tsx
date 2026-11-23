@@ -1,6 +1,8 @@
 import { addDays, day, go, inr, inrShort, kg, nm, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, type Row } from "../lib";
 import { Btn, Empty, Err, Loading, Section } from "../ui";
 import { PriceDecisions, useSave } from "../common";
+import { useEffect, useState } from "react";
+import { canPrompt, isInstalled, isIos, onInstallChange, promptInstall } from "../pwa";
 
 const KINDS: Record<string, { en: string; hi: string; to: (r: Row) => string }> = {
   hold_release: { en: "Held payments now due: pay the balance", hi: "रोकी रकम अब देनी है", to: (r) => (r.ref_type === "lot" ? `lot/${r.ref_id}/pay` : `supplier/${r.ref_id}`) },
@@ -54,6 +56,7 @@ export default function Home() {
           <span className="go">{t("Payables", "देनदारी")} ›</span>
         </button>
       )}
+      <InstallCard />
       {position.length > 0 && <PositionCard rows={position} />}
       <Section title={t("Your work", "आपका काम")}>
         {reminders.length > 0 && <Reminders rows={reminders} onDone={reload} />}
@@ -113,5 +116,27 @@ function PositionCard({ rows }: { rows: Row[] }) {
           <td className="n">{Number(r.in_production) ? kg(r.in_production) : "—"}</td><td className="n">{Number(r.booked) ? kg(r.booked) : "—"}</td></tr>)}</tbody>
       </table>
     </button>
+  );
+}
+
+// Install the app on this phone: Android/Chrome gets a button; iPhone gets the two taps in Safari.
+function InstallCard() {
+  const t = useT();
+  const [, tick] = useState(0);
+  const [hidden, setHidden] = useState(() => { try { return localStorage.getItem("installHidden") === "1"; } catch { return false; } });
+  useEffect(() => onInstallChange(() => tick((n) => n + 1)), []);
+  if (hidden || isInstalled() || (!canPrompt() && !isIos())) return null;
+  const hide = () => { setHidden(true); try { localStorage.setItem("installHidden", "1"); } catch { /* private mode */ } };
+  return (
+    <div className="notice install-card">
+      <strong>{t("Use it as an app", "इसे ऐप की तरह इस्तेमाल करें")}</strong>
+      <p className="small">{canPrompt()
+        ? t("Install Rich Alloys on this phone: it opens from its own icon, full screen.", "Rich Alloys को इस फ़ोन पर इंस्टॉल करें: अपने आइकन से, पूरी स्क्रीन पर खुलेगा।")
+        : t("In Safari, tap Share (the square with an arrow) and then 'Add to Home Screen'.", "Safari में शेयर (तीर वाला चौकोर) दबाएँ, फिर 'Add to Home Screen'।")}</p>
+      <div className="actions">
+        {canPrompt() && <Btn small kind="primary" onClick={() => promptInstall()}>{t("Install app", "ऐप इंस्टॉल करें")}</Btn>}
+        <Btn small onClick={hide}>{t("Not now", "अभी नहीं")}</Btn>
+      </div>
+    </div>
   );
 }
