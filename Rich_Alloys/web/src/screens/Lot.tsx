@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { COMPANY, csv, day, download, esc, inr, isNum, kg, printHtml, q, rpc, sb, today, useCan, useLang, useLoad, useT, nm, type Row } from "../lib";
-import { DateIn, Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Sheet, SaveBar, Tabs, TextIn } from "../ui";
-import { DN_LABEL, DealDocs, PaymentRow, PaymentSheet, PriceDecisions, RateCell, RateHistory, Stepper, StageChip, TallyTick, useSave } from "../common";
+import { DateIn, Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, Tabs, TextIn } from "../ui";
+import { DN_LABEL, DealDocs, HoldHint, PaymentRow, PaymentSheet, PriceDecisions, RateCell, RateHistory, Stepper, StageChip, TallyTick, useSave } from "../common";
 import { TermsSheet } from "./Deal";
 import { TermsLine } from "./Lots";
 
@@ -31,15 +31,17 @@ async function loadLot(id: string, money: boolean) {
     q(sb.from("sort_categories").select("*").order("sort")),
     q(sb.from("v_sorting_exceptions").select("*").eq("lot_id", id)),
   ]);
-  const [payable, payments, tds, priceHistory] = money && inv ? await Promise.all([
+  const supId = lot.deals?.supplier_id as string;
+  const [payable, payments, tds, priceHistory, holds] = money && inv ? await Promise.all([
     q(sb.from("v_payable").select("*").eq("invoice_id", inv)),
     q(sb.from("payments").select("*").eq("invoice_id", inv).order("paid_on")),
     q(sb.from("tds").select("*").eq("invoice_id", inv).order("deducted_on")),
     q(sb.from("deal_rate_history").select("*, profiles(full_name)").eq("lot_id", id).order("changed_at", { ascending: false })),
-  ]) : [[], [], [], []];
+    q(sb.from("v_payment_holds").select("*").in("ref_id", [id, supId])),
+    ]) : [[], [], [], [], []];
   const ids = [inv, ...notes.map((n) => n.id), ...payments.map((p) => p.id), ...tds.map((x) => x.id)].filter(Boolean) as string[];
   const marks = ids.length ? await q(sb.from("tally_marks").select("*").in("entity_id", ids)) : [];
-  return { lot, v: v[0] ?? {}, lines, sorting, calc, calcLines, notes, returns, cats, exc, payable: payable[0], payments, tds, priceHistory, marks };
+  return { lot, v: v[0] ?? {}, lines, sorting, calc, calcLines, notes, returns, cats, exc, payable: payable[0], payments, tds, priceHistory, hold: holds[0] as Row | undefined, marks };
 }
 export type LotData = Awaited<ReturnType<typeof loadLot>>;
 
@@ -101,6 +103,7 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
           [t("Balance to pay", "देना बाकी"), <strong key="b">{inr(d.payable.balance)}</strong>],
         ] as [string, JSX.Element | string][] : []),
       ]} />
+      {can("money_view") && isDomestic(d) && inv && <TermsBox d={d} reload={reload} />}
       {can("money_view") && isDomestic(d) && inv && <TruckPrice d={d} locked={live.length > 0} reload={reload} />}
       {d.exc.length > 0 && (
         <div className="warnbox">
@@ -129,6 +132,34 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
 }
 
 // ---------------- weights ----------------
+// Payment terms for this lot (else the deal's, else the supplier's) and the hold, with one button to change them
+function TermsBox({ d, reload }: { d: LotData; reload: () => void }) {
+  const t = useT(); const can = useCan();
+  const [open, setOpen] = useState(false);
+  const deal = d.lot.deals ?? {}; const sup = deal.suppliers ?? {};
+  const own = d.lot.provisional_pct != null || d.lot.provisional_days != null || d.lot.balance_days != null || d.lot.hold_pct != null;
+  return (
+    <Section title={t("Payment terms", "पेमेंट शर्तें")} right={can("deal_edit") ? <Btn small onClick={() => setOpen(true)}>{t("Set for this lot", "इस लॉट के लिए")}</Btn> : undefined}>
+      <p><TermsLine pct={d.lot.provisional_pct ?? deal.provisional_pct ?? sup.provisional_pct} pdays={d.lot.provisional_days ?? deal.provisional_days ?? sup.provisional_days} bdays={d.lot.balance_days ?? deal.balance_days ?? sup.balance_days} />
+        <span className="muted small"> · {own ? t("set for this lot", "इस लॉट के लिए तय") : t("from the deal or supplier", "सौदे या सप्लायर से")}</span></p>
+      {d.hold ? <HoldBox h={d.hold} reload={reload} />
+        : <p className="muted small">{t("No hold set. Set a hold % to be alerted when that much is paid.", "रोक तय नहीं। तय करें तो उतना देने पर सूचना मिलेगी।")}</p>}
+      {open && <TermsSheet table="lots" id={d.lot.id} row={d.lot} onClose={() => setOpen(false)} onSaved={reload} />}
+    </Section>
+  );
+}
+function HoldBox({ h, reload }: { h: Row; reload: () => void }) {
+  const t = useT(); const can = useCan(); const s = useSave();
+  if (h.status === "cleared") return <p className="muted small">{t("Hold", "रोक")} {h.hold_pct}%: {t("paid in full.", "पूरा दे दिया।")}</p>;
+  return (
+    <>
+      <HoldHint h={h} />
+      {h.status === "holding" && can("payment_enter") && <div className="actions">
+        <Btn small disabled={s.busy} onClick={() => s.run(() => rpc("ack_payment_hold", { p_scope: h.scope, p_ref: h.ref_id }), reload, ["Noted", "नोट किया"])}>{t("Noted: stop paying", "नोट किया: पेमेंट रोकें")}</Btn></div>}
+    </>
+  );
+}
+
 // The price this truck is bought at: fixed when it came in; after that only Himanshu (rate_confirm) changes it.
 function TruckPrice({ d, locked, reload }: { d: LotData; locked: boolean; reload: () => void }) {
   const t = useT(); const can = useCan(); const lang = useLang();
@@ -270,7 +301,7 @@ function Sorting({ d, reload }: { d: LotData; reload: () => void }) {
                         {Number(x.dn_kg) !== Number(x.sorted_kg) ? ` · ${t("debit", "डेबिट")} ${kg(x.dn_kg)} (${x.change_reason})` : ""}</span>
                     </span>
                     {!closed && can("sorting_edit") && <button type="button" className="x" aria-label={t("Delete", "हटाएँ")}
-                      onClick={() => { if (confirm(t("Delete this entry?", "यह एंट्री हटाएँ?"))) s.run(() => q(sb.from("sorting_lines").delete().eq("id", x.id)), reload); }}>×</button>}
+                      onClick={() => { if (confirm(t("Delete this entry?", "यह एंट्री हटाएँ?"))) s.run(() => q(sb.from("sorting_lines").delete().eq("id", x.id)), reload, ["Deleted", "हटा दिया"]); }}>×</button>}
                   </div>
                 </li>))}
               </ul>)}
@@ -490,6 +521,7 @@ function Pay({ d, reload }: { d: LotData; reload: () => void }) {
         [t("Balance to pay", "देना बाकी"), <strong key="b">{inr(p.balance)}</strong>, "total"],
         ...(Number(p.pending) ? [[t("Paid, waiting for reconciliation", "भुगतान, मिलान बाकी"), inr(p.pending), "warn"] as [string, string, string]] : []),
       ]} />
+      {d.hold && d.hold.status !== "cleared" && <HoldHint h={d.hold} />}
       <p className="muted small">{t("Terms", "शर्तें")}: <TermsLine pct={d.lot.provisional_pct ?? deal.provisional_pct ?? sup.provisional_pct} pdays={d.lot.provisional_days ?? deal.provisional_days ?? sup.provisional_days} bdays={d.lot.balance_days ?? deal.balance_days ?? sup.balance_days} />
         {can("deal_edit") && <> · <button type="button" className="link" onClick={() => setTerms(true)}>{t("Change for this lot", "इस लॉट के लिए बदलें")}</button></>}</p>
       <Section title={t("Payments", "भुगतान")} right={can("payment_enter") ? <Btn small kind="primary" onClick={() => setPay(true)}>+ {t("Record payment", "पेमेंट दर्ज करें")}</Btn> : undefined}>
@@ -499,9 +531,9 @@ function Pay({ d, reload }: { d: LotData; reload: () => void }) {
         <Err error={s.error} />
         {d.tds.length === 0 ? <Empty>{t("No TDS recorded.", "कोई TDS दर्ज नहीं।")}</Empty> : d.tds.map((x) => (
           <div className="item" key={x.id}>
-            <div className="item-head"><strong>{inr(x.amount)}{x.section ? ` · ${x.section}` : ""}</strong><span className="muted small">{day(x.deducted_on)}</span></div>
+            <div className="item-head"><strong>{inr(x.amount)} · {x.kind === "gst" ? t("GST TDS", "GST TDS") : `${t("Income-tax TDS", "आयकर TDS")}${x.section ? ` ${x.section}` : ""}`}</strong><span className="muted small">{day(x.deducted_on)}</span></div>
             <div className="actions"><TallyTick entity="tds" id={x.id} book="office" marks={d.marks} onDone={reload} />
-              {can("tax_edit") && <Btn small kind="ghost" onClick={() => { if (confirm(t("Remove this TDS entry?", "यह TDS हटाएँ?"))) s.run(() => q(sb.from("tds").delete().eq("id", x.id)), reload); }}>{t("Remove", "हटाएँ")}</Btn>}</div>
+              {can("tax_edit") && <Btn small kind="ghost" onClick={() => { if (confirm(t("Remove this TDS entry?", "यह TDS हटाएँ?"))) s.run(() => q(sb.from("tds").delete().eq("id", x.id)), reload, ["Removed", "हटा दिया"]); }}>{t("Remove", "हटाएँ")}</Btn>}</div>
           </div>))}
       </Section>
       {pay && <PaymentSheet supplierId={d.lot.deals?.supplier_id} invoiceId={d.lot.invoice_id} onClose={() => setPay(false)} onSaved={reload} />}
@@ -513,18 +545,20 @@ function Pay({ d, reload }: { d: LotData; reload: () => void }) {
 
 export function TdsSheet({ invoice, onClose, onSaved }: { invoice: Row; onClose: () => void; onSaved: () => void }) {
   const t = useT();
-  const [f, setF] = useState({ section: "", amount: "", date: today() });
+  const [f, setF] = useState({ section: "194Q", amount: "", date: today(), kind: "it" });
   const s = useSave();
   return (
     <Sheet title={`TDS · ${invoice.invoice_no}`} onClose={onClose}
       footer={<SaveBar busy={s.busy} error={s.error} label={t("Save", "सेव करें")} onSave={() => s.run(async () => {
         if (!isNum(f.amount) || Number(f.amount) <= 0) throw new Error(t("Enter the TDS amount deducted.", "काटा गया TDS डालें।"));
-        await q(sb.from("tds").insert({ invoice_id: invoice.id, section: f.section.trim().toUpperCase() || null, amount: Number(f.amount), deducted_on: f.date }));
+        await q(sb.from("tds").insert({ invoice_id: invoice.id, kind: f.kind, section: (f.kind === "gst" ? "GST" : f.section.trim().toUpperCase()) || null, amount: Number(f.amount), deducted_on: f.date }));
       }, () => { onSaved(); onClose(); })} />}>
       <p className="muted small">{t("Usually entered with the payment. Use this only for TDS deducted separately.", "आम तौर पर पेमेंट के साथ डलता है। अलग से काटा हो तभी यहाँ डालें।")}</p>
       <div className="grid2">
+        <Field label={t("Type", "प्रकार")}><Select value={f.kind} onChange={(v) => setF({ ...f, kind: v })} options={[
+          { value: "it", label: t("Income-tax TDS", "आयकर TDS") }, { value: "gst", label: t("GST TDS", "GST TDS") }]} /></Field>
         <Field label={t("TDS amount", "TDS रकम")}><NumIn value={f.amount} onChange={(v) => setF({ ...f, amount: v })} suffix="₹" autoFocus /></Field>
-        <Field label={t("Section (optional)", "सेक्शन (वैकल्पिक)")}><TextIn value={f.section} onValue={(v) => setF({ ...f, section: v })} /></Field>
+        {f.kind === "it" && <Field label={t("Section", "सेक्शन")}><TextIn value={f.section} onValue={(v) => setF({ ...f, section: v })} /></Field>}
         <Field label={t("Deducted on", "काटने की तारीख")}><DateIn value={f.date} onChange={(v) => setF({ ...f, date: v })} /></Field>
       </div>
     </Sheet>

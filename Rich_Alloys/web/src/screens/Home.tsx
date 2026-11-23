@@ -1,8 +1,12 @@
-import { addDays, day, go, inr, inrShort, q, sb, today, useCan, useLang, useLoad, useMe, useT, type Row } from "../lib";
+import { addDays, day, go, inr, inrShort, kg, nm, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, type Row } from "../lib";
 import { Btn, Empty, Err, Loading, Section } from "../ui";
-import { PriceDecisions } from "../common";
+import { PriceDecisions, useSave } from "../common";
 
 const KINDS: Record<string, { en: string; hi: string; to: (r: Row) => string }> = {
+  hold_release: { en: "Held payments now due: pay the balance", hi: "रोकी रकम अब देनी है", to: (r) => (r.ref_type === "lot" ? `lot/${r.ref_id}/pay` : `supplier/${r.ref_id}`) },
+  hold_reached: { en: "Payment limit reached: hold the rest", hi: "भुगतान सीमा पूरी: बाकी रोकें", to: (r) => (r.ref_type === "lot" ? `lot/${r.ref_id}/pay` : `supplier/${r.ref_id}`) },
+  po_missing: { en: "Booked: issue the PO", hi: "बुक हुआ: PO जारी करें", to: (r) => `deal/${r.ref_id}` },
+  supplier_onboard: { en: "Suppliers not onboarded", hi: "सप्लायर ऑनबोर्ड नहीं", to: (r) => `supplier/${r.ref_id}` },
   rate_confirm: { en: "Trucks that came without a booking: confirm the rate", hi: "बिना बुकिंग आए ट्रक: रेट पक्का करें", to: (r) => `deal/${r.ref_id}` },
   arrival_late: { en: "Booked supplies that are late", hi: "देर से आने वाला बुक माल", to: (r) => `deal/${r.ref_id}` },
   sorting_open: { en: "Lots to sort", hi: "छँटाई करनी है", to: (r) => `lot/${r.ref_id}/sorting` },
@@ -22,12 +26,14 @@ const ORDER = Object.keys(KINDS);
 
 export default function Home() {
   const t = useT(); const me = useMe(); const can = useCan(); const lang = useLang();
-  const { data, error } = useLoad(() => Promise.all([
+  const { data, error, reload } = useLoad(() => Promise.all([
     q(sb.from("v_tasks").select("*").order("since", { ascending: true, nullsFirst: false })),
     can("money_view") ? q(sb.from("v_cash_plan").select("due_date,amount")) : Promise.resolve([] as Row[]),
+    can("deal_edit") ? q(sb.from("v_stock_position").select("*").order("sort")) : Promise.resolve([] as Row[]),
   ]), []);
   if (!data) return error ? <Err error={error} /> : <Loading />;
-  const [tasks, cash] = data;
+  const [tasks, cash, position] = data;
+  const reminders = tasks.filter((x) => x.kind === "reminder_due");
   const groups = ORDER.map((k) => ({ k, rows: tasks.filter((x) => x.kind === k) })).filter((g) => g.rows.length);
   const now = today(); const week = addDays(now, 7);
   const overdue = cash.filter((c) => c.due_date < now).reduce((a, c) => a + Number(c.amount), 0);
@@ -48,9 +54,11 @@ export default function Home() {
           <span className="go">{t("Payables", "देनदारी")} ›</span>
         </button>
       )}
+      {position.length > 0 && <PositionCard rows={position} />}
       <Section title={t("Your work", "आपका काम")}>
+        {reminders.length > 0 && <Reminders rows={reminders} onDone={reload} />}
         {tasks.some((x) => x.kind === "price_decide") && <PriceDecisions title />}
-        {groups.length === 0 && !tasks.some((x) => x.kind === "price_decide") && <Empty>{t("Nothing waiting for you.", "आपके लिए कुछ बाकी नहीं।")}</Empty>}
+        {groups.length === 0 && !reminders.length && !tasks.some((x) => x.kind === "price_decide") && <Empty>{t("Nothing waiting for you.", "आपके लिए कुछ बाकी नहीं।")}</Empty>}
         {groups.map(({ k, rows }) => (
           <div key={k} className="task-group">
             <h3 className="sub">{t(KINDS[k].en, KINDS[k].hi)} <span className="count">{rows.length}</span></h3>
@@ -59,7 +67,8 @@ export default function Home() {
                 <li key={i}><button type="button" className="row" onClick={() => go(KINDS[k].to(r))}>
                   <span className="row-main">
                     <strong>{r.ref_no || r.supplier}</strong>
-                    <span className="muted small">{[r.ref_no ? r.supplier : null, lang === "hi" && r.detail_hi ? r.detail_hi : r.detail, r.since ? day(r.since) : null].filter(Boolean).join(" · ")}</span>
+                    <span className="muted small">{k === "hold_reached" ? [r.ref_no ? r.supplier : null, `${t("hold until", "तक रोकें")} ${day(r.detail)}`].filter(Boolean).join(" · ")
+                      : [r.ref_no ? r.supplier : null, lang === "hi" && r.detail_hi ? r.detail_hi : r.detail, r.since ? day(r.since) : null].filter(Boolean).join(" · ")}</span>
                   </span>
                   {r.amount != null && <span className="amt">{inr(r.amount)}</span>}
                 </button></li>
@@ -70,5 +79,39 @@ export default function Home() {
         ))}
       </Section>
     </>
+  );
+}
+
+// Due reminders: one tap marks done and schedules the next one.
+function Reminders({ rows, onDone }: { rows: Row[]; onDone: () => void }) {
+  const t = useT(); const s = useSave();
+  return (
+    <div className="task-group">
+      <h3 className="sub">{t("Reminders", "रिमाइंडर")} <span className="count">{rows.length}</span></h3>
+      <ul className="rows">{rows.map((r) => (
+        <li key={r.ref_id} className="edge-bad"><div className="row static">
+          <span className="row-main"><strong>{r.ref_no}</strong><span className="muted small">{[r.supplier, r.detail, `${t("due", "तारीख")} ${day(r.since)}`].filter(Boolean).join(" · ")}</span></span>
+          <Btn small kind="primary" disabled={s.busy} onClick={() => s.run(() => rpc("complete_reminder", { p_id: r.ref_id }), onDone, ["Done. Next one is scheduled.", "हो गया। अगला तय है।"])}>{t("Done", "हो गया")}</Btn>
+        </div></li>))}
+      </ul>
+      {s.error && <p className="error small">{s.error}</p>}
+    </div>
+  );
+}
+
+// Where the metal is: in the factory, in production, booked and still to come
+function PositionCard({ rows }: { rows: Row[] }) {
+  const t = useT(); const lang = useLang();
+  const main = rows.filter((r) => r.kind === "raw" || r.kind === "finished").slice(0, 5);
+  if (!main.length) return null;
+  return (
+    <button type="button" className="poscard" onClick={() => go("stock")}>
+      <span className="poscard-head"><strong>{t("Stock position", "स्टॉक स्थिति")}</strong><span className="go">{t("Stock", "स्टॉक")} ›</span></span>
+      <table className="tbl compact">
+        <thead><tr><th></th><th className="n">{t("In factory", "फ़ैक्टरी में")}</th><th className="n">{t("In production", "उत्पादन में")}</th><th className="n">{t("Booked", "बुक")}</th></tr></thead>
+        <tbody>{main.map((r) => <tr key={r.item}><td>{nm(lang, r)}</td><td className="n">{kg(r.in_factory)}</td>
+          <td className="n">{Number(r.in_production) ? kg(r.in_production) : "—"}</td><td className="n">{Number(r.booked) ? kg(r.booked) : "—"}</td></tr>)}</tbody>
+      </table>
+    </button>
   );
 }

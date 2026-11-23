@@ -82,6 +82,12 @@ the factory Tally, the office Tally, or both.
 | 30 | **Every source that brings material in is a supplier**: domestic sellers, the Mumbai branch, import sellers, job workers. Each delivery is a lot with weights, sorting, rejections and documents. The money steps apply only where money is owed for the material (section 7b). (Numbered 25 in Depesh's draft; renumbered because 25–29 were already in use.) | Depesh, 20 Nov |
 | 31 | A truck that arrives without a booking is recorded and tallied in full (lot, tax invoice, debit notes, payable, cash plan, ledger, both Tally queues, stock). Its deal is marked unbooked; the rate comes from the invoice until someone with `rate_confirm` (owner, vbog_admin) confirms or corrects it | Depesh, 20 Nov |
 | 32 | **Every invoice rate that differs from the deal is flagged**, over or under. Himanshu or Tinu (`price_decide`: owner, vbog_admin, factory_accounts) chooses one of two: **accept the invoice rate** (the deal takes it, recorded in its rate history) or **keep the agreed rate** (if the invoice is higher, a debit note for the difference × billed kg + GST; if lower, nothing is raised and the supplier bills the difference). Deal rates stay editable at any time from the deal itself, with a history of who changed what and why. **A truck's price is fixed when it enters the factory** (the deal rate at that moment, then confirmed if the invoice differs); later deal changes apply only to trucks still to come, and **only Himanshu (`rate_confirm`) changes a truck's price** once it is in, on the lot. Debit notes wait until the truck's price is confirmed; a price cannot change under an approved debit note (cancel it first) | Depesh, 20 Nov |
+| 33 | Every save or edit shows a visible "Saved" confirmation | Depesh, 23 Nov |
+| 34 | Payment terms can be set per lot (over the deal's and supplier's). A **hold** (% and days; supplier default, deal or lot override; per lot or across the supplier's bills) limits payment to 100 − hold %: alert when that is reached, alert again when the held balance falls due Y days later | Depesh, 23 Nov |
+| 35 | **Supplier onboarding**: a checklist (steps to be given by Depesh; empty until then), onboarded or not, shown wherever the supplier is chosen; recurring reminders per supplier alert the chosen person (Himanshu by default) on Home | Depesh, 23 Nov |
+| 36 | A **PO is issued after the deal is booked**, never typed at booking. Numbered in the PO/RA/NNN/YY-YY series, downloadable as a PDF (basic design until the final one is given); re-issue when rates change | Depesh, 23 Nov |
+| 37 | One table of every lot: supplier, weights, rates, each debit note, GST, income-tax TDS and GST TDS, paid and pending. TDS is recorded as income tax or GST | Depesh, 23 Nov |
+| 38 | Production can be started (material used) and closed later (output weighed). Stock position: in the factory, in production, booked and still to come; on Himanshu's Home and the Stock page | Depesh, 23 Nov |
 | 28 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 3a. Source of truth
@@ -184,6 +190,31 @@ attachments, rejects; rate cuts; returns) → debit notes → payment.
   "Invoice rate above agreed" when the invoice is higher; it needs no sorting to finish and has no stock effect. Others
   see "Himanshu or Tinu will decide this." The lot stays at "DN to approve" until it is decided.
 - Only domestic lots on a tax invoice are checked (branch, import and job work carry no money, section 7b).
+
+### 5c. Holds, onboarding, PO, lot table, stock position (decisions 33–38, built 23 Nov, `0014_holds_onboarding_po_stock.sql`)
+
+- **Saved**: every save shows a green "Saved" banner for 2.5 s (also "File uploaded" when the upload queue finishes one).
+- **Lot payment terms**: the lot's first tab has "Payment terms" with "Set for this lot" (provisional %, days, balance
+  days, hold % and release days). Empty fields fall back to the deal, then the supplier.
+- **Hold** (`v_payment_holds`): paid counts every payment not rejected. Limit = (net payable: invoice − DNs − TDS) ×
+  (100 − hold)%. Status: paying → holding (limit reached on the date the payments crossed it) → release due (that date +
+  hold days) → cleared. Home: "Payment limit reached: hold the rest" (until "Noted" is tapped on the lot) and "Held
+  payments now due". The payment form shows how much can be paid now and warns when an amount goes past the limit.
+  Scope per supplier: each lot, or all the supplier's bills together (advances count).
+- **Onboarding**: Admin > Onboarding holds the steps (none yet). Supplier page (`#/supplier/<id>`, linked from the deal,
+  Admin > Suppliers and Home): tick steps, "Mark as onboarded" once every required step is done, reopen if needed.
+  New deal marks suppliers "not onboarded"; Home lists not-onboarded suppliers that have a deal (`supplier_onboard`:
+  owner, vbog_admin, factory_accounts, ho_accounts). Nothing is blocked until the process is defined.
+- **Reminders**: per supplier, every N days/weeks/months/years, for a role (default Himanshu). Due ones are on that
+  person's Home with "Done"; done logs it and moves the date on (past today if missed).
+- **PO**: New deal has no PO field. The deal shows "PO not issued yet" and Home lists "Booked: issue the PO". "Issue PO"
+  suggests the next number (editable, unique), issues it and downloads the PDF (company, supplier, delivery, grades,
+  qty, rate, GST, total, terms, conditions, signatory). If a rate changes after issue, the deal asks to re-issue (Rev 2…).
+- **Lot table**: Lots > Table (remembered per phone): one row per lot with the columns in decision 37, totals, CSV.
+  Money columns only for `money_view`.
+- **Production**: leave "Made" empty to save it as in production; "Production done: enter what was made" closes it.
+  Output enters stock on the closing date. **Stock position** (`v_stock_position`): in factory (stock today), in
+  production (used in runs not closed), booked (deal kg still to come), total.
 
 Lot stages: Received → Sorting → DN to approve → Tally entry pending → Payment pending → Settled.
 
@@ -355,16 +386,19 @@ It is the summary his stock and production sheets roll up into, and every month 
 | `stock_moves.party`, `.doc_no`, `.transfer_id`; kinds for branch, job work, import receipt, sale, credit note, item-to-item | Stock movements beyond lots (7a) |
 | `tally_marks.amount_at_mark`, `documents.lot_id` | Amount when ticked (to detect later changes); invoice photo per lot |
 | `deal_rate_history`, `price_decisions`, `lot_lines.agreed_rate` | Every rate change on a deal (old, new, why, lot, note, who, when); each invoice-rate decision (accept or keep, who, when); the rate a settled truck is pinned to |
+| `payment_hold_acks`; `suppliers/deals/lots.hold_pct, hold_days`, `suppliers.hold_scope` | Payment hold settings and "noted" alerts |
+| `onboarding_steps`, `supplier_onboarding`, `suppliers.onboarded_at/by`; `reminders`, `reminder_log` | Onboarding checklist and status; recurring reminders and when each was done |
+| `deals.po_issued_at/by, po_revision`; `tds.kind` (it, gst); `production_runs.status, closed_on` | PO step; TDS type; production open or closed |
 | `gstr2b_imports`, `gstr2b_lines` | Uploaded 2B months and their lines, with the matched invoice |
 | `documents`, `audit_log` | Files and their status; every change logged |
 
 Views: `v_lot_lines`, `v_dn_calc(_lines)`, `v_sorting_exceptions`, `v_payable`, `v_tally_missing`, `v_doc_gaps`,
 `v_lots` (stage), `v_deals_incoming`, `v_ledger_lines`, `v_supplier_balance`, `v_cash_plan`, `v_gst_month`,
-`v_stock_moves` (opening starts an item), `v_production_runs` (yield), `v_job_work` (sent vs back), `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_price_diffs` (invoice rate vs deal rate, open or decided), `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
+`v_stock_moves` (opening starts an item), `v_production_runs` (yield), `v_job_work` (sent vs back), `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_price_diffs` (invoice rate vs deal rate, open or decided), `v_payment_holds`, `v_lot_register`, `v_stock_position`, `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
 
 Actions (functions): `create_deal`, `create_lot`, `close_lot`, `reopen_lot`, `approve_dn`, `cancel_note`,
 `set_note_tally_no`, `mark_tally`, `unmark_tally`, `reconcile_payment`, `reject_payment`, `confirm_ledger`,
-`clear_tally_change`, `set_deal_rate`, `decide_price`, `confirm_deal_rate`, `create_unbooked_lot`, `set_invoice_2b`, `import_gstr2b`, `save_production`, `verify_document`, `approve_document`, `reject_document`.
+`clear_tally_change`, `ack_payment_hold`, `set_onboarding_step`, `set_supplier_onboarded`, `complete_reminder`, `suggest_po_no`, `issue_po`, `close_production`, `set_deal_rate`, `decide_price`, `confirm_deal_rate`, `create_unbooked_lot`, `set_invoice_2b`, `import_gstr2b`, `save_production`, `verify_document`, `approve_document`, `reject_document`.
 
 Staff management (`0007_staff_and_uploads.sql`, `supabase/functions/staff-admin`): the edge function is the only code
 holding the service key. It checks the caller's role has `staff_manage` (owner and vbog_admin by default), then creates
@@ -426,6 +460,34 @@ transaction (dry-run first on a copy of the live schema). Everyone else is added
 Today GitHub Pages publishes the whole repo, so this folder (PRD, SQL, test data) is public too (decision 28).
 Recommended later: serve only `deploy/`, on its own subdomain.
 
+## 10a. iPhone and Android apps (planned, iPhone first)
+
+The same React app, wrapped with **Capacitor** (one codebase: the website, the iPhone app and the Android app stay
+identical). The app bundles the screens and talks to the same Supabase project.
+
+What has to change in the code (in a `web/` Capacitor project, `ios/` and `android/` folders):
+- Downloads (PO PDF, CSV, printed statements) go through the phone's share sheet (Capacitor Filesystem + Share), because
+  an app's web view cannot "download" a file the way a browser does.
+- Camera and photo picker for invoices keep using the upload queue; the app asks for camera and photo permission.
+- **Push notifications** (the real "alert Himanshu"): Apple Push (APNs) and Firebase for Android; a Supabase function
+  sends a push for new Home items (reminders due, payment limit reached or due, price to decide, PO to issue).
+- Safe-area padding (notch, home bar), app icon and splash screen, sign-in kept on the phone.
+
+Builds: GitHub Actions on a macOS runner builds and signs the iPhone app and uploads it to TestFlight on every merge, so
+no Mac is needed; Android builds on Linux into an .aab for Google Play (or an .apk to install directly).
+
+Needed from Rich Alloys / V-BOG (not code):
+1. **Apple Developer Program** membership (USD 99 a year). In the company's name needs a D-U-N-S number (free, can
+   take 1–2 weeks); an individual account is faster but shows the person's name as the seller.
+2. App name, bundle ID (e.g. com.richalloys.purchase), icon (1024 × 1024 PNG).
+3. An **App Store Connect API key** (Admin creates it in App Store Connect > Users and Access > Integrations) and
+   permission to store it as a GitHub Actions secret, for automatic TestFlight uploads.
+4. How staff get it: **TestFlight** (up to 100 internal testers, no review, each build lasts 90 days; simplest to start)
+   or an **unlisted App Store** listing (review once; a link only staff know). Apple needs a privacy policy URL and a
+   demo login for review.
+5. Android: a **Google Play Console** account (USD 25 once), or install the .apk directly on staff phones.
+
+
 ## 11. Testing
 
 - Database (`tests/run_local.sh`): Ogo figures, mitti exception, stock, cash plan with and without terms, new deal and lot through the app functions, weight-short DN on a new lot, permissions per role (anon, no profile, gate, factory, factory accounts, HO accounts, owner), payment reject/correct/reconcile/freeze, ledger snapshot, admin category change, audit, v1→v2 upgrade. Proven to fail when an expected figure changes.
@@ -452,6 +514,13 @@ Recommended later: serve only `deploy/`, on its own subdomain.
   needs no further decision; no truck price change under an approved DN. Proven to fail without the entry pin. Browser role play (360 px, Hindi): Himanshu books OC and Lal in one
   deal, raises OC on the deal, Sanjay's arrival form flags the invoice rate, Tinu keeps the agreed rate from Home,
   Himanshu accepts the next truck from Home in Hindi; no sideways scrolling.
+- `tests/checks_0014.sql`: Ogo in the lot table (invoice less DNs ₹1,46,82,999.40, balance ₹6,82,999.40; no money for
+  Sanjay); PO numbering after PO/RA/082, issue, re-issue, one use per number, Sanjay cannot; hold 10%/15 days on a
+  ₹14,16,000 lot: limit ₹12,74,400, holding from the crossing payment, alert, noted, over-limit flag, release due with
+  ₹1,40,600, cleared, lot override 80%, supplier-wide limit; TDS split; onboarding steps named when missing, then
+  onboarded, Sanjay cannot; a reminder missed for two months is due for Himanshu only and moves past today when done;
+  production started (500 kg out of stock into production) and closed (yield 94%), once. Browser: PO issued from the
+  deal with the PDF downloaded and "Saved" shown; role play at 360 px in English and Hindi of every new screen.
 - `tests/checks_7a.sql` also checks Tinu's statement arithmetic for every item; `checks_7b.sql` checks that a branch
   delivery is a Recipt Note and job work sits in its own columns, not in PURCHASE.
 - `tests/checks_7b.sql`: a branch delivery (Tinu's delivery note 37, 2,505 kg) on a delivery note with no money, its

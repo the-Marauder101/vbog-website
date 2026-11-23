@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { BUCKET, day, inr, isNum, rpc, sb, today, q, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "./lib";
 import { enqueue, onUploaded, online, remove, retry, useUploads, type Refused, type UpItem } from "./uploads";
-import { DateIn, Btn, Chip, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn, type Tone } from "./ui";
+import { DateIn, Btn, Chip, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn, toast, type Tone } from "./ui";
 
 export const STAGES: { id: string; en: string; hi: string; tone: Tone }[] = [
   { id: "received", en: "Received", hi: "माल आया", tone: "wait" },
@@ -41,9 +41,10 @@ export const DN_LABEL: Record<string, [string, string]> = {
 export function useSave() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const run = useCallback(async (fn: () => Promise<unknown>, after?: () => void) => {
+  // every save shows "Saved" when it worked (msg overrides, e.g. "Deleted"; null shows nothing)
+  const run = useCallback(async (fn: () => Promise<unknown>, after?: () => void, msg?: [string, string] | null) => {
     setBusy(true); setError("");
-    try { await fn(); after?.(); } catch (e) { setError((e as Error).message); }
+    try { await fn(); after?.(); if (msg !== null) toast(msg); } catch (e) { setError((e as Error).message); }
     setBusy(false);
   }, []);
   return { busy, error, run, setError };
@@ -97,21 +98,27 @@ export function PaymentSheet({ supplierId, invoiceId, dealId, existing, onClose,
   const [ref, setRef] = useState(existing?.bank_ref ?? "");
   const [kind, setKind] = useState(existing?.kind ?? (invoiceId ? "provisional" : "advance"));
   const [tds, setTds] = useState("");
-  const [section, setSection] = useState("");
+  const [section, setSection] = useState("194Q");
+  const [gstTds, setGstTds] = useState("");
   const s = useSave();
   const sups = useLoad(() => q(sb.from("suppliers").select("id,name").eq("active", true).order("name")), []);
   const open = useLoad(() => (supplier ? q(sb.from("v_payable").select("invoice_id,invoice_no,lot_no,balance").eq("supplier_id", supplier)) : Promise.resolve([] as Row[])), [supplier]);
+  const holds = useLoad(() => (supplier ? q(sb.from("v_payment_holds").select("*").eq("supplier_id", supplier)) : Promise.resolve([] as Row[])), [supplier]);
+  const lotNo = (open.data ?? []).find((x) => x.invoice_id === invoice)?.lot_no;
+  const hold = (holds.data ?? []).find((h) => h.scope === "supplier" || (invoice && h.ref_no === lotNo));
   const save = () => s.run(async () => {
     if (!supplier) throw new Error(t("Choose the supplier.", "सप्लायर चुनें।"));
     if (!isNum(amount) || Number(amount) <= 0) throw new Error(t("Enter the amount paid.", "भुगतान की रकम डालें।"));
     const row = { supplier_id: supplier, invoice_id: invoice || null, deal_id: invoice ? null : (dealId ?? existing?.deal_id ?? null),
                   amount: Number(amount), paid_on: paidOn, mode, bank_ref: ref.trim() || null, kind };
     if (tds && (!isNum(tds) || Number(tds) <= 0)) throw new Error(t("Check the TDS amount.", "TDS रकम जाँचें।"));
-    if (tds && !invoice) throw new Error(t("TDS needs a bill. Choose the bill.", "TDS के लिए बिल चुनें।"));
+    if (gstTds && (!isNum(gstTds) || Number(gstTds) <= 0)) throw new Error(t("Check the GST TDS amount.", "GST TDS रकम जाँचें।"));
+    if ((tds || gstTds) && !invoice) throw new Error(t("TDS needs a bill. Choose the bill.", "TDS के लिए बिल चुनें।"));
     if (existing) await q(sb.from("payments").update(row).eq("id", existing.id));
     else {
       const p = await q<Row>(sb.from("payments").insert(row).select("id").single());
-      if (tds) await q(sb.from("tds").insert({ invoice_id: invoice, payment_id: p.id, amount: Number(tds), section: section.trim().toUpperCase() || null, deducted_on: paidOn }));
+      if (tds) await q(sb.from("tds").insert({ invoice_id: invoice, payment_id: p.id, amount: Number(tds), kind: "it", section: section.trim().toUpperCase() || null, deducted_on: paidOn }));
+      if (gstTds) await q(sb.from("tds").insert({ invoice_id: invoice, payment_id: p.id, amount: Number(gstTds), kind: "gst", section: "GST", deducted_on: paidOn }));
     }
   }, () => { onSaved(); onClose(); });
   return (
@@ -130,6 +137,7 @@ export function PaymentSheet({ supplierId, invoiceId, dealId, existing, onClose,
                   options={(open.data ?? []).map((x) => ({ value: x.invoice_id, label: `${x.invoice_no} · ${x.lot_no ?? ""} · ${t("balance", "बाकी")} ${inr(x.balance)}` }))} />
         </Field>
       )}
+      {hold && hold.status !== "cleared" && !existing && <HoldHint h={hold} amount={amount} />}
       <div className="grid2">
         <Field label={t("Amount paid", "भुगतान रकम")}><NumIn value={amount} onChange={setAmount} suffix="₹" autoFocus /></Field>
         <Field label={t("Paid on", "भुगतान तारीख")}><DateIn value={paidOn} onChange={setPaidOn} /></Field>
@@ -143,11 +151,29 @@ export function PaymentSheet({ supplierId, invoiceId, dealId, existing, onClose,
       </div>
       {!existing && invoice && (
         <div className="grid2">
-          <Field label={t("TDS deducted from this bill", "इस बिल से काटा TDS")} hint={t("Leave empty if none.", "न हो तो खाली छोड़ें।")}><NumIn value={tds} onChange={setTds} suffix="₹" /></Field>
-          <Field label={t("TDS section (optional)", "TDS सेक्शन (वैकल्पिक)")}><TextIn value={section} onValue={setSection} /></Field>
+          <Field label={t("Income-tax TDS from this bill", "इस बिल से आयकर TDS")} hint={t("Leave empty if none.", "न हो तो खाली छोड़ें।")}><NumIn value={tds} onChange={setTds} suffix="₹" /></Field>
+          <Field label={t("Income-tax TDS section", "आयकर TDS सेक्शन")}><TextIn value={section} onValue={setSection} /></Field>
+          <Field label={t("GST TDS from this bill", "इस बिल से GST TDS")} hint={t("Leave empty if none.", "न हो तो खाली छोड़ें।")}><NumIn value={gstTds} onChange={setGstTds} suffix="₹" /></Field>
         </div>
       )}
     </Sheet>
+  );
+}
+
+// Pay up to the limit, hold the rest (supplier or lot setting)
+export function HoldHint({ h, amount }: { h: Row; amount?: string }) {
+  const t = useT();
+  const over = amount && isNum(amount) && h.status === "paying" ? Number(amount) - Number(h.can_pay_now) : 0;
+  const scope = h.scope === "supplier" ? t("this supplier, all bills", "इस सप्लायर के सभी बिल") : h.ref_no;
+  return (
+    <div className={over > 0.005 || h.status === "holding" || h.over_limit ? "warnbox" : h.status === "release_due" ? "notice" : "notice ok-notice"}>
+      <strong>{t("Pay up to", "भुगतान सीमा")} {100 - Number(h.hold_pct)}%</strong> ({scope}): {inr(h.pay_limit)} · {t("paid", "दिया")} {inr(h.paid)}
+      <p className="small">{h.status === "paying" ? `${t("Can pay now", "अभी दे सकते हैं")} ${inr(h.can_pay_now)}. ${t("Then hold", "फिर रोकें")} ${inr(Number(h.net) - Number(h.pay_limit))} ${t("for", "")} ${h.hold_days ?? 0} ${t("days", "दिन")}.`
+        : h.status === "holding" ? `${t("Limit reached on", "सीमा पहुँची")} ${day(h.reached_on)}. ${t("Hold", "रोकें")} ${inr(h.held)} ${t("until", "तक")} ${day(h.release_on)}.`
+        : `${t("Held amount due since", "रोकी रकम देनी है, तारीख")} ${day(h.release_on)}: ${inr(h.held)}.`}</p>
+      {over > 0.005 && <p className="error small">{t("This goes past the limit by", "यह सीमा से ज़्यादा है:")} {inr(over)}.</p>}
+      {h.over_limit && <p className="error small">{t("Already paid past the limit.", "सीमा से ज़्यादा दिया जा चुका है।")}</p>}
+    </div>
   );
 }
 
