@@ -11,6 +11,7 @@ import Tally from "./screens/Tally";
 import Stock from "./screens/Stock";
 import Admin from "./screens/Admin";
 import Supplier from "./screens/Supplier";
+import Docs from "./screens/Docs";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem("lang") === "hi" ? "hi" : "en"));
@@ -50,6 +51,7 @@ export default function App() {
     { id: "payables", label: T("Payables", "देनदारी"), icon: "₹", show: me.actions.has("money_view") },
     { id: "tally", label: T("Tally", "टैली"), icon: "✓", show: me.actions.has("tally_factory") || me.actions.has("tally_office") || me.actions.has("admin") },
     { id: "stock", label: T("Stock", "स्टॉक"), icon: "◫", show: me.actions.has("production_edit") || me.actions.has("stock_edit") || me.actions.has("admin") },
+    { id: "docs", label: T("Docs", "दस्तावेज़"), icon: "▣", show: me.actions.has("money_view") || me.actions.has("supplier_onboard") || me.actions.has("doc_approve") },
     { id: "admin", label: T("Admin", "एडमिन"), icon: "⚙", show: me.actions.has("admin") },
   ].filter((n) => n.show) : [];
   const [r0, r1, r2] = route;
@@ -63,6 +65,7 @@ export default function App() {
   else if (r0 === "supplier" && r1) page = <Supplier id={r1} key={r1} />;
   else if ((r0 === "payables" || r0 === "cash" || r0 === "money") && allowed("payables")) page = <Payables tab={r0 === "cash" ? "topay" : r1} />;
   else if (r0 === "tally" && allowed("tally")) page = <Tally tab={r1} />;
+  else if (r0 === "docs" && allowed("docs")) page = <Docs tab={r1} />;
   else if (r0 === "stock" && allowed("stock")) page = <Stock openProduction={r1 === "production"} />;
   else if (r0 === "admin" && allowed("admin")) page = <Admin tab={r1} />;
   else page = <Home />;
@@ -74,6 +77,7 @@ export default function App() {
           <a className="brand" href="#/">Rich Alloys<span> · {T("Purchase desk", "खरीद डेस्क")}</span></a>
           {me && <nav className="topnav">{nav.map((n) => <a key={n.id} href={`#/${n.id}`} className={(r0 ?? "") === n.id ? "on" : ""}>{n.label}</a>)}</nav>}
           <div className="top-actions">
+            {allowed("admin") && <a className="link gear" href="#/admin" aria-label={T("Admin", "एडमिन")} title={T("Admin", "एडमिन")}>⚙</a>}
             <button type="button" className="link" onClick={() => setLang(lang === "en" ? "hi" : "en")}>{lang === "en" ? "हिंदी" : "English"}</button>
             {userId && <button type="button" className="link" onClick={() => { sb.auth.signOut(); go(""); }}>{T("Sign out", "साइन आउट")}</button>}
           </div>
@@ -95,7 +99,7 @@ export default function App() {
         </main>
         {me && (
           <nav className="bottomnav" aria-label={T("Main", "मुख्य")}>
-            {nav.map((n) => <a key={n.id} href={`#/${n.id}`} className={(r0 ?? "") === n.id ? "on" : ""}><span aria-hidden="true">{n.icon}</span>{n.label}</a>)}
+            {nav.filter((n) => n.id !== "admin").map((n) => <a key={n.id} href={`#/${n.id}`} className={(r0 ?? "") === n.id ? "on" : ""}><span aria-hidden="true">{n.icon}</span>{n.label}</a>)}
           </nav>
         )}
         <Toaster />

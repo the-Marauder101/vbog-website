@@ -9,6 +9,7 @@ declare n numeric; t text; d date; ok boolean; r record;
   v_sup uuid; v_ogo uuid; v_ogo_inv uuid; v_deal uuid; v_deal2 uuid; v_lot uuid; v_inv uuid; v_rem uuid; v_run uuid; v_scrap numeric;
 begin
   insert into profiles (id, full_name, role) values (facc, 'Tinu', 'factory_accounts'), (own, 'Himanshu', 'owner'), (fac, 'Sanjay', 'factory');
+  update suppliers set onboarded_at = now() where supplier_type = 'domestic';   -- booking needs an onboarded supplier (0015)
   select lot_id, supplier_id, invoice_id into v_ogo, v_sup, v_ogo_inv from v_lots where deal_no = 'RA-082';
   perform set_config('request.jwt.claim.sub', own::text, true);
 
@@ -86,6 +87,7 @@ begin
   select tds_it, tds_gst into r from v_lot_register where lot_id = v_lot; assert r.tds_it = 1200 and r.tds_gst = 240, 'both TDS columns';
 
   -- ---- onboarding ----
+  update suppliers set onboarded_at = null, compliance_override_at = null where id = v_sup;
   select count(*) into n from v_tasks where kind = 'supplier_onboard' and ref_id = v_sup; assert n = 1, 'Ogo not onboarded yet';
   insert into onboarding_steps (code, name, sort) values ('KYC', 'KYC documents', 1), ('VISIT', 'Site visit', 2);
   ok := false; begin perform set_supplier_onboarded(v_sup, true); exception when others then ok := sqlerrm like '%KYC documents, Site visit%'; end;

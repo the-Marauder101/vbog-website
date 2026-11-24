@@ -282,3 +282,14 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .poscard .tbl td, .poscard .tbl th { padding: 4px 4px; font-size: 0.85rem; }
 .checklist { list-style: none; padding: 0; margin: 0 0 8px; }
 .checklist li { padding: 6px 0; border-bottom: 1px solid var(--rule); }
+
+/* docs desk, compliance files, header gear, price choice */
+.linkish { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.row.static .amt { margin: 0 6px; white-space: nowrap; }
+.top-actions .gear { font-size: 1.2rem; text-decoration: none; }
+.filelist { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 4px 0 4px 30px; }
+.upload.small-upload { display: inline-flex; padding: 4px 10px; min-height: 34px; font-size: .85rem; border-style: dashed; }
+.upload.small-upload input { display: none; }
+.seg.wide { display: flex; width: 100%; margin: 6px 0 10px; }
+.seg.wide button { flex: 1; }
+.rate-btn.open { color: var(--bad, #a32020); font-weight: 600; }

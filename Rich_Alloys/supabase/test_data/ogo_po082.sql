@@ -12,9 +12,13 @@ begin
   insert into profiles (id, full_name, role, plant_id) values (v_seed, 'Seed data', 'vbog_admin', v_plant)
   on conflict (id) do update set active = true, role = 'vbog_admin';
   perform set_config('request.jwt.claim.sub', v_seed::text, true);
+  -- booking needs an onboarded or overridden supplier (0015); this historical deal is loaded as an override
+  insert into suppliers (name, gstin, state, compliance_override_at, compliance_override_by, compliance_override_reason)
+  values ('Ogo Enviro Solutions Private Limited', '36AAECO5492P1ZO', 'Telangana', '2026-10-22', v_seed, 'Historical deal loaded from documents (test data)')
+  returning id into v_sup;
 
   v_deal := create_deal(jsonb_build_object(
-    'supplier_name','Ogo Enviro Solutions Private Limited','supplier_gstin','36AAECO5492P1ZO','supplier_state','Telangana',
+    'supplier_id', v_sup,
     'deal_date','2026-10-22','expected_date','2026-10-25','po_no','PO/RA/082/26-27','po_date','2026-10-22','gst_rate',18,
     'lines', jsonb_build_array(
       jsonb_build_object('grade','OC','qty_kg',5000,'rate_per_kg',1234),

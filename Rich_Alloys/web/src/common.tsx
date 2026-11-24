@@ -243,7 +243,7 @@ export function DealDocs({ dealId, dealNo, hasReturn }: { dealId: string; dealNo
   if (!data) return error ? <Err error={error} /> : <Loading />;
   const [types, docs, deal] = data;
   const stype = deal?.suppliers?.supplier_type ?? "domestic";   // PRD 7b: the checklist follows the supplier type
-  const shown = types.filter((x) => (x.side !== "return" || hasReturn) && (!x.supplier_types || x.supplier_types.includes(stype)));
+  const shown = types.filter((x) => x.side !== "compliance" && (x.side !== "return" || hasReturn) && (!x.supplier_types || x.supplier_types.includes(stype)));
   const stateOf = (code: string): DocState =>
     docs.filter((d) => d.doc_type === code).reduce<DocState>((b, d) => (rank[d.status as DocState] > rank[b] ? d.status : b), "missing");
   const done = shown.filter((x) => stateOf(x.code) === "approved").length;
@@ -426,8 +426,9 @@ export function RateCell({ rate, label, editable, save, onSaved }: { rate: unkno
   const t = useT();
   const [v, setV] = useState<string | null>(null);
   const s = useSave();
-  if (!editable) return <>{inr(rate)}/kg</>;
-  if (v === null) return <button type="button" className="rate-btn" aria-label={`${t("Change rate", "रेट बदलें")} ${label}`} onClick={() => setV(String(rate ?? ""))}>{inr(rate)}/kg ✎</button>;
+  const shown = rate == null ? t("Open", "खुला") : `${inr(rate)}/kg`;
+  if (!editable) return <>{shown}</>;
+  if (v === null) return <button type="button" className={`rate-btn${rate == null ? " open" : ""}`} aria-label={`${rate == null ? t("Fix price", "रेट तय करें") : t("Change rate", "रेट बदलें")} ${label}`} onClick={() => setV(String(rate ?? ""))}>{shown} ✎</button>;
   return (
     <span className="rate-edit">
       <NumIn value={v} onChange={setV} autoFocus />
@@ -442,7 +443,7 @@ export function RateCell({ rate, label, editable, save, onSaved }: { rate: unkno
 const SOURCE: Record<string, [string, string]> = {
   booked: ["booked", "बुक किया"], changed: ["deal changed", "सौदा बदला"],
   accepted_invoice: ["invoice rate accepted", "बिल का रेट माना"], confirmed_unbooked: ["confirmed (unbooked truck)", "पक्का किया (बिना बुकिंग)"],
-  truck_changed: ["truck price changed", "ट्रक का रेट बदला"],
+  truck_changed: ["truck price changed", "ट्रक का रेट बदला"], price_fixed: ["open price fixed", "खुला रेट तय हुआ"],
 };
 // rows from deal_rate_history (with profiles(full_name) and lots(lot_no))
 export function RateHistory({ rows, names, open }: { rows: Row[]; names: Record<string, string>; open?: boolean }) {

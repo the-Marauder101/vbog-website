@@ -12,6 +12,7 @@ begin
   insert into profiles (id, full_name, role) values
     (gate,'Test gate','gate'), (fac,'Test factory','factory'), (facc,'Test factory accounts','factory_accounts'),
     (hoac,'Test HO accounts','ho_accounts'), (own,'Test owner','owner');
+  update suppliers set onboarded_at = now() where supplier_type = 'domestic';   -- booking needs an onboarded supplier (0015)
   perform set_config('request.jwt.claim.sub', own::text, true);   -- read the numbers as the owner
   select lot_id, deal_id, supplier_id, invoice_id into v_lot, v_deal, v_sup, v_inv from v_lots where deal_no = 'RA-082';
 

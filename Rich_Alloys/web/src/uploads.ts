@@ -54,9 +54,10 @@ async function putFile(path: string, blob: Blob, type: string, onProgress: (p: n
 }
 
 /** Write the document row for a stored file. A row already written for this path counts as done. */
-async function recordDocument(d: { dealId: string; docType: string; path: string; userId: string; lotId?: string | null }) {
-  const { error } = await sb.from("documents")
-    .insert({ deal_id: d.dealId, lot_id: d.lotId ?? null, doc_type: d.docType, storage_path: d.path, uploaded_by: d.userId });
+async function recordDocument(d: { dealId: string; docType: string; path: string; userId: string; lotId?: string | null; supplierId?: string | null; step?: string | null }) {
+  const { error } = await sb.from("documents").insert(d.supplierId
+    ? { supplier_id: d.supplierId, onboarding_step: d.step ?? null, doc_type: d.docType, storage_path: d.path, uploaded_by: d.userId }
+    : { deal_id: d.dealId, lot_id: d.lotId ?? null, doc_type: d.docType, storage_path: d.path, uploaded_by: d.userId });
   if (!error || error.code === "23505") return;      // 23505: this path is already recorded
   throw new UploadError(error.message, !error.code); // no code = never reached the database
 }
@@ -68,6 +69,7 @@ const BACKOFF = [3, 10, 30, 60];               // seconds between automatic retr
 export type UpState = "uploading" | "waiting" | "failed";
 export type UpItem = {
   id: string; userId: string; dealId: string; dealNo: string; docType: string; lotId?: string | null;
+  supplierId?: string | null; step?: string | null;    // a supplier's compliance file (no deal)
   name: string; type: string; size: number; path: string; blob: Blob; addedAt: number;
   stage: "file" | "record";           // file = not yet in storage; record = stored, row not yet written
   state: UpState; progress: number; error?: string; attempts: number; retryAt?: number;
@@ -142,7 +144,13 @@ export function refusal(f: File): Refused["reason"] | null {
   return null;
 }
 
-export async function enqueue(deal: { id: string; deal_no: string }, docType: string, files: File[], uid: string, lotId?: string | null): Promise<Refused[]> {
+/** A supplier's compliance file (onboarding step, or general when step is empty). Same queue, same guarantees. */
+export function enqueueSupplier(supplier: { id: string; name: string }, step: string | null, files: File[], uid: string) {
+  return enqueue({ id: "", deal_no: supplier.name }, "COMPLIANCE", files, uid, null, { supplierId: supplier.id, step });
+}
+
+export async function enqueue(deal: { id: string; deal_no: string }, docType: string, files: File[], uid: string, lotId?: string | null,
+                              owner?: { supplierId: string; step: string | null }): Promise<Refused[]> {
   const refused: Refused[] = [];
   for (const f0 of files) {
     const f = await shrinkImage(f0);
@@ -153,7 +161,9 @@ export async function enqueue(deal: { id: string; deal_no: string }, docType: st
     const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const item: UpItem = {
       id, userId: uid, dealId: deal.id, dealNo: deal.deal_no, docType, lotId: lotId ?? null, name: f.name, type, size: f.size,
-      path: `${deal.deal_no}/${docType}/${Date.now()}-${safe}`, blob: f, addedAt: Date.now(),
+      supplierId: owner?.supplierId ?? null, step: owner?.step ?? null,
+      path: owner ? `suppliers/${owner.supplierId}/${owner.step ?? "general"}/${Date.now()}-${safe}` : `${deal.deal_no}/${docType}/${Date.now()}-${safe}`,
+      blob: f, addedAt: Date.now(),
       stage: "file", state: "waiting", progress: 0, attempts: 0,
     };
     items = [...items, item];
@@ -238,7 +248,7 @@ async function attempt(i: UpItem) {
       patch(i.id, { stage: "record", progress: 1 });
       await save(get(i.id)!);
     }
-    await recordDocument({ dealId: i.dealId, docType: i.docType, path: i.path, userId: i.userId, lotId: i.lotId });
+    await recordDocument({ dealId: i.dealId, docType: i.docType, path: i.path, userId: i.userId, lotId: i.lotId, supplierId: i.supplierId, step: i.step });
     items = items.filter((x) => x.id !== i.id);
     emit();
     await forget(i.id);

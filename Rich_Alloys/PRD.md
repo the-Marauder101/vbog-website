@@ -88,6 +88,12 @@ the factory Tally, the office Tally, or both.
 | 36 | A **PO is issued after the deal is booked**, never typed at booking. Numbered in the PO/RA/NNN/YY-YY series, downloadable as a PDF (basic design until the final one is given); re-issue when rates change | Depesh, 23 Nov |
 | 37 | One table of every lot: supplier, weights, rates, each debit note, GST, income-tax TDS and GST TDS, paid and pending. TDS is recorded as income tax or GST | Depesh, 23 Nov |
 | 38 | Production can be started (material used) and closed later (output weighed). Stock position: in the factory, in production, booked and still to come; on Himanshu's Home and the Stock page | Depesh, 23 Nov |
+| 39 | **All rates in the portal exclude GST**; GST is always added on top (labels say so) | Depesh, 24 Nov |
+| 40 | **Docs tab** for Himanshu: vendor compliance, every invoice's documents, every debit note; one tap downloads a complete .zip per invoice, per supplier or per month of debit notes (files, PO, DNs as PDFs, index). Admin moves to ⚙ in the top bar | Depesh, 24 Nov |
+| 41 | **Vendor compliance gate**: a deal can be booked only with an onboarded supplier, or one Himanshu has overridden (long-standing but not fully compliant) after typing his password again; compliance files are kept on the supplier, per onboarding step | Depesh, 24 Nov |
+| 42 | **Open pricing**: a deal is booked at a fixed price or open (to be fixed later, e.g. against LME), with a basis and "fix within X days"; each truck gets a fix-by date (changeable per truck) and an alert; debit notes wait until its price is fixed | Depesh, 24 Nov |
+| 43 | **One truck can carry material from several deals** of the same supplier (each grade names its deal); deals and lots show each other | Depesh, 24 Nov |
+| 44 | Supplier document checklist: "Vahan vehicle check" becomes **RC of vehicle**; **FASTag history** added (required); QA/QC report (factory) and supplier credit note (optional) added | Depesh, 24 Nov |
 | 28 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 3a. Source of truth
@@ -215,6 +221,38 @@ attachments, rejects; rate cuts; returns) → debit notes → payment.
 - **Production**: leave "Made" empty to save it as in production; "Production done: enter what was made" closes it.
   Output enters stock on the closing date. **Stock position** (`v_stock_position`): in factory (stock today), in
   production (used in runs not closed), booked (deal kg still to come), total.
+
+### 5d. Docs, vendor compliance, open price, several deals per truck (decisions 39–44, built 24 Nov, `0015_compliance_docs_open_price.sql`)
+
+- **Docs** (bottom bar; `money_view`, `supplier_onboard` or `doc_approve`). Three tabs:
+  - *Vendor compliance*: every supplier with Onboarded / Overridden / Not onboarded, steps done, compliance files, files in
+    all, and "Download all" (compliance files, each deal's files and PO, each invoice's files and DNs, index.csv).
+  - *Invoices*: every lot with its invoice, deals, number of files, DNs and QA/QC; "Download" gives that invoice's pack
+    (supplier documents, our weighbridge/sorting/QA-QC, PO, DN PDFs, index.csv). A truck's pack includes its deals' files.
+  - *Debit notes*: "To raise" (calculated, not approved) and "Raised" by month, each with its PDF, "credit note
+    received" when the supplier's CN is uploaded on the lot, and "Download all for the month". DN PDFs use a basic layout
+    (CGST+SGST for Maharashtra suppliers, else IGST) until Rich Alloys' DN/CN formats arrive.
+  - Packages are built on the phone (`web/src/pack.ts`, JSZip and jsPDF loaded only then). Files missing in storage are
+    listed in index.csv instead of failing the pack.
+- **Compliance** (supplier page): each onboarding step has its files (photo/PDF through the upload queue; stored under
+  `suppliers/<id>/<step>/`, `documents.supplier_id`), plus "Other compliance documents". `create_deal` refuses a domestic
+  supplier that is neither onboarded nor overridden (app users; data loads are not checked). Himanshu
+  (`compliance_override`, owner only by default) can override from the supplier page or straight from New deal: reason +
+  his password; the app signs him in again and the database accepts the override only if the token shows a password
+  sign-in in the last 5 minutes (`signed_in_recently()`). Override and its removal are logged.
+- **Open price**: New deal has "Fixed price / Open (LME, fix later)". Open: rates may be left empty, price basis text and
+  "fix within N days" (default 7). A truck on an open line gets no price (`lot_lines.agreed_rate` empty) and
+  `lots.price_fix_by` = arrival + N. Lot shows "Price open · fix by …" (Himanshu can change the date) and Home lists
+  "Open prices to fix" from that date (at once if no date). Himanshu fixes a truck on the lot (✎), or the whole deal on
+  the deal page (every open truck takes it). Tinu can set the deal rate but cannot fix trucks already in. After fixing,
+  invoice-rate differences are handled as in 5b. Debit notes and the lot's "DN to approve" wait while the price is open.
+  The PO shows "Open *" with the basis.
+- **Several deals per truck**: arrival form "+ Material from another deal on this truck" adds the grades of another open
+  deal of the same supplier (one grade once per truck). `lot_lines.deal_id` names each line's deal; prices, received kg,
+  still-to-come and stock "booked" follow it; the lot header lists every deal and the deal page lists every truck that
+  carried its material (`v_lots.deal_ids`).
+- **D-0001** was never missing: the Ogo deal was created as D-0001 and renamed to RA-082 (Rich Alloys' own number) when
+  its documents were loaded.
 
 Lot stages: Received → Sorting → DN to approve → Tally entry pending → Payment pending → Settled.
 
@@ -386,6 +424,8 @@ It is the summary his stock and production sheets roll up into, and every month 
 | `stock_moves.party`, `.doc_no`, `.transfer_id`; kinds for branch, job work, import receipt, sale, credit note, item-to-item | Stock movements beyond lots (7a) |
 | `tally_marks.amount_at_mark`, `documents.lot_id` | Amount when ticked (to detect later changes); invoice photo per lot |
 | `deal_rate_history`, `price_decisions`, `lot_lines.agreed_rate` | Every rate change on a deal (old, new, why, lot, note, who, when); each invoice-rate decision (accept or keep, who, when); the rate a settled truck is pinned to |
+| `documents.supplier_id, onboarding_step`; `suppliers.compliance_override_at/by/reason` | Compliance files on the supplier; override |
+| `deal_lines.rate_per_kg` empty = open; `deals.price_basis, price_fix_days`; `lots.price_fix_by`; `lot_lines.deal_id` | Open pricing; several deals per truck |
 | `payment_hold_acks`; `suppliers/deals/lots.hold_pct, hold_days`, `suppliers.hold_scope` | Payment hold settings and "noted" alerts |
 | `onboarding_steps`, `supplier_onboarding`, `suppliers.onboarded_at/by`; `reminders`, `reminder_log` | Onboarding checklist and status; recurring reminders and when each was done |
 | `deals.po_issued_at/by, po_revision`; `tds.kind` (it, gst); `production_runs.status, closed_on` | PO step; TDS type; production open or closed |
@@ -394,11 +434,11 @@ It is the summary his stock and production sheets roll up into, and every month 
 
 Views: `v_lot_lines`, `v_dn_calc(_lines)`, `v_sorting_exceptions`, `v_payable`, `v_tally_missing`, `v_doc_gaps`,
 `v_lots` (stage), `v_deals_incoming`, `v_ledger_lines`, `v_supplier_balance`, `v_cash_plan`, `v_gst_month`,
-`v_stock_moves` (opening starts an item), `v_production_runs` (yield), `v_job_work` (sent vs back), `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_price_diffs` (invoice rate vs deal rate, open or decided), `v_payment_holds`, `v_lot_register`, `v_stock_position`, `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
+`v_stock_moves` (opening starts an item), `v_production_runs` (yield), `v_job_work` (sent vs back), `v_tally_dn_export`, `v_gstr2b_recon`, `v_tally_changes`, `v_tally_queue`, `v_invoice_register`, `v_price_diffs` (invoice rate vs deal rate, open or decided), `v_payment_holds`, `v_lot_register`, `v_stock_position`, `v_doc_index` (every file with supplier, deal, lot, invoice, step), `v_tasks` (each person's to-do list). Function `stock_summary(from, to)`.
 
 Actions (functions): `create_deal`, `create_lot`, `close_lot`, `reopen_lot`, `approve_dn`, `cancel_note`,
 `set_note_tally_no`, `mark_tally`, `unmark_tally`, `reconcile_payment`, `reject_payment`, `confirm_ledger`,
-`clear_tally_change`, `ack_payment_hold`, `set_onboarding_step`, `set_supplier_onboarded`, `complete_reminder`, `suggest_po_no`, `issue_po`, `close_production`, `set_deal_rate`, `decide_price`, `confirm_deal_rate`, `create_unbooked_lot`, `set_invoice_2b`, `import_gstr2b`, `save_production`, `verify_document`, `approve_document`, `reject_document`.
+`clear_tally_change`, `override_compliance`, `clear_compliance_override`, `supplier_compliance`, `ack_payment_hold`, `set_onboarding_step`, `set_supplier_onboarded`, `complete_reminder`, `suggest_po_no`, `issue_po`, `close_production`, `set_deal_rate`, `decide_price`, `confirm_deal_rate`, `create_unbooked_lot`, `set_invoice_2b`, `import_gstr2b`, `save_production`, `verify_document`, `approve_document`, `reject_document`.
 
 Staff management (`0007_staff_and_uploads.sql`, `supabase/functions/staff-admin`): the edge function is the only code
 holding the service key. It checks the caller's role has `staff_manage` (owner and vbog_admin by default), then creates
@@ -528,6 +568,17 @@ Needed from Rich Alloys / V-BOG (not code):
   onboarded, Sanjay cannot; a reminder missed for two months is due for Himanshu only and moves past today when done;
   production started (500 kg out of stock into production) and closed (yield 94%), once. Browser: PO issued from the
   deal with the PDF downloaded and "Saved" shown; role play at 360 px in English and Hindi of every new screen.
+- `tests/checks_0015.sql`: RC/FASTag/QC/CN document types, compliance files not counted as deal gaps; booking refused
+  for a supplier not onboarded (also one added while booking); Tinu cannot override; Himanshu's override refused with a
+  password typed an hour ago, refused without a reason, accepted with a fresh sign-in, logged with his name; removal
+  blocks again; a compliance file indexed under the supplier and step; open price deal (no rate recorded), a missing rate
+  without "open" refused; open truck: no price, fix-by arrival + 10, no comparison, DN refused, Tinu's deal rate leaves
+  it open, on Himanshu's list when due, fixed at ₹1,190 (logged), invoice ₹1,200 debited ₹10/kg, weight short at ₹1,190;
+  fixing an open deal fixes both its trucks; one truck with OC from deal A and Lal from deal B at B's rate, received kg
+  per deal, deal B lists the truck, another supplier's deal refused, a grade twice refused. Browser role play: new
+  supplier blocked then overridden with password while booking an open-price deal, Tinu blocked without the override
+  option, one truck with two deals, Himanshu fixes the open price on the lot, a GST certificate uploaded on a step,
+  supplier / invoice / month-of-DN zips downloaded and listed.
 - `tests/checks_7a.sql` also checks Tinu's statement arithmetic for every item; `checks_7b.sql` checks that a branch
   delivery is a Recipt Note and job work sits in its own columns, not in PURCHASE.
 - `tests/checks_7b.sql`: a branch delivery (Tinu's delivery note 37, 2,505 kg) on a delivery note with no money, its

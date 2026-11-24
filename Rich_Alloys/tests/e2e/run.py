@@ -20,7 +20,7 @@ with sync_playwright() as pw:
     c, p = ctx(b); login(p, "tinu@t"); step("tinu signed in")
     p.screenshot(path="01_tinu_home.png", full_page=True)
     p.goto(URL + "#/lots/new"); s = sheet(p)
-    s.get_by_label("Supplier").select_option(label="Ogo Enviro Solutions Private Limited · not onboarded")
+    s.get_by_label("Supplier").select_option(label="Ogo Enviro Solutions Private Limited")
     s.get_by_label("Grade").select_option(label="OC")
     s.get_by_label("Quantity").fill("2000"); s.get_by_label(re.compile(r"^Rate")).fill("1200")
     s.get_by_role("button", name=re.compile("Payment terms for this deal")).click()

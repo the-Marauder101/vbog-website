@@ -16,5 +16,5 @@ Rules:
 - Only deploy/ should be public, but today GitHub Pages publishes the whole V-BOG website repo, so this folder is public
   too (PRD decision 28). Never commit client spreadsheets, invoices or photos; keep them in Project files.
 - Done: PRD 7a, 7b, 7c, 5a (unbooked trucks, late bookings), 5b (rate history, invoice rate decisions) and 5c (holds,
-  onboarding, reminders, PO, lot table, stock position). Next: onboarding steps, DN/CN and PO designs from Depesh, the
+  onboarding, reminders, PO, lot table, stock position) and 5d (Docs tab, compliance gate, open price, multi-deal trucks). Next: onboarding steps, DN/CN and PO designs from Depesh, the
   lot dashboard, the iPhone and Android apps (PRD 10a), answers to PRD section 13, then the parallel run.
