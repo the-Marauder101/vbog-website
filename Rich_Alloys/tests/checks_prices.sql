@@ -8,6 +8,7 @@ declare n numeric; t text; ok boolean; r record;
   v_dom uuid; v_deal uuid; v_lot1 uuid; v_lot2 uuid; v_lot3 uuid; v_lot4 uuid; v_inv uuid;
 begin
   insert into profiles (id, full_name, role) values (facc, 'Tinu', 'factory_accounts'), (own, 'Himanshu', 'owner'), (fac, 'Sanjay', 'factory');
+  update suppliers set onboarded_at = now() where supplier_type = 'domestic';   -- booking needs an onboarded supplier (0015)
   select supplier_id into v_dom from v_lots where deal_no = 'RA-082';
   perform set_config('request.jwt.claim.sub', own::text, true);
   select count(*) into n from v_price_diffs where deal_no = 'RA-082'; assert n = 0, 'Ogo was invoiced at the agreed rates';

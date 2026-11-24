@@ -7,6 +7,7 @@ import { canPrompt, isInstalled, isIos, onInstallChange, promptInstall } from ".
 const KINDS: Record<string, { en: string; hi: string; to: (r: Row) => string }> = {
   hold_release: { en: "Held payments now due: pay the balance", hi: "रोकी रकम अब देनी है", to: (r) => (r.ref_type === "lot" ? `lot/${r.ref_id}/pay` : `supplier/${r.ref_id}`) },
   hold_reached: { en: "Payment limit reached: hold the rest", hi: "भुगतान सीमा पूरी: बाकी रोकें", to: (r) => (r.ref_type === "lot" ? `lot/${r.ref_id}/pay` : `supplier/${r.ref_id}`) },
+  price_to_fix: { en: "Open prices to fix", hi: "खुले रेट तय करने हैं", to: (r) => `lot/${r.ref_id}` },
   po_missing: { en: "Booked: issue the PO", hi: "बुक हुआ: PO जारी करें", to: (r) => `deal/${r.ref_id}` },
   supplier_onboard: { en: "Suppliers not onboarded", hi: "सप्लायर ऑनबोर्ड नहीं", to: (r) => `supplier/${r.ref_id}` },
   rate_confirm: { en: "Trucks that came without a booking: confirm the rate", hi: "बिना बुकिंग आए ट्रक: रेट पक्का करें", to: (r) => `deal/${r.ref_id}` },

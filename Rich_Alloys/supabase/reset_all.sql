@@ -19,7 +19,7 @@ do $$ declare r record; begin
              'set_invoice_2b','save_production','verify_document','approve_document','reject_document','doc_norm','import_gstr2b',
              'transfer_stock','create_receipt','doc_kind_for','create_unbooked_lot','confirm_deal_rate',
              'log_rate_change','apply_deal_rate','set_deal_rate','decide_price',
-             'pin_truck_price','apply_truck_price','set_lot_rate','ack_payment_hold','set_onboarding_step','set_supplier_onboarded',
+             'pin_truck_price','apply_truck_price','set_lot_rate','supplier_compliance','signed_in_recently','override_compliance','clear_compliance_override','ack_payment_hold','set_onboarding_step','set_supplier_onboarded',
              'next_due','po_on_insert','complete_reminder','suggest_po_no','issue_po','close_production') loop
     execute format('drop function if exists %s cascade', r.f);
   end loop;

@@ -4,7 +4,7 @@ const SECRET = "local-test-secret-local-test-secret-123456";
 const USERS = { "owner@t": "00000000-0000-0000-0000-0000000000a1", "tinu@t": "00000000-0000-0000-0000-0000000000a2",
   "niti@t": "00000000-0000-0000-0000-0000000000a3", "gate@t": "00000000-0000-0000-0000-0000000000a4", "sanjay@t": "00000000-0000-0000-0000-0000000000a5" };
 const b64 = (o) => Buffer.from(typeof o === "string" ? o : JSON.stringify(o)).toString("base64url");
-const jwt = (sub, email) => { const h = b64({ alg: "HS256", typ: "JWT" }), p = b64({ sub, email, role: "authenticated", aud: "authenticated", exp: Math.floor(Date.now()/1000) + 36000 });
+const jwt = (sub, email) => { const h = b64({ alg: "HS256", typ: "JWT" }), p = b64({ sub, email, role: "authenticated", aud: "authenticated", exp: Math.floor(Date.now()/1000) + 36000, amr: [{ method: "password", timestamp: Math.floor(Date.now()/1000) }] });
   return `${h}.${p}.${crypto.createHmac("sha256", SECRET).update(`${h}.${p}`).digest("base64url")}`; };
 const files = new Map();
 const DIST = process.argv[2];
@@ -23,6 +23,9 @@ http.createServer(async (req, res) => {
     res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify({ signedURL: `/object/get/${k}` })); }
   if (u.pathname.startsWith("/storage/v1/object/get/")) { const f = files.get(u.pathname.replace("/storage/v1/object/get/", ""));
     res.writeHead(f ? 200 : 404, { "content-type": f?.type ?? "text/plain" }); return res.end(f?.data ?? "missing"); }
+  if (req.method === "GET" && u.pathname.startsWith("/storage/v1/object/")) {   // download (authenticated or plain path)
+    const f = files.get(u.pathname.replace("/storage/v1/object/", "").replace(/^authenticated\//, ""));
+    res.writeHead(f ? 200 : 404, { "content-type": f?.type ?? "application/json" }); return res.end(f?.data ?? JSON.stringify({ error: "not_found", message: "Object not found" })); }
   if (u.pathname.startsWith("/storage/v1/object/")) { const k = u.pathname.replace("/storage/v1/object/", "");
     files.set(k, { data: await body(req), type: req.headers["content-type"] }); res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify({ Key: k })); }
   if (u.pathname.startsWith("/rest/v1/")) {

@@ -7,6 +7,7 @@ declare n numeric; t text; ok boolean; r record;
   v_lot uuid; v_deal uuid; v_inv uuid; v_dom uuid; v_branch uuid; v_late uuid;
 begin
   insert into profiles (id, full_name, role) values (facc, 'Test factory accounts', 'factory_accounts'), (own, 'Test owner', 'owner');
+  update suppliers set onboarded_at = now() where supplier_type = 'domestic';   -- booking needs an onboarded supplier (0015)
   select supplier_id into v_dom from v_lots where deal_no = 'RA-082';
   insert into suppliers (name, supplier_type) values ('Test branch', 'branch') returning id into v_branch;
 

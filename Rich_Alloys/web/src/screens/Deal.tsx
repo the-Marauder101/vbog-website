@@ -14,7 +14,7 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
   const { data, error, reload } = useLoad(() => Promise.all([
     q<Row>(sb.from("deals").select("*, suppliers(*)").eq("id", id).single()),
     q(sb.from("deal_lines").select("*, grades(name, name_hi)").eq("deal_id", id)),
-    q(sb.from("v_lots").select("*").eq("deal_id", id).order("received_on")),
+    q(sb.from("v_lots").select("*").contains("deal_ids", [id]).order("received_on")),
     q(sb.from("v_deals_incoming").select("*").eq("deal_id", id)),
     q(sb.from("deal_rate_history").select("*, profiles(full_name), lots(lot_no)").eq("deal_id", id).order("changed_at", { ascending: false })),
   ]), [id]);
@@ -65,10 +65,13 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
 
       <Section title={t("What was agreed", "क्या तय हुआ")}>
         <table className="tbl">
-          <thead><tr><th>{t("Grade", "ग्रेड")}</th><th className="n">{t("Quantity", "मात्रा")}</th><th className="n">{t("Rate", "रेट")}</th></tr></thead>
+          <thead><tr><th>{t("Grade", "ग्रेड")}</th><th className="n">{t("Quantity", "मात्रा")}</th><th className="n">{t("Rate excl. GST", "रेट (GST अलग)")}</th></tr></thead>
           <tbody>{lines.map((l) => <tr key={l.id}><td>{nm(lang, l.grades) || l.grade}</td><td className="n">{kg(l.qty_kg)}</td>
             <td className="n"><RateCell rate={l.rate_per_kg} label={l.grade} editable={can("deal_edit") && !deal.cancelled} save={(v) => rpc("set_deal_rate", { p_deal: id, p_grade: l.grade, p_rate: v })} onSaved={reload} /></td></tr>)}</tbody>
         </table>
+        {lines.some((l) => l.rate_per_kg == null) && (
+          <p className="notice small"><strong>{t("Open price", "खुला रेट")}</strong>{deal.price_basis ? `: ${deal.price_basis}` : ""}{deal.price_fix_days != null ? ` · ${t("fix within", "तय करें")} ${deal.price_fix_days} ${t("days of each truck", "दिन में (हर ट्रक के बाद)")}` : ""}.
+            {" "}{t("Each truck's price is fixed on the lot by Himanshu; fixing it here fixes every open truck too.", "हर ट्रक का रेट हिमांशु लॉट पर तय करते हैं; यहाँ तय करने से सभी खुले ट्रक भी तय हो जाते हैं।")}</p>)}
         {can("deal_edit") && !deal.cancelled && <p className="muted small">{t("Tap a rate to change it for trucks still to come. A truck's price is fixed when it enters the factory; after that only Himanshu changes it, on the lot.", "आगे आने वाले ट्रकों का रेट बदलने के लिए टैप करें। ट्रक फ़ैक्टरी में आते ही उसका रेट तय हो जाता है; उसके बाद सिर्फ़ हिमांशु लॉट पर बदल सकते हैं।")}</p>}
         {rateHistory.length > 1 && <RateHistory rows={rateHistory} names={Object.fromEntries(lines.map((l) => [l.grade, nm(lang, l.grades) || l.grade]))} />}
         <KV rows={[
@@ -95,7 +98,7 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
         {lots.length === 0 ? <Empty>{t("No material received yet.", "अभी कोई माल नहीं आया।")}</Empty> : (
           <ul className="rows">{lots.map((l) => (
             <li key={l.lot_id}><button type="button" className="row" onClick={() => go(`lot/${l.lot_id}`)}>
-              <span className="row-main"><strong>{l.lot_no}</strong><span className="muted small">{day(l.received_on)} · {l.invoice_no}</span></span>
+              <span className="row-main"><strong>{l.lot_no}</strong><span className="muted small">{day(l.received_on)} · {l.invoice_no}{l.deal_ids?.length > 1 ? ` · ${t("same truck as", "इसी ट्रक में")} ${l.deal_nos}` : ""}{l.price_open ? ` · ${t("price open", "रेट खुला")}` : ""}</span></span>
               <StageChip stage={l.stage} /></button></li>))}
           </ul>)}
       </Section>
@@ -185,7 +188,8 @@ function PoBlock({ deal, lines, history, reload }: { deal: Row; lines: Row[]; hi
     </div>);
 }
 
-type GL = { grade: string; slipGross: string; slipBags: string; billed: string; rate: string; gross: string; bags: string; bagKg: string };
+type GL = { grade: string; slipGross: string; slipBags: string; billed: string; rate: string; gross: string; bags: string; bagKg: string;
+             dealId: string; dealNo: string; agreed: number | null };
 function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row[]; onClose: () => void; onSaved: (lot: string) => void }) {
   const t = useT(); const lang = useLang();
   const grades = useLoad(() => q(sb.from("grades").select("*").eq("active", true).order("sort")), []);
@@ -198,7 +202,13 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
   const [photo, setPhoto] = useState<File | null>(null);
   const me = useMe();
   // The invoice rate is typed from the invoice, never pre-filled: a pre-filled agreed rate would hide a difference.
-  const [gl, setGl] = useState<GL[]>(lines.map((l) => ({ grade: l.grade, slipGross: "", slipBags: "", billed: "", rate: "", gross: "", bags: "", bagKg: "" })));
+  const blank = (l: Row, d: Row): GL => ({ grade: l.grade, slipGross: "", slipBags: "", billed: "", rate: "", gross: "", bags: "", bagKg: "",
+                                         dealId: d.id, dealNo: d.deal_no, agreed: l.rate_per_kg == null ? null : Number(l.rate_per_kg) });
+  const [gl, setGl] = useState<GL[]>(lines.map((l) => blank(l, deal)));
+  // the same truck can carry material booked on another open deal of this supplier
+  const others = useLoad(() => q(sb.from("deals").select("id, deal_no, deal_lines(grade, rate_per_kg)").eq("supplier_id", deal.supplier_id)
+    .eq("cancelled", false).eq("receiving_complete", false).neq("id", deal.id).order("deal_date")), [deal.id]);
+  const [pickDeal, setPickDeal] = useState(false);
   const s = useSave();
   const set = (i: number, k: keyof GL, v: string) => setGl(gl.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   const num = (v: string) => (isNum(v) ? Number(v) : 0);
@@ -219,7 +229,7 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
     const id = await rpc<string>("create_lot", { p: {
       deal_id: deal.id, received_on: rec, vehicle_no: veh, invoice_no: invNo, invoice_date: invDate,
       total: printed || null, completes_deal: complete,
-      lines: used.map((x) => ({ grade: x.grade, billed_net_kg: x.billed, billed_rate: x.rate, slip_gross_kg: x.slipGross, slip_bag_kg: x.slipBags,
+      lines: used.map((x) => ({ grade: x.grade, deal_id: x.dealId, billed_net_kg: x.billed, billed_rate: x.rate, slip_gross_kg: x.slipGross, slip_bag_kg: x.slipBags,
                                 factory_gross_kg: x.gross, bag_count: x.bags, factory_bag_kg: x.bagKg || "0" })) } });
     // Through the upload queue: saved on the phone, retried until it is up, never dropped silently.
     if (photo) await enqueue({ id: deal.id, deal_no: deal.deal_no }, "TAX_INVOICE", [photo], me.id, id);
@@ -243,17 +253,18 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
         const fNet = num(x.gross) - num(x.bagKg); const diff = num(x.billed) - fNet; const ready = isNum(x.billed) && isNum(x.gross);
         return (
           <div className="card grade-card" key={i}>
-            <h3>{gName(x.grade)}</h3>
+            <h3>{gName(x.grade)}{x.dealId !== deal.id ? <span className="muted small"> · {x.dealNo}</span> : null}</h3>
             <p className="label-row">{t("As per supplier (packing slip and invoice)", "सप्लायर के अनुसार (पैकिंग स्लिप और बिल)")}</p>
             <div className="grid3">
               <Field label={t("Slip gross", "स्लिप कुल")}><NumIn value={x.slipGross} onChange={(v) => set(i, "slipGross", v)} suffix="kg" /></Field>
               <Field label={t("Slip bags", "स्लिप बोरी")}><NumIn value={x.slipBags} onChange={(v) => set(i, "slipBags", v)} suffix="kg" /></Field>
               <Field label={t("Billed net", "बिल नेट")}><NumIn value={x.billed} onChange={(v) => set(i, "billed", v)} suffix="kg" /></Field>
-              <Field label={t("Rate on invoice", "बिल पर रेट")} hint={(() => {
-                const agreed = Number(lines.find((l) => l.grade === x.grade)?.rate_per_kg ?? 0);
-                if (!isNum(x.rate) || !agreed || Number(x.rate) === agreed) return `${t("agreed", "तय")} ${inr(agreed)}`;
+              <Field label={t("Rate on invoice (excl. GST)", "बिल पर रेट (GST अलग)")} hint={(() => {
+                const agreed = x.agreed;
+                if (agreed == null) return t("price open: fixed later", "रेट खुला: बाद में तय");
+                if (!isNum(x.rate) || Number(x.rate) === agreed) return `${t("agreed", "तय")} ${inr(agreed)}`;
                 return <span className="bad">{t("Differs from agreed", "तय रेट से अलग")} {inr(agreed)}: {t("it will be flagged", "इसे फ्लैग किया जाएगा")}</span>;
-              })()}><NumIn value={x.rate} onChange={(v) => set(i, "rate", v)} suffix="₹/kg" placeholder={String(lines.find((l) => l.grade === x.grade)?.rate_per_kg ?? "")} /></Field>
+              })()}><NumIn value={x.rate} onChange={(v) => set(i, "rate", v)} suffix="₹/kg" placeholder={x.agreed == null ? "" : String(x.agreed)} /></Field>
             </div>
             <p className="label-row">{t("At our weighbridge", "हमारे काँटे पर")}</p>
             <div className="grid3">
@@ -269,6 +280,15 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
           </div>
         );
       })}
+      {(others.data ?? []).length > 0 && (pickDeal ? (
+        <Field label={t("Material from which other deal?", "किस दूसरे सौदे का माल?")}>
+          <Select value="" placeholder={t("Choose…", "चुनें…")} onChange={(v) => {
+            const d = others.data?.find((x) => x.id === v); if (!d) return;
+            const add = (d.deal_lines ?? []).filter((l: Row) => !gl.some((x) => x.grade === l.grade)).map((l: Row) => blank(l, d));
+            setGl([...gl, ...add]); setPickDeal(false);
+          }} options={(others.data ?? []).map((d) => ({ value: d.id, label: `${d.deal_no} · ${(d.deal_lines ?? []).map((l: Row) => gName(l.grade)).join(", ")}` }))} />
+        </Field>)
+        : <Btn small onClick={() => setPickDeal(true)}>+ {t("Material from another deal on this truck", "इसी ट्रक में दूसरे सौदे का माल")}</Btn>)}
       <div className="card">
         <KV rows={[
           [t("Taxable (weights × rate)", "कर योग्य (वज़न × रेट)"), inr(taxable)],

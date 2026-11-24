@@ -61,7 +61,7 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
                   <span className="row-main">
                     <strong>{d.deal_no}{d.po_no ? ` · ${d.po_no}` : ""}</strong>
                     <span>{d.supplier}</span>
-                    <span className="muted small">{t("Still to come", "आना बाकी")}: {kg(d.remaining_kg)} · {t("expected", "अपेक्षित")} {day(d.expected_date)}</span>
+                    <span className="muted small">{t("Still to come", "आना बाकी")}: {kg(d.remaining_kg)} · {t("expected", "अपेक्षित")} {day(d.expected_date)}{d.price_open ? ` · ${t("price open", "रेट खुला")}` : ""}</span>
                   </span>
                   {Number(d.days_late) > 0
                     ? <Chip tone="bad">{t("Late", "देरी")} {d.days_late} {t("days", "दिन")}</Chip>
@@ -80,10 +80,11 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
               <li key={l.lot_id}>
                 <button type="button" className="row" onClick={() => go(`lot/${l.lot_id}`)}>
                   <span className="row-main">
-                    <strong>{l.lot_no} · {l.deal_no}</strong>
+                    <strong>{l.lot_no} · {l.deal_nos ?? l.deal_no}</strong>
                     <span>{l.supplier}{l.supplier_type && l.supplier_type !== "domestic" ? <span className="muted small"> · {t(...TYPE_WORD[l.supplier_type])}</span> : null}</span>
                     <span className="muted small">{day(l.received_on)} · {l.days_open} {t("days", "दिन")}{l.doc_gaps ? ` · ${l.doc_gaps} ${t("docs pending", "दस्तावेज़ बाकी")}` : ""}</span>
                     {l.unbooked && !l.rate_confirmed_at && <span><Chip tone="wait">{t("Not booked: rate to confirm", "बिना बुकिंग: रेट पक्का करना है")}</Chip></span>}
+                    {l.price_open && <span><Chip tone={l.price_fix_by && l.price_fix_by <= today() ? "bad" : "info"}>{t("Price open", "रेट खुला")}{l.price_fix_by ? ` · ${t("fix by", "तय करें")} ${day(l.price_fix_by)}` : ""}</Chip></span>}
                   </span>
                   <StageChip stage={l.stage} />
                 </button>
@@ -109,7 +110,7 @@ const REG_COLS: { k: string; en: string; hi: string; kind?: "kg" | "inr" | "text
   { k: "supplier", en: "Supplier", hi: "सप्लायर" }, { k: "invoice_no", en: "Invoice", hi: "बिल" }, { k: "grades", en: "Grades", hi: "ग्रेड" },
   { k: "billed_kg", en: "Billed kg", hi: "बिल वज़न", kind: "kg" }, { k: "factory_kg", en: "Our kg", hi: "हमारा वज़न", kind: "kg" },
   { k: "weight_short_kg", en: "Short kg", hi: "कम वज़न", kind: "kg" },
-  { k: "invoice_rates", en: "Invoice rate", hi: "बिल रेट", money: true }, { k: "our_rates", en: "Our rate", hi: "हमारा रेट", money: true },
+  { k: "invoice_rates", en: "Invoice rate (excl. GST)", hi: "बिल रेट (GST अलग)", money: true }, { k: "our_rates", en: "Our rate (excl. GST)", hi: "हमारा रेट (GST अलग)", money: true },
   { k: "taxable", en: "Taxable", hi: "कर योग्य", kind: "inr", money: true }, { k: "gst", en: "GST", hi: "GST", kind: "inr", money: true },
   { k: "invoice_total", en: "Invoice total", hi: "बिल कुल", kind: "inr", money: true },
   { k: "dn_weight_short", en: "DN weight short", hi: "DN वज़न कम", kind: "inr", money: true },
@@ -153,7 +154,7 @@ type Line = { grade: string; qty: string; rate: string };
 export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (id: string) => void }) {
   const t = useT(); const lang = useLang();
   const m = useLoad(() => Promise.all([
-    q(sb.from("suppliers").select("id,name,provisional_pct,provisional_days,balance_days,onboarded_at").eq("active", true).eq("supplier_type", "domestic").order("name")),
+    q(sb.from("suppliers").select("id,name,provisional_pct,provisional_days,balance_days,onboarded_at,compliance_override_at").eq("active", true).eq("supplier_type", "domestic").order("name")),
     q(sb.from("grades").select("*").eq("active", true).order("sort")),
   ]), []);
   const [sup, setSup] = useState("");
@@ -164,6 +165,12 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
   const [lines, setLines] = useState<Line[]>([{ grade: "", qty: "", rate: "" }]);
   const [terms, setTerms] = useState({ pct: "", pdays: "", bdays: "" });
   const [showTerms, setShowTerms] = useState(false);
+  const [pricing, setPricing] = useState<"fixed" | "open">("fixed");
+  const [basis, setBasis] = useState("");
+  const [fixDays, setFixDays] = useState("7");
+  const [blocked, setBlocked] = useState<string | null>(null);   // supplier not onboarded: Himanshu may override here
+  const [ov, setOv] = useState({ reason: "", pw: "" });
+  const can = useCan();
   const s = useSave();
   if (!m.data) return null;
   const [sups, grades] = m.data;
@@ -172,24 +179,42 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
   const save = () => s.run(async () => {
     const good = lines.filter((l) => l.grade || l.qty || l.rate);
     if (!good.length) throw new Error(t("Add at least one grade.", "कम से कम एक ग्रेड डालें।"));
-    for (const l of good) if (!l.grade || !isNum(l.qty) || !isNum(l.rate)) throw new Error(t("Each grade needs quantity and rate.", "हर ग्रेड की मात्रा और रेट डालें।"));
+    for (const l of good) if (!l.grade || !isNum(l.qty) || (pricing === "fixed" && !isNum(l.rate)) || (l.rate && !isNum(l.rate)))
+      throw new Error(pricing === "fixed" ? t("Each grade needs quantity and rate.", "हर ग्रेड की मात्रा और रेट डालें।") : t("Each grade needs a quantity.", "हर ग्रेड की मात्रा डालें।"));
     if (sup === "new" && !newSup.name.trim()) throw new Error(t("Enter the supplier's name.", "सप्लायर का नाम डालें।"));
     if (!sup) throw new Error(t("Choose the supplier.", "सप्लायर चुनें।"));
     if (sup === "new" && newSup.gstin.trim() && !gstinOk(newSup.gstin))
       throw new Error(t("The GSTIN does not look right (15 characters, e.g. 27AAMCR8303C1ZF). Check it on the supplier's invoice.", "GSTIN सही नहीं लग रहा (15 अक्षर, जैसे 27AAMCR8303C1ZF)। सप्लायर के बिल पर जाँचें।"));
-    const id = await rpc<string>("create_deal", { p: {
-      supplier_id: sup === "new" ? null : sup, supplier_name: newSup.name, supplier_gstin: normGstin(newSup.gstin), supplier_state: newSup.state,
-      deal_date: dealDate, expected_date: expected || null, gst_rate: gst,
-      provisional_pct: terms.pct, provisional_days: terms.pdays, balance_days: terms.bdays,
-      lines: good.map((l) => ({ grade: l.grade, qty_kg: Number(l.qty), rate_per_kg: Number(l.rate) })) } });
-    onClose(); onSaved(id);
+    // a new supplier is saved first, so an override (if needed) has a supplier to point at
+    let supId = sup;
+    if (sup === "new") {
+      const row = await q<Row>(sb.from("suppliers").insert({ name: newSup.name.trim(), gstin: normGstin(newSup.gstin) || null, state: newSup.state.trim() || null }).select("id").single());
+      supId = row.id; setSup(row.id); m.reload();
+    }
+    if (blocked && ov.reason) {
+      const { data: ss } = await sb.auth.getSession();
+      const { error } = await sb.auth.signInWithPassword({ email: ss.session?.user.email ?? "", password: ov.pw });
+      if (error) throw new Error(t("That password is not right.", "पासवर्ड सही नहीं है।"));
+      await rpc("override_compliance", { p_supplier: supId, p_reason: ov.reason });
+    }
+    try {
+      const id = await rpc<string>("create_deal", { p: {
+        supplier_id: supId, deal_date: dealDate, expected_date: expected || null, gst_rate: gst,
+        provisional_pct: terms.pct, provisional_days: terms.pdays, balance_days: terms.bdays,
+        open_price: pricing === "open", price_basis: pricing === "open" ? basis : null, price_fix_days: pricing === "open" ? fixDays : null,
+        lines: good.map((l) => ({ grade: l.grade, qty_kg: Number(l.qty), rate_per_kg: isNum(l.rate) ? Number(l.rate) : null })) } });
+      onClose(); onSaved(id);
+    } catch (e) {
+      if (/is not onboarded/.test((e as Error).message)) setBlocked((e as Error).message);
+      throw e;
+    }
   });
   return (
     <Sheet title={t("New deal", "नया सौदा")} onClose={onClose} footer={<SaveBar busy={s.busy} error={s.error} onSave={save} label={t("Save deal", "सौदा सेव करें")} />}>
       <p className="muted small">{t("Book what was agreed. The PO is issued from the deal once it is booked.", "जो तय हुआ वो बुक करें। बुक होने के बाद सौदे से PO जारी होगा।")}</p>
       <Field label={t("Supplier", "सप्लायर")}>
         <Select value={sup} onChange={setSup} placeholder={t("Choose…", "चुनें…")}
-                options={[...sups.map((x) => ({ value: x.id, label: x.onboarded_at ? x.name : `${x.name} · ${t("not onboarded", "ऑनबोर्ड नहीं")}` })), { value: "new", label: `+ ${t("New supplier", "नया सप्लायर")}` }]} />
+                options={[...sups.map((x) => ({ value: x.id, label: x.onboarded_at || x.compliance_override_at ? x.name : `${x.name} · ${t("not onboarded", "ऑनबोर्ड नहीं")}` })), { value: "new", label: `+ ${t("New supplier", "नया सप्लायर")}` }]} />
       </Field>
       {sup === "new" && <p className="muted small">{t("A new supplier starts as not onboarded. Finish onboarding from the supplier's page.", "नया सप्लायर ऑनबोर्ड नहीं माना जाएगा। सप्लायर के पेज से ऑनबोर्डिंग पूरी करें।")}</p>}
       {sup === "new" && (
@@ -200,11 +225,20 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
         </div>
       )}
       <h3 className="sub">{t("What was agreed", "क्या तय हुआ")}</h3>
+      <div className="seg wide" role="group" aria-label={t("Price", "रेट")}>
+        <button type="button" className={pricing === "fixed" ? "on" : ""} onClick={() => setPricing("fixed")}>{t("Fixed price", "तय रेट")}</button>
+        <button type="button" className={pricing === "open" ? "on" : ""} onClick={() => setPricing("open")}>{t("Open (LME, fix later)", "खुला (LME, बाद में तय)")}</button>
+      </div>
+      {pricing === "open" && (
+        <div className="grid2">
+          <Field label={t("Price basis", "रेट का आधार")} hint={t("How it will be fixed", "कैसे तय होगा")}><TextIn value={basis} onValue={setBasis} placeholder={t("e.g. LME copper cash − 6%", "जैसे LME कॉपर कैश − 6%")} /></Field>
+          <Field label={t("Fix within", "कितने दिन में तय")} hint={t("after each truck arrives; you get an alert", "हर ट्रक आने के बाद; सूचना मिलेगी")}><NumIn value={fixDays} onChange={setFixDays} suffix={t("days", "दिन")} /></Field>
+        </div>)}
       {lines.map((l, i) => (
         <div className="line" key={i}>
           <Field label={t("Grade", "ग्रेड")}><Select value={l.grade} onChange={(v) => setLine(i, "grade", v)} placeholder="—" options={grades.map((g) => ({ value: g.code, label: nm(lang, g) }))} /></Field>
           <Field label={t("Quantity", "मात्रा")}><NumIn value={l.qty} onChange={(v) => setLine(i, "qty", v)} suffix="kg" /></Field>
-          <Field label={t("Rate", "रेट")}><NumIn value={l.rate} onChange={(v) => setLine(i, "rate", v)} suffix="₹/kg" /></Field>
+          <Field label={pricing === "open" ? t("Rate (optional)", "रेट (वैकल्पिक)") : t("Rate excl. GST", "रेट (GST अलग)")}><NumIn value={l.rate} onChange={(v) => setLine(i, "rate", v)} suffix="₹/kg" placeholder={pricing === "open" ? t("open", "खुला") : undefined} /></Field>
           {lines.length > 1 && <button type="button" className="x" aria-label={t("Remove", "हटाएँ")} onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>}
         </div>
       ))}
@@ -214,6 +248,17 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
         <Field label={t("Expected arrival", "माल कब आएगा")}><input type="date" value={expected} onChange={(e) => setExpected(e.target.value)} /></Field>
         <Field label="GST"><NumIn value={gst} onChange={setGst} suffix="%" /></Field>
       </div>
+      {blocked && (
+        <div className="warnbox">
+          <strong>{blocked}</strong>
+          {can("compliance_override") ? (
+            <div className="stack">
+              <p className="small">{t("To book anyway (long-standing supplier), give a reason and your password, then save again.", "फिर भी बुक करने के लिए (पुराना सप्लायर) कारण और अपना पासवर्ड डालें, फिर सेव करें।")}</p>
+              <Field label={t("Reason", "कारण")}><TextIn value={ov.reason} onValue={(v) => setOv({ ...ov, reason: v })} /></Field>
+              <Field label={t("Your password", "आपका पासवर्ड")}><input type="password" autoComplete="current-password" value={ov.pw} onChange={(e) => setOv({ ...ov, pw: e.target.value })} /></Field>
+            </div>)
+            : <p className="small">{t("Finish onboarding from the supplier's page, or ask Himanshu to override.", "सप्लायर के पेज से ऑनबोर्डिंग पूरी करें, या हिमांशु से छूट लें।")} <a href={`#/supplier/${sup}`}>{t("Open supplier", "सप्लायर खोलें")}</a></p>}
+        </div>)}
       <button type="button" className="link" onClick={() => setShowTerms(!showTerms)}>{showTerms ? "−" : "+"} {t("Payment terms for this deal", "इस सौदे की पेमेंट शर्तें")}</button>
       {showTerms && (
         <>

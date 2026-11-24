@@ -66,7 +66,8 @@ export default function Lot({ id, tab }: { id: string; tab?: string }) {
       <div className="page-head">
         <div>
           <h1>{d.lot.lot_no}</h1>
-          <p className="muted"><a href={`#/deal/${d.lot.deal_id}`}>{d.lot.deals?.deal_no}</a> · {sup.name}</p>
+          <p className="muted">{[...new Map(d.lines.map((l) => [l.deal_id, l.deal_no])).entries()].map(([id, no], i) => <span key={id}>{i > 0 ? " + " : ""}<a href={`#/deal/${id}`}>{no}</a></span>)}
+            {" · "}<a href={`#/supplier/${d.lot.deals?.supplier_id}`}>{sup.name}</a></p>
         </div>
         <StageChip stage={d.v.stage} />
       </div>
@@ -169,14 +170,36 @@ function TruckPrice({ d, locked, reload }: { d: LotData; locked: boolean; reload
     <Section title={t("Price for this truck", "इस ट्रक का रेट")}>
       <table className="tbl">
         <thead><tr><th>{t("Grade", "ग्रेड")}</th><th className="n">{t("Invoice", "बिल")}</th><th className="n">{t("Our price", "हमारा रेट")}</th></tr></thead>
-        <tbody>{d.lines.map((l) => <tr key={l.lot_line_id}><td>{names[l.grade]}</td><td className="n">{inr(l.billed_rate)}</td>
+        <tbody>{d.lines.map((l) => <tr key={l.lot_line_id}><td>{names[l.grade]}{new Set(d.lines.map((x) => x.deal_id)).size > 1 ? <span className="muted small"> · {l.deal_no}</span> : null}</td><td className="n">{inr(l.billed_rate)}</td>
           <td className="n"><RateCell rate={l.deal_rate} label={l.grade} editable={edit} save={(v) => rpc("set_lot_rate", { p_lot: d.lot.id, p_grade: l.grade, p_rate: v })} onSaved={reload} /></td></tr>)}</tbody>
       </table>
-      <p className="muted small">{edit ? t("Fixed when the truck came in. Tap to change it; only you can.", "ट्रक आते ही तय हुआ। बदलने के लिए टैप करें; सिर्फ़ आप बदल सकते हैं।")
+      {d.v.price_open && <OpenPrice d={d} reload={reload} />}
+      <p className="muted small">{t("Rates exclude GST; GST is added on top.", "रेट GST के बिना; GST ऊपर से जुड़ता है।")} {edit ? t("Fixed when the truck came in. Tap to change it; only you can.", "ट्रक आते ही तय हुआ। बदलने के लिए टैप करें; सिर्फ़ आप बदल सकते हैं।")
         : can("rate_confirm") ? t("Debit notes are approved: cancel them to change the price.", "डेबिट नोट मंज़ूर हैं: रेट बदलने के लिए उन्हें रद्द करें।")
         : t("Fixed when the truck came in. Only Himanshu can change it.", "ट्रक आते ही तय हुआ। सिर्फ़ हिमांशु बदल सकते हैं।")}</p>
       {d.priceHistory.length > 0 && <RateHistory rows={d.priceHistory} names={names} />}
     </Section>
+  );
+}
+
+// Open (LME) price: when it has to be fixed, changeable per truck by Himanshu
+function OpenPrice({ d, reload }: { d: LotData; reload: () => void }) {
+  const t = useT(); const can = useCan(); const s = useSave();
+  const [date, setDate] = useState<string | null>(null);
+  const by = d.lot.price_fix_by as string | null;
+  const late = by && by <= today();
+  return (
+    <div className={late ? "warnbox" : "notice"}>
+      <strong>{t("Price open", "रेट खुला")}</strong>{d.lot.deals?.price_basis ? ` · ${d.lot.deals.price_basis}` : ""}
+      <p className="small">{by ? `${late ? t("Fix it now: was due", "अभी तय करें: तारीख थी") : t("Fix by", "तय करने की तारीख")} ${day(by)}.` : t("No fix-by date: Himanshu is reminded until it is fixed.", "तारीख नहीं: तय होने तक हिमांशु को याद दिलाया जाएगा।")}
+        {" "}{t("Debit notes wait until the price is fixed.", "रेट तय होने तक डेबिट नोट रुके रहेंगे।")}</p>
+      {can("rate_confirm") && (date === null
+        ? <Btn small onClick={() => setDate(by ?? today())}>{t("Change alert date", "सूचना की तारीख बदलें")}</Btn>
+        : <div className="rate-edit"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label={t("Fix by", "तय करने की तारीख")} />
+            <Btn small kind="primary" disabled={s.busy} onClick={() => s.run(() => q(sb.from("lots").update({ price_fix_by: date || null }).eq("id", d.lot.id)), () => { setDate(null); reload(); })}>✓</Btn>
+            <Btn small onClick={() => setDate(null)}>✕</Btn></div>)}
+      <Err error={s.error} />
+    </div>
   );
 }
 
