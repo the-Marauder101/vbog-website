@@ -4,16 +4,17 @@ import { Btn, Chip, DateIn, Empty, Err, Field, Loading, NumIn, Select, Sheet, Sa
 import { StageChip, useSave } from "../common";
 import { enqueue, refusal } from "../uploads";
 import { PoList } from "./Docs";
+import { TransportList } from "./Transport";
 
 const FILTERS: [string, string, string][] = [
   ["open", "Open", "चालू"], ["incoming", "On the way", "रास्ते में"], ["sorting", "Sorting", "छँटाई"],
   ["dn_pending", "DN to approve", "डेबिट नोट"], ["tally_pending", "Tally pending", "टैली बाकी"],
-  ["payment_pending", "Payment pending", "पेमेंट बाकी"], ["settled", "Settled", "पूरे"], ["all", "All", "सब"], ["pos", "POs", "PO"],
+  ["payment_pending", "Payment pending", "पेमेंट बाकी"], ["settled", "Settled", "पूरे"], ["all", "All", "सब"], ["pos", "POs", "PO"], ["transport", "Transport", "ट्रांसपोर्ट"],
 ];
 
-export default function Lots({ openNew }: { openNew?: boolean }) {
+export default function Lots({ openNew, filter }: { openNew?: boolean; filter?: string }) {
   const t = useT(); const can = useCan();
-  const [f, setF] = useState("open");
+  const [f, setF] = useState(filter && FILTERS.some((x) => x[0] === filter) ? filter : "open");
   const [text, setText] = useState("");
   const [newDeal, setNewDeal] = useState(!!openNew);
   const [receipt, setReceipt] = useState(false);
@@ -44,14 +45,14 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
       <div className="filters" role="tablist">
         {FILTERS.map(([id, en, hi]) => <button key={id} type="button" className={f === id ? "on" : ""} onClick={() => setF(id)}>{t(en, hi)}</button>)}
       </div>
-      {f !== "pos" && <div className="search-row">
+      {f !== "pos" && f !== "transport" && <div className="search-row">
         <input className="search" type="search" placeholder={t("Search supplier, lot, PO, invoice", "सप्लायर, लॉट, PO, बिल खोजें")} value={text} onChange={(e) => setText(e.target.value)} />
         <span className="seg" role="group" aria-label={t("View", "देखें")}>
           <button type="button" className={view === "list" ? "on" : ""} onClick={() => pickView("list")}>{t("List", "सूची")}</button>
           <button type="button" className={view === "table" ? "on" : ""} onClick={() => pickView("table")}>{t("Table", "टेबल")}</button>
         </span>
       </div>}
-      {f === "pos" ? <PoList /> : view === "table" ? <LotRegister ids={new Set(lotRows.map((l) => l.lot_id))} /> : <>
+      {f === "pos" ? <PoList /> : f === "transport" ? <TransportList /> : view === "table" ? <LotRegister ids={new Set(lotRows.map((l) => l.lot_id))} /> : <>
       {inRows.length > 0 && (
         <>
           <h3 className="sub">{t("On the way", "रास्ते में")}</h3>
@@ -117,6 +118,7 @@ const REG_COLS: { k: string; en: string; hi: string; kind?: "kg" | "inr" | "text
   { k: "invoice_rates", en: "Invoice rate (excl. GST)", hi: "बिल रेट (GST अलग)", money: true }, { k: "our_rates", en: "Our rate (excl. GST)", hi: "हमारा रेट (GST अलग)", money: true },
   { k: "taxable", en: "Taxable", hi: "कर योग्य", kind: "inr", money: true }, { k: "gst", en: "GST", hi: "GST", kind: "inr", money: true },
   { k: "invoice_total", en: "Invoice total", hi: "बिल कुल", kind: "inr", money: true },
+  { k: "freight", en: "Freight (we paid)", hi: "भाड़ा (हमने दिया)", kind: "inr", money: true },
   { k: "dn_weight_short", en: "DN weight short", hi: "DN वज़न कम", kind: "inr", money: true },
   { k: "dn_quality", en: "DN quality (sorting)", hi: "DN छँटाई", kind: "inr", money: true },
   { k: "dn_return", en: "DN return", hi: "DN वापसी", kind: "inr", money: true },

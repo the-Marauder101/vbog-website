@@ -22,3 +22,4 @@ psql -d "$DB" -f tests/checks_booking.sql
 psql -d "$DB" -f tests/checks_prices.sql
 psql -d "$DB" -f tests/checks_0014.sql
 psql -d "$DB" -f tests/checks_0015.sql
+psql -d "$DB" -f tests/checks_0018.sql

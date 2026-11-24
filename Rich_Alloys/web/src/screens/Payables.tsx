@@ -3,6 +3,7 @@ import { day, inr, isNum, q, rpc, sb, today, useCan, useLoad, useT, type Row } f
 import { Btn, Chip, Empty, Err, Field, KV, Loading, NumIn, Section, Sheet, SaveBar, Tabs, TextIn } from "../ui";
 import { PaymentRow, PaymentSheet, TallyTick, useSave } from "../common";
 import Cash from "./Cash";
+import Machines from "./Machines";
 import { Gstr2b } from "./Gstr2b";
 
 export default function Payables({ tab }: { tab?: string }) {
@@ -10,6 +11,7 @@ export default function Payables({ tab }: { tab?: string }) {
   const cur = tab && tab !== "new" ? tab : "topay";
   const tabs = [{ id: "topay", label: t("Cash needed", "कितना देना है") }, { id: "payments", label: t("Payments", "भुगतान") },
                 { id: "suppliers", label: t("Supplier ledgers", "सप्लायर लेजर") },
+                ...(can("money_view") || can("machine_edit") ? [{ id: "machines", label: t("Machines", "मशीनें") }] : []),
                 ...(can("gst_2b") ? [{ id: "gst2b", label: "GSTR-2B" }] : [])];
   const setTab = (x: string) => { history.replaceState(null, "", `#/payables/${x}`); window.dispatchEvent(new HashChangeEvent("hashchange")); };
   return (
@@ -19,6 +21,7 @@ export default function Payables({ tab }: { tab?: string }) {
       {cur === "topay" && <Cash />}
       {cur === "payments" && <Payments openNew={tab === "new"} />}
       {cur === "suppliers" && <Suppliers />}
+      {cur === "machines" && <Machines />}
       {cur === "gst2b" && can("gst_2b") && <Gstr2b onChange={() => undefined} />}
     </>
   );

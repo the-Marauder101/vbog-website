@@ -5,11 +5,11 @@ do $$ declare r record; begin
     execute format('drop view if exists public.%I cascade', r.table_name);
   end loop;
 end $$;
-drop table if exists reminder_log, reminders, supplier_onboarding, onboarding_steps, payment_hold_acks, price_decisions, deal_rate_history, gstr2b_lines, gstr2b_imports, audit_log, documents, stock_tally_checks, stock_moves, production_lines,
+drop table if exists transport_bookings, machine_payments, machine_milestones, machine_orders, reminder_log, reminders, supplier_onboarding, onboarding_steps, payment_hold_acks, price_decisions, deal_rate_history, gstr2b_lines, gstr2b_imports, audit_log, documents, stock_tally_checks, stock_moves, production_lines,
   production_runs, tally_marks, ledger_confirmations, tds, payments, returns, note_lines, notes, sorting_lines, lot_lines,
   lots, invoice_lines, invoices, deal_lines, deals, suppliers, doc_types, sort_categories, grades, items, permissions,
   profiles, plants, deductions, debit_note_lines, debit_notes, receipt_lines, receipts cascade;
-drop sequence if exists deal_seq, lot_seq;
+drop sequence if exists deal_seq, lot_seq, machine_seq, transport_seq;
 do $$ declare r record; begin
   for r in select p.oid::regprocedure as f from pg_proc p join pg_namespace n on n.oid = p.pronamespace
            where n.nspname = 'public' and p.proname in ('my_role','is_staff','can','my_actions','require','via_fn','audit_row',
@@ -19,7 +19,7 @@ do $$ declare r record; begin
              'set_invoice_2b','save_production','verify_document','approve_document','reject_document','doc_norm','import_gstr2b',
              'transfer_stock','create_receipt','doc_kind_for','create_unbooked_lot','confirm_deal_rate',
              'log_rate_change','apply_deal_rate','set_deal_rate','decide_price',
-             'pin_truck_price','apply_truck_price','set_lot_rate','supplier_compliance','signed_in_recently','override_compliance','clear_compliance_override','ack_payment_hold','set_onboarding_step','set_supplier_onboarded',
+             'pin_truck_price','apply_truck_price','set_lot_rate','supplier_compliance','signed_in_recently','override_compliance','clear_compliance_override','guard_transport','attach_transport','detach_transport','ack_payment_hold','set_onboarding_step','set_supplier_onboarded',
              'next_due','po_on_insert','complete_reminder','suggest_po_no','issue_po','close_production') loop
     execute format('drop function if exists %s cascade', r.f);
   end loop;
