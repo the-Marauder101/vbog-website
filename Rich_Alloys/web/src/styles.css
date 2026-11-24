@@ -294,3 +294,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .seg.wide button { flex: 1; }
 .rate-btn.open { color: var(--bad, #a32020); font-weight: 600; }
 .eyebrow { margin: 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--soft); }
+.po-line { margin: 0 0 4px; font-size: .9rem; }
+.tbl.weights td { padding-top: 5px; padding-bottom: 5px; }
+.tbl tr.bad td, td.bad { color: var(--bad, #a32020); }
+.tbl tr.warnrow td, td.warn { color: #9a5b00; font-weight: 600; }

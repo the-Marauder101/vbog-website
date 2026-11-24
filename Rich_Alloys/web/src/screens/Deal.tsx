@@ -16,10 +16,11 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
     q(sb.from("deal_lines").select("*, grades(name, name_hi)").eq("deal_id", id)),
     q(sb.from("v_lots").select("*").contains("deal_ids", [id]).order("received_on")),
     q(sb.from("v_deals_incoming").select("*").eq("deal_id", id)),
+    q(sb.from("v_deal_weights").select("*").eq("deal_id", id)),
     q(sb.from("deal_rate_history").select("*, profiles(full_name), lots(lot_no)").eq("deal_id", id).order("changed_at", { ascending: false })),
   ]), [id]);
   if (!data) return error ? <Err error={error} /> : <Loading />;
-  const [deal, lines, lots, inc, rateHistory] = data;
+  const [deal, lines, lots, inc, weights, rateHistory] = data;
   const incoming = inc[0];
   const sup = deal.suppliers ?? {};
   return (
@@ -65,7 +66,7 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
 
       <Section title={t("What was agreed", "क्या तय हुआ")}>
         <table className="tbl">
-          <thead><tr><th>{t("Grade", "ग्रेड")}</th><th className="n">{t("Quantity", "मात्रा")}</th><th className="n">{t("Rate excl. GST", "रेट (GST अलग)")}</th></tr></thead>
+          <thead><tr><th>{t("Grade", "ग्रेड")}</th><th className="n">{t("Agreed weight", "तय वज़न")}</th><th className="n">{t("Rate excl. GST", "रेट (GST अलग)")}</th></tr></thead>
           <tbody>{lines.map((l) => <tr key={l.id}><td>{nm(lang, l.grades) || l.grade}</td><td className="n">{kg(l.qty_kg)}</td>
             <td className="n"><RateCell rate={l.rate_per_kg} label={l.grade} editable={can("deal_edit") && !deal.cancelled} save={(v) => rpc("set_deal_rate", { p_deal: id, p_grade: l.grade, p_rate: v })} onSaved={reload} /></td></tr>)}</tbody>
         </table>
@@ -73,6 +74,15 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
           <p className="notice small"><strong>{t("Open price", "खुला रेट")}</strong>{deal.price_basis ? `: ${deal.price_basis}` : ""}{deal.price_fix_days != null ? ` · ${t("fix within", "तय करें")} ${deal.price_fix_days} ${t("days of each truck", "दिन में (हर ट्रक के बाद)")}` : ""}.
             {" "}{t("Each truck's price is fixed on the lot by Himanshu; fixing it here fixes every open truck too.", "हर ट्रक का रेट हिमांशु लॉट पर तय करते हैं; यहाँ तय करने से सभी खुले ट्रक भी तय हो जाते हैं।")}</p>)}
         {can("deal_edit") && !deal.cancelled && <p className="muted small">{t("Tap a rate to change it for trucks still to come. A truck's price is fixed when it enters the factory; after that only Himanshu changes it, on the lot.", "आगे आने वाले ट्रकों का रेट बदलने के लिए टैप करें। ट्रक फ़ैक्टरी में आते ही उसका रेट तय हो जाता है; उसके बाद सिर्फ़ हिमांशु लॉट पर बदल सकते हैं।")}</p>}
+        {weights.some((w) => Number(w.trucks) > 0) && (
+          <div className="tablewrap"><table className="tbl compact weights">
+            <thead><tr><th>{t("Weights", "वज़न")}</th><th className="n">{t("PO", "PO")}</th><th className="n">{t("Invoiced", "बिल")}</th><th className="n">{t("vs PO", "PO से")}</th><th className="n">{t("Our net", "हमारा नेट")}</th><th className="n">{t("Short", "कम")}</th></tr></thead>
+            <tbody>{weights.map((w) => { const po = Number(w.po_diff_kg); const sh = Number(w.short_kg); return (
+              <tr key={w.grade}><td>{nm(lang, { name: w.grade_name, name_hi: w.grade_name_hi })}</td><td className="n">{kg(w.agreed_kg)}</td><td className="n">{kg(w.invoiced_kg)}</td>
+                <td className={`n ${po > 0.0005 ? "bad" : po < -0.0005 ? "warn" : ""}`}>{Math.abs(po) < 0.0005 ? "=" : `${po > 0 ? "+" : "−"}${kg(Math.abs(po))}`}</td>
+                <td className="n">{kg(w.net_kg)}</td><td className={`n ${sh > 0.0005 ? "bad" : ""}`}>{Math.abs(sh) < 0.0005 ? "—" : kg(sh)}</td></tr>); })}</tbody>
+          </table></div>)}
+        {weights.some((w) => Number(w.trucks) > 0) && <p className="muted small">{t("PO = agreed weight. Invoiced = weight on the supplier's invoices. Our net = our gross incl. bags − bags. Short = invoiced − our net (debited).", "PO = तय वज़न। बिल = सप्लायर के बिल का वज़न। हमारा नेट = हमारा कुल (बोरी सहित) − बोरी। कम = बिल − हमारा नेट (डेबिट)।")}</p>}
         {rateHistory.length > 1 && <RateHistory rows={rateHistory} names={Object.fromEntries(lines.map((l) => [l.grade, nm(lang, l.grades) || l.grade]))} />}
         <KV rows={[
           [t("Deal date", "सौदे की तारीख"), day(deal.deal_date)],
@@ -188,7 +198,7 @@ function PoBlock({ deal, lines, history, reload }: { deal: Row; lines: Row[]; hi
     </div>);
 }
 
-type GL = { grade: string; slipGross: string; slipBags: string; billed: string; rate: string; gross: string; bags: string; bagKg: string;
+type GL = { grade: string; billed: string; rate: string; gross: string; bags: string; bagKg: string;
              dealId: string; dealNo: string; agreed: number | null };
 function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row[]; onClose: () => void; onSaved: (lot: string) => void }) {
   const t = useT(); const lang = useLang();
@@ -202,13 +212,17 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
   const [photo, setPhoto] = useState<File | null>(null);
   const me = useMe();
   // The invoice rate is typed from the invoice, never pre-filled: a pre-filled agreed rate would hide a difference.
-  const blank = (l: Row, d: Row): GL => ({ grade: l.grade, slipGross: "", slipBags: "", billed: "", rate: "", gross: "", bags: "", bagKg: "",
+  const blank = (l: Row, d: Row): GL => ({ grade: l.grade, billed: "", rate: "", gross: "", bags: "", bagKg: "",
                                          dealId: d.id, dealNo: d.deal_no, agreed: l.rate_per_kg == null ? null : Number(l.rate_per_kg) });
   const [gl, setGl] = useState<GL[]>(lines.map((l) => blank(l, deal)));
   // the same truck can carry material booked on another open deal of this supplier
   const others = useLoad(() => q(sb.from("deals").select("id, deal_no, deal_lines(grade, rate_per_kg)").eq("supplier_id", deal.supplier_id)
     .eq("cancelled", false).eq("receiving_complete", false).neq("id", deal.id).order("deal_date")), [deal.id]);
   const [pickDeal, setPickDeal] = useState(false);
+  // P1 (agreed in the PO) and what earlier trucks already invoiced, per deal and grade
+  const dw = useLoad(() => q(sb.from("v_deal_weights").select("deal_id, grade, agreed_kg, invoiced_kg")
+    .in("deal_id", [deal.id, ...(others.data ?? []).map((d) => d.id)])), [deal.id, others.data?.length ?? 0]);
+  const po = (x: GL) => dw.data?.find((w) => w.deal_id === x.dealId && w.grade === x.grade);
   const s = useSave();
   const set = (i: number, k: keyof GL, v: string) => setGl(gl.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   const num = (v: string) => (isNum(v) ? Number(v) : 0);
@@ -229,7 +243,7 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
     const id = await rpc<string>("create_lot", { p: {
       deal_id: deal.id, received_on: rec, vehicle_no: veh, invoice_no: invNo, invoice_date: invDate,
       total: printed || null, completes_deal: complete,
-      lines: used.map((x) => ({ grade: x.grade, deal_id: x.dealId, billed_net_kg: x.billed, billed_rate: x.rate, slip_gross_kg: x.slipGross, slip_bag_kg: x.slipBags,
+      lines: used.map((x) => ({ grade: x.grade, deal_id: x.dealId, billed_net_kg: x.billed, billed_rate: x.rate,
                                 factory_gross_kg: x.gross, bag_count: x.bags, factory_bag_kg: x.bagKg || "0" })) } });
     // Through the upload queue: saved on the phone, retried until it is up, never dropped silently.
     if (photo) await enqueue({ id: deal.id, deal_no: deal.deal_no }, "TAX_INVOICE", [photo], me.id, id);
@@ -254,11 +268,11 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
         return (
           <div className="card grade-card" key={i}>
             <h3>{gName(x.grade)}{x.dealId !== deal.id ? <span className="muted small"> · {x.dealNo}</span> : null}</h3>
-            <p className="label-row">{t("As per supplier (packing slip and invoice)", "सप्लायर के अनुसार (पैकिंग स्लिप और बिल)")}</p>
-            <div className="grid3">
-              <Field label={t("Slip gross", "स्लिप कुल")}><NumIn value={x.slipGross} onChange={(v) => set(i, "slipGross", v)} suffix="kg" /></Field>
-              <Field label={t("Slip bags", "स्लिप बोरी")}><NumIn value={x.slipBags} onChange={(v) => set(i, "slipBags", v)} suffix="kg" /></Field>
-              <Field label={t("Billed net", "बिल नेट")}><NumIn value={x.billed} onChange={(v) => set(i, "billed", v)} suffix="kg" /></Field>
+            {po(x) && <p className="po-line">{t("Agreed in the PO", "PO में तय")}: <strong>{kg(po(x)?.agreed_kg)}</strong>
+              {Number(po(x)?.invoiced_kg) > 0 ? ` · ${t("already invoiced", "पहले बिल हुआ")} ${kg(po(x)?.invoiced_kg)}` : ""}</p>}
+            <p className="label-row">{t("As per the supplier's invoice", "सप्लायर के बिल के अनुसार")}</p>
+            <div className="grid2">
+              <Field label={t("Weight on invoice", "बिल पर वज़न")}><NumIn value={x.billed} onChange={(v) => set(i, "billed", v)} suffix="kg" /></Field>
               <Field label={t("Rate on invoice (excl. GST)", "बिल पर रेट (GST अलग)")} hint={(() => {
                 const agreed = x.agreed;
                 if (agreed == null) return t("price open: fixed later", "रेट खुला: बाद में तय");
@@ -266,15 +280,21 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
                 return <span className="bad">{t("Differs from agreed", "तय रेट से अलग")} {inr(agreed)}: {t("it will be flagged", "इसे फ्लैग किया जाएगा")}</span>;
               })()}><NumIn value={x.rate} onChange={(v) => set(i, "rate", v)} suffix="₹/kg" placeholder={x.agreed == null ? "" : String(x.agreed)} /></Field>
             </div>
-            <p className="label-row">{t("At our weighbridge", "हमारे काँटे पर")}</p>
+            {isNum(x.billed) && po(x) && (() => {
+              const total = Number(po(x)?.invoiced_kg ?? 0) + Number(x.billed); const d = total - Number(po(x)?.agreed_kg);
+              if (Math.abs(d) < 0.0005) return <p className="result ok">{t("Invoice matches the PO weight", "बिल का वज़न PO के बराबर")}</p>;
+              return <p className={`result ${d > 0 ? "bad" : "wait"}`}>{d > 0 ? `${t("Invoiced", "बिल")} ${kg(d)} ${t("more than agreed in the PO", "PO से ज़्यादा")}`
+                : `${t("Invoiced", "बिल")} ${kg(-d)} ${t("less than the PO", "PO से कम")} (${t("still to come, or short on the PO", "अभी आना है, या PO से कम")})`}</p>;
+            })()}
+            <p className="label-row">{t("At our weighbridge (the supplier does not give bag weight; we count and weigh)", "हमारे काँटे पर (सप्लायर बोरी का वज़न नहीं देता; हम गिनते और तौलते हैं)")}</p>
             <div className="grid3">
-              <Field label={t("Gross", "कुल वज़न")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
+              <Field label={t("Gross incl. bags", "कुल वज़न (बोरी सहित)")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
               <Field label={t("Number of bags", "बोरी गिनती")}><NumIn value={x.bags} onChange={(v) => set(i, "bags", v)} /></Field>
               <Field label={t("Weight of all bags", "सभी बोरियों का वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
             </div>
             {ready && (
               <p className={`result ${diff > 0.0005 ? "bad" : diff < -0.0005 ? "wait" : "ok"}`}>
-                {t("Our net", "हमारा नेट")} {kg(fNet)} · {diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}
+                {t("Our net (gross − bags)", "हमारा नेट (कुल − बोरी)")} {kg(fNet)} · {diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}
               </p>
             )}
           </div>

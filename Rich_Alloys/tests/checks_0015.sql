@@ -18,6 +18,13 @@ begin
   select bags, bag_kg into r from v_lots where deal_no = 'RA-082'; assert r.bags = 194 and r.bag_kg = 42.5, 'bag totals per truck';
   select bags, bag_kg into r from v_lot_register where lot_no = 'L-0001'; assert r.bags = 194 and r.bag_kg = 42.5, 'bag totals in the lot table';
 
+  -- ---- P1..P4 (0017): Ogo OC agreed 5,000, invoiced 4,864.550 -> 135.450 less than the PO ----
+  select agreed_kg, invoiced_kg, po_diff_kg, trucks into r from v_deal_weights where deal_no = 'RA-082' and grade = 'OC';
+  assert r.agreed_kg = 5000 and r.invoiced_kg = 4864.55 and r.po_diff_kg = -135.45 and r.trucks = 1, 'PO vs invoice per grade';
+  select sum(short_kg), sum(bags), sum(bag_kg) into r from v_deal_weights where deal_no = 'RA-082';
+  assert r.sum = 25.4, 'weight short = invoice - (our gross - bags), 25.4 kg as in DN 114';
+  select agreed_kg into n from v_lot_lines where lot_no = 'L-0001' and grade = 'LAL'; assert n = 5000, 'agreed weight on the truck line';
+
   -- ---- document checklist ----
   select name into t from doc_types where code = 'VAHAN_CHECK'; assert t like 'RC of vehicle%', 'Vahan check is now the RC';
   select count(*) into n from doc_types where code in ('FASTAG_HISTORY','QC_REPORT','SUPPLIER_CN','COMPLIANCE'); assert n = 4, 'new document types';
