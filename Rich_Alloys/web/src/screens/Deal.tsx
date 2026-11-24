@@ -1,9 +1,10 @@
 import { enqueue, refusal } from "../uploads";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { day, go, inr, isNum, kg, q, rpc, sb, today, useCan, useLang, useLoad, useMe, useT, nm, type Row } from "../lib";
 import { DateIn, Btn, Chip, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { DealDocs, PriceDecisions, RateCell, RateHistory, StageChip, useSave } from "../common";
 import { TermsLine } from "./Lots";
+import { DealTransport } from "./Transport";
 
 export default function Deal({ id, openArrival }: { id: string; openArrival?: boolean }) {
   const t = useT(); const lang = useLang(); const can = useCan();
@@ -104,6 +105,7 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
       </Section>
 
       <PriceDecisions dealId={id} title onDone={reload} />
+      {sup.supplier_type === "domestic" && <DealTransport deal={deal} />}
       <Section title={t("Lots (trucks) received", "आए हुए लॉट (ट्रक)")}>
         {lots.length === 0 ? <Empty>{t("No material received yet.", "अभी कोई माल नहीं आया।")}</Empty> : (
           <ul className="rows">{lots.map((l) => (
@@ -223,6 +225,11 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
   const dw = useLoad(() => q(sb.from("v_deal_weights").select("deal_id, grade, agreed_kg, invoiced_kg")
     .in("deal_id", [deal.id, ...(others.data ?? []).map((d) => d.id)])), [deal.id, others.data?.length ?? 0]);
   const po = (x: GL) => dw.data?.find((w) => w.deal_id === x.dealId && w.grade === x.grade);
+  // a truck we booked for this deal: picked here, its number filled in, attached to the lot on save
+  const trucks = useLoad(() => q(sb.from("v_transport").select("*").eq("deal_id", deal.id).is("lot_id", null).eq("status", "booked").order("pickup_on")), [deal.id]);
+  const [trk, setTrk] = useState<string | null>(null);
+  const truck = trk === "none" ? undefined : (trucks.data ?? []).find((b) => b.id === (trk ?? trucks.data?.[0]?.id));
+  useEffect(() => { if (truck?.vehicle_no && !veh) setVeh(String(truck.vehicle_no).toUpperCase()); }, [truck?.id]);
   const s = useSave();
   const set = (i: number, k: keyof GL, v: string) => setGl(gl.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   const num = (v: string) => (isNum(v) ? Number(v) : 0);
@@ -247,12 +254,21 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
                                 factory_gross_kg: x.gross, bag_count: x.bags, factory_bag_kg: x.bagKg || "0" })) } });
     // Through the upload queue: saved on the phone, retried until it is up, never dropped silently.
     if (photo) await enqueue({ id: deal.id, deal_no: deal.deal_no }, "TAX_INVOICE", [photo], me.id, id);
+    if (truck) await rpc("attach_transport", { p_booking: truck.id, p_lot: id });
     onClose(); onSaved(id);
   });
   const gName = (code: string) => nm(lang, grades.data?.find((g) => g.code === code)) || code;
   return (
     <Sheet title={`${t("Material arrived", "माल आया")} · ${deal.deal_no}`} onClose={onClose}
       footer={<SaveBar busy={s.busy} error={s.error} onSave={save} label={t("Save arrival", "माल आया सेव करें")} />}>
+      {(trucks.data ?? []).length > 0 && (
+        <div className="notice">
+          <Field label={t("Truck we booked", "हमारा बुक किया ट्रक")} hint={truck ? `${truck.transporter}${truck.from_place ? ` · ${t("from", "से")} ${truck.from_place}` : ""} · ${t("booked", "तय")} ${inr(truck.booked_price)}` : t("This truck was not booked by us", "यह ट्रक हमने बुक नहीं किया")}>
+            <Select value={trk ?? trucks.data?.[0]?.id ?? ""} onChange={(v) => { setTrk(v); const b = trucks.data?.find((x) => x.id === v); if (b?.vehicle_no) setVeh(String(b.vehicle_no).toUpperCase()); }}
+              options={[...(trucks.data ?? []).map((b) => ({ value: b.id, label: `${b.booking_no} · ${b.vehicle_no ?? t("no number yet", "नंबर नहीं")} · ${b.transporter}` })),
+                        { value: "none", label: t("Another truck (not booked by us)", "दूसरा ट्रक (हमने बुक नहीं किया)") }]} />
+          </Field>
+        </div>)}
       <div className="grid2">
         <Field label={t("Received on", "माल आने की तारीख")}><DateIn value={rec} onChange={setRec} /></Field>
         <Field label={t("Vehicle number", "गाड़ी नंबर")}><TextIn value={veh} onValue={setVeh} autoCapitalize="characters" /></Field>

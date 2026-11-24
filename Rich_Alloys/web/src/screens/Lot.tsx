@@ -3,6 +3,7 @@ import { COMPANY, csv, day, download, esc, inr, isNum, kg, printHtml, q, rpc, sb
 import { DateIn, Btn, Chip, Choice, Empty, Err, Field, KV, Loading, NumIn, Section, Select, Sheet, SaveBar, Tabs, TextIn } from "../ui";
 import { DN_LABEL, DealDocs, HoldHint, PaymentRow, PaymentSheet, PriceDecisions, RateCell, RateHistory, Stepper, StageChip, TallyTick, useSave } from "../common";
 import { TermsSheet } from "./Deal";
+import { LotTransport } from "./Transport";
 import { TermsLine } from "./Lots";
 
 // PRD 7b: only domestic purchases carry money. Branch, import and job-work lots work in kg.
@@ -107,6 +108,7 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
           [t("Balance to pay", "देना बाकी"), <strong key="b">{inr(d.payable.balance)}</strong>],
         ] as [string, JSX.Element | string][] : []),
       ]} />
+      {isDomestic(d) && <LotTransport lot={d.lot} dealIds={[...new Set(d.lines.map((l) => l.deal_id as string))]} onChange={reload} />}
       {can("money_view") && isDomestic(d) && inv && <TermsBox d={d} reload={reload} />}
       {can("money_view") && isDomestic(d) && inv && <TruckPrice d={d} locked={live.length > 0} reload={reload} />}
       {d.exc.length > 0 && (
