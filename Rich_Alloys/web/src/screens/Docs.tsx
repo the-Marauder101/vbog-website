@@ -1,7 +1,7 @@
 // Himanshu's documents desk: vendor compliance, every invoice's file pack, every debit note. One tap downloads a
 // complete .zip (files, PO, debit notes as PDFs, index) for an invoice or a supplier.
 import { useState } from "react";
-import { day, go, inr, q, sb, today, useCan, useLoad, useT, type Row } from "../lib";
+import { day, go, inr, kg, q, sb, today, useCan, useLoad, useT, type Row } from "../lib";
 import { Btn, Chip, Empty, Err, Loading, Tabs } from "../ui";
 import { DN_LABEL, StageChip } from "../common";
 
@@ -15,8 +15,9 @@ export default function Docs({ tab }: { tab?: string }) {
     <>
       <h1>{t("Documents", "दस्तावेज़")}</h1>
       <Tabs value={cur} onChange={setTab} tabs={[{ id: "compliance", label: t("Vendor compliance", "वेंडर अनुपालन") },
-        { id: "invoices", label: t("Invoices", "बिल") }, { id: "notes", label: t("Debit notes", "डेबिट नोट") }]} />
+        { id: "pos", label: t("POs", "PO") }, { id: "invoices", label: t("Invoices", "बिल") }, { id: "notes", label: t("Debit notes", "डेबिट नोट") }]} />
       {cur === "compliance" && <Compliance />}
+      {cur === "pos" && <PoList />}
       {cur === "invoices" && <Invoices />}
       {cur === "notes" && <Notes />}
     </>
@@ -173,6 +174,69 @@ function Notes() {
           </div></li>))}
         </ul>)}
       <p className="muted small">{t("Debit notes are PDFs in a basic layout until Rich Alloys' own DN and CN formats are added. Upload the supplier's credit note on the lot (Documents > Supplier credit note).", "डेबिट नोट अभी सामान्य PDF में हैं, जब तक Rich Alloys का अपना DN/CN फ़ॉर्मेट नहीं जुड़ता। सप्लायर का क्रेडिट नोट लॉट पर अपलोड करें (दस्तावेज़ > सप्लायर क्रेडिट नोट)।")}</p>
+    </>
+  );
+}
+
+// Every PO issued (newest first), its status, the trucks that came against it, and one tap for the PO or everything under it
+export function PoList() {
+  const t = useT();
+  const [text, setText] = useState("");
+  const dl = useBusy();
+  const { data, error } = useLoad(() => Promise.all([
+    q(sb.from("deals").select("id, deal_no, po_no, po_date, po_revision, po_issued_at, cancelled, receiving_complete, unbooked, gst_rate, supplier_id, suppliers(name, supplier_type), deal_lines(qty_kg, rate_per_kg)")
+      .eq("cancelled", false).order("deal_date", { ascending: false })),
+    q(sb.from("v_lots").select("lot_id, invoice_no, deal_ids")),
+    q(sb.from("v_doc_index").select("deal_id, lot_id")),
+  ]), []);
+  if (!data) return error ? <Err error={error} /> : <Loading />;
+  const [deals, lots, docs] = data;
+  const m = (r: Row) => !text || [r.po_no, r.deal_no, r.suppliers?.name].some((x) => String(x ?? "").toLowerCase().includes(text.toLowerCase()));
+  const issued = deals.filter((d) => d.po_issued_at && m(d)).sort((a, b) => String(b.po_issued_at).localeCompare(String(a.po_issued_at)));
+  const notYet = deals.filter((d) => !d.po_issued_at && !d.unbooked && d.suppliers?.supplier_type === "domestic" && m(d));
+  const pdf = (id: string) => dl.run(`p${id}`, async () => {
+    const d = await q<Row>(sb.from("deals").select("*, suppliers(*), deal_lines(*, grades(name))").eq("id", id).single());
+    const { downloadPo } = await import("../po"); await downloadPo(d, d.deal_lines ?? []); return { files: 1, missing: 0 };
+  });
+  const all = (id: string) => dl.run(`a${id}`, async (p) => { const { packageDeal } = await import("../pack"); return packageDeal(id, p); });
+  return (
+    <>
+      <input className="search" type="search" placeholder={t("Search PO, deal, supplier", "PO, सौदा, सप्लायर खोजें")} value={text} onChange={(e) => setText(e.target.value)} />
+      <Err error={dl.error} />
+      {notYet.length > 0 && (<>
+        <h3 className="sub">{t("Booked, PO not issued yet", "बुक हुआ, PO अभी जारी नहीं")} <span className="count">{notYet.length}</span></h3>
+        <ul className="rows">{notYet.map((d) => (
+          <li key={d.id} className="edge-wait"><button type="button" className="row" onClick={() => go(`deal/${d.id}`)}>
+            <span className="row-main"><strong>{d.deal_no}</strong><span className="muted small">{d.suppliers?.name}</span></span>
+            <Chip tone="wait">{t("Issue PO", "PO जारी करें")}</Chip></button></li>))}
+        </ul></>)}
+      <h3 className="sub">{t("POs issued", "जारी PO")} <span className="count">{issued.length}</span></h3>
+      {issued.length === 0 ? <Empty>{t("No PO issued yet.", "अभी कोई PO जारी नहीं।")}</Empty> : (
+        <ul className="rows">{issued.map((d) => {
+          const trucks = lots.filter((l) => (l.deal_ids ?? []).includes(d.id));
+          const lotIds = trucks.map((l) => l.lot_id);
+          const files = docs.filter((x) => x.deal_id === d.id || (x.lot_id && lotIds.includes(x.lot_id))).length;
+          const kgs = (d.deal_lines ?? []).reduce((a: number, l: Row) => a + Number(l.qty_kg), 0);
+          const value = (d.deal_lines ?? []).reduce((a: number, l: Row) => a + Number(l.qty_kg) * Number(l.rate_per_kg ?? 0), 0);
+          const open = (d.deal_lines ?? []).some((l: Row) => l.rate_per_kg == null);
+          const status: [string, string, "ok" | "wait" | "info"] = d.receiving_complete ? ["All received", "सब आ गया", "ok"] : trucks.length ? ["Part received", "कुछ आया", "info"] : ["On the way", "रास्ते में", "wait"];
+          return (
+            <li key={d.id}><div className="row static">
+              <button type="button" className="row-main linkish" onClick={() => go(`deal/${d.id}`)}>
+                <strong>{d.po_no}</strong>
+                <span>{d.suppliers?.name}</span>
+                <span className="muted small">{d.deal_no} · {day(d.po_date ?? d.po_issued_at)}{Number(d.po_revision) > 1 ? ` · Rev ${d.po_revision}` : ""} · {kg(kgs)}
+                  {open ? ` · ${t("price open", "रेट खुला")}` : ` · ${inr(value)} ${t("excl. GST", "GST अलग")}`}</span>
+                <span className="muted small">{trucks.length ? `${t("Invoices", "बिल")}: ${trucks.map((l) => l.invoice_no).join(", ")}` : t("No truck yet", "अभी कोई ट्रक नहीं")} · {files} {t("files", "फ़ाइलें")}</span>
+                <span><Chip tone={status[2]}>{t(status[0], status[1])}</Chip></span>
+              </button>
+              <span className="actions stackbtn">
+                <DlButton k={`p${d.id}`} b={dl.busy} label="PO" onClick={() => pdf(d.id)} />
+                <DlButton k={`a${d.id}`} b={dl.busy} label={t("All docs", "सभी दस्तावेज़")} onClick={() => all(d.id)} />
+              </span>
+            </div></li>);
+        })}</ul>)}
+      <p className="muted small">{t("All docs gives one .zip: the PO, the deal's documents, and for every truck against it the supplier's documents, our weighbridge, sorting and QA/QC files and the debit notes.", "सभी दस्तावेज़ से एक .zip: PO, सौदे के दस्तावेज़, और इसके हर ट्रक के सप्लायर दस्तावेज़, हमारा धर्मकांटा, छँटाई, QA/QC और डेबिट नोट।")}</p>
     </>
   );
 }

@@ -3,11 +3,12 @@ import { csv, download, gstinOk, normGstin, day, go, inr, isNum, kg, q, rpc, sb,
 import { Btn, Chip, DateIn, Empty, Err, Field, Loading, NumIn, Select, Sheet, SaveBar, TextIn } from "../ui";
 import { StageChip, useSave } from "../common";
 import { enqueue, refusal } from "../uploads";
+import { PoList } from "./Docs";
 
 const FILTERS: [string, string, string][] = [
   ["open", "Open", "चालू"], ["incoming", "On the way", "रास्ते में"], ["sorting", "Sorting", "छँटाई"],
   ["dn_pending", "DN to approve", "डेबिट नोट"], ["tally_pending", "Tally pending", "टैली बाकी"],
-  ["payment_pending", "Payment pending", "पेमेंट बाकी"], ["settled", "Settled", "पूरे"], ["all", "All", "सब"],
+  ["payment_pending", "Payment pending", "पेमेंट बाकी"], ["settled", "Settled", "पूरे"], ["all", "All", "सब"], ["pos", "POs", "PO"],
 ];
 
 export default function Lots({ openNew }: { openNew?: boolean }) {
@@ -43,14 +44,14 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
       <div className="filters" role="tablist">
         {FILTERS.map(([id, en, hi]) => <button key={id} type="button" className={f === id ? "on" : ""} onClick={() => setF(id)}>{t(en, hi)}</button>)}
       </div>
-      <div className="search-row">
+      {f !== "pos" && <div className="search-row">
         <input className="search" type="search" placeholder={t("Search supplier, lot, PO, invoice", "सप्लायर, लॉट, PO, बिल खोजें")} value={text} onChange={(e) => setText(e.target.value)} />
         <span className="seg" role="group" aria-label={t("View", "देखें")}>
           <button type="button" className={view === "list" ? "on" : ""} onClick={() => pickView("list")}>{t("List", "सूची")}</button>
           <button type="button" className={view === "table" ? "on" : ""} onClick={() => pickView("table")}>{t("Table", "टेबल")}</button>
         </span>
-      </div>
-      {view === "table" ? <LotRegister ids={new Set(lotRows.map((l) => l.lot_id))} /> : <>
+      </div>}
+      {f === "pos" ? <PoList /> : view === "table" ? <LotRegister ids={new Set(lotRows.map((l) => l.lot_id))} /> : <>
       {inRows.length > 0 && (
         <>
           <h3 className="sub">{t("On the way", "रास्ते में")}</h3>
