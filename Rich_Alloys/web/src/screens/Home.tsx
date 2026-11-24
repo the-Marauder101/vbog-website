@@ -33,9 +33,11 @@ export default function Home() {
     q(sb.from("v_tasks").select("*").order("since", { ascending: true, nullsFirst: false })),
     can("money_view") ? q(sb.from("v_cash_plan").select("due_date,amount")) : Promise.resolve([] as Row[]),
     can("deal_edit") ? q(sb.from("v_stock_position").select("*").order("sort")) : Promise.resolve([] as Row[]),
+    q(sb.from("v_lots").select("lot_id, invoice_no")),
   ]), []);
   if (!data) return error ? <Err error={error} /> : <Loading />;
-  const [tasks, cash, position] = data;
+  const [tasks, cash, position, lotInv] = data;
+  const invOf = Object.fromEntries(lotInv.map((l) => [l.lot_id, l.invoice_no]));   // the supplier's invoice no. first, ours beside it
   const reminders = tasks.filter((x) => x.kind === "reminder_due");
   const groups = ORDER.map((k) => ({ k, rows: tasks.filter((x) => x.kind === k) })).filter((g) => g.rows.length);
   const now = today(); const week = addDays(now, 7);
@@ -70,8 +72,8 @@ export default function Home() {
               {rows.slice(0, 6).map((r, i) => (
                 <li key={i}><button type="button" className="row" onClick={() => go(KINDS[k].to(r))}>
                   <span className="row-main">
-                    <strong>{r.ref_no || r.supplier}</strong>
-                    <span className="muted small">{k === "hold_reached" ? [r.ref_no ? r.supplier : null, `${t("hold until", "तक रोकें")} ${day(r.detail)}`].filter(Boolean).join(" · ")
+                    <strong>{r.ref_type === "lot" && invOf[r.ref_id] ? invOf[r.ref_id] : r.ref_no || r.supplier}</strong>
+                    <span className="muted small">{r.ref_type === "lot" && invOf[r.ref_id] ? `${r.ref_no} · ` : ""}{k === "hold_reached" ? [r.ref_no ? r.supplier : null, `${t("hold until", "तक रोकें")} ${day(r.detail)}`].filter(Boolean).join(" · ")
                       : [r.ref_no ? r.supplier : null, lang === "hi" && r.detail_hi ? r.detail_hi : r.detail, r.since ? day(r.since) : null].filter(Boolean).join(" · ")}</span>
                   </span>
                   {r.amount != null && <span className="amt">{inr(r.amount)}</span>}

@@ -65,8 +65,9 @@ export default function Lot({ id, tab }: { id: string; tab?: string }) {
       <button type="button" className="link back" onClick={() => history.back()}>← {t("Back", "वापस")}</button>
       <div className="page-head">
         <div>
-          <h1>{d.lot.lot_no}</h1>
-          <p className="muted">{[...new Map(d.lines.map((l) => [l.deal_id, l.deal_no])).entries()].map(([id, no], i) => <span key={id}>{i > 0 ? " + " : ""}<a href={`#/deal/${id}`}>{no}</a></span>)}
+          <p className="eyebrow">{docWord(t, d.v.doc_kind)}</p>
+          <h1>{d.lot.invoices?.invoice_no ?? d.lot.lot_no}</h1>
+          <p className="muted">{t("Internal no.", "आंतरिक नं.")} <strong>{d.lot.lot_no}</strong> · {[...new Map(d.lines.map((l) => [l.deal_id, l.deal_no])).entries()].map(([id, no], i) => <span key={id}>{i > 0 ? " + " : ""}<a href={`#/deal/${id}`}>{no}</a></span>)}
             {" · "}<a href={`#/supplier/${d.lot.deals?.supplier_id}`}>{sup.name}</a></p>
         </div>
         <StageChip stage={d.v.stage} />
@@ -96,6 +97,7 @@ function Summary({ d, live, reload }: { d: LotData; live: Row[]; reload: () => v
         [docWord(t, d.v.doc_kind), inv ? `${inv.invoice_no} · ${day(inv.invoice_date)}` : "—"],
         ...(d.lot.sent_by ? [[t("Sent by", "किसने भेजा"), d.lot.sent_by] as [string, string]] : []),
         [t("Weight short", "वज़न कम"), kg(d.v.weight_short_kg)],
+        ...(d.v.bags != null || Number(d.v.bag_kg) ? [[t("Bags on this truck", "इस ट्रक में बोरियाँ"), `${d.v.bags ?? "—"} ${t("bags", "बोरी")} · ${kg(d.v.bag_kg)}`] as [string, string]] : []),
         ...(Number(d.v.weight_excess_kg) > 0 ? [[t("Weight excess", "वज़न ज़्यादा"), kg(d.v.weight_excess_kg), "warn"] as [string, string, string]] : []),
         [t("Sorting", "छँटाई"), d.lot.sorting_closed_at ? `${t("Closed", "बंद")} ${day(d.lot.sorting_closed_at)}` : t("Open", "चालू")],
         ...(can("money_view") && d.payable ? [

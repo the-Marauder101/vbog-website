@@ -94,6 +94,8 @@ the factory Tally, the office Tally, or both.
 | 42 | **Open pricing**: a deal is booked at a fixed price or open (to be fixed later, e.g. against LME), with a basis and "fix within X days"; each truck gets a fix-by date (changeable per truck) and an alert; debit notes wait until its price is fixed | Depesh, 24 Nov |
 | 43 | **One truck can carry material from several deals** of the same supplier (each grade names its deal); deals and lots show each other | Depesh, 24 Nov |
 | 44 | Supplier document checklist: "Vahan vehicle check" becomes **RC of vehicle**; **FASTag history** added (required); QA/QC report (factory) and supplier credit note (optional) added | Depesh, 24 Nov |
+| 45 | **Bags per truck**: number of bags and weight of all bags are entered per grade at our weighbridge; the truck total (count and kg) shows on arrival, on the lot and in the lot table (`v_lots.bags, bag_kg`, `0016_bag_totals.sql`) | Depesh, 24 Nov |
+| 46 | **The supplier's invoice number is the main number** on screens (Lots, lot page, deal, Docs, Home, lot table); our L-/D- numbers stay beside it as the internal numbers | Depesh, 24 Nov |
 | 28 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 3a. Source of truth

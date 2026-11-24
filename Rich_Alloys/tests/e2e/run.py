@@ -42,7 +42,7 @@ with sync_playwright() as pw:
     s.locator("label.upload input").set_input_files("invoice.jpg")
     s.get_by_label("Slip gross").fill("2012"); s.get_by_label("Slip bags").fill("12")
     s.get_by_label("Billed net").fill("2000"); s.get_by_label(re.compile(r"^Rate on invoice")).fill("1200")   # typed from the invoice, never pre-filled
-    s.get_by_label(re.compile(r"^Gross")).fill("2010"); s.get_by_label("Number of bags").fill("50"); s.get_by_label("Bag weight").fill("15")
+    s.get_by_label(re.compile(r"^Gross")).fill("2010"); s.get_by_label("Number of bags").fill("50"); s.get_by_label("Weight of all bags").fill("15")
     expect(s.locator(".result")).to_contain_text("Short 5.000 kg")
     p.screenshot(path="03_arrival.png", full_page=True)
     s.get_by_role("button", name="Save arrival").click()

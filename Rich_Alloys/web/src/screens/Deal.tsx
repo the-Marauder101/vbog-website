@@ -98,7 +98,7 @@ export default function Deal({ id, openArrival }: { id: string; openArrival?: bo
         {lots.length === 0 ? <Empty>{t("No material received yet.", "अभी कोई माल नहीं आया।")}</Empty> : (
           <ul className="rows">{lots.map((l) => (
             <li key={l.lot_id}><button type="button" className="row" onClick={() => go(`lot/${l.lot_id}`)}>
-              <span className="row-main"><strong>{l.lot_no}</strong><span className="muted small">{day(l.received_on)} · {l.invoice_no}{l.deal_ids?.length > 1 ? ` · ${t("same truck as", "इसी ट्रक में")} ${l.deal_nos}` : ""}{l.price_open ? ` · ${t("price open", "रेट खुला")}` : ""}</span></span>
+              <span className="row-main"><strong>{l.invoice_no ?? l.lot_no}</strong><span className="muted small">{t("Internal", "आंतरिक")} {l.lot_no} · {day(l.received_on)}{l.deal_ids?.length > 1 ? ` · ${t("same truck as", "इसी ट्रक में")} ${l.deal_nos}` : ""}{l.price_open ? ` · ${t("price open", "रेट खुला")}` : ""}</span></span>
               <StageChip stage={l.stage} /></button></li>))}
           </ul>)}
       </Section>
@@ -270,7 +270,7 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
             <div className="grid3">
               <Field label={t("Gross", "कुल वज़न")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
               <Field label={t("Number of bags", "बोरी गिनती")}><NumIn value={x.bags} onChange={(v) => set(i, "bags", v)} /></Field>
-              <Field label={t("Bag weight", "बोरी वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
+              <Field label={t("Weight of all bags", "सभी बोरियों का वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
             </div>
             {ready && (
               <p className={`result ${diff > 0.0005 ? "bad" : diff < -0.0005 ? "wait" : "ok"}`}>
@@ -280,6 +280,8 @@ function ArrivalSheet({ deal, lines, onClose, onSaved }: { deal: Row; lines: Row
           </div>
         );
       })}
+      {gl.some((x) => x.bags || x.bagKg) && (
+        <p className="notice"><strong>{t("Bags on this truck", "इस ट्रक में बोरियाँ")}:</strong> {gl.reduce((a, x) => a + num(x.bags), 0)} {t("bags", "बोरी")} · {kg(gl.reduce((a, x) => a + num(x.bagKg), 0))}</p>)}
       {(others.data ?? []).length > 0 && (pickDeal ? (
         <Field label={t("Material from which other deal?", "किस दूसरे सौदे का माल?")}>
           <Select value="" placeholder={t("Choose…", "चुनें…")} onChange={(v) => {
