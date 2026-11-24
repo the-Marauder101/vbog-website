@@ -110,7 +110,7 @@ const REG_COLS: { k: string; en: string; hi: string; kind?: "kg" | "inr" | "text
   { k: "invoice_no", en: "Invoice", hi: "बिल" }, { k: "lot_no", en: "Internal no.", hi: "आंतरिक नं." }, { k: "deal_no", en: "Deal", hi: "सौदा" },
   { k: "received_on", en: "Received", hi: "आया", kind: "date" },
   { k: "supplier", en: "Supplier", hi: "सप्लायर" }, { k: "grades", en: "Grades", hi: "ग्रेड" },
-  { k: "billed_kg", en: "Billed kg", hi: "बिल वज़न", kind: "kg" }, { k: "factory_kg", en: "Our kg", hi: "हमारा वज़न", kind: "kg" },
+  { k: "billed_kg", en: "Invoice kg", hi: "बिल वज़न", kind: "kg" }, { k: "factory_kg", en: "Our net kg", hi: "हमारा नेट", kind: "kg" },
   { k: "weight_short_kg", en: "Short kg", hi: "कम वज़न", kind: "kg" },
   { k: "bags", en: "Bags", hi: "बोरी", kind: "num" }, { k: "bag_kg", en: "Bag weight", hi: "बोरी वज़न", kind: "kg" },
   { k: "invoice_rates", en: "Invoice rate (excl. GST)", hi: "बिल रेट (GST अलग)", money: true }, { k: "our_rates", en: "Our rate (excl. GST)", hi: "हमारा रेट (GST अलग)", money: true },
@@ -240,7 +240,7 @@ export function NewDealSheet({ onClose, onSaved }: { onClose: () => void; onSave
       {lines.map((l, i) => (
         <div className="line" key={i}>
           <Field label={t("Grade", "ग्रेड")}><Select value={l.grade} onChange={(v) => setLine(i, "grade", v)} placeholder="—" options={grades.map((g) => ({ value: g.code, label: nm(lang, g) }))} /></Field>
-          <Field label={t("Quantity", "मात्रा")}><NumIn value={l.qty} onChange={(v) => setLine(i, "qty", v)} suffix="kg" /></Field>
+          <Field label={t("Agreed weight", "तय वज़न")}><NumIn value={l.qty} onChange={(v) => setLine(i, "qty", v)} suffix="kg" /></Field>
           <Field label={pricing === "open" ? t("Rate (optional)", "रेट (वैकल्पिक)") : t("Rate excl. GST", "रेट (GST अलग)")}><NumIn value={l.rate} onChange={(v) => setLine(i, "rate", v)} suffix="₹/kg" placeholder={pricing === "open" ? t("open", "खुला") : undefined} /></Field>
           {lines.length > 1 && <button type="button" className="x" aria-label={t("Remove", "हटाएँ")} onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>}
         </div>
@@ -355,11 +355,11 @@ function ReceiptSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (lot
             <Field label={t("Grade", "ग्रेड")}><Select value={x.grade} onChange={(v) => set(i, "grade", v)} placeholder="—" options={grades.map((g) => ({ value: g.code, label: nm(lang, g) }))} /></Field>
             <div className="grid2">
               <Field label={type === "branch" ? t("Weight sent from Mumbai", "मुंबई से भेजा वज़न") : t("Weight on their document", "उनके डॉक्यूमेंट पर वज़न")}><NumIn value={x.theirs} onChange={(v) => set(i, "theirs", v)} suffix="kg" /></Field>
-              <Field label={t("Gross on our weighbridge", "हमारे कांटे पर कुल")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
+              <Field label={t("Gross incl. bags", "कुल वज़न (बोरी सहित)")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
               <Field label={t("Number of bags", "बोरी गिनती")}><NumIn value={x.bags} onChange={(v) => set(i, "bags", v)} /></Field>
-              <Field label={t("Bag weight", "बोरी वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
+              <Field label={t("Weight of all bags", "सभी बोरियों का वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
             </div>
-            {ready && <p className={`result ${diff > 0.0005 ? "bad" : "okline"}`}>{t("Our net", "हमारा नेट")} {kg(net)} · {diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}</p>}
+            {ready && <p className={`result ${diff > 0.0005 ? "bad" : "okline"}`}>{t("Our net (gross − bags)", "हमारा नेट (कुल − बोरी)")} {kg(net)} · {diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}</p>}
           </div>
         );
       })}
@@ -435,7 +435,7 @@ function UnbookedSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (lo
     const lotId = await rpc<string>("create_unbooked_lot", { p: {
       supplier_id: sup === "new" ? null : sup, supplier_name: newSup.name, supplier_gstin: normGstin(newSup.gstin), supplier_state: newSup.state,
       gst_rate: gst, invoice_no: invNo, invoice_date: invDate, received_on: rec, vehicle_no: veh,
-      lines: used.map((x) => ({ grade: x.grade, billed_net_kg: x.billed, billed_rate: x.rate, slip_gross_kg: x.slipGross, slip_bag_kg: x.slipBags,
+      lines: used.map((x) => ({ grade: x.grade, billed_net_kg: x.billed, billed_rate: x.rate,
                                 factory_gross_kg: x.gross, bag_count: x.bags, factory_bag_kg: x.bagKg || "0" })) } });
     if (photo) {
       const lot = await q<Row>(sb.from("lots").select("deal_id, deals(deal_no)").eq("id", lotId).single());
@@ -471,20 +471,18 @@ function UnbookedSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (lo
         return (
           <div className="card grade-card" key={i}>
             <Field label={t("Grade", "ग्रेड")}><Select value={x.grade} onChange={(v) => set(i, "grade", v)} placeholder="—" options={grades.map((g) => ({ value: g.code, label: nm(lang, g) }))} /></Field>
-            <p className="label-row">{t("As per supplier (packing slip and invoice)", "सप्लायर के अनुसार (पैकिंग स्लिप और बिल)")}</p>
+            <p className="label-row">{t("As per the supplier's invoice", "सप्लायर के बिल के अनुसार")}</p>
             <div className="grid2">
-              <Field label={t("Slip gross", "स्लिप कुल")}><NumIn value={x.slipGross} onChange={(v) => set(i, "slipGross", v)} suffix="kg" /></Field>
-              <Field label={t("Slip bags", "स्लिप बोरी")}><NumIn value={x.slipBags} onChange={(v) => set(i, "slipBags", v)} suffix="kg" /></Field>
-              <Field label={t("Billed net", "बिल नेट")}><NumIn value={x.billed} onChange={(v) => set(i, "billed", v)} suffix="kg" /></Field>
-              <Field label={t("Rate on invoice", "बिल पर रेट")}><NumIn value={x.rate} onChange={(v) => set(i, "rate", v)} suffix="₹/kg" /></Field>
+              <Field label={t("Weight on invoice", "बिल पर वज़न")}><NumIn value={x.billed} onChange={(v) => set(i, "billed", v)} suffix="kg" /></Field>
+              <Field label={t("Rate on invoice (excl. GST)", "बिल पर रेट (GST अलग)")}><NumIn value={x.rate} onChange={(v) => set(i, "rate", v)} suffix="₹/kg" /></Field>
             </div>
-            <p className="label-row">{t("Our weighbridge", "हमारा कांटा")}</p>
-            <div className="grid2">
-              <Field label={t("Gross on our weighbridge", "हमारे कांटे पर कुल")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
+            <p className="label-row">{t("At our weighbridge (we count and weigh the bags)", "हमारे काँटे पर (बोरी हम गिनते और तौलते हैं)")}</p>
+            <div className="grid3">
+              <Field label={t("Gross incl. bags", "कुल वज़न (बोरी सहित)")}><NumIn value={x.gross} onChange={(v) => set(i, "gross", v)} suffix="kg" /></Field>
               <Field label={t("Number of bags", "बोरी गिनती")}><NumIn value={x.bags} onChange={(v) => set(i, "bags", v)} /></Field>
-              <Field label={t("Bag weight", "बोरी वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
+              <Field label={t("Weight of all bags", "सभी बोरियों का वज़न")}><NumIn value={x.bagKg} onChange={(v) => set(i, "bagKg", v)} suffix="kg" /></Field>
             </div>
-            {ready && <p className={`result ${diff > 0.0005 ? "bad" : "okline"}`}>{t("Our net", "हमारा नेट")} {kg(net)} · {diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}</p>}
+            {ready && <p className={`result ${diff > 0.0005 ? "bad" : "okline"}`}>{t("Our net (gross − bags)", "हमारा नेट (कुल − बोरी)")} {kg(net)} · {diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}</p>}
           </div>
         );
       })}

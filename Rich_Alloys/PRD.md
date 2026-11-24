@@ -96,6 +96,7 @@ the factory Tally, the office Tally, or both.
 | 44 | Supplier document checklist: "Vahan vehicle check" becomes **RC of vehicle**; **FASTag history** added (required); QA/QC report (factory) and supplier credit note (optional) added | Depesh, 24 Nov |
 | 45 | **Bags per truck**: number of bags and weight of all bags are entered per grade at our weighbridge; the truck total (count and kg) shows on arrival, on the lot and in the lot table (`v_lots.bags, bag_kg`, `0016_bag_totals.sql`) | Depesh, 24 Nov |
 | 46 | **The supplier's invoice number is the main number** on screens (Lots, lot page, deal, Docs, Home, lot table); our L-/D- numbers stay beside it as the internal numbers | Depesh, 24 Nov |
+| 47 | **The weights of a purchase**: P1 = weight agreed in the deal/PO; P2 = weight on the supplier's invoice; P3 = our gross at the weighbridge, bags included; bags are counted and weighed by us (the supplier never gives bag weight); P4 = P3 − bags (our net); **weight short = P2 − P4** (debited, unchanged). **P2 vs P1** is shown and highlighted on arrival, on the lot and per deal across all its trucks (`v_deal_weights`, `0017_weights_p1_p4.sql`). Net, short and PO difference are calculated, never typed. The supplier's packing-slip gross/bags are no longer asked for (old values still shown where present) | Depesh, 24 Nov |
 | 28 | The portal lives in the public V-BOG website repo so GitHub Pages can serve it; client details in the PRD and test data are accepted there for now and will be scrubbed later | Depesh, 18 Nov |
 
 ## 3a. Source of truth

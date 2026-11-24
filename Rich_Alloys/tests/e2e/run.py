@@ -22,7 +22,7 @@ with sync_playwright() as pw:
     p.goto(URL + "#/lots/new"); s = sheet(p)
     s.get_by_label("Supplier").select_option(label="Ogo Enviro Solutions Private Limited")
     s.get_by_label("Grade").select_option(label="OC")
-    s.get_by_label("Quantity").fill("2000"); s.get_by_label(re.compile(r"^Rate")).fill("1200")
+    s.get_by_label("Agreed weight").fill("2000"); s.get_by_label(re.compile(r"^Rate")).fill("1200")
     s.get_by_role("button", name=re.compile("Payment terms for this deal")).click()
     s.get_by_label("Provisional").fill("90"); s.get_by_label("Paid after").fill("0"); s.get_by_label("Balance after").fill("20")
     p.screenshot(path="02_new_deal.png", full_page=True)
@@ -40,10 +40,10 @@ with sync_playwright() as pw:
     s.get_by_label("Vehicle number").fill("mh04ab1234")
     s.get_by_label("Supplier invoice number").fill("OGOES22")
     s.locator("label.upload input").set_input_files("invoice.jpg")
-    s.get_by_label("Slip gross").fill("2012"); s.get_by_label("Slip bags").fill("12")
-    s.get_by_label("Billed net").fill("2000"); s.get_by_label(re.compile(r"^Rate on invoice")).fill("1200")   # typed from the invoice, never pre-filled
+    s.get_by_label("Weight on invoice").fill("2000"); s.get_by_label(re.compile(r"^Rate on invoice")).fill("1200")   # typed from the invoice, never pre-filled
     s.get_by_label(re.compile(r"^Gross")).fill("2010"); s.get_by_label("Number of bags").fill("50"); s.get_by_label("Weight of all bags").fill("15")
-    expect(s.locator(".result")).to_contain_text("Short 5.000 kg")
+    expect(s.locator(".result.ok")).to_contain_text("Invoice matches the PO weight")   # P2 = P1
+    expect(s.locator(".result.bad")).to_contain_text("Our net (gross − bags) 1,995.000 kg · Short 5.000 kg")   # P3 2,010 − bags 15 = P4; P2 − P4
     p.screenshot(path="03_arrival.png", full_page=True)
     s.get_by_role("button", name="Save arrival").click()
     p.wait_for_selector(".stepper"); step("arrival saved, lot opened")

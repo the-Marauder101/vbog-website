@@ -32,6 +32,7 @@ async function loadLot(id: string, money: boolean) {
     q(sb.from("v_sorting_exceptions").select("*").eq("lot_id", id)),
   ]);
   const supId = lot.deals?.supplier_id as string;
+  const dealWeights = await q(sb.from("v_deal_weights").select("*").in("deal_id", [...new Set(lines.map((l) => l.deal_id as string))]));
   const [payable, payments, tds, priceHistory, holds] = money && inv ? await Promise.all([
     q(sb.from("v_payable").select("*").eq("invoice_id", inv)),
     q(sb.from("payments").select("*").eq("invoice_id", inv).order("paid_on")),
@@ -41,7 +42,7 @@ async function loadLot(id: string, money: boolean) {
     ]) : [[], [], [], [], []];
   const ids = [inv, ...notes.map((n) => n.id), ...payments.map((p) => p.id), ...tds.map((x) => x.id)].filter(Boolean) as string[];
   const marks = ids.length ? await q(sb.from("tally_marks").select("*").in("entity_id", ids)) : [];
-  return { lot, v: v[0] ?? {}, lines, sorting, calc, calcLines, notes, returns, cats, exc, payable: payable[0], payments, tds, priceHistory, hold: holds[0] as Row | undefined, marks };
+  return { lot, v: v[0] ?? {}, lines, sorting, calc, calcLines, notes, returns, cats, exc, payable: payable[0], payments, tds, priceHistory, hold: holds[0] as Row | undefined, marks, dealWeights };
 }
 export type LotData = Awaited<ReturnType<typeof loadLot>>;
 
@@ -221,16 +222,24 @@ function Weights({ d, reload }: { d: LotData; reload: () => void }) {
           <div className="card" key={l.lot_line_id}>
             <div className="item-head"><h3>{nm(lang, { name: l.grade_name, name_hi: l.grade_name_hi })}</h3>
               <Chip tone={diff > 0.0005 ? "bad" : diff < -0.0005 ? "wait" : "ok"}>{diff > 0.0005 ? `${t("Short", "कम")} ${kg(diff)}` : diff < -0.0005 ? `${t("Excess", "ज़्यादा")} ${kg(-diff)}` : t("Matches", "बराबर")}</Chip></div>
-            <table className="tbl compact">
-              <thead><tr><th></th><th className="n">{t("Supplier", "सप्लायर")}</th><th className="n">{t("Ours", "हमारा")}</th></tr></thead>
-              <tbody>
-                <tr><td>{t("Gross", "कुल")}</td><td className="n">{kg(l.slip_gross_kg)}</td><td className="n">{kg(l.factory_gross_kg)}</td></tr>
-                <tr><td>{t("Bags", "बोरी")}</td><td className="n">{kg(l.slip_bag_kg)}</td><td className="n">{kg(l.factory_bag_kg)}{l.bag_count != null ? ` (${l.bag_count})` : ""}</td></tr>
-                <tr><td><strong>{t("Net", "नेट")}</strong></td><td className="n"><strong>{kg(l.billed_net_kg)}</strong></td><td className="n"><strong>{kg(l.factory_net_kg)}</strong></td></tr>
-              </tbody>
-            </table>
-            {l.slip_vs_invoice_kg != null && Math.abs(Number(l.slip_vs_invoice_kg)) > 0.0005 &&
-              <p className="warn">{t("Packing slip nets to", "पैकिंग स्लिप का नेट")} {kg(l.slip_net_kg)}, {t("invoice bills", "बिल में")} {kg(l.billed_net_kg)}.</p>}
+            {(() => {
+              const w = d.dealWeights.find((x) => x.deal_id === l.deal_id && x.grade === l.grade);
+              const po = w ? Number(w.po_diff_kg) : null;
+              return (
+                <table className="tbl compact weights">
+                  <tbody>
+                    {l.agreed_kg != null && <tr><td>{t("Agreed in the PO", "PO में तय")}{w && Number(w.trucks) > 1 ? <span className="muted small"> ({t("deal, all trucks", "पूरा सौदा, सभी ट्रक")})</span> : null}</td><td className="n">{kg(l.agreed_kg)}</td></tr>}
+                    <tr><td>{t("Weight on invoice", "बिल पर वज़न")}</td><td className="n">{kg(l.billed_net_kg)}</td></tr>
+                    {po != null && Math.abs(po) > 0.0005 && <tr className={po > 0 ? "bad" : "warnrow"}><td>{po > 0 ? t("Invoiced more than the PO", "PO से ज़्यादा बिल") : t("Invoiced less than the PO", "PO से कम बिल")}{w && Number(w.trucks) > 1 ? <span className="muted small"> ({t("all trucks", "सभी ट्रक")})</span> : null}</td><td className="n">{kg(Math.abs(po))}</td></tr>}
+                    <tr><td>{t("Gross incl. bags (our weighbridge)", "कुल वज़न, बोरी सहित (हमारा काँटा)")}</td><td className="n">{kg(l.factory_gross_kg)}</td></tr>
+                    <tr><td>{t("Bags", "बोरी")}{l.bag_count != null ? ` · ${l.bag_count}` : ""}</td><td className="n">− {kg(l.factory_bag_kg)}</td></tr>
+                    <tr><td><strong>{t("Our net (gross − bags)", "हमारा नेट (कुल − बोरी)")}</strong></td><td className="n"><strong>{kg(l.factory_net_kg)}</strong></td></tr>
+                    <tr className={diff > 0.0005 ? "bad" : ""}><td><strong>{diff < -0.0005 ? t("Excess (our net − invoice)", "ज़्यादा (हमारा नेट − बिल)") : t("Weight short (invoice − our net)", "वज़न कम (बिल − हमारा नेट)")}</strong></td><td className="n"><strong>{kg(Math.abs(diff))}</strong></td></tr>
+                  </tbody>
+                </table>);
+            })()}
+            {(l.slip_gross_kg != null || l.slip_bag_kg != null) &&
+              <p className="muted small">{t("Supplier's packing slip", "सप्लायर की पैकिंग स्लिप")}: {t("gross", "कुल")} {kg(l.slip_gross_kg)} · {t("bags", "बोरी")} {kg(l.slip_bag_kg)}</p>}
             {l.rate_vs_deal != null && Math.abs(Number(l.rate_vs_deal)) > 0.0005 &&
               <p className="warn">{t("Invoice rate", "बिल रेट")} {inr(l.billed_rate)} {t("differs from agreed", "तय रेट से अलग")} {inr(l.deal_rate)}.</p>}
             {can("inward_edit") && !locked && <Btn small onClick={() => setEdit(l)}>{t("Correct weights", "वज़न सुधारें")}</Btn>}
@@ -263,17 +272,17 @@ function WeightEdit({ d, l, onClose, onSaved }: { d: LotData; l: Row; onClose: (
   const sv = useSave();
   const n = (v: string) => (v.trim() === "" ? null : Number(v));
   const save = () => sv.run(async () => {
-    if (!isNum(f.billed) || !isNum(f.rate) || !isNum(f.gross)) throw new Error(t("Billed net, rate and our gross are required.", "बिल नेट, रेट और हमारा कुल वज़न ज़रूरी है।"));
+    if (!isNum(f.billed) || !isNum(f.rate) || !isNum(f.gross)) throw new Error(t("Weight on invoice, rate and our gross are required.", "बिल का वज़न, रेट और हमारा कुल वज़न ज़रूरी है।"));
     await q(sb.from("lot_lines").update({ factory_gross_kg: n(f.gross), bag_count: n(f.bags), factory_bag_kg: n(f.bagKg) ?? 0 }).eq("id", l.lot_line_id));
-    if (d.lot.invoice_id) await q(sb.from("invoice_lines").update({ billed_net_kg: n(f.billed), billed_rate: n(f.rate), slip_gross_kg: n(f.slipGross), slip_bag_kg: n(f.slipBags) }).eq("invoice_id", d.lot.invoice_id).eq("grade", l.grade));
+    if (d.lot.invoice_id) await q(sb.from("invoice_lines").update({ billed_net_kg: n(f.billed), billed_rate: n(f.rate) }).eq("invoice_id", d.lot.invoice_id).eq("grade", l.grade));
   }, () => { onSaved(); onClose(); });
   const fld = (k: keyof typeof f, label: string, suffix?: string) => <Field label={label}><NumIn value={f[k]} onChange={(v) => setF({ ...f, [k]: v })} suffix={suffix} /></Field>;
   return (
     <Sheet title={`${t("Correct weights", "वज़न सुधारें")} · ${l.grade}`} onClose={onClose} footer={<SaveBar busy={sv.busy} error={sv.error} onSave={save} label={t("Save", "सेव करें")} />}>
       <p className="label-row">{t("As per supplier", "सप्लायर के अनुसार")}</p>
-      <div className="grid2">{fld("slipGross", t("Slip gross", "स्लिप कुल"), "kg")}{fld("slipBags", t("Slip bags", "स्लिप बोरी"), "kg")}{fld("billed", t("Billed net", "बिल नेट"), "kg")}{fld("rate", t("Billed rate", "बिल रेट"), "₹/kg")}</div>
+      <div className="grid2">{fld("billed", t("Weight on invoice", "बिल पर वज़न"), "kg")}{fld("rate", t("Rate on invoice (excl. GST)", "बिल पर रेट (GST अलग)"), "₹/kg")}</div>
       <p className="label-row">{t("At our weighbridge", "हमारे काँटे पर")}</p>
-      <div className="grid2">{fld("gross", t("Gross", "कुल वज़न"), "kg")}{fld("bags", t("Number of bags", "बोरी गिनती"))}{fld("bagKg", t("Bag weight", "बोरी वज़न"), "kg")}</div>
+      <div className="grid2">{fld("gross", t("Gross incl. bags", "कुल वज़न (बोरी सहित)"), "kg")}{fld("bags", t("Number of bags", "बोरी गिनती"))}{fld("bagKg", t("Weight of all bags", "सभी बोरियों का वज़न"), "kg")}</div>
     </Sheet>
   );
 }
@@ -635,7 +644,7 @@ function printLot(d: LotData) {
   const p = d.payable;
   printHtml(`${d.lot.lot_no} summary`, `${head(d, `Lot summary ${d.lot.lot_no}`)}
     <p>Received ${esc(day(d.lot.received_on))} · vehicle ${esc(d.lot.vehicle_no ?? "—")}</p>
-    <h2>Weights</h2><table><thead><tr><th>Grade</th><th class="n">Billed net</th><th class="n">Our gross</th><th class="n">Our bags</th><th class="n">Our net</th><th class="n">Short (+) / excess (−)</th></tr></thead><tbody>${w}</tbody></table>
+    <h2>Weights</h2><table><thead><tr><th>Grade</th><th class="n">Weight on invoice</th><th class="n">Our gross incl. bags</th><th class="n">Bags</th><th class="n">Our net (gross − bags)</th><th class="n">Short (+) / excess (−)</th></tr></thead><tbody>${w}</tbody></table>
     <h2>Sorting</h2><table><thead><tr><th>Date</th><th>Grade</th><th>Found</th><th class="n">kg</th><th>Action</th><th class="n">Debited kg</th><th>Reason</th></tr></thead><tbody>${srt || "<tr><td colspan=7>None</td></tr>"}</tbody></table>
     <h2>Debit notes</h2><table><thead><tr><th>Type</th><th>Tally no</th><th>Date</th><th class="n">Total</th></tr></thead><tbody>${nts || "<tr><td colspan=4>None</td></tr>"}</tbody></table>
     ${p ? `<h2>Payment</h2><table><tbody><tr><td>Invoice total</td><td class="n">${esc(inr(p.total))}</td></tr><tr><td>Debit notes</td><td class="n">${esc(inr(p.notes))}</td></tr><tr><td>TDS</td><td class="n">${esc(inr(p.tds))}</td></tr><tr><td>Paid (reconciled)</td><td class="n">${esc(inr(p.paid))}</td></tr><tr><td><b>Balance</b></td><td class="n"><b>${esc(inr(p.balance))}</b></td></tr></tbody></table>` : ""}`);
