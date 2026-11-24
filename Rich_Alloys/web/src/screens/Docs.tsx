@@ -117,7 +117,8 @@ function Invoices() {
           return (
             <li key={l.lot_id}><div className="row static">
               <button type="button" className="row-main linkish" onClick={() => go(`lot/${l.lot_id}/docs`)}>
-                <strong>{l.lot_no} · {l.invoice_no ?? "—"}</strong>
+                <strong>{l.invoice_no ?? l.lot_no}</strong>
+                <span className="muted small">{t("Internal", "आंतरिक")} {l.lot_no}</span>
                 <span>{l.supplier}</span>
                 <span className="muted small">{day(l.invoice_date ?? l.received_on)} · {l.deal_nos ?? ""} · {files} {t("files", "फ़ाइलें")} · {dns} DN{qc ? ` · ${t("QA/QC ✓", "QA/QC ✓")}` : ""}</span>
                 <span><StageChip stage={l.stage} /></span>

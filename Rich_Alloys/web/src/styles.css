@@ -293,3 +293,4 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .seg.wide { display: flex; width: 100%; margin: 6px 0 10px; }
 .seg.wide button { flex: 1; }
 .rate-btn.open { color: var(--bad, #a32020); font-weight: 600; }
+.eyebrow { margin: 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--soft); }

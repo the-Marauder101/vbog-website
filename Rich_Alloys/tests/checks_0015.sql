@@ -14,6 +14,10 @@ begin
   fresh := jsonb_build_object('sub', own, 'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', extract(epoch from now())::bigint)))::text;
   stale := jsonb_build_object('sub', own, 'amr', jsonb_build_array(jsonb_build_object('method', 'password', 'timestamp', extract(epoch from now())::bigint - 3600)))::text;
 
+  -- ---- bags on the truck (0016): Ogo notebook, 194 bags weighing 42.5 kg ----
+  select bags, bag_kg into r from v_lots where deal_no = 'RA-082'; assert r.bags = 194 and r.bag_kg = 42.5, 'bag totals per truck';
+  select bags, bag_kg into r from v_lot_register where lot_no = 'L-0001'; assert r.bags = 194 and r.bag_kg = 42.5, 'bag totals in the lot table';
+
   -- ---- document checklist ----
   select name into t from doc_types where code = 'VAHAN_CHECK'; assert t like 'RC of vehicle%', 'Vahan check is now the RC';
   select count(*) into n from doc_types where code in ('FASTAG_HISTORY','QC_REPORT','SUPPLIER_CN','COMPLIANCE'); assert n = 4, 'new document types';

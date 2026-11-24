@@ -80,7 +80,8 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
               <li key={l.lot_id}>
                 <button type="button" className="row" onClick={() => go(`lot/${l.lot_id}`)}>
                   <span className="row-main">
-                    <strong>{l.lot_no} · {l.deal_nos ?? l.deal_no}</strong>
+                    <strong>{l.invoice_no ?? l.lot_no}</strong>
+                    <span className="muted small">{t("Internal", "आंतरिक")} {l.lot_no} · {l.deal_nos ?? l.deal_no}</span>
                     <span>{l.supplier}{l.supplier_type && l.supplier_type !== "domestic" ? <span className="muted small"> · {t(...TYPE_WORD[l.supplier_type])}</span> : null}</span>
                     <span className="muted small">{day(l.received_on)} · {l.days_open} {t("days", "दिन")}{l.doc_gaps ? ` · ${l.doc_gaps} ${t("docs pending", "दस्तावेज़ बाकी")}` : ""}</span>
                     {l.unbooked && !l.rate_confirmed_at && <span><Chip tone="wait">{t("Not booked: rate to confirm", "बिना बुकिंग: रेट पक्का करना है")}</Chip></span>}
@@ -105,11 +106,13 @@ export default function Lots({ openNew }: { openNew?: boolean }) {
 }
 
 // Every lot in one table: supplier, weights, rates, each debit note, GST, TDS, paid and pending.
-const REG_COLS: { k: string; en: string; hi: string; kind?: "kg" | "inr" | "text" | "date"; money?: boolean }[] = [
-  { k: "lot_no", en: "Lot", hi: "लॉट" }, { k: "received_on", en: "Received", hi: "आया", kind: "date" },
-  { k: "supplier", en: "Supplier", hi: "सप्लायर" }, { k: "invoice_no", en: "Invoice", hi: "बिल" }, { k: "grades", en: "Grades", hi: "ग्रेड" },
+const REG_COLS: { k: string; en: string; hi: string; kind?: "kg" | "inr" | "text" | "date" | "num"; money?: boolean }[] = [
+  { k: "invoice_no", en: "Invoice", hi: "बिल" }, { k: "lot_no", en: "Internal no.", hi: "आंतरिक नं." }, { k: "deal_no", en: "Deal", hi: "सौदा" },
+  { k: "received_on", en: "Received", hi: "आया", kind: "date" },
+  { k: "supplier", en: "Supplier", hi: "सप्लायर" }, { k: "grades", en: "Grades", hi: "ग्रेड" },
   { k: "billed_kg", en: "Billed kg", hi: "बिल वज़न", kind: "kg" }, { k: "factory_kg", en: "Our kg", hi: "हमारा वज़न", kind: "kg" },
   { k: "weight_short_kg", en: "Short kg", hi: "कम वज़न", kind: "kg" },
+  { k: "bags", en: "Bags", hi: "बोरी", kind: "num" }, { k: "bag_kg", en: "Bag weight", hi: "बोरी वज़न", kind: "kg" },
   { k: "invoice_rates", en: "Invoice rate (excl. GST)", hi: "बिल रेट (GST अलग)", money: true }, { k: "our_rates", en: "Our rate (excl. GST)", hi: "हमारा रेट (GST अलग)", money: true },
   { k: "taxable", en: "Taxable", hi: "कर योग्य", kind: "inr", money: true }, { k: "gst", en: "GST", hi: "GST", kind: "inr", money: true },
   { k: "invoice_total", en: "Invoice total", hi: "बिल कुल", kind: "inr", money: true },
@@ -131,7 +134,7 @@ function LotRegister({ ids }: { ids: Set<string> }) {
   if (!data) return error ? <Err error={error} /> : <Loading />;
   const rows = data.filter((r) => ids.has(r.lot_id));
   const cols = REG_COLS.filter((c) => !c.money || can("money_view"));
-  const fmt = (c: typeof REG_COLS[number], v: unknown) => v == null ? "—" : c.kind === "kg" ? kg(v) : c.kind === "inr" ? inr(v) : c.kind === "date" ? day(v) : String(v);
+  const fmt = (c: typeof REG_COLS[number], v: unknown) => v == null ? "—" : c.kind === "kg" ? kg(v) : c.kind === "inr" ? inr(v) : c.kind === "date" ? day(v) : c.kind === "num" ? Number(v).toLocaleString("en-IN") : String(v);
   const sum = (k: string) => rows.reduce((a, r) => a + Number(r[k] ?? 0), 0);
   return (
     <>
@@ -142,8 +145,8 @@ function LotRegister({ ids }: { ids: Set<string> }) {
           <table className="tbl">
             <thead><tr>{cols.map((c) => <th key={c.k} className={c.kind === "kg" || c.kind === "inr" ? "n" : ""}>{t(c.en, c.hi)}</th>)}</tr></thead>
             <tbody>{rows.map((r) => <tr key={r.lot_id} className="click" onClick={() => go(`lot/${r.lot_id}`)}>
-              {cols.map((c) => <td key={c.k} className={c.kind === "kg" || c.kind === "inr" ? "n" : ""}>{c.k === "lot_no" ? <strong>{r.lot_no}</strong> : fmt(c, r[c.k])}</td>)}</tr>)}</tbody>
-            <tfoot><tr>{cols.map((c, i) => <td key={c.k} className={c.kind === "kg" || c.kind === "inr" ? "n" : ""}>{i === 0 ? <strong>{t("Total", "कुल")}</strong> : c.kind === "kg" || c.kind === "inr" ? <strong>{fmt(c, sum(c.k))}</strong> : ""}</td>)}</tr></tfoot>
+              {cols.map((c) => <td key={c.k} className={c.kind === "kg" || c.kind === "inr" ? "n" : ""}>{c.k === "invoice_no" ? <strong>{r.invoice_no ?? "—"}</strong> : fmt(c, r[c.k])}</td>)}</tr>)}</tbody>
+            <tfoot><tr>{cols.map((c, i) => <td key={c.k} className={c.kind === "kg" || c.kind === "inr" ? "n" : ""}>{i === 0 ? <strong>{t("Total", "कुल")}</strong> : c.kind === "kg" || c.kind === "inr" || c.kind === "num" ? <strong>{fmt(c, sum(c.k))}</strong> : ""}</td>)}</tr></tfoot>
           </table>
         </div>)}
     </>
