@@ -111,3 +111,22 @@ export async function packageNotes(notes: Row[], name: string, progress?: Progre
   const files = await dnFiles([...new Set(notes.map((n) => n.lot_id as string))], () => "", notes.map((n) => n.id));
   return zipIt(name, files, indexRows([], files), progress);
 }
+
+/** Everything under one PO: the PO, the deal's files, and every truck that carried its material (files and debit notes) */
+export async function packageDeal(dealId: string, progress?: Progress) {
+  const [deal, lots] = await Promise.all([
+    q<Row>(sb.from("deals").select("id, deal_no, po_no, suppliers(name)").eq("id", dealId).single()),
+    q(sb.from("v_lots").select("lot_id, lot_no, invoice_no").contains("deal_ids", [dealId])),
+  ]);
+  const lotIds = lots.map((l) => l.lot_id as string);
+  const docs = await q(sb.from("v_doc_index").select("*").or(lotIds.length
+    ? `deal_id.eq.${dealId},lot_id.in.(${lotIds.join(",")})` : `deal_id.eq.${dealId}`));
+  const lotDir = (id: string) => { const l = lots.find((x) => x.lot_id === id); return `Invoices/${clean(`${l?.invoice_no ?? ""} ${l?.lot_no ?? ""}`)}/`; };
+  const files: Add[] = [
+    ...await poFiles([dealId], ""),
+    ...docFiles(docs.filter((d) => !d.lot_id), "Deal documents/"),
+    ...lots.flatMap((l) => docFiles(docs.filter((d) => d.lot_id === l.lot_id), lotDir(l.lot_id))),
+    ...await dnFiles(lotIds, lotDir),
+  ];
+  return zipIt(`${deal.po_no ?? deal.deal_no} ${deal.suppliers?.name ?? ""}`, files, indexRows(docs, files), progress);
+}
